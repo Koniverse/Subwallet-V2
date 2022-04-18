@@ -21,6 +21,8 @@ export const KANARIA_EXTERNAL_SERVER = 'https://kanaria.rmrk.app/catalogue/';
 
 export const CLOUDFLARE_SERVER = 'https://cloudflare-ipfs.com/ipfs/';
 
+export const CF_IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs/';
+
 export const BIT_COUNTRY_SERVER = 'https://ipfs-cdn.bit.country/';
 
 export enum SUPPORTED_NFT_NETWORKS {
