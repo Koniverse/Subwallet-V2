@@ -54,7 +54,7 @@ function CreateAccount ({ className, defaultClassName }: Props): React.ReactElem
       })
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dep]);
+  }, []);
 
   useEffect((): void => {
     if (seed) {
