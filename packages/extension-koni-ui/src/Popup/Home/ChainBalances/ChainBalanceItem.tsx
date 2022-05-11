@@ -48,7 +48,7 @@ function ChainBalanceItem ({ accountInfo,
 
   const _onCopy = useCallback((e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation();
-    show(t('Copied'));
+    show(t('Copied'), true);
   }, [show, t]);
 
   const _onOpenDetail = useCallback(() => {

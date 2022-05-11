@@ -40,7 +40,7 @@ function Output ({ children, className = '', help, isDisabled, isError, isFull, 
 
   const _onCopy = useCallback(
     () => {
-      show(t('Copied'));
+      show(t('Copied'), false);
     },
     [show, t]
   );

@@ -47,7 +47,7 @@ function Mnemonic ({ address, className, evmAddress, evmName, isConnectWhenCreat
 
   const _onCopy = useCallback((): void => {
     onCopy();
-    show(t('Copied'));
+    show(t('Copied'), true);
   }, [show, t]);
 
   const _onSelectNormalAccount = useCallback(() => {

@@ -81,7 +81,7 @@ function AccountInfo ({ address, className, genesisHash, iconSize = 32, isExtern
   ) as IconTheme;
 
   const _onCopy = useCallback(
-    () => show(t('Copied')),
+    () => show(t('Copied'), false),
     [show, t]
   );
 

@@ -72,7 +72,7 @@ function StakingRow ({ amount, chainName, className, index, logo, price, reward,
 
   const _onCopy = useCallback(
     () => {
-      show(t('Copied'));
+      show(t('Copied'), false);
     },
     [show, t]
   );
