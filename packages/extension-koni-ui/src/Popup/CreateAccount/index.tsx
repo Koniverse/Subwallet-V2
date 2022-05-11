@@ -66,7 +66,7 @@ function CreateAccount ({ className, defaultClassName }: Props): React.ReactElem
         .catch(console.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dep, seed]);
+  }, [seed]);
 
   const _onCreate = useCallback(
     (name: string, password: string): void => {
