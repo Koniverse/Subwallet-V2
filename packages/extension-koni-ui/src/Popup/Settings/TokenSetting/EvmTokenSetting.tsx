@@ -65,7 +65,7 @@ function EvmTokenSetting ({ className }: Props): React.ReactElement {
 
   const handleShowModal = useCallback(() => {
     if (selectedTokens.length === 0) {
-      show(t<string>('At least 1 token must be selected'));
+      show(t<string>('At least 1 token must be selected'), false);
     } else {
       setShowModal(true);
     }
@@ -75,9 +75,9 @@ function EvmTokenSetting ({ className }: Props): React.ReactElement {
     deleteEvmTokens(selectedTokens)
       .then((resp) => {
         if (resp) {
-          show('Your changes are saved successfully');
+          show('Your changes are saved successfully', false);
         } else {
-          show('An error has occurred. Please try again later');
+          show('An error has occurred. Please try again later', false);
         }
 
         setShowModal(false);

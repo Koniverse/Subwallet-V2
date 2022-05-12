@@ -69,7 +69,7 @@ function AccountQrModal ({ accountName, address, className,
   );
 
   const _onCopy = useCallback(
-    () => show(t('Copied')),
+    () => show(t('Copied'), false),
     [show, t]
   );
 

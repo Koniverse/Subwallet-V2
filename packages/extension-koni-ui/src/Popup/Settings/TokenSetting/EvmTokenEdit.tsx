@@ -39,9 +39,9 @@ function EvmTokenEdit ({ className }: Props): React.ReactElement {
       upsertEvmToken(tokenInfo)
         .then((resp) => {
           if (resp) {
-            show('Your changes are saved successfully');
+            show('Your changes are saved successfully', false);
           } else {
-            show('An error has occurred. Please try again later');
+            show('An error has occurred. Please try again later', false);
           }
 
           _goBack();
@@ -59,7 +59,7 @@ function EvmTokenEdit ({ className }: Props): React.ReactElement {
 
   const onChangeSymbol = useCallback((val: string) => {
     if (val.length > 11 && val !== '') {
-      show('Token symbol should not exceed 11 characters');
+      show('Token symbol should not exceed 11 characters', false);
       setIsValidSymbol(false);
     } else {
       setIsValidSymbol(true);
@@ -75,7 +75,7 @@ function EvmTokenEdit ({ className }: Props): React.ReactElement {
     const _decimals = parseInt(val);
 
     if (isNaN(_decimals) && val !== '') {
-      show('Token decimals must be an integer');
+      show('Token decimals must be an integer', false);
       setIsValidDecimals(false);
     } else {
       setIsValidDecimals(true);

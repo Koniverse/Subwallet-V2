@@ -96,7 +96,7 @@ function ExportAccount ({ className, match: { params: { address } } }: Props): R
   );
 
   const _onCopyPrivateKey = useCallback(
-    () => show(t('Copied')),
+    () => show(t('Copied'), false),
     [show, t]
   );
 
