@@ -92,7 +92,7 @@ function ImportEvmToken ({ className = '' }: Props): React.ReactElement<Props> {
   const onChangeSymbol = useCallback((val: string) => {
     if ((val.length > 11 && val !== '') || (val.split(' ').join('') === '')) {
       setIsValidSymbol(false);
-      show('Symbol cannot exceed 11 characters or contain spaces');
+      show('Symbol cannot exceed 11 characters or contain spaces', false);
     } else {
       setIsValidSymbol(true);
     }
@@ -105,7 +105,7 @@ function ImportEvmToken ({ className = '' }: Props): React.ReactElement<Props> {
 
     if ((isNaN(_decimals) && val !== '') || (val.split(' ').join('') === '')) {
       setIsValidDecimals(false);
-      show('Invalid token decimals');
+      show('Invalid token decimals', false);
     } else {
       setIsValidDecimals(true);
     }
