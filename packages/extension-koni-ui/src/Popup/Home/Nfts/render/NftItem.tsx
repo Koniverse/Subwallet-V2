@@ -82,13 +82,13 @@ function NftItem ({ className, collectionId, collectionImage, data, onClickBack 
 
   const handleClickTransfer = useCallback(async () => {
     if (!account.account || account.account.address.toLowerCase() === ALL_ACCOUNT_KEY.toLowerCase() || !data.chain) {
-      show('An error has occurred.');
+      show('An error has occurred.', false);
 
       return;
     }
 
     if (SUPPORTED_TRANSFER_SUBSTRATE_CHAIN.indexOf(data.chain) <= -1 && SUPPORTED_TRANSFER_EVM_CHAIN.indexOf(data.chain) <= -1) {
-      show(`Transferring is not supported for ${data.chain.toUpperCase()} network`);
+      show(`Transferring is not supported for ${data.chain.toUpperCase()} network`, false);
 
       return;
     }

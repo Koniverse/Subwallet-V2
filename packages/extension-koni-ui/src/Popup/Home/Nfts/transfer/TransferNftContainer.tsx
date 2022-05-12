@@ -132,14 +132,14 @@ function TransferNftContainer ({ api, className, collectionId, collectionImage, 
 
     if (!isApiReady || !networkKey) {
       if (currentNetwork.networkKey.toLowerCase() === ALL_ACCOUNT_KEY.toLowerCase()) {
-        show(`Please change to ${networkKey.toUpperCase()} network.`);
+        show(`Please change to ${networkKey.toUpperCase()} network.`, false);
       }
 
       return;
     }
 
     if (networkKey !== currentNetwork.networkKey) {
-      show(`Please change to ${networkKey.toUpperCase()} network.`);
+      show(`Please change to ${networkKey.toUpperCase()} network.`, false);
 
       return;
     }
@@ -168,7 +168,7 @@ function TransferNftContainer ({ api, className, collectionId, collectionImage, 
 
       setShowConfirm(true);
     } else {
-      show('Some error occurred. Please try again later.');
+      show('Some error occurred. Please try again later.', false);
     }
 
     setLoading(false);

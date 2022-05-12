@@ -65,7 +65,7 @@ function ImportEvmNft ({ className = '' }: Props): React.ReactElement<Props> {
     if (contractAddress !== '') {
       if (!isEthereumAddress(contractAddress)) {
         setIsValidContract(false);
-        show('Invalid EVM contract address');
+        show('Invalid EVM contract address', false);
       } else {
         validateEvmToken({
           smartContract: contractAddress,
@@ -75,7 +75,7 @@ function ImportEvmNft ({ className = '' }: Props): React.ReactElement<Props> {
         })
           .then((resp) => {
             if (resp.isExist) {
-              show('This token has already been added');
+              show('This token has already been added', false);
               setIsValidContract(false);
             } else {
               setName(resp.name);
@@ -83,7 +83,7 @@ function ImportEvmNft ({ className = '' }: Props): React.ReactElement<Props> {
             }
           })
           .catch(() => {
-            show('Invalid contract for the selected chain');
+            show('Invalid contract for the selected chain', false);
             setIsValidContract(false);
           });
       }
@@ -120,14 +120,14 @@ function ImportEvmNft ({ className = '' }: Props): React.ReactElement<Props> {
     upsertEvmToken(evmToken)
       .then((resp) => {
         if (resp) {
-          show('Successfully added a NFT collection');
+          show('Successfully added a NFT collection', false);
           _goBack();
         } else {
-          show('An error has occurred. Please try again later');
+          show('An error has occurred. Please try again later', false);
         }
       })
       .catch(() => {
-        show('An error has occurred. Please try again later');
+        show('An error has occurred. Please try again later', false);
       });
   }, [_goBack, chain, contractAddress, name, show]);
 

@@ -120,7 +120,7 @@ function AuthTransfer ({ chain, className, collectionId, nftItem, recipientAddre
         }
 
         if (data.txError) {
-          show('Encountered an error, please try again.');
+          show('Encountered an error, please try again.', false);
           setLoading(false);
 
           return;
@@ -146,7 +146,7 @@ function AuthTransfer ({ chain, className, collectionId, nftItem, recipientAddre
         }
       });
     } else {
-      show('Encountered an error, please try again.');
+      show('Encountered an error, please try again.', false);
     }
   }, [account?.account?.address, chain, collectionId, nftItem, recipientAddress, senderInfoSubstrate.signPassword, setExtrinsicHash, setIsTxSuccess, setShowConfirm, setShowResult, setTxError, show, web3Tx]);
 
@@ -196,7 +196,7 @@ function AuthTransfer ({ chain, className, collectionId, nftItem, recipientAddre
           }
         });
       } catch (e) {
-        show('Encountered an error, please try again.');
+        show('Encountered an error, please try again.', false);
         setBalanceError(true);
         setLoading(false);
       }
@@ -212,7 +212,7 @@ function AuthTransfer ({ chain, className, collectionId, nftItem, recipientAddre
     }
 
     if (chain !== currentNetwork.networkKey) {
-      show('Incorrect network');
+      show('Incorrect network', false);
 
       return;
     }
