@@ -1,0 +1,90 @@
+[
+  {
+    "id_": 1,
+    "chainId_": 1,
+    "name": "Polkadot",
+    "symbol": "DOT",
+    "decimals": 10,
+    "priceId": "polkadot",
+    "minAmount": "10000000000",
+    "assetType": "NATIVE",
+    "metadata": null,
+    "multiChainAssetId_": 1
+  },
+  {
+    "id_": 2,
+    "chainId_": 2,
+    "name": "Kusama",
+    "symbol": "KSM",
+    "decimals": 12,
+    "priceId": "kusama",
+    "minAmount": "33333333",
+    "assetType": "NATIVE",
+    "metadata": null,
+    "multiChainAssetId_": 2
+  },
+  {
+    "id_": 3,
+    "chainId_": 3,
+    "name": "Moonbeam",
+    "symbol": "GLMR",
+    "decimals": 18,
+    "priceId": "moonbeam",
+    "minAmount": "0",
+    "assetType": "NATIVE",
+    "metadata": null,
+    "multiChainAssetId_": 3
+  },
+  {
+    "id_": 4,
+    "chainId_": 4,
+    "name": "Aleph Zero Testnet",
+    "symbol": "TZERO",
+    "decimals": 12,
+    "priceId": null,
+    "minAmount": "500",
+    "assetType": "NATIVE",
+    "metadata": null
+  },
+  {
+    "id_": 5,
+    "chainId_": 3,
+    "name": "Polkadot",
+    "symbol": "xcDOT",
+    "decimals": 10,
+    "priceId": "polkadot",
+    "minAmount": null,
+    "assetType": "LOCAL",
+    "metadata": {
+      "assetType": "ForeignAsset",
+      "assetId": "42259045809535163221576417993425387648"
+    },
+    "multiChainAssetId_": 1
+  },
+  {
+    "id_": 6,
+    "chainId_": 4,
+    "name": "PANX",
+    "symbol": "PANX",
+    "decimals": 12,
+    "priceId": null,
+    "minAmount": null,
+    "assetType": "PSP22",
+    "metadata": {
+      "contractAddress": "5CY8zDBjUDNwZBHdGbERtLLSZqY7dJYsm1KhY6tSorYvnSke"
+    }
+  },
+  {
+    "id_": 7,
+    "chainId_": 3,
+    "name": "MoonFit Beast and Beauty",
+    "symbol": "MFBB",
+    "decimals": null,
+    "priceId": null,
+    "minAmount": null,
+    "assetType": "ERC721",
+    "metadata": {
+      "contractAddress": "0x02A6DeC99B2Ca768D638fcD87A96F6069F91287c"
+    }
+  }
+]

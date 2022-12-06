@@ -1,0 +1,12 @@
+[
+  {
+    "id_": 1,
+    "srcAssetId_": 1,
+    "destAssetId_": 5
+  },
+  {
+    "id_": 1,
+    "srcAssetId_": 5,
+    "destAssetId_": 1
+  }
+]
