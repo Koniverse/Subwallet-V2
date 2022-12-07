@@ -214,6 +214,10 @@ export default class KoniState extends State {
     return this.ready;
   }
 
+  public subscribeChainInfo () {
+    return this.chainService.subscribeChainInfo();
+  }
+
   // init networkMap, apiMap and chainRegistry (first time only)
   // TODO: merge transactionHistory when custom network -> predefined network
   public initNetworkStates () {

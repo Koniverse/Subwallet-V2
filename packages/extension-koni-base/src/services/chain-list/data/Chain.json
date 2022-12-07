@@ -4,31 +4,27 @@
     "slug": "polkadot/substrate",
     "name": "Polkadot Relay Chain",
     "logo": "./71.Polkadot.png",
-    "description": "",
-    "status": "RUNNING"
+    "chainStatus": "ACTIVE"
   },
   "kusama/substrate": {
     "id_": 2,
     "slug": "kusama/substrate",
     "name": "Kusama Relay Chain",
     "logo": "./72.Kusama.png",
-    "description": "",
-    "status": "RUNNING"
+    "chainStatus": "ACTIVE"
   },
   "moonbeam/substrate-evm": {
     "id_": 3,
     "slug": "moonbeam/substrate-evm",
     "name": "Moonbeam",
     "logo": "./34.Moonbeam.png",
-    "description": "",
-    "status": "RUNNING"
+    "chainStatus": "ACTIVE"
   },
   "alephZeroTest/substrate": {
     "id_": 4,
     "slug": "alephZeroTest/substrate",
     "name": "Aleph Zero Testnet",
     "logo": "./55.Aleph.png",
-    "description": "",
-    "status": "RUNNING"
+    "chainStatus": "ACTIVE"
   }
 }

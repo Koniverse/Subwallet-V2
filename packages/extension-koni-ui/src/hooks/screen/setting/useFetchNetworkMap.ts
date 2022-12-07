@@ -6,25 +6,8 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { useSelector } from 'react-redux';
 
 export default function useFetchNetworkMap () {
-  const { currentAccount, networkMap } = useSelector((state: RootState) => state);
-  // const parsedNetworkMap: Record<string, NetworkJson> = {};
-  // let isEthereum = false;
-
-  // if (currentAccount?.account?.type === 'ethereum') {
-  //   isEthereum = true;
-  //
-  //   for (const [key, network] of Object.entries(networkMap)) {
-  //     if (network.isEthereum && network.isEthereum) {
-  //       parsedNetworkMap[key] = network;
-  //     }
-  //   }
-  // } else {
-  //   for (const [key, network] of Object.entries(networkMap)) {
-  //     if (!network.isEthereum || (network.isEthereum && !network.isEthereum)) {
-  //       parsedNetworkMap[key] = network;
-  //     }
-  //   }
-  // }
+  const networkMap = useSelector((state: RootState) => state.networkMap);
+  const currentAccount = useSelector((state: RootState) => state.currentAccount);
 
   const sorted = Object.entries(networkMap)
     .sort(([, networkMap], [, _networkMap]) => {

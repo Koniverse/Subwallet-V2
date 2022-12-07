@@ -35,3 +35,13 @@ export interface _DataMap {
   evmChain: Record<number, _EvmChainWrapper>,
   substrateChain: Record<number, _SubstrateChainWrapper>
 }
+
+export interface _ChainInfo extends _Chain {
+  substrateInfo?: _SubstrateChain,
+  evmInfo?: _EvmChain
+}
+
+export interface ChainState {
+  active: boolean,
+  currentProvider_: number
+}

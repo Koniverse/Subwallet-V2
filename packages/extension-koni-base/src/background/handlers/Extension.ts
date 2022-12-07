@@ -55,6 +55,7 @@ import { SingleAddress, SubjectInfo } from '@polkadot/ui-keyring/observable/type
 import { assert, BN, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex, u8aToString } from '@polkadot/util';
 import { base64Decode, isEthereumAddress, jsonDecrypt, keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
 import { EncryptedJson, KeypairType, Prefix } from '@polkadot/util-crypto/types';
+import {_ChainInfo} from "@subwallet/extension-koni-base/services/chain-service/types";
 
 const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
 
@@ -3891,6 +3892,40 @@ export default class KoniExtension extends Extension {
     }
   }
 
+  // private subscribeNetworkMap (id: string, port: chrome.runtime.Port): Record<string, NetworkJson> {
+  //   const cb = createSubscription<'pri(networkMap.getSubscription)'>(id, port);
+  //   const networkMapSubscription = state.subscribeNetworkMap().subscribe({
+  //     next: (rs) => {
+  //       cb(rs);
+  //     }
+  //   });
+  //
+  //   this.createUnsubscriptionHandle(id, networkMapSubscription.unsubscribe);
+  //
+  //   port.onDisconnect.addListener((): void => {
+  //     this.cancelSubscription(id);
+  //   });
+  //
+  //   return this.getNetworkMap();
+  // }
+
+  private subscribeChainInfo (id: string, port: chrome.runtime.Port): Record<string, _ChainInfo> {
+    const cb = createSubscription<'pri(chainService.subscribeChainInfo)'>(id, port);
+    const chainMapSubscription = state.subscribeChainInfo().subscribe({
+      next: (rs) => {
+        cb(rs);
+      }
+    });
+
+    this.createUnsubscriptionHandle(id, chainMapSubscription.unsubscribe);
+
+    port.onDisconnect.addListener((): void => {
+      this.cancelSubscription(id);
+    });
+
+    return {};
+  }
+
   // eslint-disable-next-line @typescript-eslint/require-await
   public override async handle<TMessageType extends MessageTypes> (id: string, type: TMessageType, request: RequestTypes[TMessageType], port: chrome.runtime.Port): Promise<ResponseType<TMessageType>> {
     switch (type) {
@@ -4000,6 +4035,8 @@ export default class KoniExtension extends Extension {
         return this.updateTransactionHistory(request as RequestTransactionHistoryAdd, id, port);
       case 'pri(transaction.history.getSubscription)':
         return this.subscribeHistory(id, port);
+
+        /// Network & Token functions
       case 'pri(networkMap.getSubscription)':
         return this.subscribeNetworkMap(id, port);
       case 'pri(networkMap.upsert)':
@@ -4028,6 +4065,18 @@ export default class KoniExtension extends Extension {
         return this.upsertCustomToken(request as CustomToken);
       case 'pri(customTokenState.deleteMany)':
         return this.deleteCustomToken(request as DeleteCustomTokenParams[]);
+      case 'pri(networkMap.recoverDotSama)':
+        return this.recoverDotSamaApi(request as string);
+      case 'pri(networkMap.enableMany)':
+        return this.enableNetworks(request as string[]);
+      case 'pri(networkMap.disableMany)':
+        return await this.disableNetworks(request as string[]);
+
+        // Network function v2
+      case 'pri(chainService.subscribeChainInfo)':
+        return this.subscribeChainInfo(id, port);
+
+        /// Balance functions
       case 'pri(transfer.checkReferenceCount)':
         return await this.transferCheckReferenceCount(request as RequestTransferCheckReferenceCount);
       case 'pri(transfer.checkSupporting)':
@@ -4040,12 +4089,6 @@ export default class KoniExtension extends Extension {
         return this.cancelSubscription(request as string);
       case 'pri(customTokenState.validateCustomToken)':
         return await this.validateCustomToken(request as ValidateCustomTokenRequest);
-      case 'pri(networkMap.recoverDotSama)':
-        return this.recoverDotSamaApi(request as string);
-      case 'pri(networkMap.enableMany)':
-        return this.enableNetworks(request as string[]);
-      case 'pri(networkMap.disableMany)':
-        return await this.disableNetworks(request as string[]);
       case 'pri(accounts.get.meta)':
         return this.getAccountMeta(request as RequestAccountMeta);
 

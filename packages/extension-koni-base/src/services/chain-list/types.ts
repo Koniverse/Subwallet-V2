@@ -33,8 +33,7 @@ export interface _Chain {
   slug: string,
   name: string,
   logo: string,
-  description: string,
-  status: _ChainStatus
+  chainStatus: _ChainStatus
 }
 
 export interface _ChainAsset {

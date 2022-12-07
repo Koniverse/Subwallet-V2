@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AssetRef, Chain, ChainAsset, ChainProvider, EvmChain, MultiChainAsset, SubstrateChain } from '@subwallet/extension-koni-base/services/chain-list';
-import { _ChainAssetWrapper, _ChainProviderWrapper, _ChainWrapper, _DataMap } from '@subwallet/extension-koni-base/services/chain-service/types';
+import { _ChainAssetWrapper, _ChainInfo, _ChainProviderWrapper, _ChainWrapper, _DataMap } from '@subwallet/extension-koni-base/services/chain-service/types';
+import { Subject } from 'rxjs';
 
 import { logger as createLogger } from '@polkadot/util/logger';
 import { Logger } from '@polkadot/util/types';
@@ -22,6 +23,8 @@ export class ChainService {
     multiChainAsset: {},
     substrateChain: {}
   };
+
+  private chainInfoSubject = new Subject<Record<string, _ChainInfo>>();
 
   private logger: Logger;
 
@@ -43,6 +46,10 @@ export class ChainService {
     });
 
     this.logger.log('Initiated with default networks');
+  }
+
+  public subscribeChainInfo () {
+    return this.chainInfoSubject;
   }
 
   public getChainMap () {

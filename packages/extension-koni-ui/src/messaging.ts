@@ -21,6 +21,7 @@ import { SingleAddress } from '@polkadot/ui-keyring/observable/types';
 
 import { _getKnownHashes, _getKnownNetworks } from './util/defaultChains';
 import { getSavedMeta, setSavedMeta } from './MetadataCache';
+import {_ChainInfo} from "@subwallet/extension-koni-base/services/chain-service/types";
 
 interface Handler {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -518,6 +519,11 @@ export async function evmNftSubmitTransaction (request: RequestEvmNftSubmitTrans
   return sendMessage('pri(evmNft.submitTransaction)', request, callback);
 }
 
+export async function subscribeChainMap (callback: (data: Record<string, _ChainInfo>) => void): Promise<Record<string, _ChainInfo>> {
+  return sendMessage('pri(chainService.subscribeChainInfo)', null, callback);
+}
+
+// TODO: deprecated
 export async function subscribeNetworkMap (callback: (data: Record<string, NetworkJson>) => void): Promise<Record<string, NetworkJson>> {
   return sendMessage('pri(networkMap.getSubscription)', null, callback);
 }
