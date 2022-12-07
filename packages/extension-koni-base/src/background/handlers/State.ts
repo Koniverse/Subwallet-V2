@@ -25,6 +25,7 @@ import { initWasmTokenState } from '@subwallet/extension-koni-base/api/tokens/wa
 import { EvmRpcError } from '@subwallet/extension-koni-base/background/errors/EvmRpcError';
 import { state } from '@subwallet/extension-koni-base/background/handlers/index';
 import { ALL_ACCOUNT_KEY, ALL_GENESIS_HASH } from '@subwallet/extension-koni-base/constants';
+import { ChainService } from '@subwallet/extension-koni-base/services/chain-service';
 import DatabaseService from '@subwallet/extension-koni-base/services/DatabaseService';
 import { CurrentAccountStore, NetworkMapStore, PriceStore } from '@subwallet/extension-koni-base/stores';
 import AccountRefStore from '@subwallet/extension-koni-base/stores/AccountRef';
@@ -119,16 +120,19 @@ export default class KoniState extends State {
 
   private readonly confirmationsPromiseMap: Record<string, { resolver: Resolver<any>, validator?: (rs: any) => Error | undefined }> = {};
 
+  // TODO: move all these states into ChainService
   private networkMap: Record<string, NetworkJson> = {}; // mapping to networkMapStore, for uses in background
   private networkMapSubject = new Subject<Record<string, NetworkJson>>();
   private lockNetworkMap = false;
+  private customTokenState: CustomTokenJson = { erc20: [], erc721: [], psp22: [], psp34: [] };
+  private customTokenSubject = new Subject<CustomTokenJson>();
+  private chainRegistryMap: Record<string, ChainRegistry> = {};
+  private chainRegistrySubject = new Subject<Record<string, ChainRegistry>>();
+  // -------------------------------------------------------------------------------
 
   private apiMap: ApiMap = { dotSama: {}, web3: {} };
 
   private serviceInfoSubject = new Subject<ServiceInfo>();
-
-  private customTokenState: CustomTokenJson = { erc20: [], erc721: [], psp22: [], psp34: [] };
-  private customTokenSubject = new Subject<CustomTokenJson>();
 
   private balanceMap: Record<string, BalanceItem> = this.generateDefaultBalanceMap();
   private balanceSubject = new Subject<BalanceJson>();
@@ -157,20 +161,21 @@ export default class KoniState extends State {
   private historyMap: Record<string, TransactionHistoryItemType[]> = {};
   private historySubject = new Subject<Record<string, TransactionHistoryItemType[]>>();
 
-  private chainRegistryMap: Record<string, ChainRegistry> = {};
-  private chainRegistrySubject = new Subject<Record<string, ChainRegistry>>();
-
   private lazyMap: Record<string, unknown> = {};
+  private ready = false;
+
+  // Services
+  private chainService: ChainService;
   public dbService: DatabaseService;
   private cron: KoniCron;
   private subscription: KoniSubscription;
   private logger: Logger;
-  private ready = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor (...args: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     super(args);
+    this.chainService = new ChainService();
     this.dbService = new DatabaseService();
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -194,6 +199,7 @@ export default class KoniState extends State {
 
   public init () {
     this.initNetworkStates();
+    this.chainService.initChainMap();
     this.updateServiceInfo();
   }
 

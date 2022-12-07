@@ -1,5 +1,5 @@
-[
-  {
+{
+  "1": {
     "id_": 1,
     "chainId_": 1,
     "providerName": "Parity",
@@ -7,7 +7,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "2": {
     "id_": 2,
     "chainId_": 1,
     "providerName": "OnFinality",
@@ -15,7 +15,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "3": {
     "id_": 3,
     "chainId_": 1,
     "providerName": "Dwellir",
@@ -23,7 +23,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "4": {
     "id_": 4,
     "chainId_": 1,
     "providerName": "Light Client",
@@ -31,7 +31,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "5": {
     "id_": 5,
     "chainId_": 1,
     "providerName": "RadiumBlock",
@@ -39,7 +39,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "6": {
     "id_": 6,
     "chainId_": 1,
     "providerName": "1RPC",
@@ -47,7 +47,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "7": {
     "id_": 7,
     "chainId_": 1,
     "providerName": "PinkNode",
@@ -55,7 +55,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "8": {
     "id_": 8,
     "chainId_": 2,
     "providerName": "Parity",
@@ -63,7 +63,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "9": {
     "id_": 9,
     "chainId_": 2,
     "providerName": "OnFinality",
@@ -71,7 +71,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "10": {
     "id_": 10,
     "chainId_": 2,
     "providerName": "Dwellir",
@@ -79,7 +79,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "11": {
     "id_": 11,
     "chainId_": 2,
     "providerName": "Light Client",
@@ -87,7 +87,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "12": {
     "id_": 12,
     "chainId_": 2,
     "providerName": "PinkNode",
@@ -95,7 +95,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "13": {
     "id_": 13,
     "chainId_": 2,
     "providerName": "RadiumBlock",
@@ -103,7 +103,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "14": {
     "id_": 14,
     "chainId_": 2,
     "providerName": "1RPC",
@@ -111,7 +111,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "15": {
     "id_": 15,
     "chainId_": 3,
     "providerName": "Moonbeam Foundation",
@@ -119,7 +119,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "16": {
     "id_": 16,
     "chainId_": 3,
     "providerName": "OnFinality",
@@ -127,7 +127,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "17": {
     "id_": 17,
     "chainId_": 3,
     "providerName": "Dwellir",
@@ -135,7 +135,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "18": {
     "id_": 18,
     "chainId_": 3,
     "providerName": "1RPC",
@@ -143,7 +143,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "19": {
     "id_": 19,
     "chainId_": 3,
     "providerName": "PinkNode",
@@ -151,7 +151,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "20": {
     "id_": 20,
     "chainId_": 3,
     "providerName": "Blast",
@@ -159,7 +159,7 @@
     "providerMode": "ws",
     "status": "ONLINE"
   },
-  {
+  "21": {
     "id_": 21,
     "chainId_": 4,
     "providerName": "Aleph Zero Foundation",
@@ -167,4 +167,4 @@
     "providerMode": "ws",
     "status": "ONLINE"
   }
-]
+}

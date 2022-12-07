@@ -1,5 +1,5 @@
-[
-  {
+{
+  "1": {
     "id_": 1,
     "chainId_": 1,
     "paraId": null,
@@ -12,7 +12,7 @@
     "supportSmartContract": false,
     "blockExplorer": "https://polkadot.subscan.io/"
   },
-  {
+  "2": {
     "id_": 2,
     "chainId_": 2,
     "paraId": null,
@@ -25,7 +25,7 @@
     "supportSmartContract": false,
     "blockExplorer": "https://kusama.subscan.io/"
   },
-  {
+  "3": {
     "id_": 3,
     "chainId_": 3,
     "paraId": 2004,
@@ -38,7 +38,7 @@
     "supportSmartContract": true,
     "blockExplorer": "https://moonbeam.subscan.io/"
   },
-  {
+  "4": {
     "id_": 4,
     "chainId_": 4,
     "paraId": -1,
@@ -51,4 +51,4 @@
     "supportSmartContract": false,
     "blockExplorer": null
   }
-]
+}

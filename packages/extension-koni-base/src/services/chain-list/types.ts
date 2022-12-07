@@ -40,6 +40,7 @@ export interface _Chain {
 export interface _ChainAsset {
   id_: number,
   chainId_: number,
+  slug: string,
   name: string,
   symbol: string,
   decimals: number | null,
@@ -73,7 +74,7 @@ export interface _SubstrateChain {
   genesisHash: string,
   addressPrefix: number,
   crowdloanUrl: string | null,
-  category: []
+  category: SubstrateChainCategory[]
 }
 
 export interface _MultiChainAsset {
