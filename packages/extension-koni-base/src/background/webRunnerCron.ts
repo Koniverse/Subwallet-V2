@@ -6,7 +6,7 @@ import { CHAIN_TYPES, getUnlockingInfo } from '@subwallet/extension-koni-base/ap
 import { getTokenPrice } from '@subwallet/extension-koni-base/api/coingecko';
 import { getNominationStakingRewardData, getPoolingStakingRewardData } from '@subwallet/extension-koni-base/api/staking';
 import { getAmplitudeUnclaimedStakingReward } from '@subwallet/extension-koni-base/api/staking/paraChain';
-import { fetchDotSamaHistory } from '@subwallet/extension-koni-base/api/subquery/history';
+import { fetchMultiChainHistories } from '@subwallet/extension-koni-base/api/subsquid/subsquid-multi-chain-history';
 import { nftHandler } from '@subwallet/extension-koni-base/background/handlers';
 import KoniState from '@subwallet/extension-koni-base/background/handlers/State';
 import WebRunnerSubscription from '@subwallet/extension-koni-base/background/webRunnerSubscription';
@@ -189,7 +189,7 @@ export default class WebRunnerCron {
 
     const result = await getNominationStakingRewardData(addresses, targetNetworkMap);
 
-    this.state.updateStakingReward(result);
+    this.state.updateStakingReward(result, 'slowInterval');
     this.logger.log('Set staking reward state done', result);
   };
 
@@ -233,7 +233,7 @@ export default class WebRunnerCron {
 
     const result = [...poolingStakingRewards, ...amplitudeUnclaimedStakingRewards];
 
-    this.state.updateStakingReward(result);
+    this.state.updateStakingReward(result, 'fastInterval');
     this.logger.log('Set staking reward state with fast interval done', result);
   }
 
@@ -311,14 +311,18 @@ export default class WebRunnerCron {
   };
 
   // history
-
-  private refreshHistory = (address: string, networkMap: Record<string, NetworkJson>) => {
+  private refreshHistory2 = (currentAddress: string) => {
     return () => {
+      const addresses = currentAddress === ALL_ACCOUNT_KEY ? [currentAddress] : Object.values(this.state.getAllAddresses());
+
       this.logger.log('Refresh History state');
-      fetchDotSamaHistory(address, networkMap, (network, historyMap) => {
-        this.logger.log(`[${network}] historyMap: `, historyMap);
-        this.state.setHistory(address, network, historyMap);
-      });
+      fetchMultiChainHistories(addresses).then((historiesMap) => {
+        Object.entries(historiesMap).forEach(([address, data]) => {
+          data.forEach((item) => {
+            this.state.setHistory(address, item.networkKey, item);
+          });
+        });
+      }).catch((err) => this.logger.warn(err));
     };
   };
 
@@ -570,7 +574,7 @@ export default class WebRunnerCron {
         (currentAccountInfo) => {
           this.resetHistory(currentAccountInfo.address).then(() => {
             this.addCron('refreshHistory',
-              this.refreshHistory(currentAccountInfo.address, this.state.getNetworkMap()),
+              this.refreshHistory2(currentAccountInfo.address),
               this.intervalMap.refreshHistory);
           }).catch(this.logger.warn);
         },
@@ -581,7 +585,7 @@ export default class WebRunnerCron {
 
           this.resetHistory(address).then(() => {
             this.addCron('refreshHistory',
-              this.refreshHistory(address, serviceInfo.networkMap),
+              this.refreshHistory2(address),
               this.intervalMap.refreshHistory);
           }).catch((err) => this.logger.warn(err));
         }
