@@ -160,7 +160,8 @@ export interface StakingJson {
 
 export interface StakingRewardJson {
   ready: boolean;
-  details: Array<StakingRewardItem>;
+  slowInterval: Array<StakingRewardItem>;
+  fastInterval: Array<StakingRewardItem>;
 }
 
 export interface StakeUnlockingJson {
@@ -353,7 +354,7 @@ export interface NetworkJson {
 
   // Provider Information
   providers: Record<string, string>; // Predefined provider map
-  currentProvider: string; // Current provider key
+  currentProvider: string | null; // Current provider key
   currentProviderMode: 'http' | 'ws'; // Current provider mode, compute depend on provider protocol. the feature need to know this to decide use subscribe or cronjob to use this features.
   customProviders?: Record<string, string>; // Custom provider map, provider name same with provider map
   nftProvider?: string;
@@ -483,7 +484,7 @@ export interface RandomTestRequest {
 }
 
 export interface TransactionHistoryItemType {
-  time: number;
+  time: number | string;
   networkKey: string;
   change: string;
   changeSymbol?: string; // if undefined => main token
