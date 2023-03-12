@@ -22,6 +22,24 @@ import { withErrorLog } from './helpers';
 import State from './State';
 import { createSubscription, unsubscribe } from './subscriptions';
 
+// check if a URL is blocked
+export const checkUrl = async (url: string) => {
+  console.log("check url ChainPatrol")
+  const response = await fetch(
+    "https://app.chainpatrol.io/api/v2/asset/check",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": "YOUR API KEY",
+      },
+      body: JSON.stringify({ type: "URL", content: url }),
+    }
+  );
+  const data = await response.json();
+  return data.status === "BLOCKED";
+};
+
 function transformAccounts (accounts: SubjectInfo, anyType = false): InjectedAccount[] {
   return Object
     .values(accounts)
@@ -166,6 +184,13 @@ export default class Tabs {
       this.redirectPhishingLanding(url);
 
       return true;
+    }
+
+    const isChainPatrolDenyList = await checkUrl(url);
+
+    if(isChainPatrolDenyList) {
+      this.redirectPhishingLanding(url);
+      return true
     }
 
     return false;
