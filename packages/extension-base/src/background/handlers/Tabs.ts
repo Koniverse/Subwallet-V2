@@ -24,7 +24,6 @@ import { createSubscription, unsubscribe } from './subscriptions';
 
 // check if a URL is blocked
 export const checkUrl = async (url: string) => {
-  console.log("check url ChainPatrol")
   const response = await fetch(
     "https://app.chainpatrol.io/api/v2/asset/check",
     {
