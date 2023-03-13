@@ -185,10 +185,11 @@ export default class Tabs {
       return true;
     }
 
-    const isChainPatrolDenyList = await checkUrl(url);
+    const isInChainPatrolDenyList = await checkUrl(url);
 
-    if(isChainPatrolDenyList) {
+    if (isInChainPatrolDenyList) {
       this.redirectPhishingLanding(url);
+      
       return true
     }
 
