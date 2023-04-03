@@ -3,9 +3,10 @@
 
 import { ApiProps, CustomToken, CustomTokenType, NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
 import { BaseNftApi, HandleNftParams } from '@subwallet/extension-koni-base/api/nft/nft';
-import { ART_ZERO_COLLECTION_API, ART_ZERO_CONTRACTS, ART_ZERO_EXTERNAL_URL, ART_ZERO_IMAGE_API, ART_ZERO_IPFS_API } from '@subwallet/extension-koni-base/api/nft/wasm_nft/utils';
+import { ART_ZERO_COLLECTION_API, ART_ZERO_EXTERNAL_URL, ART_ZERO_IMAGE_API, ART_ZERO_IPFS_API, ART_ZERO_TESTNET_COLLECTION_API, ART_ZERO_TESTNET_IMAGE_API, ART_ZERO_TESTNET_IPFS_API } from '@subwallet/extension-koni-base/api/nft/wasm_nft/utils';
 import { getPSP34ContractPromise } from '@subwallet/extension-koni-base/api/tokens/wasm';
-import { getWasmContractGasLimit } from '@subwallet/extension-koni-base/api/tokens/wasm/utils';
+import { getDefaultWeightV2, WasmContractResponse } from '@subwallet/extension-koni-base/api/tokens/wasm/utils';
+import axios from 'axios';
 import fetch from 'cross-fetch';
 
 import { ApiPromise } from '@polkadot/api';
@@ -15,6 +16,39 @@ import { isEthereumAddress } from '@polkadot/util-crypto';
 interface CollectionAttributes {
   storedOnChain: boolean,
   attributeList: string[] // list of attribute names
+}
+
+async function isArtZeroFeaturedCollection (networkKey: string, contractAddress: string) {
+  const timeout = new Promise((resolve) => {
+    const id = setTimeout(() => {
+      clearTimeout(id);
+      resolve(null);
+    }, 3000);
+  });
+
+  const urlencoded = new URLSearchParams();
+
+  urlencoded.append('collection_address', contractAddress);
+
+  const collectionInfoPromise = new Promise(function (resolve) {
+    fetch(`${networkKey === 'alephTest' ? ART_ZERO_TESTNET_COLLECTION_API : ART_ZERO_COLLECTION_API}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: urlencoded
+    }).then((resp) => {
+      resolve(resp.json());
+    }).catch(console.error);
+  });
+
+  const collectionInfo = await Promise.race([
+    timeout,
+    collectionInfoPromise
+  ]);
+
+  // @ts-ignore
+  return collectionInfo !== null && collectionInfo?.status !== 'FAILED';
 }
 
 export class WasmNftApi extends BaseNftApi {
@@ -41,35 +75,51 @@ export class WasmNftApi extends BaseNftApi {
       return undefined;
     }
 
+    if (tokenUri.startsWith('/ipfs/')) {
+      return tokenUri;
+    }
+
+    if (tokenUri.startsWith('ipfs://')) {
+      return `/ipfs/${tokenUri.split('ipfs://')[1]}`;
+    }
+
     if (!tokenUri.includes('ipfs://') && !tokenUri.includes('ipfs://ipfs/')) {
-      return `ipfs://${tokenUri}`;
+      return `/ipfs/${tokenUri}`;
     }
 
     if (tokenUri.includes('ipfs://ipfs/')) {
-      return `ipfs://${tokenUri}`;
+      return `/ipfs/${tokenUri.split('ipfs://ipfs/')[1]}`;
     }
 
     return tokenUri;
   }
 
-  private parseFeaturedNftImage (tokenUri: string) {
+  private async parseFeaturedNftImage (tokenUri: string) {
     const parsedTokenUri = this.parseFeaturedTokenUri(tokenUri);
 
     if (!parsedTokenUri) {
       return undefined;
     }
 
-    return `${ART_ZERO_IMAGE_API}?input=${parsedTokenUri}&size=500`;
+    const nftItemImageSrc = `${this.chain === 'alephTest' ? ART_ZERO_TESTNET_IMAGE_API : ART_ZERO_IMAGE_API}?input=${parsedTokenUri}&size=500`;
+
+    const collectionImageUrl = await axios(nftItemImageSrc, {
+      method: 'GET'
+    });
+
+    return collectionImageUrl.data as string;
   }
 
   private async parseFeaturedCollectionImage (smartContract: string) {
-    const resp = await fetch(ART_ZERO_COLLECTION_API, {
+    const urlencoded = new URLSearchParams();
+
+    urlencoded.append('collection_address', smartContract);
+    const resp = await fetch(this.chain === 'alephTest' ? ART_ZERO_TESTNET_COLLECTION_API : ART_ZERO_COLLECTION_API, {
       method: 'POST',
       headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: JSON.stringify({ collection_address: smartContract })
+      body: urlencoded
     });
 
     const result = (resp && resp.ok && await resp.json() as Record<string, any>);
@@ -87,7 +137,13 @@ export class WasmNftApi extends BaseNftApi {
       return;
     }
 
-    return `${ART_ZERO_IMAGE_API}?input=${parsedCollectionImage}`;
+    const collectionImageSrc = `${this.chain === 'alephTest' ? ART_ZERO_TESTNET_IMAGE_API : ART_ZERO_IMAGE_API}?input=${parsedCollectionImage}&size=500`;
+
+    const collectionImageUrl = await axios(collectionImageSrc, {
+      method: 'GET'
+    });
+
+    return collectionImageUrl.data as string;
   }
 
   private async getCollectionAttributes (contractPromise: ContractPromise): Promise<CollectionAttributes> {
@@ -99,8 +155,9 @@ export class WasmNftApi extends BaseNftApi {
     }
 
     // @ts-ignore
-    const _onChainAttributeCount = await contractPromise.query['psp34Traits::getAttributeCount'](this.addresses[0], getWasmContractGasLimit(this.chain, this.dotSamaApi?.api as ApiPromise));
-    const onChainAttributeCount = _onChainAttributeCount.output ? _onChainAttributeCount.output.toString() : '0';
+    const _onChainAttributeCount = await contractPromise.query['psp34Traits::getAttributeCount'](this.addresses[0], { gasLimit: getDefaultWeightV2(this.dotSamaApi?.api as ApiPromise) });
+    const _attributeCount = _onChainAttributeCount?.output?.toJSON() as unknown as WasmContractResponse;
+    const onChainAttributeCount = _onChainAttributeCount.output ? (_attributeCount.ok as string) : '0';
 
     if (parseInt(onChainAttributeCount) === 0) {
       return {
@@ -118,7 +175,7 @@ export class WasmNftApi extends BaseNftApi {
 
     await Promise.all(attributeIndexes.map(async (i) => {
       // @ts-ignore
-      const _attributeByIndex = await contractPromise.query['psp34Traits::getAttributeName'](this.addresses[0], getWasmContractGasLimit(this.chain, this.dotSamaApi?.api as ApiPromise), i);
+      const _attributeByIndex = await contractPromise.query['psp34Traits::getAttributeName'](this.addresses[0], { gasLimit: getDefaultWeightV2(this.dotSamaApi?.api as ApiPromise) }, i);
 
       if (_attributeByIndex.output) {
         const attributeName = _attributeByIndex.output.toString();
@@ -138,7 +195,7 @@ export class WasmNftApi extends BaseNftApi {
   private async processOnChainMetadata (contractPromise: ContractPromise, address: string, tokenIdObj: Record<string, string>, collectionAttributes: string[], isFeatured: boolean): Promise<NftItem> {
     const nftItem: NftItem = {};
     // @ts-ignore
-    const _attributeValues = await contractPromise.query['psp34Traits::getAttributes'](address, getWasmContractGasLimit(this.chain, this.dotSamaApi?.api as ApiPromise), tokenIdObj, collectionAttributes);
+    const _attributeValues = await contractPromise.query['psp34Traits::getAttributes'](address, { gasLimit: getDefaultWeightV2(this.dotSamaApi?.api as ApiPromise) }, tokenIdObj, collectionAttributes);
 
     if (_attributeValues.output) {
       const attributeValues = _attributeValues.output.toHuman() as string[];
@@ -155,7 +212,7 @@ export class WasmNftApi extends BaseNftApi {
           nftItem.description = attributeValue;
         } else if (attributeName.toLowerCase() === 'avatar') {
           if (isFeatured) {
-            nftItem.image = this.parseFeaturedNftImage(attributeValue);
+            nftItem.image = await this.parseFeaturedNftImage(attributeValue);
           } else {
             nftItem.image = this.parseUrl(attributeValue);
           }
@@ -186,17 +243,18 @@ export class WasmNftApi extends BaseNftApi {
     }
 
     // @ts-ignore
-    const _tokenUri = await contractPromise.query[targetTrait](address, getWasmContractGasLimit(this.chain, this.dotSamaApi?.api as ApiPromise), tokenId);
+    const _tokenUri = await contractPromise.query[targetTrait](address, { gasLimit: getDefaultWeightV2(this.dotSamaApi?.api as ApiPromise) }, tokenId);
 
     if (_tokenUri.output) {
       let itemDetail: Record<string, any> | boolean = false;
-      const tokenUri = _tokenUri.output.toString();
+      const _tokenUriObj = _tokenUri.output.toJSON() as unknown as WasmContractResponse;
+      const tokenUri = _tokenUriObj.ok as string;
 
       if (isFeatured) {
         const parsedTokenUri = this.parseFeaturedTokenUri(tokenUri);
 
         if (parsedTokenUri) {
-          const resp = await fetch(`${ART_ZERO_IPFS_API}?input=${parsedTokenUri}`);
+          const resp = await fetch(`${this.chain === 'alephTest' ? ART_ZERO_TESTNET_IPFS_API : ART_ZERO_IPFS_API}?input=${parsedTokenUri}`);
 
           itemDetail = (resp && resp.ok && await resp.json() as Record<string, any>);
         }
@@ -224,7 +282,7 @@ export class WasmNftApi extends BaseNftApi {
       const rawImageSrc = itemDetail.image ? itemDetail.image as string : itemDetail.image_url as string;
 
       if (isFeatured) {
-        nftItem.image = this.parseFeaturedNftImage(rawImageSrc);
+        nftItem.image = await this.parseFeaturedNftImage(rawImageSrc);
         nftItem.external_url = ART_ZERO_EXTERNAL_URL;
       } else {
         nftItem.image = this.parseUrl(rawImageSrc);
@@ -247,12 +305,10 @@ export class WasmNftApi extends BaseNftApi {
     return nftItem;
   }
 
-  private async getItemsByCollection (contractPromise: ContractPromise, collectionAttributes: string[], isMetadataOnchain: boolean, smartContract: string, collectionName: string | undefined, nftParams: HandleNftParams) {
+  private async getItemsByCollection (contractPromise: ContractPromise, collectionAttributes: string[], isMetadataOnchain: boolean, smartContract: string, collectionName: string | undefined, nftParams: HandleNftParams, isFeatured: boolean) {
     let ownItem = false;
 
     let collectionImage: string | undefined;
-
-    const isFeatured = ART_ZERO_CONTRACTS.includes(smartContract);
 
     await Promise.all(this.addresses.map(async (address) => {
       if (isEthereumAddress(address)) {
@@ -262,9 +318,9 @@ export class WasmNftApi extends BaseNftApi {
       const nftIds: string[] = [];
 
       // @ts-ignore
-      const _balance = await contractPromise.query['psp34::balanceOf'](address, getWasmContractGasLimit(this.chain, this.dotSamaApi?.api as ApiPromise), address);
-
-      const balance = _balance.output ? _balance.output.toString() : '0';
+      const _balance = await contractPromise.query['psp34::balanceOf'](address, { gasLimit: getDefaultWeightV2(this.dotSamaApi?.api as ApiPromise) }, address);
+      const balanceJson = _balance?.output?.toJSON() as unknown as WasmContractResponse;
+      const balance = _balance.output ? (balanceJson.ok as string) : '0';
 
       if (parseInt(balance) === 0) {
         nftParams.updateNftIds(this.chain, address, smartContract, nftIds);
@@ -278,15 +334,16 @@ export class WasmNftApi extends BaseNftApi {
         itemIndexes.push(i);
       }
 
-      try {
-        await Promise.all(itemIndexes.map(async (i) => {
+      await Promise.all(itemIndexes.map(async (i) => {
+        try {
           // @ts-ignore
-          const _tokenByIndexResp = await contractPromise.query['psp34Enumerable::ownersTokenByIndex'](address, getWasmContractGasLimit(this.chain, this.dotSamaApi?.api as ApiPromise), address, i);
+          const _tokenByIndexResp = await contractPromise.query['psp34Enumerable::ownersTokenByIndex'](address, { gasLimit: getDefaultWeightV2(this.dotSamaApi?.api as ApiPromise) }, address, i);
 
           if (_tokenByIndexResp.output) {
             const rawTokenId = _tokenByIndexResp.output.toHuman() as Record<string, any>;
-            const tokenIdObj = rawTokenId.Ok as Record<string, string>;
-            const tokenId = Object.values(tokenIdObj)[0];
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            const tokenIdObj = rawTokenId.Ok.Ok as Record<string, string>; // capital O, not normal o
+            const tokenId = Object.values(tokenIdObj)[0].replaceAll(',', '');
 
             nftIds.push(tokenId);
 
@@ -312,10 +369,10 @@ export class WasmNftApi extends BaseNftApi {
               collectionImage = nftItem.image; // No default collection image
             }
           }
-        }));
-      } catch (e) {
-        console.error(`error parsing item for ${this.chain} nft`, e);
-      }
+        } catch (e) {
+          console.error(`error parsing item #${i} for ${this.chain} nft`, e);
+        }
+      }));
 
       nftParams.updateNftIds(this.chain, address, smartContract, nftIds);
     }));
@@ -362,9 +419,14 @@ export class WasmNftApi extends BaseNftApi {
     await Promise.all(this.wasmContracts.map(async ({ name, smartContract }) => {
       const contractPromise = getPSP34ContractPromise(apiPromise, smartContract, this.chain);
 
-      const { attributeList, storedOnChain } = await this.getCollectionAttributes(contractPromise);
+      const [isCollectionFeatured, { attributeList, storedOnChain }] = await Promise.all([
+        isArtZeroFeaturedCollection(this.chain, smartContract),
+        this.getCollectionAttributes(contractPromise)
+      ]);
 
-      return await this.getItemsByCollection(contractPromise, attributeList, storedOnChain, smartContract, name, params);
+      console.log('isCollectionFeatured', this.chain, name, isCollectionFeatured);
+
+      return await this.getItemsByCollection(contractPromise, attributeList, storedOnChain, smartContract, name, params, isCollectionFeatured);
     }));
   }
 }

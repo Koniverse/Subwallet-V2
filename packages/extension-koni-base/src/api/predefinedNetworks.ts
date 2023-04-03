@@ -627,7 +627,9 @@ export const PREDEFINED_NETWORKS: Record<string, NetworkJson> = {
     decimals: 12,
     coinGeckoKey: 'aleph-zero',
     getStakingOnChain: true,
-    supportBonding: true
+    supportBonding: true,
+    supportSmartContract: [ContractType.wasm],
+    blockExplorer: 'https://alephzero.subscan.io'
   },
   rmrk: {
     key: 'rmrk',
@@ -1745,7 +1747,7 @@ export const PREDEFINED_NETWORKS: Record<string, NetworkJson> = {
     groups: ['TEST_NET'],
     nativeToken: 'tSSC',
     decimals: 18,
-    blockExplorer: 'https://subspace.subscan.io'
+    blockExplorer: 'https://explorer.subspace.network/#/gemini-2a'
   },
   subspace_gemini_3c: {
     key: 'subspace_gemini_3c',
@@ -1763,7 +1765,7 @@ export const PREDEFINED_NETWORKS: Record<string, NetworkJson> = {
     groups: ['TEST_NET'],
     nativeToken: 'tSSC',
     decimals: 18,
-    blockExplorer: 'https://subspace.github.io/blockexplorer/#/gemini-3c'
+    blockExplorer: 'https://explorer.subspace.network/#/gemini-3c'
   },
   origintrail: {
     key: 'origintrail',
@@ -2797,6 +2799,36 @@ export const PREDEFINED_NETWORKS: Record<string, NetworkJson> = {
     groups: ['MAIN_NET'],
     nativeToken: 'JOY',
     decimals: 10
+  },
+  aventus: {
+    key: 'aventus',
+    chain: 'Aventus Polkadot',
+    genesisHash: '0x8b5c955b5c8fd7112562327e3859473df4e3dff49bd72a113dbb668d2cfa20d7',
+    ss58Format: 42,
+    providers: {
+      Aventus: 'wss://public-rpc.mainnet.aventus.io'
+    },
+    active: false,
+    currentProviderMode: 'ws',
+    currentProvider: 'Aventus',
+    groups: ['POLKADOT_PARACHAIN'],
+    nativeToken: 'AVT',
+    decimals: 18
+  },
+  aventus_testnet: {
+    key: 'aventus_testnet',
+    chain: 'Aventus Testnet',
+    genesisHash: '0xa6ffcef7fb8caadf7f6c5ad8ada65e3eaa90d1604f3eabda546ff1d486865a0c',
+    ss58Format: 42,
+    providers: {
+      Aventus: 'wss://public-rpc.public-testnet.aventus.io'
+    },
+    active: false,
+    currentProviderMode: 'ws',
+    currentProvider: 'Aventus',
+    groups: ['TEST_NET'],
+    nativeToken: 'AVT',
+    decimals: 18
   }
 };
 
