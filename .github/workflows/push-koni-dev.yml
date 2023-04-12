@@ -19,6 +19,14 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ secrets.GH_PAT }}
+      run: |
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          export PR_NUMBER="${{ github.event.number }}"
+          export TARGET_BRANCH="${{ github.event.pull_request.base.ref }}"
+          export CURRENT_BRANCH="${{ github.event.pull_request.head.ref }}"
+        else
+          export CURRENT_BRANCH="${{ github.ref }}"
+        fi
     - name: ${{ matrix.step }}
       env:
         CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
@@ -29,6 +37,9 @@ jobs:
         GH_RELEASE_FILES: master-build.zip,master-src.zip
         COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         REF_NAME: ${{ github.ref_name }}
+        PR_NUMBER: ${{ env.PR_NUMBER }}
+        TARGET_BRANCH: ${{ env.TARGET_BRANCH }}
+        CURRENT_BRANCH: ${{ env.CURRENT_BRANCH }}
       run: |
         yarn install --immutable | grep -v 'YN0013'
         yarn ${{ matrix.step }}
