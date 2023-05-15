@@ -379,7 +379,6 @@ export const ProjectLogos: Record<string, string> = {
   polkastarter: './images/projects/polkastarter.png',
   polkaswap: './images/projects/polkaswap.png',
   polkawatch: './images/projects/polkawatch.png',
-  polymath: './images/projects/polymath.png',
   pondsama: './images/projects/pondsama.png',
   'pontem-network': './images/projects/pontem-network.png',
   'pontem-nox': './images/projects/pontem-nox.png',
