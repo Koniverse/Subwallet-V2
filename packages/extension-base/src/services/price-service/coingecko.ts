@@ -32,10 +32,6 @@ export const getTokenPrice = async (priceIds: Set<string>, currency = 'usd'): Pr
       res = await axios.get(`https://chain-data.subwallet.app/api/price/get?ids=${idStr}`);
     }
 
-    if (res.status !== 200) {
-      console.warn('Failed to get token price');
-    }
-
     const responseData = res.data as Array<GeckoItem> || [];
     const priceMap: Record<string, number> = {};
     const price24hMap: Record<string, number> = {};
@@ -54,7 +50,8 @@ export const getTokenPrice = async (priceIds: Set<string>, currency = 'usd'): Pr
       price24hMap
     } as PriceJson;
   } catch (err) {
-    console.error('Failed to get token price', err);
+    console.error(err);
+
     throw err;
   }
 };

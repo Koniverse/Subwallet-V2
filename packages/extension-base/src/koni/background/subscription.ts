@@ -42,7 +42,6 @@ export class KoniSubscription {
     this.dbService = dbService;
     this.state = state;
     this.logger = createLogger('Subscription');
-    this.init();
   }
 
   getSubscriptionMap () {
@@ -77,8 +76,9 @@ export class KoniSubscription {
     }
   }
 
-  start () {
-    this.logger.log('Starting subscription');
+  async start () {
+    await Promise.all([this.state.eventService.waitKeyringReady, this.state.eventService.waitAssetReady]);
+
     const currentAddress = this.state.keyringService.currentAccount?.address;
 
     if (currentAddress) {
@@ -94,7 +94,6 @@ export class KoniSubscription {
         return;
       }
 
-      this.logger.log('ServiceInfo updated, restarting...');
       const address = serviceInfo.currentAccountInfo?.address;
 
       if (!address) {
@@ -109,18 +108,12 @@ export class KoniSubscription {
   }
 
   stop () {
-    this.logger.log('Stopping subscription');
-
     if (this.eventHandler) {
       this.state.eventService.offLazy(this.eventHandler);
       this.eventHandler = undefined;
     }
 
     this.stopAllSubscription();
-  }
-
-  init () {
-    this.logger.log('Initializing subscription');
   }
 
   subscribeBalancesAndCrowdloans (address: string, chainInfoMap: Record<string, _ChainInfo>, chainStateMap: Record<string, _ChainState>, substrateApiMap: Record<string, _SubstrateApi>, web3ApiMap: Record<string, _EvmApi>, onlyRunOnFirstTime?: boolean) {
@@ -331,7 +324,6 @@ export class KoniSubscription {
       if (dataFromApi[chainInfo.slug]) {
         this.state.updateChainStakingMetadata(dataFromApi[chainInfo.slug]);
       } else {
-        console.warn('Not found staking data from api', chainInfo.slug);
         const chainStakingMetadata = await getChainStakingMetadata(chainInfo, substrateApiMap[chainInfo.slug]);
 
         this.state.updateChainStakingMetadata(chainStakingMetadata);

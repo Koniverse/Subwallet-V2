@@ -13,7 +13,7 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
 import { TypeRegistry } from '@polkadot/types/create';
 import { Registry } from '@polkadot/types/types';
-import { BN, formatBalance, isTestChain, objectSpread, stringify } from '@polkadot/util';
+import { BN, formatBalance, isTestChain, objectSpread } from '@polkadot/util';
 import { logger as createLogger } from '@polkadot/util/logger';
 import { Logger } from '@polkadot/util/types';
 import { defaults as addressDefaults } from '@polkadot/util-crypto/address/defaults';
@@ -43,7 +43,6 @@ export class SubstrateChainHandler {
   public resumeAllApis () {
     return Promise.all(Object.values(this.getSubstrateApiMap()).map(async (substrateApi) => {
       if (!substrateApi.api.isConnected && substrateApi.api.connect) {
-        this.logger.log(`[Substrate] Resuming network [${substrateApi.specName}]`);
         await substrateApi.api.connect();
       }
     }));
@@ -52,7 +51,6 @@ export class SubstrateChainHandler {
   public disconnectAllApis () {
     return Promise.all(Object.values(this.getSubstrateApiMap()).map(async (substrateApi) => {
       if (substrateApi.api.isConnected) {
-        this.logger.log(`[Substrate] Stopping network [${substrateApi.chainSlug}]`);
         substrateApi.api?.disconnect && await substrateApi.api?.disconnect();
       }
     }));
@@ -113,8 +111,6 @@ export class SubstrateChainHandler {
         ]);
 
         if (!(nameResp.result.isOk && symbolResp.result.isOk && decimalsResp.result.isOk) || !nameResp.output || !decimalsResp.output || !symbolResp.output) {
-          this.logger.error('Error response while validating WASM contract');
-
           return {
             name: '',
             decimals: -1,
@@ -133,8 +129,6 @@ export class SubstrateChainHandler {
           if (!name || !symbol || typeof name === 'object' || typeof symbol === 'object') {
             contractError = true;
           }
-
-          console.log('validate PSP22', name, symbol, decimals);
         }
       } else {
         tokenContract = new ContractPromise(substrateApi.api, _PSP34_ABI, contractAddress);
@@ -142,8 +136,6 @@ export class SubstrateChainHandler {
         const collectionIdResp = await tokenContract.query['psp34::collectionId'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(substrateApi.api) }); // read-only operation so no gas limit
 
         if (!collectionIdResp.result.isOk || !collectionIdResp.output) {
-          this.logger.error('Error response while validating WASM contract');
-
           return {
             name: '',
             decimals: -1,
@@ -168,8 +160,6 @@ export class SubstrateChainHandler {
         contractError
       };
     } catch (e) {
-      this.logger.error('Error validating WASM contract', e);
-
       return {
         name: '',
         decimals: -1,
@@ -244,8 +234,7 @@ export class SubstrateChainHandler {
 
       recoverConnect: () => {
         substrateApi.apiRetry = 0;
-        this.logger.log('Recover connect to ', apiUrl);
-        provider.connect().then(this.logger.log).catch(this.logger.error);
+        provider.connect().then(this.logger.log).catch(this.logger.warn);
       },
       get isReady () {
         const self = this as _SubstrateApi;
@@ -297,7 +286,6 @@ export class SubstrateChainHandler {
     });
 
     api.on('ready', () => {
-      this.logger.log('Substrate API ready with', apiUrl);
       this.loadOnReady(registry, api)
         .then((rs) => {
           objectSpread(substrateApi, rs);
@@ -350,8 +338,6 @@ export class SubstrateChainHandler {
     const tokenSymbol = properties.tokenSymbol.unwrapOr([formatBalance.getDefaults().unit, ...DEFAULT_AUX]);
     const tokenDecimals = properties.tokenDecimals.unwrapOr([DEFAULT_DECIMALS]);
     const isDevelopment = (systemChainType.isDevelopment || systemChainType.isLocal || isTestChain(systemChain));
-
-    this.logger.log(`chain: ${systemChain} (${systemChainType.toString()}), ${stringify(properties)}`);
 
     // explicitly override the ss58Format as specified
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

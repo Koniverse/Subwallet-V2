@@ -33,8 +33,6 @@ function handleExtensionIdling () { // handle extension being idle since the ini
     if (openCount <= 0) {
       koniState.sleep().then(() => {
         waitingToStop = false;
-
-        console.log('Shut down due to popup never opened since init ---------------------------------');
       }).catch((err) => console.warn(err));
     }
   }, IDLE_TIME);
@@ -50,8 +48,6 @@ chrome.runtime.onConnect.addListener((port): void => {
     koniState.wakeup().catch((err) => console.warn(err));
 
     // TODO: wakeup happens every time popup opens, no matter if the background is asleep or not
-    console.log('Wake up due to popup open ---------------------------------');
-
     if (waitingToStop) {
       clearTimeout(idleTimer);
       waitingToStop = false;
@@ -69,14 +65,10 @@ chrome.runtime.onConnect.addListener((port): void => {
         idleTimer = setTimeout(() => {
           koniState.sleep().then(() => {
             waitingToStop = false;
-
-            console.log('Shut down due to popup getting closed---------------------------------');
           }).catch((err) => console.warn(err));
         }, IDLE_TIME);
       }
     }
-
-    console.warn(`Disconnected from ${port.name}`);
   });
 });
 

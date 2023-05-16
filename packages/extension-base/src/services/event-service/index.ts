@@ -48,7 +48,7 @@ export class EventService extends EventEmitter<EventRegistry> {
     try {
       this.lazyEmitter.emit('lazy', this.pendingEvents, this.pendingEvents.map((e) => e.type));
     } catch (e) {
-      console.error('Get error in some listener of lazy event', e);
+      console.error(e);
     }
 
     this.pendingEvents = [];
