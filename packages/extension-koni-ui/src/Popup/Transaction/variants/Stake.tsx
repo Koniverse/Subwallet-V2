@@ -146,9 +146,11 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [defaultSlug, from, defaultStakingType, chain]);
 
   const minStake = useMemo(() =>
-    stakingType === StakingType.POOLED ? chainStakingMetadata?.minPoolBonding || '0' : chainStakingMetadata?.minStake || '0'
-  , [chainStakingMetadata?.minPoolBonding, chainStakingMetadata?.minStake, stakingType]
+    stakingType === StakingType.POOLED ? chainStakingMetadata?.minJoinNominationPool || '0' : chainStakingMetadata?.minStake || '0'
+  , [chainStakingMetadata?.minJoinNominationPool, chainStakingMetadata?.minStake, stakingType]
   );
+
+  console.log('minStake', minStake);
 
   const { onError, onSuccess } = useHandleSubmitTransaction(onDone);
 

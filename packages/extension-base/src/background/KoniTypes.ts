@@ -121,17 +121,6 @@ export interface StakingRewardItem {
   totalSlash?: string,
   unclaimedReward?: string
 }
-export interface UnlockingStakeInfo {
-  chain: string,
-  address: string,
-  type: StakingType,
-
-  nextWithdrawal: number,
-  redeemable: number,
-  nextWithdrawalAmount: number,
-  nextWithdrawalAction?: string,
-  validatorAddress?: string // validator to unstake from
-}
 
 export interface StakingItem {
   name: string,
@@ -1410,7 +1399,6 @@ export interface ChainStakingMetadata {
   minJoinNominationPool?: string; // for relaychain supports nomination pool
   minStake: string;
   nominatorCount?: number;
-  minPoolBonding?: string;
   maxValidatorPerNominator: number;
   maxWithdrawalRequestPerValidator: number;
   allowCancelUnstaking: boolean;
