@@ -150,8 +150,6 @@ const Component: React.FC<Props> = (props: Props) => {
   , [chainStakingMetadata?.minJoinNominationPool, chainStakingMetadata?.minStake, stakingType]
   );
 
-  console.log('minStake', minStake);
-
   const { onError, onSuccess } = useHandleSubmitTransaction(onDone);
 
   const onFieldsChange: FormCallbacks<StakeFormProps>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
