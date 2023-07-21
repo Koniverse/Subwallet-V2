@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _AssetRefPath } from '@subwallet/chain-list/types';
 import { BasicInputWrapper } from '@subwallet/extension-koni-ui/components/Field/Base';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { useSelectModalInputHelper } from '@subwallet/extension-koni-ui/hooks/form/useSelectModalInputHelper';
@@ -16,6 +17,10 @@ interface Props extends ThemeProps, BasicInputWrapper {
   items: ChainItemType[];
 }
 
+interface Item extends ChainItemType {
+  key: string; // TODO
+}
+
 const renderEmpty = () => <GeneralEmptyList />;
 
 function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactElement<Props> {
@@ -23,6 +28,8 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
   const { onSelect } = useSelectModalInputHelper(props, ref);
+
+  const _items = useMemo((): Item[] => items.map((i) => ({ ...i, key: i.type ? `${i.slug}____${i.type}` : i.slug })), [items]);
 
   const renderChainSelected = useCallback((item: ChainItemType) => {
     return (
@@ -39,10 +46,12 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
   }, []);
 
   const chainLogo = useMemo(() => {
+    const _value = value?.split(`____${_AssetRefPath.MANTA_ZK}`)[0]; // manta zk
+
     return (
       <Logo
         className='chain-logo'
-        network={value}
+        network={_value}
         shape='circle'
         size={token.controlHeightSM}
       />
@@ -75,8 +84,8 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
       disabled={disabled}
       id={id}
       inputClassName={`${className} chain-selector-input`}
-      itemKey={'slug'}
-      items={items}
+      itemKey={'key'}
+      items={_items}
       label={label}
       onSelect={onSelect}
       placeholder={placeholder || t('Select chain')}

@@ -57,6 +57,8 @@ export default class KoniDatabase extends Dexie {
 
   public mantaPay!: Table<IMantaPayLedger, object>;
 
+  public transactionsV2!: Table<ITransactionHistoryItem, object>;
+
   private schemaVersion: number;
 
   public constructor (name = DEFAULT_DATABASE, schemaVersion = 11) {
@@ -88,6 +90,10 @@ export default class KoniDatabase extends Dexie {
 
     this.conditionalVersion(3, {
       mantaPay: 'key, chain'
+    });
+
+    this.conditionalVersion(4, {
+      transactionsV2: '[chain+address+extrinsicHash+direction], &[chain+address+extrinsicHash+direction], chain, address, extrinsicHash, action'
     });
   }
 

@@ -17,6 +17,7 @@ interface Props extends ThemeProps {
   onCancel: () => void;
   loading: boolean;
   error?: string;
+  setError?: (error: string | undefined) => void;
 }
 
 interface ZkFormState {
@@ -26,7 +27,7 @@ interface ZkFormState {
 const passwordInputId = 'zk-confirm-password';
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, error, loading, onCancel, onOk } = props;
+  const { className, error, loading, onCancel, onOk, setError } = props;
   const [form] = Form.useForm<ZkFormState>();
   const [isDisabled, setIsDisabled] = useState(false);
   const { t } = useTranslation();
@@ -34,8 +35,15 @@ const Component: React.FC<Props> = (props: Props) => {
   const onUpdate: FormCallbacks<ZkFormState>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const { empty, error } = simpleCheckForm(allFields);
 
+    // @ts-ignore
+    const passwordField = changedFields.find((field) => field.name[0] === 'password');
+
+    if (passwordField) {
+      setError && setError(undefined);
+    }
+
     setIsDisabled(error || empty);
-  }, []);
+  }, [setError]);
 
   const onError = useCallback((error: string) => {
     form.setFields([{ name: 'password', errors: [error] }]);
@@ -46,7 +54,7 @@ const Component: React.FC<Props> = (props: Props) => {
     if (error) {
       onError(error);
     }
-  }, [error, onError]);
+  }, [error, form, onError]);
 
   useFocusById(passwordInputId);
 

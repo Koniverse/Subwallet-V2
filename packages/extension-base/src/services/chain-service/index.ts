@@ -4,7 +4,7 @@
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
-import { _ASSET_LOGO_MAP_SRC, _ASSET_REF_SRC, _CHAIN_ASSET_SRC, _CHAIN_INFO_SRC, _CHAIN_LOGO_MAP_SRC, _DEFAULT_ACTIVE_CHAINS, _MANTA_ZK_CHAIN_GROUP, _MULTI_CHAIN_ASSET_SRC, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
+import { _ASSET_LOGO_MAP_SRC, _ASSET_REF_SRC, _CHAIN_ASSET_SRC, _CHAIN_INFO_SRC, _CHAIN_LOGO_MAP_SRC, _DEFAULT_ACTIVE_CHAINS, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _MULTI_CHAIN_ASSET_SRC, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
@@ -47,7 +47,7 @@ export class ChainService {
   private chainStateMapSubject = new Subject<Record<string, _ChainState>>();
   private assetRegistrySubject = new Subject<Record<string, _ChainAsset>>();
   private multiChainAssetMapSubject = new Subject<Record<string, _MultiChainAsset>>();
-  private xcmRefMapSubject = new Subject<Record<string, _AssetRef>>();
+  private assetRefMapSubject = new Subject<Record<string, _AssetRef>>();
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -67,7 +67,7 @@ export class ChainService {
     this.chainStateMapSubject.next(this.dataMap.chainStateMap);
     this.chainInfoMapSubject.next(this.dataMap.chainInfoMap);
     this.assetRegistrySubject.next(this.dataMap.assetRegistry);
-    this.xcmRefMapSubject.next(this.dataMap.assetRefMap);
+    this.assetRefMapSubject.next(this.dataMap.assetRefMap);
 
     this.substrateChainHandler = new SubstrateChainHandler(this);
     this.evmChainHandler = new EvmChainHandler(this);
@@ -76,17 +76,8 @@ export class ChainService {
   }
 
   // Getter
-  public getXcmRefMap () {
+  public getAssetRefMap () {
     return this.dataMap.assetRefMap;
-    // const result: Record<string, _AssetRef> = {};
-    //
-    // Object.entries(AssetRefMap).forEach(([key, assetRef]) => {
-    //   if (assetRef.path === _AssetRefPath.XCM) {
-    //     result[key] = assetRef;
-    //   }
-    // });
-    //
-    // return result;
   }
 
   public getEvmApi (slug: string) {
@@ -128,8 +119,8 @@ export class ChainService {
     return this.multiChainAssetMapSubject;
   }
 
-  public subscribeXcmRefMap () {
-    return this.xcmRefMapSubject;
+  public subscribeAssetRefMap () {
+    return this.assetRefMapSubject;
   }
 
   public subscribeChainStateMap () {
@@ -220,10 +211,6 @@ export class ChainService {
     }
 
     return nativeTokenInfo;
-  }
-
-  public getAssetRefMap () {
-    return this.dataMap.assetRefMap;
   }
 
   public getChainStateMap () {
@@ -504,7 +491,7 @@ export class ChainService {
     this.chainInfoMapSubject.next(this.getChainInfoMap());
     this.chainStateMapSubject.next(this.getChainStateMap());
     this.assetRegistrySubject.next(this.getAssetRegistry());
-    this.xcmRefMapSubject.next(this.dataMap.assetRefMap);
+    this.assetRefMapSubject.next(this.dataMap.assetRefMap);
 
     await this.initApis();
     await this.initAssetSettings();
@@ -1553,5 +1540,38 @@ export class ChainService {
 
   getMetadataByHash (hash: string) {
     return this.dbService.stores.metadata.getMetadataByGenesisHash(hash);
+  }
+
+  public async getMantaToPrivateTx (assetId: string, amount: string) {
+    const signedTransactions = await this.mantaPay.getToPrivateTx(assetId, amount);
+    const chainApi = await this.getSubstrateApi(_DEFAULT_MANTA_ZK_CHAIN)?.isReady;
+
+    if (signedTransactions && chainApi) {
+      return chainApi.api.tx.utility.batch(signedTransactions.txs);
+    }
+
+    return undefined;
+  }
+
+  public async getMantaToPublicTx (assetId: string, amount: string, address: string) {
+    const signedTransactions = await this.mantaPay.getToPublicTx(assetId, amount, address);
+    const chainApi = await this.getSubstrateApi(_DEFAULT_MANTA_ZK_CHAIN)?.isReady;
+
+    if (signedTransactions && chainApi) {
+      return chainApi.api.tx.utility.batch(signedTransactions.txs);
+    }
+
+    return undefined;
+  }
+
+  public async getMantaZkTransfer (assetId: string, amount: string, address: string) {
+    const signedTransactions = await this.mantaPay.getPrivateTransfer(assetId, amount, address);
+    const chainApi = await this.getSubstrateApi(_DEFAULT_MANTA_ZK_CHAIN)?.isReady;
+
+    if (signedTransactions && chainApi) {
+      return chainApi.api.tx.utility.batch(signedTransactions.txs);
+    }
+
+    return undefined;
   }
 }

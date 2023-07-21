@@ -298,12 +298,12 @@ export default class KoniState {
     await this.startSubscription();
   }
 
-  public async initMantaPay (password: string) {
+  public async initMantaPay (password: string, seedPhrase?: string) {
     const mantaPayConfig = await this.chainService.mantaPay.getMantaPayFirstConfig(_DEFAULT_MANTA_ZK_CHAIN) as MantaPayConfig;
 
     if (mantaPayConfig && mantaPayConfig.enabled && !this.isMantaPayEnabled) { // only init the first login
       console.debug('Initiating MantaPay for', mantaPayConfig.address);
-      await this.enableMantaPay(false, mantaPayConfig.address, password);
+      await this.enableMantaPay(false, mantaPayConfig.address, password, seedPhrase);
       console.debug('Initiated MantaPay for', mantaPayConfig.address);
 
       this.isMantaPayEnabled = true;
@@ -956,10 +956,6 @@ export default class KoniState {
     return this.chainService.getChainStateMap();
   }
 
-  public getAssetRefMap () {
-    return this.chainService.getAssetRefMap();
-  }
-
   public getChainStateByKey (key: string) {
     return this.chainService.getChainStateByKey(key);
   }
@@ -972,8 +968,8 @@ export default class KoniState {
     return this.chainService.getMultiChainAssetMap();
   }
 
-  public getXcmRefMap () {
-    return this.chainService.getXcmRefMap();
+  public getAssetRefMap () {
+    return this.chainService.getAssetRefMap();
   }
 
   public getAssetByChainAndAsset (chain: string, assetTypes: _AssetType[]) {
@@ -1004,8 +1000,8 @@ export default class KoniState {
     return this.chainService.subscribeMultiChainAssetMap();
   }
 
-  public subscribeXcmRefMap (): Subject<Record<string, _AssetRef>> {
-    return this.chainService.subscribeXcmRefMap();
+  public subscribeAssetRefMap (): Subject<Record<string, _AssetRef>> {
+    return this.chainService.subscribeAssetRefMap();
   }
 
   public async upsertCustomToken (data: _ChainAsset) {
@@ -1852,8 +1848,8 @@ export default class KoniState {
 
     await this.chainService.mantaPay.privateWallet?.initialSigner();
 
-    if (updateStore && seedPhrase) { // first time initiation
-      await this.chainService.mantaPay.privateWallet?.loadUserSeedPhrase(seedPhrase);
+    if (updateStore) { // first time initiation
+      seedPhrase && await this.chainService.mantaPay.privateWallet?.loadUserSeedPhrase(seedPhrase); // TODO: load seed phrase
       const authContext = await this.chainService.mantaPay.privateWallet?.getAuthorizationContext();
 
       await this.chainService.mantaPay.privateWallet?.loadAuthorizationContext(authContext as interfaces.AuthContextType);
@@ -1866,6 +1862,7 @@ export default class KoniState {
         data: encryptedData
       });
     } else {
+      seedPhrase && await this.chainService.mantaPay.privateWallet?.loadUserSeedPhrase(seedPhrase);
       const authContext = (await this.chainService.mantaPay.getMantaAuthContext(address, _DEFAULT_MANTA_ZK_CHAIN)) as MantaAuthorizationContext;
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
@@ -1978,7 +1975,7 @@ export default class KoniState {
         if (config && config.enabled && config.isInitialSync) {
           this.getMantaZkBalance();
 
-          interval = setInterval(this.getMantaZkBalance, MANTA_PAY_BALANCE_INTERVAL);
+          interval = setInterval(this.getMantaZkBalance.bind(this), MANTA_PAY_BALANCE_INTERVAL);
         }
       })
       .catch(console.warn);

@@ -171,10 +171,10 @@ export const updateMultiChainAssetRegistry = (data: Record<string, _MultiChainAs
 export const subscribeMultiChainAssetMap = lazySubscribeMessage('pri(chainService.subscribeMultiChainAssetMap)', null, updateMultiChainAssetRegistry, updateMultiChainAssetRegistry);
 
 export const updateXcmRefMap = (data: Record<string, _AssetRef>) => {
-  store.dispatch({ type: 'assetRegistry/updateXcmRefMap', payload: data });
+  store.dispatch({ type: 'assetRegistry/updateAssetRefMap', payload: data });
 };
 
-export const subscribeXcmRefMap = lazySubscribeMessage('pri(chainService.subscribeXcmRefMap)', null, updateXcmRefMap, updateXcmRefMap);
+export const subscribeXcmRefMap = lazySubscribeMessage('pri(chainService.subscribeAssetRefMap)', null, updateXcmRefMap, updateXcmRefMap);
 
 export const updateAssetSettingMap = (data: Record<string, AssetSetting>) => {
   store.dispatch({ type: 'assetRegistry/updateAssetSettingMap', payload: data });

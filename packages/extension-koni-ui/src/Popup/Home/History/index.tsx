@@ -118,8 +118,8 @@ enum FilterValue {
   FAILED = 'failed',
 }
 
-function getHistoryItemKey (item: Pick<TransactionHistoryItem, 'chain' | 'address' | 'extrinsicHash' | 'transactionId'>) {
-  return `${item.chain}-${item.address}-${item.transactionId || item.extrinsicHash}`;
+function getHistoryItemKey (item: Pick<TransactionHistoryItem, 'chain' | 'address' | 'extrinsicHash' | 'transactionId' | 'direction'>) {
+  return `${item.chain}-${item.address}-${item.transactionId || item.extrinsicHash}-${item.direction}`;
 }
 
 const modalId = HISTORY_DETAIL_MODAL;

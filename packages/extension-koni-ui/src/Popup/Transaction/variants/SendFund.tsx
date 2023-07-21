@@ -1,9 +1,10 @@
 // Copyright 2019-2022 @polkadot/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { AssetSetting, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson } from '@subwallet/extension-base/background/types';
+import { _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _getAssetDecimals, _getOriginChainOfAsset, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
@@ -136,7 +137,15 @@ function getTokenItems (
   return items;
 }
 
-function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<string, _AssetRef>, chainInfoMap: Record<string, _ChainInfo>): ChainItemType[] {
+function getMantaPayDestinationName (assetRef: _AssetRef, chainInfo: _ChainInfo) {
+  if (assetRef.destAsset.includes(_ZK_ASSET_PREFIX)) {
+    return `${chainInfo.name} (Private)`;
+  }
+
+  return `${chainInfo.name} (Public)`;
+}
+
+function getTokenAvailableDestinations (tokenSlug: string, assetRefMap: Record<string, _AssetRef>, chainInfoMap: Record<string, _ChainInfo>): ChainItemType[] {
   if (!tokenSlug) {
     return [];
   }
@@ -150,13 +159,14 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
     slug: originChain.slug
   });
 
-  Object.values(xcmRefMap).forEach((xcmRef) => {
-    if (xcmRef.srcAsset === tokenSlug) {
-      const destinationChain = chainInfoMap[xcmRef.destChain];
+  Object.values(assetRefMap).forEach((assetRef) => {
+    if (assetRef.srcAsset === tokenSlug) {
+      const destinationChain = chainInfoMap[assetRef.destChain];
 
       result.push({
-        name: destinationChain.name,
-        slug: destinationChain.slug
+        name: assetRef.path === _AssetRefPath.MANTA_ZK ? getMantaPayDestinationName(assetRef, destinationChain) : destinationChain.name,
+        slug: destinationChain.slug,
+        type: assetRef.path === _AssetRefPath.MANTA_ZK ? _AssetRefPath.MANTA_ZK : undefined
       });
     }
   });
@@ -310,17 +320,29 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       return Promise.reject(t('Recipient address is required'));
     }
 
+    // TODO: validate zkAddress
+
     if (!isAddress(_recipientAddress)) {
       return Promise.reject(t('Invalid Recipient address'));
     }
 
     const { chain, destChain, from, to } = form.getFieldsValue();
 
-    if (!from || !chain || !destChain) {
+    const _destChain = destChain.split(`____${_AssetRefPath.MANTA_ZK}`)[0];
+
+    if (!from || !chain || !_destChain) {
       return Promise.resolve();
     }
 
-    const isOnChain = chain === destChain;
+    if (destChain.includes(_AssetRefPath.MANTA_ZK)) {
+      if (isSameAddress(from, _recipientAddress)) {
+        return Promise.resolve();
+      } else {
+        return Promise.reject(t('The recipient address must be the same as the sender address'));
+      }
+    }
+
+    const isOnChain = chain === _destChain;
 
     const account = findAccountByAddress(accounts, _recipientAddress);
 
@@ -338,7 +360,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         return Promise.reject(t('The recipient address must be same type as the current account address.'));
       }
     } else {
-      const isDestChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[destChain]);
+      const isDestChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[_destChain]);
 
       if (isDestChainEvmCompatible !== isEthereumAddress(to)) {
         // todo: change message later
@@ -347,7 +369,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     }
 
     if (account?.isHardware) {
-      const destChainInfo = chainInfoMap[destChain];
+      const destChainInfo = chainInfoMap[_destChain];
       const availableGen: string[] = account.availableGenesisHashes || [];
 
       if (!isEthereumAddress(account.address) && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
@@ -413,6 +435,11 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       if (part.destChain) {
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
 
+        if (part.destChain.includes(_AssetRefPath.MANTA_ZK)) {
+          form.setFieldValue('to', from);
+          validateField.push('to');
+        }
+
         if (values.to) {
           validateField.push('to');
         }
@@ -422,7 +449,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         form.validateFields(validateField).catch(noop);
       }
     },
-    [setFrom, form, assetRegistry, setChain, setAsset, isTransferAll]
+    [setFrom, form, assetRegistry, setChain, setAsset, isTransferAll, from]
   );
 
   // Submit transaction
@@ -448,7 +475,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     const isEthereum = isEthereumAddress(account.address);
     const chainAsset = assetRegistry[asset];
 
-    if (chain === destChain) {
+    if (chain === destChain.split(`____${_AssetRefPath.MANTA_ZK}`)[0]) {
       if (isLedger) {
         if (isEthereum) {
           if (!_isTokenTransferredByEvm(chainAsset)) {
@@ -466,7 +493,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       // Transfer token or send fund
       sendPromise = makeTransfer({
         from,
-        networkKey: chain,
+        networkKey: destChain,
         to: to,
         tokenSlug: asset,
         value: value,

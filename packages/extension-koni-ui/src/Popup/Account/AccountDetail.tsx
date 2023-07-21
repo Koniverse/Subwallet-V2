@@ -108,7 +108,7 @@ export const mantaPayReducer = (state: MantaPayState, action: MantaPayReducerAct
     case MantaPayReducerActionType.SET_ERROR_MESSAGE:
       return {
         ...state,
-        error: payload as string,
+        error: payload as string | undefined,
         loading: false
       };
     default:
@@ -191,6 +191,10 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [account]);
 
   const isZkModeAvailable = useIsMantaPayAvailable(account);
+
+  const setMantaPayError = useCallback((value: string | undefined) => {
+    dispatchMantaPayState({ type: MantaPayReducerActionType.SET_ERROR_MESSAGE, payload: value });
+  }, []);
 
   const walletNamePrefixIcon = useMemo((): PhosphorIcon => {
     switch (signMode) {
@@ -589,6 +593,7 @@ const Component: React.FC<Props> = (props: Props) => {
               loading={mantaPayState.loading}
               onCancel={onCloseZkModeConfirmation}
               onOk={onOkZkModeConfirmation}
+              setError={setMantaPayError}
             />
           )}
           id={zkModeConfirmationId}

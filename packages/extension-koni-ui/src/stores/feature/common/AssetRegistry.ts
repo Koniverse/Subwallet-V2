@@ -51,7 +51,7 @@ const assetRegistrySlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updateXcmRefMap (state, action: PayloadAction<Record<string, _AssetRef>>) {
+    updateAssetRefMap (state, action: PayloadAction<Record<string, _AssetRef>>) {
       const { payload } = action;
 
       return {
@@ -65,5 +65,5 @@ const assetRegistrySlice = createSlice({
   }
 });
 
-export const { updateAssetRegistry, updateAssetSettingMap, updateMultiChainAssetMap, updateXcmRefMap } = assetRegistrySlice.actions;
+export const { updateAssetRefMap, updateAssetRegistry, updateAssetSettingMap, updateMultiChainAssetMap } = assetRegistrySlice.actions;
 export default assetRegistrySlice.reducer;

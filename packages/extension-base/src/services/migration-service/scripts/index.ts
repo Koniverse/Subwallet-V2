@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import MigrateTransactionsV2Store from '@subwallet/extension-base/services/migration-service/scripts/MigrateTransactionsV2Store';
+
 import BaseMigrationJob from '../Base';
 import AutoEnableChainsTokens from './AutoEnableChainsTokens';
 import MigrateAuthUrls from './MigrateAuthUrls';
@@ -25,6 +27,7 @@ export default <Record<string, typeof BaseMigrationJob>> {
   '1.0.3-01': MigrateAutoLock,
   '1.0.3-02': MigrateChainPatrol,
   '1.0.9-01': MigrateLedgerAccount,
-  '1.0.12-02': MigrateEthProvider
+  '1.0.12-02': MigrateEthProvider,
+  '1.1.2': MigrateTransactionsV2Store
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
 };
