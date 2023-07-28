@@ -5,12 +5,14 @@ import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, M
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _ASSET_LOGO_MAP_SRC, _ASSET_REF_SRC, _CHAIN_ASSET_SRC, _CHAIN_INFO_SRC, _CHAIN_LOGO_MAP_SRC, _DEFAULT_ACTIVE_CHAINS, _MANTA_ZK_CHAIN_GROUP, _MULTI_CHAIN_ASSET_SRC, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
+import { CosmosChainHandler } from '@subwallet/extension-base/services/chain-service/handler/CosmosChainHandler';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
+import { SolanaChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SolanaChainHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
-import { _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isEqualContractAddress, _isEqualSmartContractAsset, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isEqualContractAddress, _isEqualSmartContractAsset, _isMantaZkAsset, _isPureCosmosChain, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
@@ -37,6 +39,8 @@ export class ChainService {
 
   private substrateChainHandler: SubstrateChainHandler;
   private evmChainHandler: EvmChainHandler;
+  private cosmosChainHandler: CosmosChainHandler;
+  private solanaChainHandler: SolanaChainHandler;
   private mantaChainHandler: MantaPrivateHandler | undefined;
 
   public get mantaPay () {
@@ -70,8 +74,10 @@ export class ChainService {
       this.mantaChainHandler = new MantaPrivateHandler(dbService);
     }
 
+    this.cosmosChainHandler = new CosmosChainHandler(this);
     this.substrateChainHandler = new SubstrateChainHandler(this);
     this.evmChainHandler = new EvmChainHandler(this);
+    this.solanaChainHandler = new SolanaChainHandler(this);
 
     this.logger = createLogger('chain-service');
   }
@@ -79,19 +85,18 @@ export class ChainService {
   // Getter
   public getXcmRefMap () {
     return this.dataMap.assetRefMap;
-    // const result: Record<string, _AssetRef> = {};
-    //
-    // Object.entries(AssetRefMap).forEach(([key, assetRef]) => {
-    //   if (assetRef.path === _AssetRefPath.XCM) {
-    //     result[key] = assetRef;
-    //   }
-    // });
-    //
-    // return result;
   }
 
   public getEvmApi (slug: string) {
     return this.evmChainHandler.getEvmApiByChain(slug);
+  }
+
+  public getSubstrateApi (slug: string) {
+    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  }
+
+  public getCosmosApi (slug: string) {
+    return this.cosmosChainHandler.getApiByChain(slug);
   }
 
   public getEvmApiMap () {
@@ -102,8 +107,12 @@ export class ChainService {
     return this.substrateChainHandler.getSubstrateApiMap();
   }
 
-  public getSubstrateApi (slug: string) {
-    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  public getCosmosApiMap () {
+    return this.cosmosChainHandler.getCosmosApiMap();
+  }
+
+  public getSolanaApiMap () {
+    return this.solanaChainHandler.getSolanaApiMap();
   }
 
   public getChainCurrentProviderByKey (slug: string) {
@@ -178,6 +187,18 @@ export class ChainService {
 
     Object.values(this.getChainInfoMap()).forEach((chainInfo) => {
       if (_isPureSubstrateChain(chainInfo)) {
+        result[chainInfo.slug] = chainInfo;
+      }
+    });
+
+    return result;
+  }
+
+  public getCosmosChainInfoMap (): Record<string, _ChainInfo> {
+    const result: Record<string, _ChainInfo> = {};
+
+    Object.values(this.getChainInfoMap()).forEach((chainInfo) => {
+      if (_isPureCosmosChain(chainInfo)) {
         result[chainInfo.slug] = chainInfo;
       }
     });
@@ -542,7 +563,7 @@ export class ChainService {
       }
     };
 
-    if (chainInfo.substrateInfo !== null && chainInfo.substrateInfo !== undefined) {
+    if (chainInfo.substrateInfo) {
       if (_MANTA_ZK_CHAIN_GROUP.includes(chainInfo.slug) && MODULE_SUPPORT.MANTA_ZK && this.mantaChainHandler) {
         const apiPromise = await this.mantaChainHandler?.initMantaPay(endpoint, chainInfo.slug);
         const chainApi = await this.substrateChainHandler.initApi(chainInfo.slug, endpoint, { providerName, externalApiPromise: apiPromise, onUpdateStatus });
@@ -555,20 +576,40 @@ export class ChainService {
       }
     }
 
-    if (chainInfo.evmInfo !== null && chainInfo.evmInfo !== undefined) {
+    if (chainInfo.evmInfo) {
       const chainApi = await this.evmChainHandler.initApi(chainInfo.slug, endpoint, { providerName, onUpdateStatus });
 
       this.evmChainHandler.setEvmApi(chainInfo.slug, chainApi);
     }
+
+    if (chainInfo.cosmosInfo) {
+      const chainApi = await this.cosmosChainHandler.initApi(chainInfo.slug, endpoint, { cosmosChainInfo: chainInfo.cosmosInfo, onUpdateStatus });
+
+      this.cosmosChainHandler.setCosmosApi(chainInfo.slug, chainApi);
+    }
+
+    if (chainInfo.solanaInfo) {
+      const chainApi = await this.solanaChainHandler.initApi(chainInfo.slug, endpoint, { onUpdateStatus });
+
+      this.solanaChainHandler.setSolanaApi(chainInfo.slug, chainApi);
+    }
   }
 
   private destroyApiForChain (chainInfo: _ChainInfo) {
-    if (chainInfo.substrateInfo !== null) {
+    if (chainInfo.substrateInfo) {
       this.substrateChainHandler.destroySubstrateApi(chainInfo.slug);
     }
 
-    if (chainInfo.evmInfo !== null) {
+    if (chainInfo.evmInfo) {
       this.evmChainHandler.destroyEvmApi(chainInfo.slug);
+    }
+
+    if (chainInfo.cosmosInfo) {
+      this.cosmosChainHandler.destroyCosmosApi(chainInfo.slug);
+    }
+
+    if (chainInfo.solanaInfo) {
+      this.solanaChainHandler.destroySolanaApi(chainInfo.slug);
     }
   }
 
@@ -979,8 +1020,8 @@ export class ChainService {
 
     const newChainSlug = this.generateSlugForCustomChain(params.chainEditInfo.chainType as string, params.chainEditInfo.name as string, params.chainSpec.paraId, params.chainSpec.evmChainId);
 
-    let substrateInfo: _SubstrateInfo | null = null;
-    let evmInfo: _EvmInfo | null = null;
+    let substrateInfo: _SubstrateInfo | undefined;
+    let evmInfo: _EvmInfo | undefined;
 
     if (params.chainSpec.genesisHash !== '') {
       substrateInfo = {
@@ -1162,18 +1203,18 @@ export class ChainService {
             // check if same network (with existingChainSlug)
             const existedChainInfo = this.getChainInfoByKey(existingChainSlug);
 
-            if (existedChainInfo.evmInfo !== null) {
+            if (existedChainInfo.evmInfo) {
               if (result.evmChainId !== existedChainInfo.evmInfo.evmChainId) {
                 result.error = _CHAIN_VALIDATION_ERROR.PROVIDER_NOT_SAME_CHAIN;
               }
-            } else if (existedChainInfo.substrateInfo !== null) {
+            } else if (existedChainInfo.substrateInfo) {
               if (result.genesisHash !== existedChainInfo.substrateInfo.genesisHash) {
                 result.error = _CHAIN_VALIDATION_ERROR.PROVIDER_NOT_SAME_CHAIN;
               }
             }
           } else {
             // check if network existed
-            if (result.evmChainId !== null) {
+            if (result.evmChainId) {
               for (const chainInfo of Object.values(this.getEvmChainInfoMap())) {
                 if (chainInfo?.evmInfo?.evmChainId === result.evmChainId) {
                   result.error = _CHAIN_VALIDATION_ERROR.EXISTED_CHAIN;

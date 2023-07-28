@@ -60,11 +60,19 @@ export function _isEqualSmartContractAsset (asset1: _ChainAsset, asset2: _ChainA
 }
 
 export function _isPureEvmChain (chainInfo: _ChainInfo) {
-  return (chainInfo.evmInfo !== null && chainInfo.substrateInfo === null);
+  return (!!chainInfo.evmInfo && !chainInfo.substrateInfo);
 }
 
 export function _isPureSubstrateChain (chainInfo: _ChainInfo) {
-  return (chainInfo.evmInfo === null && chainInfo.substrateInfo !== null);
+  return (!!chainInfo.substrateInfo && !chainInfo.evmInfo && !chainInfo.cosmosInfo && !chainInfo.solanaInfo);
+}
+
+export function _isPureCosmosChain (chainInfo: _ChainInfo) {
+  return (!!chainInfo.cosmosInfo && !chainInfo.substrateInfo && !chainInfo.evmInfo);
+}
+
+export function _isPureSolanaChain (chainInfo: _ChainInfo) {
+  return (!!chainInfo.solanaInfo && !chainInfo.substrateInfo && !chainInfo.evmInfo && !chainInfo.cosmosInfo);
 }
 
 export function _getOriginChainOfAsset (assetSlug: string) {
@@ -93,7 +101,7 @@ export function _isTokenTransferredByEvm (tokenInfo: _ChainAsset) {
 
 export function _checkSmartContractSupportByChain (chainInfo: _ChainInfo, contractType: _AssetType) {
   // EVM chains support smart contract by default so just checking Substrate chains
-  if (chainInfo.substrateInfo === null || (chainInfo.substrateInfo && chainInfo.substrateInfo.supportSmartContract === null)) {
+  if (!chainInfo.substrateInfo || (chainInfo.substrateInfo && chainInfo.substrateInfo.supportSmartContract === null)) {
     return false;
   }
 
@@ -225,12 +233,12 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
     };
   }
 
-  if (chainInfo.substrateInfo !== null) { // substrate by default
+  if (chainInfo.substrateInfo) { // substrate by default
     return {
       symbol: chainInfo.substrateInfo.symbol,
       decimals: chainInfo.substrateInfo.decimals
     };
-  } else if (chainInfo.evmInfo !== null) {
+  } else if (chainInfo.evmInfo) {
     return {
       symbol: chainInfo.evmInfo.symbol,
       decimals: chainInfo.evmInfo.decimals
@@ -302,7 +310,7 @@ export function _isSubstrateRelayChain (chainInfo: _ChainInfo) {
 }
 
 export function _isSubstrateParaChain (chainInfo: _ChainInfo) {
-  return chainInfo.substrateInfo !== null && chainInfo.substrateInfo.paraId !== null && chainInfo.substrateInfo?.chainType === _SubstrateChainType.PARACHAIN;
+  return chainInfo.substrateInfo && chainInfo.substrateInfo.paraId !== null && chainInfo.substrateInfo?.chainType === _SubstrateChainType.PARACHAIN;
 }
 
 export function _getEvmAbiExplorer (chainInfo: _ChainInfo) {
@@ -425,4 +433,8 @@ export const findChainInfoByChainId = (chainMap: Record<string, _ChainInfo>, cha
 
 export function _isMantaZkAsset (chainAsset: _ChainAsset) {
   return _MANTA_ZK_CHAIN_GROUP.includes(chainAsset.originChain) && chainAsset.symbol.startsWith(_ZK_ASSET_PREFIX);
+}
+
+export function _getCosmosTokenDenom (chainAsset: _ChainAsset) {
+  return chainAsset?.metadata?.coinMinimalDenom as string;
 }

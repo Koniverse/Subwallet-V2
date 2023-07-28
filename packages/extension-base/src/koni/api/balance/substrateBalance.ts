@@ -4,19 +4,15 @@
 import { SignedBalance } from '@equilab/api/genshiro/interfaces';
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { APIItemState, BalanceItem, TokenBalanceRaw } from '@subwallet/extension-base/background/KoniTypes';
-import { ASTAR_REFRESH_BALANCE_INTERVAL, SUB_TOKEN_REFRESH_BALANCE_INTERVAL } from '@subwallet/extension-base/constants';
+import { SUB_TOKEN_REFRESH_BALANCE_INTERVAL } from '@subwallet/extension-base/constants';
 import { PalletNominationPoolsPoolMember } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
-import { getEVMBalance } from '@subwallet/extension-base/koni/api/tokens/evm/balance';
-import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
 import { getPSP22ContractPromise } from '@subwallet/extension-base/koni/api/tokens/wasm';
 import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/tokens/wasm/utils';
 import { state } from '@subwallet/extension-base/koni/background/handlers';
-import { _BALANCE_CHAIN_GROUP, _MANTA_ZK_CHAIN_GROUP, _PURE_EVM_CHAINS, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
-import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _checkSmartContractSupportByChain, _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _isChainEvmCompatible, _isPureEvmChain, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { categoryAddresses, sumBN } from '@subwallet/extension-base/utils';
+import { _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
+import { _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { sumBN } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
-import { Contract } from 'web3-eth-contract';
 
 import { ApiPromise } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
@@ -31,96 +27,8 @@ type EqBalanceV0 = {
   }
 }
 
-// main subscription
-export function subscribeBalance (addresses: string[], chainInfoMap: Record<string, _ChainInfo>, substrateApiMap: Record<string, _SubstrateApi>, evmApiMap: Record<string, _EvmApi>, callback: (rs: BalanceItem) => void) {
-  const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
-
-  // Looping over each chain
-  const unsubList = Object.entries(chainInfoMap).map(async ([chainSlug, chainInfo]) => {
-    const useAddresses = _isChainEvmCompatible(chainInfo) ? evmAddresses : substrateAddresses;
-
-    if (_isPureEvmChain(chainInfo)) {
-      const nativeTokenInfo = state.getNativeTokenInfo(chainSlug);
-
-      return subscribeEVMBalance(chainSlug, useAddresses, evmApiMap, callback, nativeTokenInfo);
-    }
-
-    if (!useAddresses || useAddresses.length === 0 || _PURE_EVM_CHAINS.indexOf(chainSlug) > -1) {
-      const fungibleTokensByChain = state.chainService.getFungibleTokensByChain(chainSlug, true);
-      const now = new Date().getTime();
-
-      Object.values(fungibleTokensByChain).map((token) => {
-        return {
-          tokenSlug: token.slug,
-          free: '0',
-          locked: '0',
-          state: APIItemState.READY,
-          timestamp: now
-        } as BalanceItem;
-      }).forEach(callback);
-
-      return undefined;
-    }
-
-    const networkAPI = await substrateApiMap[chainSlug].isReady;
-
-    return subscribeSubstrateBalance(useAddresses, chainInfo, chainSlug, networkAPI, evmApiMap, callback);
-  });
-
-  return () => {
-    unsubList.forEach((subProm) => {
-      subProm.then((unsub) => {
-        unsub && unsub();
-      }).catch(console.error);
-    });
-  };
-}
-
-export async function subscribeSubstrateBalance (addresses: string[], chainInfo: _ChainInfo, chain: string, networkAPI: _SubstrateApi, evmApiMap: Record<string, _EvmApi>, callBack: (rs: BalanceItem) => void) {
-  let unsubNativeToken: () => void;
-
-  if (!_BALANCE_CHAIN_GROUP.kintsugi.includes(chain) && !_BALANCE_CHAIN_GROUP.genshiro.includes(chain) && !_BALANCE_CHAIN_GROUP.equilibrium_parachain.includes(chain)) {
-    unsubNativeToken = await subscribeWithSystemAccountPallet(addresses, chainInfo, networkAPI.api, callBack);
-  }
-
-  let unsubLocalToken: () => void;
-  let unsubEvmContractToken: () => void;
-  let unsubWasmContractToken: () => void;
-
-  try {
-    if (_BALANCE_CHAIN_GROUP.bifrost.includes(chain)) {
-      unsubLocalToken = await subscribeTokensAccountsPallet(addresses, chain, networkAPI.api, callBack);
-    } else if (_BALANCE_CHAIN_GROUP.kintsugi.includes(chain)) {
-      unsubLocalToken = await subscribeTokensAccountsPallet(addresses, chain, networkAPI.api, callBack, true);
-    } else if (_BALANCE_CHAIN_GROUP.statemine.includes(chain)) {
-      unsubLocalToken = await subscribeAssetsAccountPallet(addresses, chain, networkAPI.api, callBack);
-    } else if (_BALANCE_CHAIN_GROUP.genshiro.includes(chain)) {
-      unsubLocalToken = await subscribeEqBalanceAccountPallet(addresses, chain, networkAPI.api, callBack, true);
-    } else if (_BALANCE_CHAIN_GROUP.equilibrium_parachain.includes(chain)) {
-      unsubLocalToken = await subscribeEquilibriumTokenBalance(addresses, chain, networkAPI.api, callBack, true);
-    }
-
-    if (_isChainEvmCompatible(chainInfo)) {
-      unsubEvmContractToken = subscribeERC20Interval(addresses, chain, evmApiMap, callBack);
-    }
-
-    if (_checkSmartContractSupportByChain(chainInfo, _AssetType.PSP22)) { // Get sub-token for substrate-based chains
-      unsubWasmContractToken = subscribePSP22Balance(addresses, chain, networkAPI.api, callBack);
-    }
-  } catch (err) {
-    console.warn(err);
-  }
-
-  return () => {
-    unsubNativeToken && unsubNativeToken();
-    unsubLocalToken && unsubLocalToken();
-    unsubEvmContractToken && unsubEvmContractToken();
-    unsubWasmContractToken && unsubWasmContractToken();
-  };
-}
-
 // handler according to different logic
-async function subscribeWithSystemAccountPallet (addresses: string[], chainInfo: _ChainInfo, networkAPI: ApiPromise, callBack: (rs: BalanceItem) => void) {
+export async function subscribeWithSystemAccountPallet (addresses: string[], chainInfo: _ChainInfo, networkAPI: ApiPromise, callBack: (rs: BalanceItem) => void) {
   const chainNativeTokenSlug = _getChainNativeTokenSlug(chainInfo);
 
   const unsub = await networkAPI.query.system.account.multi(addresses, async (balances: AccountInfo[]) => {
@@ -186,51 +94,7 @@ async function subscribeWithSystemAccountPallet (addresses: string[], chainInfo:
   };
 }
 
-function subscribeERC20Interval (addresses: string[], chain: string, evmApiMap: Record<string, _EvmApi>, callBack: (result: BalanceItem) => void): () => void {
-  let tokenList = {} as Record<string, _ChainAsset>;
-  const erc20ContractMap = {} as Record<string, Contract>;
-
-  const getTokenBalances = () => {
-    Object.values(tokenList).map(async (tokenInfo) => {
-      let free = new BN(0);
-
-      try {
-        const contract = erc20ContractMap[tokenInfo.slug];
-        const balanceList = await Promise.all(addresses.map((address): Promise<string> => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-          return contract.methods.balanceOf(address).call();
-        }));
-
-        free = sumBN(balanceList.map((balance) => new BN(balance || 0)));
-
-        callBack({
-          tokenSlug: tokenInfo.slug,
-          free: free.toString(),
-          locked: '0',
-          state: APIItemState.READY
-        } as BalanceItem);
-      } catch (err) {
-        console.log(tokenInfo.slug, err);
-      }
-    });
-  };
-
-  tokenList = state.getAssetByChainAndAsset(chain, [_AssetType.ERC20]);
-
-  Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
-    erc20ContractMap[slug] = getERC20Contract(chain, _getContractAddressOfToken(tokenInfo), evmApiMap);
-  });
-
-  getTokenBalances();
-
-  const interval = setInterval(getTokenBalances, SUB_TOKEN_REFRESH_BALANCE_INTERVAL);
-
-  return () => {
-    clearInterval(interval);
-  };
-}
-
-function subscribePSP22Balance (addresses: string[], chain: string, api: ApiPromise, callBack: (result: BalanceItem) => void) {
+export function subscribePSP22Balance (addresses: string[], chain: string, api: ApiPromise, callBack: (result: BalanceItem) => void) {
   let tokenList = {} as Record<string, _ChainAsset>;
   const psp22ContractMap = {} as Record<string, ContractPromise>;
 
@@ -275,7 +139,7 @@ function subscribePSP22Balance (addresses: string[], chain: string, api: ApiProm
   };
 }
 
-async function subscribeEquilibriumTokenBalance (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void, includeNativeToken?: boolean): Promise<() => void> {
+export async function subscribeEquilibriumTokenBalance (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void, includeNativeToken?: boolean): Promise<() => void> {
   const tokenTypes = includeNativeToken ? [_AssetType.NATIVE, _AssetType.LOCAL] : [_AssetType.LOCAL];
   const tokenMap = state.getAssetByChainAndAsset(chain, tokenTypes);
 
@@ -313,7 +177,7 @@ async function subscribeEquilibriumTokenBalance (addresses: string[], chain: str
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function subscribeEqBalanceAccountPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void, includeNativeToken?: boolean): Promise<() => void> {
+export async function subscribeEqBalanceAccountPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void, includeNativeToken?: boolean): Promise<() => void> {
   const tokenTypes = includeNativeToken ? [_AssetType.NATIVE, _AssetType.LOCAL] : [_AssetType.LOCAL];
   const tokenMap = state.getAssetByChainAndAsset(chain, tokenTypes);
 
@@ -348,7 +212,7 @@ async function subscribeEqBalanceAccountPallet (addresses: string[], chain: stri
   };
 }
 
-async function subscribeTokensAccountsPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void, includeNativeToken?: boolean) {
+export async function subscribeTokensAccountsPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void, includeNativeToken?: boolean) {
   const tokenTypes = includeNativeToken ? [_AssetType.NATIVE, _AssetType.LOCAL] : [_AssetType.LOCAL];
   const tokenMap = state.getAssetByChainAndAsset(chain, tokenTypes);
 
@@ -396,7 +260,7 @@ async function subscribeTokensAccountsPallet (addresses: string[], chain: string
   };
 }
 
-async function subscribeAssetsAccountPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void) {
+export async function subscribeAssetsAccountPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem) => void) {
   const tokenMap = state.getAssetByChainAndAsset(chain, [_AssetType.LOCAL]);
 
   Object.values(tokenMap).forEach((token) => {
@@ -457,33 +321,5 @@ async function subscribeAssetsAccountPallet (addresses: string[], chain: string,
     unsubList.forEach((unsub) => {
       unsub && unsub();
     });
-  };
-}
-
-export function subscribeEVMBalance (chain: string, addresses: string[], evmApiMap: Record<string, _EvmApi>, callback: (rs: BalanceItem) => void, tokenInfo: _ChainAsset) {
-  const balanceItem = {
-    tokenSlug: tokenInfo.slug,
-    state: APIItemState.PENDING,
-    free: '0',
-    locked: '0'
-  } as BalanceItem;
-
-  function getBalance () {
-    getEVMBalance(chain, addresses, evmApiMap)
-      .then((balances) => {
-        balanceItem.free = sumBN(balances.map((b) => (new BN(b || '0')))).toString();
-        balanceItem.state = APIItemState.READY;
-        callback(balanceItem);
-      })
-      .catch(console.warn);
-  }
-
-  getBalance();
-  const interval = setInterval(getBalance, ASTAR_REFRESH_BALANCE_INTERVAL);
-  const unsub2 = subscribeERC20Interval(addresses, chain, evmApiMap, callback);
-
-  return () => {
-    clearInterval(interval);
-    unsub2 && unsub2();
   };
 }
