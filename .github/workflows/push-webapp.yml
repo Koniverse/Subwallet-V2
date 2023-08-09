@@ -34,6 +34,7 @@ jobs:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         projectName: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
-        directory: './packages/webapp/build'
         gitHubToken: ${{ secrets.GH_AUTOMATION_TOKEN }}
+        branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref }}
+        directory: './packages/webapp/build'
         wranglerVersion: '3'
