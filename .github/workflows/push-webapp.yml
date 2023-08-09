@@ -36,3 +36,4 @@ jobs:
         projectName: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
         directory: './packages/webapp/build'
         gitHubToken: ${{ secrets.GH_PAT_BOT }}
+        wranglerVersion: '3'
