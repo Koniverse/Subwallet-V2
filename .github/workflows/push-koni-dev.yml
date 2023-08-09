@@ -1,6 +1,9 @@
 name: Koni Dev
 on:
-  pull_request: { }
+  pull_request:
+    branches:
+      - koni-dev
+      - upgrade-ui
   push:
     branches:
       - koni-dev
