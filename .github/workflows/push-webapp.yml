@@ -13,12 +13,16 @@ jobs:
     name: Deploy WebApp Preview
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
       with:
-        node-version: 18
         fetch-depth: 0
         token: ${{ secrets.GH_PAT }}
     - name: Build WebApp
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'yarn'
       env:
         TRANSAK_API_KEY: ${{ secrets.TRANSAK_API_KEY }}
         BANXA_SANDBOX_API_KEY: ${{ secrets.BANXA_SANDBOX_API_KEY }}
