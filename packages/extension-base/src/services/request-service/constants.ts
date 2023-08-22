@@ -3,7 +3,12 @@
 
 export const EXTENSION_REQUEST_URL = 'extension';
 
-export const WEB_APP_URL = ['localhost:9000'];
+export const WEB_APP_URL = [
+  /// Web app
+  'localhost:9000', // Local
+  'subwallet-webapp.pages.dev', // Pull request build
+  'web.subwallet.app' // Production
+];
 
 export const PREDEFINED_CHAIN_DAPP_CHAIN_MAP: Record<string, string[]> = {
   'portal.astar.network': ['astar', 'astarEvm'],

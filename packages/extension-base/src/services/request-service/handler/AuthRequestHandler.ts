@@ -264,8 +264,9 @@ export default class AuthRequestHandler {
     } else {
       // Auto auth for web app
 
-      console.log(idStr);
-      if (WEB_APP_URL.includes(idStr)) {
+      const isWhiteList = WEB_APP_URL.some((url) => idStr.includes(url));
+
+      if (isWhiteList) {
         const isAllowedMap = this.getAddressList(true);
 
         authList[stripUrl(url)] = {
