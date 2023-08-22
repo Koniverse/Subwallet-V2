@@ -6,7 +6,7 @@ import { CONFIRMATION_QR_MODAL } from '@subwallet/extension-koni-ui/constants/mo
 import { useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useGetChainInfoByGenesisHash from '@subwallet/extension-koni-ui/hooks/chain/useGetChainInfoByGenesisHash';
 import { useLedger } from '@subwallet/extension-koni-ui/hooks/ledger/useLedger';
-import { approveSignPasswordV2, approveSignSignature, cancelSignRequest } from '@subwallet/extension-koni-ui/messaging';
+import { approveSignInjected, approveSignPasswordV2, approveSignSignature, cancelSignRequest } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { PhosphorIcon, SigData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { AccountSignMode } from '@subwallet/extension-koni-ui/types/account';
@@ -14,7 +14,7 @@ import { isSubstrateMessage } from '@subwallet/extension-koni-ui/utils';
 import { getSignMode } from '@subwallet/extension-koni-ui/utils/account/account';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { CheckCircle, QrCode, Swatches, XCircle } from 'phosphor-react';
+import { CheckCircle, QrCode, Swatches, Wallet, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -35,6 +35,8 @@ const handleConfirm = async (id: string) => await approveSignPasswordV2({ id });
 const handleCancel = async (id: string) => await cancelSignRequest(id);
 
 const handleSignature = async (id: string, { signature }: SigData) => await approveSignSignature(id, signature);
+
+const handleInjected = async (id: string) => await approveSignInjected(id);
 
 const modeCanSignMessage: AccountSignMode[] = [AccountSignMode.QR, AccountSignMode.PASSWORD];
 
@@ -61,6 +63,8 @@ const Component: React.FC<Props> = (props: Props) => {
         return QrCode;
       case AccountSignMode.LEDGER:
         return Swatches;
+      case AccountSignMode.INJECTED:
+        return Wallet;
       default:
         return CheckCircle;
     }
@@ -126,6 +130,20 @@ const Component: React.FC<Props> = (props: Props) => {
     }, 300);
   }, [id]);
 
+  const onApproveInject = useCallback(() => {
+    setLoading(true);
+
+    setTimeout(() => {
+      handleInjected(id)
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }, 300);
+  }, [id]);
+
   const onConfirmQr = useCallback(() => {
     activeModal(CONFIRMATION_QR_MODAL);
   }, [activeModal]);
@@ -174,10 +192,13 @@ const Component: React.FC<Props> = (props: Props) => {
       case AccountSignMode.LEDGER:
         onConfirmLedger();
         break;
+      case AccountSignMode.INJECTED:
+        onApproveInject();
+        break;
       default:
         onApprovePassword();
     }
-  }, [onApprovePassword, onConfirmLedger, onConfirmQr, signMode]);
+  }, [onApproveInject, onApprovePassword, onConfirmLedger, onConfirmQr, signMode]);
 
   useEffect(() => {
     !!ledgerError && notify({

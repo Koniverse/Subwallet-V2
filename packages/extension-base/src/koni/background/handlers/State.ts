@@ -34,7 +34,7 @@ import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
 import { stripUrl } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
-import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
+import { InjectedAccountWithMeta, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { decodePair } from '@subwallet/keyring/pair/decode';
 import { keyring } from '@subwallet/ui-keyring';
 import { Subscription } from 'dexie';
@@ -2044,5 +2044,9 @@ export default class KoniState {
       metadata: metadata?.hexValue || '',
       specVersion: parseInt(metadata?.specVersion || '0')
     };
+  }
+
+  public injectAccounts (accounts: InjectedAccountWithMeta[]) {
+    this.keyringService.injectAccounts(accounts);
   }
 }

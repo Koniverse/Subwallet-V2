@@ -1819,6 +1819,10 @@ export interface RequestSigningApprovePasswordV2 {
   id: string;
 }
 
+export interface RequestSigningApproveInject {
+  id: string;
+}
+
 export interface AssetSettingUpdateReq {
   tokenSlug: string;
   assetSetting: AssetSetting;
@@ -2197,6 +2201,7 @@ export interface KoniRequestSignatures {
 
   // Signing
   'pri(signing.approve.passwordV2)': [RequestSigningApprovePasswordV2, boolean];
+  'pri(signing.approve.inject)': [RequestSigningApproveInject, boolean];
 
   // Derive
   'pri(derivation.validateV2)': [RequestDeriveValidateV2, ResponseDeriveValidateV2];
