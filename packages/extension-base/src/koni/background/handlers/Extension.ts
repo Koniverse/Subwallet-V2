@@ -2892,17 +2892,21 @@ export default class KoniExtension {
         const pairs = keyring.getPairs();
 
         for (const pair of pairs) {
-          const meta: KeyringPair$Meta = {
-            ...pair.meta,
-            isMasterPassword: false
-          };
+          if (pair.meta.isInjected) {
+            // Empty
+          } else {
+            const meta: KeyringPair$Meta = {
+              ...pair.meta,
+              isMasterPassword: false
+            };
 
-          if (!meta.originGenesisHash) {
-            meta.genesisHash = '';
+            if (!meta.originGenesisHash) {
+              meta.genesisHash = '';
+            }
+
+            pair.setMeta(meta);
+            keyring.saveAccountMeta(pair, pair.meta);
           }
-
-          pair.setMeta(meta);
-          keyring.saveAccountMeta(pair, pair.meta);
         }
       }
 
