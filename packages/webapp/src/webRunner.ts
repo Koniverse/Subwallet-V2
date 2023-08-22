@@ -6,6 +6,8 @@ import '@subwallet/extension-inject/crossenv';
 import { state as koniState } from '@subwallet/extension-base/koni/background/handlers';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import KeyringStore from '@subwallet/extension-base/stores/Keyring';
+import { web3Accounts, web3Enable } from '@subwallet/extension-dapp';
+import { noop } from '@subwallet/extension-koni-ui/utils';
 import keyring from '@subwallet/ui-keyring';
 
 import { cryptoWaitReady } from '@polkadot/util-crypto';
@@ -24,9 +26,22 @@ cryptoWaitReady()
     // load all the keyring data
     keyring.loadAll({ store: new AccountsStore(), type: 'sr25519', password_store: new KeyringStore() });
 
-    keyring.restoreKeyringPassword().finally(() => {
-      koniState.updateKeyringState();
-    });
+    keyring.restoreKeyringPassword()
+      .finally(() => {
+        koniState.updateKeyringState();
+      })
+      .then(() => web3Enable('subwallet-webapp'))
+      .then(() => web3Accounts())
+      .then((value) => {
+        koniState.injectAccounts(value);
+      })
+      // .then(() => {
+      //   web3AccountsSubscribe((accounts) => {
+      //     console.log(accounts);
+      //   }).catch(noop);
+      // })
+      .finally(noop)
+    ;
     koniState.eventService.emit('crypto.ready', true);
 
     responseMessage({ id: '0', response: { status: 'crypto_ready' } } as PageStatus);

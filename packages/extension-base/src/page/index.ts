@@ -8,6 +8,7 @@ import { ProviderErrorType } from '@subwallet/extension-base/background/KoniType
 import { SubWalletEvmProvider } from '@subwallet/extension-base/page/SubWalleEvmProvider';
 import { EvmProvider } from '@subwallet/extension-inject/types';
 
+import { AccountAuthType } from '../background/types';
 import { MESSAGE_ORIGIN_PAGE } from '../defaults';
 import { getId } from '../utils/getId';
 import Injected from './Injected';
@@ -54,8 +55,8 @@ export function sendMessage<TMessageType extends MessageTypes> (message: TMessag
 }
 
 // the enable function, called by the dapp to allow access
-export async function enable (origin: string): Promise<Injected> {
-  await sendMessage('pub(authorize.tabV2)', { origin });
+export async function enable (origin: string, authType?: string): Promise<Injected> {
+  await sendMessage('pub(authorize.tabV2)', { origin, accountAuthType: authType as AccountAuthType });
 
   return new Injected(sendMessage);
 }

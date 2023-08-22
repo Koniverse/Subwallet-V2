@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { InjectedAccount, InjectedAccounts, Unsubcall } from '@subwallet/extension-inject/types';
+import type { AccountAuthType } from '../background/types';
 import type { SendRequest } from './types';
 
 // External to class, this.# is not private enough (yet)
@@ -12,14 +13,14 @@ export default class Accounts implements InjectedAccounts {
     sendRequest = _sendRequest;
   }
 
-  public get (anyType?: boolean): Promise<InjectedAccount[]> {
-    return sendRequest('pub(accounts.listV2)', { anyType, accountAuthType: 'substrate' });
+  public get (anyType?: boolean, accountAuthType = 'substrate'): Promise<InjectedAccount[]> {
+    return sendRequest('pub(accounts.listV2)', { anyType, accountAuthType: accountAuthType as AccountAuthType });
   }
 
-  public subscribe (cb: (accounts: InjectedAccount[]) => unknown): Unsubcall {
+  public subscribe (cb: (accounts: InjectedAccount[]) => unknown, accountAuthType = 'substrate'): Unsubcall {
     let id: string | null = null;
 
-    sendRequest('pub(accounts.subscribeV2)', { accountAuthType: 'substrate' }, cb)
+    sendRequest('pub(accounts.subscribeV2)', { accountAuthType: accountAuthType as AccountAuthType }, cb)
       .then((subId): void => {
         id = subId;
       })

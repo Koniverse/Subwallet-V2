@@ -46,11 +46,13 @@ export interface AccountJson extends AbstractAddressJson {
   isExternal?: boolean;
   isHardware?: boolean;
   isHidden?: boolean;
+  isInjected?: boolean;
   isMasterAccount?: boolean;
   isMasterPassword?: boolean;
   isReadOnly?: boolean;
   parentAddress?: string;
   suri?: string;
+  source?: string;
   originGenesisHash?: string | null;
   availableGenesisHashes?: string[];
 }

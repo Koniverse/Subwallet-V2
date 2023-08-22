@@ -49,22 +49,23 @@ let web3EnablePromise: Promise<InjectedExtension[]> | null = null;
 
 export { isWeb3Injected, web3EnablePromise };
 
-function getWindowExtensions (originName: string): Promise<[InjectedExtensionInfo, Injected | void][]> {
+function getWindowExtensions (originName: string, whiteList: string[]): Promise<[InjectedExtensionInfo, Injected | void][]> {
   return Promise.all(
-    Object.entries(win.injectedWeb3).map(
-      ([name, { enable, version }]): Promise<[InjectedExtensionInfo, Injected | void]> =>
+    Object.entries(win.injectedWeb3)
+      .filter(([name]) => (whiteList.length ? whiteList.includes(name) : true))
+      .map(([name, { enable, version }]): Promise<[InjectedExtensionInfo, Injected | void]> => (
         Promise.all([
           Promise.resolve({ name, version }),
-          enable(originName).catch((error: Error): void => {
+          enable(originName, 'both').catch((error: Error): void => {
             console.error(`Error initializing ${name}: ${error.message}`);
           })
         ])
-    )
+      ))
   );
 }
 
 // enables all the providers found on the injected window interface
-export function web3Enable (originName: string, compatInits: (() => Promise<boolean>)[] = []): Promise<InjectedExtension[]> {
+export function web3Enable (originName: string, whiteList: string[] = ['subwallet-js'], compatInits: (() => Promise<boolean>)[] = []): Promise<InjectedExtension[]> {
   if (!originName) {
     throw new Error('You must pass a name for your app to the web3Enable function');
   }
@@ -76,7 +77,7 @@ export function web3Enable (originName: string, compatInits: (() => Promise<bool
   web3EnablePromise = documentReadyPromise(
     (): Promise<InjectedExtension[]> =>
       initCompat.then(() =>
-        getWindowExtensions(originName)
+        getWindowExtensions(originName, whiteList)
           .then((values): InjectedExtension[] =>
             values
               .filter((value): value is [InjectedExtensionInfo, Injected] => !!value[1])
@@ -122,7 +123,7 @@ export async function web3Accounts ({ accountType, ss58Format }: Web3AccountsOpt
   const retrieved = await Promise.all(
     injected.map(async ({ accounts, name: source }): Promise<InjectedAccountWithMeta[]> => {
       try {
-        const list = await accounts.get();
+        const list = await accounts.get(true, 'both');
 
         return mapAccounts(source, list.filter(({ type }) => type && accountType ? accountType.includes(type) : true), ss58Format);
       } catch (error) {
@@ -169,7 +170,7 @@ export async function web3AccountsSubscribe (cb: (accounts: InjectedAccountWithM
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         triggerUpdate();
-      })
+      }, 'both')
   );
 
   return (): void => {

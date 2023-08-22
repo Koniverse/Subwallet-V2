@@ -29,8 +29,8 @@ export interface InjectedAccountWithMeta {
 }
 
 export interface InjectedAccounts {
-  get: (anyType?: boolean) => Promise<InjectedAccount[]>;
-  subscribe: (cb: (accounts: InjectedAccount[]) => void | Promise<void>) => Unsubcall;
+  get: (anyType?: boolean, accountAuthType?: string) => Promise<InjectedAccount[]>;
+  subscribe: (cb: (accounts: InjectedAccount[]) => void | Promise<void>, accountAuthType?: string) => Unsubcall;
 }
 
 export interface InjectedExtensionInfo {
@@ -106,7 +106,7 @@ export interface EvmProvider {
 }
 
 export interface InjectedWindowProvider {
-  enable: (origin: string) => Promise<Injected>;
+  enable: (origin: string, type?: string) => Promise<Injected>;
   version: string;
 }
 
