@@ -263,6 +263,8 @@ export default class AuthRequestHandler {
       }
     } else {
       // Auto auth for web app
+
+      console.log(idStr);
       if (WEB_APP_URL.includes(idStr)) {
         const isAllowedMap = this.getAddressList(true);
 
@@ -277,9 +279,9 @@ export default class AuthRequestHandler {
         };
 
         this.setAuthorize(authList);
-      }
 
-      return true;
+        return true;
+      }
     }
 
     return new Promise((resolve, reject): void => {
