@@ -16,7 +16,7 @@ export const SINGULAR_V1_COLLECTION_ENDPOINT = 'https://singular.rmrk.app/api/rm
 export const SINGULAR_V2_COLLECTION_ENDPOINT = 'https://singular.app/api/rmrk2/collection/';
 
 export const KANARIA_EXTERNAL_SERVER = 'https://kanaria.rmrk.app/catalogue/';
-
+// XOrigin
 export const CLOUDFLARE_PINATA_SERVER = 'https://cloudflare-ipfs.com/ipfs/';
 
 export const BIT_COUNTRY_IPFS_SERVER = 'https://ipfs-cdn.bit.country/';
@@ -111,18 +111,16 @@ export enum SUPPORTED_TRANSFER_SUBSTRATE_CHAIN_NAME {
   pioneer = 'pioneer'
 }
 
-const RANDOM_IPFS_GATEWAY_SETTING = [
-  {
-    provider: CLOUDFLARE_PINATA_SERVER,
-    weight: 10
-  }
-];
+const RANDOM_IPFS_GATEWAY_SETTING = [];
 
-if (!RuntimeInfo.protocol ||
-  (!RuntimeInfo.protocol.startsWith('http') || RuntimeInfo.protocol.startsWith('https'))) {
+if (!RuntimeInfo.protocol || (RuntimeInfo.protocol && !RuntimeInfo.protocol.startsWith('http'))) {
   RANDOM_IPFS_GATEWAY_SETTING.push({
     provider: IPFS_FLEEK,
     weight: 4
+  },
+  {
+    provider: CLOUDFLARE_PINATA_SERVER,
+    weight: 10
   },
   {
     provider: IPFS_GATEWAY_4EVERLAND,
