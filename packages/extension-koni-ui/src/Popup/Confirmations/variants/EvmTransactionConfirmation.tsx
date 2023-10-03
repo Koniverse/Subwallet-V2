@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationsQueueItem, EvmSendTransactionRequest } from '@subwallet/extension-base/background/KoniTypes';
+import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 import { ConfirmationGeneralInfo, MetaInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
 import { useGetAccountByAddress, useGetChainInfoByChainId, useOpenDetailModal } from '@subwallet/extension-koni-ui/hooks';
 import { EvmSignatureSupportType, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -19,24 +20,18 @@ interface Props extends ThemeProps {
   request: ConfirmationsQueueItem<EvmSendTransactionRequest>
 }
 
-const convertToBigN = (num: EvmSendTransactionRequest['value']): string | number | undefined => {
-  if (typeof num === 'object') {
-    return num.toNumber();
-  } else {
-    return num;
-  }
-};
-
 function Component ({ className, request, type }: Props) {
-  const { id, payload: { account, chainId, to } } = request;
+  const { id, payload: { account, chainId: _chainId, to } } = request;
   const { t } = useTranslation();
+  const chainId = useMemo(() => anyNumberToBN(_chainId).toNumber(), [_chainId]);
+
   const chainInfo = useGetChainInfoByChainId(chainId);
   const recipientAddress = to;
-  const recipient = useGetAccountByAddress(recipientAddress);
+  const recipient = useGetAccountByAddress(recipientAddress || '');
   const onClickDetail = useOpenDetailModal();
 
   const amount = useMemo((): number => {
-    return new BigN(convertToBigN(request.payload.value) || 0).toNumber();
+    return new BigN(anyNumberToBN(request.payload.value).toString() || 0).toNumber();
   }, [request.payload.value]);
 
   return (

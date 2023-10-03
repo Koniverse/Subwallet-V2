@@ -12,6 +12,7 @@ import { getPSP22ContractPromise } from '@subwallet/extension-base/koni/api/toke
 import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/tokens/wasm/utils';
 import { state } from '@subwallet/extension-base/koni/background/handlers';
 import { _BALANCE_CHAIN_GROUP, _MANTA_ZK_CHAIN_GROUP, _PURE_EVM_CHAINS, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
+import { ERC20_ABI } from '@subwallet/extension-base/services/chain-service/helper';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _checkSmartContractSupportByChain, _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _isChainEvmCompatible, _isPureEvmChain, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { categoryAddresses, sumBN } from '@subwallet/extension-base/utils';
@@ -188,7 +189,7 @@ async function subscribeWithSystemAccountPallet (addresses: string[], chainInfo:
 
 function subscribeERC20Interval (addresses: string[], chain: string, evmApiMap: Record<string, _EvmApi>, callBack: (result: BalanceItem) => void): () => void {
   let tokenList = {} as Record<string, _ChainAsset>;
-  const erc20ContractMap = {} as Record<string, Contract>;
+  const erc20ContractMap = {} as Record<string, Contract<typeof ERC20_ABI>>;
 
   const getTokenBalances = () => {
     Object.values(tokenList).map(async (tokenInfo) => {
@@ -218,7 +219,7 @@ function subscribeERC20Interval (addresses: string[], chain: string, evmApiMap: 
   tokenList = state.getAssetByChainAndAsset(chain, [_AssetType.ERC20]);
 
   Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
-    erc20ContractMap[slug] = getERC20Contract(chain, _getContractAddressOfToken(tokenInfo), evmApiMap);
+    erc20ContractMap[slug] = getERC20Contract(evmApiMap[chain], _getContractAddressOfToken(tokenInfo));
   });
 
   getTokenBalances();

@@ -1,7 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import Common from '@ethereumjs/common';
+import { Common } from '@ethereumjs/common';
+import { LegacyTransaction } from '@ethereumjs/tx';
+import { LegacyTxData } from '@ethereumjs/tx/src/types';
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { isJsonPayload, SEED_DEFAULT_LENGTH, SEED_LENGTHS } from '@subwallet/extension-base/background/handlers/Extension';
@@ -48,13 +50,12 @@ import { ProposalTypes } from '@walletconnect/types/dist/types/sign-client/propo
 import { SessionTypes } from '@walletconnect/types/dist/types/sign-client/session';
 import { getSdkError } from '@walletconnect/utils';
 import BigN from 'bignumber.js';
-import { Transaction } from 'ethereumjs-tx';
 import { t } from 'i18next';
-import { TransactionConfig } from 'web3-core';
+import { Transaction as TransactionConfig } from 'web3-types';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { TypeRegistry } from '@polkadot/types';
-import { assert, BN, BN_ZERO, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex, u8aToString } from '@polkadot/util';
+import { assert, BN, BN_ZERO, hexStripPrefix, hexToU8a, isAscii, isHex, nToHex, u8aToHex, u8aToString } from '@polkadot/util';
 import { addressToEvm, base64Decode, decodeAddress, isAddress, isEthereumAddress, jsonDecrypt, keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
 import { EncryptedJson, KeypairType, Prefix } from '@polkadot/util-crypto/types';
 
@@ -2002,7 +2003,7 @@ export default class KoniExtension {
             const gasPrice = await web3.api.eth.getGasPrice();
             const gasLimit = await web3.api.eth.estimateGas(transaction);
 
-            estimatedFee = (gasLimit * parseInt(gasPrice)).toString();
+            estimatedFee = (gasLimit * gasPrice).toString();
           } else {
             const [mockTx] = await createTransferExtrinsic({
               from: address,
@@ -2534,29 +2535,31 @@ export default class KoniExtension {
         throw new Error(t('Failed to decode data. Please use a valid QR code'));
       }
 
-      const txObject: TransactionConfig = {
+      const txObject: LegacyTxData = {
         gasPrice: new BigN(tx.gasPrice).toNumber(),
         to: tx.to,
         value: new BigN(tx.value).toNumber(),
         data: tx.data,
         nonce: new BigN(tx.nonce).toNumber(),
-        gas: new BigN(tx.gas).toNumber()
+        gasLimit: new BigN(tx.gas).toNumber()
       };
 
-      const common = Common.forCustomChain('mainnet', {
+      const common = Common.custom({
         name: network.name,
         networkId: _getEvmChainId(network),
-        chainId: _getEvmChainId(network)
-      }, 'petersburg');
+        chainId: _getEvmChainId(network),
+        defaultHardfork: 'petersburg'
+      });
 
-      // @ts-ignore
-      const transaction = new Transaction(txObject, { common });
+      const transaction = new LegacyTransaction(txObject, { common });
 
-      pair.evmSigner.signTransaction(transaction);
+      const signedHex = pair.evmSigner.signTransaction(transaction);
+      const signedTx = LegacyTransaction.fromSerializedTx(hexToU8a(signedHex));
+
       signed = signatureToHex({
-        r: u8aToHex(transaction.r),
-        s: u8aToHex(transaction.s),
-        v: u8aToHex(transaction.v)
+        r: nToHex(signedTx.r),
+        s: nToHex(signedTx.s),
+        v: nToHex(signedTx.v)
       });
     }
 

@@ -8,16 +8,15 @@ import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/ha
 import { _ChainConnectionStatus, _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { BehaviorSubject } from 'rxjs';
-import Web3 from 'web3';
-import { HttpProvider, WebsocketProvider } from 'web3-core';
+import { Web3, Web3BaseProvider } from 'web3';
 
-const acalaEvmNetworks: string[] = EVM_PASS_CONNECT_STATUS.acala;
+const networksNoNetListening: string[] = Object.values(EVM_PASS_CONNECT_STATUS).flat();
 
 export class EvmApi implements _EvmApi {
   chainSlug: string;
   api: Web3;
   apiUrl: string;
-  provider: HttpProvider | WebsocketProvider;
+  provider: Web3BaseProvider;
   apiError?: string;
   apiRetry = 0;
   public readonly isApiConnectedSubject = new BehaviorSubject(false);
@@ -61,17 +60,23 @@ export class EvmApi implements _EvmApi {
     this.connect();
   }
 
-  async recoverConnect () {
-    const wsProvider = this.provider as WebsocketProvider;
+  _connect () {
+    const wsProvider = this.provider;
 
-    if (wsProvider.reconnect) {
-      wsProvider.reconnect();
+    if (wsProvider.supportsSubscriptions()) {
+      if (wsProvider.getStatus() === 'disconnected') {
+        wsProvider.connect();
+      }
     }
+  }
+
+  async recoverConnect () {
+    this._connect();
 
     await this.isReadyHandler.promise;
   }
 
-  private createProvider (apiUrl: string): HttpProvider | WebsocketProvider {
+  private createProvider (apiUrl: string): Web3BaseProvider {
     if (apiUrl.startsWith('http')) {
       return new Web3.providers.HttpProvider(apiUrl);
     } else {
@@ -96,7 +101,7 @@ export class EvmApi implements _EvmApi {
     this.clearIntervalCheckApi();
 
     return setInterval(() => {
-      if (!acalaEvmNetworks.includes(this.chainSlug)) {
+      if (!networksNoNetListening.includes(this.chainSlug)) {
         this.api.eth.net.isListening()
           .then(() => {
             this.onConnect();
@@ -114,14 +119,12 @@ export class EvmApi implements _EvmApi {
   }
 
   connect (): void {
-    // For websocket provider, connect it
-    const wsProvider = this.provider as WebsocketProvider;
+    this._connect();
 
-    wsProvider.connect && wsProvider.connect();
     this.updateConnectionStatus(_ChainConnectionStatus.CONNECTING);
 
     // Check if api is ready
-    if (!acalaEvmNetworks.includes(this.chainSlug)) {
+    if (!networksNoNetListening.includes(this.chainSlug)) {
       this.api.eth.net.isListening()
         .then(() => {
           this.isApiReadyOnce = true;
@@ -147,9 +150,9 @@ export class EvmApi implements _EvmApi {
     this.onDisconnect();
 
     // For websocket provider, disconnect it
-    const wsProvider = this.provider as WebsocketProvider;
+    const wsProvider = this.provider;
 
-    wsProvider.disconnect && wsProvider.disconnect();
+    wsProvider.supportsSubscriptions() && wsProvider.disconnect();
 
     this.updateConnectionStatus(_ChainConnectionStatus.DISCONNECTED);
 

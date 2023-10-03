@@ -4,6 +4,7 @@
 import { TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { isSameAddress } from '@subwallet/extension-base/utils';
+import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 
 import { Vec } from '@polkadot/types';
 import { EventRecord } from '@polkadot/types/interfaces';
@@ -163,12 +164,14 @@ const evmRecover = async (history: TransactionHistoryItem, chainService: ChainSe
           const block = await api.eth.getBlock(startBlock + i, true);
 
           for (const transaction of block.transactions) {
-            if (isSameAddress(transaction.from, from) && nonce === transaction.nonce) {
-              result.extrinsicHash = transaction.hash;
-              result.blockHash = block.hash;
-              result.blockNumber = block.number;
-              found = true;
-              break;
+            if (typeof transaction !== 'string') {
+              if (isSameAddress(transaction.from, from) && transaction.nonce && anyNumberToBN(block.nonce).toNumber() === nonce) {
+                result.extrinsicHash = transaction.hash;
+                result.blockHash = block.hash;
+                result.blockNumber = anyNumberToBN(block.number).toNumber();
+                found = true;
+                break;
+              }
             }
           }
 

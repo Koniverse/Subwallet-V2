@@ -3,7 +3,7 @@
 
 import { AmountData, BaseRequestSign, ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
 import EventEmitter from 'eventemitter3';
-import { TransactionConfig } from 'web3-core';
+import { Transaction as TransactionConfig } from 'web3-types';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';

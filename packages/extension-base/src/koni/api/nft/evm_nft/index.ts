@@ -5,7 +5,7 @@ import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
 import { getRandomIpfsGateway } from '@subwallet/extension-base/koni/api/nft/config';
 import { BaseNftApi, HandleNftParams } from '@subwallet/extension-base/koni/api/nft/nft';
-import { _ERC721_ABI } from '@subwallet/extension-base/services/chain-service/helper';
+import { getERC721Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
@@ -86,8 +86,7 @@ export class EvmNftApi extends BaseNftApi {
 
     const smartContract = _getContractAddressOfToken(tokenInfo);
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment
-    const contract = new this.evmApi.api.eth.Contract(_ERC721_ABI, smartContract);
+    const contract = getERC721Contract(this.evmApi, smartContract);
     let ownItem = false;
 
     let collectionImage: string | undefined;
@@ -100,8 +99,7 @@ export class EvmNftApi extends BaseNftApi {
 
       const nftIds: string[] = [];
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-      const balance = (await contract.methods.balanceOf(address).call()) as unknown as number;
+      const balance = (await contract.methods.balanceOf(address).call());
 
       if (Number(balance) === 0) {
         return;
@@ -115,10 +113,8 @@ export class EvmNftApi extends BaseNftApi {
 
       try {
         await Promise.all(itemIndexes.map(async (i) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-          const tokenId = await contract.methods.tokenOfOwnerByIndex(address, i).call() as number;
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-          const tokenURI = await contract.methods.tokenURI(tokenId).call() as string;
+          const tokenId = await contract.methods.tokenOfOwnerByIndex(address, i).call();
+          const tokenURI = await contract.methods.tokenURI(tokenId).call();
 
           const detailUrl = this.parseUrl(tokenURI);
 

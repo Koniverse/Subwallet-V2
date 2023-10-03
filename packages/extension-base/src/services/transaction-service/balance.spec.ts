@@ -10,7 +10,7 @@ import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-
 import { _getContractAddressOfToken, _isLocalToken, _isTokenEvmSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
 import BigN from 'bignumber.js';
 import fs from 'fs';
-import { TransactionConfig } from 'web3-core';
+import { Transaction as TransactionConfig } from 'web3-types';
 
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 

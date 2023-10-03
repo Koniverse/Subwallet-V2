@@ -14,9 +14,8 @@ import { KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { KeyringOptions } from '@subwallet/ui-keyring/options/types';
 import { KeyringAddress, KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import { SessionTypes } from '@walletconnect/types/dist/types/sign-client/session';
-import Web3 from 'web3';
-import { RequestArguments, TransactionConfig } from 'web3-core';
-import { JsonRpcPayload, JsonRpcResponse } from 'web3-core-helpers';
+import { Web3 } from 'web3';
+import { JsonRpcPayload, JsonRpcResponse, Transaction as TransactionConfig, Web3APIRequest } from 'web3-types';
 
 import { SignerResult } from '@polkadot/types/types/extrinsic';
 import { BN } from '@polkadot/util';
@@ -1152,6 +1151,8 @@ export interface EvmAppState {
 
 export type RequestEvmProviderSend = JsonRpcPayload;
 
+export type RequestArguments = Web3APIRequest<unknown, string>;
+
 export interface ResponseEvmProviderSend {
   error: (Error | null);
   result?: JsonRpcResponse;
@@ -2228,7 +2229,7 @@ export interface KoniRequestSignatures {
 
   // Evm
   'evm(events.subscribe)': [RequestEvmEvents, boolean, EvmEvent];
-  'evm(request)': [RequestArguments, unknown];
+  'evm(request)': [Web3APIRequest<unknown, string>, unknown];
   'evm(provider.send)': [RequestEvmProviderSend, string | number, ResponseEvmProviderSend]
 
   // Evm Transaction

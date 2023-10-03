@@ -68,7 +68,7 @@
     "sinon-chrome": "^3.0.1"
   },
   "resolutions": {
-    "@ethereumjs/common": "^2.6.5",
+    "@ethereumjs/common": "^4.0.0",
     "@polkadot/api": "^10.9.1",
     "@polkadot/api-contract": "^10.9.1",
     "@polkadot/networks": "^12.3.2",
@@ -76,8 +76,8 @@
     "@polkadot/util": "^12.3.2",
     "@polkadot/util-crypto": "^12.3.2",
     "@subwallet/chain-list": "0.2.16-beta.4",
-    "@subwallet/keyring": "^0.1.1",
-    "@subwallet/ui-keyring": "^0.1.1",
+    "@subwallet/keyring": "^0.1.2",
+    "@subwallet/ui-keyring": "^0.1.2",
     "babel-core": "^7.0.0-bridge.0",
     "rxjs": "^7.8.1",
     "safe-buffer": "^5.2.1",

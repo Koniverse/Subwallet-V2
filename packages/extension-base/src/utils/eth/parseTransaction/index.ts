@@ -3,7 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { EvmTransactionArg, NestedArray, ParseEvmTransactionData, ResponseParseEvmContractInput, ResponseQrParseRLP } from '@subwallet/extension-base/background/KoniTypes';
-import { _ERC20_ABI, _ERC721_ABI } from '@subwallet/extension-base/services/chain-service/helper';
+import { ERC20_ABI, ERC721_ABI } from '@subwallet/extension-base/services/chain-service/helper';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getEvmAbiExplorer, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { createTransactionFromRLP, Transaction as QrTransaction } from '@subwallet/extension-base/utils/eth';
@@ -12,8 +12,7 @@ import axios from 'axios';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-const ABIs = [_ERC20_ABI, _ERC721_ABI];
+const ABIs = [ERC20_ABI, ERC721_ABI];
 
 const genName = (name: NestedArray<string>): string => {
   if (typeof name === 'string') {

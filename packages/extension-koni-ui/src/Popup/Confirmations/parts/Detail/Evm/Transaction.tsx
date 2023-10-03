@@ -3,6 +3,7 @@
 
 import { EvmSendTransactionRequest, EvmTransactionArg } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson } from '@subwallet/extension-base/background/types';
+import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 import MetaInfo from '@subwallet/extension-koni-ui/components/MetaInfo/MetaInfo';
 import useGetAccountByAddress from '@subwallet/extension-koni-ui/hooks/account/useGetAccountByAddress';
 import useGetChainInfoByChainId from '@subwallet/extension-koni-ui/hooks/chain/useGetChainInfoByChainId';
@@ -17,26 +18,20 @@ interface Props extends ThemeProps {
   account: AccountJson;
 }
 
-const convertToBigN = (num: EvmSendTransactionRequest['value']): string | number | undefined => {
-  if (typeof num === 'object') {
-    return num.toNumber();
-  } else {
-    return num;
-  }
-};
-
 const Component: React.FC<Props> = (props: Props) => {
   const { account, className, request } = props;
-  const { chainId } = request;
+  const { chainId: _chainId } = request;
 
-  const recipient = useGetAccountByAddress(request.to);
+  const recipient = useGetAccountByAddress(request.to || '');
+
+  const chainId = useMemo(() => anyNumberToBN(_chainId).toNumber(), [_chainId]);
 
   const chainInfo = useGetChainInfoByChainId(chainId);
 
   const { t } = useTranslation();
 
   const amount = useMemo((): number => {
-    return new BigN(convertToBigN(request.value) || 0).toNumber();
+    return new BigN(anyNumberToBN(request.value).toString() || 0).toNumber();
   }, [request.value]);
 
   const handlerRenderArg = useCallback((data: EvmTransactionArg, parentName: string): JSX.Element => {

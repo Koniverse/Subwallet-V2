@@ -2,11 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import BigN from 'bignumber.js';
-import BNEther from 'bn.js';
 import { ethers } from 'ethers';
-import { SignedTransaction } from 'web3-core';
+import { Bytes, Numbers } from 'web3-types';
 
-import { hexStripPrefix, numberToHex } from '@polkadot/util';
+import { hexStripPrefix, numberToHex, u8aToHex } from '@polkadot/util';
+import { HexString } from '@polkadot/util/types';
+
+interface SignatureLike {
+  readonly v: HexString;
+  readonly r: HexString;
+  readonly s: HexString;
+}
 
 const hexToNumberString = (s: string): string => {
   const temp = parseInt(s, 16);
@@ -46,13 +52,23 @@ export class Transaction {
   }
 }
 
-export const anyNumberToBN = (value?: string | number | BNEther): BigN => {
+export const anyNumberToBN = (value?: Numbers): BigN => {
   if (typeof value === 'string' || typeof value === 'number') {
     return new BigN(value);
   } else if (typeof value === 'undefined') {
     return new BigN(0);
   } else {
-    return new BigN(value.toNumber());
+    return new BigN(value.toString());
+  }
+};
+
+export const bytesToHex = (value?: Bytes): HexString | undefined => {
+  if (typeof value === 'string') {
+    return value as HexString;
+  } else if (typeof value === 'undefined') {
+    return undefined;
+  } else {
+    return u8aToHex(value);
   }
 };
 
@@ -81,7 +97,7 @@ export const createTransactionFromRLP = (rlp: string): Transaction | null => {
   }
 };
 
-export const signatureToHex = (sig: SignedTransaction): string => {
+export const signatureToHex = (sig: SignatureLike): string => {
   const v = parseInt(sig.v);
   const r = hexStripPrefix(sig.r);
   const s = hexStripPrefix(sig.s);

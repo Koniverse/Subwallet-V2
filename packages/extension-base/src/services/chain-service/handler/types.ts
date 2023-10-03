@@ -7,28 +7,28 @@ import { _ChainConnectionStatus } from '@subwallet/extension-base/services/chain
 import { ApiPromise } from '@polkadot/api';
 
 export interface _EvmChainSpec {
-  evmChainId: number,
-  name: string,
-  symbol: string,
-  decimals: number,
-  existentialDeposit: string
+  evmChainId: number;
+  name: string;
+  symbol: string;
+  decimals: number;
+  existentialDeposit: string;
 }
 
 export interface _SubstrateChainSpec {
-  name: string,
-  addressPrefix: number,
-  genesisHash: string,
-  symbol: string,
-  decimals: number,
-  existentialDeposit: string,
-  paraId: number | null
+  name: string;
+  addressPrefix: number;
+  genesisHash: string;
+  symbol: string;
+  decimals: number;
+  existentialDeposit: string;
+  paraId: number | null;
 }
 
 export interface _ApiOptions {
-  providerName?: string,
-  metadata?: MetadataItem,
-  onUpdateStatus?: (status: _ChainConnectionStatus) => void,
-  externalApiPromise?: ApiPromise
+  providerName?: string;
+  metadata?: MetadataItem;
+  onUpdateStatus?: (status: _ChainConnectionStatus) => void;
+  externalApiPromise?: ApiPromise;
 }
 
 export enum _CHAIN_VALIDATION_ERROR {

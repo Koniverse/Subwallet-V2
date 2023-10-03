@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationDefinitions, ConfirmationResult, EvmSendTransactionRequest, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 import { CONFIRMATION_QR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-koni-ui/contexts/InjectContext';
 import { useGetChainInfoByChainId, useLedger, useNotification } from '@subwallet/extension-koni-ui/hooks';
@@ -55,7 +56,7 @@ const handleSignature = async (type: EvmSignatureSupportType, id: string, signat
 const Component: React.FC<Props> = (props: Props) => {
   const { className, extrinsicType, id, payload, type } = props;
   const { payload: { account, canSign, hashPayload } } = payload;
-  const chainId = (payload.payload as EvmSendTransactionRequest)?.chainId || 1;
+  const chainId = useMemo(() => anyNumberToBN((payload.payload as EvmSendTransactionRequest)?.chainId || 1).toNumber(), [payload.payload]);
 
   const { t } = useTranslation();
   const notify = useNotification();

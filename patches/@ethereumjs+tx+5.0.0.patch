@@ -1,0 +1,115 @@
+diff --git a/node_modules/@ethereumjs/tx/src/eip1559Transaction.ts b/node_modules/@ethereumjs/tx/src/eip1559Transaction.ts
+index a4436a1..c97eb8c 100644
+--- a/node_modules/@ethereumjs/tx/src/eip1559Transaction.ts
++++ b/node_modules/@ethereumjs/tx/src/eip1559Transaction.ts
+@@ -48,7 +48,7 @@ export class FeeMarketEIP1559Transaction extends BaseTransaction<TransactionType
+   public readonly maxPriorityFeePerGas: bigint
+   public readonly maxFeePerGas: bigint
+ 
+-  public readonly common: Common
++  public override readonly common: Common
+ 
+   /**
+    * Instantiate a transaction from a data dictionary.
+@@ -200,7 +200,7 @@ export class FeeMarketEIP1559Transaction extends BaseTransaction<TransactionType
+   /**
+    * The amount of gas paid for the data in this tx
+    */
+-  getDataFee(): bigint {
++  override getDataFee(): bigint {
+     if (this.cache.dataFee && this.cache.dataFee.hardfork === this.common.hardfork()) {
+       return this.cache.dataFee.value
+     }
+@@ -384,7 +384,7 @@ export class FeeMarketEIP1559Transaction extends BaseTransaction<TransactionType
+   /**
+    * Returns an object with the JSON representation of the transaction
+    */
+-  toJSON(): JsonTx {
++  override toJSON(): JsonTx {
+     const accessListJSON = AccessLists.getAccessListJSON(this.accessList)
+     const baseJson = super.toJSON()
+ 
+diff --git a/node_modules/@ethereumjs/tx/src/eip2930Transaction.ts b/node_modules/@ethereumjs/tx/src/eip2930Transaction.ts
+index 0bff54c..ad38ad7 100644
+--- a/node_modules/@ethereumjs/tx/src/eip2930Transaction.ts
++++ b/node_modules/@ethereumjs/tx/src/eip2930Transaction.ts
+@@ -47,7 +47,7 @@ export class AccessListEIP2930Transaction extends BaseTransaction<TransactionTyp
+   public readonly AccessListJSON: AccessList
+   public readonly gasPrice: bigint
+ 
+-  public readonly common: Common
++  public override readonly common: Common
+ 
+   /**
+    * Instantiate a transaction from a data dictionary.
+@@ -177,7 +177,7 @@ export class AccessListEIP2930Transaction extends BaseTransaction<TransactionTyp
+   /**
+    * The amount of gas paid for the data in this tx
+    */
+-  getDataFee(): bigint {
++  override getDataFee(): bigint {
+     if (this.cache.dataFee && this.cache.dataFee.hardfork === this.common.hardfork()) {
+       return this.cache.dataFee.value
+     }
+@@ -354,7 +354,7 @@ export class AccessListEIP2930Transaction extends BaseTransaction<TransactionTyp
+   /**
+    * Returns an object with the JSON representation of the transaction
+    */
+-  toJSON(): JsonTx {
++  override toJSON(): JsonTx {
+     const accessListJSON = AccessLists.getAccessListJSON(this.accessList)
+     const baseJson = super.toJSON()
+ 
+diff --git a/node_modules/@ethereumjs/tx/src/eip4844Transaction.ts b/node_modules/@ethereumjs/tx/src/eip4844Transaction.ts
+index 192ad85..a4d36fb 100644
+--- a/node_modules/@ethereumjs/tx/src/eip4844Transaction.ts
++++ b/node_modules/@ethereumjs/tx/src/eip4844Transaction.ts
+@@ -89,7 +89,7 @@ export class BlobEIP4844Transaction extends BaseTransaction<TransactionType.Blob
+   public readonly maxFeePerGas: bigint
+   public readonly maxFeePerBlobGas: bigint
+ 
+-  public readonly common: Common
++  public override readonly common: Common
+   public versionedHashes: Uint8Array[]
+   blobs?: Uint8Array[] // This property should only be populated when the transaction is in the "Network Wrapper" format
+   kzgCommitments?: Uint8Array[] // This property should only be populated when the transaction is in the "Network Wrapper" format
+@@ -536,7 +536,7 @@ export class BlobEIP4844Transaction extends BaseTransaction<TransactionType.Blob
+     }
+   }
+ 
+-  toJSON(): JsonTx {
++  override toJSON(): JsonTx {
+     const accessListJSON = AccessLists.getAccessListJSON(this.accessList)
+     const baseJson = super.toJSON()
+ 
+diff --git a/node_modules/@ethereumjs/tx/src/legacyTransaction.ts b/node_modules/@ethereumjs/tx/src/legacyTransaction.ts
+index 2c9d4a0..7b501c2 100644
+--- a/node_modules/@ethereumjs/tx/src/legacyTransaction.ts
++++ b/node_modules/@ethereumjs/tx/src/legacyTransaction.ts
+@@ -37,7 +37,7 @@ function meetsEIP155(_v: bigint, chainId: bigint) {
+ export class LegacyTransaction extends BaseTransaction<TransactionType.Legacy> {
+   public readonly gasPrice: bigint
+ 
+-  public readonly common: Common
++  public override readonly common: Common
+ 
+   /**
+    * Instantiate a transaction from a data dictionary.
+@@ -227,7 +227,7 @@ export class LegacyTransaction extends BaseTransaction<TransactionType.Legacy> {
+   /**
+    * The amount of gas paid for the data in this tx
+    */
+-  getDataFee(): bigint {
++  override getDataFee(): bigint {
+     if (this.cache.dataFee && this.cache.dataFee.hardfork === this.common.hardfork()) {
+       return this.cache.dataFee.value
+     }
+@@ -335,7 +335,7 @@ export class LegacyTransaction extends BaseTransaction<TransactionType.Legacy> {
+   /**
+    * Returns an object with the JSON representation of the transaction.
+    */
+-  toJSON(): JsonTx {
++  override toJSON(): JsonTx {
+     const baseJson = super.toJSON()
+     return {
+       ...baseJson,

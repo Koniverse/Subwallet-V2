@@ -1,25 +1,25 @@
 {
   "extends": "@polkadot/dev/config/tsconfig.json",
 	"compilerOptions": {
-      "composite": true,
-      "paths": {
-        "@subwallet/extension-base": ["extension-base/src"],
-        "@subwallet/extension-base/*": ["extension-base/src/*"],
-        "@subwallet/extension-chains": ["extension-chains/src"],
-        "@subwallet/extension-chains/*": ["extension-chains/src/*"],
-        "@subwallet/extension-compat-metamask": ["extension-compat-metamask/src"],
-        "@subwallet/extension-dapp": ["extension-dapp/src"],
-        "@subwallet/extension-dapp/*": ["extension-dapp/src/*"],
-        "@subwallet/extension-inject": ["extension-inject/src"],
-        "@subwallet/extension-inject/*": ["extension-inject/src/*"],
-        "@subwallet/extension-mocks/*": ["extension-mocks/src/*"],
-        "@subwallet/extension-koni": ["extension-koni/src"],
-        "@subwallet/extension-koni/*": ["extension-koni/src/*"],
-        "@subwallet/extension-koni-ui": ["extension-koni-ui/src"],
-        "@subwallet/extension-koni-ui/*": ["extension-koni-ui/src/*"],
-        "@subwallet/web-runner": ["web-runner/src"],
-        "@subwallet/web-runner/*": ["web-runner/src/*"]
+    "composite": true,
+    "paths": {
+      "@subwallet/extension-base": ["extension-base/src"],
+      "@subwallet/extension-base/*": ["extension-base/src/*"],
+      "@subwallet/extension-chains": ["extension-chains/src"],
+      "@subwallet/extension-chains/*": ["extension-chains/src/*"],
+      "@subwallet/extension-compat-metamask": ["extension-compat-metamask/src"],
+      "@subwallet/extension-dapp": ["extension-dapp/src"],
+      "@subwallet/extension-dapp/*": ["extension-dapp/src/*"],
+      "@subwallet/extension-inject": ["extension-inject/src"],
+      "@subwallet/extension-inject/*": ["extension-inject/src/*"],
+      "@subwallet/extension-mocks/*": ["extension-mocks/src/*"],
+      "@subwallet/extension-koni": ["extension-koni/src"],
+      "@subwallet/extension-koni/*": ["extension-koni/src/*"],
+      "@subwallet/extension-koni-ui": ["extension-koni-ui/src"],
+      "@subwallet/extension-koni-ui/*": ["extension-koni-ui/src/*"],
+      "@subwallet/web-runner": ["web-runner/src"],
+      "@subwallet/web-runner/*": ["web-runner/src/*"]
     },
     "skipLibCheck": true
-	}
+  }
  }

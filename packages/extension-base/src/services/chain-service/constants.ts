@@ -223,7 +223,8 @@ export const _DEFAULT_ACTIVE_CHAINS = [
 ];
 
 export const EVM_PASS_CONNECT_STATUS = {
-  acala: ['acala_evm', 'karura_evm']
+  acala: ['acala_evm', 'karura_evm'],
+  arbitrum_one: ['arbitrum_one']
 };
 
 export const EVM_REFORMAT_DECIMALS = {

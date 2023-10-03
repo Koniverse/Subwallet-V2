@@ -1,7 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import Common from '@ethereumjs/common';
+import { Common, Hardfork } from '@ethereumjs/common';
+import { LegacyTransaction, TypedTransaction } from '@ethereumjs/tx';
+import { LegacyTxData } from '@ethereumjs/tx/src/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete } from '@subwallet/extension-base/background/KoniTypes';
 import { ConfirmationRequestBase, Resolver } from '@subwallet/extension-base/background/types';
@@ -10,11 +12,10 @@ import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 import { isInternalRequest } from '@subwallet/extension-base/utils/request';
 import keyring from '@subwallet/ui-keyring';
 import BN from 'bn.js';
-import { Transaction } from 'ethereumjs-tx';
-import { toBuffer } from 'ethereumjs-util';
+import { addHexPrefix } from 'ethereumjs-util';
 import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
-import { TransactionConfig } from 'web3-core';
+import { Numbers, Transaction as TransactionConfig } from 'web3-types';
 
 import { logger as createLogger } from '@polkadot/util';
 import { Logger } from '@polkadot/util/types';
@@ -165,34 +166,33 @@ export default class EvmRequestHandler {
     }
   }
 
-  configToTransaction (config: TransactionConfig): Transaction {
-    function formatField (input: string | number | undefined | BN): BN | number | string | undefined {
+  configToTransaction (config: TransactionConfig): TypedTransaction {
+    function formatField (input?: Numbers): string {
       if (typeof input === 'string') {
         if (input.startsWith('0x')) {
           return input;
         } else {
-          return new BN(input);
+          return addHexPrefix(new BN(input).toString(16));
         }
       }
 
-      return input;
+      return addHexPrefix(input?.toString(16) || '');
     }
 
     // Convert any string, number to number with BigN exclude hex string
-    const txData = {
-      from: config.from,
+    const txData: LegacyTxData = {
+      // from: config.from,
       nonce: formatField(config.nonce),
       gasPrice: formatField(config.gasPrice),
       gasLimit: formatField(config.gas),
-      to: config.to,
+      to: config.to || '',
       value: formatField(config.value),
-      data: toBuffer(config.data)
+      data: config.data
     };
 
-    const common = Common.custom({ chainId: config.chainId, defaultHardfork: 'petersburg' });
+    const common = Common.custom({ chainId: config.chainId ? anyNumberToBN(config.chainId).toNumber() : 1 }, { hardfork: Hardfork.Petersburg });
 
-    // @ts-ignore
-    return new Transaction(txData, { common });
+    return LegacyTransaction.fromTxData(txData, { common });
   }
 
   private async signTransaction (confirmation: ConfirmationDefinitions['evmSendTransactionRequest'][0]): Promise<string> {

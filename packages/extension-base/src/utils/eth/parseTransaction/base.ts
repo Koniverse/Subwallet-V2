@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { FunctionFragment, JsonFragment, Result } from '@ethersproject/abi';
+import { Result } from '@ethersproject/abi';
 import { NestedArray } from '@subwallet/extension-base/background/KoniTypes';
 import { Buffer } from 'buffer';
 import { ethers } from 'ethers';
 import isBuffer from 'is-buffer';
-// @ts-ignore
-import { _jsonInterfaceMethodToString, AbiInput, AbiItem, keccak256 } from 'web3-utils';
+import { isAbiConstructorFragment, isAbiFragment, jsonInterfaceMethodToString } from 'web3-eth-abi';
+import { AbiFragment, AbiFunctionFragment, AbiParameter } from 'web3-types';
+import { keccak256 } from 'web3-utils';
 
 export interface InputData {
   method: string | null;
@@ -17,22 +18,15 @@ export interface InputData {
   names: NestedArray<string>[];
 }
 
-const ABI_TYPES = ['function', 'constructor', 'event', 'fallback'];
-
-const instanceOfAbiItem = (object: any): object is AbiItem => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-  return 'type' in object && ABI_TYPES.includes(object.type);
-};
-
-const checkArrayAbiItems = (data: AbiItem[] | any): boolean => {
+const checkArrayAbiItems = (data: AbiFragment[] | any): boolean => {
   if (Array.isArray(data)) {
-    return data.length > 0 && data.every((value) => instanceOfAbiItem(value));
+    return data.length > 0 && data.every((value) => isAbiFragment(value));
   } else {
     return false;
   }
 };
 
-const genType = (type: AbiInput | string): string => {
+const genType = (type: AbiParameter | string): string => {
   if (typeof type === 'string') {
     return type;
   } else {
@@ -52,14 +46,12 @@ const genType = (type: AbiInput | string): string => {
   }
 };
 
-const getMethodId = (abi: AbiItem): string => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
-  return keccak256(_jsonInterfaceMethodToString(abi)).slice(2, 10);
+const getMethodId = (abi: AbiFragment): string => {
+  return keccak256(jsonInterfaceMethodToString(abi)).slice(2, 10);
 };
 
-const getMethodName = (abi: AbiItem): string => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
-  return _jsonInterfaceMethodToString(abi) as string;
+const getMethodName = (abi: AbiFragment): string => {
+  return jsonInterfaceMethodToString(abi);
 };
 
 const deepRemoveUnwantedArrayProperties = (arr: any[] | Result): any[] => {
@@ -76,7 +68,7 @@ const deepRemoveUnwantedArrayProperties = (arr: any[] | Result): any[] => {
 };
 
 // remove 0x from addresses
-const deepStripTupleAddresses = (input: any[], tupleTypes: AbiInput[]): any[] => input.map((item, i) => {
+const deepStripTupleAddresses = (input: any[], tupleTypes: AbiParameter[]): any[] => input.map((item, i) => {
   // We find tupleTypes to not be an array where internalType is present in the ABI indicating item is a structure
   const type = tupleTypes[i] ? tupleTypes[i].type : null;
 
@@ -104,19 +96,19 @@ const toHexString = (byteArray: Buffer) => {
 };
 
 export class InputDataDecoder {
-  readonly abi: AbiItem[];
+  readonly abi: AbiFragment[];
 
-  constructor (prop: string | AbiItem[] | any) {
+  constructor (prop: string | AbiFragment[] | any) {
     this.abi = [];
 
     if (typeof prop === 'string') {
       try {
-        this.abi = JSON.parse(prop) as AbiItem[];
+        this.abi = JSON.parse(prop) as AbiFragment[];
       } catch (err) {
         throw new Error('Invalid ABI: ' + (err as Error).message);
       }
     } else if (checkArrayAbiItems(prop)) {
-      this.abi = prop as AbiItem[];
+      this.abi = prop as AbiFragment[];
     } else {
       throw new TypeError('Must pass ABI array object or file path to constructor');
     }
@@ -136,7 +128,7 @@ export class InputDataDecoder {
     for (let i = 0; i < this.abi.length; i++) {
       const obj = this.abi[i];
 
-      if (obj.type !== 'constructor') {
+      if (isAbiConstructorFragment(obj)) {
         continue;
       }
 
@@ -191,7 +183,7 @@ export class InputDataDecoder {
 
     for (const abi of this.abi) {
       try {
-        if (abi.type === 'constructor') {
+        if (isAbiConstructorFragment(abi)) {
           continue;
         }
 
@@ -233,7 +225,7 @@ export class InputDataDecoder {
             try {
               const ifc = new ethers.Interface([]);
 
-              inputs = ifc.decodeFunctionData(ethers.FunctionFragment.from(abi as JsonFragment), data);
+              inputs = ifc.decodeFunctionData(ethers.FunctionFragment.from(abi as AbiFunctionFragment), data);
             } catch (err) {}
           }
 
@@ -241,11 +233,11 @@ export class InputDataDecoder {
           let _inputs: any[] = [];
 
           _inputs = inputs.map((input, i) => {
-            if ((types[i] as AbiInput).components) {
-              const tupleTypes = (types[i] as AbiInput).components;
+            if ((types[i] as AbiParameter).components) {
+              const tupleTypes = (types[i] as AbiParameter).components;
 
               // eslint-disable-next-line @typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-argument
-              return deepStripTupleAddresses(input, tupleTypes as AbiInput[]);
+              return deepStripTupleAddresses(input, tupleTypes as AbiParameter[]);
             }
 
             if (types[i] === 'address' && typeof input === 'string') {
@@ -281,7 +273,7 @@ export class InputDataDecoder {
 
     if (!result.method) {
       for (const obj of this.abi) {
-        if (obj.type === 'constructor') {
+        if (isAbiConstructorFragment(obj)) {
           continue;
         }
 
@@ -293,7 +285,7 @@ export class InputDataDecoder {
 
         try {
           const ifc = new ethers.Interface([]);
-          const _result = ifc.decodeFunctionData(ethers.FunctionFragment.from(obj as FunctionFragment), data);
+          const _result = ifc.decodeFunctionData(ethers.FunctionFragment.from(obj as AbiFunctionFragment), data);
           const inputs = deepRemoveUnwantedArrayProperties(_result);
 
           result.method = method;

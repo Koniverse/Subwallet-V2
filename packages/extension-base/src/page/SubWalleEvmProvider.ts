@@ -7,7 +7,7 @@ import SafeEventEmitter from '@metamask/safe-event-emitter';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { SendRequest } from '@subwallet/extension-base/page/types';
 import { JsonRpcRequest, JsonRpcResponse, JsonRpcSuccess } from 'json-rpc-engine';
-import { RequestArguments } from 'web3-core';
+import { Web3APIRequest } from 'web3-types';
 
 export interface SendSyncJsonRpcRequest extends JsonRpcRequest<unknown> {
   method: 'net_version';
@@ -86,7 +86,7 @@ export class SubWalletEvmProvider extends SafeEventEmitter implements EvmProvide
     return this;
   }
 
-  request<T> ({ method, params }: RequestArguments): Promise<T> {
+  request<T> ({ method, params }: Web3APIRequest<unknown, string>): Promise<T> {
     // Subscribe events
     switch (method) {
       case 'eth_requestAccounts':
