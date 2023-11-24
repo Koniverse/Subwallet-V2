@@ -235,7 +235,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
             hide={!isShowBalance}
             prefix='$'
             subFloatNumber
-            value={totalValue}
+            value={1000000000000000.1232343}
           />
 
           <div className={'__balance-change-container'}>
@@ -257,7 +257,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
                 hide={!isShowBalance}
                 prefix={isTotalBalanceDecrease ? '-' : '+'}
                 suffix={'%'}
-                value={totalChangePercent}
+                value={1000000000000000.1232343}
                 weight={700}
               />
             </Tag>
@@ -282,7 +282,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
             hide={!isShowBalance}
             prefix='$'
             subFloatNumber
-            value={totalBalanceInfo.freeValue}
+            value={1000000000000000.1232343}
           />
         </div>
       </div>
@@ -304,7 +304,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
             hide={!isShowBalance}
             prefix='$'
             subFloatNumber
-            value={totalBalanceInfo.lockedValue}
+            value={1000000000000000.1232343}
           />
         </div>
       </div>
@@ -402,7 +402,11 @@ const Balance = styled(Component)<Props>(({ theme: { token } }: Props) => ({
   marginBottom: 56,
   flexWrap : 'wrap',
 
-
+  '@media screen and (max-width: 1200px)' : {
+    '.__action-block': {
+      flexBasis: '100% !important'
+    },
+  },
   '.ant-number .ant-typography': {
     fontSize: 'inherit !important',
     fontWeight: 'inherit !important',
