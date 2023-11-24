@@ -134,26 +134,26 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   }, [dataContext]);
 
   const onOpenSendFund = useCallback(() => {
-    if (currentAccount && currentAccount.isReadOnly) {
-      notify({
-        message: t('The account you are using is read-only, you cannot send assets with it'),
-        type: 'info',
-        duration: 3
+      if (currentAccount && currentAccount.isReadOnly) {
+        notify({
+          message: t('The account you are using is read-only, you cannot send assets with it'),
+          type: 'info',
+          duration: 3
+        });
+
+        return;
+      }
+
+      const address = currentAccount ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
+
+      setStorage({
+        ...DEFAULT_TRANSFER_PARAMS,
+        from: address,
+        defaultSlug: tokenGroupSlug || ''
       });
-
-      return;
-    }
-
-    const address = currentAccount ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
-
-    setStorage({
-      ...DEFAULT_TRANSFER_PARAMS,
-      from: address,
-      defaultSlug: tokenGroupSlug || ''
-    });
-    activeModal(TRANSACTION_TRANSFER_MODAL);
-  },
-  [currentAccount, setStorage, tokenGroupSlug, activeModal, notify, t]
+      activeModal(TRANSACTION_TRANSFER_MODAL);
+    },
+    [currentAccount, setStorage, tokenGroupSlug, activeModal, notify, t]
   );
 
   useEffect(() => {
@@ -310,7 +310,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       </div>
 
       <div
-        className='__block-divider'
+        className='__block-divider __divider-special'
       />
 
       <div className={CN('__block-item', '__action-block')}>
@@ -400,6 +400,8 @@ const Balance = styled(Component)<Props>(({ theme: { token } }: Props) => ({
   justifyContent: 'space-between',
   alignItems: 'stretch',
   marginBottom: 56,
+  flexWrap : 'wrap',
+
 
   '.ant-number .ant-typography': {
     fontSize: 'inherit !important',
@@ -414,9 +416,9 @@ const Balance = styled(Component)<Props>(({ theme: { token } }: Props) => ({
 
   '.__balance-value': {
     fontWeight: token.headingFontWeight,
-
+    fontSize: '2vw !important',
     '.ant-number-decimal': {
-      fontSize: '24px !important',
+      fontSize: '16px !important',
       lineHeight: '32px !important'
     }
   },
@@ -426,6 +428,16 @@ const Balance = styled(Component)<Props>(({ theme: { token } }: Props) => ({
     width: 1,
     backgroundColor: token.colorBgDivider,
     marginTop: token.marginSM
+  },
+
+  '.__divider-special': {
+    display : 'block'
+  },
+
+  '@media screen and (min-width: 990px) and (max-width: 1200px)' : {
+    '.__divider-special': {
+      display : 'none'
+    },
   },
 
   '.__balance-change-container': {
@@ -459,7 +471,7 @@ const Balance = styled(Component)<Props>(({ theme: { token } }: Props) => ({
   '.__block-item': {
     display: 'flex',
     flexDirection: 'column',
-    flex: 1
+    flex: '1 1 200px'
   },
 
   '.__block-title-wrapper': {
