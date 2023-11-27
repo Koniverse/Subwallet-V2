@@ -10,17 +10,17 @@ import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-koni-ui/contexts/ScreenContext';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useConfirmModal from '@subwallet/extension-koni-ui/hooks/modal/useConfirmModal';
 import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import useFetchChainState from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainState';
 import { removeChain, upsertChain } from '@subwallet/extension-koni-ui/messaging';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, ButtonProps, Col, Field, Form, Icon, Input, Row } from '@subwallet/react-ui';
+import {Button, ButtonProps, Col, Field, Form, Icon, Input, ModalContext, Row} from '@subwallet/react-ui';
 import { FloppyDiskBack, Globe, Plus, ShareNetwork, Trash } from 'phosphor-react';
 import { FieldData, RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
+import { BaseConfirmDialog } from "@subwallet/extension-koni-ui/components/Modal/BaseConfrimDialog";
 
 type Props = ThemeProps
 
@@ -39,15 +39,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const location = useLocation();
   const showNotification = useNotification();
   const [form] = Form.useForm<ChainDetailForm>();
-  const { handleSimpleConfirmModal } = useConfirmModal({
-    title: t<string>('Delete network'),
-    maskClosable: true,
-    closable: true,
-    type: 'error',
-    subTitle: t<string>('You are about to delete this network'),
-    content: t<string>('Confirm delete this network'),
-    okText: t<string>('Remove')
-  });
+  const { inactiveModal, activeModal } = useContext(ModalContext);
+
 
   const [isChanged, setIsChanged] = useState(false);
   const [isValueValid, setIsValueValid] = useState(false);
@@ -93,32 +86,32 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [navigate]);
 
   const handleDeleteCustomChain = useCallback(() => {
-    handleSimpleConfirmModal()
-      .then(() => {
-        setIsDeleting(true);
-        removeChain(chainInfo.slug)
-          .then((result) => {
-            if (result) {
-              navigate(-1);
-              showNotification({
-                message: t('Deleted network successfully')
-              });
-            } else {
-              showNotification({
-                message: t('Error. Please try again')
-              });
-              setIsDeleting(false);
-            }
-          })
-          .catch(() => {
+    activeModal('delete-chain-modal')
+  }, [chainInfo.slug, navigate, showNotification, t, activeModal]);
+
+  const handleConfirmDeletion = useCallback( ()=>{
+    setIsDeleting(true);
+    removeChain(chainInfo.slug)
+        .then((result) => {
+          if (result) {
+            navigate(-1);
+            showNotification({
+              message: t('Deleted network successfully')
+            });
+          } else {
             showNotification({
               message: t('Error. Please try again')
             });
             setIsDeleting(false);
+          }
+        })
+        .catch(() => {
+          showNotification({
+            message: t('Error. Please try again')
           });
-      })
-      .catch(console.log);
-  }, [chainInfo.slug, handleSimpleConfirmModal, navigate, showNotification, t]);
+          setIsDeleting(false);
+        });
+  }, [chainInfo.slug, navigate, showNotification, t, activeModal])
 
   const chainTypeString = useCallback(() => {
     let result = '';
@@ -435,6 +428,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               }
             </div>
           </Form>
+          <BaseConfirmDialog
+            id={'delete-chain-modal'}
+            title={t<string>('Delete network')}
+            onOk={handleConfirmDeletion}
+            onCancel={()=>inactiveModal('delete-chain-modal')}
+            maskClosable={true}
+            closable={true}
+            type={'error'}
+            subTitle={t<string>('You are about to delete this network')}
+            content={t<string>('Confirm delete this network')}
+            okText={t<string>('Remove')}
+          />
         </div>
       </Layout.Base>
     </PageWrapper>

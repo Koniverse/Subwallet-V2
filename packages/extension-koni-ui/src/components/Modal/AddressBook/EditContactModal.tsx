@@ -8,8 +8,8 @@ import { DELETE_ADDRESS_BOOK_MODAL, EDIT_ADDRESS_BOOK_MODAL } from '@subwallet/e
 import { useCopy, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { editContactAddress, removeContactAddress } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { noop, simpleCheckForm, toShort } from '@subwallet/extension-koni-ui/utils';
-import { Button, Field, Form, Icon, Input, ModalContext, SwModalFuncProps, useExcludeModal } from '@subwallet/react-ui';
+import {  simpleCheckForm, toShort } from '@subwallet/extension-koni-ui/utils';
+import { Button, Field, Form, Icon, Input, ModalContext, useExcludeModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CopySimple, Trash } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
@@ -17,7 +17,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import useConfirmModal from '../../../hooks/modal/useConfirmModal';
+import {BaseConfirmDialog} from "@subwallet/extension-koni-ui/components/Modal/BaseConfrimDialog";
 
 interface Props extends ThemeProps {
   addressJson: AddressJson
@@ -40,7 +40,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const { t } = useTranslation();
   const notification = useNotification();
 
-  const { checkActive, inactiveModal } = useContext(ModalContext);
+  const { checkActive, inactiveModal, activeModal } = useContext(ModalContext);
 
   useExcludeModal(modalId);
 
@@ -56,21 +56,7 @@ const Component: React.FC<Props> = (props: Props) => {
     [FormFieldName.NAME]: defaultName || ''
   }), [defaultName]);
 
-  const modalProps: SwModalFuncProps = useMemo(() => {
-    return {
-      closable: true,
-      content: t('You would no longer see this address in your address book'),
-      id: DELETE_ADDRESS_BOOK_MODAL,
-      okText: t('Remove'),
-      subTitle: t('Delete this contact?'),
-      title: t('Confirmation'),
-      type: 'error',
-      maskClosable: true,
-      zIndex: 1005
-    };
-  }, [t]);
 
-  const { handleSimpleConfirmModal: onClickDelete } = useConfirmModal(modalProps);
 
   const [form] = Form.useForm<EditContactFormProps>();
 
@@ -102,6 +88,8 @@ const Component: React.FC<Props> = (props: Props) => {
     return Promise.resolve();
   }, [existNames, t]);
 
+
+
   const onSubmit: FormCallbacks<EditContactFormProps>['onFinish'] = useCallback((values: EditContactFormProps) => {
     const { [FormFieldName.NAME]: _name } = values;
 
@@ -130,112 +118,132 @@ const Component: React.FC<Props> = (props: Props) => {
     if (!address) {
       return;
     }
+    activeModal(DELETE_ADDRESS_BOOK_MODAL)
+  }, [address, activeModal, inactiveModal]);
 
-    onClickDelete()
-      .then(() => {
-        setDeleting(true);
-        removeContactAddress(address).finally(() => {
-          setDeleting(false);
-          inactiveModal(modalId);
-        });
-      })
-      .finally(noop);
-  }, [address, onClickDelete, inactiveModal]);
+
+  const onCompleteDeletion = useCallback(()=>{
+    setDeleting(true);
+    removeContactAddress(address).finally(() => {
+      setDeleting(false);
+      inactiveModal(modalId);
+    })
+  }, [address, activeModal, inactiveModal])
 
   useEffect(() => {
     form.resetFields([FormFieldName.NAME]);
   }, [form, isActive]);
 
   return (
-    <BaseModal
-      className={CN(className)}
-      id={modalId}
-      onCancel={(!loading && !deleting) ? onCancel : undefined}
-      title={t('Edit contact')}
-    >
-      <Form
-        className='form-space-sm'
-        form={form}
-        initialValues={defaultValues}
-        name='edit-contact-form'
-        onFieldsChange={onFieldsChange}
-        onFinish={onSubmit}
-      >
-        <Form.Item
-          name={FormFieldName.NAME}
-          rules={[
-            {
-              transform: (value: string) => value.trimStart().trimEnd(),
-              validator: nameValidator
-            }
-          ]}
-          statusHelpAsTooltip={true}
+      <>
+        <BaseModal
+            className={CN(className)}
+            id={modalId}
+            onCancel={(!loading && !deleting) ? onCancel : undefined}
+            title={t('Edit contact')}
         >
-          <Input
-            label={t('Contact name')}
-            prefix={(
-              <Avatar
-                size={20}
-                value={address}
+          <Form
+              className='form-space-sm'
+              form={form}
+              initialValues={defaultValues}
+              name='edit-contact-form'
+              onFieldsChange={onFieldsChange}
+              onFinish={onSubmit}
+          >
+            <Form.Item
+                name={FormFieldName.NAME}
+                rules={[
+                  {
+                    transform: (value: string) => value.trimStart().trimEnd(),
+                    validator: nameValidator
+                  }
+                ]}
+                statusHelpAsTooltip={true}
+            >
+              <Input
+                  label={t('Contact name')}
+                  prefix={(
+                      <Avatar
+                          size={20}
+                          value={address}
+                      />
+                  )}
               />
-            )}
-          />
-        </Form.Item>
-        <Form.Item>
-          <Field
-            className='address-input'
-            content={toShort(address, 12, 12)}
-            label={t('Contact address')}
-            suffix={(
+            </Form.Item>
+            <Form.Item>
+              <Field
+                  className='address-input'
+                  content={toShort(address, 12, 12)}
+                  label={t('Contact address')}
+                  suffix={(
+                      <Button
+                          className='copy-button'
+                          icon={(
+                              <Icon
+                                  phosphorIcon={CopySimple}
+                                  size='sm'
+                              />
+                          )}
+                          onClick={onCopyAddress}
+                          size='xs'
+                          type='ghost'
+                      />
+                  )}
+              />
+            </Form.Item>
+            <Form.Item
+                className='button-container'
+            >
               <Button
-                className='copy-button'
-                icon={(
-                  <Icon
-                    phosphorIcon={CopySimple}
-                    size='sm'
-                  />
-                )}
-                onClick={onCopyAddress}
-                size='xs'
-                type='ghost'
+                  disabled={loading}
+                  icon={(
+                      <Icon
+                          phosphorIcon={Trash}
+                          weight='fill'
+                      />
+                  )}
+                  loading={deleting}
+                  onClick={onDelete}
+                  schema='danger'
               />
-            )}
-          />
-        </Form.Item>
-        <Form.Item
-          className='button-container'
-        >
-          <Button
-            disabled={loading}
-            icon={(
-              <Icon
-                phosphorIcon={Trash}
-                weight='fill'
-              />
-            )}
-            loading={deleting}
-            onClick={onDelete}
-            schema='danger'
-          />
-          <Button
-            block={true}
-            disabled={loading || deleting}
-            onClick={onCancel}
-            schema='secondary'
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            block={true}
-            disabled={isDisabled || deleting}
-            htmlType='submit'
-            loading={loading}
-          >
-            {t('Save')}
-          </Button>
-        </Form.Item>
-      </Form>
-    </BaseModal>
+              <Button
+                  block={true}
+                  disabled={loading || deleting}
+                  onClick={onCancel}
+                  schema='secondary'
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                  block={true}
+                  disabled={isDisabled || deleting}
+                  htmlType='submit'
+                  loading={loading}
+              >
+                {t('Save')}
+              </Button>
+            </Form.Item>
+          </Form>
+        </BaseModal>
+        <BaseConfirmDialog
+            closable={true}
+            content={ t('You would no longer see this address in your address book')}
+            id={DELETE_ADDRESS_BOOK_MODAL}
+            okText={t('Remove')}
+            subTitle={t('Delete this contact?')}
+            title={t('Confirmation')}
+            type={'error'}
+            maskClosable={true}
+            zIndex={1005}
+            onCancel={() => {
+              inactiveModal(DELETE_ADDRESS_BOOK_MODAL);
+            }}
+            onOk= {() => {
+              onCompleteDeletion()
+              inactiveModal(DELETE_ADDRESS_BOOK_MODAL);
+            }}
+        />
+      </>
   );
 };
 

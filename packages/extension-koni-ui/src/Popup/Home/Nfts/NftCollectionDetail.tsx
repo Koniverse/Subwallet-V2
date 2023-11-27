@@ -11,19 +11,19 @@ import { ScreenContext } from '@subwallet/extension-koni-ui/contexts/ScreenConte
 import { useNavigateOnChangeAccount } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useConfirmModal from '@subwallet/extension-koni-ui/hooks/modal/useConfirmModal';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import useGetChainAssetInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useGetChainAssetInfo';
 import { deleteCustomAssets } from '@subwallet/extension-koni-ui/messaging';
 import { NftGalleryWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Nfts/component/NftGalleryWrapper';
 import { INftCollectionDetail, INftItemDetail } from '@subwallet/extension-koni-ui/Popup/Home/Nfts/utils';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, ButtonProps, Icon, SwList } from '@subwallet/react-ui';
+import {Button, ButtonProps, Icon, ModalContext, SwList} from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Image, Trash } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import styled from 'styled-components';
+import {BaseConfirmDialog} from "@subwallet/extension-koni-ui/components/Modal/BaseConfrimDialog";
 
 type WrapperProps = ThemeProps;
 type Props = ThemeProps & {
@@ -48,6 +48,7 @@ function Component ({ className = '', collectionDetail }: Props): React.ReactEle
     setShowSearchInput: React.Dispatch<React.SetStateAction<boolean>>
   } = useOutletContext();
   const { isWebUI } = useContext(ScreenContext);
+  const { inactiveModal, activeModal } = useContext(ModalContext);
 
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -60,15 +61,6 @@ function Component ({ className = '', collectionDetail }: Props): React.ReactEle
 
   const originAssetInfo = useGetChainAssetInfo(collectionInfo.originAsset);
 
-  const { handleSimpleConfirmModal } = useConfirmModal({
-    title: t<string>('Delete NFT'),
-    maskClosable: true,
-    closable: true,
-    type: 'error',
-    subTitle: t<string>('You are about to delete this NFT collection'),
-    content: t<string>('Confirm delete this NFT collection'),
-    okText: t<string>('Remove')
-  });
 
   const searchNft = useCallback((nftItem: NftItem, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
@@ -123,9 +115,12 @@ function Component ({ className = '', collectionDetail }: Props): React.ReactEle
   }, [isWebUI, t]);
 
   const handleDeleteNftCollection = useCallback(() => {
-    handleSimpleConfirmModal().then(() => {
-      if (collectionInfo.originAsset) {
-        deleteCustomAssets(collectionInfo.originAsset)
+    activeModal('delete_NFT_modal')
+  }, [collectionInfo.originAsset, goBack, showNotification, t, activeModal, inactiveModal]);
+
+  const handleConfirmDelete = useCallback(()=>{
+    if (collectionInfo.originAsset) {
+      deleteCustomAssets(collectionInfo.originAsset)
           .then((result) => {
             if (result) {
               goBack();
@@ -139,9 +134,8 @@ function Component ({ className = '', collectionDetail }: Props): React.ReactEle
             }
           })
           .catch(console.log);
-      }
-    }).catch(console.log);
-  }, [collectionInfo.originAsset, goBack, handleSimpleConfirmModal, showNotification, t]);
+    }
+  }, [collectionInfo.originAsset, goBack, showNotification, t, activeModal, inactiveModal])
 
   const subHeaderButton: ButtonProps[] = [
     {
@@ -247,6 +241,18 @@ function Component ({ className = '', collectionDetail }: Props): React.ReactEle
               searchPlaceholder={t<string>('Search Nft name or ID')}
             />
           )}
+        <BaseConfirmDialog
+          id = {'delete_NFT_modal'}
+          title={t<string>('Delete NFT')}
+          maskClosable={true}
+          closable={true}
+          type={'error'}
+          subTitle={t<string>('You are about to delete this NFT collection')}
+          content={t<string>('Confirm delete this NFT collection')}
+          okText={t<string>('Remove')}
+          onOk={handleConfirmDelete}
+          onCancel={()=>inactiveModal('delete_NFT_modal')}
+        />
       </Layout.Base>
     </PageWrapper>
   );

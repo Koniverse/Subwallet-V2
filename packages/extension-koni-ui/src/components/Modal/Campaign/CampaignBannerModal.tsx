@@ -6,11 +6,12 @@ import { HOME_CAMPAIGN_BANNER_MODAL } from '@subwallet/extension-koni-ui/constan
 import { completeBannerCampaign } from '@subwallet/extension-koni-ui/messaging/campaigns';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { getBannerButtonIcon, openInNewTab } from '@subwallet/extension-koni-ui/utils';
-import { Button, Icon, Image, ModalContext, SwModal } from '@subwallet/react-ui';
+import { Button, Icon, Image, ModalContext } from '@subwallet/react-ui';
 import { ButtonSchema } from '@subwallet/react-ui/lib/button/button';
 import CN from 'classnames';
 import React, { useCallback, useContext } from 'react';
 import styled from 'styled-components';
+import {BaseModal} from "@subwallet/extension-koni-ui/components";
 
 interface Props extends ThemeProps {
   banner: CampaignBanner;
@@ -49,7 +50,7 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [onCloseBanner]);
 
   return (
-    <SwModal
+    <BaseModal
       className={CN(className)}
       closable={false}
       id={modalId}
@@ -82,7 +83,7 @@ const Component: React.FC<Props> = (props: Props) => {
           );
         })}
       </div>
-    </SwModal>
+    </BaseModal>
   );
 };
 

@@ -6,7 +6,7 @@ import { InjectContext } from '@subwallet/extension-koni-ui/contexts/InjectConte
 import useUILock from '@subwallet/extension-koni-ui/hooks/common/useUILock';
 import { resetWallet } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, Icon, ModalContext, PageIcon, SwModal } from '@subwallet/react-ui';
+import { Button, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowCounterClockwise, Trash, WarningCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useState } from 'react';
@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import useNotification from '../../hooks/common/useNotification';
+import {BaseModal} from "@subwallet/extension-koni-ui/components";
 
 type Props = ThemeProps;
 
@@ -72,7 +73,7 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [disableInject, notify, onClose, unlock]);
 
   return (
-    <SwModal
+    <BaseModal
       className={CN(className)}
       id={modalId}
       onCancel={onClose}
@@ -123,7 +124,7 @@ const Component: React.FC<Props> = (props: Props) => {
           </Button>
         </div>
       </div>
-    </SwModal>
+    </BaseModal>
   );
 };
 

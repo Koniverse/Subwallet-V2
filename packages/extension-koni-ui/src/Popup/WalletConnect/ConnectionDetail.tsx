@@ -7,12 +7,12 @@ import { AccountItemWithName, EmptyList, GeneralEmptyList, Layout, MetaInfo, Pag
 import { BaseModal } from '@subwallet/extension-koni-ui/components/Modal/BaseModal';
 import { WALLET_CONNECT_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
-import { useConfirmModal, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { disconnectWalletConnectConnection } from '@subwallet/extension-koni-ui/messaging';
 import { ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 import { Theme, ThemeProps, WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
-import { chainsToWalletConnectChainInfos, getWCAccountList, noop } from '@subwallet/extension-koni-ui/utils';
-import { Button, Icon, Image, ModalContext, NetworkItem, SwList, SwModalFuncProps } from '@subwallet/react-ui';
+import { chainsToWalletConnectChainInfos, getWCAccountList } from '@subwallet/extension-koni-ui/utils';
+import { Button, Icon, Image, ModalContext, NetworkItem, SwList } from '@subwallet/react-ui';
 import { SwModalProps } from '@subwallet/react-ui/es/sw-modal/SwModal';
 import { SessionTypes } from '@walletconnect/types';
 import CN from 'classnames';
@@ -20,6 +20,7 @@ import { Info, MagnifyingGlass, Plugs } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { BaseConfirmDialog } from "@subwallet/extension-koni-ui/components/Modal/BaseConfrimDialog";
 import styled, { useTheme } from 'styled-components';
 
 interface ComponentProps {
@@ -52,8 +53,6 @@ const Component: React.FC<ComponentProps> = (props) => {
 
   const img = `https://icons.duckduckgo.com/ip2/${domain}.ico`;
 
-  const { activeModal, inactiveModal } = useContext(ModalContext);
-
   const { chainInfoMap } = useSelector((state) => state.chainStore);
   const { accounts } = useSelector((state) => state.accountState);
 
@@ -65,46 +64,29 @@ const Component: React.FC<ComponentProps> = (props) => {
 
   const accountItems = useMemo((): AbstractAddressJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
 
-  const modalProps = useMemo((): Partial<SwModalFuncProps> => ({
-    id: disconnectModalId,
-    okText: t('Disconnect'),
-    okButtonProps: {
-      icon: (
-        <Icon
-          phosphorIcon={Plugs}
-          weight='fill'
-        />
-      )
-    },
-    content: t('Once you disconnect, you will no longer see this connection on SubWallet and on your DApp.'),
-    subTitle: t('Are you sure you want to disconnect?'),
-    title: t('Disconnect'),
-    type: 'error',
-    closable: true
-  }), [t]);
 
-  const { handleSimpleConfirmModal } = useConfirmModal(modalProps);
+  const { inactiveModal, activeModal } = useContext(ModalContext);
 
   const [loading, setLoading] = useState(false);
 
   const onDisconnect = useCallback(() => {
-    handleSimpleConfirmModal()
-      .then(() => {
-        setLoading(true);
-        disconnectWalletConnectConnection(topic)
+    activeModal(disconnectModalId)
+  }, [notification, t, topic, inactiveModal, activeModal]);
+
+  const handleConfimDisconnect = useCallback(() => {
+      setLoading(true);
+      disconnectWalletConnectConnection(topic)
           .catch((e) => {
             console.log(e);
             notification({
               type: 'error',
               message: t('Fail to disconnect')
             });
-          });
-      })
-      .catch(noop)
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [handleSimpleConfirmModal, notification, t, topic]);
+          })
+        .finally(() => {
+          setLoading(false);
+        });
+  }, [notification, t, topic, inactiveModal, activeModal]);
 
   const goBack = useCallback(() => {
     navigate('/wallet-connect/list');
@@ -227,6 +209,25 @@ const Component: React.FC<ComponentProps> = (props) => {
           searchPlaceholder={t<string>('Network name')}
         />
       </BaseModal>
+      <BaseConfirmDialog
+          id={disconnectModalId}
+          okText={t('Disconnect')}
+          okButtonProps={{
+            icon: (
+                <Icon
+                    phosphorIcon={Plugs}
+                    weight='fill'
+                />
+            )
+          }}
+          onOk={handleConfimDisconnect}
+          onCancel={()=>inactiveModal(disconnectModalId)}
+          content={t('Once you disconnect, you will no longer see this connection on SubWallet and on your DApp.')}
+          subTitle={t('Are you sure you want to disconnect?')}
+          title={t('Disconnect')}
+          type={'error'}
+          closable={true}
+      />
     </div>
   );
 
@@ -347,6 +348,7 @@ const Wrapper: React.FC<Props> = (props: Props) => {
         className={className}
         session={session}
       />
+
     </PageWrapper>
   );
 };

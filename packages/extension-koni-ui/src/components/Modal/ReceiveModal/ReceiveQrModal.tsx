@@ -12,13 +12,14 @@ import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { getScanExplorerAddressInfoUrl, openInNewTab } from '@subwallet/extension-koni-ui/utils';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
-import { Button, Icon, Logo, ModalContext, SwModal, SwQRCode } from '@subwallet/react-ui';
+import { Button, Icon, Logo, ModalContext, SwQRCode } from '@subwallet/react-ui';
 import AccountItem from '@subwallet/react-ui/es/web3-block/account-item';
 import CN from 'classnames';
 import { CaretLeft, CopySimple, GlobeHemisphereWest } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import styled from 'styled-components';
+import {BaseModal} from "@subwallet/extension-koni-ui/components";
 
 interface Props extends ThemeProps {
   address?: string;
@@ -78,7 +79,7 @@ const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Pro
   }, [inactiveModal]);
 
   return (
-    <SwModal
+    <BaseModal
       className={CN(className)}
       closeIcon={
         <Icon
@@ -151,7 +152,7 @@ const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Pro
           onClick={handleClickViewOnExplorer}
         >{t('View account on explorer')}</Button>
       </>
-    </SwModal>
+    </BaseModal>
   );
 };
 

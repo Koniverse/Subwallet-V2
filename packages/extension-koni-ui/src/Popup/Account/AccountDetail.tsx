@@ -6,7 +6,6 @@ import AccountAvatar from '@subwallet/extension-koni-ui/components/Account/Accou
 import InstructionContainer, { InstructionContentType } from '@subwallet/extension-koni-ui/components/InstructionContainer';
 import { ACCOUNT_EXPORT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { ScreenContext } from '@subwallet/extension-koni-ui/contexts/ScreenContext';
-import useDeleteAccount from '@subwallet/extension-koni-ui/hooks/account/useDeleteAccount';
 import useGetAccountByAddress from '@subwallet/extension-koni-ui/hooks/account/useGetAccountByAddress';
 import useGetAccountSignModeByAddress from '@subwallet/extension-koni-ui/hooks/account/useGetAccountSignModeByAddress';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
@@ -28,6 +27,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
 import AccountExport from './AccountExport';
+import {BaseConfirmDialog} from "@subwallet/extension-koni-ui/components/Modal/BaseConfrimDialog";
 
 type Props = ThemeProps;
 
@@ -67,13 +67,11 @@ const Component: React.FC<Props> = (props: Props) => {
   const notify = useNotification();
   const { token } = useTheme() as Theme;
   const { accountAddress } = useParams();
-  const { activeModal } = useContext(ModalContext);
   const [exportAccountKey, setExportAccountKey] = useState<string>('exportAccountKey');
 
   const [form] = Form.useForm<DetailFormState>();
 
   const account = useGetAccountByAddress(accountAddress);
-  const deleteAccountAction = useDeleteAccount();
 
   const { isWebUI } = useContext(ScreenContext);
 
@@ -83,7 +81,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const [deriving, setDeriving] = useState(false);
   const [saving, setSaving] = useState(false);
   const checkUnlock = useUnlockChecker();
-
+  const { inactiveModal, activeModal } = useContext(ModalContext);
   const signMode = useGetAccountSignModeByAddress(accountAddress);
 
   const canDerive = useMemo((): boolean => {
@@ -119,34 +117,28 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const onDelete = useCallback(() => {
     if (account?.address) {
-      deleteAccountAction()
-        .then(() => {
-          setDeleting(true);
-          forgetAccount(account.address)
-            .then(() => {
-              goHome();
-            })
-            .catch((e: Error) => {
-              notify({
-                message: e.message,
-                type: 'error'
-              });
-            })
-            .finally(() => {
-              setDeleting(false);
-            });
-        })
-        .catch((e: Error) => {
-          if (e) {
+      activeModal('delete-account-modal')
+    }
+  }, [account?.address, notify, goHome, activeModal, inactiveModal]);
+
+  const handleConfirmDelete = useCallback(()=>{
+    if (account?.address) {
+      setDeleting(true);
+      forgetAccount(account.address)
+          .then(() => {
+            goHome();
+          })
+          .catch((e: Error) => {
             notify({
               message: e.message,
               type: 'error'
             });
-          }
-        });
+          })
+          .finally(() => {
+            setDeleting(false);
+          });
     }
-  }, [account?.address, deleteAccountAction, notify, goHome]);
-
+  },[account?.address, notify, goHome, activeModal, inactiveModal])
   const onDerive = useCallback(() => {
     if (!account?.address) {
       return;
@@ -411,6 +403,19 @@ const Component: React.FC<Props> = (props: Props) => {
             onCancelModal={onCancelExportAccount}
           />
         )}
+        <BaseConfirmDialog
+            id={'delete-account-modal'}
+            closable={true}
+            content={isWebUI ? t('If you ever want to use this account again, you would need to import it again with seedphrase, private key, or JSON file') : t('You will no longer be able to access this account via this extension')}
+            okText={ isWebUI ? t('Delete') : t('Remove')}
+            subTitle={isWebUI ? t('Delete this account') : t('Remove this account?')}
+            title={isWebUI ? t('Remove account') : t('Confirmation')}
+            type={'error'}
+            onOk={handleConfirmDelete}
+            onCancel={() => {
+              inactiveModal('delete-account-modal')
+            }}
+        />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );

@@ -8,7 +8,7 @@ import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Con
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, Icon, SwModal } from '@subwallet/react-ui';
+import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, GlobeHemisphereWest, ShieldCheck, ShieldSlash, XCircle } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -17,6 +17,7 @@ import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
+import {BaseModal} from "@subwallet/extension-koni-ui/components";
 
 type Props = ThemeProps & {
   id: string;
@@ -296,7 +297,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
   };
 
   return (
-    <SwModal
+    <BaseModal
       className={className}
       footer={actionButtons}
       id={id}
@@ -311,7 +312,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
         {...connectIconProps}
       />
       {renderContent()}
-    </SwModal>
+    </BaseModal>
   );
 }
 

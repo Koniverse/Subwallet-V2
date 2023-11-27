@@ -3,13 +3,14 @@
 
 import { REQUEST_CREATE_PASSWORD_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, Icon, ModalContext, PageIcon, SwModal } from '@subwallet/react-ui';
+import { Button, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ShieldPlus, ShieldStar } from 'phosphor-react';
 import React, { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import {BaseModal} from "@subwallet/extension-koni-ui/components";
 
 type Props = ThemeProps
 
@@ -33,7 +34,7 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [inactiveModal, location.pathname, navigate]);
 
   return (
-    <SwModal
+    <BaseModal
       closable={false}
       id={modalId}
       maskClosable={false}
@@ -66,7 +67,7 @@ const Component: React.FC<Props> = (props: Props) => {
           {t('Create master password')}
         </Button>
       </div>
-    </SwModal>
+    </BaseModal>
   );
 };
 

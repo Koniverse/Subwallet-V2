@@ -8,18 +8,18 @@ import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-koni-ui/contexts/ScreenContext';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useConfirmModal from '@subwallet/extension-koni-ui/hooks/modal/useConfirmModal';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import useGetChainAssetInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useGetChainAssetInfo';
 import { deleteCustomAssets, upsertCustomToken } from '@subwallet/extension-koni-ui/messaging';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, ButtonProps, Col, Field, Icon, Input, Logo, Row, Tooltip } from '@subwallet/react-ui';
+import {Button, ButtonProps, Col, Field, Icon, Input, Logo, ModalContext, Row, Tooltip} from '@subwallet/react-ui';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import { CheckCircle, Copy, Trash } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
+import { BaseConfirmDialog } from "@subwallet/extension-koni-ui/components/Modal/BaseConfrimDialog";
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -49,24 +49,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [priceId, setPriceId] = useState(tokenInfo?.priceId || '');
   const [loading, setLoading] = useState(false);
-
-  const { handleSimpleConfirmModal } = useConfirmModal({
-    title: t<string>('Delete token'),
-    maskClosable: true,
-    closable: true,
-    type: 'error',
-    subTitle: t<string>('You are about to delete this token'),
-    content: t<string>('Confirm delete this token'),
-    okText: t<string>('Remove')
-  });
+  const { inactiveModal, activeModal } = useContext(ModalContext);
 
   const handleDeleteToken = useCallback(() => {
     if (!tokenInfo?.slug) {
       return;
     }
+    activeModal('delete_token_modal')
+  }, [goBack, showNotification, t, tokenInfo?.slug, activeModal, inactiveModal]);
 
-    handleSimpleConfirmModal().then(() => {
-      deleteCustomAssets(tokenInfo.slug)
+  const handleConfirmDeletion =  useCallback(()=>{
+    deleteCustomAssets(tokenInfo.slug)
         .then((result) => {
           if (result) {
             goBack();
@@ -84,8 +77,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             message: t('Deleted token unsuccessfully')
           });
         });
-    }).catch(console.log);
-  }, [goBack, handleSimpleConfirmModal, showNotification, t, tokenInfo?.slug]);
+  }, [goBack, showNotification, t, tokenInfo?.slug, activeModal, inactiveModal])
 
   const subHeaderButton: ButtonProps[] = useMemo(() => {
     return [
@@ -349,6 +341,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               </Col>
             </Row>
           </div>
+          <BaseConfirmDialog
+            id={'delete_token_modal'}
+            title={t<string>('Delete token')}
+            maskClosable={true}
+            closable={true}
+            type={'error'}
+            subTitle={t<string>('You are about to delete this token')}
+            onOk={handleConfirmDeletion}
+            onCancel={()=>inactiveModal('delete_token_modal')}
+            content={t<string>('Confirm delete this token')}
+            okText={t<string>('Remove')}
+          />
         </div>
       </Layout.Base>
     </PageWrapper>
