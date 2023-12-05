@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountJson, CurrentAccountInfo } from '@subwallet/extension-base/background/types';
+import { SimpleQrModal } from '@subwallet/extension-koni-ui/components/Modal';
 import { DISCONNECT_EXTENSION_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useDefaultNavigate, useGetCurrentAuth, useGetCurrentTab, useIsPopup, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { saveCurrentAccountAddress } from '@subwallet/extension-koni-ui/messaging';
@@ -47,6 +48,7 @@ const ConnectWebsiteId = 'connectWebsiteId';
 const renderEmpty = () => <GeneralEmptyList />;
 
 const modalId = SELECT_ACCOUNT_MODAL;
+const simpleQrModalId = 'simple-qr-modal-id';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
@@ -64,6 +66,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const isCurrentTabFetched = !!currentTab;
   const currentAuth = useGetCurrentAuth();
   const isPopup = useIsPopup();
+  const [selectedAccountAddress, setSelectedAccountAddress] = useState<string | undefined>();
 
   const accounts = useMemo((): AccountJson[] => {
     const result = [..._accounts].sort(funcSortByName);
@@ -137,6 +140,11 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     activeModal(DISCONNECT_EXTENSION_MODAL);
   }, [activeModal]);
 
+  const setSelectedAccount = useCallback((address: string) => { // onClickItemQrButton
+    setSelectedAccountAddress(address);
+    activeModal(simpleQrModalId);
+  }, [activeModal]);
+
   const renderItem = useCallback((item: AccountJson, _selected: boolean): React.ReactNode => {
     const currentAccountIsAll = isAccountAll(item.address);
 
@@ -165,7 +173,8 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         isSelected={_selected}
         isShowSubIcon
         moreIcon={!isInjected ? undefined : SignOut}
-        onPressMoreBtn={isInjected ? openDisconnectExtensionModal : onClickDetailAccount(item.address)}
+        onClickQrButton={setSelectedAccount}
+        onPressMoreButton={isInjected ? openDisconnectExtensionModal : onClickDetailAccount(item.address)}
         source={item.source}
         subIcon={(
           <Logo
@@ -176,7 +185,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         )}
       />
     );
-  }, [className, onClickDetailAccount, openDisconnectExtensionModal, showAllAccount]);
+  }, [className, onClickDetailAccount, openDisconnectExtensionModal, setSelectedAccount, showAllAccount]);
 
   const renderSelectedItem = useCallback((item: AccountJson): React.ReactNode => {
     return (
@@ -338,6 +347,10 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         isNotConnected={connectionState === ConnectionStatement.NOT_CONNECTED}
         onCancel={onCloseConnectWebsiteModal}
         url={currentTab?.url || ''}
+      />
+      <SimpleQrModal
+        address={selectedAccountAddress}
+        id={simpleQrModalId}
       />
     </div>
   );
