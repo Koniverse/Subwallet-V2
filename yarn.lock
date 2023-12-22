@@ -21904,6 +21904,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-swipeable-list@npm:^1.9.3":
+  version: 1.9.3
+  resolution: "react-swipeable-list@npm:1.9.3"
+  checksum: 3913f18d4826cdc37bcf06b9279986f752a8b04b475bc84c2720040daed7f462d74360fc7a08296bbac51231d8f2d43d0347033aa41a15ec176f1386925ebff4
+  languageName: node
+  linkType: hard
+
 "react-tabs@npm:^6.0.0":
   version: 6.0.0
   resolution: "react-tabs@npm:6.0.0"
@@ -22740,6 +22747,7 @@ __metadata:
     loglevel: ^1.8.1
     patch-package: ^6.4.7
     postinstall-postinstall: ^2.1.0
+    react-swipeable-list: ^1.9.3
     sinon-chrome: ^3.0.1
     typescript: ^4.5.4
   bin:

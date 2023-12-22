@@ -4,6 +4,7 @@
 import { AccountJson, CurrentAccountInfo } from '@subwallet/extension-base/background/types';
 import { BaseSelectModal, SimpleQrModal } from '@subwallet/extension-koni-ui/components/Modal';
 import { DISCONNECT_EXTENSION_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { ScreenContext } from '@subwallet/extension-koni-ui/contexts/ScreenContext';
 import { useDefaultNavigate, useGetCurrentAuth, useGetCurrentTab, useGoBackSelectAccount, useIsPopup, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { saveCurrentAccountAddress } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -67,6 +68,8 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const currentAuth = useGetCurrentAuth();
   const isPopup = useIsPopup();
   const [selectedQrAddress, setSelectedQrAddress] = useState<string | undefined>();
+  const { isWebUI } = useContext(ScreenContext);
+  const [swipedItemKey, setSwipedItemKey] = useState<string | undefined>(undefined);
 
   const accounts = useMemo((): AccountJson[] => {
     const result = [..._accounts].sort(funcSortByName);
@@ -179,20 +182,28 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
     const isInjected = !!item.isInjected;
 
+    const handleSwipe = () => {
+      setSwipedItemKey(item.address);
+    };
+
     return (
       <AccountCardItem
         accountName={item.name || ''}
         address={item.address}
         className={className}
+        enableSwipe={isWebUI}
         genesisHash={item.genesisHash}
         isSelected={_selected}
+        isSwiped={swipedItemKey === item.address}
         moreIcon={!isInjected ? undefined : SignOut}
         onClickQrButton={onClickItemQrButton}
         onPressMoreButton={isInjected ? openDisconnectExtensionModal : onClickDetailAccount(item.address)}
+        onSwipe={handleSwipe}
         source={item.source}
+
       />
     );
-  }, [className, onClickDetailAccount, openDisconnectExtensionModal, onClickItemQrButton, showAllAccount]);
+  }, [swipedItemKey, isWebUI, className, onClickDetailAccount, openDisconnectExtensionModal, onClickItemQrButton, showAllAccount]);
 
   const renderSelectedItem = useCallback((item: AccountJson): React.ReactNode => {
     return (
@@ -324,7 +335,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
           </div>
         </Tooltip>
       )}
-
       <BaseSelectModal
         background={'default'}
         className={className}
@@ -353,7 +363,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         }
         title={t('Select account')}
       />
-
       <ConnectWebsiteModal
         authInfo={currentAuth}
         id={ConnectWebsiteId}
