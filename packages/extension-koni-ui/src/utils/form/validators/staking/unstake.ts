@@ -20,6 +20,11 @@ export const validateUnStakeValue = (min: number | string | BigN, max: number | 
     validator: (_, value: string) => {
       const val = new BigN(value);
 
+      if (!max) {
+        // Todo: Change message
+        return Promise.reject(new Error(t('Cannot get boned value')));
+      }
+
       if (val.gt(maxValue)) {
         return Promise.reject(new Error(t('{{name}} must be equal or less than {{maxString}}', { replace: { name, maxString } })));
       }

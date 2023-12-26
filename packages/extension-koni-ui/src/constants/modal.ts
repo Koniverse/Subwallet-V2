@@ -28,5 +28,13 @@ export const ADD_CONNECTION_MODAL = 'add-connection-modal';
 export const DISCONNECT_EXTENSION_MODAL = 'disconnect-extension-modal';
 
 /* Campaign */
+
 export const HOME_CAMPAIGN_BANNER_MODAL = 'home-campaign-banner-modal';
+
 /* Campaign */
+
+/* Chain */
+
+export const CHECK_CHAIN_MODAL = 'check-chain-modal';
+
+/* Chain */

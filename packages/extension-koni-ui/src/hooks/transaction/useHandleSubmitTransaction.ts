@@ -2,9 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { detectTranslate } from '@subwallet/extension-base/utils';
 import { useCallback, useMemo } from 'react';
 
 import { useNotification, useTranslation } from '../common';
+
+const rejectMessage = detectTranslate('Rejected by user');
+const cannotConnectMessage = 'connection not open on send()';
 
 const useHandleSubmitTransaction = (onDone: (extrinsicHash: string) => void, setIgnoreWarnings?: (value: boolean) => void) => {
   const notify = useNotification();
@@ -14,10 +18,15 @@ const useHandleSubmitTransaction = (onDone: (extrinsicHash: string) => void, set
     const { errors, id, warnings } = rs;
 
     if (errors.length || warnings.length) {
-      if (![t('Rejected by user'), 'Rejected by user'].includes(errors[0]?.message)) {
+      if (![t(rejectMessage), rejectMessage, cannotConnectMessage].includes(errors[0]?.message)) {
         notify({
           message: errors[0]?.message || warnings[0]?.message,
           type: errors.length ? 'error' : 'warning'
+        });
+      } else if ([cannotConnectMessage].includes(errors[0]?.message)) {
+        notify({
+          message: t('Connection failed. Check your internet connection or change your network endpoint.'),
+          type: 'error'
         });
       }
 

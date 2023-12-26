@@ -17,7 +17,7 @@ import { useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTra
 import { useIsMantaPayEnabled } from '@subwallet/extension-koni-ui/hooks/account/useIsMantaPayEnabled';
 import { getMaxTransfer, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
+import { ChainItemType, FormCallbacks, FormRule, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, formatBalance, isAccountAll, noop } from '@subwallet/extension-koni-ui/utils';
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-koni-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon } from '@subwallet/react-ui';
@@ -237,7 +237,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const { chainInfoMap, chainStateMap } = useSelector((root) => root.chainStore);
   const { assetRegistry, assetSettingMap, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts, isAllAccount } = useSelector((state: RootState) => state.accountState);
-  const [maxTransfer, setMaxTransfer] = useState<string>('0');
+  const [maxTransfer, setMaxTransfer] = useState<string | null>(null);
+  const [isMaxTransferLoading, setIsMaxTransferLoading] = useState(true);
   const checkAction = usePreCheckAction(from, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
   const isZKModeEnabled = useIsMantaPayEnabled(from);
 
@@ -361,27 +362,44 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     return Promise.resolve();
   }, [accounts, chainInfoMap, form, t]);
 
-  const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
-    if (!amount) {
-      return Promise.reject(t('Amount is required'));
-    }
+  const amountRules = useMemo((): FormRule[] => {
+    const validateAmount = (rule: Rule, amount: string): Promise<void> => {
+      if (!amount) {
+        return Promise.reject(t('Amount is required'));
+      }
 
-    if ((new BN(maxTransfer)).lte(BN_ZERO)) {
-      return Promise.reject(t('You don\'t have enough tokens to proceed'));
-    }
+      if (!maxTransfer) {
+        if (isMaxTransferLoading) {
+          return Promise.resolve();
+        } else {
+          // TODO: Change message
+          return Promise.reject(t('Cannot get balance'));
+        }
+      }
 
-    if ((new BigN(amount)).eq(new BigN(0))) {
-      return Promise.reject(t('Amount must be greater than 0'));
-    }
+      if ((new BN(maxTransfer)).lte(BN_ZERO)) {
+        return Promise.reject(t('You don\'t have enough tokens to proceed'));
+      }
 
-    if ((new BigN(amount)).gt(new BigN(maxTransfer))) {
-      const maxString = formatBalance(maxTransfer, decimals);
+      if ((new BigN(amount)).eq(new BigN(0))) {
+        return Promise.reject(t('Amount must be greater than 0'));
+      }
 
-      return Promise.reject(t('Amount must be equal or less than {{number}}', { replace: { number: maxString } }));
-    }
+      if ((new BigN(amount)).gt(new BigN(maxTransfer))) {
+        const maxString = formatBalance(maxTransfer, decimals);
 
-    return Promise.resolve();
-  }, [decimals, maxTransfer, t]);
+        return Promise.reject(t('Amount must be equal or less than {{number}}', { replace: { number: maxString } }));
+      }
+
+      return Promise.resolve();
+    };
+
+    return [
+      {
+        validator: validateAmount
+      }
+    ];
+  }, [decimals, isMaxTransferLoading, maxTransfer, t]);
 
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
@@ -516,7 +534,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const onFilterAccountFunc = useMemo(() => filterAccountFunc(chainInfoMap, assetRegistry, multiChainAssetMap, sendFundSlug), [assetRegistry, chainInfoMap, multiChainAssetMap, sendFundSlug]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
-    const bnMaxTransfer = new BN(maxTransfer);
+    const bnMaxTransfer = new BN(maxTransfer || '0');
 
     if (!bnMaxTransfer.isZero()) {
       setIsTransferAll(value);
@@ -571,7 +589,23 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   useEffect(() => {
     let cancel = false;
 
+    const validateField = () => {
+      if (!cancel) {
+        const value = form.getFieldValue('value') as string;
+
+        if (value) {
+          setTimeout(() => {
+            form.validateFields(['value']).finally(() => update({}));
+          }, 100);
+        }
+      }
+    };
+
     if (from && asset) {
+      setIsMaxTransferLoading(true);
+      validateField();
+      setMaxTransfer(null);
+
       getMaxTransfer({
         address: from,
         networkKey: assetRegistry[asset].originChain,
@@ -583,18 +617,11 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           !cancel && setMaxTransfer(balance.value);
         })
         .catch(() => {
-          !cancel && setMaxTransfer('0');
+          !cancel && setMaxTransfer(null);
         })
         .finally(() => {
-          if (!cancel) {
-            const value = form.getFieldValue('value') as string;
-
-            if (value) {
-              setTimeout(() => {
-                form.validateFields(['value']).finally(() => update({}));
-              }, 100);
-            }
-          }
+          setIsMaxTransferLoading(false);
+          validateField();
         });
     }
 
@@ -695,21 +722,19 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
           <Form.Item
             name={'value'}
-            rules={[
-              {
-                validator: validateAmount
-              }
-            ]}
+            rules={amountRules}
             statusHelpAsTooltip={true}
             validateTrigger='onBlur'
           >
             <AmountInput
               decimals={decimals}
               forceUpdateMaxValue={forceUpdateMaxValue}
-              maxValue={maxTransfer}
+              loading={isMaxTransferLoading}
+              maxValue={maxTransfer || '0'}
               onSetMax={onSetMaxTransferable}
               showMaxButton={true}
-              tooltip={t('Amount')}
+              // TODO: Change waiting message
+              tooltip={isMaxTransferLoading ? t('Waiting to get balance') : t('Amount')}
             />
           </Form.Item>
         </Form>

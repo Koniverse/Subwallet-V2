@@ -7,9 +7,11 @@ import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { ChainInfoWithState, useChainInfoWithState, useFilterModal, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { ButtonProps, Icon, ModalContext, SwList } from '@subwallet/react-ui';
+import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
+import CN from 'classnames';
 import { FadersHorizontal, Plus } from 'phosphor-react';
-import React, { SyntheticEvent, useCallback, useContext, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 type Props = ThemeProps
@@ -26,13 +28,17 @@ enum FilterValue {
 
 const renderEmpty = () => <NetworkEmptyList />;
 
-function Component ({ className = '' }: Props): React.ReactElement<Props> {
+function Component (): React.ReactElement {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+
   const navigate = useNavigate();
-  const dataContext = useContext(DataContext);
   const { activeModal } = useContext(ModalContext);
   const chainInfoList = useChainInfoWithState();
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
+
+  const [defaultSearch] = useState(searchParams.get('chain'));
+  const sectionRef = useRef<SwListSectionRef>(null);
 
   const FILTER_OPTIONS = useMemo((): OptionType[] => ([
     { label: t('EVM networks'), value: FilterValue.EVM },
@@ -76,7 +82,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     };
   }, [selectedFilters]);
 
-  const searchToken = useCallback((chainInfo: ChainInfoWithState, searchText: string) => {
+  const searchChain = useCallback((chainInfo: ChainInfoWithState, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
 
     return chainInfo.name.toLowerCase().includes(searchTextLowerCase);
@@ -118,57 +124,74 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     activeModal(FILTER_MODAL_ID);
   }, [activeModal]);
 
-  return (
-    <PageWrapper
-      className={`manage_chains ${className}`}
-      resolve={dataContext.awaitStores(['chainStore'])}
-    >
-      <Layout.Base
-        onBack={onBack}
-        showBackButton={true}
-        showSubHeader={true}
-        subHeaderBackground={'transparent'}
-        subHeaderCenter={true}
-        subHeaderIcons={subHeaderButton}
-        subHeaderPaddingVertical={true}
-        title={t<string>('Manage networks')}
-      >
-        <SwList.Section
-          actionBtnIcon={(
-            <Icon
-              phosphorIcon={FadersHorizontal}
-              size='sm'
-              weight={'fill'}
-            />
-          )}
-          className={'manage_chains__container'}
-          enableSearchInput
-          filterBy={filterFunction}
-          list={chainInfoList}
-          mode={'boxed'}
-          onClickActionBtn={openFilterModal}
-          renderItem={renderChainItem}
-          renderWhenEmpty={renderEmpty}
-          searchFunction={searchToken}
-          searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('Search network')}
-          showActionBtn
-        />
+  useEffect(() => {
+    if (defaultSearch) {
+      sectionRef?.current?.setSearchValue(defaultSearch);
+    }
+  }, [defaultSearch]);
 
-        <FilterModal
-          id={FILTER_MODAL_ID}
-          onApplyFilter={onApplyFilter}
-          onCancel={onCloseFilterModal}
-          onChangeOption={onChangeFilterOption}
-          optionSelectionMap={filterSelectionMap}
-          options={FILTER_OPTIONS}
-        />
-      </Layout.Base>
-    </PageWrapper>
+  return (
+    <Layout.Base
+      onBack={onBack}
+      showBackButton={true}
+      showSubHeader={true}
+      subHeaderBackground={'transparent'}
+      subHeaderCenter={true}
+      subHeaderIcons={subHeaderButton}
+      subHeaderPaddingVertical={true}
+      title={t<string>('Manage networks')}
+    >
+      <SwList.Section
+        actionBtnIcon={(
+          <Icon
+            phosphorIcon={FadersHorizontal}
+            size='sm'
+            weight={'fill'}
+          />
+        )}
+        className={'manage_chains__container'}
+        enableSearchInput
+        filterBy={filterFunction}
+        list={chainInfoList}
+        mode={'boxed'}
+        onClickActionBtn={openFilterModal}
+        ref={sectionRef}
+        renderItem={renderChainItem}
+        renderWhenEmpty={renderEmpty}
+        searchFunction={searchChain}
+        searchMinCharactersCount={2}
+        searchPlaceholder={t<string>('Search network')}
+        showActionBtn
+      />
+
+      <FilterModal
+        id={FILTER_MODAL_ID}
+        onApplyFilter={onApplyFilter}
+        onCancel={onCloseFilterModal}
+        onChangeOption={onChangeFilterOption}
+        optionSelectionMap={filterSelectionMap}
+        options={FILTER_OPTIONS}
+      />
+    </Layout.Base>
   );
 }
 
-const ManageChains = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const Wrapper: React.FC<Props> = (props: Props) => {
+  const { className } = props;
+
+  const dataContext = useContext(DataContext);
+
+  return (
+    <PageWrapper
+      className={CN(className, 'manage_chains')}
+      resolve={dataContext.awaitStores(['chainStore'])}
+    >
+      <Component />
+    </PageWrapper>
+  );
+};
+
+const ManageChains = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
   return ({
     '.ant-sw-screen-layout-body': {
       display: 'flex'

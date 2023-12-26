@@ -9,6 +9,7 @@ import { ChainStore, ReduxStatus } from '@subwallet/extension-koni-ui/stores/typ
 const initialState: ChainStore = {
   chainInfoMap: {},
   chainStateMap: {},
+  checkChainTarget: '',
   reduxStatus: ReduxStatus.INIT
 };
 
@@ -16,7 +17,7 @@ const chainStoreSlice = createSlice({
   initialState,
   name: 'chainStore',
   reducers: {
-    updateChainInfoMap (state, action: PayloadAction<Record<string, _ChainInfo>>) {
+    updateChainInfoMap (state, action: PayloadAction<Record<string, _ChainInfo>>): ChainStore {
       const { payload } = action;
 
       return {
@@ -25,7 +26,7 @@ const chainStoreSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updateChainStateMap (state, action: PayloadAction<Record<string, _ChainState>>) {
+    updateChainStateMap (state, action: PayloadAction<Record<string, _ChainState>>): ChainStore {
       const { payload } = action;
 
       return {
@@ -33,9 +34,18 @@ const chainStoreSlice = createSlice({
         chainStateMap: payload,
         reduxStatus: ReduxStatus.READY
       };
+    },
+    updateCheckChainTarget (state, action: PayloadAction<string>): ChainStore {
+      const { payload } = action;
+
+      return {
+        ...state,
+        checkChainTarget: payload,
+        reduxStatus: ReduxStatus.READY
+      };
     }
   }
 });
 
-export const { updateChainInfoMap, updateChainStateMap } = chainStoreSlice.actions;
+export const { updateChainInfoMap, updateChainStateMap, updateCheckChainTarget } = chainStoreSlice.actions;
 export default chainStoreSlice.reducer;

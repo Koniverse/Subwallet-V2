@@ -15,6 +15,7 @@ export default abstract class MigrateProvider extends BaseMigrationJob {
     const chainInfo = state.getChainInfo(this.slug);
 
     if (
+      chainInfo &&
       chainState &&
       chainState.active &&
       chainInfo.providers[this.newProvider] &&

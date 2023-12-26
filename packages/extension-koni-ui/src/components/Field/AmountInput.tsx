@@ -4,7 +4,7 @@
 import { getOS } from '@subwallet/extension-base/utils';
 import { useForwardInputRef } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, Input, InputRef } from '@subwallet/react-ui';
+import { ActivityIndicator, Button, Input, InputRef } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import React, { ChangeEventHandler, ClipboardEventHandler, ForwardedRef, forwardRef, SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ interface Props extends ThemeProps, BasicInputWrapper {
   onSetMax?: (value: boolean) => void;
   showMaxButton?: boolean;
   forceUpdateMaxValue?: object;
+  loading?: boolean;
 }
 
 const isValidInput = (input: string) => {
@@ -68,7 +69,18 @@ const isControlKey = (keycode: number) => {
 };
 
 const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
-  const { className, decimals, disabled, forceUpdateMaxValue, maxValue, onChange, onSetMax, showMaxButton, statusHelp, tooltip, value } = props;
+  const { className,
+    decimals,
+    disabled,
+    forceUpdateMaxValue,
+    loading = false,
+    maxValue,
+    onChange,
+    onSetMax,
+    showMaxButton,
+    statusHelp,
+    tooltip,
+    value } = props;
 
   const { t } = useTranslation();
 
@@ -100,20 +112,26 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   }, [decimals]);
 
   const suffix = useMemo((): React.ReactNode => (
-    showMaxButton
+    loading
       ? (
-        <Button
-          onClick={_onClickMaxBtn}
-          size='xs'
-          type='ghost'
-        >
-          <span className='max-btn-text'>{t('Max')}</span>
-        </Button>
+        <div style={{ marginRight: 8 }}>
+          <ActivityIndicator />
+        </div>
       )
-      : (
-        <span />
-      )
-  ), [showMaxButton, _onClickMaxBtn, t]);
+      : showMaxButton
+        ? (
+          <Button
+            onClick={_onClickMaxBtn}
+            size='xs'
+            type='ghost'
+          >
+            <span className='max-btn-text'>{t('Max')}</span>
+          </Button>
+        )
+        : (
+          <span />
+        )
+  ), [loading, showMaxButton, _onClickMaxBtn, t]);
 
   const onChangeInput: ChangeEventHandler<HTMLInputElement> = useCallback((event) => {
     let value = event.target.value;

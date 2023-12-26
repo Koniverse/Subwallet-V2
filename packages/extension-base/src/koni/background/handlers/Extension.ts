@@ -3331,11 +3331,14 @@ export default class KoniExtension {
     return this.#koniState.getChainInfoMap();
   }
 
-  private subscribeChainStateMap (id: string, port: chrome.runtime.Port): Record<string, _ChainState> {
+  private async subscribeChainStateMap (id: string, port: chrome.runtime.Port): Promise<Record<string, _ChainState>> {
     const cb = createSubscription<'pri(chainService.subscribeChainStateMap)'>(id, port);
+    let ready = false;
     const chainStateMapSubscription = this.#koniState.subscribeChainStateMap().subscribe({
       next: (rs) => {
-        cb(rs);
+        if (ready) {
+          cb(rs);
+        }
       }
     });
 
@@ -3344,6 +3347,9 @@ export default class KoniExtension {
     port.onDisconnect.addListener((): void => {
       this.cancelSubscription(id);
     });
+
+    await this.#koniState.eventService.waitChainReady;
+    ready = true;
 
     return this.#koniState.getChainStateMap();
   }

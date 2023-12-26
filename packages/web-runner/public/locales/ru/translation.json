@@ -865,5 +865,12 @@
   "Open": "",
   "State": "",
   "Earning status": "",
-  "Earning": ""
+  "Earning": "",
+  "Update network?": "",
+  "Your selected network might have lost connection. Try updating it by either re-enabling it or changing network provider.": "",
+  "Update": "",
+  "Connection failed. Check your internet connection or change your network endpoint.": "",
+  "Cannot get balance": "",
+  "Waiting to get balance": "",
+  "Cannot get boned value": ""
 }

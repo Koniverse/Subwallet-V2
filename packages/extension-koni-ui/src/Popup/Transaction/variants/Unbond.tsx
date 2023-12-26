@@ -83,9 +83,9 @@ const Component: React.FC = () => {
 
   const bondedValue = useMemo((): string => {
     if (!mustChooseValidator) {
-      return nominatorMetadata?.activeStake || '0';
+      return nominatorMetadata?.activeStake || '';
     } else {
-      return selectedValidator?.activeStake || '0';
+      return selectedValidator?.activeStake || '';
     }
   }, [mustChooseValidator, nominatorMetadata?.activeStake, selectedValidator?.activeStake]);
 

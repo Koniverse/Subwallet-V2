@@ -117,7 +117,8 @@ export interface AssetRegistryStore extends BaseReduxStore {
 
 export interface ChainStore extends BaseReduxStore {
   chainInfoMap: Record<string, _ChainInfo>,
-  chainStateMap: Record<string, _ChainState>
+  chainStateMap: Record<string, _ChainState>,
+  checkChainTarget: string;
 }
 
 export interface BalanceStore extends BaseReduxStore {

@@ -3,19 +3,26 @@
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _ChainConnectionStatus } from '@subwallet/extension-base/services/chain-service/types';
-import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
-import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
+import { CHAIN_CONNECT_STATUS_NEED_CHECK } from '@subwallet/extension-koni-ui/constants';
 import { enableChain } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Button } from '@subwallet/react-ui';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
+
+import { useNotification, useTranslation } from '../common';
+import useOpenUpdateChainModal from './useOpenUpdateChainModal';
 
 export default function useChainChecker () {
   const { t } = useTranslation();
   const { chainInfoMap, chainStateMap } = useSelector((root: RootState) => root.chainStore);
   const notify = useNotification();
   const [connectingChain, setConnectingChain] = useState<string | null>(null);
+  const openCheckModal = useOpenUpdateChainModal();
+
+  const chainRef = useRef('');
+  const updateChainRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (connectingChain && chainStateMap[connectingChain]?.connectionStatus === _ChainConnectionStatus.CONNECTED) {
@@ -26,7 +33,15 @@ export default function useChainChecker () {
     }
   }, [connectingChain, chainInfoMap, chainStateMap, notify, t]);
 
-  const ensureChainEnable = useCallback((chain: string) => {
+  const _ensureChainEnable = useCallback((chain: string) => {
+    clearTimeout(timeoutRef.current);
+
+    if (chainRef.current !== chain) {
+      updateChainRef.current = false;
+    }
+
+    chainRef.current = chain;
+
     const chainState = chainStateMap[chain];
     const chainInfo = chainInfoMap[chain];
 
@@ -58,17 +73,16 @@ export default function useChainChecker () {
           duration: 3,
           btn
         });
-      } else if (chainState.connectionStatus === _ChainConnectionStatus.DISCONNECTED) {
-        const message = t('Chain {{name}} is disconnected', { replace: { name: chainInfo?.name } });
-
-        notify({
-          message,
-          type: NotificationType.ERROR,
-          duration: 3
-        });
+      } else if (chainState && CHAIN_CONNECT_STATUS_NEED_CHECK.includes(chainState.connectionStatus)) {
+        timeoutRef.current = setTimeout(() => {
+          if (!updateChainRef.current && chainRef.current === chain) {
+            openCheckModal(chain);
+            updateChainRef.current = true;
+          }
+        }, 3000);
       }
     }
-  }, [chainInfoMap, chainStateMap, notify, t]);
+  }, [chainInfoMap, chainStateMap, notify, openCheckModal, t]);
 
-  return ensureChainEnable;
+  return _ensureChainEnable;
 }

@@ -12,7 +12,7 @@ import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useFetchChainState, useGetBalance, useGetChainStakingMetadata, useGetNativeTokenBasicInfo, useGetNativeTokenSlug, useGetNominatorInfo, useGetSupportedStakingTokens, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useFetchChainAssetInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainAssetInfo';
 import { submitBonding, submitPoolBonding } from '@subwallet/extension-koni-ui/messaging';
-import { FormCallbacks, FormFieldData, StakeParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { FormCallbacks, FormFieldData, FormRule, StakeParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, isAccountAll, parseNominations, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { Button, Divider, Form, Icon } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
@@ -97,7 +97,7 @@ const Component: React.FC = () => {
 
   const nominatorMetadata: NominatorMetadata | undefined = useMemo(() => nominatorMetadataList[0], [nominatorMetadataList]);
 
-  const { nativeTokenBalance } = useGetBalance(chain, from);
+  const { error, isLoading, nativeTokenBalance } = useGetBalance(chain, from);
   const tokenList = useGetSupportedStakingTokens(stakingType, from, stakingChain);
 
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(chain), [chain]);
@@ -209,6 +209,44 @@ const Component: React.FC = () => {
       return '';
     }
   }, [chain, defaultData.chain, defaultData.from, defaultData.pool, from, isChangeData]);
+
+  const amountRules = useMemo((): FormRule[] => {
+    return [
+      { required: true, message: t('Amount is required') },
+      ({ getFieldValue }) => ({
+        validator: (_, value: string) => {
+          const type = getFieldValue('type') as StakingType;
+          const val = new BigN(value);
+
+          if (type === StakingType.POOLED) {
+            if (val.lte(0)) {
+              return Promise.reject(new Error(t('Amount must be greater than 0')));
+            }
+          } else {
+            if (!nominatorMetadata?.isBondedBefore || !isRelayChain) {
+              if (val.lte(0)) {
+                return Promise.reject(new Error(t('Amount must be greater than 0')));
+              }
+            }
+          }
+
+          if (isLoading) {
+            return Promise.resolve();
+          } else {
+            if (error) {
+              return Promise.reject(t('Cannot get balance'));
+            }
+          }
+
+          if (val.gt(nativeTokenBalance.value)) {
+            return Promise.reject(t('Amount cannot exceed your balance'));
+          }
+
+          return Promise.resolve();
+        }
+      })
+    ];
+  }, [error, isLoading, isRelayChain, nativeTokenBalance.value, nominatorMetadata?.isBondedBefore, t]);
 
   const { onError, onSuccess } = useHandleSubmitTransaction(onDone);
 
@@ -381,7 +419,7 @@ const Component: React.FC = () => {
       cancel = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form, nativeTokenBalance.value]);
+  }, [form, nativeTokenBalance.value, error]);
 
   useRestoreTransaction(form);
   useInitValidateTransaction(validateFields, form, defaultData);
@@ -462,39 +500,16 @@ const Component: React.FC = () => {
 
             <Form.Item
               name={'value'}
-              rules={[
-                { required: true, message: t('Amount is required') },
-                ({ getFieldValue }) => ({
-                  validator: (_, value: string) => {
-                    const type = getFieldValue('type') as StakingType;
-                    const val = new BigN(value);
-
-                    if (type === StakingType.POOLED) {
-                      if (val.lte(0)) {
-                        return Promise.reject(new Error(t('Amount must be greater than 0')));
-                      }
-                    } else {
-                      if (!nominatorMetadata?.isBondedBefore || !isRelayChain) {
-                        if (val.lte(0)) {
-                          return Promise.reject(new Error(t('Amount must be greater than 0')));
-                        }
-                      }
-                    }
-
-                    if (val.gt(nativeTokenBalance.value)) {
-                      return Promise.reject(t('Amount cannot exceed your balance'));
-                    }
-
-                    return Promise.resolve();
-                  }
-                })
-              ]}
+              rules={amountRules}
               statusHelpAsTooltip={true}
             >
               <AmountInput
                 decimals={(chain && from) ? decimals : -1}
+                loading={isLoading}
                 maxValue={maxValue}
                 showMaxButton={false}
+                // TODO: Change waiting message
+                tooltip={isLoading ? t('Waiting to get balance') : t('Amount')}
               />
             </Form.Item>
           </div>
