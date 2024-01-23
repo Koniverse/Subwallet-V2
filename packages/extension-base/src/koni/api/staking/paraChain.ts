@@ -6,7 +6,7 @@ import { APIItemState, NominatorMetadata, StakingItem, StakingRewardItem, Stakin
 import { subscribeAmplitudeNominatorMetadata } from '@subwallet/extension-base/koni/api/staking/bonding/amplitude';
 import { subscribeAstarNominatorMetadata } from '@subwallet/extension-base/koni/api/staking/bonding/astar';
 import { subscribeParaChainNominatorMetadata } from '@subwallet/extension-base/koni/api/staking/bonding/paraChain';
-import { PalletDappsStakingAccountLedger, PalletParachainStakingDelegator, ParachainStakingStakeOption } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
+import { PalletDappStakingAccountLedger, PalletParachainStakingDelegator, ParachainStakingStakeOption } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainNativeTokenBasicInfo } from '@subwallet/extension-base/services/chain-service/utils';
@@ -269,16 +269,16 @@ export function getParaStakingOnChain (substrateApi: _SubstrateApi, useAddresses
 export function getAstarStakingOnChain (substrateApi: _SubstrateApi, useAddresses: string[], chainInfoMap: Record<string, _ChainInfo>, chain: string, stakingCallback: (networkKey: string, rs: StakingItem) => void, nominatorStateCallback: (nominatorMetadata: NominatorMetadata) => void) {
   const { symbol } = _getChainNativeTokenBasicInfo(chainInfoMap[chain]);
 
-  return substrateApi.api.query.dappsStaking.ledger.multi(useAddresses, async (ledgers: Codec[]) => {
+  return substrateApi.api.query.dappStaking.ledger.multi(useAddresses, async (ledgers: Codec[]) => {
     if (ledgers) {
       await Promise.all(ledgers.map(async (_ledger, i) => {
         let bnUnlockingBalance = BN_ZERO;
         const owner = reformatAddress(useAddresses[i], 42);
 
-        const ledger = _ledger.toPrimitive() as unknown as PalletDappsStakingAccountLedger;
+        const ledger = _ledger.toPrimitive() as unknown as PalletDappStakingAccountLedger;
 
         if (ledger && ledger.locked > 0) {
-          const unlockingChunks = ledger.unbondingInfo.unlockingChunks;
+          const unlockingChunks = ledger.unlocking;
           const _totalStake = ledger.locked;
           const bnTotalStake = new BN(_totalStake.toString());
 

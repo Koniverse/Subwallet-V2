@@ -30,16 +30,45 @@ export interface PalletDappsStakingDappInfo {
   imagesUrl: string[]
 }
 
+/** Deprecated */
 export interface PalletDappsStakingUnlockingChunk {
   amount: number,
   unlockEra: number
 }
 
+/** Deprecated */
 export interface PalletDappsStakingAccountLedger {
   locked: number,
   unbondingInfo: {
     unlockingChunks: PalletDappsStakingUnlockingChunk[]
   }
+}
+
+export interface PalletDappStakingUnlockingChunk {
+  amount: number,
+  unlockBlock: number
+}
+
+export interface PalletDappStakingStaked {
+  voting: number,
+  buildAndEarn: number,
+  era: number,
+  period: number
+}
+
+export interface PalletDappStakingStakedFuture {
+  voting: number,
+  buildAndEarn: number,
+  era: number,
+  period: number
+}
+
+export interface PalletDappStakingAccountLedger {
+  locked: number,
+  unlocking: PalletDappStakingUnlockingChunk[]
+  staked: PalletDappStakingStaked,
+  stakedFuture: PalletDappStakingStakedFuture,
+  contractStakeCount: number
 }
 
 export interface BlockHeader {
