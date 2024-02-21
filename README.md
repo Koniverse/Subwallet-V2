@@ -116,7 +116,7 @@ Cronjob is define in folder `packages/extension-koni-base/src/cron`.
 ### Add new redux store
 - Subwallet extension use [redux-tookit](https://redux-toolkit.js.org/) to generate store.
 - Define redux store reducers and state into separate file by method `createSlice` of redux toolkit.
-- Map reducer into root store in file index.ts
+- Map reducer into root store in file avail.ts
 
 ### Add new message caller
 Read "Add a message handle"

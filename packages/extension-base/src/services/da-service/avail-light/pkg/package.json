@@ -1,0 +1,14 @@
+{
+  "name": "wasm-avail-light",
+  "version": "0.1.0",
+  "files": [
+    "wasm_avail_light_bg.wasm",
+    "wasm_avail_light.js",
+    "wasm_avail_light.d.ts"
+  ],
+  "module": "wasm_avail_light.js",
+  "types": "wasm_avail_light.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -6245,6 +6245,7 @@ __metadata:
     protobufjs: ^7.2.4
     rxjs: ^7.8.1
     uuid: ^9.0.0
+    wasm-avail-light: "file:src/services/da-service/avail-light/pkg"
     web3: ^1.10.0
     web3-core: ^1.10.0
     web3-core-helpers: ^1.10.0
@@ -25910,6 +25911,13 @@ __metadata:
   dependencies:
     loose-envify: ^1.0.0
   checksum: 4f2cb6a9575e4faf71ddad9ad1ae7a00d0a75d24521c193fa464f30e6b04027bd97aa5d9546b0e13d3a150ab402eda216d59c1d0f2d6ca60124d96cd40dfa35c
+  languageName: node
+  linkType: hard
+
+"wasm-avail-light@file:src/services/da-service/avail-light/pkg::locator=%40subwallet%2Fextension-base%40workspace%3Apackages%2Fextension-base":
+  version: 0.1.0
+  resolution: "wasm-avail-light@file:src/services/da-service/avail-light/pkg#src/services/da-service/avail-light/pkg::hash=9242a5&locator=%40subwallet%2Fextension-base%40workspace%3Apackages%2Fextension-base"
+  checksum: 04dc74d34529a57b446002e823cc2c8cf256e1bbe74710421ab96220da45c1eda1f277a572b5c34152d28284af5e46c5b86877de2eca4767f94b51069191defe
   languageName: node
   linkType: hard
 

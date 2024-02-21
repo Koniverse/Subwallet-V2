@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-// Test for index.ts
+// Test for avail.ts
 
 import { SUBSCAN_API_CHAIN_MAP } from '@subwallet/extension-base/services/subscan-service/subscan-chain-map';
 

@@ -81,6 +81,7 @@
     "protobufjs": "^7.2.4",
     "rxjs": "^7.8.1",
     "uuid": "^9.0.0",
+    "wasm-avail-light": "file:src/services/da-service/avail-light/pkg",
     "web3": "^1.10.0",
     "web3-core": "^1.10.0",
     "web3-core-helpers": "^1.10.0",
