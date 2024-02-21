@@ -222,11 +222,6 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const isFirstRender = useIsFirstRender();
 
   const [form] = Form.useForm<TransferParams>();
-  const formDefault = useMemo((): TransferParams => {
-    return {
-      ...defaultData
-    };
-  }, [defaultData]);
 
   const destChain = useWatchTransaction('destChain', form, defaultData);
   const transferAmount = useWatchTransaction('value', form, defaultData);
@@ -515,6 +510,18 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
   const onFilterAccountFunc = useMemo(() => filterAccountFunc(chainInfoMap, assetRegistry, multiChainAssetMap, sendFundSlug), [assetRegistry, chainInfoMap, multiChainAssetMap, sendFundSlug]);
 
+  const defaultFromAccount = useMemo(() => {
+    const accountsFilter = accounts.filter(onFilterAccountFunc);
+
+    return accountsFilter.length === 1 ? accountsFilter[0] : undefined;
+  }, [accounts, onFilterAccountFunc]);
+
+  const formDefault = useMemo((): TransferParams => {
+    return {
+      ...defaultData,
+      from: defaultFromAccount?.address || from
+    };
+  }, [defaultData, defaultFromAccount?.address, from]);
   const onSetMaxTransferable = useCallback((value: boolean) => {
     const bnMaxTransfer = new BN(maxTransfer);
 

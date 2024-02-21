@@ -37,9 +37,8 @@ const Component: React.FC<Props> = (props: Props) => {
   const { chain, type } = defaultData;
 
   const [form] = Form.useForm<CancelUnStakeParams>();
-  const formDefault = useMemo((): CancelUnStakeParams => ({ ...defaultData }), [defaultData]);
 
-  const { isAllAccount } = useSelector((state) => state.accountState);
+  const { accounts, isAllAccount } = useSelector((state) => state.accountState);
   const { chainInfoMap } = useSelector((state) => state.chainStore);
 
   const from = useWatchTransaction('from', form, defaultData);
@@ -107,6 +106,13 @@ const Component: React.FC<Props> = (props: Props) => {
     return (nomination ? nomination.unstakings.length > 0 : false) && accountFilterFunc(chainInfoMap, type, chain)(account);
   }, [chainInfoMap, allNominatorInfo, chain, type]);
 
+  const defaultFromAccount = useMemo(() => {
+    const accountsFilter = accounts.filter((account) => filterAccount(account));
+
+    return accountsFilter.length === 1 ? accountsFilter[0] : undefined;
+  }, [accounts, filterAccount]);
+  const formDefault = useMemo((): CancelUnStakeParams => ({ ...defaultData, from: defaultFromAccount?.address || from }), [defaultData, defaultFromAccount?.address, from]);
+
   const onPreCheck = usePreCheckAction(from);
 
   useRestoreTransaction(form);
@@ -134,7 +140,7 @@ const Component: React.FC<Props> = (props: Props) => {
               address={from}
               chain={chain}
               className={'free-balance'}
-              label={t('Available balance:')}
+              label={t(from === '' ? 'Select account to view available balance' : 'Available balance:')}
               onBalanceReady={setIsBalanceReady}
             />
             <Form.Item name={'unstake'}>

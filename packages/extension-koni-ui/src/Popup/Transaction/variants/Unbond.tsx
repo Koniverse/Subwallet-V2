@@ -48,17 +48,13 @@ const Component: React.FC = () => {
   const { defaultData, onDone, persistData } = useTransactionContext<UnStakeParams>();
   const { chain, type } = defaultData;
 
-  const currentAccount = useSelector((state) => state.accountState.currentAccount);
+  const { accounts, currentAccount } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const isAll = isAccountAll(currentAccount?.address || '');
 
   const [form] = Form.useForm<UnStakeParams>();
   const [isBalanceReady, setIsBalanceReady] = useState(true);
   const [amountChange, setAmountChange] = useState(false);
-
-  const formDefault = useMemo((): UnStakeParams => ({
-    ...defaultData
-  }), [defaultData]);
 
   const from = useWatchTransaction('from', form, defaultData);
   const currentValidator = useWatchTransaction('validator', form, defaultData);
@@ -76,6 +72,17 @@ const Component: React.FC = () => {
       return undefined;
     }
   }, [currentValidator, nominatorMetadata]);
+
+  const defaultFromAccount = useMemo(() => {
+    const accountsFilter = accounts.filter(_accountFilterFunc(allNominatorInfo, chainInfoMap, type, chain));
+
+    return accountsFilter.length === 1 ? accountsFilter[0] : undefined;
+  }, [accounts, allNominatorInfo, chain, chainInfoMap, type]);
+
+  const formDefault = useMemo((): UnStakeParams => ({
+    ...defaultData,
+    from: defaultFromAccount?.address || from
+  }), [defaultData, defaultFromAccount, from]);
 
   const mustChooseValidator = useMemo(() => {
     return isActionFromValidator(type, chain || '');
@@ -257,7 +264,7 @@ const Component: React.FC = () => {
             address={from}
             chain={chain}
             className={'free-balance'}
-            label={t('Available balance:')}
+            label={t(from === '' ? 'Select account to view available balance' : 'Available balance:')}
             onBalanceReady={setIsBalanceReady}
           />
 
@@ -302,7 +309,7 @@ const Component: React.FC = () => {
           <div className={CN('text-light-4', { mt: mustChooseValidator })}>
             {
               t(
-                'Once unbonded, your funds would be available for withdrawal after {{time}}.',
+                ' Once unbonded, your funds will be available for withdrawal after {{time}}. Keep in mind that you need to withdraw manually.',
                 {
                   replace:
                       {

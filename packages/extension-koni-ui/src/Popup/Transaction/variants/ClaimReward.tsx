@@ -41,9 +41,8 @@ const Component: React.FC<Props> = (props: Props) => {
   const { chain, type } = defaultData;
 
   const [form] = Form.useForm<ClaimRewardParams>();
-  const formDefault = useMemo((): ClaimRewardParams => ({ ...defaultData }), [defaultData]);
 
-  const { isAllAccount } = useSelector((state) => state.accountState);
+  const { accounts, isAllAccount } = useSelector((state) => state.accountState);
   const { stakingRewardMap } = useSelector((state) => state.staking);
   const { chainInfoMap } = useSelector((state) => state.chainStore);
 
@@ -145,6 +144,13 @@ const Component: React.FC<Props> = (props: Props) => {
     return ((type === StakingType.POOLED || isAmplitudeNetwork) && bnUnclaimedReward.gt(BN_ZERO)) || (isAstarNetwork && !!nominatorMetadata.nominations.length);
   }, [allNominatorInfo, chainInfoMap, rewardList, chain, type]);
 
+  const defaultFromAccount = useMemo(() => {
+    const accountsFilter = accounts.filter((account) => filterAccount(account));
+
+    return accountsFilter.length === 1 ? accountsFilter[0] : undefined;
+  }, [accounts, filterAccount]);
+  const formDefault = useMemo((): ClaimRewardParams => ({ ...defaultData, from: defaultFromAccount?.address || from }), [defaultData, defaultFromAccount?.address, from]);
+
   useRestoreTransaction(form);
   useInitValidateTransaction(validateFields, form, defaultData);
 
@@ -170,7 +176,7 @@ const Component: React.FC<Props> = (props: Props) => {
               address={from}
               chain={chain}
               className={'free-balance'}
-              label={t('Available balance:')}
+              label={t(from === '' ? 'Select account to view available balance' : 'Available balance:')}
               onBalanceReady={setIsBalanceReady}
             />
             <Form.Item>

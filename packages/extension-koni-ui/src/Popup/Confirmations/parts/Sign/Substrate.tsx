@@ -7,10 +7,11 @@ import { CONFIRMATION_QR_MODAL } from '@subwallet/extension-koni-ui/constants/mo
 import { InjectContext } from '@subwallet/extension-koni-ui/contexts/InjectContext';
 import { useGetChainInfoByGenesisHash, useNotification, useParseSubstrateRequestPayload, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { useLedger } from '@subwallet/extension-koni-ui/hooks/ledger/useLedger';
+import useConfirmModal from '@subwallet/extension-koni-ui/hooks/modal/useConfirmModal';
 import { approveSignPasswordV2, approveSignSignature, cancelSignRequest } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountSignMode, PhosphorIcon, SigData, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isSubstrateMessage, removeTransactionPersist } from '@subwallet/extension-koni-ui/utils';
+import { isSubstrateMessage, noop, removeTransactionPersist } from '@subwallet/extension-koni-ui/utils';
 import { getSignMode } from '@subwallet/extension-koni-ui/utils/account/account';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -97,6 +98,16 @@ const Component: React.FC<Props> = (props: Props) => {
     isLocked,
     ledger
   ]);
+
+  const { handleSimpleConfirmModal } = useConfirmModal({
+    title: t<string>('Warning'),
+    maskClosable: true,
+    closable: true,
+    type: 'warning',
+    subTitle: t<string>('Your staked funds will be locked'),
+    content: t<string>('Once staked, your funds will be locked and become non-transferable. To unlock your funds, you need to unstake manually, wait for the unstaking period to end and then withdraw manually.'),
+    okText: t<string>('Confirm')
+  });
 
   // Handle buttons actions
   const onCancel = useCallback(() => {
@@ -207,26 +218,30 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [account.address, isMessage, onApproveSignature, payload, request.payload, substrateWallet]);
 
   const onConfirm = useCallback(() => {
-    removeTransactionPersist(extrinsicType);
+    (extrinsicType === ExtrinsicType.STAKING_BOND || extrinsicType === ExtrinsicType.STAKING_JOIN_POOL ? handleSimpleConfirmModal() : Promise.resolve())
+      .then(() => {
+        removeTransactionPersist(extrinsicType);
 
-    switch (signMode) {
-      case AccountSignMode.QR:
-        onConfirmQr();
-        break;
-      case AccountSignMode.LEDGER:
-        onConfirmLedger();
-        break;
-      case AccountSignMode.INJECTED:
-        onConfirmInject();
-        break;
-      default:
-        checkUnlock().then(() => {
-          onApprovePassword();
-        }).catch(() => {
-          // Unlock is cancelled
-        });
-    }
-  }, [checkUnlock, extrinsicType, onApprovePassword, onConfirmInject, onConfirmLedger, onConfirmQr, signMode]);
+        switch (signMode) {
+          case AccountSignMode.QR:
+            onConfirmQr();
+            break;
+          case AccountSignMode.LEDGER:
+            onConfirmLedger();
+            break;
+          case AccountSignMode.INJECTED:
+            onConfirmInject();
+            break;
+          default:
+            checkUnlock().then(() => {
+              onApprovePassword();
+            }).catch(() => {
+              // Unlock is cancelled
+            });
+        }
+      })
+      .catch(noop);
+  }, [checkUnlock, extrinsicType, handleSimpleConfirmModal, onApprovePassword, onConfirmInject, onConfirmLedger, onConfirmQr, signMode]);
 
   useEffect(() => {
     !!ledgerError && notify({

@@ -39,7 +39,7 @@ const Component: React.FC = () => {
   const { defaultData, onDone, persistData, setDisabledRightBtn, setShowRightBtn } = useTransactionContext<StakeParams>();
   const { defaultChain: stakingChain, defaultType: _stakingType } = defaultData;
 
-  const currentAccount = useSelector((state) => state.accountState.currentAccount);
+  const { accounts, currentAccount } = useSelector((state) => state.accountState);
   const isEthAdr = isEthereumAddress(currentAccount?.address);
 
   const defaultPoolTokenList = useGetSupportedStakingTokens(StakingType.POOLED, currentAccount?.address || '', stakingChain);
@@ -76,7 +76,6 @@ const Component: React.FC = () => {
   }, [_stakingType, disablePool, defaultData.type]);
 
   const [form] = Form.useForm<StakeParams>();
-
   const from = useWatchTransaction('from', form, defaultData);
   const chain = useWatchTransaction('chain', form, defaultData);
   const asset = useWatchTransaction('asset', form, defaultData);
@@ -89,6 +88,12 @@ const Component: React.FC = () => {
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const chainState = useFetchChainState(chain);
   const assetInfo = useFetchChainAssetInfo(asset);
+
+  const defaultFromAccount = useMemo(() => {
+    const accountsFilter = accounts.filter(accountFilterFunc(chainInfoMap, stakingType, stakingChain));
+
+    return accountsFilter.length === 1 ? accountsFilter[0] : undefined;
+  }, [accounts, chainInfoMap, stakingChain, stakingType]);
 
   const [isDisable, setIsDisable] = useState(true);
 
@@ -138,10 +143,11 @@ const Component: React.FC = () => {
   const formDefault: StakeParams = useMemo(() => {
     return {
       ...defaultData,
+      from: defaultFromAccount?.address || from,
       type: defaultStakingType,
       asset: defaultData.asset || defaultSlug
     };
-  }, [defaultData, defaultStakingType, defaultSlug]);
+  }, [defaultData, defaultFromAccount?.address, from, defaultStakingType, defaultSlug]);
 
   const [isChangeData, setIsChangeData] = useState(false);
 
@@ -422,7 +428,9 @@ const Component: React.FC = () => {
             hidden={!isAllAccount}
             name={'from'}
           >
-            <AccountSelector filter={accountFilterFunc(chainInfoMap, stakingType, stakingChain)} />
+            <AccountSelector
+              filter={accountFilterFunc(chainInfoMap, stakingType, stakingChain)}
+            />
           </Form.Item>
 
           {
@@ -442,7 +450,7 @@ const Component: React.FC = () => {
             address={from}
             chain={chain}
             className={'account-free-balance'}
-            label={t('Available balance:')}
+            label={t(from === '' ? 'Select account to view available balance' : 'Available balance:')}
             onBalanceReady={setIsBalanceReady}
           />
 
