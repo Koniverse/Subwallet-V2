@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getBlockExplorerFromChain, _getChainNativeTokenBasicInfo, _getChainSubstrateAddressPrefix, _getCrowdloanUrlFromChain, _getEvmChainId, _getSubstrateParaId, _isChainEvmCompatible, _isCustomChain, _isPureEvmChain, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getBlockExplorerFromChain, _getChainNativeTokenBasicInfo, _getChainSubstrateAddressPrefix, _getCrowdloanUrlFromChain, _getEvmChainId, _getLogoUrlFromChain, _getSubstrateParaId, _isChainEvmCompatible, _isCustomChain, _isPureEvmChain, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ProviderSelector } from '@subwallet/extension-koni-ui/components/Field/ProviderSelector';
@@ -26,7 +26,8 @@ type Props = ThemeProps
 interface ChainDetailForm {
   currentProvider: string,
   blockExplorer: string,
-  crowdloanUrl: string
+  crowdloanUrl: string,
+  logoUrl: string
 }
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
@@ -145,7 +146,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     return {
       currentProvider: chainState.currentProvider,
       blockExplorer: _getBlockExplorerFromChain(chainInfo),
-      crowdloanUrl: _getCrowdloanUrlFromChain(chainInfo)
+      crowdloanUrl: _getCrowdloanUrlFromChain(chainInfo),
+      logoUrl: _getLogoUrlFromChain(chainInfo)
     } as ChainDetailForm;
   }, [chainInfo, chainState.currentProvider]);
 
@@ -175,6 +177,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     const blockExplorer = form.getFieldValue('blockExplorer') as string;
     const crowdloanUrl = form.getFieldValue('crowdloanUrl') as string;
+    const logoUrl = form.getFieldValue('logoUrl') as string;
     const currentProvider = form.getFieldValue('currentProvider') as string;
 
     const params: _NetworkUpsertParams = {
@@ -184,7 +187,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         currentProvider: currentProvider,
         providers: chainInfo.providers,
         blockExplorer,
-        crowdloanUrl
+        crowdloanUrl,
+        logoUrl
       }
     };
 
@@ -252,6 +256,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [t]);
 
   const blockExplorerValidator = useCallback((rule: RuleObject, value: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (value.length === 0 || isUrl(value)) {
+        resolve();
+      } else {
+        reject(new Error(t('Block explorer must be a valid URL')));
+      }
+    });
+  }, [t]);
+
+  const logoUrlValidator = useCallback((rule: RuleObject, value: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (value.length === 0 || isUrl(value)) {
         resolve();
@@ -430,6 +444,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   />
                 </Form.Item>
               }
+
+              <Form.Item
+                name={'logoUrl'}
+                rules={[{ validator: logoUrlValidator }]}
+                statusHelpAsTooltip={true}
+              >
+                <Input
+                  disabled={!_isCustomChain(chainInfo.slug)}
+                  placeholder={t('Logo URL')}
+                  tooltip={t('Logo URL')}
+                  tooltipPlacement={'topLeft'}
+                />
+              </Form.Item>
             </div>
           </Form>
         </div>

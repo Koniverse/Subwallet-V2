@@ -32,6 +32,7 @@ interface ChainImportForm {
   evmChainId: number,
   blockExplorer: string,
   crowdloanUrl: string,
+  logoUrl: string,
   priceId: string
 }
 
@@ -73,8 +74,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     const blockExplorer = form.getFieldValue('blockExplorer') as string;
     const crowdloanUrl = form.getFieldValue('crowdloanUrl') as string;
+    const logoUrl = form.getFieldValue('logoUrl') as string;
     const provider = form.getFieldValue('provider') as string;
-
     const decimals = form.getFieldValue('decimals') as number;
     const symbol = form.getFieldValue('symbol') as string;
     const addressPrefix = form.getFieldValue('addressPrefix') as number;
@@ -93,6 +94,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         providers: { [newProviderKey]: provider },
         blockExplorer,
         crowdloanUrl,
+        logoUrl,
         symbol,
         chainType: isPureEvmChain ? 'EVM' : 'Substrate',
         name,
@@ -137,6 +139,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         resolve();
       } else {
         reject(new Error(t('Block explorer must be a valid URL')));
+      }
+    });
+  }, [t]);
+
+  const logoUrlValidator = useCallback((rule: RuleObject, value: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (value.length === 0 || isUrl(value)) {
+        resolve();
+      } else {
+        reject(new Error(t('Logo URL must be a valid URL')));
       }
     });
   }, [t]);
@@ -408,6 +420,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 <Input
                   placeholder={t('Crowdloan URL')}
                   tooltip={t('Crowdloan URL')}
+                  tooltipPlacement={'topLeft'}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name={'logoUrl'}
+                rules={[{ validator: logoUrlValidator }]}
+                statusHelpAsTooltip={true}
+              >
+                <Input
+                  placeholder={t('Logo URL')}
+                  tooltip={t('Logo URL')}
                   tooltipPlacement={'topLeft'}
                 />
               </Form.Item>

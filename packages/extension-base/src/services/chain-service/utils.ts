@@ -388,6 +388,10 @@ export function _getCrowdloanUrlFromChain (chainInfo: _ChainInfo): string {
   return chainInfo?.substrateInfo?.crowdloanUrl || '';
 }
 
+export function _getLogoUrlFromChain (chainInfo: _ChainInfo): string {
+  return chainInfo?.icon || '';
+}
+
 export function _isCustomProvider (providerKey: string) {
   return providerKey.startsWith(_CUSTOM_PREFIX);
 }

@@ -3,6 +3,7 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _isCustomAsset, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { isUrl } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
@@ -46,6 +47,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const originChainInfo = useFetchChainInfo(tokenInfo.originChain);
 
   const [priceId, setPriceId] = useState(tokenInfo.priceId || '');
+  const [logoUrl, setLogoUrl] = useState(tokenInfo.icon || '');
   const [loading, setLoading] = useState(false);
 
   const { handleSimpleConfirmModal } = useConfirmModal({
@@ -149,16 +151,21 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     setPriceId(e.currentTarget.value);
   }, []);
 
+  const onChangeLogoUrl = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    setLogoUrl(e.currentTarget.value);
+  }, []);
+
   const isSubmitDisabled = useCallback(() => {
-    return tokenInfo.priceId === priceId || priceId.length === 0;
-  }, [priceId, tokenInfo.priceId]);
+    return priceId.length === 0 || (tokenInfo.icon === logoUrl && tokenInfo.priceId === priceId) || !(logoUrl.length === 0 || isUrl(logoUrl));
+  }, [tokenInfo.priceId, tokenInfo.icon, priceId, logoUrl]);
 
   const onSubmit = useCallback(() => {
     setLoading(true);
 
     upsertCustomToken({
       ...tokenInfo,
-      priceId
+      priceId,
+      icon: logoUrl
     })
       .then((result) => {
         if (result) {
@@ -177,7 +184,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           message: t('Error')
         });
       });
-  }, [goBack, priceId, showNotification, t, tokenInfo]);
+  }, [goBack, logoUrl, priceId, showNotification, t, tokenInfo]);
 
   const leftFooterButtonProps = useCallback(() => {
     return _isCustomAsset(tokenInfo.slug)
@@ -321,6 +328,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 </Tooltip>
               </Col>
             </Row>
+            <Tooltip
+              placement={'topLeft'}
+              title={t('Logo URL')}
+            >
+              <div>
+                <Input
+                  disabled={!_isCustomAsset(tokenInfo.slug)}
+                  onChange={onChangeLogoUrl}
+                  placeholder={t('Logo URL')}
+                  value={logoUrl}
+                />
+              </div>
+            </Tooltip>
           </div>
         </div>
       </Layout.Base>

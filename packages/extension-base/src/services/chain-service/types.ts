@@ -102,6 +102,7 @@ export type _NetworkUpsertParams = {
     slug: string,
     symbol?: string,
     blockExplorer?: string,
+    logoUrl?: string,
     crowdloanUrl?: string,
     priceId?: string
   },

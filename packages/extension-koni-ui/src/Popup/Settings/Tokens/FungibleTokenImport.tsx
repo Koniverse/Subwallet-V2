@@ -3,7 +3,7 @@
 
 import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getTokenTypesSupportedByChain, _isChainTestNet, _parseMetadataForSmartContractAsset } from '@subwallet/extension-base/services/chain-service/utils';
-import { isValidSubstrateAddress } from '@subwallet/extension-base/utils';
+import { isUrl, isValidSubstrateAddress } from '@subwallet/extension-base/utils';
 import { AddressInput, ChainSelector, Layout, PageWrapper, TokenTypeSelector } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useChainChecker, useDefaultNavigate, useGetChainPrefixBySlug, useGetContractSupportedChains, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
@@ -13,7 +13,7 @@ import { convertFieldToError, convertFieldToObject, reformatAddress, simpleCheck
 import { Col, Field, Form, Icon, Input, Row } from '@subwallet/react-ui';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import { PlusCircle } from 'phosphor-react';
-import { FieldData } from 'rc-field-form/lib/interface';
+import { FieldData, RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled, { useTheme } from 'styled-components';
 
@@ -26,6 +26,7 @@ interface TokenImportFormType {
   chain: string;
   type: _AssetType;
   priceId: string;
+  logoUrl: string;
   tokenName: string;
   decimals: number;
   symbol: string;
@@ -70,6 +71,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     chain: '',
     type: '' as _AssetType,
     priceId: '',
+    logoUrl: '',
     tokenName: '',
     decimals: -1,
     symbol: ''
@@ -145,6 +147,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     ];
   }, [chainNetworkPrefix, form, selectedChain, t]);
 
+  const logoUrlValidator = useCallback((rule: RuleObject, value: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (value.length === 0 || isUrl(value)) {
+        resolve();
+      } else {
+        reject(new Error(t('Logo URL must be a valid URL')));
+      }
+    });
+  }, [t]);
+
   const onFieldChange: FormCallbacks<TokenImportFormType>['onFieldsChange'] = useCallback((changedFields: FieldData[], allFields: FieldData[]) => {
     const { empty, error } = simpleCheckForm(allFields, ['--priceId', '--tokenName']);
 
@@ -154,7 +166,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     const { chain, type } = changes;
 
-    const baseResetFields = ['tokenName', 'symbol', 'decimals', 'priceId'];
+    const baseResetFields = ['tokenName', 'symbol', 'decimals', 'priceId', 'logoUrl'];
 
     if (chain) {
       const nftTypes = getTokenTypeSupported(chainInfoMap[chain]);
@@ -181,12 +193,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [chainInfoMap, form]);
 
   const onSubmit: FormCallbacks<TokenImportFormType>['onFinish'] = useCallback((formValues: TokenImportFormType) => {
-    const { chain, contractAddress, decimals, priceId, symbol, tokenName, type } = formValues;
+    const { chain, contractAddress, decimals, logoUrl, priceId, symbol, tokenName, type } = formValues;
 
     const reformattedAddress = reformatAddress(contractAddress, chainNetworkPrefix);
 
     setLoading(true);
-
+    console.log(logoUrl, 'logourl');
     upsertCustomToken({
       originChain: chain,
       slug: '',
@@ -199,7 +211,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       metadata: _parseMetadataForSmartContractAsset(reformattedAddress),
       multiChainAsset: null,
       hasValue: _isChainTestNet(chainInfoMap[formValues.chain]),
-      icon: 'default.png'
+      icon: logoUrl
     })
       .then((result) => {
         if (result) {
@@ -368,6 +380,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 disabled={fieldDisabled}
                 placeholder={t('Price ID')}
                 tooltip={t('Price ID')}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name={'logoUrl'}
+              rules={[{ validator: logoUrlValidator }]}
+              statusHelpAsTooltip={true}
+            >
+              <Input
+                disabled={fieldDisabled}
+                placeholder={t('Logo URL')}
+                tooltip={t('Logo URL')}
+                tooltipPlacement={'topLeft'}
               />
             </Form.Item>
           </Form>

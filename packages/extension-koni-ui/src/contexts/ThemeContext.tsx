@@ -4,6 +4,8 @@
 import type { ThemeProps } from '../types';
 
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
+import { useChainInfoWithState } from '@subwallet/extension-koni-ui/hooks';
+import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import applyPreloadStyle from '@subwallet/extension-koni-ui/preloadStyle';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { generateTheme, SW_THEME_CONFIGS, SwThemeConfig } from '@subwallet/extension-koni-ui/themes';
@@ -245,16 +247,32 @@ export function ThemeProvider ({ children }: ThemeProviderProps): React.ReactEle
   const dataContext = useContext(DataContext);
   const themeName = useSelector((state: RootState) => state.settings.theme);
   const logoMaps = useSelector((state: RootState) => state.settings.logoMaps);
+  const chainInfoList = useChainInfoWithState();
+  const tokenInfoList = useChainAssets({ isFungible: true }).chainAssets;
   const [themeReady, setThemeReady] = useState(false);
+  const [themeConfig, setThemeConfig] = useState<SwThemeConfig>(SW_THEME_CONFIGS[themeName]);
 
-  const themeConfig = useMemo(() => {
+  useEffect(() => {
     const config = SW_THEME_CONFIGS[themeName];
 
-    Object.assign(config.logoMap.network, logoMaps.chainLogoMap);
-    Object.assign(config.logoMap.symbol, logoMaps.assetLogoMap);
+    Object.assign(config.logoMap.network, logoMaps.chainLogoMap, chainInfoList.reduce((chainLogoMap: Record<string, string>, { icon, slug }) => {
+      chainLogoMap[slug] = icon;
 
-    return config;
-  }, [logoMaps, themeName]);
+      return chainLogoMap;
+    }, {}));
+    setThemeConfig(config);
+  }, [logoMaps.chainLogoMap, themeName, chainInfoList]);
+
+  useEffect(() => {
+    const config = SW_THEME_CONFIGS[themeName];
+
+    Object.assign(config.logoMap.symbol, logoMaps.assetLogoMap, tokenInfoList.reduce((tokenLogoMap: Record<string, string>, { icon, slug }) => {
+      tokenLogoMap[slug.toLowerCase()] = icon;
+
+      return tokenLogoMap;
+    }, {}));
+    setThemeConfig(config);
+  }, [logoMaps.assetLogoMap, themeName, tokenInfoList]);
 
   useEffect(() => {
     dataContext.awaitStores(['settings']).then(() => {
