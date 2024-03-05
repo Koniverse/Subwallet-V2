@@ -15,7 +15,7 @@ import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import AssetSettingStore from '@subwallet/extension-base/stores/AssetSetting';
-import { fetchStaticData, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
+import { addLazy, fetchStaticData, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import Web3 from 'web3';
 
@@ -283,8 +283,10 @@ export class ChainService {
     const result: Record<string, _ChainInfo> = {};
 
     Object.values(this.getChainStateMap()).forEach((chainState) => {
-      if (chainState.active) {
-        result[chainState.slug] = this.getChainInfoByKey(chainState.slug);
+      const chainInfo = this.getChainInfoByKey(chainState.slug);
+
+      if (chainState.active && chainInfo && chainInfo.chainStatus === _ChainStatus.ACTIVE) {
+        result[chainState.slug] = chainInfo;
       }
     });
 
@@ -530,7 +532,6 @@ export class ChainService {
 
     await this.initChains();
     this.chainInfoMapSubject.next(this.getChainInfoMap());
-    this.updateChainStateMapSubscription();
     this.assetRegistrySubject.next(this.getAssetRegistry());
     this.xcmRefMapSubject.next(this.dataMap.assetRefMap);
 
@@ -568,7 +569,6 @@ export class ChainService {
 
   checkLatestData () {
     clearInterval(this.refreshLatestChainDataTimeOut);
-
     this.handleLatestData();
 
     this.refreshLatestChainDataTimeOut = setInterval(this.handleLatestData.bind(this), LATEST_CHAIN_DATA_FETCHING_INTERVAL);
@@ -613,14 +613,19 @@ export class ChainService {
   }
 
   handleLatestPriceId (latestPriceIds: Record<string, string | null>) {
+    let isUpdated = false;
+
     Object.entries(latestPriceIds).forEach(([slug, priceId]) => {
-      if (this.dataMap.assetRegistry[slug]) {
+      if (this.dataMap.assetRegistry[slug] && this.dataMap.assetRegistry[slug].priceId !== priceId) {
+        isUpdated = true;
         this.dataMap.assetRegistry[slug].priceId = priceId;
       }
     });
 
-    this.assetRegistrySubject.next(this.dataMap.assetRegistry);
-    this.eventService.emit('asset.updateState', '');
+    if (isUpdated) {
+      this.assetRegistrySubject.next(this.dataMap.assetRegistry);
+      this.eventService.emit('asset.updateState', '');
+    }
 
     this.logger.log('Finished updating latest price IDs');
   }
@@ -634,9 +639,9 @@ export class ChainService {
       this.handleLatestBlockedAssetRef(latestAssetRef);
     }).catch(console.error);
 
-    // this.fetchLatestPriceIdsData().then((latestPriceIds) => {
-    //   this.handleLatestPriceId(latestPriceIds);
-    // }).catch(console.error);
+    this.fetchLatestPriceIdsData().then((latestPriceIds) => {
+      this.handleLatestPriceId(latestPriceIds);
+    }).catch(console.error);
   }
 
   private async initApis () {
@@ -1105,7 +1110,9 @@ export class ChainService {
   }
 
   private updateChainStateMapSubscription () {
-    this.chainStateMapSubject.next(this.getChainStateMap());
+    addLazy('updateChainStateMapSubscription', () => {
+      this.chainStateMapSubject.next(this.getChainStateMap());
+    }, 300, 900);
   }
 
   private updateChainInfoMapSubscription () {
