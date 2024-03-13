@@ -77,7 +77,12 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
     });
 
     raw.sort((a, b) => {
-      return convertChainActivePriority(chainStateMap[b.originChain]?.active) - convertChainActivePriority(chainStateMap[a.originChain]?.active);
+      return convertChainActivePriority(
+        chainStateMap[b.originChain]?.active &&
+        tokenBalanceMap[b.slug].isReady) -
+        convertChainActivePriority(
+          chainStateMap[a.originChain]?.active &&
+          tokenBalanceMap[a.slug].isReady);
     });
 
     return raw;
@@ -139,7 +144,9 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
                   )
                 }
               </div>
-              { !!isShowBalance && tokenBalanceMap[item.slug].isReady &&
+              { !!isShowBalance &&
+                tokenBalanceMap[item.slug].isReady &&
+                chainStateMap[item.originChain].active &&
                 <Number
                   className={CN('__value', {
                     '-is-not-selected': !selected
@@ -153,7 +160,9 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
               <div className='__token-original-chain'>
                 {chainInfoMap[item.originChain]?.name || item.originChain}
               </div>
-              { !!isShowBalance && tokenBalanceMap[item.slug].isReady &&
+              { !!isShowBalance &&
+                tokenBalanceMap[item.slug].isReady &&
+                chainStateMap[item.originChain].active &&
                 <Number
                   className={CN('__converted-value', {
                     '-is-not-selected': !selected
@@ -190,7 +199,7 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
         symbol={item.slug.toLowerCase()}
       />
     );
-  }, [chainInfoMap, isShowBalance, token.colorSuccess, tokenBalanceMap]);
+  }, [chainInfoMap, chainStateMap, isShowBalance, token.colorSuccess, tokenBalanceMap]);
 
   useEffect(() => {
     if (value) {
