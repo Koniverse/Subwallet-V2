@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _DEFAULT_CHAINS } from '@subwallet/chain-list';
 import { _SubstrateChainType } from '@subwallet/chain-list/types';
 import { SingleModeJson, ThemeNames } from '@subwallet/extension-base/background/KoniTypes';
 
@@ -234,10 +233,7 @@ export const _XCM_TYPE = {
   PR: `${_SubstrateChainType.PARACHAIN}-${_SubstrateChainType.RELAYCHAIN}` // UMP
 };
 
-export const _DEFAULT_ACTIVE_CHAINS = [
-  ..._DEFAULT_CHAINS,
-  'vara_network'
-];
+export const _DEFAULT_ACTIVE_CHAINS = ['goldberg_testnet'];
 
 export const EVM_PASS_CONNECT_STATUS: Record<string, string[]> = {
   arbitrum_one: ['*'],
