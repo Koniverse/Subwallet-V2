@@ -138,7 +138,7 @@ function gitPush () {
   const version = npmGetVersion();
   let doGHRelease = false;
 
-  if (process.env.GH_RELEASE_GITHUB_API_TOKEN) {
+  if (process.env.GH_PAT) {
     const changes = fs.readFileSync('CHANGELOG.md', 'utf8');
 
     if (changes.includes(`## ${version}`)) {
@@ -197,7 +197,7 @@ function loopFunc (fn) {
 
 gitSetup();
 gitBump();
-npmSetup();
+// npmSetup();
 
 runClean();
 runCheck();
@@ -206,8 +206,8 @@ runBuild();
 runBuildWebRunner();
 
 gitPush();
-try {
-  loopFunc(npmPublish);
-} catch (e) {
-  console.error(e);
-}
+// try {
+//   loopFunc(npmPublish);
+// } catch (e) {
+//   console.error(e);
+// }

@@ -41,9 +41,7 @@ jobs:
         cache: 'yarn'
     - name: Build Dev
       env:
-        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
         GH_PAT: ${{ secrets.GH_PAT }}
-        GH_RELEASE_GITHUB_API_TOKEN: ${{ secrets.GH_PAT }}
         TRANSAK_API_KEY: ${{ secrets.TRANSAK_API_KEY }}
         COINBASE_PAY_ID: ${{ secrets.COINBASE_PAY_ID }}
         GH_RELEASE_FILES: master-build.zip,master-src.zip
@@ -56,6 +54,7 @@ jobs:
       run: |
         yarn install --immutable | grep -v 'YN0013'
         yarn build:koni-dev
+
     # Deploy after build
     - name: Upload to Build to Nextcloud
       id: nextcloud_upload
@@ -66,20 +65,7 @@ jobs:
         nextcloud-url: 'https://file.cdmteck.com'
         nextcloud-username: ${{ secrets.NEXTCLOUD_USERNAME }}
         nextcloud-password: ${{ secrets.NEXTCLOUD_PASSWORD }}
-    - name: Deploy Webrunner to Netlify
-      id: netlify_deployment
-      uses: nwtgck/actions-netlify@v2.0
-      with:
-        publish-dir: './packages/web-runner/build'
-        alias: ${{ steps.setup_params.outputs.ref }}
-        github-token: ${{ secrets.GH_PAT }}
-        deploy-message: ${{ github.event.head_commit.message }}
-        enable-pull-request-comment: true
-        enable-commit-comment: true
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_WEB_RUNNER_SITE_ID }}
-      timeout-minutes: 1
+
     - name: Notify to Discord
       uses: sarisia/actions-status-discord@v1
       if: always()
@@ -91,4 +77,3 @@ jobs:
         description: |
           The Deployment has been completed.
           - Extension: ${{ steps.nextcloud_upload.outputs.SHAREABLE_URL }}
-          - Web-runner: ${{ steps.netlify_deployment.outputs.deploy-url }}
