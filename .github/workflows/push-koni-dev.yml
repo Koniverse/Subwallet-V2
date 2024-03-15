@@ -2,14 +2,10 @@ name: Koni Dev
 on:
   pull_request:
     branches:
-      - koni-dev
-      - upgrade-ui
-      - subwallet-dev
+      - dev
   push:
     branches:
-      - koni-dev
-      - upgrade-ui
-      - subwallet-dev
+      - dev
 
 jobs:
   master:
