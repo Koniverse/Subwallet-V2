@@ -39,21 +39,6 @@ jobs:
         nextcloud-username: ${{ secrets.NEXTCLOUD_USERNAME }}
         nextcloud-password: ${{ secrets.NEXTCLOUD_PASSWORD }}
 
-    - name: Deploy Webrunner to Netlify
-      id: netlify_deployment
-      uses: nwtgck/actions-netlify@v2.0
-      with:
-        publish-dir: './packages/web-runner/build'
-        production-branch: master
-        github-token: ${{ secrets.GH_PAT }}
-        deploy-message: ${{ github.event.head_commit.message }}
-        enable-pull-request-comment: true
-        enable-commit-comment: true
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_WEB_RUNNER_SITE_ID }}
-      timeout-minutes: 1
-
     - name: Notify to Discord
       uses: sarisia/actions-status-discord@v1
       if: always()
@@ -65,4 +50,3 @@ jobs:
         description: |
           Master is completed.
           - Extension: ${{ steps.nextcloud_upload.outputs.SHAREABLE_URL }}
-          - Web-runner: ${{ steps.netlify_deployment.outputs.deploy-url }}
