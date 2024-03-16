@@ -23,33 +23,27 @@ import { logger as createLogger } from '@polkadot/util/logger';
 import { Logger } from '@polkadot/util/types';
 
 const availChainInfoMap = (() => {
-  const enableList = ['goldberg_testnet'];
-  const chainOrdinal = ['goldberg_testnet', 'ethereum', 'binance', 'polygon', 'arbitrum_one', 'optimism', 'avalanche_c', 'base_mainnet', 'fantom', 'tomochain', 'boba', 'watr_mainnet_evm', 'manta_network_evm'];
-  const ordinalMap = chainOrdinal.reduce((map, slug, index) => {
-    map[slug] = index + 1;
+  const enableList = [
+    'goldberg_testnet',
+    'ethereum',
+    'binance',
+    'polygon',
+    'arbitrum_one',
+    'optimism',
+    'avalanche_c',
+    'base_mainnet',
+    'fantom',
+    'tomochain',
+    'manta_network_evm',
+    'ethereum_goerli',
+    'binance_test',
+    'fantom_testnet',
+    'okxTest'
+  ];
 
-    return map;
-  }, {} as Record<string, number>);
-
-  const entries = Object.entries(ChainInfoMap)
-    .filter(([slug, info]) => {
-      return enableList.includes(slug) || _isPureEvmChain(info);
-    }).sort(([slugA, infoA], [slugB, infoB]) => {
-      const oA = ordinalMap[slugA] || 999;
-      const oB = ordinalMap[slugB] || 999;
-
-      if (infoA.isTestnet && oA === 999) {
-        return 1;
-      }
-
-      if (infoB.isTestnet && oB === 999) {
-        return -1;
-      }
-
-      return oA - oB;
-    });
-
-  return Object.fromEntries(entries);
+  return Object.fromEntries(enableList.map((slug) => {
+    return [slug, ChainInfoMap[slug]];
+  }));
 })();
 
 export class ChainService {
