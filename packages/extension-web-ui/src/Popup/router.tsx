@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { PHISHING_PAGE_REDIRECT } from '@subwallet/extension-base/defaults';
 import { PageWrapper } from '@subwallet/extension-web-ui/components';
 import ErrorFallback from '@subwallet/extension-web-ui/Popup/ErrorFallback';
 import { Root } from '@subwallet/extension-web-ui/Popup/Root';
@@ -50,7 +49,7 @@ export class LazyLoader {
   }
 }
 
-const PhishingDetected = new LazyLoader('PhishingDetected', () => import('@subwallet/extension-web-ui/Popup/PhishingDetected'));
+// const PhishingDetected = new LazyLoader('PhishingDetected', () => import('@subwallet/extension-web-ui/Popup/PhishingDetected'));
 const Welcome = new LazyLoader('Welcome', () => import('@subwallet/extension-web-ui/Popup/Welcome'));
 const CreateDone = new LazyLoader('CreateDone', () => import('@subwallet/extension-web-ui/Popup/CreateDone'));
 const BuyTokens = new LazyLoader('BuyTokens', () => import('@subwallet/extension-web-ui/Popup/BuyTokens'));
@@ -63,11 +62,11 @@ const NftCollections = new LazyLoader('NftCollections', () => import('@subwallet
 const NftCollectionDetail = new LazyLoader('NftCollectionDetail', () => import('@subwallet/extension-web-ui/Popup/Home/Nfts/NftCollectionDetail'));
 const NftImport = new LazyLoader('NftImport', () => import('@subwallet/extension-web-ui/Popup/Home/Nfts/NftImport'));
 
-const InscriptionItems = new LazyLoader('InscriptionItems', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemList'));
-const InscriptionItemDetail = new LazyLoader('InscriptionItemDetail', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemDetail'));
+// const InscriptionItems = new LazyLoader('InscriptionItems', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemList'));
+// const InscriptionItemDetail = new LazyLoader('InscriptionItemDetail', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemDetail'));
 
 const History = new LazyLoader('History', () => import('@subwallet/extension-web-ui/Popup/Home/History'));
-const Crowdloans = new LazyLoader('Crowdloans', () => import('@subwallet/extension-web-ui/Popup/Home/Crowdloans'));
+// const Crowdloans = new LazyLoader('Crowdloans', () => import('@subwallet/extension-web-ui/Popup/Home/Crowdloans'));
 const Home = new LazyLoader('Home', () => import('@subwallet/extension-web-ui/Popup/Home'));
 const Statistics = new LazyLoader('Statistics', () => import('@subwallet/extension-web-ui/Popup/Home/Statistics'));
 
@@ -123,7 +122,7 @@ const ConnectionDetail = new LazyLoader('ConnectionDetail', () => import('@subwa
 
 // DApps
 
-const DApps = new LazyLoader('DApps', () => import('@subwallet/extension-web-ui/Popup/DApps'));
+// const DApps = new LazyLoader('DApps', () => import('@subwallet/extension-web-ui/Popup/DApps'));
 
 const EarningEntry = new LazyLoader('EarningEntry', () => import('@subwallet/extension-web-ui/Popup/Home/Earning/EarningEntry'));
 const EarningPools = new LazyLoader('EarningPools', () => import('@subwallet/extension-web-ui/Popup/Home/Earning/EarningPools'));
@@ -135,11 +134,11 @@ const EarningPreviewOutlet = new LazyLoader('EarningPreviewOutlet', () => import
 // const EarningDoneOutlet = new LazyLoader('EarningDoneOutlet', () => import('@subwallet/extension-web-ui/Popup/EarningDone/Outlet'));
 // const EarningDoneContent = new LazyLoader('EarningDoneContent', () => import('@subwallet/extension-web-ui/Popup/EarningDone/Content'));
 
-const CrowdloanUnlockCampaign = new LazyLoader('CrowdloanUnlockCampaign', () => import('@subwallet/extension-web-ui/Popup/CrowdloanUnlockCampaign'));
-const CheckCrowdloanContributions = new LazyLoader('CrowdloanContributionsResult', () => import('@subwallet/extension-web-ui/Popup/CrowdloanUnlockCampaign/CheckCrowdloanContributions'));
-const CrowdloanContributionsResult = new LazyLoader('CrowdloanContributionsResult', () => import('@subwallet/extension-web-ui/Popup/CrowdloanUnlockCampaign/CrowdloanContributionsResult'));
+// const CrowdloanUnlockCampaign = new LazyLoader('CrowdloanUnlockCampaign', () => import('@subwallet/extension-web-ui/Popup/CrowdloanUnlockCampaign'));
+// const CheckCrowdloanContributions = new LazyLoader('CrowdloanContributionsResult', () => import('@subwallet/extension-web-ui/Popup/CrowdloanUnlockCampaign/CheckCrowdloanContributions'));
+// const CrowdloanContributionsResult = new LazyLoader('CrowdloanContributionsResult', () => import('@subwallet/extension-web-ui/Popup/CrowdloanUnlockCampaign/CrowdloanContributionsResult'));
 
-const MissionPool = new LazyLoader('MissionPool', () => import('@subwallet/extension-web-ui/Popup/MissionPool'));
+// const MissionPool = new LazyLoader('MissionPool', () => import('@subwallet/extension-web-ui/Popup/MissionPool'));
 
 /* 404 */
 
@@ -190,15 +189,15 @@ export const router = createBrowserRouter([
               NftItemDetail.generateRouterObject('item-detail')
             ]
           },
-          {
-            path: 'inscriptions',
-            element: <NestedOutlet />,
-            children: [
-              InscriptionItems.generateRouterObject(''),
-              InscriptionItemDetail.generateRouterObject('item-detail')
-            ]
-          },
-          Crowdloans.generateRouterObject('crowdloans'),
+          // {
+          //   path: 'inscriptions',
+          //   element: <NestedOutlet />,
+          //   children: [
+          //     InscriptionItems.generateRouterObject(''),
+          //     InscriptionItemDetail.generateRouterObject('item-detail')
+          //   ]
+          // },
+          // Crowdloans.generateRouterObject('crowdloans'),
           {
             path: 'earning',
             element: <Outlet />,
@@ -208,10 +207,10 @@ export const router = createBrowserRouter([
               EarningPositionDetail.generateRouterObject('position-detail')
             ]
           },
-          MissionPool.generateRouterObject('mission-pools'),
+          // MissionPool.generateRouterObject('mission-pools'),
           History.generateRouterObject('history'),
-          History.generateRouterObject('history/:address/:chain/:extrinsicHashOrId'),
-          DApps.generateRouterObject('dapps')
+          History.generateRouterObject('history/:address/:chain/:extrinsicHashOrId')
+          // DApps.generateRouterObject('dapps')
         ]
       },
       {
@@ -308,17 +307,17 @@ export const router = createBrowserRouter([
           ConnectionDetail.generateRouterObject('detail/:topic')
         ]
       },
-      {
-        ...CrowdloanUnlockCampaign.generateRouterObject('/crowdloan-unlock-campaign'),
-        children: [
-          CheckCrowdloanContributions.generateRouterObject('check-contributions'),
-          CrowdloanContributionsResult.generateRouterObject('contributions-result')
-        ]
-      },
+      // {
+      //   ...CrowdloanUnlockCampaign.generateRouterObject('/crowdloan-unlock-campaign'),
+      //   children: [
+      //     CheckCrowdloanContributions.generateRouterObject('check-contributions'),
+      //     CrowdloanContributionsResult.generateRouterObject('contributions-result')
+      //   ]
+      // },
       NotFoundContent.generateRouterObject('not-found'),
       NotFoundRedirect.generateRouterObject('*'),
-      UnsafeAccess.generateRouterObject('unsafe-access'),
-      PhishingDetected.generateRouterObject(`${PHISHING_PAGE_REDIRECT}/:website`)
+      UnsafeAccess.generateRouterObject('unsafe-access')
+      // PhishingDetected.generateRouterObject(`${PHISHING_PAGE_REDIRECT}/:website`)
     ]
   }
 ]);

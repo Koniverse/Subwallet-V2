@@ -11,7 +11,7 @@ import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { SwScreenLayout } from '@subwallet/react-ui';
 import { SwTabBarItem } from '@subwallet/react-ui/es/sw-tab-bar';
 import CN from 'classnames';
-import { Aperture, Clock, Globe, Parachute, Rocket, Vault, Wallet } from 'phosphor-react';
+import { Aperture, Clock, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -73,36 +73,36 @@ const Component = ({ children, className, footer, headerIcons, isSetTitleContext
       key: 'earning',
       url: '/home/earning'
     },
-    {
-      icon: {
-        type: 'phosphor',
-        phosphorIcon: Globe,
-        weight: 'fill'
-      },
-      label: t('DApps'),
-      key: 'dapps',
-      url: '/home/dapps'
-    },
-    {
-      icon: {
-        type: 'phosphor',
-        phosphorIcon: Parachute,
-        weight: 'fill'
-      },
-      label: t('Mission Pools'),
-      key: 'mission-pools',
-      url: '/home/mission-pools'
-    },
-    {
-      icon: {
-        type: 'phosphor',
-        phosphorIcon: Rocket,
-        weight: 'fill'
-      },
-      label: t('Crowdloans'),
-      key: 'crowdloans',
-      url: '/home/crowdloans'
-    },
+    // {
+    //   icon: {
+    //     type: 'phosphor',
+    //     phosphorIcon: Globe,
+    //     weight: 'fill'
+    //   },
+    //   label: t('DApps'),
+    //   key: 'dapps',
+    //   url: '/home/dapps'
+    // },
+    // {
+    //   icon: {
+    //     type: 'phosphor',
+    //     phosphorIcon: Parachute,
+    //     weight: 'fill'
+    //   },
+    //   label: t('Mission Pools'),
+    //   key: 'mission-pools',
+    //   url: '/home/mission-pools'
+    // },
+    // {
+    //   icon: {
+    //     type: 'phosphor',
+    //     phosphorIcon: Rocket,
+    //     weight: 'fill'
+    //   },
+    //   label: t('Crowdloans'),
+    //   key: 'crowdloans',
+    //   url: '/home/crowdloans'
+    // },
     {
       icon: {
         type: 'phosphor',

@@ -60,10 +60,10 @@ export class KoniSubscription {
       delete this.subscriptionMap.balance;
     }
 
-    if (this.subscriptionMap.crowdloan) {
-      this.subscriptionMap.crowdloan();
-      delete this.subscriptionMap.crowdloan;
-    }
+    // if (this.subscriptionMap.crowdloan) {
+    //   this.subscriptionMap.crowdloan();
+    //   delete this.subscriptionMap.crowdloan;
+    // }
   }
 
   async start () {
@@ -72,7 +72,7 @@ export class KoniSubscription {
 
     if (currentAddress) {
       this.subscribeBalances(currentAddress, this.state.getChainInfoMap(), this.state.getChainStateMap(), this.state.getSubstrateApiMap(), this.state.getEvmApiMap());
-      this.subscribeCrowdloans(currentAddress, this.state.getSubstrateApiMap());
+      // this.subscribeCrowdloans(currentAddress, this.state.getSubstrateApiMap());
     }
 
     this.eventHandler = (events, eventTypes) => {
@@ -90,7 +90,7 @@ export class KoniSubscription {
       }
 
       this.subscribeBalances(address, serviceInfo.chainInfoMap, serviceInfo.chainStateMap, serviceInfo.chainApiMap.substrate, serviceInfo.chainApiMap.evm);
-      this.subscribeCrowdloans(address, serviceInfo.chainApiMap.substrate);
+      // this.subscribeCrowdloans(address, serviceInfo.chainApiMap.substrate);
     };
 
     this.state.eventService.onLazy(this.eventHandler.bind(this));
@@ -231,10 +231,10 @@ export class KoniSubscription {
   }
 
   async reloadCrowdloan () {
-    const currentAddress = this.state.keyringService.currentAccount?.address;
-
-    this.subscribeCrowdloans(currentAddress, this.state.getSubstrateApiMap());
-
-    await waitTimeout(1800);
+    // const currentAddress = this.state.keyringService.currentAccount?.address;
+    //
+    // this.subscribeCrowdloans(currentAddress, this.state.getSubstrateApiMap());
+    //
+    // await waitTimeout(1800);
   }
 }

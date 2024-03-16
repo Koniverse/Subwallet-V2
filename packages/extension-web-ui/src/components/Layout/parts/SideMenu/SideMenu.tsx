@@ -9,7 +9,7 @@ import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, Image } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowCircleLeft, ArrowCircleRight, ArrowSquareUpRight, Clock, Gear, Globe, Info, MessengerLogo, Parachute, Rocket, Vault, Wallet } from 'phosphor-react';
+import { ArrowCircleLeft, ArrowCircleRight, ArrowSquareUpRight, Clock, Gear, Info, MessengerLogo, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -30,8 +30,8 @@ function Component ({ className,
     'Home',
     'Tokens',
     'NftCollections',
-    'Crowdloans',
-    'Staking',
+    // 'Crowdloans',
+    // 'Staking',
     'Settings'
   ]);
 
@@ -47,21 +47,21 @@ function Component ({ className,
         value: '/home/earning',
         icon: Vault
       },
-      {
-        label: t('dApps'),
-        value: '/home/dapps',
-        icon: Globe
-      },
-      {
-        label: t('Mission Pools'),
-        value: '/home/mission-pools',
-        icon: Parachute
-      },
-      {
-        label: t('Crowdloans'),
-        value: '/home/crowdloans',
-        icon: Rocket
-      },
+      // {
+      //   label: t('dApps'),
+      //   value: '/home/dapps',
+      //   icon: Globe
+      // },
+      // {
+      //   label: t('Mission Pools'),
+      //   value: '/home/mission-pools',
+      //   icon: Parachute
+      // },
+      // {
+      //   label: t('Crowdloans'),
+      //   value: '/home/crowdloans',
+      //   icon: Rocket
+      // },
       {
         label: t('History'),
         value: '/home/history',

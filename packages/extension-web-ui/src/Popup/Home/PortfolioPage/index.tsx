@@ -80,7 +80,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const notify = useNotification();
 
   const TAB_LIST = useMemo(() => {
-    return [t('Tokens'), t('NFTs'), t('Inscriptions'), t('Statistics')];
+    return [t('Tokens'), t('NFTs'), t('Statistics')];
   }, [t]);
 
   const handleSelectTab = useCallback((index: number) => {
@@ -89,8 +89,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     } else if (index === 1) {
       navigate('nfts/collections');
     } else if (index === 2) {
-      navigate('inscriptions');
-    } else if (index === 3) {
       navigate('statistics');
     }
   }, [navigate]);
