@@ -2,10 +2,10 @@ name: Koni Dev
 on:
   pull_request:
     branches:
-      - dev
+      - avail-dev
   push:
     branches:
-      - dev
+      - avail-dev
 
 jobs:
   master:
