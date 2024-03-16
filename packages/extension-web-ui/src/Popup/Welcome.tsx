@@ -6,14 +6,12 @@ import { AutoConnect, CONFIRM_GENERAL_TERM, CONNECT_EXTENSION, CREATE_RETURN, DE
 import { ATTACH_ACCOUNT_MODAL, CREATE_ACCOUNT_MODAL, GENERAL_TERM_AND_CONDITION_MODAL, IMPORT_ACCOUNT_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
-import { createAccountExternalV2 } from '@subwallet/extension-web-ui/messaging';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { checkHasInjected } from '@subwallet/extension-web-ui/utils/wallet';
-import { Button, ButtonProps, Form, Icon, Image, Input, ModalContext } from '@subwallet/react-ui';
+import { Button, ButtonProps, Icon, Image, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { FileArrowDown, PlusCircle, PuzzlePiece, Swatches, Wallet } from 'phosphor-react';
-import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
+import { PuzzlePiece } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -23,15 +21,10 @@ import { useLocalStorage } from 'usehooks-ts';
 import { GeneralTermModal } from '../components/Modal/TermsAndConditions/GeneralTermModal';
 import SocialGroup from '../components/SocialGroup';
 import { ScreenContext } from '../contexts/ScreenContext';
-import useGetDefaultAccountName from '../hooks/account/useGetDefaultAccountName';
 import usePreloadView from '../hooks/router/usePreloadView';
-import { convertFieldToObject, isMobile, readOnlyScan, simpleCheckForm } from '../utils';
+import { isMobile } from '../utils';
 
 type Props = ThemeProps;
-
-interface ReadOnlyAccountInput {
-  address?: string;
-}
 
 interface WelcomeButtonItem {
   id: string;
@@ -50,82 +43,20 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const { isWebUI } = useContext(ScreenContext);
   const { enableInject, loadingInject, selectWallet } = useContext(InjectContext);
 
-  const { accounts, isNoAccount } = useSelector((root: RootState) => root.accountState);
+  const { isNoAccount } = useSelector((root: RootState) => root.accountState);
 
-  const autoGenAttachReadonlyAccountName = useGetDefaultAccountName();
   const [, setSelectedAccountTypes] = useLocalStorage(SELECTED_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPES);
   const [_returnPath, setReturnStorage] = useLocalStorage(CREATE_RETURN, DEFAULT_ROUTER_PATH);
   const [modalIdAfterConfirm, setModalIdAfterConfirm] = useState('');
   const [_isConfirmedTermGeneral, setIsConfirmedTermGeneral] = useLocalStorage(CONFIRM_GENERAL_TERM, 'nonConfirmed');
 
-  const [form] = Form.useForm<ReadOnlyAccountInput>();
-
-  const [reformatAttachAddress, setReformatAttachAddress] = useState('');
   const [returnPath] = useState(_returnPath);
-  const [loading, setLoading] = useState(false);
-  const [isAttachAddressEthereum, setAttachAddressEthereum] = useState(false);
-  const [isAttachReadonlyAccountButtonDisable, setIsAttachReadonlyAccountButtonDisable] = useState(true);
 
   usePreloadView([
     'CreatePassword',
     'CreateDone',
     'NewSeedPhrase'
   ]);
-
-  const formDefault: ReadOnlyAccountInput = {
-    address: ''
-  };
-
-  const handleResult = useCallback((val: string) => {
-    const result = readOnlyScan(val);
-
-    if (result) {
-      setReformatAttachAddress(result.content);
-      setAttachAddressEthereum(result.isEthereum);
-    }
-  }, []);
-
-  const onFieldsChange: Callbacks<ReadOnlyAccountInput>['onFieldsChange'] =
-    useCallback(
-      (changes: FieldData[], allFields: FieldData[]) => {
-        const { empty, error } = simpleCheckForm(allFields);
-
-        setIsAttachReadonlyAccountButtonDisable(error || empty);
-
-        const changeMap = convertFieldToObject<ReadOnlyAccountInput>(changes);
-
-        if (changeMap.address) {
-          handleResult(changeMap.address);
-        }
-      },
-      [handleResult]
-    );
-
-  const accountAddressValidator = useCallback(
-    (rule: RuleObject, value: string) => {
-      const result = readOnlyScan(value);
-
-      if (result) {
-        // For each account, check if the address already exists return promise reject
-        for (const account of accounts) {
-          if (account.address === result.content) {
-            setReformatAttachAddress('');
-
-            return Promise.reject(t('Account already exists'));
-          }
-        }
-      } else {
-        setReformatAttachAddress('');
-
-        if (value !== '') {
-          return Promise.reject(t('Invalid address'));
-        }
-      }
-
-      return Promise.resolve();
-    },
-    [accounts, t]
-  );
 
   const buttonList = useMemo((): WelcomeButtonItem[] => [
     {
@@ -135,30 +66,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       schema: 'primary',
       title: t('Connect wallet'),
       loading: loadingInject
-    },
-    {
-      description: t('Create a new account with SubWallet'),
-      icon: PlusCircle,
-      id: CREATE_ACCOUNT_MODAL,
-      schema: 'secondary',
-      title: t('Create a new account'),
-      loading: false
-    },
-    {
-      description: t('Import an existing account'),
-      icon: FileArrowDown,
-      id: IMPORT_ACCOUNT_MODAL,
-      schema: 'secondary',
-      title: t('Import an account'),
-      loading: false
-    },
-    {
-      description: t('Attach an account without private key'),
-      icon: Swatches,
-      id: ATTACH_ACCOUNT_MODAL,
-      schema: 'secondary',
-      title: t('Attach an account'),
-      loading: false
     }
   ], [t, loadingInject]);
 
@@ -190,50 +97,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       }
     };
   }, [_isConfirmedTermGeneral, activeModal, openModal]);
-
-  const afterConfirmTermToAttachReadonlyAccount = useCallback(() => {
-    setLoading(true);
-
-    if (reformatAttachAddress) {
-      createAccountExternalV2({
-        name: autoGenAttachReadonlyAccountName,
-        address: reformatAttachAddress,
-        genesisHash: '',
-        isEthereum: isAttachAddressEthereum,
-        isAllowed: true,
-        isReadOnly: true
-      })
-        .then((errors) => {
-          if (errors.length) {
-            form.setFields([
-              { name: 'address', errors: errors.map((e) => e.message) }
-            ]);
-          } else {
-            navigate('/create-done');
-          }
-        })
-        .catch((error: Error) => {
-          form.setFields([{ name: 'address', errors: [error.message] }]);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-
-    setIsConfirmedTermGeneral('confirmed');
-  }, [reformatAttachAddress, setIsConfirmedTermGeneral, autoGenAttachReadonlyAccountName, isAttachAddressEthereum, form, navigate]);
-
-  const onSubmitAttachReadonlyAccount = useCallback(() => {
-    setModalIdAfterConfirm('');
-
-    if (_isConfirmedTermGeneral.includes('nonConfirmed')) {
-      activeModal(GENERAL_TERM_AND_CONDITION_MODAL);
-    } else {
-      afterConfirmTermToAttachReadonlyAccount();
-    }
-  }, [_isConfirmedTermGeneral, activeModal, afterConfirmTermToAttachReadonlyAccount]);
 
   useEffect(() => {
     if (!isNoAccount) {
@@ -315,58 +178,13 @@ function Component ({ className }: Props): React.ReactElement<Props> {
               </Button>
             ))}
           </div>
-
-          <div className='divider' />
         </div>
-
-        {isWebUI && (
-          <>
-            <Form
-              className={CN('add-wallet-container')}
-              form={form}
-              initialValues={formDefault}
-              onFieldsChange={onFieldsChange}
-              onFinish={onSubmitAttachReadonlyAccount}
-            >
-              <div className='form-title lg-text'>{t('Watch any wallet')}?</div>
-              <Form.Item
-                name={'address'}
-                rules={[
-                  {
-                    message: t('Account address is required'),
-                    required: true
-                  },
-                  {
-                    validator: accountAddressValidator
-                  }
-                ]}
-                statusHelpAsTooltip={true}
-              >
-                <Input
-                  placeholder={t('Enter address')}
-                  prefix={<Wallet size={24} />}
-                  type={'text'}
-                />
-              </Form.Item>
-              <Button
-                block
-                className='add-wallet-button'
-                disabled={isAttachReadonlyAccountButtonDisable}
-                loading={loading}
-                onClick={form.submit}
-                schema='primary'
-              >
-                {t('Add watch-only wallet')}
-              </Button>
-            </Form>
-          </>
-        )}
       </div>
 
       {isWebUI && (
         <SocialGroup className={'social-group'} />
       )}
-      <GeneralTermModal onOk={modalIdAfterConfirm === '' ? afterConfirmTermToAttachReadonlyAccount : openModal(modalIdAfterConfirm)} />
+      <GeneralTermModal onOk={openModal(modalIdAfterConfirm)} />
     </Layout.Base>
   );
 }
@@ -534,8 +352,8 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
         '.buttons': {
           display: 'grid',
-          gridTemplateRows: '1fr 1fr',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr',
+          gridTemplateColumns: '1fr',
           gap: token.sizeMS,
 
           '.ant-btn:not(.-icon-only) .ant-btn-loading-icon>.anticon': {

@@ -38,6 +38,7 @@ const accountStateSlice = createSlice({
       return {
         ...state,
         ...payload,
+        hasMasterPassword: true, // Apply for webapp only
         reduxStatus: ReduxStatus.READY
       };
     },

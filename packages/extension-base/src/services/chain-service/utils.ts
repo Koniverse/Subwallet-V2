@@ -118,8 +118,8 @@ export function _getTokenMinAmount (tokenInfo: _ChainAsset) {
   return tokenInfo.minAmount || '0';
 }
 
-export function _isChainEvmCompatible (chainInfo: _ChainInfo) {
-  return !!chainInfo.evmInfo;
+export function _isChainEvmCompatible (chainInfo?: _ChainInfo) {
+  return !!chainInfo?.evmInfo;
 }
 
 export function _isNativeToken (tokenInfo: _ChainAsset) {
