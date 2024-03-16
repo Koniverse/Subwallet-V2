@@ -277,6 +277,29 @@ function Component ({ className, modalContent, slug }: Props) {
     }
   }, [form, tokens, chainInfoMap, disclaimerAgree, onConfirm, walletReference, notify, t]);
 
+  // Determine the type of account that can be used to buy tokens and chains supports
+  const supportAccountType = useMemo(() => {
+    const types = {} as Record<AccountType, string[]>;
+
+    Object.values(tokens).forEach((info) => {
+      if (!chainInfoMap[info.network]) {
+        return;
+      }
+
+      if (!types[info.support]) {
+        types[info.support] = [];
+      }
+
+      types[info.support].push(info.network);
+    });
+
+    if (types.ETHEREUM && types.SUBSTRATE) {
+      return 'ALL';
+    } else {
+      return types.ETHEREUM ? 'ETHEREUM' : 'SUBSTRATE';
+    }
+  }, [chainInfoMap, tokens]);
+
   const filterAccountType = useMemo((): AccountType => {
     if (currentSymbol) {
       let result: AccountType = '' as AccountType;
@@ -297,9 +320,9 @@ function Component ({ className, modalContent, slug }: Props) {
 
       return result;
     } else {
-      return 'ALL';
+      return supportAccountType;
     }
-  }, [currentSymbol, tokens]);
+  }, [currentSymbol, supportAccountType, tokens]);
 
   const accountsFilter = useCallback((account: AccountJson) => {
     if (isAccountAll(account.address)) {

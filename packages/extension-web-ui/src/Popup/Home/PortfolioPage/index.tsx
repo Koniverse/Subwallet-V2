@@ -151,7 +151,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
                       <TabPanel></TabPanel>
                       <TabPanel></TabPanel>
                       <TabPanel></TabPanel>
-                      <TabPanel></TabPanel>
                     </div>
                   </Tabs>
                 </>
