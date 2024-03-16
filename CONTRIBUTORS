@@ -7,7 +7,7 @@
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
       99	lw-cdm                        	
       88	dominhquang                   	[Issue-2649] Add send crash log feature
-      83	Hieu Dao                      	Update README.md
+      84	Hieu Dao                      	Update README.md
       82	Thibaut Sardan                	Add account filtering feature (#832)
       80	leewong                       	Update account filter for earn transaction
       63	Roman                         	fix ui issues
