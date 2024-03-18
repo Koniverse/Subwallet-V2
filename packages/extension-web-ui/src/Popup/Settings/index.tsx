@@ -7,18 +7,16 @@ import { BaseModal, PageWrapper, WalletConnect } from '@subwallet/extension-web-
 import { EXTENSION_VERSION, SUPPORT_MAIL, TERMS_OF_SERVICE_URL, TWITTER_URL, WEB_BUILD_NUMBER, WEBSITE_URL, WIKI_URL } from '@subwallet/extension-web-ui/constants/common';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
-import useNotification from '@subwallet/extension-web-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
-import useUILock from '@subwallet/extension-web-ui/hooks/common/useUILock';
 import useIsPopup from '@subwallet/extension-web-ui/hooks/dom/useIsPopup';
 import useDefaultNavigate from '@subwallet/extension-web-ui/hooks/router/useDefaultNavigate';
 import { windowOpen } from '@subwallet/extension-web-ui/messaging';
 import { Theme, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
-import { BackgroundIcon, Button, ButtonProps, Icon, Image, ModalContext, SettingItem, SwHeader, SwIconProps } from '@subwallet/react-ui';
+import { BackgroundIcon, ButtonProps, Icon, Image, ModalContext, SettingItem, SwHeader, SwIconProps } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowsOut, ArrowSquareOut, Book, BookBookmark, CaretRight, ChatTeardropText, Coin, EnvelopeSimple, FrameCorners, Globe, GlobeHemisphereEast, Lock, ShareNetwork, ShieldCheck, X } from 'phosphor-react';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ArrowsOut, ArrowSquareOut, Book, BookBookmark, CaretRight, ChatTeardropText, Coin, EnvelopeSimple, FrameCorners, Globe, GlobeHemisphereEast, ShareNetwork, ShieldCheck, X } from 'phosphor-react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
@@ -76,37 +74,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const navigate = useNavigate();
   const { token } = useTheme() as Theme;
   const isPopup = useIsPopup();
-  const notify = useNotification();
   const location = useLocation();
   const { goHome } = useDefaultNavigate();
   const { t } = useTranslation();
-  const [locking, setLocking] = useState(false);
   const { isWebUI } = useContext(ScreenContext);
   const { setTitle } = useContext(WebUIContext);
   const { activeModal, inactiveModal } = useContext(ModalContext);
-
-  const { isUILocked, lock, unlock } = useUILock();
-
-  const onLock = useCallback(() => {
-    if (isUILocked) {
-      unlock();
-      goHome();
-    } else {
-      setLocking(true);
-      lock()
-        .then(() => {
-          goHome();
-        })
-        .catch((e: Error) => {
-          notify({
-            message: e.message,
-            type: 'error'
-          });
-        }).finally(() => {
-          setLocking(false);
-        });
-    }
-  }, [goHome, isUILocked, lock, notify, unlock]);
 
   // todo: i18n all titles, labels below
   const SettingGroupItemType = useMemo((): SettingGroupItemType[] => ([
@@ -374,22 +347,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               );
             })
           }
-
-          <Button
-            block
-            icon={
-              <Icon
-                phosphorIcon={Lock}
-                type='phosphor'
-                weight={'fill'}
-              />
-            }
-            loading={locking}
-            onClick={onLock}
-            schema={'secondary'}
-          >
-            {t('Lock')}
-          </Button>
 
           <div className={'__version'}>
           SubWallet v {EXTENSION_VERSION} - {WEB_BUILD_NUMBER}

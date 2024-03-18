@@ -10,7 +10,6 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 import SelectAccount from '../SelectAccount';
-import LockStatus from './parts/LockStatus';
 import Networks from './parts/Networks';
 
 export type Props = ThemeProps & {
@@ -57,8 +56,6 @@ function Component ({ className, onBack, showBackButton, title = '' }: Props): R
           <div className={'trigger-container -select-account'}>
             <SelectAccount />
           </div>
-
-          <LockStatus />
         </div>
       </div>
     </div>

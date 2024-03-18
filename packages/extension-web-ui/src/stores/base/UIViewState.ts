@@ -19,6 +19,7 @@ const uiViewSlice = createSlice({
       return {
         ...state,
         ...payload,
+        isUILocked: false,
         reduxStatus: ReduxStatus.READY
       };
     }
