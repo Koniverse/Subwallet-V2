@@ -6,17 +6,15 @@ import type { ThemeProps } from '../types';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import applyPreloadStyle from '@subwallet/extension-web-ui/preloadStyle';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { generateTheme, SW_THEME_CONFIGS, SwThemeConfig } from '@subwallet/extension-web-ui/themes';
+import { appTheme, AppThemeConfig, Theme } from '@subwallet/extension-web-ui/themes';
 import { ConfigProvider, theme as reactUiTheme } from '@subwallet/react-ui';
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled, { createGlobalStyle, ThemeProvider as StyledComponentThemeProvider } from 'styled-components';
 
-import { Theme } from '../types';
-
 interface Props {
   children: React.ReactNode;
-  themeConfig: SwThemeConfig
+  themeConfig: AppThemeConfig
 }
 
 const { useToken } = reactUiTheme;
@@ -283,9 +281,8 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
 function ThemeGenerator ({ children, themeConfig }: Props): React.ReactElement<Props> {
   const { token } = useToken();
 
-  // Generate theme from config
   const theme = useMemo<Theme>(() => {
-    return generateTheme(themeConfig, token);
+    return { ...themeConfig, token } as Theme;
   }, [themeConfig, token]);
 
   return (
@@ -311,18 +308,13 @@ const TooltipContainer = styled.div({
 
 export function ThemeProvider ({ children }: ThemeProviderProps): React.ReactElement<ThemeProviderProps> {
   const dataContext = useContext(DataContext);
-  const themeName = useSelector((state: RootState) => state.settings.theme);
   const logoMaps = useSelector((state: RootState) => state.settings.logoMaps);
   const [themeReady, setThemeReady] = useState(false);
 
-  const themeConfig = useMemo(() => {
-    const config = SW_THEME_CONFIGS[themeName];
-
-    Object.assign(config.logoMap.network, logoMaps.chainLogoMap);
-    Object.assign(config.logoMap.symbol, logoMaps.assetLogoMap);
-
-    return config;
-  }, [logoMaps, themeName]);
+  useEffect(() => {
+    Object.assign(appTheme.logoMap.network, logoMaps.chainLogoMap);
+    Object.assign(appTheme.logoMap.symbol, logoMaps.assetLogoMap);
+  }, [logoMaps]);
 
   useEffect(() => {
     dataContext.awaitStores(['settings']).then(() => {
@@ -339,9 +331,9 @@ export function ThemeProvider ({ children }: ThemeProviderProps): React.ReactEle
     <ConfigProvider
       getModalContainer={getModalContainer}
       getPopupContainer={getPopupContainer}
-      theme={themeConfig}
+      theme={appTheme}
     >
-      <ThemeGenerator themeConfig={themeConfig}>
+      <ThemeGenerator themeConfig={appTheme}>
         <TooltipContainer id='tooltip-container' />
         {children}
       </ThemeGenerator>
