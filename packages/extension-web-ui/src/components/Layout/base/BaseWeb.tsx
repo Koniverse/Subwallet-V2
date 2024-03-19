@@ -30,13 +30,15 @@ const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } 
 
     '.web-layout-background': {
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      top: '-10vh',
+      left: '0',
+      right: '-20vw',
+      height: '20vh',
       zIndex: -1,
       transitionDuration: 'background-color 0.3s ease',
+      filter: 'blur(110.5px)',
       background: extendToken.tokensScreenInfoBackgroundColor,
+      opacity: 0.45,
 
       '&.__background-common': {
         background: token.colorBgDefault

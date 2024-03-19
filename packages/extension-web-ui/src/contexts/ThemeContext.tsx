@@ -282,6 +282,8 @@ function ThemeGenerator ({ children, themeConfig }: Props): React.ReactElement<P
   const { token } = useToken();
 
   const theme = useMemo<Theme>(() => {
+    console.log('tokenData', token);
+
     return { ...themeConfig, token } as Theme;
   }, [themeConfig, token]);
 
