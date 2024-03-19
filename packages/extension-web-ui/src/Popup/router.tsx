@@ -92,17 +92,17 @@ const ManageWebsiteAccessDetail = new LazyLoader('ManageWebsiteAccessDetail', ()
 // const ImportPrivateKey = new LazyLoader('ImportPrivateKey', () => import('@subwallet/extension-web-ui/Popup/Account/ImportPrivateKey'));
 // const RestoreJson = new LazyLoader('RestoreJson', () => import('@subwallet/extension-web-ui/Popup/Account/RestoreJson'));
 // const ImportQrCode = new LazyLoader('ImportQrCode', () => import('@subwallet/extension-web-ui/Popup/Account/ImportQrCode'));
-// const AttachReadOnly = new LazyLoader('AttachReadOnly', () => import('@subwallet/extension-web-ui/Popup/Account/AttachReadOnly'));
-// const ConnectPolkadotVault = new LazyLoader('ConnectPolkadotVault', () => import('@subwallet/extension-web-ui/Popup/Account/ConnectQrSigner/ConnectPolkadotVault'));
-// const ConnectKeystone = new LazyLoader('ConnectKeystone', () => import('@subwallet/extension-web-ui/Popup/Account/ConnectQrSigner/ConnectKeystone'));
-// const ConnectLedger = new LazyLoader('ConnectLedger', () => import('@subwallet/extension-web-ui/Popup/Account/ConnectLedger'));
+const AttachReadOnly = new LazyLoader('AttachReadOnly', () => import('@subwallet/extension-web-ui/Popup/Account/AttachReadOnly'));
+const ConnectPolkadotVault = new LazyLoader('ConnectPolkadotVault', () => import('@subwallet/extension-web-ui/Popup/Account/ConnectQrSigner/ConnectPolkadotVault'));
+const ConnectKeystone = new LazyLoader('ConnectKeystone', () => import('@subwallet/extension-web-ui/Popup/Account/ConnectQrSigner/ConnectKeystone'));
+const ConnectLedger = new LazyLoader('ConnectLedger', () => import('@subwallet/extension-web-ui/Popup/Account/ConnectLedger'));
 
 const Login = new LazyLoader('Login', () => import('@subwallet/extension-web-ui/Popup/Keyring/Login'));
 const CreatePassword = new LazyLoader('CreatePassword', () => import('@subwallet/extension-web-ui/Popup/Keyring/CreatePassword'));
 const ChangePassword = new LazyLoader('ChangePassword', () => import('@subwallet/extension-web-ui/Popup/Keyring/ChangePassword'));
 const ApplyMasterPassword = new LazyLoader('ApplyMasterPassword', () => import('@subwallet/extension-web-ui/Popup/Keyring/ApplyMasterPassword'));
 
-// const AccountDetail = new LazyLoader('AccountDetail', () => import('@subwallet/extension-web-ui/Popup/Account/AccountDetail'));
+const AccountDetail = new LazyLoader('AccountDetail', () => import('@subwallet/extension-web-ui/Popup/Account/AccountDetail'));
 // const AccountExport = new LazyLoader('AccountExport', () => import('@subwallet/extension-web-ui/Popup/Account/AccountExport'));
 
 const Transaction = new LazyLoader('Transaction', () => import('@subwallet/extension-web-ui/Popup/Transaction/Transaction'));
@@ -281,23 +281,23 @@ export const router = createBrowserRouter([
           }
         ]
       },
-      // {
-      //   path: 'accounts',
-      //   element: <Outlet />,
-      //   children: [
-      //     NewSeedPhrase.generateRouterObject('new-seed-phrase'),
-      //     ImportSeedPhrase.generateRouterObject('import-seed-phrase'),
-      //     ImportPrivateKey.generateRouterObject('import-private-key'),
-      //     RestoreJson.generateRouterObject('restore-json'),
-      //     ImportQrCode.generateRouterObject('import-by-qr'),
-      //     AttachReadOnly.generateRouterObject('attach-read-only'),
-      //     ConnectPolkadotVault.generateRouterObject('connect-polkadot-vault'),
-      //     ConnectKeystone.generateRouterObject('connect-keystone'),
-      //     ConnectLedger.generateRouterObject('connect-ledger'),
-      //     AccountDetail.generateRouterObject('detail/:accountAddress'),
-      //     AccountExport.generateRouterObject('export/:accountAddress')
-      //   ]
-      // },
+      {
+        path: 'accounts',
+        element: <Outlet />,
+        children: [
+          // NewSeedPhrase.generateRouterObject('new-seed-phrase'),
+          // ImportSeedPhrase.generateRouterObject('import-seed-phrase'),
+          // ImportPrivateKey.generateRouterObject('import-private-key'),
+          // RestoreJson.generateRouterObject('restore-json'),
+          // ImportQrCode.generateRouterObject('import-by-qr'),
+          AttachReadOnly.generateRouterObject('attach-read-only'),
+          ConnectPolkadotVault.generateRouterObject('connect-polkadot-vault'),
+          ConnectKeystone.generateRouterObject('connect-keystone'),
+          ConnectLedger.generateRouterObject('connect-ledger'),
+          AccountDetail.generateRouterObject('detail/:accountAddress'),
+          // AccountExport.generateRouterObject('export/:accountAddress')
+        ]
+      },
       {
         path: 'wallet-connect',
         element: <Outlet />,

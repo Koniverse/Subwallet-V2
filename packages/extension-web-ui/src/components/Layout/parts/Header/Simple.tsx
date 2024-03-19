@@ -73,7 +73,7 @@ function Component ({ className,
           }
           onClick={openInNewTab(HELP_URL)}
           size='xs'
-          type='ghost'
+          type='primary'
         >
           {t<string>('Help')}
         </Button>

@@ -179,7 +179,7 @@ function Component ({ className,
           alt={'SubWallet'}
           onClick={goHome}
           shape={'square'}
-          src='/images/subwallet/gradient-logo.png'
+          src='/images/avail/avail-icon.png'
           style={{ cursor: 'pointer' }}
         />
 

@@ -33,24 +33,26 @@ const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } 
       top: '-10vh',
       left: '0',
       right: '-20vw',
-      height: '20vh',
+      height: '30vh',
       zIndex: -1,
       transitionDuration: 'background-color 0.3s ease',
       filter: 'blur(110.5px)',
       background: extendToken.tokensScreenInfoBackgroundColor,
-      opacity: 0.45,
 
       '&.__background-common': {
-        background: token.colorBgDefault
+        background: token.colorBgDefault,
+        opacity: 0.45
       },
       '&.__background-info': {
         background: extendToken.tokensScreenInfoBackgroundColor
       },
       '&.__background-increase': {
-        background: extendToken.tokensScreenSuccessBackgroundColor
+        background: extendToken.tokensScreenSuccessBackgroundColor,
+        opacity: 0.45
       },
       '&.__background-decrease': {
-        background: extendToken.tokensScreenDangerBackgroundColor
+        background: extendToken.tokensScreenDangerBackgroundColor,
+        opacity: 0.45
       }
     },
 

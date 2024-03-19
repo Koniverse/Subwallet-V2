@@ -565,11 +565,22 @@ const Tokens = styled(WrapperComponent)<ThemeProps>(({ theme: { extendToken, tok
       right: 0,
       display: 'flex',
       alignItems: 'center',
-      backgroundImage: extendToken.tokensScreenInfoBackgroundColor,
       transition: 'opacity, padding-top 0.27s ease',
 
       '&.-is-shrink': {
         height: 128
+      },
+
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: '50%',
+        backgroundImage: extendToken.tokensScreenSuccessBackgroundColor,
+        filter: 'blur(110.5px)',
+        opacity: 0.45
       }
     },
 
