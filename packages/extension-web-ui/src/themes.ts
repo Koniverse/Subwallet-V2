@@ -53,18 +53,21 @@ const defaultLogoMap: Web3LogoMap = {
   default: SwLogosMap.default
 };
 
-const currentToken = {
+const currentToken: Partial<GlobalToken> = {
   ...seedToken,
   colorPrimary: '#3073F1',
   colorSecondary: '#44D5DE',
+  colorSuccess: '#4CEAAC',
+  colorWarning: '#f2d457',
+  colorError: '#E42A12',
+  colorInfo: '#3073F1',
   colorBgBase: '#131518',
   colorBgDefault: '#131518',
   colorBgSecondary: '#1A1F25',
   colorBgDivider: 'rgba(255, 255, 255, 0.1)',
   colorBgInput: '#1D2B3E',
   bodyFontWeight: '400',
-  fontFamily: '\'THICCCBOI\', sans-serif',
-  fontBase: '\'THICCCBOI\', sans-serif'
+  fontFamily: '\'THICCCBOI\', sans-serif'
 };
 
 export const appTheme: AppThemeConfig = {
@@ -76,7 +79,7 @@ export const appTheme: AppThemeConfig = {
     oneColumnWidth: 400,
     bigOneColumnWidth: 600,
     twoColumnWidth: 820,
-    bodyBackgroundColor: currentToken.colorBgBase,
+    bodyBackgroundColor: currentToken.colorBgBase || '#000',
     logo: subWalletLogo,
     defaultImagePlaceholder,
     tokensScreenSuccessBackgroundColor: 'linear-gradient(45deg, #78F7FF 9.56%, #31A0FF 44.2%, #DAC7FF 95.08%)',
