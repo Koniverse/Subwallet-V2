@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { DISCONNECT_EXTENSION_MODAL, SELECT_EXTENSION_MODAL } from '@subwallet/extension-web-ui/constants';
+import { ATTACH_ACCOUNT_MODAL, DISCONNECT_EXTENSION_MODAL, SELECT_EXTENSION_MODAL } from '@subwallet/extension-web-ui/constants';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
+import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
-import { PuzzlePiece } from 'phosphor-react';
+import { PuzzlePiece, Swatches } from 'phosphor-react';
 import React, { useCallback, useContext } from 'react';
 import styled from 'styled-components';
 
@@ -16,6 +17,11 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { t } = useTranslation();
   const { activeModal } = useContext(ModalContext);
   const { enabled, injected, loadingInject } = useContext(InjectContext);
+  const { isWebUI } = useContext(ScreenContext);
+
+  const openAttachAccount = useCallback(() => {
+    activeModal(ATTACH_ACCOUNT_MODAL);
+  }, [activeModal]);
 
   const onClickExtension = useCallback(() => {
     if (enabled) {
@@ -27,6 +33,18 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   return (
     <div className={className}>
+      <Button
+        className='btn-min-width'
+        icon={(
+          <Icon
+            phosphorIcon={Swatches}
+            weight={'fill'}
+          />
+        )}
+        onClick={openAttachAccount}
+        schema='secondary'
+        tooltip={isWebUI ? t('Attach account') : undefined}
+      />
       <Button
         className='btn-full-width'
         icon={(
