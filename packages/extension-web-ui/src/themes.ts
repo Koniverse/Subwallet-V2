@@ -61,7 +61,7 @@ const currentToken = {
   colorBgDefault: '#131518',
   colorBgSecondary: '#1A1F25',
   colorBgDivider: 'rgba(255, 255, 255, 0.1)',
-  colorBgInput: '#131518',
+  colorBgInput: '#1D2B3E',
   bodyFontWeight: '400',
   fontFamily: '\'THICCCBOI\', sans-serif',
   fontBase: '\'THICCCBOI\', sans-serif'

@@ -99,8 +99,12 @@ const Controller = styled(Component)<Props>(({ theme: { token } }: Props) => ({
       padding: `0 ${token.padding}px`,
       height: 40,
       gap: 8,
-      background: token.colorBgSecondary,
-      borderRadius: 32
+      background: 'rgba(0, 0, 0, 0.25)',
+      borderRadius: 32,
+
+      '.ant-select-modal-input-container.ant-select-modal-input-bg-default': {
+        background: 'transparent'
+      }
     },
 
     '.trigger-container.-select-account': {

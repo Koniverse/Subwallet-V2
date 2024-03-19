@@ -61,8 +61,7 @@ export const BaseSelectModal = styled(Component)(({ theme: { token } }: ThemePro
         height: '100%',
         maxHeight: '100%',
         paddingLeft: token.paddingLG,
-        paddingRight: token.paddingLG,
-        borderRadius: '8px 0 0 8px'
+        paddingRight: token.paddingLG
       },
 
       '.ant-sw-list-section .ant-sw-list-wrapper': {

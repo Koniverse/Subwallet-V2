@@ -226,7 +226,7 @@ const HeaderDesktopPart = styled(Component)<Props>(({ theme: { token } }: Props)
 
   '.__block-divider': {
     height: 116,
-    width: 1,
+    width: 2,
     backgroundColor: token.colorBgDivider,
     marginTop: token.marginSM
   },

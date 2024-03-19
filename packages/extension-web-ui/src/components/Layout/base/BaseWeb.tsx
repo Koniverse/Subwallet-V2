@@ -44,6 +44,7 @@ const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } 
         opacity: 0.45
       },
       '&.__background-info': {
+        opacity: 0.45,
         background: extendToken.tokensScreenInfoBackgroundColor
       },
       '&.__background-increase': {

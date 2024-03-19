@@ -5,6 +5,7 @@ import { Layout } from '@subwallet/extension-web-ui/components';
 import { AutoConnect, CONFIRM_GENERAL_TERM, CONNECT_EXTENSION, CREATE_RETURN, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, PREDEFINED_WALLETS, SELECTED_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
 import { ATTACH_ACCOUNT_MODAL, CREATE_ACCOUNT_MODAL, GENERAL_TERM_AND_CONDITION_MODAL, IMPORT_ACCOUNT_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
+import { BackgroundColorMap, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useGetDefaultAccountName } from '@subwallet/extension-web-ui/hooks';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { createAccountExternalV2 } from '@subwallet/extension-web-ui/messaging';
@@ -48,6 +49,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { isWebUI } = useContext(ScreenContext);
+  const { setBackground } = useContext(WebUIContext);
   const { enableInject, loadingInject, selectWallet } = useContext(InjectContext);
 
   const { accounts, isNoAccount } = useSelector((root: RootState) => root.accountState);
@@ -225,6 +227,8 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       setReturnStorage(DEFAULT_ROUTER_PATH);
     }
   }, [isNoAccount, navigate, returnPath, setReturnStorage]);
+
+  setBackground(BackgroundColorMap.WELCOME);
 
   useEffect(() => {
     if (isMobile && !AutoConnect.ignore) {

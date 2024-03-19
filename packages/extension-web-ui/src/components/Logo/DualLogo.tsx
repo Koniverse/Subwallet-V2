@@ -54,7 +54,7 @@ const DualLogo = styled(Component)<Props>(({ linkIconBg, theme }: Props) => ({
   marginBottom: theme.token.marginXS,
 
   '.link-icon': {
-    backgroundColor: linkIconBg || theme.token['gray-1'],
+    backgroundColor: linkIconBg || theme.token['colorPrimary-6'],
     zIndex: 10,
     textAlign: 'center',
     width: 40,

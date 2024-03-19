@@ -12,6 +12,7 @@ interface WebUIContextProviderProps {
 }
 
 export enum BackgroundColorMap {
+  WELCOME = 'welcome',
   COMMON = 'common',
   INFO = 'info',
   INCREASE = 'increase',
