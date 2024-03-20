@@ -9,9 +9,11 @@ import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, Image } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowCircleLeft, ArrowCircleRight, ArrowSquareUpRight, Clock, Gear, Info, MessengerLogo, Vault, Wallet } from 'phosphor-react';
+import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, ArrowSquareUpRight, Clock, Gear, Info, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+import useNotification from '../../../../hooks/common/useNotification';
 
 export type Props = ThemeProps & {
   isCollapsed: boolean,
@@ -25,6 +27,7 @@ function Component ({ className,
   const navigate = useNavigate();
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const { t } = useTranslation();
+  const notify = useNotification();
 
   usePreloadView([
     'Home',
@@ -34,6 +37,14 @@ function Component ({ className,
     // 'Staking',
     'Settings'
   ]);
+
+  const showComingSoon = useCallback(() => {
+    notify({
+      message: t('Coming soon'),
+      type: 'info',
+      closable: false
+    });
+  }, [notify, t]);
 
   const menuItems = useMemo<MenuItemType[]>(() => {
     return [
@@ -62,6 +73,16 @@ function Component ({ className,
       //   value: '/home/crowdloans',
       //   icon: Rocket
       // },
+      {
+        label: t('Swap'),
+        value: '__coming_soon__',
+        icon: ArrowsLeftRight
+      },
+      {
+        label: t('Bridge'),
+        value: '__coming_soon__',
+        icon: NewspaperClipping
+      },
       {
         label: t('History'),
         value: '/home/history',
@@ -113,8 +134,14 @@ function Component ({ className,
   const handleNavigate = useCallback((
     value: string
   ) => {
+    if (value === '__coming_soon__') {
+      showComingSoon();
+
+      return;
+    }
+
     navigate(`${value}`);
-  }, [navigate]);
+  }, [navigate, showComingSoon]);
 
   const goHome = useCallback(() => {
     navigate('/home');

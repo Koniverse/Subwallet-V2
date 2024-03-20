@@ -11,7 +11,6 @@ export type MenuItemType = {
   label: string;
   value: string;
   icon: SwIconProps['phosphorIcon'];
-
 };
 
 type Props = MenuItemType & ThemeProps & {
