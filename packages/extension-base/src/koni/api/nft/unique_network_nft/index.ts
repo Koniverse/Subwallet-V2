@@ -5,9 +5,8 @@ import { NftCollection, NftItem } from '@subwallet/extension-base/background/Kon
 import { OPAL_SCAN_ENDPOINT, QUARTZ_SCAN_ENDPOINT, UNIQUE_IPFS_GATEWAY, UNIQUE_SCAN_ENDPOINT } from '@subwallet/extension-base/koni/api/nft/config';
 import { BaseNftApi, HandleNftParams } from '@subwallet/extension-base/koni/api/nft/nft';
 import { baseParseIPFSUrl } from '@subwallet/extension-base/utils';
+import { decodeAddress, encodeAddress } from '@subwallet/keyring';
 import fetch from 'cross-fetch';
-
-import { decodeAddress, encodeAddress } from '@polkadot/util-crypto';
 
 interface NftAttributeData {
   _: string

@@ -3,8 +3,7 @@
 
 import { ExtrinsicType, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { ExtrinsicItem, ExtrinsicParam } from '@subwallet/extension-base/services/subscan-service/types';
-
-import { encodeAddress } from '@polkadot/util-crypto';
+import { encodeAddress } from '@subwallet/keyring';
 
 export type ExtrinsicParserFunction = (item: TransactionHistoryItem) => TransactionHistoryItem | null;
 

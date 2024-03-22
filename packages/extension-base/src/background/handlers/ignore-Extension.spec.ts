@@ -8,7 +8,7 @@ import type { MetadataDef } from '@subwallet/extension-inject/types';
 import type { KeyringPair } from '@subwallet/keyring/types';
 import type { ExtDef } from '@polkadot/types/extrinsic/signedExtensions/types';
 import type { SignerPayloadJSON } from '@polkadot/types/types';
-import type { KeypairType } from '@polkadot/util-crypto/types';
+import { KeypairType } from '@polkadot/util-crypto/types';
 
 import { SWStorage } from '@subwallet/extension-base/storage';
 import keyring from '@subwallet/ui-keyring';

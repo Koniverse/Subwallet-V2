@@ -2,35 +2,41 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils/account/accountAll';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress } from '@subwallet/keyring';
+import { KeypairType } from '@subwallet/keyring/types';
 
-import { decodeAddress, encodeAddress, ethereumEncode, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
 
 export default function reformatAddress (address: string, networkPrefix = 42, isEthereum = false): string {
-  if (!isAddress(address)) {
-    return address;
-  }
-
-  if (isAccountAll(address)) {
-    return address;
-  }
-
-  if (isEthereumAddress(address)) {
-    return address;
-  }
-
   try {
+    if (!address || address === '') {
+      return '';
+    }
+
+    if (isEthereumAddress(address)) {
+      return address;
+    }
+
+    if (isAccountAll(address)) {
+      return address;
+    }
+
     const publicKey = decodeAddress(address);
 
     if (isEthereum) {
       return ethereumEncode(publicKey);
     }
 
+    const type: KeypairType = getKeypairTypeByAddress(address);
+
     if (networkPrefix < 0) {
       return address;
     }
 
-    return encodeAddress(publicKey, networkPrefix);
-  } catch {
+    return encodeAddress(publicKey, networkPrefix, type);
+  } catch (e) {
+    console.warn('Get error while reformat address', address, e);
+
     return address;
   }
 }

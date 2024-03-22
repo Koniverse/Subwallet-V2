@@ -4,8 +4,9 @@
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getSubstrateParaId, _getXcmAssetMultilocation, _isChainEvmCompatible, _isNativeToken, _isSubstrateParaChain, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { decodeAddress } from '@subwallet/keyring';
 
-import { decodeAddress, evmToAddress } from '@polkadot/util-crypto';
+import { evmToAddress } from '@polkadot/util-crypto';
 
 export const FOUR_INSTRUCTIONS_WEIGHT = 5000000000;
 export const FOUR_INSTRUCTIONS_LIMITED_WEIGHT = { Limited: 5000000000 };

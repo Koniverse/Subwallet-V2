@@ -9,5 +9,4 @@ export * from './accountAll';
 export * from './buildHierarchy';
 export * from './ledger';
 export * from './seedPhrase';
-export * from './toAddress';
 export * from './typeGuards';

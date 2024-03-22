@@ -6,8 +6,9 @@ import { ChainType, ExtrinsicStatus, ExtrinsicType, TransactionDirection, Transa
 import { getExtrinsicParserKey, subscanExtrinsicParserMap, supportedExtrinsicParser } from '@subwallet/extension-base/services/history-service/helpers/subscan-extrinsic-parser-helper';
 import { ExtrinsicItem, TransferItem } from '@subwallet/extension-base/services/subscan-service/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
+import { decodeAddress, encodeAddress } from '@subwallet/keyring';
 
-import { decodeAddress, encodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 function autoFormatAddress (address: string): string {
   try {

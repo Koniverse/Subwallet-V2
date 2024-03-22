@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SELECTED_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
+import { KeypairType } from '@subwallet/keyring/types';
 import Bowser from 'bowser';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export const openInNewTab = (url: string) => {
   return () => {

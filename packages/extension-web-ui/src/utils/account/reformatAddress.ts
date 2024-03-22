@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isAccountAll } from '@subwallet/extension-web-ui/utils/account/accountAll';
+import { decodeAddress, encodeAddress } from '@subwallet/keyring';
 
-import { decodeAddress, encodeAddress, ethereumEncode, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { ethereumEncode, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 export default function reformatAddress (address: string, networkPrefix = 42, isEthereum = false): string {
   if (!isAddress(address)) {

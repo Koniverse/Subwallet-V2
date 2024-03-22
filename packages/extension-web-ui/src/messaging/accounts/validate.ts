@@ -3,8 +3,7 @@
 
 import { ResponseCheckPublicAndSecretKey, ResponsePrivateKeyValidateV2, ResponseSeedValidateV2 } from '@subwallet/extension-base/background/KoniTypes';
 import { sendMessage } from '@subwallet/extension-web-ui/messaging/base';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { KeypairType } from '@subwallet/keyring/types';
 
 export async function checkPublicAndPrivateKey (publicKey: string, secretKey: string): Promise<ResponseCheckPublicAndSecretKey> {
   return sendMessage('pri(accounts.checkPublicAndSecretKey)', { publicKey, secretKey });

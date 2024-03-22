@@ -10,9 +10,10 @@ import { _getChainSubstrateAddressPrefix, _isChainEvmCompatible } from '@subwall
 import { Recoded } from '@subwallet/extension-web-ui/types';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils/account/accountAll';
 import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatAddress';
+import { decodeAddress } from '@subwallet/keyring';
+import { KeypairType } from '@subwallet/keyring/types';
 
-import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { findAccountByAddress } from './account/account';
 
@@ -208,9 +209,6 @@ export function getScanExplorerAddressInfoUrl (networkKey: string, address: stri
 }
 
 export const detectThemeAvatar = (address?: string) => isEthereumAddress(address) ? 'ethereum' : 'polkadot';
-
-export { toAddress } from './account/toAddress';
-export { openInNewTab } from '@subwallet/extension-web-ui/utils/common/browser';
 
 export * from './account';
 export * from './buy';

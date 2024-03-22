@@ -4,13 +4,12 @@
 import useAccountAvatarInfo from '@subwallet/extension-web-ui/hooks/account/useAccountAvatarInfo';
 import useAccountAvatarTheme from '@subwallet/extension-web-ui/hooks/account/useAccountAvatarTheme';
 import { Theme, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Icon } from '@subwallet/react-ui';
 import AccountItem, { AccountItemProps } from '@subwallet/react-ui/es/web3-block/account-item';
 import { CheckCircle } from 'phosphor-react';
 import React from 'react';
 import styled, { useTheme } from 'styled-components';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export interface AccountItemBaseProps extends Omit<AccountItemProps, 'avatarIdentPrefix'>, ThemeProps {
   genesisHash?: string | null;

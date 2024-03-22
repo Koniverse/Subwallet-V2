@@ -14,9 +14,10 @@ import { getLogoByNetworkKey } from '@subwallet/extension-web-ui/utils';
 import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatAddress';
 import { getNetworkKeyByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { AccountInfoByNetwork } from '@subwallet/extension-web-ui/utils/types';
+import { decodeAddress, encodeAddress } from '@subwallet/keyring';
+import { KeypairType } from '@subwallet/keyring/types';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 export function getAccountType (address: string): AccountType {
   return isAccountAll(address) ? 'ALL' : isEthereumAddress(address) ? 'ETHEREUM' : 'SUBSTRATE';

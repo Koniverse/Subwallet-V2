@@ -5,15 +5,7 @@ import { AddressJson } from '@subwallet/extension-base/background/types';
 import { reformatAddress } from '@subwallet/extension-base/utils/index';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
-
-export const simpleAddress = (address: string): string => {
-  if (isEthereumAddress(address)) {
-    return address;
-  }
-
-  return encodeAddress(decodeAddress(address));
-};
+import { isAddress } from '@polkadot/util-crypto';
 
 export function quickFormatAddressToCompare (address?: string) {
   if (!isAddress(address)) {

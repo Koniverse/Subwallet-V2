@@ -5,10 +5,9 @@ import useChainInfo from '@subwallet/extension-web-ui/hooks/chain/useChainInfo';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { Recoded } from '@subwallet/extension-web-ui/types';
 import { recodeAddress } from '@subwallet/extension-web-ui/utils';
+import { KeypairType } from '@subwallet/keyring/types';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export default function useAccountRecoded (address: string, genesisHash?: string | null, givenType: KeypairType = 'sr25519'): Recoded {
   const accounts = useSelector((state: RootState) => state.accountState.accounts);

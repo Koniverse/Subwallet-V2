@@ -11,6 +11,7 @@ import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslat
 import { Theme } from '@subwallet/extension-web-ui/themes';
 import { PhosphorIcon } from '@subwallet/extension-web-ui/types';
 import { AccountSignMode } from '@subwallet/extension-web-ui/types/account';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Icon, Image, Logo } from '@subwallet/react-ui';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import CN from 'classnames';
@@ -18,8 +19,6 @@ import { CheckCircle, CopySimple, Eye, PencilSimpleLine, PuzzlePiece, QrCode, Sh
 import React, { Context, useCallback, useContext, useMemo } from 'react';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import styled, { ThemeContext } from 'styled-components';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export interface _AccountCardItem {
   className?: string;

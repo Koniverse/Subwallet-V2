@@ -9,6 +9,7 @@ import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNa
 import { createAccountSuriV2, validateSeedV2 } from '@subwallet/extension-web-ui/messaging';
 import { FormCallbacks, FormFieldData, FormRule, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { convertFieldToObject, noop, simpleCheckForm } from '@subwallet/extension-web-ui/utils';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import { wordlists } from 'bip39';
 import CN from 'classnames';
@@ -16,8 +17,6 @@ import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 import SelectAccountType from '../../components/Account/SelectAccountType';
 

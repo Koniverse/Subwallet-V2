@@ -4,12 +4,11 @@
 /* eslint-disable no-use-before-define */
 
 import type { InjectedAccount, InjectedMetadataKnown, MetadataDef, ProviderList, ProviderMeta } from '@subwallet/extension-inject/types';
-import type { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
+import type { KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import type { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import type { JsonRpcResponse } from '@polkadot/rpc-provider/types';
 import type { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import type { HexString } from '@polkadot/util/types';
-import type { KeypairType } from '@polkadot/util-crypto/types';
 
 import { CurrentNetworkInfo, KoniRequestSignatures, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 
@@ -76,7 +75,7 @@ export type AccountWithChildren = AccountJson & {
   children?: AccountWithChildren[];
 }
 
-export interface FindAccountFunction{
+export interface FindAccountFunction {
   (networkMap: Record<string, NetworkJson>, address: string, genesisHash?: string): AccountJson | undefined;
 }
 
@@ -123,7 +122,7 @@ export interface RequestSignatures extends KoniRequestSignatures {
   'pri(accounts.create.suri)': [RequestAccountCreateSuri, boolean];
   'pri(accounts.edit)': [RequestAccountEdit, boolean];
   'pri(accounts.export)': [RequestAccountExport, ResponseAccountExport];
-  'pri(accounts.batchExport)': [RequestAccountBatchExport, ResponseAccountsExport]
+  'pri(accounts.batchExport)': [RequestAccountBatchExport, ResponseAccountsExport];
   'pri(accounts.forget)': [RequestAccountForget, boolean];
   'pri(accounts.show)': [RequestAccountShow, boolean];
   'pri(accounts.tie)': [RequestAccountTie, boolean];
@@ -196,8 +195,8 @@ export type AccountAuthType = 'substrate' | 'evm' | 'both';
 export interface RequestAuthorizeTab {
   origin: string;
   accountAuthType?: AccountAuthType;
-  allowedAccounts?: string[]
-  reConfirm?: boolean
+  allowedAccounts?: string[];
+  reConfirm?: boolean;
 }
 
 export interface RequestAuthorizeApprove {
@@ -310,15 +309,15 @@ export interface RequestAccountBatchExport {
 
 export interface RequestAccountList {
   anyType?: boolean;
-  accountAuthType?: AccountAuthType
+  accountAuthType?: AccountAuthType;
 }
 
 export interface RequestAccountSubscribe {
-  accountAuthType?: AccountAuthType
+  accountAuthType?: AccountAuthType;
 }
 
 export interface RequestAccountUnsubscribe {
-  id: string
+  id: string;
 }
 
 export interface RequestRpcSend {

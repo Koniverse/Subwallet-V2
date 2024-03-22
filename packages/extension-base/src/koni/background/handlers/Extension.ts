@@ -42,8 +42,8 @@ import { convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress,
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { balanceFormatter, formatNumber } from '@subwallet/extension-base/utils/number';
 import { MetadataDef } from '@subwallet/extension-inject/types';
-import { createPair } from '@subwallet/keyring';
-import { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { createPair, decodeAddress, getDerivePath } from '@subwallet/keyring';
+import { KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { KeyringAddress, KeyringJson$Meta } from '@subwallet/ui-keyring/types';
@@ -57,15 +57,13 @@ import { TransactionConfig } from 'web3-core';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { TypeRegistry } from '@polkadot/types';
 import { assert, BN, BN_ZERO, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex, u8aToString } from '@polkadot/util';
-import { addressToEvm, base64Decode, decodeAddress, isAddress, isEthereumAddress, jsonDecrypt, keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
-import { EncryptedJson, KeypairType, Prefix } from '@polkadot/util-crypto/types';
-
-const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
+import { addressToEvm, base64Decode, isAddress, isEthereumAddress, jsonDecrypt, keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
+import { EncryptedJson, Prefix } from '@polkadot/util-crypto/types';
 
 function getSuri (seed: string, type?: KeypairType): string {
-  return type === 'ethereum'
-    ? `${seed}${ETH_DERIVE_DEFAULT}`
-    : seed;
+  const extraPath = type ? getDerivePath(type)(0) : '';
+
+  return seed + (extraPath ? '/' + extraPath : '');
 }
 
 function transformAccounts (accounts: SubjectInfo): AccountJson[] {
@@ -404,7 +402,7 @@ export default class KoniExtension {
     }
 
     try {
-      return parentPair.derive(suri, metadata);
+      return parentPair.substrate.derive(suri, metadata);
     } catch (err) {
       throw new Error(t('"{{suri}}" is not a valid derivation path', { replace: { suri } }));
     }
@@ -1448,7 +1446,7 @@ export default class KoniExtension {
     }
 
     try {
-      return parentPair.derive(suri, metadata);
+      return parentPair.substrate.derive(suri, metadata);
     } catch (err) {
       throw new Error(t('"{{suri}}" is not a valid derivation path', { replace: { suri } }));
     }
@@ -2607,7 +2605,7 @@ export default class KoniExtension {
         data = `0x${message}`;
       }
 
-      signed = await pair.evmSigner.signMessage(data, 'personal_sign');
+      signed = await pair.evm.signMessage(data, 'personal_sign');
     } else {
       const tx: QrTransaction | null = createTransactionFromRLP(message);
 
@@ -2633,7 +2631,7 @@ export default class KoniExtension {
       // @ts-ignore
       const transaction = new LegacyTransaction(txObject, { common });
 
-      const signedTranaction = LegacyTransaction.fromSerializedTx(hexToU8a(pair.evmSigner.signTransaction(transaction)));
+      const signedTranaction = LegacyTransaction.fromSerializedTx(hexToU8a(pair.evm.signTransaction(transaction)));
 
       signed = signatureToHex({
         r: signedTranaction.r?.toString(16) || '',
@@ -3209,11 +3207,11 @@ export default class KoniExtension {
 
         meta.suri = `//${index}`;
 
-        return parentPair.deriveEvm(index, meta);
+        return parentPair.evm.derive(index, meta);
       } else {
         meta.suri = suri;
 
-        return parentPair.derive(suri, meta);
+        return parentPair.substrate.derive(suri, meta);
       }
     };
 
@@ -3244,6 +3242,7 @@ export default class KoniExtension {
   private derivationCreateV3 ({ address: parentAddress }: RequestDeriveCreateV3): boolean {
     const parentPair = keyring.getPair(parentAddress);
     const isEvm = parentPair.type === 'ethereum';
+    const isBitcoin = ['bitcoin-44', 'bitcoin-84', 'bitcoin-86'].includes(parentPair.type);
 
     if (parentPair.isLocked) {
       keyring.unlockPair(parentPair.address);
@@ -3253,7 +3252,7 @@ export default class KoniExtension {
     const children = pairs.filter((p) => p.meta.parentAddress === parentAddress);
     const name = `Account ${pairs.length}`;
 
-    let index = isEvm ? 1 : 0;
+    let index = (isEvm || isBitcoin) ? 1 : 0;
     let valid = false;
 
     do {
@@ -3271,7 +3270,11 @@ export default class KoniExtension {
       parentAddress,
       suri: `//${index}`
     };
-    const childPair = isEvm ? parentPair.deriveEvm(index, meta) : parentPair.derive(meta.suri, meta);
+    const childPair = isEvm
+      ? parentPair.evm.derive(index, meta)
+      : isBitcoin
+        ? parentPair.bitcoin.derive(index, meta)
+        : parentPair.substrate.derive(meta.suri, meta);
     const address = childPair.address;
 
     this._saveCurrentAccountAddress(address, () => {
@@ -3320,10 +3323,10 @@ export default class KoniExtension {
 
       meta.suri = `//${index}`;
 
-      childPair = parentPair.deriveEvm(index, meta);
+      childPair = parentPair.evm.derive(index, meta);
     } else {
       meta.suri = suri;
-      childPair = parentPair.derive(suri, meta);
+      childPair = parentPair.substrate.derive(suri, meta);
     }
 
     return {
@@ -3347,7 +3350,7 @@ export default class KoniExtension {
 
     for (let i = start; i < end; i++) {
       const suri = `//${i}`;
-      const pair = isEvm ? parentPair.deriveEvm(i, {}) : parentPair.derive(suri, {});
+      const pair = isEvm ? parentPair.evm.derive(i, {}) : parentPair.substrate.derive(suri, {});
 
       result.push({ address: pair.address, suri: suri });
     }

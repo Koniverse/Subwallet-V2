@@ -14,9 +14,10 @@ import { getLogoByNetworkKey } from '@subwallet/extension-koni-ui/utils';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
 import { getNetworkKeyByGenesisHash } from '@subwallet/extension-koni-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { AccountInfoByNetwork } from '@subwallet/extension-koni-ui/utils/types';
+import { decodeAddress, encodeAddress } from '@subwallet/keyring';
+import { KeypairType } from '@subwallet/keyring/types';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 export function getAccountType (address: string): AccountType {
   return isAccountAll(address) ? 'ALL' : isEthereumAddress(address) ? 'ETHEREUM' : 'SUBSTRATE';
@@ -39,13 +40,11 @@ export const getAccountInfoByNetwork = (networkMap: Record<string, NetworkJson>,
 
 export const findAccountByAddress = (accounts: AccountJson[], address?: string): AccountJson | null => {
   try {
-    const isAllAccount = address && isAccountAll(address);
-
-    if (!isAddress(address) && !isAllAccount) {
+    if (!address) {
       return null;
     }
 
-    const originAddress = isAccountAll(address) ? address : isEthereumAddress(address) ? address : encodeAddress(decodeAddress(address));
+    const originAddress = reformatAddress(address);
     const result = accounts.find((account) => account.address.toLowerCase() === originAddress.toLowerCase());
 
     return result || null;

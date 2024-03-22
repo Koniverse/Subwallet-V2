@@ -12,14 +12,13 @@ import useClickOutSide from '@subwallet/extension-web-ui/hooks/dom/useClickOutSi
 import useSwitchModal from '@subwallet/extension-web-ui/hooks/modal/useSwitchModal';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { renderModalSelector } from '@subwallet/extension-web-ui/utils/common/dom';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 interface Props extends ThemeProps {
   id: string;

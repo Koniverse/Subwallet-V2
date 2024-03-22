@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import useAccountRecoded from '@subwallet/extension-koni-ui/hooks/account/useAccountRecoded';
+import { KeypairType } from '@subwallet/keyring/types';
 import { useMemo } from 'react';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 interface Result {
   address: string;

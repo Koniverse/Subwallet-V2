@@ -22,7 +22,7 @@ import { AuthUrls } from '@subwallet/extension-base/services/request-service/typ
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { KeyringPair } from '@subwallet/keyring/types';
+import { KeypairType, KeyringPair } from '@subwallet/keyring/types';
 import keyring from '@subwallet/ui-keyring';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { t } from 'i18next';
@@ -53,13 +53,15 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
     )
     : [];
 
-  let authTypeFilter = ({ type }: SingleAddress) => true;
+  let keyringTypes: KeypairType[] = [];
 
   if (accountAuthType === 'substrate') {
-    authTypeFilter = ({ type }: SingleAddress) => (type !== 'ethereum');
+    keyringTypes = ['ed25519', 'sr25519', 'ecdsa'];
   } else if (accountAuthType === 'evm') {
-    authTypeFilter = ({ type }: SingleAddress) => (type === 'ethereum');
+    keyringTypes = ['ethereum'];
   }
+
+  const authTypeFilter = ({ type }: SingleAddress) => (!!type && keyringTypes.includes(type));
 
   return Object
     .values(accounts)

@@ -4,10 +4,10 @@
 import { NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
 import { VARA_SCAN_ENDPOINT } from '@subwallet/extension-base/koni/api/nft/config';
 import { BaseNftApi, HandleNftParams } from '@subwallet/extension-base/koni/api/nft/nft';
+import { decodeAddress } from '@subwallet/keyring';
 import fetch from 'cross-fetch';
 
 import { hexAddPrefix, u8aToHex } from '@polkadot/util';
-import { decodeAddress } from '@polkadot/util-crypto';
 
 interface NftData {
   collection: {
