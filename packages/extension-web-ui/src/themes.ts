@@ -66,8 +66,7 @@ const currentToken: Partial<GlobalToken> = {
   colorBgSecondary: '#1A1F25',
   colorBgDivider: 'rgba(255, 255, 255, 0.1)',
   colorBgInput: '#1D2B3E',
-  bodyFontWeight: '400',
-  fontFamily: '\'THICCCBOI\', sans-serif'
+  bodyFontWeight: '400'
 };
 
 export const appTheme: AppThemeConfig = {

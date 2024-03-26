@@ -108,11 +108,11 @@ export const WebUIContextProvider = ({ children }: WebUIContextProviderProps) =>
 
     if (simplePages.indexOf(pathName) !== -1 || noAccount || checkEarningDonePage(pathname)) {
       setShowSidebar(false);
-      setBackground(BackgroundColorMap.INFO);
+      // setBackground(BackgroundColorMap.INFO);
       setHeaderType(HeaderType.SIMPLE);
     } else {
       setShowSidebar(true);
-      !isPortfolio && setBackground(BackgroundColorMap.COMMON);
+      // !isPortfolio && setBackground(BackgroundColorMap.COMMON);
 
       if (isPortfolio) {
         setHeaderType(HeaderType.COMMON);

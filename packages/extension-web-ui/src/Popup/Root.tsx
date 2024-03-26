@@ -8,6 +8,7 @@ import BaseWeb from '@subwallet/extension-web-ui/components/Layout/base/BaseWeb'
 import { Logo2D } from '@subwallet/extension-web-ui/components/Logo';
 import { DEFAULT_ROUTER_PATH } from '@subwallet/extension-web-ui/constants/router';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
+import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WalletModalContext } from '@subwallet/extension-web-ui/contexts/WalletModalContext';
 import { useSubscribeLanguage } from '@subwallet/extension-web-ui/hooks';
@@ -27,7 +28,6 @@ import styled from 'styled-components';
 
 import { CONFIRMATION_MODAL, TRANSACTION_STORAGES } from '../constants';
 import { WebUIContextProvider } from '../contexts/WebUIContext';
-import {InjectContext} from "@subwallet/extension-web-ui/contexts/InjectContext";
 
 changeHeaderLogo(<Logo2D />);
 
@@ -264,14 +264,14 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
   }, [currentAccount, initAccount]);
 
   if (rootLoading || loadingInject) {
-    return <></>;
+    return (<></>);
   } else {
-    return <>
+    return (<>
       {redirectTarget.redirect && <Navigate to={redirectTarget.redirect} />}
       <MainWrapper className={CN('main-page-container', `screen-size-${screenContext.screenType}`, { 'web-ui-enable': screenContext.isWebUI })}>
         {children}
-      </MainWrapper>;
-    </>;
+      </MainWrapper>
+    </>);
   }
 }
 

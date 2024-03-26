@@ -8,7 +8,6 @@ import { BUY_TOKEN_MODAL, DEFAULT_TRANSFER_PARAMS, TRANSACTION_TRANSFER_MODAL, T
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { BackgroundColorMap, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useNotification, useReceiveQR, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { reloadCron, saveShowBalance } from '@subwallet/extension-web-ui/messaging';
 import BuyTokens from '@subwallet/extension-web-ui/Popup/BuyTokens';
@@ -38,7 +37,6 @@ type Action = {
 function Component ({ className }: Props): React.ReactElement<Props> {
   const dataContext = useContext(DataContext);
   const { isWebUI } = useContext(ScreenContext);
-  const { setBackground } = useContext(WebUIContext);
   const locationPathname = useLocation().pathname;
   const tokenGroupSlug = useParams()?.slug;
   const isShowBalance = useSelector((state: RootState) => state.settings.isShowBalance);
@@ -162,11 +160,11 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     setBuyTokensKey(`buyTokensKey-${Date.now()}`);
   }, [locationPathname]);
 
-  useEffect(() => {
-    const backgroundColor = isTotalBalanceDecrease ? BackgroundColorMap.DECREASE : BackgroundColorMap.INCREASE;
-
-    setBackground(backgroundColor);
-  }, [isTotalBalanceDecrease, setBackground]);
+  // useEffect(() => {
+  //   const backgroundColor = isTotalBalanceDecrease ? BackgroundColorMap.DECREASE : BackgroundColorMap.INCREASE;
+  //
+  //   setBackground(backgroundColor);
+  // }, [isTotalBalanceDecrease, setBackground]);
 
   const handleCancelTransfer = useCallback(() => {
     inactiveModal(TRANSACTION_TRANSFER_MODAL);

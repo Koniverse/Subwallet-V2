@@ -5,7 +5,6 @@ import { Layout } from '@subwallet/extension-web-ui/components';
 import { AutoConnect, CONFIRM_GENERAL_TERM, CONNECT_EXTENSION, CREATE_RETURN, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, PREDEFINED_WALLETS, SELECTED_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
 import { ATTACH_ACCOUNT_MODAL, CREATE_ACCOUNT_MODAL, GENERAL_TERM_AND_CONDITION_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
-import { BackgroundColorMap, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useGetDefaultAccountName } from '@subwallet/extension-web-ui/hooks';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { createAccountExternalV2 } from '@subwallet/extension-web-ui/messaging';
@@ -40,7 +39,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { isWebUI } = useContext(ScreenContext);
-  const { setBackground } = useContext(WebUIContext);
   const { enableInject, loadingInject, selectWallet } = useContext(InjectContext);
 
   const { accounts, isNoAccount } = useSelector((root: RootState) => root.accountState);
@@ -200,7 +198,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     }
   }, [isNoAccount, navigate, returnPath, setReturnStorage]);
 
-  setBackground(BackgroundColorMap.WELCOME);
+  // setBackground(BackgroundColorMap.WELCOME);
 
   useEffect(() => {
     if (isMobile && !AutoConnect.ignore) {
@@ -216,7 +214,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     <Layout.Base
       className={CN(className, '__welcome-layout-containter')}
     >
-      {!isWebUI && <div className='bg-image' />}
+      <div className='welcome-bg-image' />
       <div className={'body-container'}>
         <div className={CN('brand-container', 'flex-column')}>
           <div className='logo-container'>
@@ -231,7 +229,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
                 : (
                   <Image
                     src={'/images/avail/avail-icon.png'}
-                    width={139}
+                    width={90}
                   />
                 )
             }
@@ -331,7 +329,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   );
 }
 
-const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const Welcome = styled(Component)<Props>(({ theme: { extendToken, token } }: Props) => {
   return {
     position: 'relative',
 
@@ -341,18 +339,16 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
       justifyContent: 'center'
     },
 
-    '.bg-image': {
-      backgroundImage: 'url("/images/subwallet/welcome-background.png")',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'top',
-      backgroundSize: 'contain',
-      height: '100%',
-      position: 'absolute',
-      width: '100%',
-      left: 0,
-      top: 0,
-      opacity: 0.1,
-      zIndex: -1
+    '.welcome-bg-image': {
+      position: 'fixed',
+      top: '-10vh',
+      left: '0',
+      right: '-20vw',
+      height: '30vh',
+      zIndex: 0,
+      transitionDuration: 'background-color 0.3s ease',
+      filter: 'blur(110.5px)',
+      background: extendToken.tokensScreenInfoBackgroundColor
     },
 
     '.brand-container': {
@@ -363,13 +359,13 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
       height: 2,
       backgroundColor: token.colorBgDivider,
       opacity: 0.8,
-      width: '100%'
+      width: '100%',
+      display: 'none'
     },
 
     '.body-container': {
       padding: `0 ${token.padding}px`,
       textAlign: 'center',
-      opacity: 0.999, // Hot fix show wrong opacity in browser
 
       '.title': {
         marginTop: token.marginXL,
@@ -448,6 +444,10 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
         marginTop: 24
       },
 
+      '.divider': {
+        display: 'block'
+      },
+
       '.title': {
         marginBottom: token.marginXS
       },
@@ -483,6 +483,23 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
         '.social-group': {
           paddingBottom: 32
         }
+      }
+    },
+    '@media (max-width: 560px)': {
+      '.buttons .ant-btn': {
+        display: 'block',
+        width: 300,
+        marginLeft: 'auto',
+        marginRight: 'auto',
+        marginBottom: token.margin
+      },
+
+      '.body-container .title': {
+        fontSize: 24
+      },
+
+      '.body-container .sub-title': {
+        fontSize: 14
       }
     }
   };
