@@ -678,3 +678,7 @@ div#popup-container {
 .ant-web3-block {
     transition: background-color 0.3s;
 }
+
+.ant-number {
+  font-family: 'Plus Jakarta Sans';
+}
