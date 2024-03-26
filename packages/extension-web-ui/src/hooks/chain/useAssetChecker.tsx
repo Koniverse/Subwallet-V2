@@ -41,6 +41,10 @@ export default function useAssetChecker () {
     const chainInfo = chainInfoMap[assetInfo.originChain];
     const chainStatus = chainStatusMap[assetInfo.originChain];
 
+    if (!chainInfo) {
+      return;
+    }
+
     if ((assetInfo && !assetSetting) || !assetSetting.visible) {
       const message = t('{{name}} on {{chainName}} is not ready to use, do you want to turn it on?', {
         replace: {
