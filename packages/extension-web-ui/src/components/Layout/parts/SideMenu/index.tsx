@@ -35,7 +35,7 @@ const SideMenu = styled(Component)<Props>(({ theme: { token } }: Props) => ({
 
   '.__branding': {
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
     textAlign: 'center',
 
