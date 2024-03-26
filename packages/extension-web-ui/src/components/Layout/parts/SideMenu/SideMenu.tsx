@@ -9,7 +9,7 @@ import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, Image } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, ArrowSquareUpRight, Clock, Gear, Info, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
+import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, ArrowSquareUpRight, Clock, Gear, Info, Layout, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -75,12 +75,12 @@ function Component ({ className,
       // },
       {
         label: t('Swap'),
-        value: '__coming_soon__',
+        value: '/swap',
         icon: ArrowsLeftRight
       },
       {
         label: t('Bridge'),
-        value: '__coming_soon__',
+        value: '/bridge',
         icon: NewspaperClipping
       },
       {
@@ -134,7 +134,7 @@ function Component ({ className,
   const handleNavigate = useCallback((
     value: string
   ) => {
-    if (value === '__coming_soon__') {
+    if (value === '/swap' || value === '/bridge') {
       showComingSoon();
 
       return;
@@ -202,13 +202,34 @@ function Component ({ className,
       })}
     >
       <div className='__logo-container'>
-        <Image
-          alt={'SubWallet'}
-          onClick={goHome}
-          shape={'square'}
-          src='/images/avail/avail-icon.png'
-          style={{ cursor: 'pointer' }}
-        />
+        <div className='__branding'>
+          <Image
+            alt={'SubWallet'}
+            className={'__extend-logo'}
+            onClick={goHome}
+            shape={'square'}
+            src={'/images/avail/avail-space-brand.png'}
+            style={{ cursor: 'pointer' }}
+          />
+
+          <Image
+            alt={'SubWallet'}
+            className={'__collapse-logo'}
+            onClick={goHome}
+            shape={'square'}
+            src={'/images/avail/avail-icon.png'}
+            style={{ cursor: 'pointer' }}
+          />
+
+          {!isCollapsed && (<Icon
+            className={'__layout-icon'}
+            phosphorIcon={Layout}
+            size={'md'}
+            weight={'fill'}
+          />)}
+        </div>
+
+        <div className={'__divider'} />
 
         <Button
           className={'__sidebar-collapse-trigger'}

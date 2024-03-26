@@ -14,16 +14,40 @@ const SideMenu = styled(Component)<Props>(({ theme: { token } }: Props) => ({
   transition: `width ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1)`,
 
   '.__logo-container': {
-    width: '100%',
-    height: 156,
-    display: 'flex',
-    justifyContent: 'center',
     position: 'relative',
-    transition: `width ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1), padding ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1)`,
+    transition: `height ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1), padding ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1)`,
+    paddingLeft: token.paddingLG,
+    paddingRight: token.paddingLG,
 
-    '.ant-image-img': {
-      width: 'auto'
+    '.ant-image': {
+      height: 36,
+      transition: `opacity ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1)`
+    },
+
+    '.ant-image:nth-child(2)': {
+      display: 'block',
+      position: 'absolute',
+      width: 36,
+      top: 26,
+      left: 8
     }
+  },
+
+  '.__branding': {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    textAlign: 'center',
+
+    '.__layout-icon': {
+      color: '#384D69'
+    }
+  },
+
+  '.__divider': {
+    borderTop: `1px solid ${token.colorBgInput}`,
+    marginTop: token.paddingXL,
+    marginBottom: token.paddingXL - 4
   },
 
   '.__sidebar-collapse-trigger': {
@@ -51,7 +75,7 @@ const SideMenu = styled(Component)<Props>(({ theme: { token } }: Props) => ({
   },
 
   '.ant-image': {
-    transition: `height ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1),border-color ${token.motionDurationSlow}`
+    // transition: `height ${token.motionDurationSlow} cubic-bezier(0.645, 0.045, 0.355, 1),border-color ${token.motionDurationSlow}`
   },
 
   '.ant-image-img': {
@@ -68,14 +92,18 @@ const SideMenu = styled(Component)<Props>(({ theme: { token } }: Props) => ({
   },
 
   '&, &.-expanded': {
-    width: 248,
 
     '.__logo-container': {
-      paddingTop: 39
-    },
+      paddingTop: 64,
+      paddingBottom: 0,
 
-    '.ant-image': {
-      height: 69
+      '.ant-image:nth-child(1)': {
+        opacity: 1
+      },
+
+      '.ant-image:nth-child(2)': {
+        opacity: 0
+      }
     },
 
     '.side-menu-item': {
@@ -87,11 +115,24 @@ const SideMenu = styled(Component)<Props>(({ theme: { token } }: Props) => ({
     width: 52,
 
     '.__logo-container': {
-      paddingTop: 24
-    },
+      paddingLeft: 0,
+      paddingRight: 0,
+      paddingTop: 24,
+      textAlign: 'center',
 
-    '.ant-image': {
-      height: 32
+      '.ant-image:nth-child(1)': {
+        opacity: 0
+      },
+
+      '.ant-image:nth-child(2)': {
+        opacity: 1
+      },
+
+      '.__divider': {
+        borderColor: 'transparent',
+        marginTop: 0,
+        marginBottom: token.paddingXL - 4
+      }
     },
 
     '.side-menu-item': {
