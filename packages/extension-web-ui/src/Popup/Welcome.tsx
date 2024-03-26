@@ -3,20 +3,20 @@
 
 import { Layout } from '@subwallet/extension-web-ui/components';
 import { AutoConnect, CONFIRM_GENERAL_TERM, CONNECT_EXTENSION, CREATE_RETURN, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, PREDEFINED_WALLETS, SELECTED_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
-import { ATTACH_ACCOUNT_MODAL, CREATE_ACCOUNT_MODAL, GENERAL_TERM_AND_CONDITION_MODAL, IMPORT_ACCOUNT_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
+import { ATTACH_ACCOUNT_MODAL, CREATE_ACCOUNT_MODAL, GENERAL_TERM_AND_CONDITION_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
 import { BackgroundColorMap, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useGetDefaultAccountName } from '@subwallet/extension-web-ui/hooks';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { createAccountExternalV2 } from '@subwallet/extension-web-ui/messaging';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { checkHasInjected } from '@subwallet/extension-web-ui/utils/wallet';
-import { Button, ButtonProps, Form, Icon, Image, Input, ModalContext } from '@subwallet/react-ui';
+import { Button, Form, Icon, Image, Input, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { PuzzlePiece, Swatches, Wallet } from 'phosphor-react';
 import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -32,15 +32,6 @@ type Props = ThemeProps;
 
 interface ReadOnlyAccountInput {
   address?: string;
-}
-
-interface WelcomeButtonItem {
-  id: string;
-  icon: PhosphorIcon;
-  schema: ButtonProps['schema'];
-  title: string;
-  description: string;
-  loading: boolean;
 }
 
 function Component ({ className }: Props): React.ReactElement<Props> {
@@ -128,25 +119,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     },
     [accounts, t]
   );
-
-  const buttonList = useMemo((): WelcomeButtonItem[] => [
-    {
-      description: t('Connect to your existing wallet'),
-      icon: PuzzlePiece,
-      id: CONNECT_EXTENSION,
-      schema: 'primary',
-      title: t('Connect wallet'),
-      loading: loadingInject
-    },
-    {
-      description: t('Attach an account without private key'),
-      icon: Swatches,
-      id: ATTACH_ACCOUNT_MODAL,
-      schema: 'secondary',
-      title: t('Attach an account'),
-      loading: false
-    }
-  ], [t, loadingInject]);
 
   const openModal = useCallback((id: string) => {
     return () => {
@@ -272,34 +244,37 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
         <div className='buttons-container'>
           <div className='buttons'>
-            {buttonList.map((item) => (
-              <Button
-                block={true}
-                className={CN('welcome-import-button', `type-${item.id}`)}
-                contentAlign='left'
-                icon={
-                  <Icon
-                    className='welcome-import-icon'
-                    phosphorIcon={item.icon}
-                    size='md'
-                    weight='fill'
-                  />
-                }
-                key={item.id}
-                loading={item.loading}
-                onClick={onClickToSelectTypeConnect(item.id)}
-                schema={item.schema}
-              >
-                <div className='welcome-import-button-content'>
-                  <div className='welcome-import-button-title'>
-                    {t(item.title)}
-                  </div>
-                  <div className='welcome-import-button-description'>
-                    {t(item.description)}
-                  </div>
-                </div>
-              </Button>
-            ))}
+            <Button
+              contentAlign='left'
+              icon={
+                <Icon
+                  phosphorIcon={Swatches}
+                  size='md'
+                  weight='fill'
+                />
+              }
+              onClick={onClickToSelectTypeConnect(ATTACH_ACCOUNT_MODAL)}
+              schema='secondary'
+              shape='round'
+            >
+              {t('Attach an account')}
+            </Button>
+            <Button
+              contentAlign='left'
+              icon={
+                <Icon
+                  phosphorIcon={PuzzlePiece}
+                  size='md'
+                  weight='fill'
+                />
+              }
+              loading={loadingInject}
+              onClick={onClickToSelectTypeConnect(CONNECT_EXTENSION)}
+              schema='primary'
+              shape='round'
+            >
+              {t('Connect wallet')}
+            </Button>
           </div>
           <div className='divider' />
         </div>
@@ -428,40 +403,13 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
     '.buttons-container': {
       '.buttons': {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: token.sizeXS
-      }
-    },
-
-    '.welcome-import-button': {
-      height: 'auto',
-
-      '.welcome-import-icon': {
-        height: token.sizeLG,
-        width: token.sizeLG,
-        marginLeft: token.sizeMD - token.size
+        fontSize: 16
       },
-
-      '.welcome-import-button-content': {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: token.sizeXXS,
-        fontWeight: token.fontWeightStrong,
-        padding: `${token.paddingSM - 1}px ${token.paddingLG}px`,
-        textAlign: 'start',
-
-        '.welcome-import-button-title': {
-          fontSize: token.fontSizeHeading5,
-          lineHeight: token.lineHeightHeading5,
-          color: token.colorTextBase
-        },
-
-        '.welcome-import-button-description': {
-          fontSize: token.fontSizeHeading6,
-          lineHeight: token.lineHeightHeading6,
-          color: token.colorTextLabel
-        }
+      '.ant-btn': {
+        paddingLeft: token.paddingXL,
+        paddingRight: token.paddingXL,
+        marginLeft: token.marginSM,
+        marginRight: token.marginSM
       }
     },
 
@@ -518,40 +466,7 @@ const Welcome = styled(Component)<Props>(({ theme: { token } }: Props) => {
         },
 
         '.buttons': {
-          display: 'grid',
-          gridTemplateRows: '1fr',
-          gridTemplateColumns: '1fr 1fr',
-          gap: token.sizeMS,
 
-          '.ant-btn:not(.-icon-only) .ant-btn-loading-icon>.anticon': {
-            fontSize: 24,
-            height: 24,
-            width: 24,
-            marginLeft: 4,
-            marginRight: 0
-          },
-
-          [`.type-${CREATE_ACCOUNT_MODAL}`]: {
-            color: token['green-6']
-          },
-
-          [`.type-${IMPORT_ACCOUNT_MODAL}`]: {
-            color: token['orange-7']
-          },
-
-          [`.type-${ATTACH_ACCOUNT_MODAL}`]: {
-            color: token['magenta-6']
-          },
-
-          [`.type-${CONNECT_EXTENSION}`]: {
-            color: token.colorSuccess,
-            order: -1
-          },
-
-          '.welcome-import-button': {
-            width: '100%',
-            paddingRight: 14
-          }
         }
       },
 

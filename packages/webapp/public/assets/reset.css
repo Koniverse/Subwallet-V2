@@ -682,3 +682,11 @@ div#popup-container {
 .ant-number {
   font-family: 'Plus Jakarta Sans';
 }
+
+.ant-btn-default.-schema-secondary {
+  background-color: #384D69;
+}
+
+.ant-btn-default.-schema-secondary:hover {
+  background-color: #4E6786;
+}
