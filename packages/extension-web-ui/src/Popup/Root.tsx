@@ -27,6 +27,7 @@ import styled from 'styled-components';
 
 import { CONFIRMATION_MODAL, TRANSACTION_STORAGES } from '../constants';
 import { WebUIContextProvider } from '../contexts/WebUIContext';
+import {InjectContext} from "@subwallet/extension-web-ui/contexts/InjectContext";
 
 changeHeaderLogo(<Logo2D />);
 
@@ -95,6 +96,7 @@ interface RedirectProps {
 }
 
 function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactElement {
+  const { loadingInject } = useContext(InjectContext);
   const dataContext = useContext(DataContext);
   const screenContext = useContext(ScreenContext);
   const location = useLocation();
@@ -261,12 +263,15 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
     }
   }, [currentAccount, initAccount]);
 
-  if (rootLoading || redirectTarget.redirect) {
-    return <>{redirectTarget.redirect && <Navigate to={redirectTarget.redirect} />}</>;
+  if (rootLoading || loadingInject) {
+    return <></>;
   } else {
-    return <MainWrapper className={CN('main-page-container', `screen-size-${screenContext.screenType}`, { 'web-ui-enable': screenContext.isWebUI })}>
-      {children}
-    </MainWrapper>;
+    return <>
+      {redirectTarget.redirect && <Navigate to={redirectTarget.redirect} />}
+      <MainWrapper className={CN('main-page-container', `screen-size-${screenContext.screenType}`, { 'web-ui-enable': screenContext.isWebUI })}>
+        {children}
+      </MainWrapper>;
+    </>;
   }
 }
 
