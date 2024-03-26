@@ -3,11 +3,10 @@
 
 import { ATTACH_ACCOUNT_MODAL, DISCONNECT_EXTENSION_MODAL, SELECT_EXTENSION_MODAL } from '@subwallet/extension-web-ui/constants';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
-import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
-import { PuzzlePiece, Swatches } from 'phosphor-react';
+import { Swatches, Wallet } from 'phosphor-react';
 import React, { useCallback, useContext } from 'react';
 import styled from 'styled-components';
 
@@ -17,7 +16,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { t } = useTranslation();
   const { activeModal } = useContext(ModalContext);
   const { enabled, injected, loadingInject } = useContext(InjectContext);
-  const { isWebUI } = useContext(ScreenContext);
 
   const openAttachAccount = useCallback(() => {
     activeModal(ATTACH_ACCOUNT_MODAL);
@@ -34,7 +32,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   return (
     <div className={className}>
       <Button
-        className='btn-min-width'
         icon={(
           <Icon
             phosphorIcon={Swatches}
@@ -43,22 +40,23 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         )}
         onClick={openAttachAccount}
         schema='secondary'
-        tooltip={isWebUI ? t('Attach account') : undefined}
-      />
+        // tooltip={isWebUI ? t('Attach account') : undefined}
+      >
+        {t('Attach account')}
+      </Button>
       <Button
-        className='btn-full-width'
         icon={(
           <Icon
-            phosphorIcon={PuzzlePiece}
+            phosphorIcon={Wallet}
             weight={'fill'}
           />
         )}
         loading={loadingInject}
         onClick={onClickExtension}
         schema={ (enabled && !loadingInject) ? 'danger' : 'secondary'}
-        tooltip={(enabled && !loadingInject) ? t('Disconnect extension') : injected ? t('Connect extension') : t('Download extension')}
+        // tooltip={(enabled && !loadingInject) ? t('Disconnect extension') : injected ? t('Connect extension') : t('Download extension')}
       >
-        {(enabled && !loadingInject) ? t('Disconnect extension') : injected ? t('Connect extension') : t('Download extension')}
+        {(enabled && !loadingInject) ? t('Disconnect') : injected ? t('Connect') : t('Download')}
       </Button>
     </div>
   );
@@ -67,8 +65,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 const SelectAccountFooter = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     display: 'flex',
+    justifyContent: 'stretch',
 
-    '.btn-full-width': {
+    '.ant-btn': {
       width: '100%'
     }
   };

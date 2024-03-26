@@ -9,7 +9,7 @@ import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, Image } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, ArrowSquareUpRight, Clock, Gear, Info, Layout, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
+import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, ArrowSquareUpRight, Clock, Gear, Info, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -220,13 +220,6 @@ function Component ({ className,
             src={'/images/avail/avail-icon.png'}
             style={{ cursor: 'pointer' }}
           />
-
-          {!isCollapsed && (<Icon
-            className={'__layout-icon'}
-            phosphorIcon={Layout}
-            size={'md'}
-            weight={'fill'}
-          />)}
         </div>
 
         <div className={'__divider'} />
@@ -257,6 +250,7 @@ function Component ({ className,
                 className={'side-menu-item'}
                 icon={m.icon}
                 isActivated={selectedKeys.includes(m.value)}
+                isComingSoon={m.value === '/swap' || m.value === '/bridge'}
                 key={m.value}
                 label={m.label}
                 onClick={handleNavigate}

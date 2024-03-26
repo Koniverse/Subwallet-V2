@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
-import { Icon, SwIconProps, Tooltip } from '@subwallet/react-ui';
+import { Icon, SwIconProps, Tag, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useCallback } from 'react';
 import styled from 'styled-components';
+import {useTranslation} from "@subwallet/extension-web-ui/hooks";
 
 export type MenuItemType = {
   label: string;
@@ -17,9 +18,11 @@ type Props = MenuItemType & ThemeProps & {
   showToolTip: boolean;
   isActivated: boolean;
   onClick: (key: string) => void;
+  isComingSoon?: boolean;
 };
 
-function Component ({ className = '', icon, isActivated, label, onClick, showToolTip, value }: Props): React.ReactElement<Props> {
+function Component ({ className = '', icon, isActivated, isComingSoon, label, onClick, showToolTip, value }: Props): React.ReactElement<Props> {
+  const { t } = useTranslation();
   const _onClick = useCallback(() => {
     onClick(value);
   }, [value, onClick]);
@@ -39,6 +42,7 @@ function Component ({ className = '', icon, isActivated, label, onClick, showToo
       />
       <div className={'__label'}>
         {label}
+        {isComingSoon ? <Tag color='secondary'>{t('SOON')}</Tag> : ''}
       </div>
 
       {
@@ -95,6 +99,12 @@ export const MenuItem = styled(Component)<Props>(({ theme: { token } }: Props) =
       marginLeft: token.marginXS,
       color: token.colorTextLight3,
       'white-space': 'nowrap'
+    },
+
+    '.ant-tag.ant-tag-secondary': {
+      marginLeft: 8,
+      color: '#fff',
+      backgroundColor: '#384D69'
     },
 
     '&:hover': {

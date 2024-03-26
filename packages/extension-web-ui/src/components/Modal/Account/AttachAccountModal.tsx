@@ -18,7 +18,7 @@ import { PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { renderModalSelector } from '@subwallet/extension-web-ui/utils/common/dom';
 import { BackgroundIcon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { DeviceTabletCamera, Eye, QrCode, Swatches } from 'phosphor-react';
+import { Eye, QrCode, Swatches } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
@@ -104,13 +104,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       label: t('Connect a Polkadot Vault account'),
       onClick: onClickItem('accounts/connect-polkadot-vault')
     },
-    {
-      backgroundColor: token['blue-7'],
-      icon: DeviceTabletCamera,
-      key: 'connect-keystone',
-      label: t('Connect a Keystone device'),
-      onClick: onClickItem('accounts/connect-keystone')
-    },
+    // {
+    //   backgroundColor: token['blue-7'],
+    //   icon: DeviceTabletCamera,
+    //   key: 'connect-keystone',
+    //   label: t('Connect a Keystone device'),
+    //   onClick: onClickItem('accounts/connect-keystone')
+    // },
     {
       backgroundColor: token['green-7'],
       icon: Eye,

@@ -81,9 +81,9 @@ export const appTheme: AppThemeConfig = {
     bodyBackgroundColor: currentToken.colorBgBase || '#000',
     logo: subWalletLogo,
     defaultImagePlaceholder,
-    tokensScreenSuccessBackgroundColor: 'linear-gradient(45deg, #78F7FF 9.56%, #31A0FF 44.2%, #DAC7FF 95.08%)',
-    tokensScreenDangerBackgroundColor: 'linear-gradient(45deg, #78F7FF 9.56%, #31A0FF 44.2%, #DAC7FF 95.08%)',
-    tokensScreenInfoBackgroundColor: 'linear-gradient(45deg, #78F7FF 9.56%, #31A0FF 44.2%, #DAC7FF 95.08%)'
+    tokensScreenSuccessBackgroundColor: 'linear-gradient(180deg, rgba(76, 234, 172, 0.10) 5%, rgba(217, 217, 217, 0.00) 33%)',
+    tokensScreenDangerBackgroundColor: 'linear-gradient(180deg, rgba(234, 76, 76, 0.10) 5%, rgba(217, 217, 217, 0.00) 33%)',
+    tokensScreenInfoBackgroundColor: 'linear-gradient(rgba(0, 75, 255, 0.1) 5%, rgba(217, 217, 217, 0) 33%)'
   },
   logoMap: defaultLogoMap
 };

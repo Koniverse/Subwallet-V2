@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
-import SwLogosMap from '@subwallet/extension-web-ui/assets/subwallet';
-import { BaseModal, PageWrapper, WalletConnect } from '@subwallet/extension-web-ui/components';
+import { BaseModal, PageWrapper } from '@subwallet/extension-web-ui/components';
 import { EXTENSION_VERSION, SUPPORT_MAIL, TERMS_OF_SERVICE_URL, TWITTER_URL, WEB_BUILD_NUMBER, WEBSITE_URL, WIKI_URL } from '@subwallet/extension-web-ui/constants/common';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
@@ -194,13 +193,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               className='__subwallet-logo'
               height={24}
               shape='squircle'
-              src={SwLogosMap.subwallet}
+              src={'/images/avail/avail-icon.png'}
               width={24}
             />
           ),
           leftIconBgColor: 'transparent',
           rightIcon: CaretRight,
-          title: t('About SubWallet'),
+          title: t('About Avail Space'),
           onClick: () => {
             activeModal(modalId);
           }
@@ -208,7 +207,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
       ]
     }
-  ]), [activeModal, isPopup, isWebUI, navigate, t, token]);
+  ]), [activeModal, isPopup, navigate, t, token]);
 
   const aboutSubwalletType = useMemo<SettingItemType[]>(() => {
     return [
@@ -326,7 +325,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           className={CN(className, 'about-subwallet-modal')}
           id={modalId}
           onCancel={closeModal}
-          title={t('About SubWallet')}
+          title={t('About Avail Space')}
         >
           {aboutSubwalletType.map((item) => (
             <div

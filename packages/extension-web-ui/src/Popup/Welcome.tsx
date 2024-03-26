@@ -13,7 +13,7 @@ import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { checkHasInjected } from '@subwallet/extension-web-ui/utils/wallet';
 import { Button, Form, Icon, Image, Input, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { PuzzlePiece, Swatches, Wallet } from 'phosphor-react';
+import { Swatches, Wallet } from 'phosphor-react';
 import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -261,7 +261,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
               contentAlign='left'
               icon={
                 <Icon
-                  phosphorIcon={PuzzlePiece}
+                  phosphorIcon={Wallet}
                   size='md'
                   weight='fill'
                 />
