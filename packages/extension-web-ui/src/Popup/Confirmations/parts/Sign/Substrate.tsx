@@ -76,11 +76,11 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const genesisHash = useMemo(() => {
     if (isSubstrateMessage(payload)) {
-      return chainInfoMap.polkadot.substrateInfo?.genesisHash || '';
+      return chainInfoMap.polkadot?.substrateInfo?.genesisHash || '';
     } else {
       return payload.genesisHash.toHex();
     }
-  }, [chainInfoMap.polkadot.substrateInfo?.genesisHash, payload]);
+  }, [chainInfoMap.polkadot?.substrateInfo?.genesisHash, payload]);
 
   const chain = useGetChainInfoByGenesisHash(genesisHash);
 
