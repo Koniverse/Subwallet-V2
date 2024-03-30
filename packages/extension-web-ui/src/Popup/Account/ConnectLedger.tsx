@@ -43,6 +43,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const { t } = useTranslation();
   const { goHome } = useDefaultNavigate();
+  const { chainInfoMap } = useSelector((root: RootState) => root.chainStore);
 
   const supportedLedger = useGetSupportedLedger();
   const onComplete = useCompleteCreateAccount();
@@ -55,7 +56,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const networks = useMemo((): ChainItemType[] => supportedLedger.map((network) => ({
     name: !network.isEthereum ? network.networkName.replace(' network', '') : network.networkName,
     slug: network.slug
-  })), [supportedLedger]);
+  })).filter((n) => !!chainInfoMap[n.slug]), [chainInfoMap, supportedLedger]);
 
   const [chain, setChain] = useState(supportedLedger[0].slug);
   const [ledgerAccounts, setLedgerAccounts] = useState<Array<ImportLedgerItem | null>>([]);
