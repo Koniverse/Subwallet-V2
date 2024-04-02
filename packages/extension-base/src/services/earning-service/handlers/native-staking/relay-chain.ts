@@ -10,7 +10,7 @@ import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { BaseYieldPositionInfo, EarningStatus, NativeYieldPoolInfo, OptimalYieldPath, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingNominations, PalletStakingStakingLedger, PalletStakingValidatorPrefs, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, SubmitYieldJoinData, TernoaStakingRewardsStakingRewardsData, TransactionData, UnstakingStatus, ValidatorExtraInfo, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, EarningStatus, NativeYieldPoolInfo, OptimalYieldPath, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposurePage, PalletStakingNominations, PalletStakingStakingLedger, PalletStakingValidatorPrefs, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, SubmitYieldJoinData, TernoaStakingRewardsStakingRewardsData, TransactionData, UnstakingStatus, ValidatorExtraInfo, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
@@ -181,11 +181,30 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
 
       await Promise.all(validatorList.map(async (validatorAddress) => {
         let nominationStatus = EarningStatus.NOT_EARNING;
-        const [[identity], _eraStaker] = await Promise.all([
-          parseIdentity(substrateApi, validatorAddress),
-          substrateApi.api.query.staking.erasStakers(currentEra, validatorAddress)
-        ]);
-        const eraStaker = _eraStaker.toPrimitive() as unknown as PalletStakingExposure;
+        let eraStaker: PalletStakingExposure;
+        const [identity] = await parseIdentity(substrateApi, validatorAddress);
+
+        if (substrateApi.api.query.staking.erasStakersPaged) {
+          const _eraStakers = await substrateApi.api.query.staking.erasStakersPaged.entries(currentEra, validatorAddress);
+
+          eraStaker = {
+            others: [],
+            total: 0,
+            own: 0
+          };
+
+          for (const [, _eraStaker] of _eraStakers) {
+            const tmp = _eraStaker.toPrimitive() as unknown as PalletStakingExposurePage;
+
+            eraStaker.total = eraStaker.total + tmp.pageTotal;
+            eraStaker.others.push(...tmp.others);
+          }
+        } else {
+          const _eraStaker = await substrateApi.api.query.staking.erasStakers(currentEra, validatorAddress);
+
+          eraStaker = _eraStaker.toPrimitive() as unknown as PalletStakingExposure;
+        }
+
         const sortedNominators = eraStaker.others
           .sort((a, b) => {
             return new BigN(b.value).minus(a.value).toNumber();
@@ -350,7 +369,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
 
     const [_totalEraStake, _eraStakers, _minBond, _stakingRewards, _validators] = await Promise.all([
       chainApi.api.query.staking.erasTotalStake(parseInt(currentEra)),
-      chainApi.api.query.staking.erasStakers.entries(parseInt(currentEra)),
+      chainApi.api.query.staking.erasStakersOverview ? chainApi.api.query.staking.erasStakersOverview.entries(parseInt(currentEra)) : chainApi.api.query.staking.erasStakers.entries(parseInt(currentEra)),
       chainApi.api.query.staking.minNominatorBond(),
       chainApi.api.query.stakingRewards?.data && chainApi.api.query.stakingRewards.data(),
       chainApi.api.query.staking.validators.entries()

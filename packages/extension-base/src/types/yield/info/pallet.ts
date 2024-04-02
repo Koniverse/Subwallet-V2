@@ -21,6 +21,11 @@ export interface PalletStakingExposure {
   others: PalletStakingExposureItem[]
 }
 
+export interface PalletStakingExposurePage {
+  pageTotal: number,
+  others: PalletStakingExposureItem[]
+}
+
 export interface PalletDappsStakingDappInfo {
   address: string,
   name: string,

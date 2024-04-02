@@ -8,10 +8,11 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { _EXPECTED_BLOCK_TIME, _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
-import { BaseYieldPositionInfo, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletNominationPoolsPoolMember, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingNominations, RequestStakePoolingBonding, StakeCancelWithdrawalParams, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletNominationPoolsPoolMember, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposurePage, PalletStakingNominations, RequestStakePoolingBonding, StakeCancelWithdrawalParams, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
+import { combineLatest } from 'rxjs';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { UnsubscribePromise } from '@polkadot/api-base/types/base';
@@ -206,8 +207,28 @@ export default class NominationPoolHandler extends BasePoolHandler {
       const validatorList = nominations.targets;
 
       await Promise.all(validatorList.map(async (validatorAddress) => {
-        const _eraStaker = await substrateApi.api.query.staking.erasStakers(currentEra, validatorAddress);
-        const eraStaker = _eraStaker.toPrimitive() as unknown as PalletStakingExposure;
+        let eraStaker: PalletStakingExposure;
+
+        if (substrateApi.api.query.staking.erasStakersPaged) {
+          const _eraStakers = await substrateApi.api.query.staking.erasStakersPaged.entries(currentEra, validatorAddress);
+
+          eraStaker = {
+            others: [],
+            total: 0,
+            own: 0
+          };
+
+          for (const [, _eraStaker] of _eraStakers) {
+            const tmp = _eraStaker.toPrimitive() as unknown as PalletStakingExposurePage;
+
+            eraStaker.total = eraStaker.total + tmp.pageTotal;
+            eraStaker.others.push(...tmp.others);
+          }
+        } else {
+          const _eraStaker = await substrateApi.api.query.staking.erasStakers(currentEra, validatorAddress);
+
+          eraStaker = _eraStaker.toPrimitive() as unknown as PalletStakingExposure;
+        }
 
         const sortedNominators = eraStaker.others
           .sort((a, b) => {
@@ -280,62 +301,56 @@ export default class NominationPoolHandler extends BasePoolHandler {
   }
 
   async subscribePoolPosition (useAddresses: string[], resultCallback: (rs: YieldPositionInfo) => void): Promise<VoidFunction> {
-    let cancel = false;
     const substrateApi = this.substrateApi;
     const defaultInfo = this.baseInfo;
 
     await substrateApi.isReady;
 
-    const unsub = await substrateApi.api.query?.nominationPools?.poolMembers.multi(useAddresses, async (ledgers: Codec[]) => {
-      if (cancel) {
-        unsub();
+    const ledgerObservable = substrateApi.api.rx.query.nominationPools.poolMembers.multi(useAddresses);
+    const currentEraObservable = substrateApi.api.rx.query.staking.currentEra();
+    const subscribe = combineLatest({ ledgers: ledgerObservable, _currentEra: currentEraObservable })
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      .subscribe(async ({ _currentEra,
+        ledgers }) => {
+        if (ledgers) {
+          const _deriveSessionProgress = await substrateApi.api.derive?.session?.progress();
 
-        return;
-      }
+          const currentEra = _currentEra.toString();
 
-      if (ledgers) {
-        const [_currentEra, _deriveSessionProgress] = await Promise.all([
-          substrateApi.api.query.staking.currentEra(),
-          substrateApi.api.derive?.session?.progress()
-        ]);
+          await Promise.all(ledgers.map(async (_poolMemberInfo, i) => {
+            const poolMemberInfo = _poolMemberInfo.toPrimitive() as unknown as PalletNominationPoolsPoolMember;
+            const owner = reformatAddress(useAddresses[i], 42);
 
-        const currentEra = _currentEra.toString();
+            if (poolMemberInfo) {
+              const nominatorMetadata = await this.parsePoolMemberMetadata(substrateApi, poolMemberInfo, currentEra, _deriveSessionProgress);
 
-        await Promise.all(ledgers.map(async (_poolMemberInfo, i) => {
-          const poolMemberInfo = _poolMemberInfo.toPrimitive() as unknown as PalletNominationPoolsPoolMember;
-          const owner = reformatAddress(useAddresses[i], 42);
-
-          if (poolMemberInfo) {
-            const nominatorMetadata = await this.parsePoolMemberMetadata(substrateApi, poolMemberInfo, currentEra, _deriveSessionProgress);
-
-            resultCallback({
-              ...defaultInfo,
-              ...nominatorMetadata,
-              address: owner,
-              type: this.type
-            });
-          } else {
-            resultCallback({
-              ...defaultInfo,
-              type: this.type,
-              address: owner,
-              balanceToken: this.nativeToken.slug,
-              totalStake: '0',
-              activeStake: '0',
-              unstakeBalance: '0',
-              isBondedBefore: false,
-              status: EarningStatus.NOT_STAKING,
-              nominations: [], // can only join 1 pool at a time
-              unstakings: []
-            });
-          }
-        }));
-      }
-    });
+              resultCallback({
+                ...defaultInfo,
+                ...nominatorMetadata,
+                address: owner,
+                type: this.type
+              });
+            } else {
+              resultCallback({
+                ...defaultInfo,
+                type: this.type,
+                address: owner,
+                balanceToken: this.nativeToken.slug,
+                totalStake: '0',
+                activeStake: '0',
+                unstakeBalance: '0',
+                isBondedBefore: false,
+                status: EarningStatus.NOT_STAKING,
+                nominations: [], // can only join 1 pool at a time
+                unstakings: []
+              });
+            }
+          }));
+        }
+      });
 
     return () => {
-      cancel = true;
-      unsub();
+      subscribe.unsubscribe();
     };
   }
 
