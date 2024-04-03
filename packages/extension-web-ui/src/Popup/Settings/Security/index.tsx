@@ -16,7 +16,7 @@ import { noop } from '@subwallet/extension-web-ui/utils';
 import { isNoAccount } from '@subwallet/extension-web-ui/utils/account/account';
 import { BackgroundIcon, Icon, ModalContext, SettingItem, Switch } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { Camera, CaretRight, CheckCircle, GlobeHemisphereEast, Key, LockKeyOpen, LockLaminated, ShieldStar } from 'phosphor-react';
+import { Camera, CaretRight, CheckCircle, GlobeHemisphereEast, ShieldStar } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -89,29 +89,29 @@ const Component: React.FC<Props> = (props: Props) => {
     }
   }), [t]);
 
-  const items = useMemo((): SecurityItem[] => [
-    {
-      icon: Key,
-      key: SecurityType.WALLET_PASSWORD,
-      title: t('Change wallet password'),
-      url: '/keyring/change-password',
-      disabled: noAccount
-    },
-    {
-      icon: LockLaminated,
-      key: SecurityType.AUTO_LOCK,
-      title: t('Wallet auto-lock'),
-      url: '',
-      disabled: false
-    },
-    {
-      icon: LockKeyOpen,
-      key: SecurityType.UNLOCK_TYPE,
-      title: t('Authenticate with password'),
-      url: '',
-      disabled: false
-    }
-  ], [noAccount, t]);
+  // const items = useMemo((): SecurityItem[] => [
+  //   {
+  //     icon: Key,
+  //     key: SecurityType.WALLET_PASSWORD,
+  //     title: t('Change wallet password'),
+  //     url: '/keyring/change-password',
+  //     disabled: noAccount
+  //   },
+  //   {
+  //     icon: LockLaminated,
+  //     key: SecurityType.AUTO_LOCK,
+  //     title: t('Wallet auto-lock'),
+  //     url: '',
+  //     disabled: false
+  //   },
+  //   {
+  //     icon: LockKeyOpen,
+  //     key: SecurityType.UNLOCK_TYPE,
+  //     title: t('Authenticate with password'),
+  //     url: '',
+  //     disabled: false
+  //   }
+  // ], [noAccount, t]);
 
   const websiteAccessItem = useMemo((): SecurityItem => ({
     icon: GlobeHemisphereEast,
@@ -285,9 +285,6 @@ const Component: React.FC<Props> = (props: Props) => {
         title={t('Security settings')}
       >
         <div className='body-container'>
-          <div className='items-container'>
-            {items.map(onRenderItem)}
-          </div>
           <div className='setting-config-container hidden'>
             <div className='label'>
               {t('Website access')}

@@ -316,7 +316,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           }
 
           <div className={'__version'}>
-          SubWallet v {EXTENSION_VERSION} - {WEB_BUILD_NUMBER}
+            AvailSpace v{EXTENSION_VERSION} - {WEB_BUILD_NUMBER}
           </div>
         </div>
 

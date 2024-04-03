@@ -58,7 +58,7 @@ const Component: React.FC<Props> = (props: Props) => {
     slug: network.slug
   })).filter((n) => !!chainInfoMap[n.slug]), [chainInfoMap, supportedLedger]);
 
-  const [chain, setChain] = useState(supportedLedger[0].slug);
+  const [chain, setChain] = useState('ethereum');
   const [ledgerAccounts, setLedgerAccounts] = useState<Array<ImportLedgerItem | null>>([]);
   const [page, setPage] = useState(0);
   const [selectedAccounts, setSelectedAccounts] = useState<ImportLedgerItem[]>([]);
