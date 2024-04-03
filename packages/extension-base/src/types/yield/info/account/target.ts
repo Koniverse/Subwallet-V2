@@ -15,7 +15,9 @@ export enum EarningStatus {
   /** Waiting (Pool selected not in the reward list) */
   WAITING = 'WAITING',
   /** Account not staking */
-  NOT_STAKING = 'NOT_STAKING'
+  NOT_STAKING = 'NOT_STAKING',
+  /** Account is Voting for AstarV3Dapp in voting subperiod */
+  VOTING = 'VOTING'
 }
 
 /**

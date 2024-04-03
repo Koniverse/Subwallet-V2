@@ -96,3 +96,27 @@ export interface StakeClaimRewardParams extends BaseRequestSign {
 }
 
 export type RequestStakeClaimReward = InternalRequestSign<StakeClaimRewardParams>;
+
+export interface RequestUnlockParams extends BaseRequestSign {
+  address: string;
+  slug: string;
+  amount: string;
+}
+
+export type RequestUnlock = InternalRequestSign<RequestUnlockParams>;
+
+export interface RequestCancelUnlockParams extends BaseRequestSign {
+  address: string;
+  slug: string;
+  unlockingInfo: UnstakingInfo;
+}
+
+export type RequestCancelUnlock = InternalRequestSign<RequestCancelUnlockParams>;
+
+export interface RequestWithdrawUnlockParams extends BaseRequestSign {
+  address: string;
+  slug: string;
+  unlockingInfo: UnstakingInfo;
+}
+
+export type RequestWithdrawUnlock = InternalRequestSign<RequestWithdrawUnlockParams>;

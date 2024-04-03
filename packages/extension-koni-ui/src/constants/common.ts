@@ -13,6 +13,5 @@ export const TWITTER_URL = 'https://twitter.com/subwalletapp';
 export const DISCORD_URL = 'https://discord.com/invite/vPCN4vdB8v';
 export const SUPPORT_MAIL = 'mailto:support@subwallet.app';
 export const ALL_KEY = 'all';
-export const ASTAR_PORTAL_URL = 'https://portal.astar.network/astar/dapp-staking/discover';
 
 export const DEFAULT_CLAIM_DAPP_STAKING_REWARDS_STATE = ClaimDAppStakingRewardsState.NONE;

@@ -24,22 +24,93 @@ export interface PalletStakingExposure {
 export interface PalletDappsStakingDappInfo {
   address: string,
   name: string,
-  gitHubUrl: string,
-  tags: string[],
-  url: string,
+  iconUrl: string,
   imagesUrl: string[]
 }
 
+/* Deprecated
 export interface PalletDappsStakingUnlockingChunk {
   amount: number,
   unlockEra: number
 }
+ */
 
+/* Deprecated
 export interface PalletDappsStakingAccountLedger {
   locked: number,
   unbondingInfo: {
     unlockingChunks: PalletDappsStakingUnlockingChunk[]
   }
+}
+ */
+
+export interface PalletDappStakingV3AccountLedger {
+  locked: string,
+  unlocking: PalletDappStakingV3UnlockingChunk[],
+  staked: PalletDappStakingV3StakeInfo,
+  stakedFuture: PalletDappStakingV3StakeInfo,
+  contractStakeCount: number,
+}
+export interface PalletDappStakingV3UnlockingChunk {
+  amount: string,
+  unlockBlock: string
+}
+
+export interface PalletDappStakingV3StakeInfo {
+  voting: string,
+  buildAndEarn: string,
+  era: number,
+  period: number
+}
+
+export interface PalletDappStakingV3ProtocolState {
+  era: number,
+  nextEraStart: string,
+  periodInfo: {
+    number: number,
+    subperiod: DappStakingV3Subperiod,
+    nextSubperiodStartEra: string,
+  }
+}
+
+export interface PalletDappStakingV3PeriodEndInfo {
+  bonusRewardPool: string,
+  totalVpStake: string,
+  finalEra: string
+}
+
+export enum DappStakingV3Subperiod {
+  BUILD_AND_EARN = 'BuildAndEarn',
+  VOTING = 'Voting'
+}
+
+export interface PalletDappStakingV3DappInfo {
+  contractAddress: string,
+  dappId: string,
+  owner: string,
+  stakersCount: number,
+}
+
+export interface PalletDappStakingV3SingularStakingInfo {
+  staked: PalletDappStakingV3StakeInfo,
+  loyalStaker: boolean
+}
+
+export interface PalletDappStakingV3ContractStakeAmount {
+  staked: PalletDappStakingV3StakeInfo,
+  stakedFuture: PalletDappStakingV3StakeInfo
+}
+
+export interface PalletDappStakingV3EraRewardSpan {
+  firstEra: number,
+  lastEra: number,
+  span: DappStakingV3EraRewards[]
+}
+
+export interface DappStakingV3EraRewards {
+  stakerRewardPool: string,
+  staked: string,
+  dappRewardPool: string
 }
 
 export interface BlockHeader {

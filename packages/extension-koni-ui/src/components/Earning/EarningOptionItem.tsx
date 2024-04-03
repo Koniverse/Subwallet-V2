@@ -4,7 +4,6 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps, YieldGroupInfo } from '@subwallet/extension-koni-ui/types';
-import { isRelatedToAstar } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Logo, Number } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretRight } from 'phosphor-react';
@@ -22,9 +21,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const { chain, className, isShowBalance, onClick, poolGroup } = props;
   const { t } = useTranslation();
 
-  const { balance, group, maxApy, symbol, token } = poolGroup;
-
-  const _isRelatedToAstar = isRelatedToAstar(group);
+  const { balance, maxApy, symbol, token } = poolGroup;
 
   return (
     <div
@@ -55,7 +52,7 @@ const Component: React.FC<Props> = (props: Props) => {
             </div>
 
             {
-              !_isRelatedToAstar && !!maxApy && (
+              !!maxApy && (
                 <div className='__item-upto'>
                   <div className='__item-upto-label'>
                     {t('Up to')}:
@@ -86,7 +83,7 @@ const Component: React.FC<Props> = (props: Props) => {
               </div>
             </div>
             {
-              !_isRelatedToAstar && !!maxApy && (
+              !!maxApy && (
                 <div className='__item-time'>
                   {t('per year')}
                 </div>
@@ -97,14 +94,6 @@ const Component: React.FC<Props> = (props: Props) => {
       </div>
 
       <div className={'__item-right-part'}>
-        {
-          _isRelatedToAstar && (
-            <div className={'__visit-dapp'}>
-              {t('View on dApp')}
-            </div>
-          )
-        }
-
         <Icon
           phosphorIcon={CaretRight}
           size='sm'
@@ -137,8 +126,7 @@ const EarningOptionItem = styled(Component)<Props>(({ theme: { token } }: Props)
     '.__item-right-part': {
       display: 'flex',
       alignItems: 'center',
-      paddingLeft: 10,
-      gap: 10
+      paddingLeft: 10
     },
 
     '.__item-logo': {
@@ -232,12 +220,6 @@ const EarningOptionItem = styled(Component)<Props>(({ theme: { token } }: Props)
       fontSize: token.fontSizeSM,
       lineHeight: token.lineHeightSM,
       color: token.colorTextLight4
-    },
-
-    '.__visit-dapp': {
-      color: token.colorTextLight4,
-      fontSize: token.fontSizeSM,
-      lineHeight: token.lineHeightSM
     }
   });
 });

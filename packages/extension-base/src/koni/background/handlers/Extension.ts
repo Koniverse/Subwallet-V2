@@ -37,7 +37,7 @@ import { WALLET_CONNECT_EIP155_NAMESPACE } from '@subwallet/extension-base/servi
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { AccountsStore } from '@subwallet/extension-base/stores';
-import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
+import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestCancelUnlock, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlock, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestWithdrawUnlock, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { balanceFormatter, formatNumber } from '@subwallet/extension-base/utils/number';
@@ -4157,6 +4157,69 @@ export default class KoniExtension {
     });
   }
 
+  private async yieldSubmitUnlock (params: RequestUnlock): Promise<SWTransactionResponse> {
+    const { address, amount, slug } = params;
+    const poolHandler = this.#koniState.earningService.getPoolHandler(slug);
+
+    if (!poolHandler || !amount) {
+      return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
+    }
+
+    const chain = poolHandler.chain;
+    const extrinsic = await this.#koniState.earningService.handleUnlock(params);
+
+    return await this.#koniState.transactionService.handleTransaction({
+      address,
+      chain,
+      transaction: extrinsic,
+      data: params,
+      extrinsicType: ExtrinsicType.STAKING_UNLOCK,
+      chainType: poolHandler?.transactionChainType || ChainType.SUBSTRATE
+    });
+  }
+
+  private async yieldSubmitCancelUnlock (params: RequestCancelUnlock): Promise<SWTransactionResponse> {
+    const { address, slug, unlockingInfo } = params;
+    const poolHandler = this.#koniState.earningService.getPoolHandler(slug);
+
+    if (!poolHandler || !unlockingInfo) {
+      return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
+    }
+
+    const chain = poolHandler.chain;
+    const extrinsic = await this.#koniState.earningService.handleCancelUnlock(params);
+
+    return await this.#koniState.transactionService.handleTransaction({
+      address,
+      chain,
+      transaction: extrinsic,
+      data: params,
+      extrinsicType: ExtrinsicType.STAKING_CANCEL_UNLOCK,
+      chainType: poolHandler?.transactionChainType || ChainType.SUBSTRATE
+    });
+  }
+
+  private async yieldSubmitWithdrawUnlock (params: RequestWithdrawUnlock): Promise<SWTransactionResponse> {
+    const { address, slug } = params;
+    const poolHandler = this.#koniState.earningService.getPoolHandler(slug);
+
+    if (!poolHandler) {
+      return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
+    }
+
+    const chain = poolHandler.chain;
+    const extrinsic = await this.#koniState.earningService.handleWithdrawUnlock(params);
+
+    return await this.#koniState.transactionService.handleTransaction({
+      address,
+      chain,
+      transaction: extrinsic,
+      data: params,
+      extrinsicType: ExtrinsicType.STAKING_WITHDRAW_UNLOCK,
+      chainType: poolHandler?.transactionChainType || ChainType.SUBSTRATE
+    });
+  }
+
   private async yieldSubmitClaimReward (params: RequestStakeClaimReward): Promise<SWTransactionResponse> {
     const { address, slug } = params;
     const poolHandler = this.#koniState.earningService.getPoolHandler(slug);
@@ -4522,7 +4585,12 @@ export default class KoniExtension {
         return await this.yieldSubmitCancelWithdrawal(request as RequestStakeCancelWithdrawal);
       case 'pri(yield.claimReward.submit)':
         return await this.yieldSubmitClaimReward(request as RequestStakeClaimReward);
-
+      case 'pri(yield.unlock.submit)':
+        return await this.yieldSubmitUnlock(request as RequestUnlock);
+      case 'pri(yield.cancelUnlock.submit)':
+        return await this.yieldSubmitCancelUnlock(request as RequestCancelUnlock);
+      case 'pri(yield.withdrawUnlock.submit)':
+        return await this.yieldSubmitWithdrawUnlock(request as RequestWithdrawUnlock);
         /* Others */
 
         /* Actions */

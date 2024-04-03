@@ -108,6 +108,8 @@ export const _EXPECTED_BLOCK_TIME: Record<string, number> = { // in seconds
   creditcoin: 12,
   vara_network: 3,
   goldberg_testnet: 20,
+  astar: 12,
+  shibuya: 12,
   polimec: 12
 };
 

@@ -12,12 +12,12 @@ import BaseLiquidStakingPoolHandler from '@subwallet/extension-base/services/ear
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
-import { EarningRewardHistoryItem, EarningRewardItem, EarningRewardJson, HandleYieldStepData, HandleYieldStepParams, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldWithdrawal, ResponseEarlyValidateYield, TransactionData, ValidateYieldProcessParams, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { EarningRewardHistoryItem, EarningRewardItem, EarningRewardJson, HandleYieldStepData, HandleYieldStepParams, OptimalYieldPath, OptimalYieldPathParams, RequestCancelUnlock, RequestEarlyValidateYield, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlock, RequestWithdrawUnlock, RequestYieldLeave, RequestYieldWithdrawal, ResponseEarlyValidateYield, TransactionData, ValidateYieldProcessParams, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { addLazy, categoryAddresses, createPromiseHandler, PromiseHandler, removeLazy } from '@subwallet/extension-base/utils';
 import { fetchStaticCache } from '@subwallet/extension-base/utils/fetchStaticCache';
 import { BehaviorSubject } from 'rxjs';
 
-import { AcalaLiquidStakingPoolHandler, AmplitudeNativeStakingPoolHandler, AstarNativeStakingPoolHandler, BasePoolHandler, BifrostLiquidStakingPoolHandler, BifrostMantaLiquidStakingPoolHandler, InterlayLendingPoolHandler, NominationPoolHandler, ParallelLiquidStakingPoolHandler, ParaNativeStakingPoolHandler, RelayNativeStakingPoolHandler, StellaSwapLiquidStakingPoolHandler } from './handlers';
+import { AcalaLiquidStakingPoolHandler, AmplitudeNativeStakingPoolHandler, AstarV3NativeStakingPoolHandler, BasePoolHandler, BifrostLiquidStakingPoolHandler, BifrostMantaLiquidStakingPoolHandler, InterlayLendingPoolHandler, NominationPoolHandler, ParallelLiquidStakingPoolHandler, ParaNativeStakingPoolHandler, RelayNativeStakingPoolHandler, StellaSwapLiquidStakingPoolHandler } from './handlers';
 
 const fetchPoolsData = async () => {
   const fetchData = await fetchStaticCache<{data: Record<string, YieldPoolInfo>}>('earning/yield-pools.json', { data: {} });
@@ -39,7 +39,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
   private dbService: DatabaseService;
   private eventService: EventService;
-  private useOnlineCacheOnly = true;
+  private useOnlineCacheOnly = false;
 
   constructor (state: KoniState) {
     this.state = state;
@@ -75,7 +75,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
       }
 
       if (_STAKING_CHAIN_GROUP.astar.includes(chain)) {
-        handlers.push(new AstarNativeStakingPoolHandler(this.state, chain));
+        handlers.push(new AstarV3NativeStakingPoolHandler(this.state, chain));
       }
 
       if (_STAKING_CHAIN_GROUP.amplitude.includes(chain)) {
@@ -924,6 +924,45 @@ export default class EarningService implements StoppableServiceInterface, Persis
   /* Leave */
 
   /* Other */
+
+  public async handleUnlock (params: RequestUnlock): Promise<TransactionData> {
+    await this.eventService.waitChainReady;
+
+    const { slug } = params;
+    const handler = this.getPoolHandler(slug);
+
+    if (handler && _STAKING_CHAIN_GROUP.astar.includes(slug)) {
+      return (handler as AstarV3NativeStakingPoolHandler).handleUnlock(params.amount);
+    } else {
+      return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR));
+    }
+  }
+
+  public async handleCancelUnlock (params: RequestCancelUnlock): Promise<TransactionData> {
+    await this.eventService.waitChainReady;
+
+    const { slug } = params;
+    const handler = this.getPoolHandler(slug);
+
+    if (handler && _STAKING_CHAIN_GROUP.astar.includes(slug)) {
+      return (handler as AstarV3NativeStakingPoolHandler).handleCancelUnlock();
+    } else {
+      return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR));
+    }
+  }
+
+  public async handleWithdrawUnlock (params: RequestWithdrawUnlock): Promise<TransactionData> {
+    await this.eventService.waitChainReady;
+
+    const { slug } = params;
+    const handler = this.getPoolHandler(slug);
+
+    if (handler && _STAKING_CHAIN_GROUP.astar.includes(slug)) {
+      return (handler as AstarV3NativeStakingPoolHandler).handleWithdrawUnlock();
+    } else {
+      return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR));
+    }
+  }
 
   public async handleYieldWithdraw (params: RequestYieldWithdrawal): Promise<TransactionData> {
     await this.eventService.waitChainReady;

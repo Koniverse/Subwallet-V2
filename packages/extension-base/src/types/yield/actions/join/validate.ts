@@ -11,6 +11,10 @@ export enum YieldValidationStatus {
   OK = 'OK'
 }
 
+export enum AstarV3ErrorType {
+  CAN_NOT_JOIN_LAST_ERA = 'CAN_NOT_JOIN_LAST_ERA'
+}
+
 export interface YieldProcessValidation {
   ok: boolean,
   status: YieldValidationStatus,

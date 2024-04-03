@@ -56,6 +56,12 @@ const typeName = (type: SWTransaction['extrinsicType']) => {
       return 'Withdraw pool';
     case ExtrinsicType.JOIN_YIELD_POOL:
       return 'Start earning';
+    case ExtrinsicType.STAKING_UNLOCK:
+      return 'Unlock';
+    case ExtrinsicType.STAKING_CANCEL_UNLOCK:
+      return 'Cancel unlock';
+    case ExtrinsicType.STAKING_WITHDRAW_UNLOCK:
+      return 'Withdraw unlock';
     case ExtrinsicType.UNKNOWN:
     default:
       return 'unknown';

@@ -321,10 +321,15 @@ export interface NativeYieldPoolInfo extends AbstractYieldPoolInfo {
   statistic?: NormalYieldPoolStatistic;
 }
 
+export interface AstarDappV3PoolInfo extends NativeYieldPoolInfo {
+  isVotingSubperiod: boolean;
+  isLastEra: boolean;
+}
+
 /**
  * Info of yield pool
  * */
-export type YieldPoolInfo = NativeYieldPoolInfo | NominationYieldPoolInfo | LiquidYieldPoolInfo | LendingYieldPoolInfo;
+export type YieldPoolInfo = AstarDappV3PoolInfo | NativeYieldPoolInfo | NominationYieldPoolInfo | LiquidYieldPoolInfo | LendingYieldPoolInfo;
 
 /**
  * @interface YieldAssetExpectedEarning

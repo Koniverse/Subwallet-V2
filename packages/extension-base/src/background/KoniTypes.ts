@@ -10,7 +10,7 @@ import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCus
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseEarlyValidateYield, ResponseGetYieldPoolTargets, SubmitYieldStepData, TokenApproveData, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
+import { AstarV3ErrorType, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestCancelUnlock, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlock, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestWithdrawUnlock, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseEarlyValidateYield, ResponseGetYieldPoolTargets, SubmitYieldStepData, TokenApproveData, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
 import { KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { KeyringOptions } from '@subwallet/ui-keyring/options/types';
@@ -480,6 +480,10 @@ export enum ExtrinsicType {
   STAKING_CANCEL_COMPOUNDING = 'staking.cancel_compounding',
   STAKING_CANCEL_UNSTAKE = 'staking.cancel_unstake',
 
+  STAKING_UNLOCK = 'staking.unlock',
+  STAKING_CANCEL_UNLOCK = 'staking.cancel_unlock',
+  STAKING_WITHDRAW_UNLOCK = 'staking.withdraw_unlock',
+
   JOIN_YIELD_POOL = 'earn.join_pool', // TODO: review this
   MINT_VDOT = 'earn.mint_vdot',
   MINT_LDOT = 'earn.mint_ldot',
@@ -528,6 +532,10 @@ export interface ExtrinsicDataTypeMap {
   [ExtrinsicType.STAKING_CANCEL_COMPOUNDING]: RequestTuringCancelStakeCompound,
   [ExtrinsicType.STAKING_CANCEL_UNSTAKE]: RequestStakeCancelWithdrawal,
   [ExtrinsicType.STAKING_POOL_WITHDRAW]: any,
+
+  [ExtrinsicType.STAKING_UNLOCK]: RequestUnlock,
+  [ExtrinsicType.STAKING_CANCEL_UNLOCK]: RequestCancelUnlock,
+  [ExtrinsicType.STAKING_WITHDRAW_UNLOCK]: RequestWithdrawUnlock,
 
   // Yield
   [ExtrinsicType.JOIN_YIELD_POOL]: RequestYieldStepSubmit,
@@ -727,7 +735,7 @@ export enum TransferTxErrorType {
   RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT',
 }
 
-export type TransactionErrorType = BasicTxErrorType | TransferTxErrorType | StakingTxErrorType | YieldValidationStatus
+export type TransactionErrorType = BasicTxErrorType | TransferTxErrorType | StakingTxErrorType | YieldValidationStatus | AstarV3ErrorType
 
 export enum BasicTxWarningCode {
   NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'notEnoughExistentialDeposit'
@@ -2370,6 +2378,9 @@ export interface KoniRequestSignatures {
   'pri(yield.withdraw.submit)': [RequestYieldWithdrawal, SWTransactionResponse];
   'pri(yield.cancelWithdrawal.submit)': [RequestStakeCancelWithdrawal, SWTransactionResponse];
   'pri(yield.claimReward.submit)': [RequestStakeClaimReward, SWTransactionResponse];
+  'pri(yield.unlock.submit)': [RequestUnlock, SWTransactionResponse];
+  'pri(yield.cancelUnlock.submit)': [RequestCancelUnlock, SWTransactionResponse];
+  'pri(yield.withdrawUnlock.submit)': [RequestWithdrawUnlock, SWTransactionResponse];
 
   /* Other */
 

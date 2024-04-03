@@ -6,7 +6,7 @@ import { NotificationType } from '@subwallet/extension-base/background/KoniTypes
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { EarningRewardHistoryItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
-import { ASTAR_PORTAL_URL, BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
+import { BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation, useYieldRewardTotal } from '@subwallet/extension-koni-ui/hooks';
 import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { customFormatDate, openInNewTab } from '@subwallet/extension-koni-ui/utils';
@@ -67,7 +67,7 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
 
   const onClaimReward = useCallback(() => {
     if (type === YieldPoolType.NATIVE_STAKING && isDAppStaking) {
-      openInNewTab(ASTAR_PORTAL_URL)();
+      openInNewTab('https://portal.astar.network/astar/dapp-staking/discover')();
 
       return;
     }

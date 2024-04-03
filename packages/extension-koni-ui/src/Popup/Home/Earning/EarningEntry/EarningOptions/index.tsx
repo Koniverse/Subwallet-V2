@@ -5,11 +5,11 @@ import { isLendingPool, isLiquidPool } from '@subwallet/extension-base/services/
 import { YieldPoolInfo } from '@subwallet/extension-base/types';
 import { EmptyList, FilterModal, Layout } from '@subwallet/extension-koni-ui/components';
 import { EarningOptionItem } from '@subwallet/extension-koni-ui/components/Earning';
-import { ASTAR_PORTAL_URL, DEFAULT_EARN_PARAMS, EARN_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { DEFAULT_EARN_PARAMS, EARN_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { useFilterModal, useHandleChainConnection, useSelector, useTranslation, useYieldGroupInfo } from '@subwallet/extension-koni-ui/hooks';
 import { ChainConnectionWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { EarningEntryView, EarningPoolsParam, ThemeProps, YieldGroupInfo } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll, isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
+import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { FadersHorizontal, Vault } from 'phosphor-react';
@@ -141,10 +141,9 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
 
   const { alertProps,
     checkChainConnected,
-    closeAlert,
     closeConnectChainModal,
     connectingChain,
-    onConnectChain, openAlert,
+    onConnectChain,
     openConnectChainModal, setExtraSuccessFlag, turnOnChain } = useHandleChainConnection({
     alertModalId,
     chainConnectionLoadingModalId,
@@ -165,27 +164,6 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
 
   const onClickItem = useCallback((item: YieldGroupInfo) => {
     return () => {
-      if (isRelatedToAstar(item.group)) {
-        openAlert({
-          title: t('Enter Astar portal'),
-          content: t('You are navigating to Astar portal to view and manage your stake in Astar dApp staking v3. SubWallet will offer support for Astar dApp staking v3 soon.'),
-          cancelButton: {
-            text: t('Cancel'),
-            schema: 'secondary',
-            onClick: closeAlert
-          },
-          okButton: {
-            text: t('Enter Astar portal'),
-            onClick: () => {
-              openInNewTab(ASTAR_PORTAL_URL)();
-              closeAlert();
-            }
-          }
-        });
-
-        return;
-      }
-
       setSelectedPoolGroup(item);
 
       if (item.poolListLength > 1) {
@@ -217,7 +195,7 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
         navigateToEarnTransaction(item);
       }
     };
-  }, [checkChainConnected, closeAlert, getAltChain, navigate, navigateToEarnTransaction, openAlert, openConnectChainModal, poolInfoMap, t]);
+  }, [checkChainConnected, getAltChain, navigate, navigateToEarnTransaction, openConnectChainModal, poolInfoMap]);
 
   const _onConnectChain = useCallback((chain: string) => {
     if (currentAltChain) {

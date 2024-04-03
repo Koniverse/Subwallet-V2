@@ -566,6 +566,44 @@ export default class TransactionService {
         break;
       }
 
+      case ExtrinsicType.STAKING_UNLOCK: {
+        const data = parseTransactionData<ExtrinsicType.STAKING_UNLOCK>(transaction.data);
+
+        const slug = data.slug;
+        const poolHandler = this.state.earningService.getPoolHandler(slug);
+
+        const amount: AmountData = {
+          ...baseNativeAmount,
+          value: data.amount || '0'
+        };
+
+        if (poolHandler) {
+          const asset = this.state.getAssetBySlug(poolHandler.metadataInfo.inputAsset);
+
+          if (asset) {
+            amount.decimals = asset.decimals || 0;
+            amount.symbol = asset.symbol;
+          }
+        }
+
+        historyItem.amount = amount;
+        break;
+      }
+
+      case ExtrinsicType.STAKING_CANCEL_UNLOCK: {
+        const data = parseTransactionData<ExtrinsicType.STAKING_CANCEL_UNLOCK>(transaction.data);
+
+        historyItem.amount = { ...baseNativeAmount, value: data.unlockingInfo.claimable || '0' };
+        break;
+      }
+
+      case ExtrinsicType.STAKING_WITHDRAW_UNLOCK: {
+        const data = parseTransactionData<ExtrinsicType.STAKING_WITHDRAW_UNLOCK>(transaction.data);
+
+        historyItem.amount = { ...baseNativeAmount, value: data.unlockingInfo.claimable || '0' };
+        break;
+      }
+
       case ExtrinsicType.EVM_EXECUTE: {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const data = parseTransactionData<ExtrinsicType.EVM_EXECUTE>(transaction.data);
@@ -792,7 +830,7 @@ export default class TransactionService {
       } catch (e) {
         console.error(e);
       }
-    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.STAKING_JOIN_POOL, ExtrinsicType.STAKING_POOL_WITHDRAW, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
+    } else if ([ExtrinsicType.STAKING_UNLOCK, ExtrinsicType.STAKING_CANCEL_UNLOCK, ExtrinsicType.STAKING_WITHDRAW_UNLOCK, ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.STAKING_JOIN_POOL, ExtrinsicType.STAKING_POOL_WITHDRAW, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
       this.state.eventService.emit('transaction.submitStaking', transaction.chain);
     }
   }
@@ -915,11 +953,7 @@ export default class TransactionService {
     return ethers.Transaction.from(txObject).unsignedSerialized as HexString;
   }
 
-  private async signAndSendEvmTransaction ({ address,
-    chain,
-    id,
-    transaction,
-    url }: SWTransaction): Promise<TransactionEmitter> {
+  private async signAndSendEvmTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
     const payload = (transaction as EvmSendTransactionRequest);
     const evmApi = this.state.chainService.getEvmApi(chain);
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
