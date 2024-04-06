@@ -2046,6 +2046,6 @@ export default class KoniState {
   }
 
   public getCrowdloanContributions ({ address, page, relayChain }: RequestCrowdloanContributions) {
-    return this.subscanService.getCrowdloanContributions(relayChain, address, page);
+    // return this.subscanService.getCrowdloanContributions(relayChain, address, page);
   }
 }

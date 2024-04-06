@@ -160,6 +160,7 @@ export class NftHandler {
           }
 
           if (_isSupportOrdinal(chain) && targetIsWeb) {
+            console.log('Support ordinal', chain);
             const subscanChain = chainInfo.extraInfo?.subscanSlug;
 
             if (subscanChain) {

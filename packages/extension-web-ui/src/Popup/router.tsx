@@ -62,8 +62,8 @@ const NftCollections = new LazyLoader('NftCollections', () => import('@subwallet
 const NftCollectionDetail = new LazyLoader('NftCollectionDetail', () => import('@subwallet/extension-web-ui/Popup/Home/Nfts/NftCollectionDetail'));
 const NftImport = new LazyLoader('NftImport', () => import('@subwallet/extension-web-ui/Popup/Home/Nfts/NftImport'));
 
-// const InscriptionItems = new LazyLoader('InscriptionItems', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemList'));
-// const InscriptionItemDetail = new LazyLoader('InscriptionItemDetail', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemDetail'));
+const InscriptionItems = new LazyLoader('InscriptionItems', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemList'));
+const InscriptionItemDetail = new LazyLoader('InscriptionItemDetail', () => import('@subwallet/extension-web-ui/Popup/Home/Inscriptions/InscriptionItemDetail'));
 
 const History = new LazyLoader('History', () => import('@subwallet/extension-web-ui/Popup/Home/History'));
 // const Crowdloans = new LazyLoader('Crowdloans', () => import('@subwallet/extension-web-ui/Popup/Home/Crowdloans'));
@@ -189,14 +189,14 @@ export const router = createBrowserRouter([
               NftItemDetail.generateRouterObject('item-detail')
             ]
           },
-          // {
-          //   path: 'inscriptions',
-          //   element: <NestedOutlet />,
-          //   children: [
-          //     InscriptionItems.generateRouterObject(''),
-          //     InscriptionItemDetail.generateRouterObject('item-detail')
-          //   ]
-          // },
+          {
+            path: 'inscriptions',
+            element: <NestedOutlet />,
+            children: [
+              InscriptionItems.generateRouterObject(''),
+              InscriptionItemDetail.generateRouterObject('item-detail')
+            ]
+          },
           // Crowdloans.generateRouterObject('crowdloans'),
           {
             path: 'earning',

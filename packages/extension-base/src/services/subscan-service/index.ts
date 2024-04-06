@@ -18,7 +18,7 @@ interface SubscanError {
 export class SubscanService {
   private callRate = 2; // limit per interval check
   private limitRate = 2; // max rate per interval check
-  private intervalCheck = 1000; // interval check in ms
+  private intervalCheck = 1200; // interval check in ms
   private maxRetry = 9; // interval check in ms
   private rollbackRateTime = 30 * 1000; // rollback rate time in ms
   private timeoutRollbackRate: NodeJS.Timeout | undefined = undefined;
@@ -47,10 +47,10 @@ export class SubscanService {
   }
 
   private getApiUrl (chain: string, path: string) {
-    const subscanChain = this.subscanChainMap[chain];
+    const subscanChain = chain === 'avail-testnet' ? 'avail-testnet' : this.subscanChainMap[chain];
 
     if (!subscanChain) {
-      throw new SWError('NOT_SUPPORTED', 'Chain is not supported');
+      throw new SWError('NOT_SUPPORTED', `Chain ${chain} is not supported`);
     }
 
     return `https://${subscanChain}.api.subscan.io/${path}`;
@@ -113,6 +113,7 @@ export class SubscanService {
         request.run().then((rs) => {
           request.resolve(rs);
         }).catch((e: Error) => {
+          console.error(e);
           const error = JSON.parse(e.message) as SubscanError;
 
           // Limit rate

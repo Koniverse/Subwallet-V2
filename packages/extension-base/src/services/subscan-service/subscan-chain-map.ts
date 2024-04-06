@@ -64,7 +64,8 @@ export const SUBSCAN_API_CHAIN_MAP: Record<string, string> = {
   vara_network: 'vara',
   krest_network: 'krest',
   crust_mainnet: 'crust',
-  manta_network: 'manta'
+  manta_network: 'manta',
+  goldberg_testnet: 'avail-testnet'
 };
 
 /**
