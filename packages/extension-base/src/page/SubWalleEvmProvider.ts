@@ -132,7 +132,7 @@ export class SubWalletEvmProvider extends SafeEventEmitter implements EvmProvide
 
     switch (payload.method) {
       case 'net_version':
-        result = this.version ? `AvailSpace v${this.version}` : null;
+        result = this.version ? `Avail Space v${this.version}` : null;
         break;
       default:
         throw new Error(`Not support ${payload.method}`);

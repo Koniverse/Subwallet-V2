@@ -183,7 +183,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           rightIcon: ArrowSquareOut,
           title: t('Request a feature'),
           onClick: () => {
-            window.open(`${SUPPORT_MAIL}?subject=[AvailSpace In-app Feedback]`, '_self');
+            window.open(`${SUPPORT_MAIL}?subject=[Avail Space In-app Feedback]`, '_self');
           }
         },
         {
@@ -316,7 +316,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           }
 
           <div className={'__version'}>
-            AvailSpace v{EXTENSION_VERSION} - {WEB_BUILD_NUMBER}
+            Avail Space v{EXTENSION_VERSION} - {WEB_BUILD_NUMBER}
           </div>
         </div>
 

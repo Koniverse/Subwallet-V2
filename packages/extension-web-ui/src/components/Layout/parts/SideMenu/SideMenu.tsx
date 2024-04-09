@@ -125,7 +125,7 @@ function Component ({ className,
         openInNewTab(TERMS_OF_SERVICE_URL)();
         break;
       case 'contact':
-        window.open(`${SUPPORT_MAIL}?subject=[AvailSpace] Contact`, '_self');
+        window.open(`${SUPPORT_MAIL}?subject=[Avail Space] Contact`, '_self');
         break;
       default:
     }
