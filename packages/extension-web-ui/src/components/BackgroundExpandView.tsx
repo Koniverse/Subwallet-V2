@@ -3,12 +3,9 @@
 
 import { useIsPopup } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
-import { convertHexColorToRGBA, openInNewTab } from '@subwallet/extension-web-ui/utils';
-import { Button, Icon } from '@subwallet/react-ui';
+import { convertHexColorToRGBA } from '@subwallet/extension-web-ui/utils';
 import CN from 'classnames';
-import { Question } from 'phosphor-react';
 import React, { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -20,8 +17,6 @@ type Props = ThemeProps;
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className } = props;
-
-  const { t } = useTranslation();
   const location = useLocation();
 
   const isPopup = useIsPopup();
@@ -49,16 +44,6 @@ const Component: React.FC<Props> = (props: Props) => {
       <div className='expand-view-header'>
         <div className='logo-container'>
           <Logo2D />
-        </div>
-        <div className='help-container'>
-          <Button
-            icon={<Icon phosphorIcon={Question} />}
-            onClick={openInNewTab('https://docs.subwallet.app/')}
-            size='xs'
-            type='ghost'
-          >
-            {t('Help')}
-          </Button>
         </div>
         {
           isShowNotification && (

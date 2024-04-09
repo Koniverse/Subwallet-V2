@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logo2D } from '@subwallet/extension-web-ui/components/Logo';
-import { HELP_URL } from '@subwallet/extension-web-ui/constants';
-import { useDefaultNavigate, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import { useDefaultNavigate } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
-import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon } from '@subwallet/react-ui';
-import { CaretLeft, Question } from 'phosphor-react';
+import { CaretLeft } from 'phosphor-react';
 import React, { useCallback } from 'react';
 import styled from 'styled-components';
 
@@ -21,7 +19,6 @@ function Component ({ className,
   onBack,
   showBackButton = true,
   title }: Props): React.ReactElement<Props> {
-  const { t } = useTranslation();
   const { goHome } = useDefaultNavigate();
 
   const defaultOnBack = useCallback(() => {
@@ -62,21 +59,6 @@ function Component ({ className,
             <div className={'__title'}>{title}</div>
           </div>
         )}
-        <Button
-          className={'__help-button'}
-          icon={
-            <Icon
-              customSize='28px'
-              phosphorIcon={Question}
-              weight={'duotone'}
-            />
-          }
-          onClick={openInNewTab(HELP_URL)}
-          size='xs'
-          type='primary'
-        >
-          {t<string>('Help')}
-        </Button>
       </div>
     </div>
   );
