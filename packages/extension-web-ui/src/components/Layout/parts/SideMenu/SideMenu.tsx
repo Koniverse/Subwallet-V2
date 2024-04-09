@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MenuItem, MenuItemType } from '@subwallet/extension-web-ui/components/Layout/parts/SideMenu/MenuItem';
-import { CONTACT_US, FAQS_URL, TERMS_OF_SERVICE_URL } from '@subwallet/extension-web-ui/constants';
+import { FAQS_URL, SUPPORT_MAIL, TERMS_OF_SERVICE_URL } from '@subwallet/extension-web-ui/constants';
 import { useTranslation } from '@subwallet/extension-web-ui/hooks';
 import usePreloadView from '@subwallet/extension-web-ui/hooks/router/usePreloadView';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, Image } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, ArrowSquareUpRight, Clock, Gear, Info, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
+import { ArrowCircleLeft, ArrowCircleRight, ArrowsLeftRight, Clock, Gear, MessengerLogo, NewspaperClipping, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -98,21 +98,21 @@ function Component ({ className,
 
   const staticMenuItems = useMemo<MenuItemType[]>(() => {
     return [
-      {
-        label: t('FAQs'),
-        value: 'faqs',
-        icon: Info
-      },
+      // {
+      //   label: t('FAQs'),
+      //   value: 'faqs',
+      //   icon: Info
+      // },
       {
         label: t('Contact'),
         value: 'contact',
         icon: MessengerLogo
-      },
-      {
-        label: t('Terms of services'),
-        value: 'tos',
-        icon: ArrowSquareUpRight
       }
+      // {
+      //   label: t('Terms of services'),
+      //   value: 'tos',
+      //   icon: ArrowSquareUpRight
+      // }
     ];
   }, [t]);
 
@@ -125,7 +125,7 @@ function Component ({ className,
         openInNewTab(TERMS_OF_SERVICE_URL)();
         break;
       case 'contact':
-        openInNewTab(CONTACT_US)();
+        window.open(`${SUPPORT_MAIL}?subject=[AvailSpace] Contact`, '_self');
         break;
       default:
     }

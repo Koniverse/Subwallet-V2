@@ -3,7 +3,7 @@
 
 import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
 import { BaseModal, PageWrapper } from '@subwallet/extension-web-ui/components';
-import { EXTENSION_VERSION, SUPPORT_MAIL, TERMS_OF_SERVICE_URL, TWITTER_URL, WEB_BUILD_NUMBER, WEBSITE_URL, WIKI_URL } from '@subwallet/extension-web-ui/constants/common';
+import { EXTENSION_VERSION, SUPPORT_MAIL, TWITTER_URL, WEB_BUILD_NUMBER } from '@subwallet/extension-web-ui/constants/common';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
@@ -14,7 +14,7 @@ import { Theme, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { BackgroundIcon, ButtonProps, Icon, Image, ModalContext, SettingItem, SwHeader, SwIconProps } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowsOut, ArrowSquareOut, Book, BookBookmark, CaretRight, ChatTeardropText, Coin, EnvelopeSimple, FrameCorners, Globe, GlobeHemisphereEast, ShareNetwork, ShieldCheck, X } from 'phosphor-react';
+import { ArrowsOut, ArrowSquareOut, BookBookmark, CaretRight, ChatTeardropText, Coin, EnvelopeSimple, FrameCorners, GlobeHemisphereEast, ShareNetwork, ShieldCheck, X } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
@@ -168,14 +168,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             window.open(`${SUPPORT_MAIL}?subject=[In-app Support]`, '_self');
           }
         },
-        {
-          key: 'user-manual',
-          leftIcon: Book,
-          leftIconBgColor: token['green-6'],
-          rightIcon: ArrowSquareOut,
-          title: t('User guide'),
-          onClick: openInNewTab(WIKI_URL)
-        },
+        // {
+        //   key: 'user-manual',
+        //   leftIcon: Book,
+        //   leftIconBgColor: token['green-6'],
+        //   rightIcon: ArrowSquareOut,
+        //   title: t('User guide'),
+        //   onClick: openInNewTab(WIKI_URL)
+        // },
         {
           key: 'request-a-feature',
           leftIcon: ChatTeardropText,
@@ -183,7 +183,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           rightIcon: ArrowSquareOut,
           title: t('Request a feature'),
           onClick: () => {
-            window.open(`${SUPPORT_MAIL}?subject=[SubWallet In-app Feedback]`, '_self');
+            window.open(`${SUPPORT_MAIL}?subject=[AvailSpace In-app Feedback]`, '_self');
           }
         },
         {
@@ -211,22 +211,22 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const aboutSubwalletType = useMemo<SettingItemType[]>(() => {
     return [
-      {
-        key: 'website',
-        leftIcon: Globe,
-        rightIcon: ArrowSquareOut,
-        leftIconBgColor: token['purple-7'],
-        title: t('Website'),
-        onClick: openInNewTab(WEBSITE_URL)
-      },
-      {
-        key: 'terms-of-use',
-        leftIcon: BookBookmark,
-        rightIcon: ArrowSquareOut,
-        leftIconBgColor: token['volcano-7'],
-        title: t('Terms of use'),
-        onClick: openInNewTab(TERMS_OF_SERVICE_URL)
-      },
+      // {
+      //   key: 'website',
+      //   leftIcon: Globe,
+      //   rightIcon: ArrowSquareOut,
+      //   leftIconBgColor: token['purple-7'],
+      //   title: t('Website'),
+      //   onClick: openInNewTab(WEBSITE_URL)
+      // },
+      // {
+      //   key: 'terms-of-use',
+      //   leftIcon: BookBookmark,
+      //   rightIcon: ArrowSquareOut,
+      //   leftIconBgColor: token['volcano-7'],
+      //   title: t('Terms of use'),
+      //   onClick: openInNewTab(TERMS_OF_SERVICE_URL)
+      // },
       {
         key: 'x',
         leftIcon: (
