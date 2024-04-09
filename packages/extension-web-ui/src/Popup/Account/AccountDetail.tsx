@@ -3,7 +3,6 @@
 
 import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import AccountAvatar from '@subwallet/extension-web-ui/components/Account/AccountAvatar';
-import InstructionContainer, { InstructionContentType } from '@subwallet/extension-web-ui/components/InstructionContainer';
 import { ACCOUNT_EXPORT_MODAL } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import useDeleteAccount from '@subwallet/extension-web-ui/hooks/account/useDeleteAccount';
@@ -44,19 +43,6 @@ enum ActionType {
 interface DetailFormState {
   [FormFieldName.NAME]: string;
 }
-
-const instructionContents: InstructionContentType[] = [
-  {
-    title: 'Why do I need to enter a password?',
-    description: 'For your wallet protection, SubWallet locks your wallet after 15 minutes of inactivity. You will need this password to unlock it.',
-    type: 'warning'
-  },
-  {
-    title: 'Can I recover a password?',
-    description: 'The password is stored securely on your device. We will not be able to recover it for you, so make sure you remember it!',
-    type: 'warning'
-  }
-];
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className } = props;
@@ -397,10 +383,6 @@ const Component: React.FC<Props> = (props: Props) => {
               {t('Remove account')}
             </Button>
           </div>
-
-          {isWebUI &&
-            <InstructionContainer contents={instructionContents} />
-          }
         </div>
 
         {isWebUI && (
