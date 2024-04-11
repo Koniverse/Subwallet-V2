@@ -20,7 +20,7 @@ export enum StaticKey {
   CHAINS = 'chains',
   MARKETING_CAMPAINGS = 'marketing-campaigns',
   CROWDLOAN_FUNDS = 'crowdloan-funds',
-  TERM_AND_CONDITION = 'term-and-condition',
+  TERM_AND_CONDITION = 'markdown-contents/term_and_condition_avail',
   BUY_TOKEN_CONFIGS = 'buy-token-configs'
 }
 

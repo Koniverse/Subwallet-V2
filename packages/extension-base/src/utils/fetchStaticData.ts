@@ -14,6 +14,8 @@ export async function fetchStaticData<T> (slug: string, targetFile?: string) {
   try {
     const rs = await axios.get(`https://static-data.subwallet.app/${slug}/${fetchFile}`);
 
+    console.log('fetchStaticData', slug, fetchFile);
+
     return rs.data as T;
   } catch (e) {
     return staticData[slug as StaticKey] as T;

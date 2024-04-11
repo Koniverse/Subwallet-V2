@@ -36,8 +36,10 @@ const Component = ({ className, onOk }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchStaticData('term-and-condition', 'index.md')
-      .then((md) => setStaticData({ md: md as string }))
+    fetchStaticData<{content: string}>('markdown-contents/term_and_condition_avail', 'list.json')
+      .then((md) => {
+        setStaticData({ md: md.content });
+      })
       .catch((e) => console.log('fetch _termAndCondition error:', e));
   }, []);
 
@@ -95,7 +97,7 @@ const Component = ({ className, onOk }: Props) => {
           checked={isChecked}
           className={'term-footer-checkbox'}
           onChange={onCheckedInput}
-        >{t('I understand and agree to the Terms of Use, which apply to my use of SubWallet and all of its feature')}</Checkbox>
+        >{t('I understand and agree to the Terms of Use, which apply to my use of Avail Space and all of its feature')}</Checkbox>
         <div className={'term-footer-button-group'}>
           <Button
             block={true}

@@ -5,7 +5,7 @@ import { DefaultLogosMap } from '@subwallet/extension-web-ui/assets/logo';
 
 const SwLogosMap: Record<string, string> = {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  subwallet: require('./subwallet.png'),
+  subwallet: require('./availspace.png'),
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   avatar_placeholder: require('./avatar_placeholder.png'),
   default: DefaultLogosMap.default,
