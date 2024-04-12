@@ -33,6 +33,8 @@ interface ReadOnlyAccountInput {
   address?: string;
 }
 
+let tryToConnect = false;
+
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -198,13 +200,12 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     }
   }, [isNoAccount, navigate, returnPath, setReturnStorage]);
 
-  // setBackground(BackgroundColorMap.WELCOME);
-
   useEffect(() => {
-    if (isMobile && !AutoConnect.ignore) {
+    if (isMobile && !tryToConnect && !AutoConnect.ignore) {
       const installedWallet = Object.values(PREDEFINED_WALLETS).find((w) => (w.supportMobile && checkHasInjected(w.key)));
 
       if (installedWallet) {
+        tryToConnect = true;
         enableInject(installedWallet.key);
       }
     }
