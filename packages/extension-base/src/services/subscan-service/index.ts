@@ -47,10 +47,10 @@ export class SubscanService {
   }
 
   private getApiUrl (chain: string, path: string) {
-    const subscanChain = chain === 'avail-testnet' ? 'avail-testnet' : this.subscanChainMap[chain];
+    const subscanChain = this.subscanChainMap[chain];
 
     if (!subscanChain) {
-      throw new SWError('NOT_SUPPORTED', `Chain ${chain} is not supported`);
+      throw new SWError('NOT_SUPPORTED', `Chain ${chain} is not supported for path ${path}`);
     }
 
     return `https://${subscanChain}.api.subscan.io/${path}`;
@@ -139,7 +139,11 @@ export class SubscanService {
   }
 
   public setSubscanChainMap (subscanChainMap: Record<string, string>) {
-    this.subscanChainMap = subscanChainMap;
+    this.subscanChainMap = {
+      ...subscanChainMap,
+      'avail-testnet': 'avail-testnet',
+      polkadot: 'polkadot'
+    };
   }
 
   // Implement Subscan API
