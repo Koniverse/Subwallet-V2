@@ -10,7 +10,7 @@ import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCus
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseEarlyValidateYield, ResponseGetYieldPoolTargets, SubmitYieldStepData, TokenApproveData, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
+import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestSubmitTransfer, RequestSubscribeTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseEarlyValidateYield, ResponseGetYieldPoolTargets, ResponseSubscribeTransfer, SubmitYieldStepData, TokenApproveData, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
 import { KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { KeyringOptions } from '@subwallet/ui-keyring/options/types';
@@ -510,8 +510,8 @@ export enum ExtrinsicType {
 
 export interface ExtrinsicDataTypeMap {
   // Transfer
-  [ExtrinsicType.TRANSFER_BALANCE]: RequestTransfer,
-  [ExtrinsicType.TRANSFER_TOKEN]: RequestTransfer,
+  [ExtrinsicType.TRANSFER_BALANCE]: RequestSubmitTransfer,
+  [ExtrinsicType.TRANSFER_TOKEN]: RequestSubmitTransfer,
   [ExtrinsicType.TRANSFER_XCM]: RequestCrossChainTransfer,
 
   // NFT
@@ -1569,8 +1569,6 @@ export interface ValidateTransactionResponse {
   transferNativeAmount?: string
 }
 
-export type RequestTransfer = InternalRequestSign<RequestCheckTransfer>;
-
 export interface RequestCheckCrossChainTransfer extends BaseRequestSign {
   originNetworkKey: string,
   destinationNetworkKey: string,
@@ -2397,15 +2395,16 @@ export interface KoniRequestSignatures {
   'pri(transfer.checkSupporting)': [RequestTransferCheckSupporting, SupportTransferResponse];
   'pri(transfer.getExistentialDeposit)': [RequestTransferExistentialDeposit, string];
   'pri(transfer.getMaxTransferable)': [RequestMaxTransferable, AmountData];
+  'pri(transfer.subscribe)': [RequestSubscribeTransfer, ResponseSubscribeTransfer, ResponseSubscribeTransfer];
   'pri(subscription.cancel)': [string, boolean];
   'pri(freeBalance.get)': [RequestFreeBalance, AmountData];
   'pri(freeBalance.subscribe)': [RequestFreeBalance, AmountDataWithId, AmountDataWithId];
 
   // Transfer
-  'pri(accounts.checkTransfer)': [RequestCheckTransfer, ValidateTransactionResponse];
-  'pri(accounts.transfer)': [RequestTransfer, SWTransactionResponse];
+  // 'pri(accounts.checkTransfer)': [RequestCheckTransfer, ValidateTransactionResponse];
+  'pri(accounts.transfer)': [RequestSubmitTransfer, SWTransactionResponse];
 
-  'pri(accounts.checkCrossChainTransfer)': [RequestCheckCrossChainTransfer, ValidateTransactionResponse];
+  // 'pri(accounts.checkCrossChainTransfer)': [RequestCheckCrossChainTransfer, ValidateTransactionResponse];
   'pri(accounts.crossChainTransfer)': [RequestCrossChainTransfer, SWTransactionResponse];
 
   // Confirmation Queues

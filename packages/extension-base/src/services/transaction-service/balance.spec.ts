@@ -8,6 +8,7 @@ import { getERC20TransactionObject, getEVMTransactionObject } from '@subwallet/e
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
 import { _getContractAddressOfToken, _isLocalToken, _isTokenEvmSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
+import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import BigN from 'bignumber.js';
 import fs from 'fs';
 import { TransactionConfig } from 'web3-core';
@@ -103,10 +104,31 @@ describe('test token transfer', () => {
         try {
           let transaction: TransactionConfig;
 
+          const getChainFee = () => {
+            return calculateGasFeeParams(_api, networkKey)
+          }
+
           if (_isTokenEvmSmartContract(asset) || _isLocalToken(asset)) {
-            [transaction] = await getERC20TransactionObject(_getContractAddressOfToken(asset), chain, '0x29d6d6d84c9662486198667b5a9fbda3e698b23f', '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b', '0', false, _api);
+            [transaction] = await getERC20TransactionObject({
+              assetAddress: _getContractAddressOfToken(asset),
+              chain: networkKey,
+              evmApi: _api,
+              from: '0x29d6d6d84c9662486198667b5a9fbda3e698b23f',
+              getChainFee,
+              to: '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b',
+              transferAll: false,
+              value: '0'
+            });
           } else {
-            [transaction] = await getEVMTransactionObject(chain, '0x29d6d6d84c9662486198667b5a9fbda3e698b23f', '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b', '0', false, _api);
+            [transaction] = await getEVMTransactionObject({
+              chain: networkKey,
+              evmApi: _api,
+              from: '0x29d6d6d84c9662486198667b5a9fbda3e698b23f',
+              getChainFee,
+              to: '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b',
+              transferAll: false,
+              value: '0'
+            });
           }
 
           if (transaction) {

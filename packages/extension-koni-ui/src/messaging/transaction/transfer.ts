@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AmountData, RequestCrossChainTransfer, RequestMaxTransferable, RequestTransfer, RequestTransferCheckReferenceCount, RequestTransferCheckSupporting, RequestTransferExistentialDeposit, SupportTransferResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AmountData, RequestCrossChainTransfer, RequestMaxTransferable, RequestTransferCheckReferenceCount, RequestTransferCheckSupporting, RequestTransferExistentialDeposit, SupportTransferResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { RequestSubmitTransfer, RequestSubscribeTransfer, ResponseSubscribeTransfer } from '@subwallet/extension-base/types';
 
 import { sendMessage } from '../base';
 
-export async function makeTransfer (request: RequestTransfer): Promise<SWTransactionResponse> {
+export async function makeTransfer (request: RequestSubmitTransfer): Promise<SWTransactionResponse> {
   return sendMessage('pri(accounts.transfer)', request);
 }
 
@@ -28,4 +29,8 @@ export async function transferGetExistentialDeposit (request: RequestTransferExi
 
 export async function getMaxTransfer (request: RequestMaxTransferable): Promise<AmountData> {
   return sendMessage('pri(transfer.getMaxTransferable)', request);
+}
+
+export async function subscribeMaxTransfer (request: RequestSubscribeTransfer, callback: (data: ResponseSubscribeTransfer) => void): Promise<ResponseSubscribeTransfer> {
+  return sendMessage('pri(transfer.subscribe)', request, callback);
 }

@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AmountData, RequestCrossChainTransfer, RequestMaxTransferable, RequestTransfer, RequestTransferCheckReferenceCount, RequestTransferCheckSupporting, RequestTransferExistentialDeposit, SupportTransferResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AmountData, RequestCrossChainTransfer, RequestMaxTransferable, RequestTransferCheckReferenceCount, RequestTransferCheckSupporting, RequestTransferExistentialDeposit, SupportTransferResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { RequestSubmitTransfer } from '@subwallet/extension-base/types';
 
 import { sendMessage } from '../base';
 
-export async function makeTransfer (request: RequestTransfer): Promise<SWTransactionResponse> {
+export async function makeTransfer (request: RequestSubmitTransfer): Promise<SWTransactionResponse> {
   return sendMessage('pri(accounts.transfer)', request);
 }
 

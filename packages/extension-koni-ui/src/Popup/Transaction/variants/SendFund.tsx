@@ -6,14 +6,15 @@ import { AssetSetting, ExtrinsicType, NotificationType } from '@subwallet/extens
 import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _getAssetDecimals, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { FeeCustom, FeeOption, ResponseSubscribeTransfer } from '@subwallet/extension-base/types';
 import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountSelector, AddressInput, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
-import { useAlert, useFetchChainAssetInfo, useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTransaction, useIsMantaPayEnabled, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
-import { getMaxTransfer, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
+import { useAlert, useFetchChainAssetInfo, useGetChainPrefixBySlug, useGetNativeTokenBasicInfo, useHandleSubmitTransaction, useInitValidateTransaction, useIsMantaPayEnabled, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import { cancelSubscription, makeCrossChainTransfer, makeTransfer, subscribeMaxTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, findNetworkJsonByGenesisHash, formatBalance, isAccountAll, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { Button, Form, Icon } from '@subwallet/react-ui';
+import { Button, Form, Icon, Number, Select } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -234,45 +235,31 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const { chainInfoMap, chainStatusMap } = useSelector((root) => root.chainStore);
   const { assetRegistry, assetSettingMap, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts, isAllAccount } = useSelector((state: RootState) => state.accountState);
-  const [maxTransfer, setMaxTransfer] = useState<string>('0');
-  const checkAction = usePreCheckAction(from, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
+
   const isZKModeEnabled = useIsMantaPayEnabled(from);
+  const fromChainNetworkPrefix = useGetChainPrefixBySlug(chain);
+  const destChainNetworkPrefix = useGetChainPrefixBySlug(destChain);
+  const destChainGenesisHash = chainInfoMap[destChain]?.substrateInfo?.genesisHash || '';
+  const checkAction = usePreCheckAction(from, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
+  const nativeTokenBasicInfo = useGetNativeTokenBasicInfo(chain);
 
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chain];
 
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChain === chain && _isNativeToken(assetInfo);
   }, [chainInfoMap, chain, destChain, assetInfo]);
-
-  const [loading, setLoading] = useState(false);
-  const [isTransferAll, setIsTransferAll] = useState(false);
-  const [, update] = useState({});
-  const [isFetchingMaxValue, setIsFetchingMaxValue] = useState(false);
-  const [isBalanceReady, setIsBalanceReady] = useState(true);
-  const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
   const chainStatus = useMemo(() => chainStatusMap[chain]?.connectionStatus, [chain, chainStatusMap]);
-
-  const handleTransferAll = useCallback((value: boolean) => {
-    setForceUpdateMaxValue({});
-    setIsTransferAll(value);
-  }, []);
-
-  const { onError, onSuccess } = useHandleSubmitTransaction(handleTransferAll);
-
   const destChainItems = useMemo<ChainItemType[]>(() => {
     return getTokenAvailableDestinations(asset, xcmRefMap, chainInfoMap);
   }, [chainInfoMap, asset, xcmRefMap]);
-
   const currentChainAsset = useMemo(() => {
     const _asset = isFirstRender ? defaultData.asset : asset;
 
     return _asset ? assetRegistry[_asset] : undefined;
   }, [isFirstRender, defaultData.asset, asset, assetRegistry]);
-
   const decimals = useMemo(() => {
     return currentChainAsset ? _getAssetDecimals(currentChainAsset) : 0;
   }, [currentChainAsset]);
-
   const extrinsicType = useMemo((): ExtrinsicType => {
     if (!currentChainAsset) {
       return ExtrinsicType.UNKNOWN;
@@ -288,11 +275,6 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       }
     }
   }, [chain, currentChainAsset, destChain]);
-
-  const fromChainNetworkPrefix = useGetChainPrefixBySlug(chain);
-  const destChainNetworkPrefix = useGetChainPrefixBySlug(destChain);
-  const destChainGenesisHash = chainInfoMap[destChain]?.substrateInfo?.genesisHash || '';
-
   const tokenItems = useMemo<TokenItemType[]>(() => {
     return getTokenItems(
       from,
@@ -305,6 +287,26 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       isZKModeEnabled
     );
   }, [accounts, assetRegistry, assetSettingMap, chainInfoMap, from, isZKModeEnabled, multiChainAssetMap, sendFundSlug]);
+  const onFilterAccountFunc = useMemo(() => filterAccountFunc(chainInfoMap, assetRegistry, multiChainAssetMap, sendFundSlug), [assetRegistry, chainInfoMap, multiChainAssetMap, sendFundSlug]);
+
+  const [loading, setLoading] = useState(false);
+  const [isTransferAll, setIsTransferAll] = useState(false);
+  const [, update] = useState({});
+  const [isBalanceReady, setIsBalanceReady] = useState(false);
+  const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
+  const [isFetchingInfo, setIsFetchingInfo] = useState(false);
+  const [transferInfo, setTransferInfo] = useState<ResponseSubscribeTransfer | undefined>();
+  const [selectedFeeOption, setSelectedFeeOption] = useState<FeeOption | undefined>();
+  const [,] = useState<FeeCustom | undefined>();
+
+  const estimatedFee = useMemo((): string => transferInfo?.feeOptions.estimatedFee || '0', [transferInfo]);
+
+  const handleTransferAll = useCallback((value: boolean) => {
+    setForceUpdateMaxValue({});
+    setIsTransferAll(value);
+  }, []);
+
+  const { onError, onSuccess } = useHandleSubmitTransaction(handleTransferAll);
 
   const validateRecipientAddress = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     if (!_recipientAddress) {
@@ -376,6 +378,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   }, [accounts, chainInfoMap, form, t]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
+    const maxTransfer = transferInfo?.maxTransferable || '0';
+
     if (!amount) {
       return Promise.reject(t('Amount is required'));
     }
@@ -395,7 +399,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     }
 
     return Promise.resolve();
-  }, [decimals, maxTransfer, t]);
+  }, [decimals, t, transferInfo]);
 
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
@@ -490,11 +494,12 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       // Transfer token or send fund
       sendPromise = makeTransfer({
         from,
-        networkKey: chain,
+        chain,
         to: to,
         tokenSlug: asset,
         value: value,
-        transferAll: isTransferAll
+        transferAll: isTransferAll,
+        feeOption: selectedFeeOption
       });
     } else {
       if (isLedger) {
@@ -529,17 +534,15 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         })
       ;
     }, 300);
-  }, [accounts, chainInfoMap, assetRegistry, notification, t, isTransferAll, onSuccess, onError]);
-
-  const onFilterAccountFunc = useMemo(() => filterAccountFunc(chainInfoMap, assetRegistry, multiChainAssetMap, sendFundSlug), [assetRegistry, chainInfoMap, multiChainAssetMap, sendFundSlug]);
+  }, [accounts, chainInfoMap, assetRegistry, notification, t, isTransferAll, onSuccess, onError, selectedFeeOption]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
-    const bnMaxTransfer = new BN(maxTransfer);
+    const bnMaxTransfer = new BN(transferInfo?.maxTransferable || '0');
 
     if (!bnMaxTransfer.isZero()) {
       setIsTransferAll(value);
     }
-  }, [maxTransfer]);
+  }, [transferInfo]);
 
   const onPreSubmit = useCallback(() => {
     if (_isNativeToken(assetInfo)) {
@@ -618,58 +621,73 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   // Get max transfer value
   useEffect(() => {
     let cancel = false;
+    let id = '';
 
-    setIsFetchingMaxValue(false);
+    setIsFetchingInfo(true);
+
+    const validate = () => {
+      const value = form.getFieldValue('value') as string;
+
+      if (value) {
+        setTimeout(() => {
+          form.validateFields(['value']).finally(() => update({}));
+        }, 100);
+      }
+    };
+
+    const callback = (transferInfo: ResponseSubscribeTransfer) => {
+      if (!cancel) {
+        setTransferInfo(transferInfo);
+        id = transferInfo.id;
+
+        validate();
+      } else {
+        cancelSubscription(transferInfo.id).catch(console.error);
+      }
+    };
 
     if (from && asset) {
-      getMaxTransfer({
+      subscribeMaxTransfer({
         address: from,
-        networkKey: assetRegistry[asset].originChain,
+        chain: assetRegistry[asset].originChain,
         token: asset,
         isXcmTransfer: chain !== destChain,
-        destChain
-      })
-        .then((balance) => {
-          if (!cancel) {
-            setMaxTransfer(balance.value);
-            setIsFetchingMaxValue(true);
-          }
-        })
-        .catch(() => {
-          if (!cancel) {
-            setMaxTransfer('0');
-            setIsFetchingMaxValue(true);
-          }
+        destChain,
+        feeOption: selectedFeeOption
+      }, callback)
+        .then(callback)
+        .catch((e) => {
+          console.error(e);
+
+          setTransferInfo(undefined);
+          validate();
         })
         .finally(() => {
-          if (!cancel) {
-            const value = form.getFieldValue('value') as string;
-
-            if (value) {
-              setTimeout(() => {
-                form.validateFields(['value']).finally(() => update({}));
-              }, 100);
-            }
-          }
+          setIsFetchingInfo(false);
         });
     }
 
     return () => {
       cancel = true;
+      id && cancelSubscription(id).catch(console.error);
     };
-  }, [asset, assetRegistry, chain, chainStatus, destChain, form, from]);
+  }, [asset, assetRegistry, chain, chainStatus, destChain, form, from, selectedFeeOption]);
 
   useEffect(() => {
     const bnTransferAmount = new BN(transferAmount || '0');
-    const bnMaxTransfer = new BN(maxTransfer || '0');
+    const bnMaxTransfer = new BN(transferInfo?.maxTransferable || '0');
 
     if (bnTransferAmount.gt(BN_ZERO) && bnTransferAmount.eq(bnMaxTransfer)) {
       setIsTransferAll(true);
     }
-  }, [maxTransfer, transferAmount]);
+  }, [transferInfo, transferAmount]);
 
   useRestoreTransaction(form);
   useInitValidateTransaction(validateFields, form, defaultData);
+
+  useEffect(() => {
+    console.log(transferInfo);
+  }, [transferInfo]);
 
   return (
     <>
@@ -763,10 +781,20 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
             <AmountInput
               decimals={decimals}
               forceUpdateMaxValue={forceUpdateMaxValue}
-              maxValue={maxTransfer}
+              maxValue={transferInfo?.maxTransferable || '0'}
               onSetMax={onSetMaxTransferable}
               showMaxButton={!hideMaxButton}
               tooltip={t('Amount')}
+            />
+          </Form.Item>
+          <Form.Item>
+            <Select
+              onSelect={setSelectedFeeOption}
+              options={['fast', 'average', 'slow'].map((option) => ({
+                label: option,
+                value: option
+              }))}
+              value={selectedFeeOption}
             />
           </Form.Item>
         </Form>
@@ -796,12 +824,17 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
             />
           )
         }
+        <Number
+          decimal={nativeTokenBasicInfo.decimals}
+          suffix={nativeTokenBasicInfo.symbol}
+          value={estimatedFee}
+        />
       </TransactionContent>
       <TransactionFooter
         className={`${className} -transaction-footer`}
       >
         <Button
-          disabled={!isBalanceReady || (isTransferAll ? !isFetchingMaxValue : false)}
+          disabled={!isBalanceReady || (isTransferAll ? isFetchingInfo : false)}
           icon={(
             <Icon
               phosphorIcon={PaperPlaneTilt}

@@ -333,8 +333,8 @@ export default class StellaSwapLiquidStakingPoolHandler extends BaseLiquidStakin
       data: approveEncodedCall,
       gas: gasLimit,
       gasPrice: priority.gasPrice,
-      maxFeePerGas: priority.maxFeePerGas?.toString(),
-      maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+      maxFeePerGas: priority.options?.[priority.options.default].maxFeePerGas.toString(),
+      maxPriorityFeePerGas: priority.options?.[priority.options.default].maxPriorityFeePerGas?.toString()
     } as TransactionConfig;
 
     const _data: TokenApproveData = {
@@ -374,8 +374,8 @@ export default class StellaSwapLiquidStakingPoolHandler extends BaseLiquidStakin
       data: depositEncodedCall,
       gas: gasLimit,
       gasPrice: priority.gasPrice,
-      maxFeePerGas: priority.maxFeePerGas?.toString(),
-      maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+      maxFeePerGas: priority.options?.[priority.options.default].maxFeePerGas.toString(),
+      maxPriorityFeePerGas: priority.options?.[priority.options.default].maxPriorityFeePerGas?.toString()
     } as TransactionConfig;
 
     return {
@@ -418,8 +418,8 @@ export default class StellaSwapLiquidStakingPoolHandler extends BaseLiquidStakin
       data: redeemEncodedCall,
       gas: gasLimit,
       gasPrice: priority.gasPrice,
-      maxFeePerGas: priority.maxFeePerGas?.toString(),
-      maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+      maxFeePerGas: priority.options?.[priority.options.default].maxFeePerGas.toString(),
+      maxPriorityFeePerGas: priority.options?.[priority.options.default].maxPriorityFeePerGas?.toString()
     };
 
     return [ExtrinsicType.UNSTAKE_STDOT, transaction];
@@ -451,8 +451,8 @@ export default class StellaSwapLiquidStakingPoolHandler extends BaseLiquidStakin
       data: withdrawEncodedCall,
       gas: gasLimit,
       gasPrice: priority.gasPrice,
-      maxFeePerGas: priority.maxFeePerGas?.toString(),
-      maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+      maxFeePerGas: priority.options?.[priority.options.default].maxFeePerGas.toString(),
+      maxPriorityFeePerGas: priority.options?.[priority.options.default].maxPriorityFeePerGas?.toString()
     }; // TODO: check tx history parsing
   }
 
