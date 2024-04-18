@@ -3,6 +3,7 @@
 
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
+import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
 import { BaseModal } from '@subwallet/extension-web-ui/components';
 import InfoIcon from '@subwallet/extension-web-ui/components/Icon/InfoIcon';
 import { RECEIVE_QR_MODAL } from '@subwallet/extension-web-ui/constants/modal';
@@ -100,6 +101,7 @@ const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Pro
           <SwQRCode
             color='#000'
             errorLevel='H'
+            icon={DefaultLogosMap.subwallet}
             logoPadding={isEvmChain ? 6 : 7 }
             size={264}
             value={formattedAddress}

@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
 import { Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import AlertBox from '@subwallet/extension-web-ui/components/Alert';
 import CloseIcon from '@subwallet/extension-web-ui/components/Icon/CloseIcon';
@@ -486,6 +487,7 @@ const Component: React.FC<Props> = (props: Props) => {
                       <div className='qr-area'>
                         <SwQRCode
                           errorLevel='Q'
+                          icon={DefaultLogosMap.subwallet}
                           logoPadding={!isEthereumAddress(account.address) ? 4 : 3}
                           size={264}
                           value={qrData}
