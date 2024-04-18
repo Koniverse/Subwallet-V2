@@ -107,12 +107,11 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
   }, [noAllAccount, params.requiredNamespaces]);
 
   const isUnSupportCase = useMemo(() =>
-    Object.values(params.requiredNamespaces || {})
+    (Object.values(params.requiredNamespaces || {}).length === 0 ? Object.values(params.optionalNamespaces) : Object.values(params.requiredNamespaces))
       .map((namespace) => namespace.chains || [])
       .flat()
       .some((chain) => !isSupportWalletConnectChain(chain, chainInfoMap))
-  , [chainInfoMap, params.requiredNamespaces]
-  );
+  , [chainInfoMap, params.optionalNamespaces, params.requiredNamespaces]);
 
   const supportOneChain = useMemo(() => supportedChains.length === 1, [supportedChains]);
   const supportOneNamespace = useMemo(() => Object.keys(namespaces).length === 1, [namespaces]);
