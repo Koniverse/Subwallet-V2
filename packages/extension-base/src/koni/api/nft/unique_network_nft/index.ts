@@ -156,6 +156,7 @@ export class UniqueNftApi extends BaseNftApi {
             };
 
             params.updateItem(this.chain, parsedNft, address);
+            console.log('parsedNft', parsedNft);
 
             // Update Collection information
             if (!collectionMap[nft.collection_id.toString()]) {
@@ -168,6 +169,7 @@ export class UniqueNftApi extends BaseNftApi {
 
               collectionMap[nft.collection_id.toString()] = parsedCollection;
               params.updateCollection(this.chain, parsedCollection);
+              console.log('parsedCollection', parsedCollection);
             }
           }
         }
