@@ -566,6 +566,16 @@ export default class TransactionService {
         break;
       }
 
+      case ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS: {
+        const data = parseTransactionData<ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS>(transaction.data);
+
+        historyItem.additionalInfo = {
+          claimPermissionless: data.claimPermissionless
+        } as TransactionAdditionalInfo[ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS];
+
+        break;
+      }
+
       case ExtrinsicType.EVM_EXECUTE: {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const data = parseTransactionData<ExtrinsicType.EVM_EXECUTE>(transaction.data);
@@ -802,7 +812,7 @@ export default class TransactionService {
       } catch (e) {
         console.error(e);
       }
-    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.STAKING_JOIN_POOL, ExtrinsicType.STAKING_POOL_WITHDRAW, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
+    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.STAKING_JOIN_POOL, ExtrinsicType.STAKING_POOL_WITHDRAW, ExtrinsicType.STAKING_LEAVE_POOL, ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS].includes(transaction.extrinsicType)) {
       this.state.eventService.emit('transaction.submitStaking', transaction.chain);
     } else if (transaction.extrinsicType === ExtrinsicType.SWAP) {
       const inputData = parseTransactionData<ExtrinsicType.SWAP>(transaction.data);

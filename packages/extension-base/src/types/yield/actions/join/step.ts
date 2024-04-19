@@ -34,6 +34,18 @@ export interface OptimalYieldPathParams {
   address: string;
   amount: string;
   targets?: YieldPoolTarget[];
+  claimPermissions?: PalletNominationPoolsClaimPermission
+}
+
+/**
+ * @enum {string}
+ * @description Type of claim permission
+ * */
+
+export enum PalletNominationPoolsClaimPermission {
+  PERMISSIONED = 'Permissioned',
+  PERMISSIONLESS_COMPOUND = 'PermissionlessCompound',
+  PERMISSIONLESS_WITHDRAW = 'PermissionlessWithdraw'
 }
 
 /**

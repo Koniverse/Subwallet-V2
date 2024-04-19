@@ -5,7 +5,7 @@ import { BaseRequestSign, ChainType, ExtrinsicType, InternalRequestSign } from '
 
 import { TransactionData } from '../../../transaction';
 import { NominationPoolInfo, ValidatorInfo, YieldPositionInfo } from '../../info';
-import { OptimalYieldPath } from './step';
+import { OptimalYieldPath, PalletNominationPoolsClaimPermission } from './step';
 
 // Result after create extrinsic
 export interface HandleYieldStepData {
@@ -29,6 +29,7 @@ export interface SubmitJoinNativeStaking extends AbstractSubmitYieldJoinData {
 
 export interface SubmitJoinNominationPool extends AbstractSubmitYieldJoinData {
   selectedPool: NominationPoolInfo;
+  claimPermissions?: PalletNominationPoolsClaimPermission;
 }
 
 export interface SubmitYieldStepData extends AbstractSubmitYieldJoinData { // TODO

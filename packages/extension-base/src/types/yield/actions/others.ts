@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BaseRequestSign, InternalRequestSign } from '@subwallet/extension-base/background/KoniTypes';
+import { PalletNominationPoolsClaimPermission } from '@subwallet/extension-base/types';
 
 import { BasePoolInfo, UnstakingInfo, YieldPoolInfo } from '../info';
 
@@ -96,3 +97,11 @@ export interface StakeClaimRewardParams extends BaseRequestSign {
 }
 
 export type RequestStakeClaimReward = InternalRequestSign<StakeClaimRewardParams>;
+
+export interface SetClaimPermissionlessParams extends BaseRequestSign {
+  address: string;
+  slug: string;
+  claimPermissionless: PalletNominationPoolsClaimPermission;
+}
+
+export type RequestSetClaimPermissionless = InternalRequestSign<SetClaimPermissionlessParams>;
