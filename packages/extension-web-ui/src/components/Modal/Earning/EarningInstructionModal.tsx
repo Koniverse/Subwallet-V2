@@ -361,49 +361,23 @@ const Component: React.FC<Props> = (props: Props) => {
 
     let urlParam = '';
 
-    switch (poolInfo.metadata.shortName) {
-      case 'Polkadot': {
-        urlParam = '#polkadot-nomination-pool';
+    switch (poolInfo.type) {
+      case YieldPoolType.NATIVE_STAKING: {
+        urlParam = '/direct-nomination';
         break;
       }
 
-      case 'Acala': {
-        urlParam = '#acala';
+      case YieldPoolType.NOMINATION_POOL: {
+        urlParam = '/nomination-pool';
         break;
       }
 
-      case 'Bifrost Polkadot': {
-        urlParam = '#bifrost';
-
-        if (poolInfo.slug === 'MANTA___liquid_staking___bifrost_dot') {
-          urlParam = '#vmanta-on-bifrost';
-        }
-
+      default:
+        urlParam = '';
         break;
-      }
-
-      case 'Interlay': {
-        urlParam = '#interlay';
-        break;
-      }
-
-      case 'Moonwell': {
-        urlParam = '#moonwell';
-        break;
-      }
-
-      case 'Parallel': {
-        urlParam = '#parallel';
-        break;
-      }
-
-      case 'Stellaswap': {
-        urlParam = '#stellaswap';
-        break;
-      }
     }
 
-    const url = `https://docs.subwallet.app/main/web-dashboard-user-guide/earning/faqs${urlParam}`;
+    const url = `https://docs.availspace.app/avail-space/web-dashboard-user-guide/earning/${urlParam}`;
 
     open(url);
   }, [poolInfo]);

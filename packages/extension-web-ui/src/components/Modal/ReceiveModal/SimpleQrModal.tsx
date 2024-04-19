@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
 import { BackIcon, BaseModal } from '@subwallet/extension-web-ui/components';
 import InfoIcon from '@subwallet/extension-web-ui/components/Icon/InfoIcon';
 import useNotification from '@subwallet/extension-web-ui/hooks/common/useNotification';
@@ -44,6 +45,7 @@ const Component: React.FC<Props> = ({ address, className, id: modalId, onBack }:
         <SwQRCode
           color='#000'
           errorLevel='H'
+          icon={DefaultLogosMap.subwallet}
           logoPadding={isEvmAddress ? 6 : 7 }
           size={264}
           value={address || ''}

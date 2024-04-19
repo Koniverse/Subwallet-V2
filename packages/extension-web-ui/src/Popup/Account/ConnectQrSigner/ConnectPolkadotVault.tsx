@@ -16,7 +16,7 @@ const Component: React.FC<ThemeProps> = () => {
   return (
     <ConnectQrSigner
       deviceName={t('Polkadot Vault')}
-      instructionUrl={'https://docs.subwallet.app/main/extension-user-guide/account-management/attach-a-polkadot-vault-previously-parity-signer-account'}
+      instructionUrl={'https://docs.availspace.app/avail-space/web-dashboard-user-guide/getting-started/attach-accounts-on-external-wallets-cold-wallet-+-watch-only-wallet/connect-via-polkadot-vault'}
       logoUrl={DefaultLogosMap.polkadot_vault}
       subTitle={t('Open Polkadot Vault on your phone to connect wallet')}
       title={t('Connect Polkadot Vault')}

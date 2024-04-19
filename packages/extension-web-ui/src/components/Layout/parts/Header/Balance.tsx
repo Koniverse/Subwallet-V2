@@ -24,6 +24,8 @@ import { useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
+import { isEthereumAddress } from '@polkadot/util-crypto';
+
 export type Props = ThemeProps
 
 type Action = {
@@ -67,11 +69,11 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     selectedNetwork,
     tokenSelectorItems } = useReceiveQR(_tokenGroupSlug);
 
-  const currentAccount = useSelector((state) => state.accountState.currentAccount);
   const { tokens } = useSelector((state) => state.buyService);
   const [sendFundKey, setSendFundKey] = useState<string>('sendFundKey');
   const [buyTokensKey, setBuyTokensKey] = useState<string>('buyTokensKey');
   const [buyTokenSymbol, setBuyTokenSymbol] = useState<string>('');
+  const { currentAccount, isAllAccount } = useSelector((state) => state.accountState);
   const notify = useNotification();
 
   const isTotalBalanceDecrease = totalBalanceInfo.change.status === 'decrease';
@@ -193,27 +195,30 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       });
   }, []);
 
-  const actions: Action[] = [
-    {
-      label: 'Receive',
-      type: 'receive',
-      icon: ArrowFatLinesDown,
-      onClick: onOpenReceive
-    },
-    {
-      label: 'Send',
-      type: 'send',
-      icon: PaperPlaneTilt,
-      onClick: onOpenSendFund
-    },
-    {
-      label: 'Buy',
-      type: 'buys',
-      icon: ShoppingCartSimple,
-      onClick: onOpenBuyTokens,
-      disabled: !isSupportBuyTokens
-    }
-  ];
+  const actions: Action[] = useMemo(() =>
+    (
+      [
+        {
+          label: 'Receive',
+          type: 'receive',
+          icon: ArrowFatLinesDown,
+          onClick: onOpenReceive
+        },
+        {
+          label: 'Send',
+          type: 'send',
+          icon: PaperPlaneTilt,
+          onClick: onOpenSendFund
+        },
+        {
+          label: 'Buy',
+          type: 'buys',
+          icon: ShoppingCartSimple,
+          onClick: onOpenBuyTokens,
+          disabled: !isSupportBuyTokens || !(isAllAccount || isEthereumAddress(currentAccount?.address))
+        }
+      ]
+    ), [currentAccount?.address, isAllAccount, isSupportBuyTokens, onOpenBuyTokens, onOpenReceive, onOpenSendFund]);
 
   return (
     <div className={CN(className, 'flex-row')}>
