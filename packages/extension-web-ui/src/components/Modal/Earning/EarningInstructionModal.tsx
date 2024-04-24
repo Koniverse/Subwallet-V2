@@ -555,7 +555,9 @@ const Component: React.FC<Props> = (props: Props) => {
       closable={isWebUI}
       destroyOnClose={true}
       footer={footerNode}
+      fullSizeOnMobile={true}
       id={modalId}
+      maskClosable={false}
       onCancel={closeModal}
       title={title}
       width={isWebUI ? 642 : undefined}

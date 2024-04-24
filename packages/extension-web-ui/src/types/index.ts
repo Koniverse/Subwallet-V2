@@ -23,6 +23,7 @@ export type AlertDialogButtonProps = {
 
 export type AlertDialogProps = {
   title: string,
+  className?: string,
   type?: NotificationType,
   closable?: boolean,
   content: React.ReactNode,
@@ -127,6 +128,7 @@ export interface SigData {
 
 export * from './account';
 export * from './balance';
+export * from './field';
 export * from './buy';
 export * from './chain';
 export * from './confirmation';

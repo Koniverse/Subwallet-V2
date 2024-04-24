@@ -36,6 +36,7 @@ export interface EarnParams extends TransactionFormBaseProps {
   target: string;
   value: string;
   redirectFromPreview: boolean;
+  hasPreSelectTarget: boolean;
 }
 
 export interface UnStakeParams extends TransactionFormBaseProps {
@@ -57,4 +58,11 @@ export interface WithdrawParams extends TransactionFormBaseProps {
 export interface ClaimRewardParams extends TransactionFormBaseProps {
   slug: string;
   bondReward: boolean;
+}
+
+export interface SwapParams extends TransactionFormBaseProps {
+  fromAmount: string,
+  fromTokenSlug: string;
+  toTokenSlug: string;
+  recipient?: string;
 }

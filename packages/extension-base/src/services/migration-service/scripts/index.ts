@@ -3,6 +3,8 @@
 
 import BaseMigrationJob from '../Base';
 // import MigrateAssetSetting from './databases/MigrateAssetSetting';
+import MigrateAssetSetting from './databases/MigrateAssetSetting';
+import MigrateTransactionHistoryBySymbol from '@subwallet/extension-base/services/migration-service/scripts/MigrateTransactionHistoryBySymbol';
 
 export const EVERYTIME = '__everytime__';
 
@@ -30,4 +32,6 @@ export default <Record<string, typeof BaseMigrationJob>>{
   // '1.1.41-01': DeleteChainStaking
   // '1.1.41-02': MigrateAssetSetting
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
+  '1.1.53-01': MigrateAssetSetting,
+  '1.1.53-02': MigrateTransactionHistoryBySymbol
 };
