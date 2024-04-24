@@ -24,6 +24,7 @@ import { Logger } from '@polkadot/util/types';
 
 const availChainInfoMap = (() => {
   const enableList = [
+    'availTuringTest',
     'goldberg_testnet',
     'ethereum',
     'binance',
