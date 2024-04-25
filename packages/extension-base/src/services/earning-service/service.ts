@@ -207,7 +207,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
         // Account changed or chain changed (active or inactive)
         // Chain changed (active or inactive)
         // Todo: Optimize performance of chain active or inactive in the future
-        if (eventTypes.includes('account.updateCurrent') || eventTypes.includes('account.remove') || eventTypes.includes('chain.updateState') || delayReload) {
+        if (eventTypes.includes('account.updateCurrent') || eventTypes.includes('account.add') || eventTypes.includes('account.remove') || eventTypes.includes('chain.updateState') || delayReload) {
           if (delayReload) {
             this.delayReloadTimeout = setTimeout(() => {
               this.reloadEarning().catch(console.error); // Timeout is removed inside reloadEarning > runUnsubscribePoolsPosition
