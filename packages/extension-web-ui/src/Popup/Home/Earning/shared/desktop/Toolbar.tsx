@@ -27,7 +27,7 @@ function Component ({ className, extraActionNode, inputPlaceholder, onClickFilte
             size='sm'
           />
         )}
-        extraButton={<></>}
+        extraButton={(<>{extraActionNode}</>)}
         onClickActionBtn={onClickFilter}
         onSearch={onSearch}
         placeholder={inputPlaceholder}

@@ -115,7 +115,7 @@ const Unstake = new LazyLoader('Unstake', () => import('@subwallet/extension-web
 const CancelUnstake = new LazyLoader('CancelUnstake', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/CancelUnstake'));
 const ClaimReward = new LazyLoader('ClaimReward', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/ClaimReward'));
 const Withdraw = new LazyLoader('Withdraw', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Withdraw'));
-const SwapTransaction = new LazyLoader('SwapTransaction', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Swap'));
+// const SwapTransaction = new LazyLoader('SwapTransaction', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Swap'));
 
 // Wallet Connect
 const ConnectWalletConnect = new LazyLoader('ConnectWalletConnect', () => import('@subwallet/extension-web-ui/Popup/WalletConnect/ConnectWalletConnect'));
@@ -226,7 +226,7 @@ export const router = createBrowserRouter([
           CancelUnstake.generateRouterObject('cancel-unstake'),
           ClaimReward.generateRouterObject('claim-reward'),
           Withdraw.generateRouterObject('withdraw'),
-          SwapTransaction.generateRouterObject('swap'),
+          // SwapTransaction.generateRouterObject('swap'),
           {
             path: 'compound',
             element: <Example />
@@ -298,7 +298,7 @@ export const router = createBrowserRouter([
           ConnectPolkadotVault.generateRouterObject('connect-polkadot-vault'),
           ConnectKeystone.generateRouterObject('connect-keystone'),
           ConnectLedger.generateRouterObject('connect-ledger'),
-          AccountDetail.generateRouterObject('detail/:accountAddress'),
+          AccountDetail.generateRouterObject('detail/:accountAddress')
           // AccountExport.generateRouterObject('export/:accountAddress')
         ]
       },
