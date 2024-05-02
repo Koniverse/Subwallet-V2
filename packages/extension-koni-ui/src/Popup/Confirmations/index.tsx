@@ -4,6 +4,7 @@
 import { ConfirmationDefinitions, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson, AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
+import { PalletNominationPoolsClaimPermission, RequestSetClaimPermissionless } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { AlertModal } from '@subwallet/extension-koni-ui/components';
 import { NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
@@ -162,6 +163,8 @@ const Component = function ({ className }: Props) {
 
     if (confirmation.item.isInternal) {
       const transaction = transactionRequest[confirmation.item.id];
+      const isRemoveAutoClaim = !!(transaction.data as RequestSetClaimPermissionless).claimPermissionless &&
+        (transaction.data as RequestSetClaimPermissionless).claimPermissionless === PalletNominationPoolsClaimPermission.PERMISSIONED;
 
       if (!transaction) {
         return t(titleMap[confirmation.type] || '');
@@ -213,10 +216,10 @@ const Component = function ({ className }: Props) {
           return t('Redeem stDOT confirm');
         case ExtrinsicType.UNSTAKE_VDOT:
           return t('Unstake vDOT confirm');
-        case ExtrinsicType.UNSTAKE_VMANTA:
-          return t('Unstake vMANTA confirm');
         case ExtrinsicType.UNSTAKE_LDOT:
           return t('Unstake LDOT confirm');
+        case ExtrinsicType.UNSTAKE_VMANTA:
+          return t('Unstake vMANTA confirm');
         case ExtrinsicType.UNSTAKE_SDOT:
           return t('Unstake sDOT confirm');
         case ExtrinsicType.UNSTAKE_STDOT:
@@ -225,12 +228,14 @@ const Component = function ({ className }: Props) {
           return t('Unstake stDOT confirm');
         case ExtrinsicType.STAKING_COMPOUNDING:
           return t('Stake compound confirm');
-        case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:
-          return t('Cancel compound confirm');
         case ExtrinsicType.TOKEN_APPROVE:
           return t('Token approve');
+        case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:
+          return t('Cancel compound confirm');
         case ExtrinsicType.SWAP:
           return t('Swap confirmation');
+        case ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS:
+          return isRemoveAutoClaim ? t('Remove auto claim') : t('Add auto claim');
         case ExtrinsicType.CROWDLOAN:
         case ExtrinsicType.EVM_EXECUTE:
         case ExtrinsicType.UNKNOWN:

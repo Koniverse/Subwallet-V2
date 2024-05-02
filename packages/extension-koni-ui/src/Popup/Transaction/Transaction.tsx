@@ -73,6 +73,7 @@ function Component ({ className }: Props) {
   }, [cacheStorage]);
 
   const [defaultData] = useState(storage);
+
   const { chain, from } = storage;
 
   const homePath = useMemo((): string => {

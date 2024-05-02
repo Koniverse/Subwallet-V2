@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { StakingType } from '@subwallet/extension-base/background/KoniTypes';
+import { PalletNominationPoolsClaimPermission } from '@subwallet/extension-base/types';
 
 export interface TransactionFormBaseProps {
   from: string,
   chain: string
-  asset: string
+  asset: string,
+  claimPermissionless?: PalletNominationPoolsClaimPermission;
 }
 
 export interface TransferParams extends TransactionFormBaseProps {
@@ -35,6 +37,7 @@ export interface EarnParams extends TransactionFormBaseProps {
   slug: string;
   target: string;
   value: string;
+  claimPermissionless?: PalletNominationPoolsClaimPermission;
 }
 
 export interface UnStakeParams extends TransactionFormBaseProps {

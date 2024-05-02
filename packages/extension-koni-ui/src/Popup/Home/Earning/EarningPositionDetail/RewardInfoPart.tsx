@@ -4,7 +4,7 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
-import { EarningRewardHistoryItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { EarningRewardHistoryItem, NominationYieldPositionInfo, PalletNominationPoolsClaimPermission, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { ASTAR_PORTAL_URL, BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation, useYieldRewardTotal } from '@subwallet/extension-koni-ui/hooks';
@@ -64,6 +64,10 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
       return t('Rewards');
     }
   }, [t, type]);
+
+  const statusClaimPermission = useMemo(() => {
+    return (compound as NominationYieldPositionInfo).claimPermissionStatus;
+  }, [compound]);
 
   const onClaimReward = useCallback(() => {
     if (type === YieldPoolType.NATIVE_STAKING && isDAppStaking) {
@@ -143,6 +147,7 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
             {canClaim && (
               <Button
                 onClick={onClaimReward}
+                schema={statusClaimPermission && statusClaimPermission === PalletNominationPoolsClaimPermission.PERMISSIONED ? 'primary' : 'secondary'}
                 size='xs'
               >
                 {type === YieldPoolType.NATIVE_STAKING && isDAppStaking ? t('Check rewards') : t('Claim rewards')}
@@ -266,5 +271,14 @@ export const RewardInfoPart = styled(Component)<Props>(({ theme: { token } }: Pr
 
   '.__view-explorer-button': {
     marginTop: token.marginSM
+  },
+
+  '.-schema-secondary': {
+    backgroundColor: token['gray-2'],
+    transition: 'all 0.1s',
+    '&:hover': {
+      backgroundColor: token['gray-3']
+    }
   }
+
 }));

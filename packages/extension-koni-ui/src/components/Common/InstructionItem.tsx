@@ -7,17 +7,21 @@ import React from 'react';
 import styled from 'styled-components';
 
 interface Props extends ThemeProps{
-  title: string;
+  title: string | React.ReactNode;
   description: React.ReactNode;
   iconInstruction: React.ReactNode;
+  onClick?: (value?: any) => void;
 }
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, description, iconInstruction, title } = props;
+  const { className, description, iconInstruction, onClick, title } = props;
 
   return (
     <>
-      <div className={CN(className)}>
+      <div
+        className={CN(className)}
+        onClick={onClick}
+      >
         <div className='__item-left-part'>{iconInstruction}</div>
         <div className='__item-right-part'>
           <div className={'__item-title'}>{title}</div>

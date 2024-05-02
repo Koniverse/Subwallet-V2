@@ -75,6 +75,7 @@ const getTransactionComponent = (extrinsicType: ExtrinsicType): typeof BaseTrans
       return SwapTransactionConfirmation;
     case ExtrinsicType.CROWDLOAN:
     case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:
+    case ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS:
     case ExtrinsicType.STAKING_COMPOUNDING:
     case ExtrinsicType.EVM_EXECUTE:
     case ExtrinsicType.UNKNOWN:

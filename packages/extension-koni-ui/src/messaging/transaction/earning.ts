@@ -4,7 +4,7 @@
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { RequestStakePoolingUnbonding, RequestYieldFastWithdrawal } from '@subwallet/extension-base/background/KoniTypes';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ValidateYieldProcessParams, ValidatorInfo, YieldPoolInfo } from '@subwallet/extension-base/types';
+import { NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestSetClaimPermissionless, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ValidateYieldProcessParams, ValidatorInfo, YieldPoolInfo } from '@subwallet/extension-base/types';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging';
 
 export async function fetchPoolTarget (request: RequestGetYieldPoolTargets) {
@@ -57,4 +57,8 @@ export async function yieldSubmitNominationPoolUnstaking (data: RequestStakePool
 
 export async function yieldSubmitRedeem (data: RequestYieldFastWithdrawal) {
   return sendMessage('pri(yield.submitRedeem)', data);
+}
+
+export async function yieldSubmitSetClaimPermissions (data: RequestSetClaimPermissionless) {
+  return sendMessage('pri(yield.setClaimPermissionless.submit)', data);
 }

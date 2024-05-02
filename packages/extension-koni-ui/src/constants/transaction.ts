@@ -24,6 +24,7 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.STAKING_COMPOUNDING]: detectTranslate('Compound'),
   [ExtrinsicType.STAKING_CANCEL_COMPOUNDING]: detectTranslate('Cancel compound'),
   [ExtrinsicType.JOIN_YIELD_POOL]: detectTranslate('Start earning'), // TODO: Change this
+  [ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS]: detectTranslate('Set claim'),
   [ExtrinsicType.EVM_EXECUTE]: detectTranslate('Execute'),
   [ExtrinsicType.UNKNOWN]: detectTranslate('Unknown'),
 

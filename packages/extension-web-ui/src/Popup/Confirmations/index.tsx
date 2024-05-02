@@ -237,6 +237,8 @@ const Component = function ({ className }: Props) {
           return t('Cancel compound confirm');
         case ExtrinsicType.TOKEN_APPROVE:
           return t('Token approve');
+        case ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS:
+          return t('Auto claim confirmation');
         case ExtrinsicType.SWAP:
           return t('Swap confirmation');
         case ExtrinsicType.CROWDLOAN:

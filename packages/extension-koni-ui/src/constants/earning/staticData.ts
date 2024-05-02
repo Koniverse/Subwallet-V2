@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { YieldPoolType } from '@subwallet/extension-base/types';
+import { PalletNominationPoolsClaimPermission, YieldPoolType } from '@subwallet/extension-base/types';
 
 export const EARNING_DATA_RAW = {
   [YieldPoolType.NOMINATION_POOL]: [
@@ -213,3 +213,20 @@ export const UNSTAKE_ALERT_DATA = [
     iconColor: '#aada62'
   }
 ];
+
+export const SET_CLAIM_PERMISSIONS = {
+  [PalletNominationPoolsClaimPermission.PERMISSIONLESS_COMPOUND]: {
+    title: 'Auto compound',
+    description: 'Your nomination pool staking rewards are auto compounded and staked',
+    icon: 'Lightning',
+    iconColor: '#86C338',
+    bgColor: 'lime'
+  },
+  [PalletNominationPoolsClaimPermission.PERMISSIONLESS_WITHDRAW]: {
+    title: 'Auto withdraw',
+    description: 'Your nomination pool staking rewards are auto withdrawn to your transferable balance',
+    icon: 'ArrowCircleDown',
+    iconColor: '#004BFF',
+    bgColor: 'blue'
+  }
+};

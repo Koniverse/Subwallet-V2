@@ -52,6 +52,8 @@ const typeName = (type: SWTransaction['extrinsicType']) => {
       return 'EVM execute';
     case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:
       return 'Cancel compounding';
+    case ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS:
+      return 'Set claim permissionless';
     case ExtrinsicType.STAKING_POOL_WITHDRAW:
       return 'Withdraw pool';
     case ExtrinsicType.JOIN_YIELD_POOL:

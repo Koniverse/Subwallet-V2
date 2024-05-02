@@ -233,6 +233,7 @@ function Component ({ className, inputAsset, poolInfo, transactionChainValue, tr
             />
             <Button
               onClick={onWithDraw}
+              schema={'primary'}
               size='xs'
             >
               {t('Withdraw')}
@@ -316,6 +317,14 @@ export const WithdrawInfoPart = styled(Component)<Props>(({ theme: { token } }: 
       fontSize: `${token.fontSizeHeading5}px !important`,
       fontWeight: 'inherit !important',
       lineHeight: token.lineHeightHeading5
+    }
+  },
+
+  '.-schema-secondary': {
+    backgroundColor: token['gray-2'],
+    transition: 'all 0.1s',
+    '&:hover': {
+      backgroundColor: token['gray-3']
     }
   }
 }));

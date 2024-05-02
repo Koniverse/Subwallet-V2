@@ -52,6 +52,7 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.UNSTAKE_VMANTA]: detectTranslate('Unstake vMANTA'),
 
   [ExtrinsicType.TOKEN_APPROVE]: detectTranslate('Token approve'),
+  [ExtrinsicType.STAKING_SET_CLAIM_PERMISSIONLESS]: detectTranslate('Auto claim'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap')
 };
 
