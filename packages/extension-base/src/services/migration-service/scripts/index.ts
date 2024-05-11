@@ -1,12 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import BaseMigrationJob from '../Base';
-// import MigrateAssetSetting from './databases/MigrateAssetSetting';
-import MigrateAssetSetting from './databases/MigrateAssetSetting';
+import EnableAvailTuringChain from '@subwallet/extension-base/services/migration-service/scripts/EnableAvailTuringChain';
 import MigrateTransactionHistoryBySymbol from '@subwallet/extension-base/services/migration-service/scripts/MigrateTransactionHistoryBySymbol';
-import EnableAvailTuringChain
-  from "@subwallet/extension-base/services/migration-service/scripts/EnableAvailTuringChain";
+
+import BaseMigrationJob from '../Base';
+import MigrateAssetSetting from './databases/MigrateAssetSetting';
 
 export const EVERYTIME = '__everytime__';
 
@@ -34,7 +33,7 @@ export default <Record<string, typeof BaseMigrationJob>>{
   // '1.1.41-01': DeleteChainStaking
   // '1.1.41-02': MigrateAssetSetting
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
-  '1.1.53-01': MigrateAssetSetting,
-  '1.1.53-02': MigrateTransactionHistoryBySymbol,
-  '1.1.58-0___AVAIL': EnableAvailTuringChain
+  '1.1.58-0___AVAIL': EnableAvailTuringChain,
+  '1.1.62-01': MigrateAssetSetting,
+  '1.1.62-02': MigrateTransactionHistoryBySymbol
 };
