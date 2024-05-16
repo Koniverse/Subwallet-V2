@@ -21,8 +21,8 @@ export default function useDefaultNavigate () {
   );
 
   const goBack = useCallback(
-    () => {
-      navigate(RouteState.prevDifferentPathNum);
+    (urlToBack?: string) => {
+      urlToBack ? navigate(urlToBack) : navigate(RouteState.prevDifferentPathNum);
     },
     [navigate]
   );
