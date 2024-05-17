@@ -8,6 +8,7 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
+import { _UPDATED_RUNTIME_STAKING_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { BaseYieldPositionInfo, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletNominationPoolsPoolMember, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposureItem, PalletStakingNominations, RequestStakePoolingBonding, SpStakingExposurePage, StakeCancelWithdrawalParams, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
@@ -109,16 +110,20 @@ export default class NominationPoolHandler extends BasePoolHandler {
       const maxSupportedEras = substrateApi.api.consts.staking.historyDepth.toString();
       const erasPerDay = 24 / _STAKING_ERA_LENGTH_MAP[chainInfo.slug]; // Can be exactly calculate from epochDuration, blockTime, sessionsPerEra
 
-      const supportedDays = getSupportedDaysByHistoryDepth(erasPerDay, parseInt(maxSupportedEras));
+      const supportedDays = getSupportedDaysByHistoryDepth(erasPerDay, parseInt(maxSupportedEras), parseInt(currentEra) / erasPerDay);
+
       const startEra = parseInt(currentEra) - supportedDays * erasPerDay;
 
-      const [_EraStakeInfo, _totalIssuance, _auctionCounter, _minPoolJoin, ..._eraReward] = await Promise.all([
+      const [_maxPoolMember, _EraStakeInfo, _totalIssuance, _auctionCounter, _minPoolJoin, ..._eraReward] = await Promise.all([
+        substrateApi.api.query.nominationPools?.maxPoolMembersPerPool(),
         substrateApi.api.query.staking.erasTotalStake.multi([parseInt(currentEra), parseInt(currentEra) - 1]),
         substrateApi.api.query.balances.totalIssuance(),
         substrateApi.api.query.auctions?.auctionCounter(),
-        substrateApi.api.query?.nominationPools?.minJoinBond(),
+        substrateApi.api.query.nominationPools?.minJoinBond(),
         substrateApi.api.query.staking.erasValidatorReward.multi([...Array(supportedDays).keys()].map((i) => i + startEra))
       ]);
+
+      const maxPoolMembers = _maxPoolMember ? parseInt(_maxPoolMember.toString()) : undefined;
 
       const [_totalEraStake, _lastTotalStaked] = _EraStakeInfo;
       const validatorEraReward = getAvgValidatorEraReward(supportedDays, _eraReward[0]);
@@ -166,7 +171,8 @@ export default class NominationPoolHandler extends BasePoolHandler {
           totalApy: expectedReturn, // TODO recheck
           unstakingPeriod: unlockingPeriod,
           inflation: inflation
-        }
+        },
+        maxPoolMembers: maxPoolMembers || undefined
       };
 
       callback(data);
@@ -206,33 +212,24 @@ export default class NominationPoolHandler extends BasePoolHandler {
       const validatorList = nominations.targets;
 
       await Promise.all(validatorList.map(async (validatorAddress) => {
-        let sortedNominators: PalletStakingExposureItem[] = [];
+        let eraStakerOtherList: PalletStakingExposureItem[] = [];
 
-        if (['kusama'].includes(this.chain)) { // todo: hot fix for kusama first, we'll review all relaychains later
+        if (_UPDATED_RUNTIME_STAKING_GROUP.includes(this.chain)) { // todo: review all relaychains later
           const _eraStaker = await substrateApi.api.query.staking.erasStakersPaged.entries(currentEra, validatorAddress);
-          const eraStakerOtherList: PalletStakingExposureItem[] = [];
 
-          _eraStaker.forEach((paged) => {
-            const pagedExposure = paged[1].toPrimitive() as unknown as SpStakingExposurePage;
-
-            eraStakerOtherList.push(...pagedExposure.others);
-          });
-
-          sortedNominators = eraStakerOtherList
-            .sort((a, b) => {
-              return new BigN(b.value).minus(a.value).toNumber();
-            })
-          ;
+          eraStakerOtherList = _eraStaker.flatMap((paged) => (paged[1].toPrimitive() as unknown as SpStakingExposurePage).others);
         } else {
           const _eraStaker = await substrateApi.api.query.staking.erasStakers(currentEra, validatorAddress);
           const eraStaker = _eraStaker.toPrimitive() as unknown as PalletStakingExposure;
 
-          sortedNominators = eraStaker.others
-            .sort((a, b) => {
-              return new BigN(b.value).minus(a.value).toNumber();
-            })
-          ;
+          eraStakerOtherList = eraStaker.others;
         }
+
+        const sortedNominators: PalletStakingExposureItem[] = eraStakerOtherList
+          .sort((a, b) => {
+            return new BigN(b.value).minus(a.value).toNumber();
+          })
+        ;
 
         const topNominators = sortedNominators
           .map((nominator) => {
@@ -413,11 +410,12 @@ export default class NominationPoolHandler extends BasePoolHandler {
       const poolsPalletId = substrateApi.api.consts.nominationPools.palletId.toString();
       const poolStashAccount = parsePoolStashAddress(substrateApi.api, 0, poolId, poolsPalletId);
 
-      const [_nominations, _bondedPool, _metadata, _minimumActiveStake] = await Promise.all([
+      const [_nominations, _bondedPool, _metadata, _minimumActiveStake, _maxPoolMembers] = await Promise.all([
         substrateApi.api.query.staking.nominators(poolStashAccount),
         substrateApi.api.query.nominationPools.bondedPools(poolId),
         substrateApi.api.query.nominationPools.metadata(poolId),
-        substrateApi.api.query.staking.minimumActiveStake()
+        substrateApi.api.query.staking.minimumActiveStake(),
+        substrateApi.api.query.nominationPools?.maxPoolMembersPerPool()
       ]);
 
       const minimumActiveStake = _minimumActiveStake.toPrimitive() as number;
@@ -432,6 +430,8 @@ export default class NominationPoolHandler extends BasePoolHandler {
       const isPoolNominating = !!nominations && nominations.targets.length > 0;
       const isPoolEarningReward = bondedPool.points > minimumActiveStake;
 
+      const maxPoolMembers = _maxPoolMembers ? parseInt(_maxPoolMembers.toString()) : undefined;
+
       nominationPools.push({
         id: poolId,
         address: poolAddress,
@@ -440,7 +440,8 @@ export default class NominationPoolHandler extends BasePoolHandler {
         roles: bondedPool.roles,
         memberCounter: bondedPool.memberCounter,
         state: bondedPool.state,
-        isProfitable: isPoolOpen && isPoolNominating && isPoolEarningReward
+        isProfitable: isPoolOpen && isPoolNominating && isPoolEarningReward,
+        isCrowded: maxPoolMembers ? bondedPool.memberCounter >= maxPoolMembers : false
       });
     }));
 
