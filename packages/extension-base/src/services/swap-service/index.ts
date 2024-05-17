@@ -172,10 +172,10 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
         //   this.handlers[providerId] = new HydradxHandler(this.chainService, this.state.balanceService, false);
         //   break;
         case SwapProviderId.STELLASWAP_TESTNET:
-          this.handlers[providerId] = new StellaswapHandler(this.chainService, this.state.balanceService, this.state);
+          this.handlers[providerId] = new StellaswapHandler(this.chainService, this.state.balanceService);
           break;
         case SwapProviderId.STELLASWAP:
-          this.handlers[providerId] = new StellaswapHandler(this.chainService, this.state.balanceService, this.state, false);
+          this.handlers[providerId] = new StellaswapHandler(this.chainService, this.state.balanceService, false);
           break;
         default:
           break;
