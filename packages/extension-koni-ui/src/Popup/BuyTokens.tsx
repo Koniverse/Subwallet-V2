@@ -403,6 +403,7 @@ function Component ({ className }: Props) {
                 <TokenSelector
                   disabled={tokenItems.length < 2}
                   items={tokenItems}
+                  selectedAccount={selectedAddress}
                   showChainInSelected={false}
                 />
               </Form.Item>

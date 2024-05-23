@@ -10,7 +10,6 @@ import { AssetRegistryStore, BalanceStore, ChainStore, PriceStore } from '@subwa
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
 import { AccountBalanceHookType } from '@subwallet/extension-koni-ui/types/hook';
 import BigN from 'bignumber.js';
-import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 const BN_0 = new BigN(0);
@@ -303,7 +302,7 @@ function getAccountBalance (
   };
 }
 
-export default function useAccountBalance (tokenGroupMap: Record<string, string[]>, showZeroBalance?: boolean): AccountBalanceHookType {
+export default function useAccountBalance (tokenGroupMap: Record<string, string[]>, isShowZeroBalance: boolean, selectedAccount?: string): AccountBalanceHookType {
   const balanceMap = useSelector((state: RootState) => state.balance.balanceMap);
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const priceMap = useSelector((state: RootState) => state.price.priceMap);
@@ -311,15 +310,10 @@ export default function useAccountBalance (tokenGroupMap: Record<string, string[
   const currency = useSelector((state: RootState) => state.price.currencyData);
   const assetRegistryMap = useSelector((state: RootState) => state.assetRegistry.assetRegistry);
   const multiChainAssetMap = useSelector((state: RootState) => state.assetRegistry.multiChainAssetMap);
-  const isShowZeroBalanceSetting = useSelector((state: RootState) => state.settings.isShowZeroBalance);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
 
-  const isShowZeroBalance = useMemo(() => {
-    return showZeroBalance || isShowZeroBalanceSetting;
-  }, [isShowZeroBalanceSetting, showZeroBalance]);
-
   return getAccountBalance(
-    currentAccount?.address || '',
+    selectedAccount || currentAccount?.address || '',
     tokenGroupMap,
     balanceMap,
     priceMap,

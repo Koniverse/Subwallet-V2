@@ -25,7 +25,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const chainsByAccountType = useGetChainSlugsByAccountType();
   const tokenGroupStructure = useTokenGroup(chainsByAccountType);
-  const accountBalance = useAccountBalance(tokenGroupStructure.tokenGroupMap);
+  const isShowZeroBalance = useSelector((state: RootState) => state.settings.isShowZeroBalance);
+  const accountBalance = useAccountBalance(tokenGroupStructure.tokenGroupMap, isShowZeroBalance);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
   const [isConfirmedTermGeneral, setIsConfirmedTermGeneral] = useLocalStorage(CONFIRM_GENERAL_TERM, 'nonConfirmed');
 
