@@ -183,14 +183,13 @@ const walletKey = 'subwallet-js';
 script.src = chrome.extension.getURL('page.js');
 
 placeholderScript.textContent = `class SubWalletPlaceholder {
-  provider = undefined;
   isSubWallet = true;
   connected = false;
   isConnected = () => false;
   __waitProvider = (async () => {
     const self = this;
-    if (self.provider) {
-      return self.provider;
+    if (self) {
+      return self;
     } else {
       return await new Promise((resolve, reject) => {
         let retry = 0;
@@ -199,9 +198,9 @@ placeholderScript.textContent = `class SubWalletPlaceholder {
             clearInterval(interval);
             reject(new Error("SubWallet provider not found"));
           }
-          if (self.provider) {
+          if (self) {
             clearInterval(interval);
-            resolve(self.provider);
+            resolve(self);
           }
         }, 100);
       });
@@ -290,27 +289,8 @@ if (!window.injectedWeb3['${walletKey}']) {
   };
 }
 
-window.SubWallet = new Proxy(new SubWalletPlaceholder(), {
-  get(obj, key) {
-    if (key === "provider") {
-      return undefined;
-    }
+window.SubWallet = new SubWalletPlaceholder()
 
-    const target = obj.provider || obj;
-
-    if (key === 'then') {
-      return Promise.resolve(target);
-    }
-
-    const proxyTarget = Reflect.get(target, key);
-
-    if (typeof proxyTarget?.bind === 'function') {
-      return proxyTarget.bind(target);
-    }
-
-    return proxyTarget;
-  }
-});
 
 const announceProvider = () => {
   const detail = Object.freeze({ info: {
