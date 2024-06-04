@@ -23,8 +23,6 @@ interface ExchangeRateItem {
 }
 const DEFAULT_CURRENCY = 'USD';
 
-let useBackupApi = false;
-
 export const getExchangeRateMap = async (): Promise<Record<CurrencyType, ExchangeRateJSON>> => {
   try {
     const response = await fetch('https://api-cache.subwallet.app/exchange-rate');
@@ -54,6 +52,7 @@ export const getExchangeRateMap = async (): Promise<Record<CurrencyType, Exchang
 
 export const getPriceMap = async (priceIds: Set<string>, currency: CurrencyType = 'USD'): Promise<Omit<PriceJson, 'exchangeRateMap'>> => {
   const idStr = Array.from(priceIds).join(',');
+  let useBackupApi = false;
   let rs: Response | undefined;
 
   if (!useBackupApi) {

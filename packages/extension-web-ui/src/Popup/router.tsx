@@ -181,14 +181,14 @@ export const router = createBrowserRouter([
       {
         ...Home.generateRouterObject('/home'),
         children: [
-          Tokens.generateRouterObject('tokens'),
-          Statistics.generateRouterObject('statistics'),
+          Tokens.generateRouterObject('tokens', true),
+          Statistics.generateRouterObject('statistics', true),
           TokenDetailList.generateRouterObject('tokens/detail/:slug'),
           {
             path: 'nfts',
             element: <NestedOutlet />,
             children: [
-              NftCollections.generateRouterObject('collections'),
+              NftCollections.generateRouterObject('collections', true),
               NftCollectionDetail.generateRouterObject('collection-detail'),
               NftItemDetail.generateRouterObject('item-detail')
             ]
@@ -206,15 +206,15 @@ export const router = createBrowserRouter([
             path: 'earning',
             element: <Outlet />,
             children: [
-              EarningEntry.generateRouterObject(''),
+              EarningEntry.generateRouterObject('', true),
               EarningPools.generateRouterObject('pools'),
               EarningPositionDetail.generateRouterObject('position-detail')
             ]
           },
           MissionPool.generateRouterObject('mission-pools'),
-          History.generateRouterObject('history'),
+          History.generateRouterObject('history', true),
           History.generateRouterObject('history/:address/:chain/:extrinsicHashOrId'),
-          DApps.generateRouterObject('dapps')
+          DApps.generateRouterObject('dapps', true)
         ]
       },
       {
@@ -227,7 +227,7 @@ export const router = createBrowserRouter([
           CancelUnstake.generateRouterObject('cancel-unstake'),
           ClaimReward.generateRouterObject('claim-reward'),
           Withdraw.generateRouterObject('withdraw'),
-          SwapTransaction.generateRouterObject('swap'),
+          SwapTransaction.generateRouterObject('swap', true),
           {
             path: 'compound',
             element: <Example />
@@ -257,7 +257,7 @@ export const router = createBrowserRouter([
       {
         path: '/settings',
         children: [
-          Settings.generateRouterObject('/settings'),
+          Settings.generateRouterObject('/settings', true),
           Settings.generateRouterObject('list'),
           GeneralSetting.generateRouterObject('general'),
           ManageAddressBook.generateRouterObject('address-book'),
@@ -299,7 +299,7 @@ export const router = createBrowserRouter([
           ConnectPolkadotVault.generateRouterObject('connect-polkadot-vault'),
           ConnectKeystone.generateRouterObject('connect-keystone'),
           ConnectLedger.generateRouterObject('connect-ledger'),
-          AccountDetail.generateRouterObject('detail/:accountAddress'),
+          AccountDetail.generateRouterObject('detail/:accountAddress', true),
           AccountExport.generateRouterObject('export/:accountAddress')
         ]
       },
