@@ -105,14 +105,6 @@ export default class TransactionService {
 
     // Check support for transaction
     checkSupportForTransaction(validationResponse, transaction);
-    // // Estimate fee
-    // const estimateFee: FeeData = {
-    //   symbol: '',
-    //   decimals: 0,
-    //   value: '',
-    //   tooHigh: false,
-    //   feeTokenSlug: ''
-    // };
 
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
@@ -122,9 +114,6 @@ export default class TransactionService {
 
     const evmApi = this.state.chainService.getEvmApi(chainInfo.slug);
     const isNeedEvmApi = transaction && !isSubstrateTransaction(transaction) && !evmApi;
-      // estimateFee.feeTokenSlug = _getChainNativeTokenSlug(chainInfo);
-      // estimateFee.decimals = decimals;
-      // estimateFee.symbol = symbol;
 
     if (isNeedEvmApi) {
       validationResponse.errors.push(new TransactionError(BasicTxErrorType.CHAIN_DISCONNECTED, undefined));
