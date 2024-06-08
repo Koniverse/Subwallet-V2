@@ -59,6 +59,7 @@ const Component: React.FC = () => {
   const poolInfo = poolInfoMap[slug];
   const poolType = poolInfo.type;
   const poolChain = poolInfo.chain;
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const [form] = Form.useForm<UnStakeParams>();
   const [isBalanceReady, setIsBalanceReady] = useState(true);
@@ -355,6 +356,7 @@ const Component: React.FC = () => {
               doFilter={false}
               externalAccounts={accountList}
               label={poolInfo.type === YieldPoolType.LENDING ? t('Withdraw from account') : t('Unstake from account')}
+              addressPrefix={networkPrefix}
             />
           </Form.Item>
           <FreeBalance
