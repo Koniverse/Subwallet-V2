@@ -38,10 +38,6 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
     const availableQuotes: QuoteAskResponse[] = [];
     const swappingSrcChain = this.chainService.getAssetBySlug(request.pair.from).originChain;
 
-    // const swapPair = request.pair;
-    // const fromAssetInfo = this.chainService.getAssetBySlug(swapPair.from);
-    // const toAssetInfo = this.chainService.getAssetBySlug(swapPair.to);
-
     await Promise.all(Object.values(this.handlers).map(async (handler) => {
       // temporary solution to reduce number of requests to providers, will work as long as there's only 1 provider for 1 chain
       if (!_PROVIDER_TO_SUPPORTED_PAIR_MAP[handler.providerSlug].includes(swappingSrcChain)) {
@@ -170,13 +166,13 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
 
           break;
 
-        // case SwapProviderId.HYDRADX_TESTNET:
-        //   this.handlers[providerId] = new HydradxHandler(this.chainService, this.state.balanceService);
-        //   break;
-        //
-        // case SwapProviderId.HYDRADX_MAINNET:
-        //   this.handlers[providerId] = new HydradxHandler(this.chainService, this.state.balanceService, false);
-        //   break;
+        case SwapProviderId.HYDRADX_TESTNET:
+          this.handlers[providerId] = new HydradxHandler(this.chainService, this.state.balanceService);
+          break;
+
+        case SwapProviderId.HYDRADX_MAINNET:
+          this.handlers[providerId] = new HydradxHandler(this.chainService, this.state.balanceService, false);
+          break;
         case SwapProviderId.STELLASWAP_TESTNET:
           this.handlers[providerId] = new StellaswapHandler(this.chainService, this.state.balanceService);
           break;

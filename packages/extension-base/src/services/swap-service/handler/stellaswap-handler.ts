@@ -7,13 +7,14 @@ import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { BasicTxErrorType, ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { _getEarlyHydradxValidationError } from '@subwallet/extension-base/core/logic-validation/swap';
 import { getEVMTransactionObject } from '@subwallet/extension-base/koni/api/tokens/evm/transfer';
 import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapHandlerInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
-import { calculateSwapRate, getEarlyHydradxValidationError, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
+import { calculateSwapRate, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { BaseStepDetail } from '@subwallet/extension-base/types/service-base';
 import { HydradxPreValidationMetadata, OptimalSwapPath, OptimalSwapPathParams, StellaswapPreValidationMetadata, SwapBaseTxData, SwapEarlyValidation, SwapErrorType, SwapFeeInfo, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapRoute, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { AxiosError } from 'axios';
@@ -62,13 +63,15 @@ const STELLASWAP_NATIVE_TOKEN_ID = 'ETH';
 export class StellaswapHandler implements SwapHandlerInterface {
   private swapBaseHandler: SwapBaseHandler;
   isTestnet: boolean;
+  providerSlug: SwapProviderId;
 
   constructor (chainService: ChainService, balanceService: BalanceService, isTestnet = true) { // todo: pass in baseHandler from service
+    this.providerSlug = isTestnet ? SwapProviderId.STELLASWAP_TESTNET : SwapProviderId.STELLASWAP;
     this.swapBaseHandler = new SwapBaseHandler({
       balanceService,
       chainService,
       providerName: isTestnet ? 'Stellaswap Testnet' : 'Stellaswap',
-      providerSlug: isTestnet ? SwapProviderId.STELLASWAP_TESTNET : SwapProviderId.STELLASWAP
+      providerSlug: this.providerSlug
     });
 
     this.isTestnet = isTestnet;
@@ -250,15 +253,13 @@ export class StellaswapHandler implements SwapHandlerInterface {
     if (earlyValidation.error) {
       const metadata = earlyValidation.metadata as HydradxPreValidationMetadata;
 
-      return getEarlyHydradxValidationError(earlyValidation.error, metadata);
+      return _getEarlyHydradxValidationError(earlyValidation.error, metadata);
     }
 
     try {
       const quote = await stellaSwap.getQuote(fromAssetAddress, toAssetAddress, request.fromAmount, request.address, (request.slippage * 100).toString()) as StellaswapQuoteResp;
 
-      console.log('quote', quote);
-
-      const toAmount = quote.result.amountOutOriginal;
+      const toAmount = quote.result.amountOut;
       const swapPath = this.parseSwapPath(fromAsset.slug, toAsset.slug, quote.result.trades[0].path);
 
       return Promise.resolve({
@@ -269,15 +270,9 @@ export class StellaswapHandler implements SwapHandlerInterface {
         provider: this.providerInfo,
         aliveUntil: +Date.now() + (SWAP_QUOTE_TIMEOUT_MAP[this.slug] || SWAP_QUOTE_TIMEOUT_MAP.default),
         feeInfo: {
-          feeComponent: [ // todo
-            {
-              tokenSlug: fromChainNativeTokenSlug,
-              amount: '100000000000000',
-              feeType: SwapFeeType.NETWORK_FEE
-            }
-          ],
+          feeComponent: [],
           defaultFeeToken: fromChainNativeTokenSlug,
-          feeOptions: [fromChainNativeTokenSlug] // todo: parse fee options
+          feeOptions: [fromChainNativeTokenSlug]
         },
         isLowLiquidity: false,
         route: swapPath
