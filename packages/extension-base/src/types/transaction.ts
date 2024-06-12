@@ -7,4 +7,4 @@ import { SubmittableExtrinsic } from '@polkadot/api/types';
 
 export type TransactionData = SubmittableExtrinsic<'promise'> | TransactionConfig;
 
-export type TransactionDataWithCustom = TransactionData | unknown;
+export type TransactionDataWithCustom = TransactionData | (() => Promise<string>);

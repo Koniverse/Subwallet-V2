@@ -186,8 +186,32 @@ export default class TransactionService {
     };
   }
 
-  public async handleTransactionWithCustom (transaction: SWTransactionInputWithCustom): Promise<SWTransactionResponse> {
+  public async handleTransactionWithPromise (_transactionInput: SWTransactionInputWithCustom): Promise<SWTransactionResponse> {
+    const { additionalValidator, eventsHandler, transaction, ...transactionInput } = _transactionInput;
+
     // todo
+    const validationResponse: SWTransactionResponse = {
+      ...transactionInput,
+      status: undefined,
+      errors: transactionInput.errors || [],
+      warnings: transactionInput.warnings || []
+    };
+
+    await new Promise<void>((resolve) => {
+      transaction?.()
+        .then((tx) => {
+          validationResponse.extrinsicHash = tx;
+          resolve();
+        })
+        .catch((e: Error) => {
+          const error = e instanceof TransactionError ? e : new TransactionError(BasicTxErrorType.INTERNAL_ERROR, e.message);
+
+          validationResponse.errors.push(error);
+          resolve();
+        });
+    });
+
+    return validationResponse;
   }
 
   public async handleTransaction (transaction: SWTransactionInput): Promise<SWTransactionResponse> {

@@ -265,7 +265,17 @@ export class StellaswapHandler implements SwapHandlerInterface {
     const fromAssetAddress = _isNativeToken(fromAsset) ? STELLASWAP_NATIVE_TOKEN_ID : _getContractAddressOfToken(fromAsset);
     const toAssetAddress = _isNativeToken(toAsset) ? STELLASWAP_NATIVE_TOKEN_ID : _getContractAddressOfToken(toAsset);
 
-    const getTransactionPromise = (signer: any): Promise<any> => {
+    const getTransactionPromise = (): Promise<any> => {
+      const signer = new Proxy({}, {
+        get: (target, prop) => {
+          console.log('prop', prop);
+
+          return (...arg) => {
+            console.log('arg', arg);
+          };
+        }
+      });
+
       return stellaSwap.executeSwap(
         fromAssetAddress,
         toAssetAddress,

@@ -28,7 +28,7 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
 }
 
 export interface SWTransactionWithCustom extends Omit<SWTransaction, 'transaction'> {
-  transaction: unknown;
+  transaction: () => Promise<string>;
 }
 
 export interface SWTransactionInputWithCustom extends SwInputBase, Partial<Pick<SWTransactionWithCustom, 'estimateFee'>> {
