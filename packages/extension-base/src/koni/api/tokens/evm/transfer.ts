@@ -2,7 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { ExternalRequestPromise, ExternalRequestPromiseStatus, HandleBasicTx, TransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
+import {
+  _Address,
+  ExternalRequestPromise,
+  ExternalRequestPromiseStatus,
+  HandleBasicTx,
+  TransactionResponse
+} from '@subwallet/extension-base/background/KoniTypes';
 import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
 import { _BALANCE_PARSING_CHAIN_GROUP, EVM_REFORMAT_DECIMALS } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ERC721_ABI } from '@subwallet/extension-base/services/chain-service/helper';
@@ -12,6 +18,7 @@ import BigN from 'bignumber.js';
 import { TransactionConfig, TransactionReceipt } from 'web3-core';
 
 import { hexToBn } from '@polkadot/util';
+import {_getContractAddressOfToken} from "@subwallet/extension-base/services/chain-service/utils";
 
 interface HandleTransferBalanceResultProps {
   callback: HandleBasicTx;
@@ -145,6 +152,37 @@ export async function getERC20TransactionObject (
   }
 
   return [transactionObject, transferValue];
+}
+
+const MAX_INT = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
+
+export async function getERC20ApproveTransaction (
+  contractAddress: _Address,
+  chainInfo: _ChainInfo,
+  address: _Address,
+  spender: _Address,
+  evmApi: _EvmApi,
+  amount = MAX_INT
+): Promise<TransactionConfig> {
+  const contract = getERC20Contract(contractAddress, evmApi);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+  const approveCall = contract.methods.approve(spender, amount).encodeABI(); // TODO: need test
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  const approveEncodedCall = approveCall.encodeABI() as string;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  const gasLimit = await approveCall.estimateGas({ from: address }) as number;
+  const priority = await calculateGasFeeParams(evmApi, chainInfo.slug);
+
+  return {
+    from: address,
+    to: contractAddress,
+    data: approveEncodedCall,
+    gas: gasLimit,
+    gasPrice: priority.gasPrice,
+    maxFeePerGas: priority.maxFeePerGas?.toString(),
+    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+  } as TransactionConfig;
 }
 
 export async function getERC721Transaction (

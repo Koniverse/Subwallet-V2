@@ -27,6 +27,21 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
   eventsHandler?: (eventEmitter: TransactionEmitter) => void;
 }
 
+export interface SWTransactionWithCustom extends Omit<SWTransaction, 'transaction'> {
+  transaction: unknown;
+}
+
+export interface SWTransactionInputWithCustom extends SwInputBase, Partial<Pick<SWTransactionWithCustom, 'estimateFee'>> {
+  id?: string;
+  transaction?: SWTransactionWithCustom['transaction'] | null;
+  warnings?: SWTransactionWithCustom['warnings'];
+  errors?: SWTransactionWithCustom['errors'];
+  edAsWarning?: boolean;
+  isTransferAll?: boolean;
+  resolveOnDone?: boolean;
+  skipFeeValidation?: boolean;
+}
+
 export type SWTransactionResult = Omit<SWTransaction, 'transaction' | 'additionalValidator' | 'eventsHandler'>
 
 type SwInputBase = Pick<SWTransaction, 'address' | 'url' | 'data' | 'extrinsicType' | 'chain' | 'chainType' | 'ignoreWarnings' | 'transferNativeAmount'>

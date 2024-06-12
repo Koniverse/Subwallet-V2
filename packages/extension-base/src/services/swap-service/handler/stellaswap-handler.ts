@@ -8,7 +8,7 @@ import { SwapError } from '@subwallet/extension-base/background/errors/SwapError
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { BasicTxErrorType, ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getEarlyHydradxValidationError } from '@subwallet/extension-base/core/logic-validation/swap';
-import { getEVMTransactionObject } from '@subwallet/extension-base/koni/api/tokens/evm/transfer';
+import { getERC20ApproveTransaction } from '@subwallet/extension-base/koni/api/tokens/evm/transfer';
 import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
@@ -16,10 +16,8 @@ import { _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _
 import { SwapBaseHandler, SwapHandlerInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { calculateSwapRate, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { BaseStepDetail } from '@subwallet/extension-base/types/service-base';
-import { HydradxPreValidationMetadata, OptimalSwapPath, OptimalSwapPathParams, StellaswapPreValidationMetadata, SwapBaseTxData, SwapEarlyValidation, SwapErrorType, SwapFeeInfo, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapRoute, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { AxiosError } from 'axios';
+import { HydradxPreValidationMetadata, OptimalSwapPath, OptimalSwapPathParams, StellaswapPreValidationMetadata, SwapBaseTxData, SwapEarlyValidation, SwapErrorType, SwapFeeInfo, SwapProviderId, SwapQuote, SwapRequest, SwapRoute, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import BigNumber from 'bignumber.js';
-import { AbstractSigner, ethers } from 'ethers';
 
 // const STELLASWAP_LOW_LIQUIDITY_THRESHOLD = 0.15; // in percentage
 
@@ -77,13 +75,6 @@ export class StellaswapHandler implements SwapHandlerInterface {
     this.isTestnet = isTestnet;
   }
 
-  getMockSigner (address: string): AbstractSigner {
-    const currentHttpProvider = this.chainService.getChainCurrentProviderByKey('moonbeam').endpoint.replace('wss://', 'https://');
-    const providerObj = new ethers.JsonRpcProvider(currentHttpProvider);
-
-    return new ethers.VoidSigner(address, providerObj);
-  }
-
   chain = (): string => {
     if (!this.isTestnet) {
       return COMMON_CHAIN_SLUGS.MOONBEAM;
@@ -136,29 +127,19 @@ export class StellaswapHandler implements SwapHandlerInterface {
       return Promise.resolve(undefined);
     }
 
-    const mockSigner = this.getMockSigner(params.request.address);
+    const contractAddresses = await stellaSwap.getAddresses();
+    const evmApi = this.chainService.getEvmApi(fromAsset.originChain);
+    const erc20Contract = getERC20Contract(fromAssetAddress, evmApi);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    const allowance = await erc20Contract?.methods.allowance(params.request.address, contractAddresses.permit2).call() as string;
 
-    const allowance = await stellaSwap.checkAllowance(_getContractAddressOfToken(fromAsset), mockSigner, '0xeb70c2E0c0DCD6A6187D75b55AFc25b3B3ebE5a2') as string;
+    // const allowance = await stellaSwap.checkAllowance(fromAssetAddress, erc20Contract, contractAddresses.permit2) as string;
     const bnAllowance = new BigNumber(allowance);
     const bnAmount = new BigNumber(params.request.fromAmount);
 
     if (!allowance || bnAmount.gt(bnAllowance)) {
-      const evmApi = this.chainService.getEvmApi(this.chain());
-      const inputTokenContract = getERC20Contract(fromAssetAddress, evmApi);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-      const allowanceCall = inputTokenContract.methods.allowance(params.request.address, '0xeb70c2E0c0DCD6A6187D75b55AFc25b3B3ebE5a2');
-
-      const gasPrice = await evmApi.api.eth.getGasPrice();
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-      const estimatedGas = (await allowanceCall.estimateGas()) as number;
-
       const fee: SwapFeeInfo = {
-        feeComponent: [{
-          feeType: SwapFeeType.NETWORK_FEE,
-          amount: (estimatedGas * parseInt(gasPrice)).toString(),
-          tokenSlug: fromChainNativeTokenSlug
-        }],
+        feeComponent: [],
         defaultFeeToken: fromChainNativeTokenSlug, // token to pay transaction fee with
         feeOptions: [fromChainNativeTokenSlug], // list of tokenSlug, always include defaultFeeToken
         selectedFeeToken: fromChainNativeTokenSlug
@@ -176,15 +157,9 @@ export class StellaswapHandler implements SwapHandlerInterface {
   }
 
   async getSubmitStep (params: OptimalSwapPathParams): Promise<[BaseStepDetail, SwapFeeInfo] | undefined> {
-    const pair = params.request.pair;
-    const fromAsset = this.chainService.getAssetBySlug(pair.from);
-    const toAsset = this.chainService.getAssetBySlug(pair.to);
-
     if (!params.selectedQuote) {
       return Promise.resolve(undefined);
     }
-
-    const res = await stellaSwap.executeSwap(_getContractAddressOfToken(fromAsset), _getContractAddressOfToken(toAsset), params.selectedQuote.fromAmount, this.getMockSigner(''), '1');
 
     if (params.selectedQuote) {
       const submitStep = {
@@ -278,20 +253,27 @@ export class StellaswapHandler implements SwapHandlerInterface {
         route: swapPath
       } as SwapQuote);
     } catch (e) {
-      const error = e as AxiosError;
-
-      console.log(error);
-
       return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
     }
   }
 
   async handleSubmitStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
     const { address, quote, recipient } = params;
-    const pair = quote.pair;
-    const fromAsset = this.chainService.getAssetBySlug(pair.from);
-    const chainInfo = this.chainService.getChainInfoByKey(this.chain());
-    const transactionConfig = await getEVMTransactionObject(chainInfo, address, '0x30Fa101871dE933f98cE55e3448C3f8A2015d09b', quote.fromAmount, false, this.chainService.getEvmApi(chainInfo.slug));
+
+    const fromAsset = this.chainService.getAssetBySlug(params.quote.pair.from);
+    const toAsset = this.chainService.getAssetBySlug(params.quote.pair.to);
+    const fromAssetAddress = _isNativeToken(fromAsset) ? STELLASWAP_NATIVE_TOKEN_ID : _getContractAddressOfToken(fromAsset);
+    const toAssetAddress = _isNativeToken(toAsset) ? STELLASWAP_NATIVE_TOKEN_ID : _getContractAddressOfToken(toAsset);
+
+    const getTransactionPromise = (signer: any): Promise<any> => {
+      return stellaSwap.executeSwap(
+        fromAssetAddress,
+        toAssetAddress,
+        params.quote.fromAmount,
+        signer,
+        (params.slippage * 100).toString()
+      );
+    };
 
     const txData: SwapBaseTxData = {
       address,
@@ -302,31 +284,28 @@ export class StellaswapHandler implements SwapHandlerInterface {
       process: params.process
     };
 
-    return {
+    return Promise.resolve({
       txChain: fromAsset.originChain,
       txData,
-      extrinsic: transactionConfig[0],
+      extrinsic: getTransactionPromise,
       transferNativeAmount: _isNativeToken(fromAsset) ? quote.fromAmount : '0', // todo
       extrinsicType: ExtrinsicType.SWAP,
       chainType: ChainType.EVM
-    } as SwapSubmitStepData;
+    } as SwapSubmitStepData);
   }
 
   async handleTokenApprovalStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
-    const { address, quote, recipient } = params;
-    const pair = quote.pair;
-    const fromAsset = this.chainService.getAssetBySlug(pair.from);
-    const chainInfo = this.chainService.getChainInfoByKey(this.chain());
+    const { address, quote } = params;
+    const fromAsset = this.chainService.getAssetBySlug(quote.pair.from);
     const evmApi = this.chainService.getEvmApi(this.chain());
 
-    const inputTokenContract = getERC20Contract(_getContractAddressOfToken(fromAsset), evmApi);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    const allowanceCall = inputTokenContract.methods.allowance(params.address, '0x30Fa101871dE933f98cE55e3448C3f8A2015d09b');
+    const contractAddresses = await stellaSwap.getAddresses();
+    const approveTransaction = await getERC20ApproveTransaction(_getContractAddressOfToken(fromAsset), this.chainService.getChainInfoByKey(this.chain()), address, contractAddresses.permit2, evmApi, params.quote.fromAmount);
 
     return {
       txChain: fromAsset.originChain,
-      txData,
-      extrinsic: transactionConfig[0],
+      txData: null,
+      extrinsic: approveTransaction,
       transferNativeAmount: _isNativeToken(fromAsset) ? quote.fromAmount : '0', // todo
       extrinsicType: ExtrinsicType.SWAP,
       chainType: ChainType.EVM

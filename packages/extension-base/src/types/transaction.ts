@@ -6,3 +6,5 @@ import { TransactionConfig } from 'web3-core';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 
 export type TransactionData = SubmittableExtrinsic<'promise'> | TransactionConfig;
+
+export type TransactionDataWithCustom = TransactionData | unknown;
