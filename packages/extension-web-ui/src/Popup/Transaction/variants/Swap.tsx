@@ -1568,7 +1568,7 @@ const Component = () => {
                         <div key={`${item.type}-${index}`}>
                           {item.type === SwapFeeType.NETWORK_FEE
                             ? (
-                              <>
+                              <div className={'__fee-paid-token-wrapper'}>
                                 <MetaInfo.Number
                                   decimals={0}
                                   label={t(item.label)}
@@ -1599,7 +1599,7 @@ const Component = () => {
                                     className='token-logo'
                                     isShowSubLogo={false}
                                     shape='circle'
-                                    size={18}
+                                    size={16}
                                     token={feeAssetInfo && feeAssetInfo.slug.toLowerCase()}
                                   />
                                   <Icon
@@ -1608,7 +1608,7 @@ const Component = () => {
                                     phosphorIcon={PencilSimpleLine}
                                   />
                                 </div>
-                              </>
+                              </div>
                             )
                             : (
                               <MetaInfo.Number
@@ -1640,7 +1640,9 @@ const Component = () => {
       </>
 
       <ChooseFeeTokenModal
+        address={fromValue}
         estimatedFee={isSwapHydraDX ? networkFeeHydraDX : estimatedFeeValue}
+        extrinsicType={ExtrinsicType.SWAP}
         isSwapHydraDX={isSwapHydraDX}
         items={feeOptions}
         modalId={SWAP_CHOOSE_FEE_TOKEN_MODAL}
@@ -1702,6 +1704,12 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center'
+    },
+    '.__fee-paid-token-wrapper': {
+      marginBottom: token.marginSM,
+      '.__fee-paid-token': {
+        marginTop: token.marginXXS
+      }
     },
     '.__xcm-notification': {
       marginBottom: token.marginSM

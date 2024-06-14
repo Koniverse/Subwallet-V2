@@ -54,14 +54,14 @@ const Component: React.FC<Props> = (props: Props) => {
           />
           <MetaInfo.Default
             className={'__token-network-fee'}
-            label={t('Token for paying network fee')}
+            label={t('Token to paying fee')}
             valueColorSchema={'default'}
           >
             {_getAssetSymbol(selectedFeeTokenInfo)}
           </MetaInfo.Default>
           <MetaInfo.Number
             decimals={0}
-            label={t('Estimated network fee')}
+            label={t('Estimated transaction fee')}
             prefix={(currencyData.isPrefix && currencyData.symbol) || ''}
             value={defaultFeeValueInFiatPrice}
           />
