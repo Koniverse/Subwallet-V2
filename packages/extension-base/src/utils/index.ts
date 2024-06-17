@@ -435,5 +435,6 @@ export * from './number';
 export * from './object';
 export * from './promise';
 export * from './registry';
+export * from './request';
 export * from './swap';
 export * from './translate';

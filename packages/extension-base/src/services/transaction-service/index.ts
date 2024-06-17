@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { BigNumber } from '@ethersproject/bignumber';
+import { serialize as serializeTransaction, Transaction } from '@ethersproject/transactions';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
@@ -19,15 +21,10 @@ import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction } from
 import { SWTransaction, SWTransactionInput, SWTransactionInputWithCustom, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
-import { Web3Transaction } from '@subwallet/extension-base/signers/types';
-import { LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
-import { anyNumberToBN, reformatAddress } from '@subwallet/extension-base/utils';
-import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
-import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
+import { anyNumberToBN, isContractAddress, mergeTransactionAndSignature, parseContractInput, reformatAddress } from '@subwallet/extension-base/utils';
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
 import keyring from '@subwallet/ui-keyring';
-import { addHexPrefix } from 'ethereumjs-util';
-import { ethers, TransactionLike } from 'ethers';
 import EventEmitter from 'eventemitter3';
 import { t } from 'i18next';
 import { BehaviorSubject, interval as rxjsInterval, Subscription } from 'rxjs';
@@ -201,10 +198,13 @@ export default class TransactionService {
       transaction?.()
         .then((tx) => {
           validationResponse.extrinsicHash = tx;
+          validationResponse.id = transactionInput.id;
+          console.log('handleTransactionWithPromise', 'done', tx, validationResponse);
           resolve();
         })
         .catch((e: Error) => {
           const error = e instanceof TransactionError ? e : new TransactionError(BasicTxErrorType.INTERNAL_ERROR, e.message);
+          console.log('handleTransactionWithPromise', 'error', validationResponse);
 
           validationResponse.errors.push(error);
           resolve();
@@ -827,36 +827,36 @@ export default class TransactionService {
   public generateHashPayload (chain: string, transaction: TransactionConfig): HexString {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
-    let txObject: TransactionLike;
+    let txObject: Transaction;
 
     const max = anyNumberToBN(transaction.maxFeePerGas);
 
     if (max.gt(BN_ZERO)) {
       txObject = {
         nonce: transaction.nonce ?? 0,
-        maxFeePerGas: addHexPrefix(anyNumberToBN(transaction.maxFeePerGas).toString(16)),
-        maxPriorityFeePerGas: addHexPrefix(anyNumberToBN(transaction.maxPriorityFeePerGas).toString(16)),
-        gasLimit: addHexPrefix(anyNumberToBN(transaction.gas).toString(16)),
+        maxFeePerGas: BigNumber.from(transaction.maxFeePerGas),
+        maxPriorityFeePerGas: BigNumber.from(transaction.maxPriorityFeePerGas),
+        gasLimit: BigNumber.from(transaction.gas),
         to: transaction.to,
-        value: addHexPrefix(anyNumberToBN(transaction.value).toString(16)),
-        data: transaction.data,
-        chainId: _getEvmChainId(chainInfo),
+        value: BigNumber.from(transaction.value || 0),
+        data: transaction.data || '',
+        chainId: _getEvmChainId(chainInfo) || 1,
         type: 2
       };
     } else {
       txObject = {
         nonce: transaction.nonce ?? 0,
-        gasPrice: addHexPrefix(anyNumberToBN(transaction.gasPrice).toString(16)),
-        gasLimit: addHexPrefix(anyNumberToBN(transaction.gas).toString(16)),
+        gasPrice: BigNumber.from(transaction.gasPrice),
+        gasLimit: BigNumber.from(transaction.gas),
         to: transaction.to,
-        value: addHexPrefix(anyNumberToBN(transaction.value).toString(16)),
-        data: transaction.data,
-        chainId: _getEvmChainId(chainInfo),
+        value: BigNumber.from(transaction.value || 0),
+        data: transaction.data || '',
+        chainId: _getEvmChainId(chainInfo) || 1,
         type: 0
       };
     }
 
-    return ethers.Transaction.from(txObject).unsignedSerialized as HexString;
+    return serializeTransaction(txObject) as HexString;
   }
 
   private async signAndSendEvmTransaction ({ address,

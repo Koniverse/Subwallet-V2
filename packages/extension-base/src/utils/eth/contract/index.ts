@@ -7,10 +7,11 @@ import { _ERC20_ABI, _ERC721_ABI } from '@subwallet/extension-base/services/chai
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getEvmAbiExplorer, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { fetchJson } from '@subwallet/extension-base/utils';
-import { createTransactionFromRLP, Transaction as QrTransaction } from '@subwallet/extension-base/utils/eth';
-import { InputDataDecoder } from '@subwallet/extension-base/utils/eth/parseTransaction/base';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
+
+import { createTransactionFromRLP, EvmQrTransaction } from '../qr-signer';
+import { InputDataDecoder } from './base';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 const ABIs = [_ERC20_ABI, _ERC721_ABI];
@@ -218,7 +219,7 @@ const getChainInfoByChainId = (networkMap: Record<string, _ChainInfo>, chainId: 
 };
 
 export const parseEvmRlp = async (data: string, networkMap: Record<string, _ChainInfo>, evmApiMap: Record<string, _EvmApi>): Promise<ResponseQrParseRLP> => {
-  const tx: QrTransaction | null = createTransactionFromRLP(data);
+  const tx: EvmQrTransaction | null = createTransactionFromRLP(data);
 
   if (!tx) {
     throw new Error(t('Failed to decode data. Please use a valid QR code'));

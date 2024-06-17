@@ -39,8 +39,7 @@ import WalletConnectService from '@subwallet/extension-base/services/wallet-conn
 import { SWStorage } from '@subwallet/extension-base/storage';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
 import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
-import { isAccountAll, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
-import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { isAccountAll, isContractAddress, parseContractInput, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { decodePair } from '@subwallet/keyring/pair/decode';
@@ -1336,6 +1335,8 @@ export default class KoniState {
     let address = '';
     let payload: any;
     const [p1, p2] = params as [string, string];
+
+    console.log(method, params, allowedAccounts);
 
     if (typeof p1 === 'string' && isEthereumAddress(p1)) {
       address = p1;

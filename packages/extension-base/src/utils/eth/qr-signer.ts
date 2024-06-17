@@ -1,24 +1,18 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import BigN from 'bignumber.js';
-import BNEther from 'bn.js';
 import { ethers } from 'ethers';
 import { SignedTransaction } from 'web3-core';
 
 import { hexStripPrefix, numberToHex } from '@polkadot/util';
 
-const hexToNumberString = (s: string): string => {
-  const temp = parseInt(s, 16);
+import { hexToNumberString } from './common';
 
-  if (isNaN(temp)) {
-    return '0';
-  } else {
-    return temp.toString();
-  }
-};
-
-export class Transaction {
+/**
+ * NOTE: Use for signing transaction as a QR Signer
+ * @deprecated
+ * */
+export class EvmQrTransaction {
   readonly nonce: string;
   readonly gasPrice: string;
   readonly gas: string;
@@ -46,28 +40,18 @@ export class Transaction {
   }
 }
 
-export const anyNumberToBN = (value?: string | number | BNEther): BigN => {
-  if (typeof value === 'string' || typeof value === 'number') {
-    return new BigN(value);
-  } else if (typeof value === 'undefined') {
-    return new BigN(0);
-  } else {
-    return new BigN(value.toNumber());
-  }
-};
-
-export const createTransactionFromRLP = (rlp: string): Transaction | null => {
+export const createTransactionFromRLP = (rlp: string): EvmQrTransaction | null => {
   try {
-    const transaction = ethers.Transaction.from(rlp);
+    const transaction = ethers.utils.parseTransaction(rlp);
     const nonce = transaction.nonce.toString(16);
-    const gasPrice = transaction.gasPrice?.toString(16) || '';
-    const gas = transaction.gasLimit.toString(16);
+    const gasPrice = transaction.gasPrice?.toHexString() || '';
+    const gas = transaction.gasLimit.toHexString();
     const to = transaction.to || '';
-    const value = transaction.value.toString(16);
+    const value = transaction.value.toHexString();
     const data = transaction.data;
     const ethereumChainId = transaction.chainId.toString(16);
 
-    return new Transaction(nonce,
+    return new EvmQrTransaction(nonce,
       gasPrice,
       gas,
       to,

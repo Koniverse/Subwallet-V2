@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
@@ -10,7 +10,7 @@ import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 let transactionCount = 0;
 let validationCount = 0;
 
-export const getTransactionId = (chainType: string, chain: string, isInternal: boolean, isWalletConnect = false): string => {
+export const getTransactionId = (chainType: ChainType, chain: string, isInternal: boolean, isWalletConnect = false): string => {
   return `${isInternal ? 'internal' : !isWalletConnect ? 'external' : 'wallet-connect'}.${chainType}.${chain}.${Date.now()}.${++transactionCount}`;
 };
 

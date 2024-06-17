@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Transaction } from '@subwallet/extension-base/utils/eth';
+import { EvmQrTransaction } from '@subwallet/extension-base/utils';
 import { ScannerResult as _ScannerResult } from '@subwallet/react-ui/es/sw-qr-scanner';
 
 import { GenericExtrinsicPayload } from '@polkadot/types';
@@ -108,7 +108,7 @@ export interface TxQRInfo {
   dataToSign: string | Uint8Array;
   isHash: boolean;
   isOversized: boolean;
-  tx: Transaction | GenericExtrinsicPayload | string | Uint8Array;
+  tx: EvmQrTransaction | GenericExtrinsicPayload | string | Uint8Array;
 }
 
 export interface MultiFramesInfo {

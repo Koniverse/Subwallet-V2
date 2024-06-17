@@ -3,7 +3,7 @@
 
 import { ResponseParseTransactionSubstrate, ResponseQrParseRLP, SignerDataType } from '@subwallet/extension-base/background/KoniTypes';
 import { _isChainEnabled } from '@subwallet/extension-base/services/chain-service/utils';
-import { createTransactionFromRLP, Transaction } from '@subwallet/extension-base/utils/eth';
+import { createTransactionFromRLP, EvmQrTransaction } from '@subwallet/extension-base/utils';
 import { MULTIPART, SCANNER_QR_STEP } from '@subwallet/extension-koni-ui/constants';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { parseEVMTransaction, parseSubstrateTransaction, qrSignEvm, qrSignSubstrate } from '@subwallet/extension-koni-ui/messaging';
@@ -39,7 +39,7 @@ type ScannerStoreState = {
   signedData: string;
   step: number;
   totalFrameCount: number;
-  tx: Transaction | GenericExtrinsicPayload | string | Uint8Array | null;
+  tx: EvmQrTransaction | GenericExtrinsicPayload | string | Uint8Array | null;
   type: SignerDataType | null;
 };
 

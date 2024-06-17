@@ -7,8 +7,7 @@ import { EvmProviderError } from '@subwallet/extension-base/background/errors/Ev
 import { ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete } from '@subwallet/extension-base/background/KoniTypes';
 import { ConfirmationRequestBase, Resolver } from '@subwallet/extension-base/background/types';
 import RequestService from '@subwallet/extension-base/services/request-service';
-import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
-import { isInternalRequest } from '@subwallet/extension-base/utils/request';
+import { anyNumberToBN, isInternalRequest } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
 import BN from 'bn.js';
@@ -209,14 +208,13 @@ export default class EvmRequestHandler {
 
   private async signTransaction (confirmation: ConfirmationDefinitions['evmSendTransactionRequest'][0]): Promise<string> {
     const transaction = confirmation.payload;
-    const { estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value } = transaction;
+    const { from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value } = transaction;
     const pair = keyring.getPair(from as string);
     const params = {
       ...transaction,
       gas: anyNumberToBN(gas).toNumber(),
       value: anyNumberToBN(value).toNumber(),
       gasPrice: anyNumberToBN(gasPrice).toNumber(),
-      gasLimit: anyNumberToBN(estimateGas).toNumber(),
       maxFeePerGas: anyNumberToBN(maxFeePerGas).toNumber(),
       maxPriorityFeePerGas: anyNumberToBN(maxPriorityFeePerGas).toNumber()
       // nonce: await web3.eth.getTransactionCount(from) // Todo: fill this value from transaction service

@@ -2399,7 +2399,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethersproject/providers@npm:5.7.2":
+"@ethersproject/providers@npm:5.7.2, @ethersproject/providers@npm:^5.7.2":
   version: 5.7.2
   resolution: "@ethersproject/providers@npm:5.7.2"
   dependencies:
@@ -6165,14 +6165,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.56-beta.1":
-  version: 0.2.56-beta.1
-  resolution: "@subwallet/chain-list@npm:0.2.56-beta.1"
+"@subwallet/chain-list@npm:0.2.68-beta.2":
+  version: 0.2.68-beta.2
+  resolution: "@subwallet/chain-list@npm:0.2.68-beta.2"
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 0e28decfb6a92f0be95032ba3cf547af59ea307036b49e97d431c28ee2e940a01aab728cc7fea2e6fdf9d67ad3f8dcd0d0d0898b88a4cd5869f329064828968b
+  checksum: 94aaeea2d09afed1f0f90afba50564c533eb78ea320e71d2e1ba1950b79066d8bac6f1264a1aa0cac3df789969342fa3ac88b281d70a8141875c4bf222a9c2d7
   languageName: node
   linkType: hard
 
@@ -6188,6 +6188,12 @@ __metadata:
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
     "@ethersproject/abi": ^5.7.0
+    "@ethersproject/abstract-provider": ^5.7.0
+    "@ethersproject/bignumber": ^5.7.0
+    "@ethersproject/bytes": ^5.7.0
+    "@ethersproject/properties": ^5.7.0
+    "@ethersproject/providers": ^5.7.2
+    "@ethersproject/transactions": ^5.7.0
     "@galacticcouncil/sdk": ^2.1.0
     "@gear-js/api": ^0.37.2
     "@json-rpc-tools/utils": ^1.7.6
@@ -6213,7 +6219,7 @@ __metadata:
     "@sora-substrate/type-definitions": ^1.17.7
     "@stellaswap/swap-sdk": ^0.0.16
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.56-beta.1
+    "@subwallet/chain-list": 0.2.68-beta.2
     "@subwallet/extension-base": ^1.2.5-0
     "@subwallet/extension-chains": ^1.2.5-0
     "@subwallet/extension-dapp": ^1.2.5-0
@@ -6238,7 +6244,7 @@ __metadata:
     dexie-export-import: ^4.0.7
     eth-simple-keyring: ^4.2.0
     ethereumjs-util: ^7.1.5
-    ethers: ^6.4.2
+    ethers: ^5.7.2
     eventemitter3: ^5.0.0
     graphql: ^16.8.1
     i18next: ^21.9.2
@@ -6345,7 +6351,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.56-beta.1
+    "@subwallet/chain-list": 0.2.68-beta.2
     "@subwallet/extension-base": ^1.2.5-0
     "@subwallet/extension-chains": ^1.2.5-0
     "@subwallet/extension-dapp": ^1.2.5-0
@@ -6481,7 +6487,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.56-beta.1
+    "@subwallet/chain-list": 0.2.68-beta.2
     "@subwallet/extension-base": ^1.2.5-0
     "@subwallet/extension-chains": ^1.2.5-0
     "@subwallet/extension-dapp": ^1.2.5-0
@@ -14255,7 +14261,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^5.3.1":
+"ethers@npm:^5.3.1, ethers@npm:^5.7.2":
   version: 5.7.2
   resolution: "ethers@npm:5.7.2"
   dependencies:
@@ -14305,21 +14311,6 @@ __metadata:
     tslib: 2.4.0
     ws: 8.5.0
   checksum: e8027c5071ad0370c61a1978f0602ab950d840c5923948f55e88b9808300e4e02e792bb793ea109ce7fa0e748f30a40a05f1202204a2b0402cdffbcb64a218e4
-  languageName: node
-  linkType: hard
-
-"ethers@npm:^6.4.2":
-  version: 6.12.0
-  resolution: "ethers@npm:6.12.0"
-  dependencies:
-    "@adraffy/ens-normalize": 1.10.1
-    "@noble/curves": 1.2.0
-    "@noble/hashes": 1.3.2
-    "@types/node": 18.15.13
-    aes-js: 4.0.0-beta.5
-    tslib: 2.4.0
-    ws: 8.5.0
-  checksum: a9fa6937f57be00f217cac045752113f0be6ecbef77b90d653202f4127930023e86d20f06631cc4114bdbcf28fcb7dcb5244a88e2e430df1dfcb623e93c23366
   languageName: node
   linkType: hard
 

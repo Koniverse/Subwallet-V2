@@ -39,8 +39,7 @@ import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, StorageDataInterface, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
-import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, parseContractInput, parseEvmRlp, reformatAddress, signatureToHex, EvmQrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 import { createPair } from '@subwallet/keyring';
 import { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
@@ -2529,7 +2528,7 @@ export default class KoniExtension {
 
       signed = await pair.evmSigner.signMessage(data, 'personal_sign');
     } else {
-      const tx: QrTransaction | null = createTransactionFromRLP(message);
+      const tx: EvmQrTransaction | null = createTransactionFromRLP(message);
 
       if (!tx) {
         throw new Error(t('Failed to decode data. Please use a valid QR code'));
@@ -4299,7 +4298,7 @@ export default class KoniExtension {
     // const chosenFeeToken = process.steps.findIndex((step) => step.type === SwapStepType.SET_FEE_TOKEN) > -1;
     // const allowSkipValidation = [ExtrinsicType.SET_FEE_TOKEN, ExtrinsicType.SWAP].includes(extrinsicType);
 
-    if (typeof extrinsic === 'function' ) {
+    if (typeof extrinsic === 'function') {
       return await this.#koniState.transactionService.handleTransactionWithPromise({
         address,
         chain: txChain,
