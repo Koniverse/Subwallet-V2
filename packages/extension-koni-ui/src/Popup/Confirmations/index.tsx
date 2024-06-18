@@ -60,10 +60,11 @@ const Component = function ({ className }: Props) {
       return null;
     }
 
+    let isMessage = false;
+
     if (NEED_SIGN_CONFIRMATION.includes(confirmation.type)) {
       let account: AccountJson | undefined;
       let canSign = true;
-      let isMessage = false;
 
       if (confirmation.type === 'signingRequest') {
         const request = confirmation.item as SigningRequest;
@@ -112,7 +113,7 @@ const Component = function ({ className }: Props) {
       }
     }
 
-    if (confirmation.item.isInternal && confirmation.type !== 'connectWCRequest') {
+    if (confirmation.item.isInternal && confirmation.type !== 'connectWCRequest' && confirmation.type !== 'evmSignatureRequest') {
       return (
         <TransactionConfirmation
           closeAlert={closeAlert}

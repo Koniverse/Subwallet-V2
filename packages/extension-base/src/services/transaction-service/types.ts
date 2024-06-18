@@ -1,24 +1,22 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { BaseRequestSign, ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { BaseRequestSign, ExtrinsicStatus, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { SwTransactionMetadata, TransactionDataPromise } from '@subwallet/extension-base/types';
 import EventEmitter from 'eventemitter3';
 import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';
 
-export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>> {
+export interface SWTransaction extends ValidateTransactionResponse, SwTransactionMetadata, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>> {
   id: string;
   url?: string;
   isInternal: boolean,
   chain: string;
-  chainType: ChainType;
   address: string;
-  data: ExtrinsicDataTypeMap[ExtrinsicType];
   status: ExtrinsicStatus;
   extrinsicHash: string;
-  extrinsicType: ExtrinsicType;
   createdAt: number;
   updatedAt: number;
   estimateFee?: FeeData,
@@ -28,7 +26,7 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
 }
 
 export interface SWTransactionWithCustom extends Omit<SWTransaction, 'transaction'> {
-  transaction: () => Promise<string>;
+  transaction: TransactionDataPromise;
 }
 
 export interface SWTransactionInputWithCustom extends SwInputBase, Partial<Pick<SWTransactionWithCustom, 'estimateFee'>> {

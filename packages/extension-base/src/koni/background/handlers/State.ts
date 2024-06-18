@@ -38,7 +38,7 @@ import { TransactionEventResponse } from '@subwallet/extension-base/services/tra
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
-import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
+import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface, SwTransactionMetadata } from '@subwallet/extension-base/types';
 import { isAccountAll, isContractAddress, parseContractInput, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
@@ -1457,7 +1457,7 @@ export default class KoniState {
     return Object.fromEntries(await Promise.all(promiseList));
   }
 
-  public async evmSendTransaction (id: string, url: string, networkKey: string, allowedAccounts: string[], transactionParams: EvmSendTransactionParams): Promise<string | undefined> {
+  public async evmSendTransaction (id: string, url: string, networkKey: string, allowedAccounts: string[], transactionParams: EvmSendTransactionParams, _extraMetadata?: SwTransactionMetadata): Promise<string | undefined> {
     const evmApi = this.getEvmApi(networkKey);
     const evmNetwork = this.getChainInfo(networkKey);
     const web3 = evmApi.api;
@@ -1584,14 +1584,26 @@ export default class KoniState {
       canSign: true
     };
 
-    const eType = transaction.value ? ExtrinsicType.TRANSFER_BALANCE : ExtrinsicType.EVM_EXECUTE;
-
-    const transactionData = { ...transaction };
     const token = this.chainService.getNativeTokenInfo(networkKey);
+    let extraMetadata: SwTransactionMetadata;
 
-    if (eType === ExtrinsicType.TRANSFER_BALANCE) {
-      // @ts-ignore
-      transactionData.tokenSlug = token.slug;
+    if (_extraMetadata) {
+      extraMetadata = _extraMetadata;
+    } else {
+      const eType = transaction.value ? ExtrinsicType.TRANSFER_BALANCE : ExtrinsicType.EVM_EXECUTE;
+
+      const transactionData = { ...transaction };
+
+      if (eType === ExtrinsicType.TRANSFER_BALANCE) {
+        // @ts-ignore
+        transactionData.tokenSlug = token.slug;
+      }
+
+      extraMetadata = {
+        data: transactionData,
+        extrinsicType: eType,
+        chainType: ChainType.EVM
+      };
     }
 
     // Custom handle this instead of general handler transaction
@@ -1600,15 +1612,13 @@ export default class KoniState {
       address: requestPayload.from as string,
       chain: networkKey,
       url,
-      data: transactionData,
-      extrinsicType: eType,
-      chainType: ChainType.EVM,
       estimateFee: {
         value: estimateGas,
         symbol: token.symbol,
         decimals: token.decimals || 18
       },
-      id
+      id,
+      ...extraMetadata
     });
 
     // Wait extrinsic hash

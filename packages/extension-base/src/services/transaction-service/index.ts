@@ -139,8 +139,8 @@ export default class TransactionService {
   }
 
   private fillTransactionDefaultInfo (transaction: SWTransactionInput): SWTransaction {
-    const isInternal = !transaction.url;
-    const transactionId = getTransactionId(transaction.chainType, transaction.chain, isInternal, isWalletConnectRequest(transaction.id));
+    const isInternal = !transaction.url || transaction.url === EXTENSION_REQUEST_URL;
+    const transactionId = transaction.id || getTransactionId(transaction.chainType, transaction.chain, isInternal, isWalletConnectRequest(transaction.id));
 
     return {
       ...transaction,
@@ -194,17 +194,38 @@ export default class TransactionService {
       warnings: transactionInput.warnings || []
     };
 
+    const id = getTransactionId(transactionInput.chainType, transactionInput.chain, true, false);
+
+    validationResponse.id = id;
+
     await new Promise<void>((resolve) => {
-      transaction?.()
-        .then((tx) => {
-          validationResponse.extrinsicHash = tx;
-          validationResponse.id = transactionInput.id;
-          console.log('handleTransactionWithPromise', 'done', tx, validationResponse);
+      transaction?.(id, {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data: transactionInput.data,
+        chainType: transactionInput.chainType,
+        extrinsicType: transactionInput.extrinsicType
+      })
+        .then((result) => {
+          if (result instanceof Error) {
+            let error: TransactionError;
+
+            if (result.message === 'User Rejected Request') {
+              error = new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST);
+            } else {
+              error = new TransactionError(BasicTxErrorType.INTERNAL_ERROR, result.message);
+            }
+
+            error.stack = result.stack;
+            error.cause = result.cause;
+            validationResponse.errors.push(error);
+          } else {
+            validationResponse.extrinsicHash = result;
+          }
+
           resolve();
         })
         .catch((e: Error) => {
           const error = e instanceof TransactionError ? e : new TransactionError(BasicTxErrorType.INTERNAL_ERROR, e.message);
-          console.log('handleTransactionWithPromise', 'error', validationResponse);
 
           validationResponse.errors.push(error);
           resolve();

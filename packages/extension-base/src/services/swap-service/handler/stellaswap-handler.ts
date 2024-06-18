@@ -4,8 +4,6 @@
 import { TransactionRequest, TransactionResponse } from '@ethersproject/abstract-provider';
 import { Deferrable } from '@ethersproject/properties';
 import { Provider } from '@ethersproject/providers';
-
-import { hexAddPrefix } from '@polkadot/util';
 import stellaSwap from '@stellaswap/swap-sdk';
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
@@ -19,16 +17,18 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { SwapBaseHandler, SwapHandlerInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { calculateSwapRate, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
-import { TokenApproveData } from '@subwallet/extension-base/types';
+import { SwTransactionMetadata, TokenApproveData } from '@subwallet/extension-base/types';
 import { BaseStepDetail } from '@subwallet/extension-base/types/service-base';
 import { HydradxPreValidationMetadata, OptimalSwapPath, OptimalSwapPathParams, StellaswapPreValidationMetadata, SwapBaseTxData, SwapEarlyValidation, SwapErrorType, SwapFeeInfo, SwapProviderId, SwapQuote, SwapRequest, SwapRoute, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { anyNumberToBN } from '@subwallet/extension-base/utils';
 import { getId } from '@subwallet/extension-base/utils/getId';
-import BigN from 'bignumber.js';
 import BigNumber from 'bignumber.js';
 import { ethers, Signer, TypedDataDomain, TypedDataField, VoidSigner } from 'ethers';
+
+import { hexAddPrefix } from '@polkadot/util';
 
 // const STELLASWAP_LOW_LIQUIDITY_THRESHOLD = 0.15; // in percentage
 
@@ -84,13 +84,13 @@ class SWMockSigner extends VoidSigner {
         if ('type' in _value && _value.type === 'BigNumber' && 'hex' in _value) {
           // @ts-ignore
           // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
-          return new BigN(_value.hex).toFixed();
+          return new BigNumber(_value.hex).toFixed();
         } else {
           return value;
         }
       } else {
         if (key === 'amount' && typeof value === 'string' && value.includes('0x')) {
-          return new BigN(value).toFixed();
+          return new BigNumber(value).toFixed();
         }
 
         return value;
@@ -103,6 +103,7 @@ class SWMockSigner extends VoidSigner {
         types,
         domain,
         primaryType: 'PermitWitnessTransferFrom',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         message: JSON.parse(message)
       })
     ]);
@@ -123,23 +124,24 @@ class SWMockSigner extends VoidSigner {
       }
     };
 
-    // const _tx = await this.provider?.getTransaction('0x2edff7e969c00f119585f93829060a1d0a12def81ae8ec6f4ef70e94238ea5e2');
-    //
-    // if (!_tx) {
-    //   throw Error('Cannot sign');
-    // }
-    //
-    // return _tx;
+    const from = await convertData(tx.from) || '';
+    const data = await convertData(tx.data) || '0x';
+    const to = await convertData(tx.to) || '';
+    const gasPrice = await convertData(tx.gasPrice);
+    const value = await convertData(tx.value);
+    const gasLimit = await convertData(tx.gasLimit);
+    const maxFeePerGas = await convertData(tx.maxFeePerGas);
+    const maxPriorityFeePerGas = await convertData(tx.maxPriorityFeePerGas);
 
     const txHash = await this._signTransaction({
-      from: await convertData(tx.from) || '',
-      data: (await convertData(tx.data))?.toString() || '',
-      to: await convertData(tx.to) || '',
-      gasPrice: anyNumberToBN((await convertData(tx.gasPrice))).toNumber(),
-      value: anyNumberToBN((await convertData(tx.value))).toNumber(),
-      gasLimit: anyNumberToBN((await convertData(tx.gasLimit))).toNumber(),
-      maxFeePerGas: anyNumberToBN((await convertData(tx.maxFeePerGas))).toNumber(),
-      maxPriorityFeePerGas: anyNumberToBN((await convertData(tx.maxPriorityFeePerGas))).toNumber()
+      from,
+      data: data?.toString() || '0x',
+      to,
+      gasPrice: gasPrice ? anyNumberToBN(gasPrice).toNumber() : undefined,
+      value: value ? anyNumberToBN(value).toNumber() : 0,
+      gasLimit: gasLimit ? anyNumberToBN(gasLimit).toNumber() : undefined,
+      maxFeePerGas: maxFeePerGas ? anyNumberToBN(maxFeePerGas).toNumber() : undefined,
+      maxPriorityFeePerGas: maxPriorityFeePerGas ? anyNumberToBN(maxPriorityFeePerGas).toNumber() : undefined
     });
 
     if (!txHash) {
@@ -153,29 +155,6 @@ class SWMockSigner extends VoidSigner {
     }
 
     return _tx;
-    //
-    // const transactionData: UnsignedTransaction = {
-    //   type: _tx.type,
-    //   data: _tx.data,
-    //   gasLimit: _tx.gasLimit.toHexString(),
-    //   nonce: _tx.nonce,
-    //   to: _tx.to,
-    //   chainId: _tx.chainId,
-    //   value: _tx.value.toHexString()
-    // }
-    //
-    // if (transactionData.type === 2) {
-    //   transactionData.maxPriorityFeePerGas = _tx.maxPriorityFeePerGas?.toHexString();
-    //   transactionData.maxFeePerGas = _tx.maxFeePerGas?.toHexString();
-    // } else if (transactionData.type === 0) {
-    //   transactionData.gasPrice = _tx.gasPrice?.toHexString()
-    // }
-    //
-    // return ethers.utils.joinSignature({
-    //   r: _tx.r || '0x',
-    //   s: _tx.s || '0x',
-    //   v: _tx.v || 0
-    // });
   }
 }
 
@@ -196,7 +175,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
     this.isTestnet = isTestnet;
   }
 
-  getMockSigner (address: string): Signer {
+  getMockSigner (address: string, id: string, metadata: SwTransactionMetadata): Signer {
     const chain = this.chain();
     const currentProvider = this.chainService.getChainCurrentProviderByKey(chain).endpoint;
     const chainInfo = this.chainService.getChainInfoByKey(chain);
@@ -216,13 +195,13 @@ export class StellaswapHandler implements SwapHandlerInterface {
     const _signMessage = async (method: string, params: any) => {
       const id = getId();
 
-      return this.state.evmSign(id, chrome.runtime.getURL('/'), method, params, [address]);
+      return this.state.evmSign(id, EXTENSION_REQUEST_URL, method, params, [address]);
     };
 
     const _signTransaction = async (transaction: EvmSendTransactionParams) => {
-      const id = getId();
+      const chain = this.chain();
 
-      return this.state.evmSendTransaction(id, chrome.runtime.getURL('/'), this.chain(), [address], transaction);
+      return this.state.evmSendTransaction(id, EXTENSION_REQUEST_URL, chain, [address], transaction, metadata);
     };
 
     return new SWMockSigner(address, provider, _signMessage, _signTransaction);
@@ -418,8 +397,8 @@ export class StellaswapHandler implements SwapHandlerInterface {
     const fromAssetAddress = _isNativeToken(fromAsset) ? STELLASWAP_NATIVE_TOKEN_ID : _getContractAddressOfToken(fromAsset);
     const toAssetAddress = _isNativeToken(toAsset) ? STELLASWAP_NATIVE_TOKEN_ID : _getContractAddressOfToken(toAsset);
 
-    const getTransactionPromise = (): Promise<any> => {
-      const signer = this.getMockSigner(address);
+    const getTransactionPromise = (id: string, metadata: SwTransactionMetadata): Promise<string> => {
+      const signer = this.getMockSigner(address, id, metadata);
 
       const amountIn = hexAddPrefix(new BigNumber(params.quote.fromAmount).toString(16));
 
@@ -429,7 +408,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
         amountIn,
         signer,
         (params.slippage * 100).toString()
-      );
+      ) as Promise<string>;
     };
 
     const txData: SwapBaseTxData = {
@@ -448,7 +427,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
       transferNativeAmount: _isNativeToken(fromAsset) ? quote.fromAmount : '0', // todo
       extrinsicType: ExtrinsicType.SWAP,
       chainType: ChainType.EVM
-    } as SwapSubmitStepData);
+    });
   }
 
   async handleTokenApprovalStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
