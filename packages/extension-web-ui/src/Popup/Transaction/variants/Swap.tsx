@@ -646,7 +646,8 @@ const Component = () => {
           } else {
             let latestOptimalQuote = currentQuote;
 
-            if (currentOptimalSwapPath.steps.length > 2 && isLastStep) {
+            if (currentOptimalSwapPath.steps.length > 2 &&
+              (currentOptimalSwapPath.steps[step].type === SwapStepType.SET_FEE_TOKEN || currentOptimalSwapPath.steps[step].type === SwapStepType.SWAP)) {
               if (currentQuoteRequest) {
                 const latestSwapQuote = await getLatestSwapQuote(currentQuoteRequest);
 
