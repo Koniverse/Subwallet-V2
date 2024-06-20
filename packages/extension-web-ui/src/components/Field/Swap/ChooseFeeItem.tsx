@@ -40,7 +40,7 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [assetRegistryMap, slug]);
 
   const chain = _getAssetOriginChain(feeAssetInfo);
-  const { nativeTokenBalance, tokenBalance } = useGetBalance(chain, address, slug, true, extrinsicType);
+  const { isLoading, nativeTokenBalance, tokenBalance } = useGetBalance(chain, address, slug, true, extrinsicType);
 
   const balance = useMemo(() => {
     if (feeAssetInfo?.assetType === _AssetType.LOCAL) {
@@ -88,7 +88,7 @@ const Component: React.FC<Props> = (props: Props) => {
               }
             </div>
             <div className={'__line-2'}>Available:&nbsp;
-              {new BigN(balance.value).isGreaterThan(0)
+              {!isLoading
                 ? (
                   <Number
                     className={'__available-fee-info'}
