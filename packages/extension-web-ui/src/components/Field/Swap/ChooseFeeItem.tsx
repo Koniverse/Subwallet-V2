@@ -7,7 +7,7 @@ import { _getAssetOriginChain, _getAssetPriceId, _getAssetSymbol } from '@subwal
 import { swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { useGetBalance, useSelector } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
-import { Icon, Logo, ModalContext, Number } from '@subwallet/react-ui';
+import { ActivityIndicator, Icon, Logo, ModalContext, Number } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
@@ -88,15 +88,23 @@ const Component: React.FC<Props> = (props: Props) => {
               }
             </div>
             <div className={'__line-2'}>Available:&nbsp;
-              <Number
-                className={'__available-fee-info'}
-                customFormatter={swapCustomFormatter}
-                decimal={balance.decimals}
-                formatType={'custom'}
-                metadata={numberMetadata}
-                suffix={_getAssetSymbol(feeAssetInfo)}
-                value={balance.value}
-              />
+              {new BigN(balance.value).isGreaterThan(0)
+                ? (
+                  <Number
+                    className={'__available-fee-info'}
+                    customFormatter={swapCustomFormatter}
+                    decimal={balance.decimals}
+                    formatType={'custom'}
+                    metadata={numberMetadata}
+                    suffix={_getAssetSymbol(feeAssetInfo)}
+                    value={balance.value}
+                  />
+                )
+                : (
+                  <div className={'__process-item-loading'}>
+                    <ActivityIndicator size={12} />
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -135,7 +143,7 @@ const ChooseFeeItem = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
     '.__line-2': {
       display: 'flex',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
       alignItems: 'baseline',
       fontSize: token.fontSizeSM,
       fontWeight: token.fontWeightStrong,
@@ -149,6 +157,11 @@ const ChooseFeeItem = styled(Component)<Props>(({ theme: { token } }: Props) => 
       }
 
     },
+    '.__process-item-loading': {
+      fontSize: token.fontSize,
+      lineHeight: token.lineHeightSM
+    },
+
     '.check-icon': {
       color: token.colorSuccess
     }
