@@ -12,7 +12,12 @@ const loaders: Record<string, Promise<LoadResult>> = {};
 const languageCacheOnline: Record<string, Record<string, string>> = {};
 const mergedLanguageCache: Record<string, Record<string, string>> = {};
 
-const fetchTarget = 'https://demo-calculator.pages.dev/localization-contents/c7449b7b-f367-4205-ba95-361af8ed8e2a';
+const PRODUCTION_BRANCHES = ['master', 'webapp', 'webapp-dev'];
+const PROJECT_ID = '5dcb4a73-9e30-4220-b578-2a1aab0dfff5';
+const branchName = process.env.BRANCH_NAME || 'koni-dev';
+const envTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'prod' : 'dev';
+const fetchTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'https://subwallet-static-content.pages.dev/' : 'https://sw-static-data-dev.pages.dev/ ';
+const fetchFile = `${fetchTarget}/localization-contents/${PROJECT_ID}/${envTarget}`;
 
 export default class Backend {
   type = 'backend';
@@ -36,7 +41,7 @@ export default class Backend {
 
   async createLoader (lng: string): Promise<LoadResult> {
     try {
-      const responseOnline = await fetch(`${fetchTarget}/${lng}.json`);
+      const responseOnline = await fetch(`${fetchFile}/${lng}.json`);
       const response = await fetch(`locales/${lng}/translation.json`);
       // TODO: this URL is temporary for testing
 
