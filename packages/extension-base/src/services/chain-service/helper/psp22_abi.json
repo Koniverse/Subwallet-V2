@@ -172,7 +172,7 @@
           " for the caller to withdraw from `from`.",
           "",
           " Returns `InsufficientBalance` error if there are not enough tokens on",
-          " the the account Balance of `from`.",
+          " the account Balance of `from`.",
           "",
           " Returns `ZeroSenderAddress` error if sender's address is zero.",
           "",
