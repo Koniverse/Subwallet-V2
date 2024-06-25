@@ -11,8 +11,6 @@ import { SwapError } from '@subwallet/extension-base/background/errors/SwapError
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { BasicTxErrorType, ChainType, EvmSendTransactionParams, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getEarlyHydradxValidationError } from '@subwallet/extension-base/core/logic-validation/swap';
-import { getERC20ApproveTransaction } from '@subwallet/extension-base/koni/api/tokens/evm/transfer';
-import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
@@ -20,15 +18,16 @@ import { _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { SwapBaseHandler, SwapHandlerInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { calculateSwapRate, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
-import { SwTransactionMetadata, TokenApproveData } from '@subwallet/extension-base/types';
-import { BaseStepDetail } from '@subwallet/extension-base/types/service-base';
-import { HydradxPreValidationMetadata, OptimalSwapPath, OptimalSwapPathParams, StellaswapPreValidationMetadata, SwapBaseTxData, SwapEarlyValidation, SwapErrorType, SwapFeeInfo, SwapProviderId, SwapQuote, SwapRequest, SwapRoute, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { SwTransactionMetadata, TokenSpendingApprovalParams } from '@subwallet/extension-base/types';
+import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType } from '@subwallet/extension-base/types/service-base';
+import { HydradxPreValidationMetadata, OptimalSwapPathParams, StellaswapPreValidationMetadata, SwapBaseTxData, SwapEarlyValidation, SwapErrorType, SwapProviderId, SwapQuote, SwapRequest, SwapRoute, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { anyNumberToBN } from '@subwallet/extension-base/utils';
 import { getId } from '@subwallet/extension-base/utils/getId';
 import BigNumber from 'bignumber.js';
 import { ethers, Signer, TypedDataDomain, TypedDataField, VoidSigner } from 'ethers';
 
 import { hexAddPrefix } from '@polkadot/util';
+import { getERC20Contract, getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 
 // const STELLASWAP_LOW_LIQUIDITY_THRESHOLD = 0.15; // in percentage
 
@@ -235,14 +234,14 @@ export class StellaswapHandler implements SwapHandlerInterface {
     return this.swapBaseHandler.slug;
   }
 
-  generateOptimalProcess (params: OptimalSwapPathParams): Promise<OptimalSwapPath> {
+  generateOptimalProcess (params: OptimalSwapPathParams): Promise<CommonOptimalPath> {
     return this.swapBaseHandler.generateOptimalProcess(params, [
       this.getApproveStep.bind(this),
       this.getSubmitStep.bind(this)
     ]);
   }
 
-  async getApproveStep (params: OptimalSwapPathParams): Promise<[BaseStepDetail, SwapFeeInfo] | undefined> {
+  async getApproveStep (params: OptimalSwapPathParams): Promise<[BaseStepDetail, CommonStepFeeInfo] | undefined> {
     const pair = params.request.pair;
     const fromAsset = this.chainService.getAssetBySlug(pair.from);
 
@@ -270,7 +269,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
     const bnAmount = new BigNumber(params.request.fromAmount);
 
     if (!allowance || bnAmount.gt(bnAllowance)) {
-      const fee: SwapFeeInfo = {
+      const fee: CommonStepFeeInfo = {
         feeComponent: [],
         defaultFeeToken: fromChainNativeTokenSlug, // token to pay transaction fee with
         feeOptions: [fromChainNativeTokenSlug], // list of tokenSlug, always include defaultFeeToken
@@ -278,7 +277,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
       };
 
       const step: BaseStepDetail = {
-        type: SwapStepType.TOKEN_APPROVAL,
+        type: CommonStepType.TOKEN_APPROVAL,
         name: 'Authorize token approval'
       };
 
@@ -288,7 +287,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
     return undefined;
   }
 
-  async getSubmitStep (params: OptimalSwapPathParams): Promise<[BaseStepDetail, SwapFeeInfo] | undefined> {
+  async getSubmitStep (params: OptimalSwapPathParams): Promise<[BaseStepDetail, CommonStepFeeInfo] | undefined> {
     if (!params.selectedQuote) {
       return Promise.resolve(undefined);
     }
@@ -436,11 +435,15 @@ export class StellaswapHandler implements SwapHandlerInterface {
     const evmApi = this.chainService.getEvmApi(this.chain());
 
     const contractAddresses = await stellaSwap.getAddresses();
-    const approveTransaction = await getERC20ApproveTransaction(_getContractAddressOfToken(fromAsset), this.chainService.getChainInfoByKey(this.chain()), address, contractAddresses.permit2, evmApi);
+    const contractAddress = _getContractAddressOfToken(fromAsset);
+    const spenderAddress = contractAddresses.permit2;
+    const approveTransaction = await getERC20SpendingApprovalTx(spenderAddress, address, contractAddress, evmApi);
 
-    const _data: TokenApproveData = {
-      inputTokenSlug: fromAsset.slug,
-      spenderTokenSlug: contractAddresses.permit2
+    const _data: TokenSpendingApprovalParams = {
+      contractAddress,
+      chain: this.chain(),
+      spenderAddress,
+      owner: address
     };
 
     return {
@@ -448,7 +451,7 @@ export class StellaswapHandler implements SwapHandlerInterface {
       txData: _data,
       extrinsic: approveTransaction,
       transferNativeAmount: '0', // todo
-      extrinsicType: ExtrinsicType.TOKEN_APPROVE,
+      extrinsicType: ExtrinsicType.TOKEN_SPENDING_APPROVAL,
       chainType: ChainType.EVM
     } as SwapSubmitStepData;
   }
@@ -458,13 +461,13 @@ export class StellaswapHandler implements SwapHandlerInterface {
     const type = process.steps[currentStep].type;
 
     switch (type) {
-      case SwapStepType.DEFAULT:
+      case CommonStepType.DEFAULT:
         return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
-      case SwapStepType.XCM:
+      case CommonStepType.XCM:
         return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR));
-      case SwapStepType.TOKEN_APPROVAL:
+      case CommonStepType.TOKEN_APPROVAL:
         return this.handleTokenApprovalStep(params);
-      case SwapStepType.SET_FEE_TOKEN:
+      case CommonStepType.SET_FEE_TOKEN:
         return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
       case SwapStepType.SWAP:
         return this.handleSubmitStep(params);
