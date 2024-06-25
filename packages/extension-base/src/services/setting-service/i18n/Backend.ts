@@ -13,10 +13,10 @@ const languageCacheOnline: Record<string, Record<string, string>> = {};
 const mergedLanguageCache: Record<string, Record<string, string>> = {};
 
 const PRODUCTION_BRANCHES = ['master', 'webapp', 'webapp-dev'];
-const PROJECT_ID = '5dcb4a73-9e30-4220-b578-2a1aab0dfff5';
+const PROJECT_ID = 'subwallet-extension';
 const branchName = process.env.BRANCH_NAME || 'koni-dev';
 const envTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'prod' : 'dev';
-const fetchTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'https://subwallet-static-content.pages.dev/' : 'https://sw-static-data-dev.pages.dev/ ';
+const fetchTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'https://subwallet-static-content.pages.dev/' : 'https://sw-static-data-dev.pages.dev/';
 const fetchFile = `${fetchTarget}/localization-contents/${PROJECT_ID}/${envTarget}`;
 
 export default class Backend {
