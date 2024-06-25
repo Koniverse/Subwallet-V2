@@ -2,50 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _Address, ExternalRequestPromise, ExternalRequestPromiseStatus, HandleBasicTx, TransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
-import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
-import { _BALANCE_PARSING_CHAIN_GROUP, EVM_REFORMAT_DECIMALS } from '@subwallet/extension-base/services/chain-service/constants';
-import { _ERC721_ABI } from '@subwallet/extension-base/services/chain-service/helper';
-import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
+import { getERC20Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
+import { _ERC721_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { getPSP34ContractPromise } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
+import { getWasmContractGasLimit } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
+import { EVM_REFORMAT_DECIMALS } from '@subwallet/extension-base/services/chain-service/constants';
+import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import BigN from 'bignumber.js';
-import { TransactionConfig, TransactionReceipt } from 'web3-core';
-
-import { hexToBn } from '@polkadot/util';
-
-interface HandleTransferBalanceResultProps {
-  callback: HandleBasicTx;
-  changeValue: string;
-  networkKey: string;
-  receipt: TransactionReceipt;
-  response: TransactionResponse;
-  updateState?: (promise: Partial<ExternalRequestPromise>) => void;
-}
-
-export const handleTransferBalanceResult = ({ callback,
-  changeValue,
-  networkKey,
-  receipt,
-  response,
-  updateState }: HandleTransferBalanceResultProps) => {
-  response.status = true;
-  let fee: string;
-
-  if (_BALANCE_PARSING_CHAIN_GROUP.bobabeam.indexOf(networkKey) > -1) {
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    fee = hexToBn(receipt.l1Fee || '0x0').add(hexToBn(receipt.l2BobaFee || '0x0')).toString();
-  } else {
-    fee = (receipt.gasUsed * receipt.effectiveGasPrice).toString();
-  }
-
-  response.txResult = {
-    change: changeValue || '0',
-    fee
-  };
-  updateState && updateState({ status: receipt.status ? ExternalRequestPromiseStatus.COMPLETED : ExternalRequestPromiseStatus.FAILED });
-  callback(response);
-};
+import { TransactionConfig } from 'web3-core';
 
 export async function getEVMTransactionObject (
   chainInfo: _ChainInfo,
@@ -147,37 +112,6 @@ export async function getERC20TransactionObject (
   return [transactionObject, transferValue];
 }
 
-const MAX_INT = '115792089237316195423570985008687907853269984665640564039457584007913129639935';
-
-export async function getERC20ApproveTransaction (
-  contractAddress: _Address,
-  chainInfo: _ChainInfo,
-  address: _Address,
-  spender: _Address,
-  evmApi: _EvmApi,
-  amount = MAX_INT
-): Promise<TransactionConfig> {
-  const contract = getERC20Contract(contractAddress, evmApi);
-
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-  const approveCall = contract.methods.approve(spender, amount); // TODO: need test
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-  const approveEncodedCall = approveCall.encodeABI() as string;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-  const gasLimit = await approveCall.estimateGas({ from: address }) as number;
-  const priority = await calculateGasFeeParams(evmApi, chainInfo.slug);
-
-  return {
-    from: address,
-    to: contractAddress,
-    data: approveEncodedCall,
-    gas: gasLimit,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
-  } as TransactionConfig;
-}
-
 export async function getERC721Transaction (
   web3Api: _EvmApi,
   chain: string,
@@ -205,4 +139,30 @@ export async function getERC721Transaction (
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
     data: contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).encodeABI()
   };
+}
+
+const mustFormatNumberReg = /^-?[0-9][0-9,.]+$/;
+
+export async function getPSP34TransferExtrinsic (substrateApi: _SubstrateApi, senderAddress: string, recipientAddress: string, params: Record<string, any>) {
+  const contractAddress = params.contractAddress as string;
+  const onChainOption = params.onChainOption as Record<string, string>;
+
+  for (const [key, value] of Object.entries(onChainOption)) {
+    if (mustFormatNumberReg.test(value)) {
+      onChainOption[key] = value.replaceAll(',', '');
+    }
+  }
+
+  try {
+    const contractPromise = getPSP34ContractPromise(substrateApi.api, contractAddress);
+    // @ts-ignore
+    const gasLimit = await getWasmContractGasLimit(substrateApi.api, senderAddress, 'psp34::transfer', contractPromise, {}, [recipientAddress, onChainOption, {}]);
+
+    // @ts-ignore
+    return contractPromise.tx['psp34::transfer']({ gasLimit }, recipientAddress, onChainOption, {});
+  } catch (e) {
+    console.debug(e);
+
+    return null;
+  }
 }
