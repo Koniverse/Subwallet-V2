@@ -1,17 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-export type PalletAssetsAssetAccount = {
-  balance: number | string,
-  status: 'Frozen' | 'Liquid' | 'Blocked',
-  reason: Record<string, unknown>,
-  extra: unknown
-}
+import { _getAssetPalletLockedBalance, _getAssetPalletTransferable, PalletAssetsAssetAccount } from '@subwallet/extension-base/core/substrate/assets-pallet';
 
 export function _getForeignAssetPalletTransferable (accountInfo: PalletAssetsAssetAccount): bigint {
-  return accountInfo.status !== 'Liquid' ? BigInt(0) : BigInt(accountInfo.balance);
+  return _getAssetPalletTransferable(accountInfo);
 }
 
 export function _getForeignAssetPalletLockedBalance (accountInfo: PalletAssetsAssetAccount): bigint {
-  return accountInfo.status === 'Liquid' ? BigInt(0) : BigInt(accountInfo.balance);
+  return _getAssetPalletLockedBalance(accountInfo);
 }
