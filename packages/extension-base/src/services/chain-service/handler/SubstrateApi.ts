@@ -1,8 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import '@polkadot/types-augment';
-
 import { options as acalaOptions } from '@acala-network/api';
 import { GearApi } from '@gear-js/api';
 import { rpc as oakRpc, types as oakTypes } from '@oak-foundation/types';
@@ -10,10 +8,11 @@ import { MetadataItem } from '@subwallet/extension-base/background/KoniTypes';
 import { _API_OPTIONS_CHAIN_GROUP, API_AUTO_CONNECT_MS, API_CONNECT_TIMEOUT } from '@subwallet/extension-base/services/chain-service/constants';
 import { getSubstrateConnectProvider } from '@subwallet/extension-base/services/chain-service/handler/light-client';
 import { DEFAULT_AUX } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
-import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
+import { _ApiOptions, _SubstrateApiMode } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _SubstrateApi, _SubstrateDefaultFormatBalance } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { goldbergRpc, goldbergTypes, spec as availSpec } from 'avail-js-sdk';
+import { DedotClient, WsProvider as DedotWsProvider } from 'dedot';
 import { BehaviorSubject } from 'rxjs';
 
 import { ApiPromise, WsProvider } from '@polkadot/api';
@@ -28,7 +27,7 @@ import { defaults as addressDefaults } from '@polkadot/util-crypto/address/defau
 
 export class SubstrateApi implements _SubstrateApi {
   chainSlug: string;
-  api: ApiPromise;
+  _api: ApiPromise | DedotClient;
   providerName?: string;
   provider: ProviderInterface;
   apiUrl: string;
@@ -41,6 +40,11 @@ export class SubstrateApi implements _SubstrateApi {
   private handleApiReady: PromiseHandler<_SubstrateApi>;
   public readonly isApiConnectedSubject = new BehaviorSubject(false);
   public readonly connectionStatusSubject = new BehaviorSubject(_ChainConnectionStatus.DISCONNECTED);
+
+  get api (): ApiPromise {
+    return this._api as ApiPromise;
+  }
+
   get isApiConnected (): boolean {
     return this.isApiConnectedSubject.getValue();
   }
@@ -86,7 +90,7 @@ export class SubstrateApi implements _SubstrateApi {
     }
   }
 
-  private createApi (provider: ProviderInterface, externalApiPromise?: ApiPromise): ApiPromise {
+  private createApiPromise (provider: ProviderInterface, externalApiPromise?: ApiPromise): ApiPromise {
     const apiOption: ApiOptions = {
       provider,
       typesBundle,
@@ -150,14 +154,41 @@ export class SubstrateApi implements _SubstrateApi {
     return api;
   }
 
-  constructor (chainSlug: string, apiUrl: string, { externalApiPromise, metadata, providerName }: _ApiOptions = {}) {
+  private createDedotClient (providerUrl: string): DedotClient {
+    const wsProvider = new DedotWsProvider(providerUrl);
+    const dedot = new DedotClient(wsProvider);
+
+    dedot.on('ready', this.onReady.bind(this));
+    dedot.on('connected', this.onConnect.bind(this));
+    dedot.on('disconnected', this.onDisconnect.bind(this));
+    dedot.on('error', this.onError.bind(this));
+
+    return dedot;
+  }
+
+  private createApiByMode (mode: _SubstrateApiMode, apiUrl: string, externalApiPromise?: ApiPromise) {
+    switch (mode) {
+      case _SubstrateApiMode.DEDOT: {
+        this._api = this.createDedotClient(apiUrl);
+
+        break;
+      }
+
+      default: {
+        this.provider = this.createProvider(apiUrl);
+        this._api = this.createApiPromise(this.provider, externalApiPromise);
+      }
+    }
+  }
+
+  constructor (chainSlug: string, apiUrl: string, { externalApiPromise, metadata, mode, providerName }: _ApiOptions = {}) {
     this.chainSlug = chainSlug;
     this.apiUrl = apiUrl;
     this.providerName = providerName;
     this.registry = new TypeRegistry();
     this.metadata = metadata;
     this.provider = this.createProvider(apiUrl);
-    this.api = this.createApi(this.provider, externalApiPromise);
+    this._api = this.createApiPromise(this.provider, externalApiPromise);
 
     this.handleApiReady = createPromiseHandler<_SubstrateApi>();
   }
@@ -182,7 +213,7 @@ export class SubstrateApi implements _SubstrateApi {
     // Create new provider and api
     this.apiUrl = apiUrl;
     this.provider = this.createProvider(apiUrl);
-    this.api = this.createApi(this.provider);
+    this._api = this.createApiPromise(this.provider);
   }
 
   connect (): void {

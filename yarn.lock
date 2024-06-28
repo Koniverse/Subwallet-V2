@@ -1882,6 +1882,136 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dedot/api@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/api@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/providers": 0.0.1-alpha.36
+    "@dedot/runtime-specs": 0.0.1-alpha.36
+    "@dedot/shape": 0.0.1-alpha.36
+    "@dedot/storage": 0.0.1-alpha.36
+    "@dedot/types": 0.0.1-alpha.36
+    "@dedot/utils": 0.0.1-alpha.36
+  checksum: fe5fae1576aa1a19c3f5bf22ad810b71f4e77594abff8135224deaa539f834b692ba7ee1cc5d2886970c044d016fc2e9d500e037c9d7688dc664c33b368dd3cc
+  languageName: node
+  linkType: hard
+
+"@dedot/cli@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/cli@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/api": 0.0.1-alpha.36
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/codegen": 0.0.1-alpha.36
+    "@polkadot/types-support": ^12.0.1
+    yargs: ^17.7.2
+  bin:
+    dedot: bin/dedot
+    djs: bin/dedot
+  checksum: e1c4f1b90f232efcb923fa7e22f2fdb0a58c7e41932b13ed476a1743b80300e4f598a4ff8250f55ab298a2e98d69852a0e5769857b1cb0db9c18fc060e1ca72c
+  languageName: node
+  linkType: hard
+
+"@dedot/codecs@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/codecs@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/shape": 0.0.1-alpha.36
+    "@dedot/utils": 0.0.1-alpha.36
+  checksum: f408d324cbd7ea23f284e10e0c42b355acbdcaca29b612c73b82de3fe5d876be4c60bea5011f118874dee3f7dd3e1645fce2ef23553bafc77f193c4fc5417e1f
+  languageName: node
+  linkType: hard
+
+"@dedot/codegen@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/codegen@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/api": 0.0.1-alpha.36
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/providers": 0.0.1-alpha.36
+    "@dedot/runtime-specs": 0.0.1-alpha.36
+    "@dedot/shape": 0.0.1-alpha.36
+    "@dedot/types": 0.0.1-alpha.36
+    "@dedot/utils": 0.0.1-alpha.36
+    handlebars: ^4.7.8
+    prettier: ^3.3.2
+  checksum: d0bffe2481bcf1254e3524affaea1c0d6aee90cf64a68d91fd6f31dbbd0bd3e2661e562821605bf250dcd6e4b868047ff5e7a427ad3052368f3cef823b718c5d
+  languageName: node
+  linkType: hard
+
+"@dedot/contracts@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/contracts@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/api": 0.0.1-alpha.36
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/types": 0.0.1-alpha.36
+    "@dedot/utils": 0.0.1-alpha.36
+  checksum: 36840222ee01ab88f9b41853e833b8721348adf05885c33bc34b9c98c1229810fa9fbcfa14b8a0b1790882b83e7156bf3e1f4f0d789caa74285c4e55882c9147
+  languageName: node
+  linkType: hard
+
+"@dedot/providers@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/providers@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/utils": 0.0.1-alpha.36
+    "@polkadot/x-ws": ^12.6.2
+  checksum: 881739ed84a6460c28c268888f25bbfe89c8a4027bb8eaeca8ac94216506261a5d381aa7bbe96e0927e88b03d95fabc1cdd0ea6a94a7be234234ee7b761b93de
+  languageName: node
+  linkType: hard
+
+"@dedot/runtime-specs@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/runtime-specs@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/shape": 0.0.1-alpha.36
+    "@dedot/types": 0.0.1-alpha.36
+  checksum: 07e8823976a87e066232ee9ed863e0a039e04101a94ea492ef49d3c2db3441178119b60945850c3b19cfb44846644e295b3bd7e89fb35e3cc446ea57f9e346bd
+  languageName: node
+  linkType: hard
+
+"@dedot/shape@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/shape@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/utils": 0.0.1-alpha.36
+    subshape: ^0.14.0
+  checksum: 1407eb09d8be56281abb53bf6e028ee7618d258868c4341b7d1bd343c8e589c8db703eed609eda0bd262ffc1db70126e58a9e0caedf2b7a1de58dfb0996dcf8d
+  languageName: node
+  linkType: hard
+
+"@dedot/storage@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/storage@npm:0.0.1-alpha.36"
+  checksum: fe7411cd836f5879a104a662d530f5d4fa77f792d7a46ae9919c02bed07f13adc6af4d047233694af7f7723c2aed72f57ed89d9a5ed397cdb3803ea89a3efa62
+  languageName: node
+  linkType: hard
+
+"@dedot/types@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/types@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/shape": 0.0.1-alpha.36
+    "@dedot/utils": 0.0.1-alpha.36
+  checksum: a31e33360fdbc20dfc313d452a8be3e0630fdd40e9d621e6be2f31dc39f9c35f1a7d38bd035fd5479c038c074d4e6353d7ad94a8f5a9582706be6096e139b5af
+  languageName: node
+  linkType: hard
+
+"@dedot/utils@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "@dedot/utils@npm:0.0.1-alpha.36"
+  dependencies:
+    "@noble/hashes": ^1.4.0
+    "@scure/base": ^1.1.7
+    eventemitter3: ^5.0.1
+  checksum: 5caba2a981df484a3b853557800490336159053c83ccfcdcdd7631ba4d7fece41b6f9fbf9bf9e1426e6c9b5e6c2ecc51d383566892723955790fafd7c33a44fa
+  languageName: node
+  linkType: hard
+
 "@digitalnative/type-definitions@npm:1.1.27":
   version: 1.1.27
   resolution: "@digitalnative/type-definitions@npm:1.1.27"
@@ -3739,7 +3869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:^1.3.1":
+"@noble/hashes@npm:^1.3.1, @noble/hashes@npm:^1.4.0":
   version: 1.4.0
   resolution: "@noble/hashes@npm:1.4.0"
   checksum: 8ba816ae26c90764b8c42493eea383716396096c5f7ba6bea559993194f49d80a73c081f315f4c367e51bd2d5891700bcdfa816b421d24ab45b41cb03e4f3342
@@ -5572,6 +5702,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@scure/base@npm:^1.1.7":
+  version: 1.1.7
+  resolution: "@scure/base@npm:1.1.7"
+  checksum: d9084be9a2f27971df1684af9e40bb750e86f549345e1bb3227fb61673c0c83569c92c1cb0a4ddccb32650b39d3cd3c145603b926ba751c9bc60c27317549b20
+  languageName: node
+  linkType: hard
+
 "@scure/bip32@npm:1.3.3":
   version: 1.3.3
   resolution: "@scure/bip32@npm:1.3.3"
@@ -6034,6 +6171,7 @@ __metadata:
     browser-passworder: ^2.0.3
     buffer: ^6.0.3
     cross-fetch: ^3.1.5
+    dedot: 0.0.1-alpha.36
     dexie: ^3.2.2
     dexie-export-import: ^4.0.7
     eth-simple-keyring: ^4.2.0
@@ -12278,6 +12416,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dedot@npm:0.0.1-alpha.36":
+  version: 0.0.1-alpha.36
+  resolution: "dedot@npm:0.0.1-alpha.36"
+  dependencies:
+    "@dedot/api": 0.0.1-alpha.36
+    "@dedot/cli": 0.0.1-alpha.36
+    "@dedot/codecs": 0.0.1-alpha.36
+    "@dedot/contracts": 0.0.1-alpha.36
+    "@dedot/providers": 0.0.1-alpha.36
+    "@dedot/runtime-specs": 0.0.1-alpha.36
+    "@dedot/shape": 0.0.1-alpha.36
+    "@dedot/types": 0.0.1-alpha.36
+    "@dedot/utils": 0.0.1-alpha.36
+  bin:
+    dedot: bin/dedot
+    djs: bin/dedot
+  checksum: 5c0c966de82833d0f3d80633507af6efdf1242dd12f54d070d5d146b668538b4e713981e6438e6c9bff8cec0a1d721b47e96eb8f49e194d44c47b525a0426616
+  languageName: node
+  linkType: hard
+
 "deep-extend@npm:^0.6.0":
   version: 0.6.0
   resolution: "deep-extend@npm:0.6.0"
@@ -15587,6 +15745,24 @@ __metadata:
   version: 2.0.1
   resolution: "handle-thing@npm:2.0.1"
   checksum: 68071f313062315cd9dce55710e9496873945f1dd425107007058fc1629f93002a7649fcc3e464281ce02c7e809a35f5925504ab8105d972cf649f1f47cb7d6c
+  languageName: node
+  linkType: hard
+
+"handlebars@npm:^4.7.8":
+  version: 4.7.8
+  resolution: "handlebars@npm:4.7.8"
+  dependencies:
+    minimist: ^1.2.5
+    neo-async: ^2.6.2
+    source-map: ^0.6.1
+    uglify-js: ^3.1.4
+    wordwrap: ^1.0.0
+  dependenciesMeta:
+    uglify-js:
+      optional: true
+  bin:
+    handlebars: bin/handlebars
+  checksum: 00e68bb5c183fd7b8b63322e6234b5ac8fbb960d712cb3f25587d559c2951d9642df83c04a1172c918c41bcfc81bfbd7a7718bbce93b893e0135fc99edea93ff
   languageName: node
   linkType: hard
 
@@ -22199,6 +22375,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prettier@npm:^3.3.2":
+  version: 3.3.2
+  resolution: "prettier@npm:3.3.2"
+  bin:
+    prettier: bin/prettier.cjs
+  checksum: 5557d8caed0b182f68123c2e1e370ef105251d1dd75800fadaece3d061daf96b1389141634febf776050f9d732c7ae8fd444ff0b4a61b20535e7610552f32c69
+  languageName: node
+  linkType: hard
+
 "pretty-error@npm:^4.0.0":
   version: 4.0.0
   resolution: "pretty-error@npm:4.0.0"
@@ -25791,6 +25976,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"subshape@npm:^0.14.0":
+  version: 0.14.0
+  resolution: "subshape@npm:0.14.0"
+  checksum: 171a2d55db431917e1206b3cd9b4df976406fb12358f4932aff77d8d67f5564aec6909803ab3b95374876dcfc55c5a9582d0f2c164903e9996289cfcac8dfbd9
+  languageName: node
+  linkType: hard
+
 "superellipsejs@npm:^0.0.6":
   version: 0.0.6
   resolution: "superellipsejs@npm:0.0.6"
@@ -26539,6 +26731,15 @@ __metadata:
   version: 1.5.3
   resolution: "ufo@npm:1.5.3"
   checksum: 2f54fa543b2e689cc4ab341fe2194937afe37c5ee43cd782e6ecc184e36859e84d4197a43ae4cd6e9a56f793ca7c5b950dfff3f16fadaeef9b6b88b05c88c8ef
+  languageName: node
+  linkType: hard
+
+"uglify-js@npm:^3.1.4":
+  version: 3.18.0
+  resolution: "uglify-js@npm:3.18.0"
+  bin:
+    uglifyjs: bin/uglifyjs
+  checksum: 887733d05d4139a94dffd04a5f07ee7d8be70201c016ea48cb82703778b5c48fadbe6e5e7ac956425522f72e657d3eade23f06ae8a0e2eeed2d684bf6cc25e36
   languageName: node
   linkType: hard
 
@@ -28158,6 +28359,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"wordwrap@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "wordwrap@npm:1.0.0"
+  checksum: 2a44b2788165d0a3de71fd517d4880a8e20ea3a82c080ce46e294f0b68b69a2e49cff5f99c600e275c698a90d12c5ea32aff06c311f0db2eb3f1201f3e7b2a04
+  languageName: node
+  linkType: hard
+
 "wrap-ansi-cjs@npm:wrap-ansi@^7.0.0, wrap-ansi@npm:^7.0.0":
   version: 7.0.0
   resolution: "wrap-ansi@npm:7.0.0"
@@ -28448,6 +28656,21 @@ __metadata:
     y18n: ^5.0.5
     yargs-parser: ^21.1.1
   checksum: 47da1b0d854fa16d45a3ded57b716b013b2179022352a5f7467409da5a04a1eef5b3b3d97a2dfc13e8bbe5f2ffc0afe3bc6a4a72f8254e60f5a4bd7947138643
+  languageName: node
+  linkType: hard
+
+"yargs@npm:^17.7.2":
+  version: 17.7.2
+  resolution: "yargs@npm:17.7.2"
+  dependencies:
+    cliui: ^8.0.1
+    escalade: ^3.1.1
+    get-caller-file: ^2.0.5
+    require-directory: ^2.1.1
+    string-width: ^4.2.3
+    y18n: ^5.0.5
+    yargs-parser: ^21.1.1
+  checksum: 73b572e863aa4a8cbef323dd911d79d193b772defd5a51aab0aca2d446655216f5002c42c5306033968193bdbf892a7a4c110b0d77954a7fdf563e653967b56a
   languageName: node
   linkType: hard
 
