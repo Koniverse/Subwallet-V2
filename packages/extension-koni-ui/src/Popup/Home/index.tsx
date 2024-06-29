@@ -1,42 +1,49 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { CampaignBanner } from '@subwallet/extension-base/background/KoniTypes';
-import { CampaignBannerModal, Layout } from '@subwallet/extension-koni-ui/components';
+import { Layout } from '@subwallet/extension-koni-ui/components';
 import { GlobalSearchTokenModal } from '@subwallet/extension-koni-ui/components/Modal/GlobalSearchTokenModal';
+import RemindUpgradeFirefoxVersion from '@subwallet/extension-koni-ui/components/Modal/RemindUpgradeFirefoxVersion';
 import { GeneralTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/GeneralTermModal';
-import { CLAIM_DAPP_STAKING_REWARDS, CLAIM_DAPP_STAKING_REWARDS_MODAL, CONFIRM_GENERAL_TERM, DEFAULT_CLAIM_DAPP_STAKING_REWARDS_STATE, GENERAL_TERM_AND_CONDITION_MODAL, HOME_CAMPAIGN_BANNER_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { CONFIRM_GENERAL_TERM, DEFAULT_SESSION_VALUE, GENERAL_TERM_AND_CONDITION_MODAL, HOME_CAMPAIGN_BANNER_MODAL, LATEST_SESSION, REMIND_BACKUP_SEED_PHRASE_MODAL, REMIND_UPGRADE_FIREFOX_VERSION } from '@subwallet/extension-koni-ui/constants';
+import { AppOnlineContentContext } from '@subwallet/extension-koni-ui/contexts/AppOnlineContentProvider';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useAccountBalance, useGetBannerByScreen, useGetChainSlugsByAccountType, useGetMantaPayConfig, useHandleMantaPaySync, useTokenGroup } from '@subwallet/extension-koni-ui/hooks';
+import { useAccountBalance, useGetChainSlugsByAccountType, useGetMantaPayConfig, useHandleMantaPaySync, useSetSessionLatest, useTokenGroup, useUpgradeFireFoxVersion } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { ClaimDAppStakingRewardsState, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { RemindBackUpSeedPhraseParamState, SessionStorage, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { isFirefox } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { Outlet } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
 
 export const GlobalSearchTokenModalId = 'globalSearchToken';
+const historyPageIgnoreRemind = 'ignoreRemind';
+const historyPageIgnoreBanner = 'ignoreBanner';
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const chainsByAccountType = useGetChainSlugsByAccountType();
   const tokenGroupStructure = useTokenGroup(chainsByAccountType);
+  const location = useLocation();
   const accountBalance = useAccountBalance(tokenGroupStructure.tokenGroupMap);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
   const [isConfirmedTermGeneral, setIsConfirmedTermGeneral] = useLocalStorage(CONFIRM_GENERAL_TERM, 'nonConfirmed');
-  const [claimDAppStakingRewardsState] = useLocalStorage<ClaimDAppStakingRewardsState>(CLAIM_DAPP_STAKING_REWARDS, DEFAULT_CLAIM_DAPP_STAKING_REWARDS_STATE);
-  const claimDAppStakingRewardsStateRef = useRef(claimDAppStakingRewardsState);
+  const { isNeedUpgradeVersion } = useUpgradeFireFoxVersion();
+  const { showAppPopup } = useContext(AppOnlineContentContext);
+
   const mantaPayConfig = useGetMantaPayConfig(currentAccount?.address);
   const isZkModeSyncing = useSelector((state: RootState) => state.mantaPay.isSyncing);
   const handleMantaPaySync = useHandleMantaPaySync();
+  const remindBackUpShowed = useRef<boolean>(false);
+  const showAppPopupFunc = useRef<(currentRoute: string | undefined) => void>(showAppPopup);
 
-  const banners = useGetBannerByScreen('home');
-
-  const firstBanner = useMemo((): CampaignBanner | undefined => banners[0], [banners]);
+  const { sessionLatest } = useSetSessionLatest();
 
   const onOpenGlobalSearchToken = useCallback(() => {
     activeModal(GlobalSearchTokenModalId);
@@ -57,22 +64,55 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [handleMantaPaySync, isZkModeSyncing, mantaPayConfig]);
 
   useEffect(() => {
-    if (firstBanner && claimDAppStakingRewardsStateRef.current !== ClaimDAppStakingRewardsState.NONE) {
-      activeModal(HOME_CAMPAIGN_BANNER_MODAL);
+    showAppPopupFunc.current = showAppPopup;
+  }, [showAppPopup]);
+
+  useEffect(() => {
+    const isFromIgnorePage = location.state as RemindBackUpSeedPhraseParamState;
+    const sessionLatestInit = (JSON.parse(localStorage.getItem(LATEST_SESSION) || JSON.stringify(DEFAULT_SESSION_VALUE))) as SessionStorage;
+
+    const handleOpenBanner = () => {
+      if (!sessionLatestInit.remind && isFromIgnorePage?.from !== historyPageIgnoreBanner) {
+        showAppPopupFunc.current(location.pathname);
+      }
+    };
+
+    if (isFirefox()) {
+      isNeedUpgradeVersion().then((rs) => {
+        if (rs) {
+          activeModal(REMIND_UPGRADE_FIREFOX_VERSION);
+        } else {
+          handleOpenBanner();
+        }
+      })
+        .catch(console.error);
+    } else {
+      handleOpenBanner();
     }
-  }, [activeModal, firstBanner]);
+  }, [activeModal, isNeedUpgradeVersion, location]);
+
+  useEffect(() => {
+    // Run remind backup seed phrase one time
+    if (!remindBackUpShowed.current) {
+      const infoSession = Date.now();
+
+      const isFromIgnorePage = location.state as RemindBackUpSeedPhraseParamState;
+
+      if (infoSession - sessionLatest.timeCalculate > sessionLatest.timeBackup &&
+        sessionLatest.remind &&
+        (isFromIgnorePage?.from !== historyPageIgnoreRemind)) {
+        inactiveModal(HOME_CAMPAIGN_BANNER_MODAL);
+        activeModal(REMIND_BACKUP_SEED_PHRASE_MODAL);
+        remindBackUpShowed.current = true;
+      }
+    }
+  }, [activeModal, inactiveModal, location, sessionLatest]);
 
   useEffect(() => {
     if (isConfirmedTermGeneral.includes('nonConfirmed')) {
       activeModal(GENERAL_TERM_AND_CONDITION_MODAL);
     }
   }, [activeModal, isConfirmedTermGeneral, setIsConfirmedTermGeneral]);
-
-  useEffect(() => {
-    if (claimDAppStakingRewardsState === ClaimDAppStakingRewardsState.NONE) {
-      activeModal(CLAIM_DAPP_STAKING_REWARDS_MODAL);
-    }
-  }, [activeModal, claimDAppStakingRewardsState]);
 
   return (
     <>
@@ -89,6 +129,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           >
             <Outlet />
             <GeneralTermModal onOk={onAfterConfirmTermModal} />
+            <RemindUpgradeFirefoxVersion />
           </Layout.Home>
         </div>
       </HomeContext.Provider>
@@ -99,7 +140,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         sortedTokenSlugs={tokenGroupStructure.sortedTokenSlugs}
         tokenBalanceMap={accountBalance.tokenBalanceMap}
       />
-      {firstBanner && <CampaignBannerModal banner={firstBanner} />}
     </>
   );
 }

@@ -10,9 +10,9 @@ import React from 'react';
 import styled from 'styled-components';
 
 interface Props extends ThemeProps {
-  type?: 'info' | 'warning';
+  type?: 'info' | 'warning' | 'error';
   title: string;
-  description: string;
+  description: React.ReactNode;
 }
 
 const Component: React.FC<Props> = (props: Props) => {
@@ -42,7 +42,7 @@ const AlertBox = styled(Component)<Props>(({ theme: { token } }: Props) => {
     textAlign: 'start',
     backgroundColor: token.colorBgSecondary,
     borderRadius: token.borderRadiusLG,
-    padding: `${token.paddingSM + 2}px ${token.paddingXS}px ${token.paddingSM + 2}px ${token.paddingSM}px`,
+    padding: `${token.paddingSM + 2}px ${token.paddingSM}px ${token.paddingSM + 2}px ${token.paddingSM}px`,
     display: 'flex',
     flexDirection: 'row',
     gap: token.sizeXS + 2,
@@ -85,6 +85,15 @@ const AlertBox = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
       '.alert-title': {
         color: token.colorWarning
+      }
+    },
+
+    '&.type-error': {
+      '--bg-color': getAlphaColor(token.colorError, 0.1),
+      '--icon-color': token.colorError,
+
+      '.alert-title': {
+        color: token.colorError
       }
     }
   };

@@ -34,6 +34,7 @@ const Component: React.FC<Props> = (props: Props) => {
         <MetaInfo.Account
           address={data.recipientAddress}
           label={t('Send to')}
+          networkPrefix={networkPrefix}
         />
 
         <MetaInfo.Chain
@@ -43,9 +44,9 @@ const Component: React.FC<Props> = (props: Props) => {
       </MetaInfo>
       <MetaInfo hasBackgroundWrapper={true}>
         {
-          (data.nftItemName || data.nftItem) && (
+          !!(data.nftItemName || data.nftItem) && (
             <MetaInfo.Default label={t('NFT')}>
-              {data.nftItemName || data.nftItem.name || `${data.nftItem.collectionId}_${data.nftItem.id}`}
+              {data.nftItemName || data.nftItem.name || data.nftItem.id}
             </MetaInfo.Default>
           )
         }

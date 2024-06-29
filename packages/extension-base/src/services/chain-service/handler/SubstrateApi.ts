@@ -4,6 +4,7 @@
 import '@polkadot/types-augment';
 
 import { options as acalaOptions } from '@acala-network/api';
+import { GearApi } from '@gear-js/api';
 import { rpc as oakRpc, types as oakTypes } from '@oak-foundation/types';
 import { MetadataItem } from '@subwallet/extension-base/background/KoniTypes';
 import { _API_OPTIONS_CHAIN_GROUP, API_AUTO_CONNECT_MS, API_CONNECT_TIMEOUT } from '@subwallet/extension-base/services/chain-service/constants';
@@ -12,20 +13,29 @@ import { DEFAULT_AUX } from '@subwallet/extension-base/services/chain-service/ha
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _SubstrateApi, _SubstrateDefaultFormatBalance } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils/promise';
-import { spec as availSpec } from 'avail-js-sdk';
+import { goldbergRpc, goldbergTypes, spec as availSpec } from 'avail-js-sdk';
 import { BehaviorSubject } from 'rxjs';
 
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { SubmittableExtrinsicFunction } from '@polkadot/api/promise/types';
 import { ApiOptions } from '@polkadot/api/types';
-import { typesBundle } from '@polkadot/apps-config/api';
+import { typesBundle as _typesBundle } from '@polkadot/apps-config/api';
 import { ProviderInterface } from '@polkadot/rpc-provider/types';
 import { TypeRegistry } from '@polkadot/types/create';
-import { Registry } from '@polkadot/types/types';
+import { OverrideBundleDefinition, Registry } from '@polkadot/types/types';
 import { BN, formatBalance } from '@polkadot/util';
 import { defaults as addressDefaults } from '@polkadot/util-crypto/address/defaults';
 
-import goldbergSpec from './chain-spec/goldberg';
+const typesBundle = { ..._typesBundle };
+
+// Override avail spec for signedExtensions
+const _availSpec: OverrideBundleDefinition = {
+  signedExtensions: availSpec.signedExtensions
+};
+
+if (typesBundle.spec) {
+  typesBundle.spec.avail = _availSpec;
+}
 
 export class SubstrateApi implements _SubstrateApi {
   chainSlug: string;
@@ -91,7 +101,7 @@ export class SubstrateApi implements _SubstrateApi {
     const apiOption: ApiOptions = {
       provider,
       typesBundle,
-      registry: this.registry,
+      registry: this.registry, // This line makes this object registry to be the same as the api registry
       noInitWarn: true
     };
 
@@ -110,28 +120,30 @@ export class SubstrateApi implements _SubstrateApi {
     if (externalApiPromise) {
       api = externalApiPromise;
     } else if (_API_OPTIONS_CHAIN_GROUP.acala.includes(this.chainSlug)) {
-      api = new ApiPromise(acalaOptions({ provider, noInitWarn: true }));
+      api = new ApiPromise(acalaOptions(apiOption));
     } else if (_API_OPTIONS_CHAIN_GROUP.turing.includes(this.chainSlug)) {
       api = new ApiPromise({
-        provider,
+        ...apiOption,
         rpc: oakRpc,
-        types: oakTypes,
-        noInitWarn: true
+        types: oakTypes
       });
     } else if (_API_OPTIONS_CHAIN_GROUP.avail.includes(this.chainSlug)) {
       api = new ApiPromise({
-        provider,
+        ...apiOption,
         rpc: availSpec.rpc,
         types: availSpec.types,
-        signedExtensions: availSpec.signedExtensions,
-        noInitWarn: true
+        signedExtensions: availSpec.signedExtensions
       });
     } else if (_API_OPTIONS_CHAIN_GROUP.goldberg.includes(this.chainSlug)) {
       api = new ApiPromise({
+        ...apiOption,
+        rpc: goldbergRpc,
+        types: goldbergTypes,
+        signedExtensions: availSpec.signedExtensions
+      });
+    } else if (_API_OPTIONS_CHAIN_GROUP.gear.includes(this.chainSlug)) {
+      api = new GearApi({
         provider,
-        rpc: goldbergSpec.rpc,
-        types: goldbergSpec.types,
-        signedExtensions: goldbergSpec.signedExtensions,
         noInitWarn: true
       });
     } else {
@@ -274,7 +286,11 @@ export class SubstrateApi implements _SubstrateApi {
     this.systemName = systemName.toString();
     this.systemVersion = systemVersion.toString();
 
-    const properties = registry.createType('ChainProperties', { ss58Format: api.registry.chainSS58, tokenDecimals: api.registry.chainDecimals, tokenSymbol: api.registry.chainTokens });
+    const properties = registry.createType('ChainProperties', {
+      ss58Format: api.registry.chainSS58,
+      tokenDecimals: api.registry.chainDecimals,
+      tokenSymbol: api.registry.chainTokens
+    });
     const ss58Format = properties.ss58Format.unwrapOr(DEFAULT_SS58).toNumber();
     const tokenSymbol = properties.tokenSymbol.unwrapOr([formatBalance.getDefaults().unit, ...DEFAULT_AUX]);
     const tokenDecimals = properties.tokenDecimals.unwrapOr([DEFAULT_DECIMALS]);

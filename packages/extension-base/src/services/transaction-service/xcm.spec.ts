@@ -3,7 +3,7 @@
 
 import { AssetRefMap, ChainAssetMap, ChainInfoMap } from '@subwallet/chain-list';
 import { _AssetRef } from '@subwallet/chain-list/types';
-import { createXcmExtrinsic } from '@subwallet/extension-base/koni/api/xcm';
+import { createXcmExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -79,13 +79,21 @@ describe('test token transfer', () => {
   });
 
   it('xcm check', async () => {
-    const rawSrcChains = Object.values(AssetRefMap).map((value) => value.srcChain);
+    const rawChainsMap: Record<string, string> = {};
+
+    Object.values(AssetRefMap).forEach((value) => {
+      rawChainsMap[value.srcChain] = value.srcChain;
+    });
+    const rawSrcChains = Object.keys(rawChainsMap).map((value) => value);
     const errorList: _AssetRef[] = [];
 
     await Promise.all(rawSrcChains.map(async (srcChain) => {
       const chainInfo = ChainInfoMap[srcChain];
 
-      substrateApiMap[chainInfo.slug] = await substrateChainHandler.initApi(srcChain, chainInfo.providers[Object.keys(chainInfo.providers)[0]]);
+      const providerIndex = chainInfo.slug !== 'astar' ? 0 : 1;
+      const provider = chainInfo.providers[Object.keys(chainInfo.providers)[providerIndex]];
+
+      substrateApiMap[chainInfo.slug] = await substrateChainHandler.initApi(srcChain, provider);
     }));
 
     for (const assetRef of Object.values(AssetRefMap)) {

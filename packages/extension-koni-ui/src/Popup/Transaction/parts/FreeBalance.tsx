@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { useGetBalance } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -15,12 +16,23 @@ type Props = ThemeProps & {
   label?: string;
   chain?: string;
   onBalanceReady?: (rs: boolean) => void;
+  hidden?: boolean;
+  isSubscribe?: boolean;
+  extrinsicType?: ExtrinsicType;
 }
 
-const Component = ({ address, chain, className, label, onBalanceReady, tokenSlug }: Props) => {
+const Component = ({ address,
+  chain,
+  className,
+  extrinsicType,
+  hidden,
+  isSubscribe,
+  label,
+  onBalanceReady,
+  tokenSlug }: Props) => {
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
-  const { error, isLoading, nativeTokenBalance, nativeTokenSlug, tokenBalance } = useGetBalance(chain, address, tokenSlug);
+  const { error, isLoading, nativeTokenBalance, nativeTokenSlug, tokenBalance } = useGetBalance(chain, address, tokenSlug, isSubscribe, extrinsicType);
 
   useEffect(() => {
     onBalanceReady?.(!isLoading && !error);
@@ -30,8 +42,22 @@ const Component = ({ address, chain, className, label, onBalanceReady, tokenSlug
     return <></>;
   }
 
+  if (!address) {
+    return (
+      <Typography.Paragraph className={CN(className, 'free-balance', {
+        hidden: hidden
+      })}
+      >
+        {t('Select account to view available balance')}
+      </Typography.Paragraph>
+    );
+  }
+
   return (
-    <Typography.Paragraph className={CN(className, 'free-balance')}>
+    <Typography.Paragraph className={CN(className, 'free-balance', {
+      hidden: hidden
+    })}
+    >
       {!error && <span className='__label'>{label || t('Sender available balance:')}</span>}
       {isLoading && <ActivityIndicator size={14} />}
       {error && <Typography.Text className={'error-message'}>{error}</Typography.Text>}

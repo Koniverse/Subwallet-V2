@@ -5,16 +5,18 @@ import { ConfirmationDefinitions, ExtrinsicType } from '@subwallet/extension-bas
 import { AccountJson, AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
-import { useConfirmationsInfo, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { AlertModal } from '@subwallet/extension-koni-ui/components';
+import { isProductionMode, NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
+import { useAlert, useConfirmationsInfo, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ConfirmationType } from '@subwallet/extension-koni-ui/stores/base/RequestState';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isRawPayload } from '@subwallet/extension-koni-ui/utils';
+import { AccountSignMode, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { getSignMode, isRawPayload } from '@subwallet/extension-koni-ui/utils';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 import { SignerPayloadJSON } from '@polkadot/types/types';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { ConfirmationHeader } from './parts';
 import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
@@ -34,11 +36,14 @@ const titleMap: Record<ConfirmationType, string> = {
   notSupportWCRequest: detectTranslate('WalletConnect')
 } as Record<ConfirmationType, string>;
 
+const alertModalId = 'confirmation-alert-modal';
+
 const Component = function ({ className }: Props) {
   const { confirmationQueue, numberOfConfirmations } = useConfirmationsInfo();
   const [index, setIndex] = useState(0);
   const confirmation = confirmationQueue[index] || null;
   const { t } = useTranslation();
+  const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
   const { transactionRequest } = useSelector((state) => state.requestState);
 
@@ -65,14 +70,20 @@ const Component = function ({ className }: Props) {
         const _isMessage = isRawPayload(request.request.payload);
 
         account = request.account;
+        const isEthereum = isEthereumAddress(account.address);
 
         if (account.isHardware) {
-          if (_isMessage) {
-            canSign = false;
+          if (account.isGeneric) {
+            canSign = !isEthereum;
           } else {
-            const payload = request.request.payload as SignerPayloadJSON;
+            if (_isMessage) {
+              canSign = true;
+            } else {
+              const payload = request.request.payload as SignerPayloadJSON;
 
-            canSign = !!account.availableGenesisHashes?.includes(payload.genesisHash);
+              // Valid even with evm ledger account (evm - availableGenesisHashes is empty)
+              canSign = !!account.availableGenesisHashes?.includes(payload.genesisHash);
+            }
           }
         } else {
           canSign = true;
@@ -87,7 +98,15 @@ const Component = function ({ className }: Props) {
         isMessage = confirmation.type === 'evmSignatureRequest';
       }
 
-      if (account?.isReadOnly || !canSign) {
+      const signMode = getSignMode(account);
+      const isEvm = isEthereumAddress(account?.address);
+
+      const notSupport = signMode === AccountSignMode.READ_ONLY ||
+        signMode === AccountSignMode.UNKNOWN ||
+        (signMode === AccountSignMode.QR && isEvm && isProductionMode) ||
+        !canSign;
+
+      if (notSupport) {
         return (
           <NotSupportConfirmation
             account={account}
@@ -99,8 +118,14 @@ const Component = function ({ className }: Props) {
       }
     }
 
-    if (confirmation.item.isInternal) {
-      return <TransactionConfirmation confirmation={confirmation} />;
+    if (confirmation.item.isInternal && confirmation.type !== 'connectWCRequest') {
+      return (
+        <TransactionConfirmation
+          closeAlert={closeAlert}
+          confirmation={confirmation}
+          openAlert={openAlert}
+        />
+      );
     }
 
     switch (confirmation.type) {
@@ -143,7 +168,7 @@ const Component = function ({ className }: Props) {
     }
 
     return null;
-  }, [confirmation]);
+  }, [closeAlert, confirmation, openAlert]);
 
   const headerTitle = useMemo((): string => {
     if (!confirmation) {
@@ -165,17 +190,65 @@ const Component = function ({ className }: Props) {
           return t('Transfer confirmation');
         case ExtrinsicType.STAKING_JOIN_POOL:
         case ExtrinsicType.STAKING_BOND:
-          return t('Add to bond confirm');
+        case ExtrinsicType.JOIN_YIELD_POOL:
+          return t('Add to stake confirm');
         case ExtrinsicType.STAKING_LEAVE_POOL:
         case ExtrinsicType.STAKING_UNBOND:
-          return t('Unbond confirm');
+          return t('Unstake confirm');
         case ExtrinsicType.STAKING_WITHDRAW:
+        case ExtrinsicType.STAKING_POOL_WITHDRAW:
           return t('Withdrawal confirm');
         case ExtrinsicType.STAKING_CLAIM_REWARD:
           return t('Claim rewards confirm');
         case ExtrinsicType.STAKING_CANCEL_UNSTAKE:
           return t('Cancel unstake confirm');
-        default:
+        case ExtrinsicType.MINT_VDOT:
+          return t('Mint vDOT confirm');
+        case ExtrinsicType.MINT_VMANTA:
+          return t('Mint vMANTA confirm');
+        case ExtrinsicType.MINT_LDOT:
+          return t('Mint LDOT confirm');
+        case ExtrinsicType.MINT_SDOT:
+          return t('Mint sDOT confirm');
+        case ExtrinsicType.MINT_QDOT:
+          return t('Mint qDOT confirm');
+        case ExtrinsicType.MINT_STDOT:
+          return t('Mint stDOT confirm');
+        case ExtrinsicType.REDEEM_VDOT:
+          return t('Redeem vDOT confirm');
+        case ExtrinsicType.REDEEM_VMANTA:
+          return t('Redeem vMANTA confirm');
+        case ExtrinsicType.REDEEM_LDOT:
+          return t('Redeem LDOT confirm');
+        case ExtrinsicType.REDEEM_SDOT:
+          return t('Redeem sDOT confirm');
+        case ExtrinsicType.REDEEM_QDOT:
+          return t('Redeem qDOT confirm');
+        case ExtrinsicType.REDEEM_STDOT:
+          return t('Redeem stDOT confirm');
+        case ExtrinsicType.UNSTAKE_VDOT:
+          return t('Unstake vDOT confirm');
+        case ExtrinsicType.UNSTAKE_VMANTA:
+          return t('Unstake vMANTA confirm');
+        case ExtrinsicType.UNSTAKE_LDOT:
+          return t('Unstake LDOT confirm');
+        case ExtrinsicType.UNSTAKE_SDOT:
+          return t('Unstake sDOT confirm');
+        case ExtrinsicType.UNSTAKE_STDOT:
+          return t('Unstake qDOT confirm');
+        case ExtrinsicType.UNSTAKE_QDOT:
+          return t('Unstake stDOT confirm');
+        case ExtrinsicType.STAKING_COMPOUNDING:
+          return t('Stake compound confirm');
+        case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:
+          return t('Cancel compound confirm');
+        case ExtrinsicType.TOKEN_SPENDING_APPROVAL:
+          return t('Token approve');
+        case ExtrinsicType.SWAP:
+          return t('Swap confirmation');
+        case ExtrinsicType.CROWDLOAN:
+        case ExtrinsicType.EVM_EXECUTE:
+        case ExtrinsicType.UNKNOWN:
           return t('Transaction confirm');
       }
     } else {
@@ -192,16 +265,26 @@ const Component = function ({ className }: Props) {
   }, [index, numberOfConfirmations]);
 
   return (
-    <div className={className}>
-      <ConfirmationHeader
-        index={index}
-        numberOfConfirmations={numberOfConfirmations}
-        onClickNext={nextConfirmation}
-        onClickPrev={prevConfirmation}
-        title={headerTitle}
-      />
-      {content}
-    </div>
+    <>
+      <div className={className}>
+        <ConfirmationHeader
+          index={index}
+          numberOfConfirmations={numberOfConfirmations}
+          onClickNext={nextConfirmation}
+          onClickPrev={prevConfirmation}
+          title={headerTitle}
+        />
+        {content}
+      </div>
+      {
+        !!alertProps && (
+          <AlertModal
+            modalId={alertModalId}
+            {...alertProps}
+          />
+        )
+      }
+    </>
   );
 };
 

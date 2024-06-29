@@ -3,8 +3,8 @@
 
 import { ChainAssetMap, ChainInfoMap } from '@subwallet/chain-list';
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
-import { createTransferExtrinsic } from '@subwallet/extension-base/koni/api/dotsama/transfer';
-import { getERC20TransactionObject, getEVMTransactionObject } from '@subwallet/extension-base/koni/api/tokens/evm/transfer';
+import { createTransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/token';
+import { getERC20TransactionObject, getEVMTransactionObject } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
 import { _getContractAddressOfToken, _isLocalToken, _isTokenEvmSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
@@ -98,16 +98,15 @@ describe('test token transfer', () => {
       await _api.isReady;
 
       const assets = Object.values(ChainAssetMap).filter((asset) => asset.originChain === networkKey && ![_AssetType.ERC721, _AssetType.PSP34].includes(asset.assetType));
-      const evmApiMap = evmChainHandler.getEvmApiMap();
 
       for (const asset of assets) {
         try {
           let transaction: TransactionConfig;
 
           if (_isTokenEvmSmartContract(asset) || _isLocalToken(asset)) {
-            [transaction] = await getERC20TransactionObject(_getContractAddressOfToken(asset), chain, '0x29d6d6d84c9662486198667b5a9fbda3e698b23f', '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b', '0', false, evmApiMap);
+            [transaction] = await getERC20TransactionObject(_getContractAddressOfToken(asset), chain, '0x29d6d6d84c9662486198667b5a9fbda3e698b23f', '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b', '0', false, _api);
           } else {
-            [transaction] = await getEVMTransactionObject(chain, '0x29d6d6d84c9662486198667b5a9fbda3e698b23f', '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b', '0', false, evmApiMap);
+            [transaction] = await getEVMTransactionObject(chain, '0x29d6d6d84c9662486198667b5a9fbda3e698b23f', '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b', '0', false, _api);
           }
 
           if (transaction) {

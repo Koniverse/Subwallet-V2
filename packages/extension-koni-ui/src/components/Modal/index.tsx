@@ -5,6 +5,8 @@ export { default as DisconnectExtensionModal } from './DisconnectExtensionModal'
 export { default as RequestCameraAccessModal } from './RequestCameraAccessModal';
 export { default as RequestCreatePasswordModal } from './RequestCreatePasswordModal';
 export { default as ResetWalletModal } from './ResetWalletModal';
+export { default as RemindBackupSeedPhraseModal } from './RemindBackupSeedPhraseModal';
+export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVersion';
 export { SortingModal } from './SortingModal';
 
 export * from './Account';
@@ -15,4 +17,5 @@ export * from './Customize/CustomizeModal';
 export * from './FilterModal';
 export * from './GlobalSearchTokenModal';
 export * from './ReceiveModal';
-export * from './Staking';
+export * from './Common';
+export * from './Announcement';

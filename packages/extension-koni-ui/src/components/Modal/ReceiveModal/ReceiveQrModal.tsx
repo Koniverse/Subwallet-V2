@@ -9,12 +9,11 @@ import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotifi
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getScanExplorerAddressInfoUrl } from '@subwallet/extension-koni-ui/utils';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
 import { Button, Icon, Logo, ModalContext, SwModal, SwQRCode } from '@subwallet/react-ui';
 import AccountItem from '@subwallet/react-ui/es/web3-block/account-item';
 import CN from 'classnames';
-import { CaretLeft, CopySimple, GlobeHemisphereWest } from 'phosphor-react';
+import { ArrowSquareOut, CaretLeft, CopySimple } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import styled from 'styled-components';
@@ -52,8 +51,8 @@ const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Pro
   }, [address, chainInfo]);
 
   const scanExplorerAddressUrl = useMemo(() => {
-    return getExplorerLink(chainInfo, formattedAddress, 'account') || getScanExplorerAddressInfoUrl(selectedNetwork || '', formattedAddress);
-  }, [selectedNetwork, formattedAddress, chainInfo]);
+    return getExplorerLink(chainInfo, formattedAddress, 'account');
+  }, [formattedAddress, chainInfo]);
 
   const handleClickViewOnExplorer = useCallback(() => {
     try {
@@ -139,13 +138,13 @@ const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Pro
           icon={
             <Icon
               customSize={'28px'}
-              phosphorIcon={GlobeHemisphereWest}
+              phosphorIcon={ArrowSquareOut}
               size='sm'
               weight={'fill'}
             />
           }
           onClick={handleClickViewOnExplorer}
-        >{t('View account on explorer')}</Button>
+        >{t('View on explorer')}</Button>
       </>
     </SwModal>
   );

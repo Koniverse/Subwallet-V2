@@ -3,16 +3,14 @@
 
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
+import { getPSP34ContractPromise, getTokenUriMethod, isAzeroDomainNft, isPinkRoboNft } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
+import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
 import { AZERO_DOMAIN_CONTRACTS } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { BaseNftApi, HandleNftParams } from '@subwallet/extension-base/koni/api/nft/nft';
 import { collectionApiFromArtZero, collectionDetailApiFromArtZero, externalUrlOnArtZero, ipfsApiFromArtZero, itemImageApiFromArtZero } from '@subwallet/extension-base/koni/api/nft/wasm_nft/utils';
-import { getPSP34ContractPromise, getTokenUriMethod, isAzeroDomainNft, isPinkRoboNft } from '@subwallet/extension-base/koni/api/tokens/wasm';
-import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/tokens/wasm/utils';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
-import axios from 'axios';
-import fetch from 'cross-fetch';
 
 import { ApiPromise } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
@@ -121,11 +119,9 @@ export class WasmNftApi extends BaseNftApi {
 
     const nftItemImageSrc = `${itemImageApiFromArtZero(this.chain)}?input=${parsedTokenUri}&size=500`;
 
-    const collectionImageUrl = await axios(nftItemImageSrc, {
-      method: 'GET'
-    });
+    const collectionImageUrl = await fetch(nftItemImageSrc);
 
-    return collectionImageUrl.data as string;
+    return await collectionImageUrl.text();
   }
 
   private async parseFeaturedCollectionImage (smartContract: string) {
@@ -157,11 +153,9 @@ export class WasmNftApi extends BaseNftApi {
 
     const collectionImageSrc = `${itemImageApiFromArtZero(this.chain)}?input=${parsedCollectionImage}&size=500`;
 
-    const collectionImageUrl = await axios(collectionImageSrc, {
-      method: 'GET'
-    });
+    const collectionImageUrl = await fetch(collectionImageSrc);
 
-    return collectionImageUrl.data as string;
+    return await collectionImageUrl.text();
   }
 
   // private async getCollectionAttributes (contractPromise: ContractPromise): Promise<CollectionAttributes> {

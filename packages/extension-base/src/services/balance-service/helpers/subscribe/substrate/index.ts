@@ -1,56 +1,97 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { GearApi } from '@gear-js/api';
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
-import { APIItemState } from '@subwallet/extension-base/background/KoniTypes';
+import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { SUB_TOKEN_REFRESH_BALANCE_INTERVAL } from '@subwallet/extension-base/constants';
-import { PalletNominationPoolsPoolMember } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
-import { getPSP22ContractPromise } from '@subwallet/extension-base/koni/api/tokens/wasm';
-import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/tokens/wasm/utils';
-import { state } from '@subwallet/extension-base/koni/background/handlers';
-import { subscribeERC20Interval } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/evm';
+import { _getForeignAssetPalletLockedBalance, _getForeignAssetPalletTransferable, PalletAssetsAssetAccount } from '@subwallet/extension-base/core/substrate/foreign-asset-pallet';
+import { _getTotalStakeInNominationPool, PalletNominationPoolsPoolMember } from '@subwallet/extension-base/core/substrate/nominationpools-pallet';
+import { _getSystemPalletTotalBalance, _getSystemPalletTransferable, FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/system-pallet';
+import { getPSP22ContractPromise } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
+import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
 import { _BALANCE_CHAIN_GROUP, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _checkSmartContractSupportByChain, _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _isChainEvmCompatible, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { BalanceItem, TokenBalanceRaw } from '@subwallet/extension-base/types';
+import { _checkSmartContractSupportByChain, _getChainExistentialDeposit, _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _getTokenTypesSupportedByChain, _getXcmAssetMultilocation, _isBridgedToken, _isChainEvmCompatible, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { BalanceItem, SubscribeBasePalletBalance, SubscribeSubstratePalletBalance, TokenBalanceRaw } from '@subwallet/extension-base/types';
+import { filterAssetsByChainAndType, getGRC20ContractPromise, GRC20 } from '@subwallet/extension-base/utils';
+import BigN from 'bignumber.js';
+import { combineLatest, Observable } from 'rxjs';
 
-import { ApiPromise } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
-import { AccountInfo } from '@polkadot/types/interfaces';
-import { BN, BN_ZERO } from '@polkadot/util';
+import { Codec } from '@polkadot/types/types';
+import { BN, BN_ZERO, noop, u8aToHex } from '@polkadot/util';
+import { decodeAddress } from '@polkadot/util-crypto';
 
+import { subscribeERC20Interval } from '../evm';
 import { subscribeEquilibriumTokenBalance } from './equilibrium';
 
-export async function subscribeSubstrateBalance (addresses: string[], chainInfo: _ChainInfo, chain: string, networkAPI: _SubstrateApi, evmApiMap: Record<string, _EvmApi>, callBack: (rs: BalanceItem[]) => void) {
+export const subscribeSubstrateBalance = async (addresses: string[], chainInfo: _ChainInfo, assetMap: Record<string, _ChainAsset>, substrateApi: _SubstrateApi, evmApi: _EvmApi, callback: (rs: BalanceItem[]) => void, extrinsicType?: ExtrinsicType) => {
   let unsubNativeToken: () => void;
-
-  if (!_BALANCE_CHAIN_GROUP.kintsugi.includes(chain) && !_BALANCE_CHAIN_GROUP.genshiro.includes(chain) && !_BALANCE_CHAIN_GROUP.equilibrium_parachain.includes(chain)) {
-    unsubNativeToken = await subscribeWithSystemAccountPallet(addresses, chainInfo, networkAPI.api, callBack);
-  }
-
   let unsubLocalToken: () => void;
   let unsubEvmContractToken: () => void;
   let unsubWasmContractToken: () => void;
+  let unsubBridgedToken: () => void;
+  let unsubGrcToken: () => void;
+
+  const chain = chainInfo.slug;
+  const baseParams: SubscribeBasePalletBalance = {
+    addresses,
+    chainInfo,
+    assetMap,
+    callback,
+    extrinsicType
+  };
+
+  const substrateParams: SubscribeSubstratePalletBalance = {
+    ...baseParams,
+    substrateApi: substrateApi.api
+  };
+
+  if (!_BALANCE_CHAIN_GROUP.kintsugi.includes(chain) && !_BALANCE_CHAIN_GROUP.genshiro.includes(chain) && !_BALANCE_CHAIN_GROUP.equilibrium_parachain.includes(chain)) {
+    unsubNativeToken = await subscribeWithSystemAccountPallet(substrateParams);
+  }
 
   try {
     if (_BALANCE_CHAIN_GROUP.bifrost.includes(chain)) {
-      unsubLocalToken = await subscribeTokensAccountsPallet(addresses, chain, networkAPI.api, callBack);
+      unsubLocalToken = await subscribeTokensAccountsPallet(substrateParams);
     } else if (_BALANCE_CHAIN_GROUP.kintsugi.includes(chain)) {
-      unsubLocalToken = await subscribeTokensAccountsPallet(addresses, chain, networkAPI.api, callBack, true);
+      unsubLocalToken = await subscribeTokensAccountsPallet({
+        ...substrateParams,
+        includeNativeToken: true
+      });
     } else if (_BALANCE_CHAIN_GROUP.statemine.includes(chain)) {
-      unsubLocalToken = await subscribeAssetsAccountPallet(addresses, chain, networkAPI.api, callBack);
+      unsubLocalToken = await subscribeAssetsAccountPallet(substrateParams);
     } else if (_BALANCE_CHAIN_GROUP.genshiro.includes(chain) || _BALANCE_CHAIN_GROUP.equilibrium_parachain.includes(chain)) {
-      unsubLocalToken = await subscribeEquilibriumTokenBalance(addresses, chain, networkAPI.api, callBack, true);
+      unsubLocalToken = await subscribeEquilibriumTokenBalance({
+        ...substrateParams,
+        includeNativeToken: true
+      });
     } else if (_BALANCE_CHAIN_GROUP.centrifuge.includes(chain)) {
-      unsubLocalToken = await subscribeOrmlTokensPallet(addresses, chain, networkAPI.api, callBack);
+      unsubLocalToken = await subscribeOrmlTokensPallet(substrateParams);
     }
 
-    if (_isChainEvmCompatible(chainInfo)) {
-      unsubEvmContractToken = subscribeERC20Interval(addresses, chain, evmApiMap, callBack);
+    if (_BALANCE_CHAIN_GROUP.supportBridged.includes(chain)) {
+      unsubBridgedToken = await subscribeForeignAssetBalance(substrateParams);
+    }
+
+    /**
+     * Some substrate chain use evm account format but not have evm connection and support ERC20 contract,
+     * so we need to check if the chain is compatible with EVM and support ERC20
+     * */
+    if (_isChainEvmCompatible(chainInfo) && _getTokenTypesSupportedByChain(chainInfo).includes(_AssetType.ERC20)) { // Get sub-token for EVM-compatible chains
+      unsubEvmContractToken = subscribeERC20Interval({
+        ...baseParams,
+        evmApi: evmApi
+      });
     }
 
     if (_checkSmartContractSupportByChain(chainInfo, _AssetType.PSP22)) { // Get sub-token for substrate-based chains
-      unsubWasmContractToken = subscribePSP22Balance(addresses, chain, networkAPI.api, callBack);
+      unsubWasmContractToken = subscribePSP22Balance(substrateParams);
+    }
+
+    if (_checkSmartContractSupportByChain(chainInfo, _AssetType.GRC20)) { // Get sub-token for substrate-based chains
+      unsubGrcToken = subscribeGRC20Balance(substrateParams);
     }
   } catch (err) {
     console.warn(err);
@@ -61,85 +102,126 @@ export async function subscribeSubstrateBalance (addresses: string[], chainInfo:
     unsubLocalToken && unsubLocalToken();
     unsubEvmContractToken && unsubEvmContractToken();
     unsubWasmContractToken && unsubWasmContractToken();
+    unsubBridgedToken && unsubBridgedToken();
+    unsubGrcToken?.();
   };
-}
+};
 
 // handler according to different logic
-async function subscribeWithSystemAccountPallet (addresses: string[], chainInfo: _ChainInfo, networkAPI: ApiPromise, callBack: (rs: BalanceItem[]) => void) {
+// eslint-disable-next-line @typescript-eslint/require-await
+const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo, extrinsicType, substrateApi }: SubscribeSubstratePalletBalance) => {
   const chainNativeTokenSlug = _getChainNativeTokenSlug(chainInfo);
 
-  // TODO: Need handle case error
-  const unsub = await networkAPI.query.system.account.multi(addresses, async (balances: AccountInfo[]) => {
-    const pooledStakingBalances: BN[] = [];
+  const balanceSubscribe: Observable<Codec[]> = substrateApi.rx.query.system.account.multi(addresses);
 
-    if (_isSubstrateRelayChain(chainInfo) && networkAPI.query.nominationPools) {
-      const poolMemberDatas = await networkAPI.query.nominationPools.poolMembers?.multi(addresses);
+  let poolSubscribe: Observable<Codec[]> | undefined; // add points in nomination pool back to user's balance
 
-      if (poolMemberDatas) {
-        for (const _poolMemberData of poolMemberDatas) {
-          const poolMemberData = _poolMemberData.toPrimitive() as unknown as PalletNominationPoolsPoolMember;
+  if ((_isSubstrateRelayChain(chainInfo) && substrateApi.query.nominationPools)) {
+    poolSubscribe = substrateApi.rx.query.nominationPools.poolMembers?.multi(addresses);
+  }
 
-          if (poolMemberData) {
-            let pooled = new BN(poolMemberData.points.toString());
-
-            Object.entries(poolMemberData.unbondingEras).forEach(([, amount]) => {
-              pooled = pooled.add(new BN(amount));
-            });
-
-            pooledStakingBalances.push(pooled);
-          } else {
-            pooledStakingBalances.push(BN_ZERO);
-          }
+  if (!poolSubscribe) {
+    poolSubscribe = new Observable<Codec[]>((subscriber) => {
+      subscriber.next(addresses.map(() => ({
+        toPrimitive () {
+          return null;
         }
-      }
-    }
+      } as Codec)));
+    });
+  }
 
-    const items: BalanceItem[] = balances.map((balance: AccountInfo, index) => {
-      let total = balance.data?.free?.toBn() || new BN(0);
-      const reserved = balance.data?.reserved?.toBn() || new BN(0);
-      // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-      const miscFrozen = balance.data?.miscFrozen?.toBn() || balance?.data?.frozen?.toBn() || new BN(0);
-      const feeFrozen = balance.data?.feeFrozen?.toBn() || new BN(0);
+  const subscription = combineLatest({ balances: balanceSubscribe, poolMemberInfos: poolSubscribe }).subscribe(({ balances, poolMemberInfos }) => {
+    const items: BalanceItem[] = balances.map((_balance, index) => {
+      const balanceInfo = _balance.toPrimitive() as unknown as FrameSystemAccountInfo;
 
-      let locked = reserved.add(miscFrozen);
+      const poolMemberInfo = poolMemberInfos[index].toPrimitive() as unknown as PalletNominationPoolsPoolMember;
 
-      total = total.add(reserved);
+      const nominationPoolBalance = poolMemberInfo ? _getTotalStakeInNominationPool(poolMemberInfo) : new BigN(0);
 
-      const pooledStakingBalance = pooledStakingBalances[index] || BN_ZERO;
-
-      if (pooledStakingBalance.gt(BN_ZERO)) {
-        total = total.add(pooledStakingBalance);
-        locked = locked.add(pooledStakingBalance);
-      }
-
-      const free = total.sub(locked);
+      const transferableBalance = _getSystemPalletTransferable(balanceInfo, _getChainExistentialDeposit(chainInfo), extrinsicType);
+      const totalBalance = _getSystemPalletTotalBalance(balanceInfo);
+      const totalLockedFromTransfer = new BigN(totalBalance).minus(transferableBalance).plus(nominationPoolBalance);
 
       return ({
         address: addresses[index],
         tokenSlug: chainNativeTokenSlug,
-        free: free.gte(BN_ZERO) ? free.toString() : '0',
-        locked: locked.toString(),
+        free: transferableBalance,
+        locked: totalLockedFromTransfer.toFixed(),
         state: APIItemState.READY,
-        substrateInfo: {
-          miscFrozen: miscFrozen.toString(),
-          reserved: reserved.toString(),
-          feeFrozen: feeFrozen.toString()
-        }
+        metadata: balanceInfo
       });
     });
 
-    callBack(items);
+    callback(items);
   });
 
   return () => {
-    unsub();
+    subscription.unsubscribe();
   };
+};
+
+const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, chainInfo, substrateApi }: SubscribeSubstratePalletBalance) => {
+  const chain = chainInfo.slug;
+  const tokenMap = filterAssetsByChainAndType(assetMap, chain, [_AssetType.LOCAL]);
+
+  // @ts-ignore
+  const unsubList = await Promise.all(Object.values(tokenMap).map(async (tokenInfo) => {
+    try {
+      const isBridgedToken = _isBridgedToken(tokenInfo);
+
+      if (isBridgedToken) {
+        const assetLocation = _getTokenOnChainInfo(tokenInfo) || _getXcmAssetMultilocation(tokenInfo);
+
+        return await substrateApi.query.foreignAssets.account.multi(addresses.map((address) => [assetLocation, address]), (balances) => {
+          const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
+            const accountInfo = balance?.toPrimitive() as PalletAssetsAssetAccount;
+
+            return {
+              address: addresses[index],
+              tokenSlug: tokenInfo.slug,
+              free: accountInfo ? _getForeignAssetPalletTransferable(accountInfo).toString() : '0',
+              locked: accountInfo ? _getForeignAssetPalletLockedBalance(accountInfo).toString() : '0',
+              state: APIItemState.READY
+            };
+          });
+
+          callback(items);
+        });
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+
+    return undefined;
+  }));
+
+  return () => {
+    unsubList.forEach((unsub) => {
+      unsub && unsub();
+    });
+  };
+};
+
+function extractOkResponse<T> (response: Record<string, T>): T | undefined {
+  if ('ok' in response) {
+    return response.ok;
+  }
+
+  if ('Ok' in response) {
+    return response.Ok;
+  }
+
+  return undefined;
 }
 
-function subscribePSP22Balance (addresses: string[], chain: string, api: ApiPromise, callBack: (result: BalanceItem[]) => void) {
-  let tokenList = {} as Record<string, _ChainAsset>;
+const subscribePSP22Balance = ({ addresses, assetMap, callback, chainInfo, substrateApi }: SubscribeSubstratePalletBalance) => {
+  const chain = chainInfo.slug;
   const psp22ContractMap = {} as Record<string, ContractPromise>;
+  const tokenList = filterAssetsByChainAndType(assetMap, chain, [_AssetType.PSP22]);
+
+  Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
+    psp22ContractMap[slug] = getPSP22ContractPromise(substrateApi, _getContractAddressOfToken(tokenInfo));
+  });
 
   const getTokenBalances = () => {
     Object.values(tokenList).map(async (tokenInfo) => {
@@ -147,13 +229,15 @@ function subscribePSP22Balance (addresses: string[], chain: string, api: ApiProm
         const contract = psp22ContractMap[tokenInfo.slug];
         const balances: BalanceItem[] = await Promise.all(addresses.map(async (address): Promise<BalanceItem> => {
           try {
-            const _balanceOf = await contract.query['psp22::balanceOf'](address, { gasLimit: getDefaultWeightV2(api) }, address);
+            const _balanceOf = await contract.query['psp22::balanceOf'](address, { gasLimit: getDefaultWeightV2(substrateApi) }, address);
             const balanceObj = _balanceOf?.output?.toPrimitive() as Record<string, any>;
+            const freeResponse = extractOkResponse(balanceObj) as number | string;
+            const free: string = freeResponse ? new BigN(freeResponse).toString() : '0';
 
             return {
               address: address,
               tokenSlug: tokenInfo.slug,
-              free: _balanceOf.output ? (balanceObj.ok as string ?? balanceObj.Ok as string) : '0',
+              free,
               locked: '0',
               state: APIItemState.READY
             };
@@ -170,17 +254,12 @@ function subscribePSP22Balance (addresses: string[], chain: string, api: ApiProm
           }
         }));
 
-        callBack(balances);
+        callback(balances);
       } catch (err) {
         console.warn(tokenInfo.slug, err); // TODO: error createType
       }
     });
   };
-
-  tokenList = state.getAssetByChainAndAsset(chain, [_AssetType.PSP22]);
-  Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
-    psp22ContractMap[slug] = getPSP22ContractPromise(api, _getContractAddressOfToken(tokenInfo));
-  });
 
   getTokenBalances();
 
@@ -189,11 +268,12 @@ function subscribePSP22Balance (addresses: string[], chain: string, api: ApiProm
   return () => {
     clearInterval(interval);
   };
-}
+};
 
-async function subscribeTokensAccountsPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem[]) => void, includeNativeToken?: boolean) {
+const subscribeTokensAccountsPallet = async ({ addresses, assetMap, callback, chainInfo, includeNativeToken, substrateApi }: SubscribeSubstratePalletBalance) => {
+  const chain = chainInfo.slug;
   const tokenTypes = includeNativeToken ? [_AssetType.NATIVE, _AssetType.LOCAL] : [_AssetType.LOCAL];
-  const tokenMap = state.getAssetByChainAndAsset(chain, tokenTypes);
+  const tokenMap = filterAssetsByChainAndType(assetMap, chain, tokenTypes);
 
   const unsubList = await Promise.all(Object.values(tokenMap).map(async (tokenInfo) => {
     try {
@@ -202,7 +282,7 @@ async function subscribeTokensAccountsPallet (addresses: string[], chain: string
 
       // Get Token Balance
       // @ts-ignore
-      return await api.query.tokens.accounts.multi(addresses.map((address) => [address, onChainInfo || assetId]), (balances: TokenBalanceRaw[]) => {
+      return await substrateApi.query.tokens.accounts.multi(addresses.map((address) => [address, onChainInfo || assetId]), (balances: TokenBalanceRaw[]) => {
         const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
           const tokenBalance = {
             reserved: balance.reserved || new BN(0),
@@ -218,15 +298,11 @@ async function subscribeTokensAccountsPallet (addresses: string[], chain: string
             tokenSlug: tokenInfo.slug,
             state: APIItemState.READY,
             free: freeBalance.toString(),
-            locked: lockedBalance.toString(),
-            substrateInfo: {
-              reserved: tokenBalance.reserved.toString(),
-              miscFrozen: tokenBalance.frozen.toString()
-            }
+            locked: lockedBalance.toString()
           };
         });
 
-        callBack(items);
+        callback(items);
       });
     } catch (err) {
       console.warn(err);
@@ -240,10 +316,11 @@ async function subscribeTokensAccountsPallet (addresses: string[], chain: string
       unsub && unsub();
     });
   };
-}
+};
 
-async function subscribeAssetsAccountPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem[]) => void) {
-  const tokenMap = state.getAssetByChainAndAsset(chain, [_AssetType.LOCAL]);
+const subscribeAssetsAccountPallet = async ({ addresses, assetMap, callback, chainInfo, includeNativeToken, substrateApi }: SubscribeSubstratePalletBalance) => {
+  const chain = chainInfo.slug;
+  const tokenMap = filterAssetsByChainAndType(assetMap, chain, [_AssetType.LOCAL]);
 
   Object.values(tokenMap).forEach((token) => {
     if (_MANTA_ZK_CHAIN_GROUP.includes(token.originChain) && token.symbol.startsWith(_ZK_ASSET_PREFIX)) {
@@ -255,27 +332,28 @@ async function subscribeAssetsAccountPallet (addresses: string[], chain: string,
     try {
       const assetIndex = _getTokenOnChainAssetId(tokenInfo);
 
+      if (assetIndex === '-1') {
+        return undefined;
+      }
+
       // Get Token Balance
-      return await api.query.assets.account.multi(addresses.map((address) => [assetIndex, address]), (balances) => {
+      return await substrateApi.query.assets.account.multi(addresses.map((address) => [assetIndex, address]), (balances) => {
         const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
-          // @ts-ignore
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment
-          const bdata = balance?.toHuman();
+          const bdata = balance?.toPrimitive();
 
           let frozen = BN_ZERO;
           let total = BN_ZERO;
 
           if (bdata) {
             // @ts-ignore
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
             const addressBalance = new BN(String(bdata?.balance).replaceAll(',', '') || '0');
 
             // @ts-ignore
-            if (bdata?.isFrozen) {
+            if (bdata?.isFrozen || ['Blocked', 'Frozen'].includes(bdata?.status as string)) { // Status 'Frozen' and 'Blocked' are for frozen balance
               frozen = addressBalance;
-            } else {
-              total = addressBalance;
             }
+
+            total = addressBalance;
           }
 
           const free = total.sub(frozen);
@@ -285,15 +363,11 @@ async function subscribeAssetsAccountPallet (addresses: string[], chain: string,
             tokenSlug: tokenInfo.slug,
             free: free.toString(),
             locked: frozen.toString(),
-            state: APIItemState.READY,
-            substrateInfo: {
-              miscFrozen: frozen.toString(),
-              reserved: '0'
-            }
+            state: APIItemState.READY
           };
         });
 
-        callBack(items);
+        callback(items);
       });
     } catch (err) {
       console.warn(err);
@@ -307,12 +381,13 @@ async function subscribeAssetsAccountPallet (addresses: string[], chain: string,
       unsub && unsub();
     });
   };
-}
+};
 
 // eslint-disable-next-line @typescript-eslint/require-await
-async function subscribeOrmlTokensPallet (addresses: string[], chain: string, api: ApiPromise, callBack: (rs: BalanceItem[]) => void): Promise<() => void> {
+const subscribeOrmlTokensPallet = async ({ addresses, assetMap, callback, chainInfo, substrateApi }: SubscribeSubstratePalletBalance): Promise<() => void> => {
+  const chain = chainInfo.slug;
   const tokenTypes = [_AssetType.LOCAL];
-  const tokenMap = state.getAssetByChainAndAsset(chain, tokenTypes);
+  const tokenMap = filterAssetsByChainAndType(assetMap, chain, tokenTypes);
 
   const unsubList = Object.values(tokenMap).map(async (tokenInfo) => {
     try {
@@ -320,7 +395,7 @@ async function subscribeOrmlTokensPallet (addresses: string[], chain: string, ap
 
       // Get Token Balance
       // @ts-ignore
-      const unsub = await api.query.ormlTokens.accounts.multi(addresses.map((address) => [address, onChainInfo]), (balances: TokenBalanceRaw[]) => {
+      const unsub = await substrateApi.query.ormlTokens.accounts.multi(addresses.map((address) => [address, onChainInfo]), (balances: TokenBalanceRaw[]) => {
         const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
           const tokenBalance = {
             reserved: balance.reserved || new BN(0),
@@ -338,15 +413,11 @@ async function subscribeOrmlTokensPallet (addresses: string[], chain: string, ap
             tokenSlug: tokenInfo.slug,
             state: APIItemState.READY,
             free: freeBalance.toString(),
-            locked: lockedBalance.toString(),
-            substrateInfo: {
-              reserved: tokenBalance.reserved.toString(),
-              miscFrozen: tokenBalance.frozen.toString()
-            }
+            locked: lockedBalance.toString()
           };
         });
 
-        callBack(items);
+        callback(items);
       });
 
       return unsub;
@@ -364,4 +435,64 @@ async function subscribeOrmlTokensPallet (addresses: string[], chain: string, ap
       }).catch(console.error);
     });
   };
-}
+};
+
+const subscribeGRC20Balance = ({ addresses, assetMap, callback, chainInfo, substrateApi }: SubscribeSubstratePalletBalance): VoidCallback => {
+  if (!(substrateApi instanceof GearApi)) {
+    console.warn('Cannot subscribe GRC20 balance without GearApi instance');
+
+    return noop;
+  }
+
+  const chain = chainInfo.slug;
+  const psp22ContractMap = {} as Record<string, GRC20>;
+  const tokenList = filterAssetsByChainAndType(assetMap, chain, [_AssetType.GRC20]);
+
+  Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
+    psp22ContractMap[slug] = getGRC20ContractPromise(substrateApi, _getContractAddressOfToken(tokenInfo));
+  });
+
+  const getTokenBalances = () => {
+    Object.values(tokenList).map(async (tokenInfo) => {
+      try {
+        const contract = psp22ContractMap[tokenInfo.slug];
+        const balances: BalanceItem[] = await Promise.all(addresses.map(async (address): Promise<BalanceItem> => {
+          try {
+            const actor = u8aToHex(decodeAddress(address));
+            const _balanceOf = await contract.balanceOf(actor, address);
+
+            return {
+              address: address,
+              tokenSlug: tokenInfo.slug,
+              free: _balanceOf.toString(10),
+              locked: '0',
+              state: APIItemState.READY
+            };
+          } catch (err) {
+            console.error(`Error on get balance of account ${address} for token ${tokenInfo.slug}`, err);
+
+            return {
+              address: address,
+              tokenSlug: tokenInfo.slug,
+              free: '0',
+              locked: '0',
+              state: APIItemState.READY
+            };
+          }
+        }));
+
+        callback(balances);
+      } catch (err) {
+        console.warn(tokenInfo.slug, err); // TODO: error createType
+      }
+    });
+  };
+
+  getTokenBalances();
+
+  const interval = setInterval(getTokenBalances, SUB_TOKEN_REFRESH_BALANCE_INTERVAL);
+
+  return () => {
+    clearInterval(interval);
+  };
+};

@@ -4,19 +4,19 @@
 import type { SwScreenLayoutProps } from '@subwallet/react-ui';
 
 import { LanguageType } from '@subwallet/extension-base/background/KoniTypes';
+import SelectAccount from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount';
 import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { SwScreenLayout } from '@subwallet/react-ui';
 import { SwTabBarItem } from '@subwallet/react-ui/es/sw-tab-bar';
 import CN from 'classnames';
-import { Aperture, Clock, Database, Rocket, Wallet } from 'phosphor-react';
+import { Aperture, Clock, Rocket, Vault, Wallet } from 'phosphor-react';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import Footer from '../parts/Footer';
-import SelectAccount from '../parts/SelectAccount';
 
 export interface LayoutBaseProps extends Omit<
 SwScreenLayoutProps,
@@ -24,11 +24,12 @@ SwScreenLayoutProps,
 >, ThemeProps {
   children: React.ReactNode | React.ReactNode[];
   showFooter?: boolean;
+  isDisableHeader?: boolean;
 }
 
 const specialLanguages: Array<LanguageType> = ['ja', 'ru'];
 
-const Component = ({ children, className, headerIcons, onBack, showFooter, ...props }: LayoutBaseProps) => {
+const Component = ({ children, className, headerIcons, isDisableHeader, onBack, showFooter, ...props }: LayoutBaseProps) => {
   const navigate = useNavigate();
   const { goHome } = useDefaultNavigate();
   const { pathname } = useLocation();
@@ -59,6 +60,16 @@ const Component = ({ children, className, headerIcons, onBack, showFooter, ...pr
     {
       icon: {
         type: 'phosphor',
+        phosphorIcon: Vault,
+        weight: 'fill'
+      },
+      label: t('Earning'),
+      key: 'earning',
+      url: '/home/earning'
+    },
+    {
+      icon: {
+        type: 'phosphor',
         phosphorIcon: Rocket,
         weight: 'fill'
       },
@@ -66,16 +77,16 @@ const Component = ({ children, className, headerIcons, onBack, showFooter, ...pr
       key: 'crowdloans',
       url: '/home/crowdloans'
     },
-    {
-      icon: {
-        type: 'phosphor',
-        phosphorIcon: Database,
-        weight: 'fill'
-      },
-      label: t('Staking'),
-      key: 'staking',
-      url: '/home/staking'
-    },
+    // {
+    //   icon: {
+    //     type: 'phosphor',
+    //     phosphorIcon: Database,
+    //     weight: 'fill'
+    //   },
+    //   label: t('Staking'),
+    //   key: 'staking',
+    //   url: '/home/staking'
+    // },
     {
       icon: {
         type: 'phosphor',
@@ -115,7 +126,7 @@ const Component = ({ children, className, headerIcons, onBack, showFooter, ...pr
   return (
     <SwScreenLayout
       {...props}
-      className={CN(className, { 'special-language': specialLanguages.includes(language) })}
+      className={CN(className, { 'special-language': specialLanguages.includes(language), 'disable-header': isDisableHeader })}
       footer={showFooter && <Footer />}
       headerContent={props.showHeader && <SelectAccount />}
       headerIcons={headerIcons}
@@ -139,6 +150,12 @@ const Base = styled(Component)<LayoutBaseProps>(({ theme: { token } }: LayoutBas
     '.ant-sw-tab-bar-item-label': {
       textAlign: 'center'
     }
+  },
+
+  '&.disable-header > .ant-sw-screen-layout-header': {
+    opacity: '0.4',
+    pointerEvents: 'none'
+
   },
 
   '&.special-language': {

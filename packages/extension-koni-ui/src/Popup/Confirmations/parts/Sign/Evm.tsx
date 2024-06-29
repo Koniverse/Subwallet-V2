@@ -27,6 +27,7 @@ interface Props extends ThemeProps {
   type: EvmSignatureSupportType;
   payload: ConfirmationDefinitions[EvmSignatureSupportType][0];
   extrinsicType?: ExtrinsicType;
+  txExpirationTime?: number;
 }
 
 const handleConfirm = async (type: EvmSignatureSupportType, id: string, payload: string) => {
@@ -53,7 +54,7 @@ const handleSignature = async (type: EvmSignatureSupportType, id: string, signat
 };
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, extrinsicType, id, payload, type } = props;
+  const { className, extrinsicType, id, payload, txExpirationTime, type } = props;
   const { payload: { account, canSign, hashPayload } } = payload;
   const chainId = (payload.payload as EvmSendTransactionRequest)?.chainId || 1;
 
@@ -67,7 +68,8 @@ const Component: React.FC<Props> = (props: Props) => {
   const checkUnlock = useUnlockChecker();
 
   const signMode = useMemo(() => getSignMode(account), [account]);
-  const isLedger = useMemo(() => signMode === AccountSignMode.LEDGER, [signMode]);
+  const isLedger = useMemo(() => signMode === AccountSignMode.LEGACY_LEDGER || signMode === AccountSignMode.GENERIC_LEDGER, [signMode]);
+  const [showQuoteExpired, setShowQuoteExpired] = useState<boolean>(false);
   const isMessage = isEvmMessage(payload);
 
   const [loading, setLoading] = useState(false);
@@ -79,7 +81,7 @@ const Component: React.FC<Props> = (props: Props) => {
     refresh: refreshLedger,
     signMessage: ledgerSignMessage,
     signTransaction: ledgerSignTransaction,
-    warning: ledgerWarning } = useLedger(chain?.slug, isLedger);
+    warning: ledgerWarning } = useLedger(chain?.slug, isLedger, true);
 
   const isLedgerConnected = useMemo(() => !isLocked && !isLedgerLoading && !!ledger, [
     isLedgerLoading,
@@ -91,7 +93,8 @@ const Component: React.FC<Props> = (props: Props) => {
     switch (signMode) {
       case AccountSignMode.QR:
         return QrCode;
-      case AccountSignMode.LEDGER:
+      case AccountSignMode.LEGACY_LEDGER:
+      case AccountSignMode.GENERIC_LEDGER:
         return Swatches;
       case AccountSignMode.INJECTED:
         return Wallet;
@@ -149,7 +152,9 @@ const Component: React.FC<Props> = (props: Props) => {
     setLoading(true);
 
     setTimeout(() => {
-      const signPromise = isMessage ? ledgerSignMessage(u8aToU8a(hashPayload), account.accountIndex, account.addressOffset) : ledgerSignTransaction(hexToU8a(hashPayload), account.accountIndex, account.addressOffset);
+      const signPromise = isMessage
+        ? ledgerSignMessage(u8aToU8a(hashPayload), account.accountIndex, account.addressOffset)
+        : ledgerSignTransaction(hexToU8a(hashPayload), new Uint8Array(0), account.accountIndex, account.addressOffset);
 
       signPromise
         .then(({ signature }) => {
@@ -204,11 +209,24 @@ const Component: React.FC<Props> = (props: Props) => {
   const onConfirm = useCallback(() => {
     removeTransactionPersist(extrinsicType);
 
+    if (txExpirationTime) {
+      const currentTime = +Date.now();
+
+      if (currentTime >= txExpirationTime) {
+        notify({
+          message: t('Transaction expired'),
+          type: 'error'
+        });
+        onCancel();
+      }
+    }
+
     switch (signMode) {
       case AccountSignMode.QR:
         onConfirmQr();
         break;
-      case AccountSignMode.LEDGER:
+      case AccountSignMode.LEGACY_LEDGER:
+      case AccountSignMode.GENERIC_LEDGER:
         onConfirmLedger();
         break;
       case AccountSignMode.INJECTED:
@@ -221,7 +239,7 @@ const Component: React.FC<Props> = (props: Props) => {
           // Unlock is cancelled
         });
     }
-  }, [checkUnlock, extrinsicType, onConfirmInject, onApprovePassword, onConfirmLedger, onConfirmQr, signMode]);
+  }, [extrinsicType, txExpirationTime, signMode, notify, t, onCancel, onConfirmQr, onConfirmLedger, onConfirmInject, checkUnlock, onApprovePassword]);
 
   useEffect(() => {
     !!ledgerError && notify({
@@ -236,6 +254,22 @@ const Component: React.FC<Props> = (props: Props) => {
       type: 'warning'
     });
   }, [ledgerWarning, notify]);
+  useEffect(() => {
+    let timer: NodeJS.Timer;
+
+    if (txExpirationTime) {
+      timer = setInterval(() => {
+        if (Date.now() >= txExpirationTime) {
+          setShowQuoteExpired(true);
+          clearInterval(timer);
+        }
+      }, 1000);
+    }
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [txExpirationTime]);
 
   return (
     <div className={CN(className, 'confirmation-footer')}>
@@ -253,7 +287,7 @@ const Component: React.FC<Props> = (props: Props) => {
         {t('Cancel')}
       </Button>
       <Button
-        disabled={!canSign}
+        disabled={showQuoteExpired || !canSign}
         icon={(
           <Icon
             phosphorIcon={approveIcon}
@@ -263,7 +297,13 @@ const Component: React.FC<Props> = (props: Props) => {
         loading={loading}
         onClick={onConfirm}
       >
-        {t('Approve')}
+        {
+          !isLedger
+            ? t('Approve')
+            : !isLedgerConnected
+              ? t('Refresh')
+              : t('Approve')
+        }
       </Button>
       {
         signMode === AccountSignMode.QR && (

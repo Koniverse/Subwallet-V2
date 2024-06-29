@@ -1,20 +1,24 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { GearApi } from '@gear-js/api';
 import { _AssetType } from '@subwallet/chain-list/types';
-import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/tokens/wasm/utils';
+import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { AbstractChainHandler } from '@subwallet/extension-base/services/chain-service/handler/AbstractChainHandler';
 import { SubstrateApi } from '@subwallet/extension-base/services/chain-service/handler/SubstrateApi';
 import { _ApiOptions, _SubstrateChainSpec } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _SmartContractTokenInfo, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
+import { DEFAULT_GEAR_ADDRESS, getGRC20ContractPromise } from '@subwallet/extension-base/utils';
 
+import { ApiPromise } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
+import { getSpecExtensions, getSpecTypes } from '@polkadot/types-known';
 import { BN } from '@polkadot/util';
 import { logger as createLogger } from '@polkadot/util/logger';
 import { Logger } from '@polkadot/util/types';
 
-import { _PSP22_ABI, _PSP34_ABI } from '../helper';
+import { _PSP22_ABI, _PSP34_ABI } from '../../../koni/api/contract-handler/utils';
 
 export const DEFAULT_AUX = ['Aux1', 'Aux2', 'Aux3', 'Aux4', 'Aux5', 'Aux6', 'Aux7', 'Aux8', 'Aux9'];
 
@@ -109,68 +113,106 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     return result;
   }
 
-  public async getSmartContractTokenInfo (contractAddress: string, tokenType: _AssetType, originChain: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
-    let tokenContract: ContractPromise;
+  private async getPsp22TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<[string, number, string, boolean]> {
+    const tokenContract = new ContractPromise(apiPromise, _PSP22_ABI, contractAddress);
+
+    const [nameResp, symbolResp, decimalsResp] = await Promise.all([
+      tokenContract.query['psp22Metadata::tokenName'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }), // read-only operation so no gas limit
+      tokenContract.query['psp22Metadata::tokenSymbol'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }),
+      tokenContract.query['psp22Metadata::tokenDecimals'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) })
+    ]);
+
+    if (!(nameResp.result.isOk && symbolResp.result.isOk && decimalsResp.result.isOk) || !nameResp.output || !decimalsResp.output || !symbolResp.output) {
+      return ['', 1, '', true];
+    } else {
+      let contractError = false;
+
+      const symbolObj = symbolResp.output?.toHuman() as Record<string, any>;
+      const decimalsObj = decimalsResp.output?.toHuman() as Record<string, any>;
+      const nameObj = nameResp.output?.toHuman() as Record<string, any>;
+
+      const name = nameResp.output ? (nameObj.Ok as string || nameObj.ok as string) : '';
+      const decimals = decimalsResp.output ? (new BN((decimalsObj.Ok || decimalsObj.ok) as string | number)).toNumber() : 0;
+      const symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
+
+      if (!name || !symbol || typeof name === 'object' || typeof symbol === 'object') {
+        contractError = true;
+      }
+
+      return [name, decimals, symbol, contractError];
+    }
+  }
+
+  private async getPsp34TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<[string, number, string, boolean]> {
+    const tokenContract = new ContractPromise(apiPromise, _PSP34_ABI, contractAddress);
+
+    const collectionIdResp = await tokenContract.query['psp34::collectionId'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }); // read-only operation so no gas limit
+
+    if (!collectionIdResp.result.isOk || !collectionIdResp.output) {
+      return ['', -1, '', true];
+    } else {
+      let contractError = false;
+      const collectionIdDict = collectionIdResp.output?.toHuman() as Record<string, string>;
+
+      if (collectionIdDict.Bytes === '') {
+        contractError = true;
+      }
+
+      return ['', -1, '', contractError];
+    }
+  }
+
+  private async getGrc20TokenInfo (apiPromise: ApiPromise, contractAddress: string): Promise<[string, number, string, boolean]> {
+    if (!(apiPromise instanceof GearApi)) {
+      console.warn('Cannot subscribe GRC20 balance without GearApi instance');
+
+      return ['', -1, '', true];
+    }
+
+    let contractError = false;
+    const tokenContract = getGRC20ContractPromise(apiPromise, contractAddress);
+
+    const [nameRes, symbolRes, decimalsRes] = await Promise.all([
+      tokenContract.name(DEFAULT_GEAR_ADDRESS.ALICE),
+      tokenContract.symbol(DEFAULT_GEAR_ADDRESS.ALICE),
+      tokenContract.decimals(DEFAULT_GEAR_ADDRESS.ALICE)
+    ]);
+
+    const decimals = typeof decimalsRes === 'string' ? parseInt(decimalsRes) : decimalsRes;
+
+    if (!nameRes || !symbolRes) {
+      contractError = true;
+    }
+
+    return [nameRes, decimals, symbolRes, contractError];
+  }
+
+  public async getSubstrateContractTokenInfo (contractAddress: string, tokenType: _AssetType, originChain: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
+    // todo: improve this funtion later
+
     let name = '';
     let decimals: number | undefined = -1;
     let symbol = '';
     let contractError = false;
 
-    const substrateApi = this.getSubstrateApiByChain(originChain);
+    const apiPromise = this.getSubstrateApiByChain(originChain).api;
 
     try {
-      if (tokenType === _AssetType.PSP22) {
-        tokenContract = new ContractPromise(substrateApi.api, _PSP22_ABI, contractAddress);
+      switch (tokenType) {
+        case _AssetType.PSP22:
+          [name, decimals, symbol, contractError] = await this.getPsp22TokenInfo(apiPromise, contractAddress, contractCaller);
 
-        const [nameResp, symbolResp, decimalsResp] = await Promise.all([
-          tokenContract.query['psp22Metadata::tokenName'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(substrateApi.api) }), // read-only operation so no gas limit
-          tokenContract.query['psp22Metadata::tokenSymbol'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(substrateApi.api) }),
-          tokenContract.query['psp22Metadata::tokenDecimals'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(substrateApi.api) })
-        ]);
+          break;
 
-        if (!(nameResp.result.isOk && symbolResp.result.isOk && decimalsResp.result.isOk) || !nameResp.output || !decimalsResp.output || !symbolResp.output) {
-          return {
-            name: '',
-            decimals: -1,
-            symbol: '',
-            contractError: true
-          };
-        } else {
-          const symbolObj = symbolResp.output?.toHuman() as Record<string, any>;
-          const decimalsObj = decimalsResp.output?.toHuman() as Record<string, any>;
-          const nameObj = nameResp.output?.toHuman() as Record<string, any>;
+        case _AssetType.PSP34:
+          [name, decimals, symbol, contractError] = await this.getPsp34TokenInfo(apiPromise, contractAddress, contractCaller);
 
-          name = nameResp.output ? (nameObj.Ok as string || nameObj.ok as string) : '';
-          decimals = decimalsResp.output ? (new BN((decimalsObj.Ok || decimalsObj.ok) as string | number)).toNumber() : 0;
-          symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
+          break;
 
-          if (!name || !symbol || typeof name === 'object' || typeof symbol === 'object') {
-            contractError = true;
-          }
+        case _AssetType.GRC20:
+          [name, decimals, symbol, contractError] = await this.getGrc20TokenInfo(apiPromise, contractAddress);
 
-          console.log('validate PSP22', name, symbol, decimals);
-        }
-      } else {
-        tokenContract = new ContractPromise(substrateApi.api, _PSP34_ABI, contractAddress);
-
-        const collectionIdResp = await tokenContract.query['psp34::collectionId'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(substrateApi.api) }); // read-only operation so no gas limit
-
-        if (!collectionIdResp.result.isOk || !collectionIdResp.output) {
-          return {
-            name: '',
-            decimals: -1,
-            symbol: '',
-            contractError: true
-          };
-        } else {
-          const collectionIdDict = collectionIdResp.output?.toHuman() as Record<string, string>;
-
-          if (collectionIdDict.Bytes === '') {
-            contractError = true;
-          } else {
-            name = ''; // no function to get collection name, let user manually put in the name
-          }
-        }
+          break;
       }
 
       return {
@@ -203,6 +245,33 @@ export class SubstrateChainHandler extends AbstractChainHandler {
 
   public async initApi (chainSlug: string, apiUrl: string, { externalApiPromise, onUpdateStatus, providerName }: Omit<_ApiOptions, 'metadata'> = {}): Promise<SubstrateApi> {
     const existed = this.substrateApiMap[chainSlug];
+    const metadata = await this.parent?.getMetadata(chainSlug);
+
+    const updateMetadata = (substrateApi: SubstrateApi) => {
+      // Update metadata to database with async methods
+      substrateApi.api.isReady.then(async (api) => {
+        const currentSpecVersion = api.runtimeVersion.specVersion.toString();
+        const genesisHash = api.genesisHash.toHex();
+
+        // Avoid date existed metadata
+        if (metadata && metadata.specVersion === currentSpecVersion && metadata.genesisHash === genesisHash) {
+          return;
+        }
+
+        const systemChain = await api.rpc.system.chain();
+        // const _metadata: Option<OpaqueMetadata> = await api.call.metadata.metadataAtVersion(15);
+        // const metadataHex = _metadata.isSome ? _metadata.unwrap().toHex().slice(2) : ''; // Need unwrap to create metadata object
+
+        this.parent?.upsertMetadata(chainSlug, {
+          chain: chainSlug,
+          genesisHash: genesisHash,
+          specVersion: currentSpecVersion,
+          hexValue: api.runtimeMetadata.toHex(),
+          types: getSpecTypes(api.registry, systemChain, api.runtimeVersion.specName, api.runtimeVersion.specVersion) as unknown as Record<string, string>,
+          userExtensions: getSpecExtensions(api.registry, systemChain, api.runtimeVersion.specName)
+        }).catch(console.error);
+      }).catch(console.error);
+    };
 
     // Return existed to avoid re-init metadata
     if (existed) {
@@ -212,29 +281,18 @@ export class SubstrateChainHandler extends AbstractChainHandler {
         await existed.updateApiUrl(apiUrl);
       }
 
+      // Update data in case of existed api (if needed - old provider cannot connect)
+      updateMetadata(existed);
+
       return existed;
     }
 
-    const metadata = await this.parent?.getMetadata(chainSlug);
     const apiObject = new SubstrateApi(chainSlug, apiUrl, { providerName, metadata, externalApiPromise });
 
     apiObject.connectionStatusSubject.subscribe(this.handleConnection.bind(this, chainSlug));
     onUpdateStatus && apiObject.connectionStatusSubject.subscribe(onUpdateStatus);
 
-    // Update metadata to database with async methods
-    apiObject.isReady.then((api) => {
-      // Avoid date existed metadata
-      if (metadata && metadata.specVersion === api.specVersion && metadata.genesisHash === api.api.genesisHash.toHex()) {
-        return;
-      }
-
-      this.parent?.upsertMetadata(chainSlug, {
-        chain: chainSlug,
-        genesisHash: api.api.genesisHash.toHex(),
-        specVersion: api.specVersion,
-        hexValue: api.api.runtimeMetadata.toHex()
-      }).catch(console.error);
-    }).catch(console.error);
+    updateMetadata(apiObject);
 
     return apiObject;
   }

@@ -8,6 +8,7 @@ import storage from 'redux-persist/lib/storage';
 import AccountStateReducer from './base/AccountState';
 import RequestStateReducer from './base/RequestState';
 import SettingsReducer from './base/Settings';
+import StaticContentReducer from './base/StaticContent';
 import UIViewStateReducer from './base/UIViewState';
 import BalanceReducer from './feature/Balance';
 import BondingReducer from './feature/Bonding';
@@ -16,10 +17,13 @@ import CampaignReducer from './feature/Campaign';
 import AssetRegistryReducer from './feature/common/AssetRegistry';
 import ChainStoreReducer from './feature/common/ChainStore';
 import CrowdloanReducer from './feature/Crowdloan';
+import EarningReducer from './feature/Earning';
 import MantaPayReducer from './feature/MantaPay';
+import MissionPoolReducer from './feature/MissionPool';
 import NftReducer from './feature/Nft';
 import PriceReducer from './feature/Price';
 import StakingReducer from './feature/Staking';
+import SwapReducer from './feature/Swap';
 import TransactionHistoryReducer from './feature/TransactionHistory';
 import WalletConnectReducer from './feature/WalletConnect';
 
@@ -32,7 +36,8 @@ const persistConfig = {
     'uiViewState',
     'staking',
     'campaign',
-    'buyService'
+    'buyService',
+    'staticContent'
   ]
 };
 
@@ -48,6 +53,8 @@ const rootReducers = combineReducers({
   mantaPay: MantaPayReducer,
   campaign: CampaignReducer,
   buyService: BuyServiceReducer,
+  earning: EarningReducer,
+  swap: SwapReducer,
 
   // common
   chainStore: ChainStoreReducer,
@@ -58,9 +65,13 @@ const rootReducers = combineReducers({
   settings: SettingsReducer,
   accountState: AccountStateReducer,
   uiViewState: UIViewStateReducer,
+  staticContent: StaticContentReducer,
 
   // wallet connect
-  walletConnect: WalletConnectReducer
+  walletConnect: WalletConnectReducer,
+
+  // mission pool
+  missionPool: MissionPoolReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducers);

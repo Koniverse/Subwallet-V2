@@ -1,22 +1,26 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
+import { _AssetType } from '@subwallet/chain-list/types';
 import { APIItemState } from '@subwallet/extension-base/background/KoniTypes';
 import { ASTAR_REFRESH_BALANCE_INTERVAL, SUB_TOKEN_REFRESH_BALANCE_INTERVAL } from '@subwallet/extension-base/constants';
-import { getEVMBalance } from '@subwallet/extension-base/koni/api/tokens/evm/balance';
-import { getERC20Contract } from '@subwallet/extension-base/koni/api/tokens/evm/web3';
-import { state } from '@subwallet/extension-base/koni/background/handlers';
+import { getERC20Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
-import { BalanceItem } from '@subwallet/extension-base/types';
+import { BalanceItem, SubscribeEvmPalletBalance } from '@subwallet/extension-base/types';
+import { filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
 import { Contract } from 'web3-eth-contract';
 
 import { BN } from '@polkadot/util';
 
-export function subscribeERC20Interval (addresses: string[], chain: string, evmApiMap: Record<string, _EvmApi>, callBack: (result: BalanceItem[]) => void): () => void {
-  let tokenList = {} as Record<string, _ChainAsset>;
+export function subscribeERC20Interval ({ addresses, assetMap, callback, chainInfo, evmApi }: SubscribeEvmPalletBalance): () => void {
+  const chain = chainInfo.slug;
+  const tokenList = filterAssetsByChainAndType(assetMap, chain, [_AssetType.ERC20]);
   const erc20ContractMap = {} as Record<string, Contract>;
+
+  Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
+    erc20ContractMap[slug] = getERC20Contract(_getContractAddressOfToken(tokenInfo), evmApi);
+  });
 
   const getTokenBalances = () => {
     Object.values(tokenList).map(async (tokenInfo) => {
@@ -43,18 +47,12 @@ export function subscribeERC20Interval (addresses: string[], chain: string, evmA
           };
         });
 
-        callBack(items);
+        callback(items);
       } catch (err) {
         console.log(tokenInfo.slug, err);
       }
     });
   };
-
-  tokenList = state.getAssetByChainAndAsset(chain, [_AssetType.ERC20]);
-
-  Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
-    erc20ContractMap[slug] = getERC20Contract(chain, _getContractAddressOfToken(tokenInfo), evmApiMap);
-  });
 
   getTokenBalances();
 
@@ -65,14 +63,29 @@ export function subscribeERC20Interval (addresses: string[], chain: string, evmA
   };
 }
 
-export function subscribeEVMBalance (chain: string, addresses: string[], evmApiMap: Record<string, _EvmApi>, callback: (rs: BalanceItem[]) => void, tokenInfo: _ChainAsset) {
+async function getEVMBalance (addresses: string[], web3Api: _EvmApi): Promise<string[]> {
+  return await Promise.all(addresses.map(async (address) => {
+    try {
+      return await web3Api.api.eth.getBalance(address);
+    } catch (e) {
+      return '0';
+    }
+  }));
+}
+
+export function subscribeEVMBalance (params: SubscribeEvmPalletBalance) {
+  const { addresses, assetMap, callback, chainInfo, evmApi } = params;
+  const chain = chainInfo.slug;
+  const nativeTokenInfo = filterAssetsByChainAndType(assetMap, chain, [_AssetType.NATIVE]);
+  const nativeTokenSlug = Object.values(nativeTokenInfo)[0]?.slug || '';
+
   function getBalance () {
-    getEVMBalance(chain, addresses, evmApiMap)
+    getEVMBalance(addresses, evmApi)
       .then((balances) => {
         return balances.map((balance, index): BalanceItem => {
           return {
             address: addresses[index],
-            tokenSlug: tokenInfo.slug,
+            tokenSlug: nativeTokenSlug,
             state: APIItemState.READY,
             free: (new BN(balance || '0')).toString(),
             locked: '0'
@@ -80,12 +93,12 @@ export function subscribeEVMBalance (chain: string, addresses: string[], evmApiM
         });
       })
       .catch((e) => {
-        console.error(`Error on get native balance with token ${tokenInfo.slug}`, e);
+        console.error(`Error on get native balance with token ${nativeTokenSlug}`, e);
 
         return addresses.map((address): BalanceItem => {
           return {
             address: address,
-            tokenSlug: tokenInfo.slug,
+            tokenSlug: nativeTokenSlug,
             state: APIItemState.READY,
             free: '0',
             locked: '0'
@@ -101,7 +114,7 @@ export function subscribeEVMBalance (chain: string, addresses: string[], evmApiM
 
   getBalance();
   const interval = setInterval(getBalance, ASTAR_REFRESH_BALANCE_INTERVAL);
-  const unsub2 = subscribeERC20Interval(addresses, chain, evmApiMap, callback);
+  const unsub2 = subscribeERC20Interval(params);
 
   return () => {
     clearInterval(interval);

@@ -1,9 +1,10 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AttachAccountModal, CreateAccountModal, DeriveAccountModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
+import { AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
 import { CustomizeModal } from '@subwallet/extension-koni-ui/components/Modal/Customize/CustomizeModal';
-import ClaimDappStakingRewardsModal from '@subwallet/extension-koni-ui/components/Modal/Staking/ClaimDappStakingRewardsModal';
+import { EARNING_INSTRUCTION_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useGetConfig, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import Confirmations from '@subwallet/extension-koni-ui/Popup/Confirmations';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ModalContext, SwModal, useExcludeModal } from '@subwallet/react-ui';
@@ -56,8 +57,11 @@ export const WalletModalContext = ({ children }: Props) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasConfirmations } = useSelector((state: RootState) => state.requestState);
   const { hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
+  const { getConfig } = useGetConfig();
+  const { onHandleSessionLatest, setTimeBackUp } = useSetSessionLatest();
 
   useExcludeModal('confirmations');
+  useExcludeModal(EARNING_INSTRUCTION_MODAL);
 
   const onCloseModal = useCallback(() => {
     setSearchParams((prev) => {
@@ -84,6 +88,16 @@ export const WalletModalContext = ({ children }: Props) => {
     }
   }, [activeModal, inactiveModals, searchParams]);
 
+  useEffect(() => {
+    getConfig().then(setTimeBackUp).catch(console.error);
+  }, [getConfig, setTimeBackUp]);
+
+  useEffect(() => {
+    onHandleSessionLatest();
+  }, [onHandleSessionLatest]);
+
+  // todo: will remove ClaimDappStakingRewardsModal after Astar upgrade to v3
+
   return <>
     <div
       id='popup-container'
@@ -93,6 +107,7 @@ export const WalletModalContext = ({ children }: Props) => {
     <SwModal
       className={'modal-full'}
       closable={false}
+      destroyOnClose={true}
       id={'confirmations'}
       onCancel={onCloseModal}
       transitionName={'fade'}
@@ -101,6 +116,7 @@ export const WalletModalContext = ({ children }: Props) => {
       <Confirmations />
     </SwModal>
     <CreateAccountModal />
+    <RemindBackupSeedPhraseModal />
     <ImportAccountModal />
     <AttachAccountModal />
     <NewSeedModal />
