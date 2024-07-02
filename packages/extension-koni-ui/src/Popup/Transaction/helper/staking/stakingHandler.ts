@@ -30,9 +30,10 @@ export function getWaitingTime (waitingTime: number, status: UnstakingStatus, t:
     return t('Available for withdrawal');
   } else {
     const waitingTimeInMs = waitingTime * 60 * 60 * 1000;
+
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment
     const formattedWaitingTime = humanizeDuration(waitingTimeInMs, {
-      units: ['d', 'h'],
+      units: waitingTime >= 24 ? ['d', 'h'] : ['h', 'm'],
       round: true,
       delimiter: ' ',
       language: 'shortEn',
@@ -42,7 +43,7 @@ export function getWaitingTime (waitingTime: number, status: UnstakingStatus, t:
           mo: () => 'mo',
           w: () => 'w',
           d: () => 'd',
-          h: () => 'hr',
+          h: () => 'h',
           m: () => 'm',
           s: () => 's',
           ms: () => 'ms'
