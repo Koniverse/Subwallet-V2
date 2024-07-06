@@ -21,6 +21,16 @@ import { t } from 'i18next';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
+export interface BalanceState {
+  nativeBalance: AssetBalance,
+  nonNativeBalance?: AssetBalance
+}
+
+interface AssetBalance {
+  tokenInfo: _ChainAsset,
+  transferable: string
+}
+
 // normal transfer
 export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address, to: _Address, value: string | undefined, transferAll: boolean | undefined): [TransactionError[], KeyringPair | undefined, BigN | undefined] {
   const errors: TransactionError[] = [];
@@ -70,6 +80,15 @@ export function additionalValidateTransfer (tokenInfo: _ChainAsset, extrinsicTyp
   }
 
   return [warning, error];
+}
+
+export function balanceValidation (senderBalanceState: BalanceState, receiverBalanceState: BalanceState) {
+  const nativeMinAmount = _getTokenMinAmount(senderBalanceState.nativeBalance.tokenInfo);
+  const nonNativeMinAmount = senderBalanceState.nonNativeBalance ? _getTokenMinAmount(senderBalanceState.nonNativeBalance?.tokenInfo) : undefined;
+
+  // 1. validate nativeBalance, nonNativeBalance receiver
+  // 2. validate nativeBalance, nonNativeBalance sender
+
 }
 
 // xcm transfer

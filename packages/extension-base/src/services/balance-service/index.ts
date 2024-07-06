@@ -244,6 +244,9 @@ export class BalanceService implements StoppableServiceInterface {
     });
   }
 
+  // public async subscribeLockedBalance (address: string, chain: string, tokenSlug: string | undefined, callback?: (rs: AmountData) => void) {
+  //
+  // }
   /**
    * @public
    * @async
@@ -260,6 +263,12 @@ export class BalanceService implements StoppableServiceInterface {
 
     return balance;
   }
+
+  // public async getLockedBalance (address: string, chain: string, tokenSlug?: string, extrinsicType?: ExtrinsicType): Promise<AmountData> {
+  //   const [, lockedBalance] = await this.subscribeLockedBalancec(address, chain, tokenSlug, extrinsicType);
+  //
+  //   return lockedBalance
+  // }
 
   /** Remove balance from the subject object by addresses */
   public removeBalanceByAddresses (addresses: string[]) {

@@ -11,7 +11,7 @@ import { AccountExternalError, AccountExternalErrorCode, AccountsWithCurrentAddr
 import { AccountAuthType, AccountJson, AuthorizeRequest, MessageTypes, MetadataRequest, RequestAccountChangePassword, RequestAccountCreateExternal, RequestAccountCreateHardware, RequestAccountCreateSuri, RequestAccountEdit, RequestAccountExport, RequestAccountForget, RequestAccountShow, RequestAccountTie, RequestAccountValidate, RequestAuthorizeCancel, RequestAuthorizeReject, RequestBatchRestore, RequestCurrentAccountAddress, RequestDeriveCreate, RequestDeriveValidate, RequestJsonRestore, RequestMetadataApprove, RequestMetadataReject, RequestSeedCreate, RequestSeedValidate, RequestSigningApproveSignature, RequestSigningCancel, RequestTypes, ResponseAccountExport, ResponseAuthorizeList, ResponseDeriveValidate, ResponseJsonGetAccountInfo, ResponseSeedCreate, ResponseSeedValidate, ResponseType, SigningRequest, WindowOpenParams } from '@subwallet/extension-base/background/types';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { ALL_ACCOUNT_KEY, ALL_GENESIS_HASH, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
-import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { additionalValidateXcmTransfer, BalanceState, balanceValidation, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
 import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
@@ -1731,6 +1731,93 @@ export default class KoniExtension {
     });
   }
 
+  private async getSenderReceiverTransferableState (from: string, to: string, networkKey: string, tokenSlug: string, nativeTokenSlug: string, extrinsicType: ExtrinsicType, isTransferNativeToken: boolean) {
+    let senderBalanceState;
+    let receiverBalanceState;
+
+    const [
+      senderNativeTransferTokenTransferable,
+      reiceiverNativeTokenTransferable,
+      senderNonNativeTransferTokenTransferable,
+      reiceiverNonNativeTokenTransferable
+    ] = await this.getSenderReceiverTransferableBalance(from, to, networkKey, tokenSlug, nativeTokenSlug, extrinsicType, isTransferNativeToken);
+
+    if (isTransferNativeToken) {
+      const nativeTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
+
+      senderBalanceState = {
+        nativeBalance: {
+          tokenInfo: nativeTokenInfo,
+          transferable: senderNativeTransferTokenTransferable
+        }
+      } as BalanceState;
+
+      receiverBalanceState = {
+        nativeBalance: {
+          tokenInfo: nativeTokenInfo,
+          transferable: reiceiverNativeTokenTransferable
+        }
+      } as BalanceState;
+    } else {
+      const nativeTokenInfo = this.#koniState.chainService.getAssetBySlug(nativeTokenSlug);
+      const nonNativeTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
+
+      senderBalanceState = {
+        nativeBalance: {
+          tokenInfo: nativeTokenInfo,
+          transferable: senderNativeTransferTokenTransferable
+        },
+        nonNativeBalance: {
+          tokenInfo: nonNativeTokenInfo,
+          transferable: senderNonNativeTransferTokenTransferable
+        }
+      } as BalanceState;
+
+      receiverBalanceState = {
+        nativeBalance: {
+          tokenInfo: nativeTokenInfo,
+          transferable: reiceiverNativeTokenTransferable
+        },
+        nonNativeBalance: {
+          tokenInfo: nonNativeTokenInfo,
+          transferable: reiceiverNonNativeTokenTransferable
+        }
+      } as BalanceState;
+    }
+
+    return [senderBalanceState, receiverBalanceState];
+  }
+
+  private async getSenderReceiverTransferableBalance (from: string, to: string, networkKey: string, tokenSlug: string, nativeTokenSlug: string, extrinsicType: ExtrinsicType, isTransferNativeToken: boolean) {
+    let senderNativeTransferTokenTransferable: string;
+    let reiceiverNativeTokenTransferable: string;
+    let senderNonNativeTransferTokenTransferable: string | undefined;
+    let reiceiverNonNativeTokenTransferable: string | undefined;
+
+    const [senderTransferable, receiverTransferable] = await Promise.all([
+      this.getAddressTransferableBalance({ address: from, networkKey, token: tokenSlug, extrinsicType }),
+      this.getAddressTransferableBalance({ address: to, networkKey, token: tokenSlug, extrinsicType })
+    ]);
+
+    if (isTransferNativeToken) {
+      senderNativeTransferTokenTransferable = senderTransferable.value;
+      reiceiverNativeTokenTransferable = receiverTransferable.value;
+    } else {
+      senderNonNativeTransferTokenTransferable = senderTransferable.value;
+      reiceiverNonNativeTokenTransferable = receiverTransferable.value;
+
+      const [senderNativeTransferable, receiverNativeTransferable] = await Promise.all([
+        this.getAddressTransferableBalance({ address: from, networkKey, token: nativeTokenSlug, extrinsicType }),
+        this.getAddressTransferableBalance({ address: to, networkKey, token: nativeTokenSlug, extrinsicType })
+      ]);
+
+      senderNativeTransferTokenTransferable = senderNativeTransferable.value;
+      reiceiverNativeTokenTransferable = receiverNativeTransferable.value;
+    }
+
+    return [senderNativeTransferTokenTransferable, reiceiverNativeTokenTransferable, senderNonNativeTransferTokenTransferable, reiceiverNonNativeTokenTransferable];
+  }
+
   private async makeTransfer (inputData: RequestTransfer): Promise<SWTransactionResponse> {
     const { from, networkKey, to, tokenSlug, transferAll, value } = inputData;
     const transferTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
@@ -1743,6 +1830,7 @@ export default class KoniExtension {
     const nativeTokenInfo = this.#koniState.getNativeTokenInfo(networkKey);
     const nativeTokenSlug: string = nativeTokenInfo.slug;
     const isTransferNativeToken = nativeTokenSlug === tokenSlug;
+
     const extrinsicType = isTransferNativeToken ? ExtrinsicType.TRANSFER_BALANCE : ExtrinsicType.TRANSFER_TOKEN;
     let chainType = ChainType.SUBSTRATE;
 
@@ -1799,18 +1887,12 @@ export default class KoniExtension {
     const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
 
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
-      let senderTransferTokenTransferable: string | undefined;
+      const [
+        senderBalanceState,
+        receiverBalanceState
+      ] = await this.getSenderReceiverTransferableState(from, to, networkKey, tokenSlug, nativeTokenSlug, extrinsicType, isTransferNativeToken);
 
-      // Check ed for sender
-      if (!isTransferNativeToken) {
-        const { value } = await this.getAddressTransferableBalance({ address: from, networkKey, token: tokenSlug, extrinsicType });
-
-        senderTransferTokenTransferable = value;
-      }
-
-      const { value: receiverTransferTokenTransferable } = await this.getAddressTransferableBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
-
-      const [warning, error] = additionalValidateTransfer(transferTokenInfo, extrinsicType, receiverTransferTokenTransferable, transferAmount.value, senderTransferTokenTransferable);
+      const [warnings, errors] = balanceValidation(senderBalanceState, receiverBalanceState);
 
       warning && inputTransaction.warnings.push(warning);
       error && inputTransaction.errors.push(error);
@@ -2038,6 +2120,9 @@ export default class KoniExtension {
 
     return await this.#koniState.balanceService.getTransferableBalance(address, networkKey, token, extrinsicType);
   }
+
+  // todo:
+  // private async getAddressLockedBalance ({ address, networkKey, token}: RequestLockedBalance): Promise<AmountData> {
 
   private async getMaxTransferable ({ address, destChain, isXcmTransfer, networkKey, token }: RequestMaxTransferable): Promise<AmountData> {
     const tokenInfo = token ? this.#koniState.chainService.getAssetBySlug(token) : this.#koniState.chainService.getNativeTokenInfo(networkKey);
