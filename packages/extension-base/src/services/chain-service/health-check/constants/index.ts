@@ -9,7 +9,7 @@ export const chainProvider: Record<string, number> = {
   polygon: 2,
   shidenEvm: 2,
   shiden: 2,
-  ajunaPolkadot: 1,
+  ajunaPolkadot: 0,
   crabParachain: 1,
   astarEvm: 1,
   shibuya: 1,
