@@ -92,11 +92,11 @@ const Component: React.FC<Props> = (props: Props) => {
           block={true}
           onClick={onClickToFAQ(true)}
           schema={'secondary'}
-        >{t('Dismiss')}</Button>
+        >{t('settings.Screen.walletConnect.Modal.Connect.Button.dismiss')}</Button>
         <Button
           block={true}
           onClick={onClickToFAQ(false)}
-        >{t('Review guide')}</Button>
+        >{t('settings.Screen.walletConnect.Modal.Connect.Button.reviewGuide')}</Button>
       </div>
     );
   }, [onClickToFAQ, t]);
@@ -192,11 +192,11 @@ const Component: React.FC<Props> = (props: Props) => {
         icon: <CloseIcon />,
         onClick: goHome
       }]}
-      title={t('WalletConnect')}
+      title={t('settings.Screen.walletConnect.Connect.title')}
     >
       <div className='body-container'>
         <div className='description'>
-          {t('By clicking "Connect", you allow this dapp to view your public address')}
+          {t('settings.Screen.walletConnect.Connect.description')}
         </div>
         <div className='page-icon'>
           <PageIcon
@@ -222,7 +222,7 @@ const Component: React.FC<Props> = (props: Props) => {
             rules={[
               {
                 required: true,
-                message: t('URI is required')
+                message: t('settings.Screen.walletConnect.Connect.Input.URI.ErrorTooltip.required')
               },
               {
                 validator: uriValidator
@@ -233,7 +233,7 @@ const Component: React.FC<Props> = (props: Props) => {
             <Input
               disabled={loading}
               label={t('URI')}
-              placeholder={t('Please type or paste or scan URI')}
+              placeholder={t('settings.Screen.walletConnect.Connect.Input.URI.placeHolder')}
               suffix={(
                 <>
                   {
@@ -277,7 +277,7 @@ const Component: React.FC<Props> = (props: Props) => {
         footer={footerModalWC}
         id={modalId}
         onCancel={onClickToFAQ(true)}
-        title={t('Connection unsuccessful')}
+        title={t('settings.Screen.walletConnect.Modal.Connect.unsuccessful')}
       >
         <div className='__wc-modal-container'>
           <div className='page-icon'>
@@ -290,7 +290,7 @@ const Component: React.FC<Props> = (props: Props) => {
             />
           </div>
           <div className={'__wc-modal-content'}>
-            {t('Connection unsuccessful. Review our user guide and try connecting again.')}
+            {t('settings.Screen.walletConnect.Modal.Connect.description')}
           </div>
         </div>
       </SwModal>
