@@ -6,6 +6,7 @@ import { _AssetType } from '@subwallet/chain-list/types';
 import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { AbstractChainHandler } from '@subwallet/extension-base/services/chain-service/handler/AbstractChainHandler';
+import { PolkadotApiWrapper } from '@subwallet/extension-base/services/chain-service/handler/PolkadotApiWrapper';
 import { SubstrateApi } from '@subwallet/extension-base/services/chain-service/handler/SubstrateApi';
 import { _ApiOptions, _SubstrateChainSpec } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _SmartContractTokenInfo, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
@@ -292,6 +293,10 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     }
 
     const apiObject = new SubstrateApi(chainSlug, apiUrl, { providerName, metadata, externalApiPromise });
+
+    const testApi = new PolkadotApiWrapper('polkadot', 'wss://polkadot-rpc.publicnode.com');
+
+    console.log('test', testApi);
 
     apiObject.connectionStatusSubject.subscribe(this.handleConnection.bind(this, chainSlug));
     onUpdateStatus && apiObject.connectionStatusSubject.subscribe(onUpdateStatus);

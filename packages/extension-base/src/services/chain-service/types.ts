@@ -84,6 +84,10 @@ export interface _SubstrateApiState {
   defaultFormatBalance?: _SubstrateDefaultFormatBalance;
 }
 
+export interface _SubstrateApiV2 extends Omit<_SubstrateApi, 'api'> {
+  api: any;
+}
+
 export interface _SubstrateApi extends _SubstrateApiState, _ChainBaseApi, _SubstrateApiAdapter {
   api: ApiPromise;
   isReady: Promise<_SubstrateApi>;
