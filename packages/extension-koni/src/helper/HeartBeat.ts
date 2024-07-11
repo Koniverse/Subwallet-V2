@@ -13,8 +13,16 @@
 
 let heartbeatInterval: NodeJS.Timer | undefined;
 
-async function runHeartbeat () {
-  await chrome.storage.local.set({ 'last-heartbeat': new Date().getTime() });
+async function runHeartbeat (cb: () => Promise<void>) {
+  await chrome.alarms.create('keep-loaded-alarm', {
+    periodInMinutes: 0.3
+  });
+
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'keep-loaded-alarm') {
+      cb().catch(() => console.error('Failed to load alarms'));
+    }
+  });
 }
 
 /**
@@ -22,22 +30,21 @@ async function runHeartbeat () {
  * this sparingly when you are doing work which requires persistence, and call
  * stopHeartbeat once that work is complete.
  */
-export function startHeartbeat () {
+export function startHeartbeat (cb: () => Promise<void>) {
   // Run the heartbeat once at service worker startup.
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
   }
 
-  runHeartbeat().then(() => {
-    // Then again every 20 seconds.
-    heartbeatInterval = setInterval(() => {
-      runHeartbeat().catch(console.error);
-    }, 20 * 1000);
-  }).catch(console.error);
+  runHeartbeat(cb).catch(console.error);
 }
 
 export function stopHeartbeat () {
-  clearInterval(heartbeatInterval);
+  chrome.alarms.clear('keep-loaded-alarm', function (wasCleared) {
+    if (wasCleared) {
+      console.log('Alarm was cleared');
+    }
+  });
   heartbeatInterval = undefined;
 }
 
