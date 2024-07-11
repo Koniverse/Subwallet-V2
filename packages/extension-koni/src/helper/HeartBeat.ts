@@ -3,6 +3,8 @@
 
 // These code from https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#keep-sw-alive
 
+import { isFirefox } from '@subwallet/extension-base/utils';
+
 /**
  * Tracks when a service worker was last alive and extends the service worker
  * lifetime by writing the current time to extension storage every 20 seconds.
@@ -14,15 +16,19 @@
 let heartbeatInterval: NodeJS.Timer | undefined;
 
 async function runHeartbeat (cb: () => Promise<void>) {
-  await chrome.alarms.create('keep-loaded-alarm', {
-    periodInMinutes: 0.3
-  });
+  if (isFirefox) {
+    await chrome.alarms.create('keep-loaded-alarm', {
+      periodInMinutes: 0.3
+    });
 
-  chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === 'keep-loaded-alarm') {
-      cb().catch(() => console.error('Failed to load alarms'));
-    }
-  });
+    chrome.alarms.onAlarm.addListener((alarm) => {
+      if (alarm.name === 'keep-loaded-alarm') {
+        cb().catch(() => console.error('Failed to load alarms'));
+      }
+    });
+  } else {
+    await cb();
+  }
 }
 
 /**
@@ -36,15 +42,26 @@ export function startHeartbeat (cb: () => Promise<void>) {
     clearInterval(heartbeatInterval);
   }
 
-  runHeartbeat(cb).catch(console.error);
+  runHeartbeat(cb).then(() => {
+    if (!isFirefox) {
+      heartbeatInterval = setInterval(() => {
+        runHeartbeat(cb).catch(console.error);
+      }, 20 * 1000);
+    }
+  }).catch(console.error);
 }
 
 export function stopHeartbeat () {
-  chrome.alarms.clear('keep-loaded-alarm', function (wasCleared) {
-    if (wasCleared) {
-      console.log('Alarm was cleared');
-    }
-  });
+  if (isFirefox) {
+    chrome.alarms.clear('keep-loaded-alarm', function (wasCleared) {
+      if (wasCleared) {
+        console.log('Alarm was cleared');
+      }
+    });
+  } else {
+    clearInterval(heartbeatInterval);
+  }
+
   heartbeatInterval = undefined;
 }
 

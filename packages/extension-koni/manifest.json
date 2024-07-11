@@ -8,8 +8,7 @@
   "permissions": [
     "notifications",
     "storage",
-    "tabs",
-    "alarms"
+    "tabs"
   ],
   "background": {
     "service_worker": "background.js"
