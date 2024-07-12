@@ -162,7 +162,7 @@ module.exports = (entry, alias = {}, compileWithHtml = false) => {
       }),
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
       fallback: {
-        crypto: require.resolve('crypto-browserify'),
+        crypto: false,
         path: require.resolve('path-browserify'),
         stream: require.resolve('stream-browserify'),
         os: require.resolve('os-browserify/browser'),

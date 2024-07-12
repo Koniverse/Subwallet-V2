@@ -27,7 +27,9 @@ enum ChainflipFeeType {
   INGRESS = 'INGRESS',
   NETWORK = 'NETWORK',
   EGRESS = 'EGRESS',
-  LIQUIDITY = 'LIQUIDITY'
+  LIQUIDITY = 'LIQUIDITY',
+  BROKER= 'BROKER',
+  BOOST= 'BOOST'
 }
 
 const INTERMEDIARY_MAINNET_ASSET_SLUG = COMMON_ASSETS.USDC_ETHEREUM;
@@ -270,9 +272,10 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
           }
 
           case ChainflipFeeType.NETWORK:
+          case ChainflipFeeType.BOOST:
 
           // eslint-disable-next-line no-fallthrough
-          case ChainflipFeeType.LIQUIDITY: {
+          case ChainflipFeeType.BROKER: {
             const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
 
             feeComponent.push({

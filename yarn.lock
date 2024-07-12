@@ -1828,15 +1828,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@chainflip/sdk@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@chainflip/sdk@npm:1.3.0"
+"@chainflip/rpc@npm:^1.4.10":
+  version: 1.4.10
+  resolution: "@chainflip/rpc@npm:1.4.10"
   dependencies:
-    "@polkadot/util": ^12.6.2
-    "@polkadot/util-crypto": ^12.6.2
+    "@chainflip/utils": ^0.3.0
+    zod: ^3.22.8
+  checksum: 6f74746455ae593d24e6a195e140ceb6099394200686bf4a647fd7de1af0e1f5b78266d24a49634ecb74b85750f4edc155ef394c063fc34b3bddaf2a66c97e49
+  languageName: node
+  linkType: hard
+
+"@chainflip/sdk@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "@chainflip/sdk@npm:1.4.2"
+  dependencies:
+    "@chainflip/rpc": ^1.4.10
+    "@chainflip/utils": ^0.2.1
     axios: ^1.6.8
-    ethers: ^6.11.1
-  checksum: ca4a8461411a15b02fd4d31ee56410b69059db0cd1157726c509f6f59e645a6d955c99b56d32051ec8d7697996af9d0d7c4badc9ab59cc0936cf1a9a0389c747
+    ethers: ^6.13.1
+  checksum: 0f1c5e01359b014cc52f5a44b3a3572e13a732de6e9250950ef603907df53103c25093193368e88780e9d6920d73b747bc82dc29d454bb7af6658a69ad64a428
+  languageName: node
+  linkType: hard
+
+"@chainflip/utils@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@chainflip/utils@npm:0.2.1"
+  checksum: d2490e9c6964b9f6cac570c279f1fc1df420ec5963c308d1c57500f3fab5c3575cb82f7acad45f164c00b3049e9fa3ee456cc1883ccf49f517659a714d60ee6c
+  languageName: node
+  linkType: hard
+
+"@chainflip/utils@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@chainflip/utils@npm:0.3.0"
+  checksum: 28d0bdc00ad71255efa51c3a0fc51257b1af0579f1b8c8adb24ad450c42b48246a4a0d7c3eeafbc7d361249bab54b5a1fce4e3ce190a97886da590b704f97ee4
   languageName: node
   linkType: hard
 
@@ -5984,7 +6008,7 @@ __metadata:
     "@acala-network/api": ^5.0.2
     "@apollo/client": ^3.7.14
     "@azns/resolver-core": ^1.4.0
-    "@chainflip/sdk": ^1.3.0
+    "@chainflip/sdk": ^1.4.2
     "@equilab/api": ~1.14.25
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
@@ -14004,9 +14028,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^6.11.1":
-  version: 6.11.1
-  resolution: "ethers@npm:6.11.1"
+"ethers@npm:^6.13.1":
+  version: 6.13.1
+  resolution: "ethers@npm:6.13.1"
   dependencies:
     "@adraffy/ens-normalize": 1.10.1
     "@noble/curves": 1.2.0
@@ -14014,8 +14038,8 @@ __metadata:
     "@types/node": 18.15.13
     aes-js: 4.0.0-beta.5
     tslib: 2.4.0
-    ws: 8.5.0
-  checksum: e8027c5071ad0370c61a1978f0602ab950d840c5923948f55e88b9808300e4e02e792bb793ea109ce7fa0e748f30a40a05f1202204a2b0402cdffbcb64a218e4
+    ws: 8.17.1
+  checksum: beef4b6d117f64c369f44be631e0f666b966374eac0cc0446fa7abe114b11d6b3019060022eec65c031f150711f4913d249de507ff3da3204e654635db80a07e
   languageName: node
   linkType: hard
 
@@ -28172,6 +28196,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ws@npm:8.17.1":
+  version: 8.17.1
+  resolution: "ws@npm:8.17.1"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 442badcce1f1178ec87a0b5372ae2e9771e07c4929a3180321901f226127f252441e8689d765aa5cfba5f50ac60dd830954afc5aeae81609aefa11d3ddf5cecf
+  languageName: node
+  linkType: hard
+
 "ws@npm:8.5.0":
   version: 8.5.0
   resolution: "ws@npm:8.5.0"
@@ -28427,6 +28466,13 @@ __metadata:
   version: 0.8.15
   resolution: "zen-observable@npm:0.8.15"
   checksum: b7289084bc1fc74a559b7259faa23d3214b14b538a8843d2b001a35e27147833f4107590b1b44bf5bc7f6dfe6f488660d3a3725f268e09b3925b3476153b7821
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.22.8":
+  version: 3.23.8
+  resolution: "zod@npm:3.23.8"
+  checksum: 15949ff82118f59c893dacd9d3c766d02b6fa2e71cf474d5aa888570c469dbf5446ac5ad562bb035bf7ac9650da94f290655c194f4a6de3e766f43febd432c5c
   languageName: node
   linkType: hard
 
