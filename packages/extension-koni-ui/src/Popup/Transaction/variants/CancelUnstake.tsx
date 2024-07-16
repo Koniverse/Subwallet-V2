@@ -161,10 +161,10 @@ const Component = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
-              addressPrefix={networkPrefix}
             />
           </Form.Item>
           <FreeBalance

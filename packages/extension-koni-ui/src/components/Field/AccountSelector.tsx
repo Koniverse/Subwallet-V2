@@ -103,6 +103,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
         placeholder={placeholder || t('Select account')}
         prefix={
           <Avatar
+            identPrefix={addressPrefix}
             size={20}
             theme={value ? isEthereumAddress(value) ? 'ethereum' : 'polkadot' : undefined}
             value={value}

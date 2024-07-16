@@ -352,11 +352,11 @@ const Component: React.FC = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
               label={poolInfo.type === YieldPoolType.LENDING ? t('Withdraw from account') : t('Unstake from account')}
-              addressPrefix={networkPrefix}
             />
           </Form.Item>
           <FreeBalance
