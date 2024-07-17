@@ -5,6 +5,8 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 
 export const STABLE_XCM_VERSION = 3;
 
+export const CHAINS_OLD_XCM_VERSION = ['pioneer'];
+
 export function isUseTeleportProtocol (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo) {
   const relayChainToSystemChain = (['polkadot'].includes(originChainInfo.slug) && ['statemint'].includes(destChainInfo.slug)) ||
     (['kusama'].includes(originChainInfo.slug) && ['statemine'].includes(destChainInfo.slug)) ||

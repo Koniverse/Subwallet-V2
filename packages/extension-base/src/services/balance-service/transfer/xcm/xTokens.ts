@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getXcmDestWeight, _getXcmMultiAssets, _getXcmMultiLocation } from '@subwallet/extension-base/core/substrate/xcm-parser';
-import { STABLE_XCM_VERSION } from '@subwallet/extension-base/services/balance-service/transfer/xcm/utils';
+import { CHAINS_OLD_XCM_VERSION, STABLE_XCM_VERSION } from '@subwallet/extension-base/services/balance-service/transfer/xcm/utils';
 import { _getTokenOnChainAssetId, _getTokenOnChainInfo, _getXcmAssetId, _getXcmAssetMultilocation, _getXcmAssetType } from '@subwallet/extension-base/services/chain-service/utils';
 
 import { ApiPromise } from '@polkadot/api';
@@ -20,7 +20,12 @@ function getCurrencyId (tokenInfo: _ChainAsset): unknown {
 }
 
 export function getExtrinsicByXtokensPallet (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, destinationChainInfo: _ChainInfo, recipientAddress: string, value: string, api: ApiPromise) {
-  const version = STABLE_XCM_VERSION;
+  let version = STABLE_XCM_VERSION;
+
+  if (CHAINS_OLD_XCM_VERSION.includes(originChainInfo.slug)) {
+    version = 1;
+  }
+
   const destination = _getXcmMultiLocation(originChainInfo, destinationChainInfo, version, recipientAddress);
 
   if (!_getXcmAssetMultilocation(tokenInfo)) {
