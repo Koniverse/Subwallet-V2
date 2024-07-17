@@ -4,7 +4,6 @@
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
-import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
@@ -16,12 +15,13 @@ import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import AssetSettingStore from '@subwallet/extension-base/stores/AssetSetting';
-import { addLazy, fetchStaticData, filterAssetsByChainAndType, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
+import { addLazy, calculateMetadataHash, fetchStaticData, filterAssetsByChainAndType, getShortMetadata, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import Web3 from 'web3';
 
 import { logger as createLogger } from '@polkadot/util/logger';
-import { Logger } from '@polkadot/util/types';
+import { HexString, Logger } from '@polkadot/util/types';
+import { ExtraInfo } from '@polkadot-api/merkleize-metadata';
 
 const filterChainInfoMap = (data: Record<string, _ChainInfo>, ignoredChains: string[]): Record<string, _ChainInfo> => {
   return Object.fromEntries(
@@ -38,7 +38,11 @@ const ignoredList = [
   'merlinEvm',
   'botanixEvmTest',
   'syscoin_evm',
-  'rollux_evm'
+  'syscoin_evm_testnet',
+  'rollux_evm',
+  'rollux_testnet',
+  'boolAlpha',
+  'boolBeta_testnet'
 ];
 
 const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
@@ -843,6 +847,36 @@ export class ChainService {
 
     const onUpdateStatus = (status: _ChainConnectionStatus) => {
       const slug = chainInfo.slug;
+      const isActive = this.getChainStateByKey(slug).active;
+      const isConnectProblem = status !== _ChainConnectionStatus.CONNECTING && status !== _ChainConnectionStatus.CONNECTED;
+      const isLightRpc = endpoint.startsWith('light');
+
+      if (isActive && isConnectProblem && !isLightRpc) {
+        const reportApiUrl = 'https://api-cache.subwallet.app/api/health-check/report-rpc';
+        const requestBody = {
+          chainSlug: slug,
+          chainStatus: status,
+          rpcReport: {
+            [providerName]: endpoint
+          },
+          configStatus: {
+            countUnstable: 10,
+            countDie: 20
+          }
+        };
+
+        fetch(reportApiUrl, { // can get status from this response
+          method: 'POST',
+          headers: {
+            'X-API-KEY': '9b1c94a5e1f3a2d9f8b2a4d6e1f3a2d9',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        })
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          .then(() => {})
+          .catch((error) => console.error('Error connecting to the report API:', error));
+      }
 
       this.updateChainConnectionStatus(slug, status);
     };
@@ -854,6 +888,7 @@ export class ChainService {
       //
       //   this.substrateChainHandler.setSubstrateApi(chainInfo.slug, chainApi);
       // } else {
+
       const chainApi = await this.substrateChainHandler.initApi(chainInfo.slug, endpoint, { providerName, onUpdateStatus });
 
       this.substrateChainHandler.setSubstrateApi(chainInfo.slug, chainApi);
@@ -1965,6 +2000,8 @@ export class ChainService {
     }
   }
 
+  /* Metadata */
+
   getMetadata (chain: string) {
     return this.dbService.stores.metadata.getMetadata(chain);
   }
@@ -1976,6 +2013,48 @@ export class ChainService {
   getMetadataByHash (hash: string) {
     return this.dbService.stores.metadata.getMetadataByGenesisHash(hash);
   }
+
+  getExtraInfo (chain: string): Omit<ExtraInfo, 'specVersion' | 'specName'> {
+    const chainInfo = this.getChainInfoByKey(chain);
+
+    return {
+      decimals: chainInfo.substrateInfo?.decimals ?? 0,
+      tokenSymbol: chainInfo.substrateInfo?.symbol ?? 'Unit',
+      base58Prefix: chainInfo.substrateInfo?.addressPrefix ?? 42
+    };
+  }
+
+  async calculateMetadataHash (chain: string): Promise<string | undefined> {
+    const metadata = await this.getMetadata(chain);
+
+    if (!metadata || !metadata.hexV15) {
+      return undefined;
+    }
+
+    const extraInfo = this.getExtraInfo(chain);
+    const specVersion = parseInt(metadata.specVersion);
+    const specName = metadata.specName;
+    const hexV15 = metadata.hexV15;
+
+    return calculateMetadataHash({ ...extraInfo, specVersion, specName }, hexV15);
+  }
+
+  async shortenMetadata (chain: string, txBlob: string): Promise<string | undefined> {
+    const metadata = await this.getMetadata(chain);
+
+    if (!metadata || !metadata.hexV15) {
+      return undefined;
+    }
+
+    const extraInfo = this.getExtraInfo(chain);
+    const specVersion = parseInt(metadata.specVersion);
+    const specName = metadata.specName;
+    const hexV15 = metadata.hexV15;
+
+    return getShortMetadata(txBlob as HexString, { ...extraInfo, specVersion, specName }, hexV15);
+  }
+
+  /* Metadata */
 
   getSubscanChainMap (reverse?: boolean): Record<string, string> {
     const result: Record<string, string> = {};

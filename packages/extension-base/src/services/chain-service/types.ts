@@ -27,6 +27,12 @@ export enum _ChainConnectionStatus {
   CONNECTING = 'CONNECTING',
 }
 
+export interface ReportRpc {
+  runningRpc: Record<string, string>,
+  unstableRpc: Record<string, string>,
+  dieRpc: Record<string, string>
+}
+
 export interface _ChainState {
   slug: string;
   active: boolean;
@@ -83,6 +89,7 @@ export interface _SubstrateApiState {
 export interface _SubstrateApi extends _SubstrateApiState, _ChainBaseApi {
   api: ApiPromise;
   isReady: Promise<_SubstrateApi>;
+  connect: (_callbackUpdateMetadata?: (substrateApi: _SubstrateApi) => void) => void;
 
   specName: string;
   specVersion: string;
