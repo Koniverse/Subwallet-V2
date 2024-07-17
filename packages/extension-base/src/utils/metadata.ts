@@ -42,7 +42,7 @@ export const cacheMetadata = (
       return;
     }
 
-    const systemChain = await api.rpc.system.chain();
+    const systemChain = api.runtimeChain;
     // const _metadata: Option<OpaqueMetadata> = await api.call.metadata.metadataAtVersion(15);
     // const metadataHex = _metadata.isSome ? _metadata.unwrap().toHex().slice(2) : ''; // Need unwrap to create metadata object
     let hexV15: HexString | undefined;
