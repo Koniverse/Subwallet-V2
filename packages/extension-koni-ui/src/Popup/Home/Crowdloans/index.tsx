@@ -113,8 +113,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     () => {
       return (
         <EmptyList
-          emptyMessage={t('Your crowdloans will show up here')}
-          emptyTitle={t('No crowdloans found')}
+          emptyMessage={t('emptyContent.crowdloan.description')}
+          emptyTitle={t('emptyContent.crowdloan.title')}
           phosphorIcon={Rocket}
         />
       );
@@ -135,7 +135,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     >
       <Layout.WithSubHeaderOnly
         onBack={goBackToSettingList}
-        title={t('Crowdloans')}
+        title={t('settings.Screen.crowdloans.title')}
       >
         <div className='content-container'>
           {!!banners.length && (
@@ -158,7 +158,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             renderWhenEmpty={emptyCrowdloanList}
             searchFunction={searchFunction}
             searchMinCharactersCount={2}
-            searchPlaceholder={t<string>('Search project')}
+            searchPlaceholder={t<string>('settings.crowdloan.searchPlaceHolder')}
             showActionBtn
           />
         </div>
