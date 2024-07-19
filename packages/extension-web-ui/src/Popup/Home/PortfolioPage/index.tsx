@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Headers from '@subwallet/extension-web-ui/components/Layout/parts/Header';
-import { useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
+import { useGetBannerByScreen, useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { reloadCron } from '@subwallet/extension-web-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { ActivityIndicator, Button, Icon, Input, SwSubHeader } from '@subwallet/react-ui';
@@ -126,11 +127,19 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   }, [pathname]);
 
   const isShowReloadNft = useMemo(() => pathname.startsWith('/home/nfts/collections'), [pathname]);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', 'aleph-NATIVE-AZERO');
 
   return (
     <div className={CN(className, 'portfolio-container')}>
       <div className='portfolio-header'>
         <Headers.Balance className={'portfolio-balance'} />
+        <div className={'token-detail-banner-wrapper'}>
+          {!!banners.length && (<BannerGenerator
+            banners={banners}
+            dismissBanner={dismissBanner}
+            onClickBanner={onClickBanner}
+          />)}
+        </div>
         <div className='menu-bar'>
           {
             !isDetail

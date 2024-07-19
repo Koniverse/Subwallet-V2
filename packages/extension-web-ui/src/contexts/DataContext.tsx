@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { persistor, store, StoreName } from '@subwallet/extension-web-ui/stores';
-import { getDAppsData, getMissionPoolData, subscribeAccountsData, subscribeAddressBook, subscribeAssetLogoMaps, subscribeAssetRegistry, subscribeAssetSettings, subscribeAuthorizeRequests, subscribeAuthUrls, subscribeBalance, subscribeBuyServices, subscribeBuyTokens, subscribeChainInfoMap, subscribeChainLogoMaps, subscribeChainStateMap, subscribeChainStatusMap, subscribeConfirmationRequests, subscribeConnectWCRequests, subscribeCrowdloan, subscribeKeyringState, subscribeMantaPayConfig, subscribeMantaPaySyncingState, subscribeMetadataRequests, subscribeMultiChainAssetMap, subscribeNftCollections, subscribeNftItems, subscribePrice, subscribeProcessingCampaign, subscribeRewardHistory, subscribeSigningRequests, subscribeSwapPairs, subscribeTransactionRequests, subscribeTxHistory, subscribeUiSettings, subscribeWalletConnectSessions, subscribeWCNotSupportRequests, subscribeXcmRefMap, subscribeYieldMinAmountPercent, subscribeYieldPoolInfo, subscribeYieldPositionInfo, subscribeYieldReward } from '@subwallet/extension-web-ui/stores/utils';
+import { getDAppsData, getMissionPoolData, subscribeAccountsData, subscribeAddressBook, subscribeAssetLogoMaps, subscribeAssetRegistry, subscribeAssetSettings, subscribeAuthorizeRequests, subscribeAuthUrls, subscribeBalance, subscribeBuyServices, subscribeBuyTokens, subscribeCampaignPopupVisibility, subscribeChainInfoMap, subscribeChainLogoMaps, subscribeChainStateMap, subscribeChainStatusMap, subscribeConfirmationRequests, subscribeConnectWCRequests, subscribeCrowdloan, subscribeKeyringState, subscribeMantaPayConfig, subscribeMantaPaySyncingState, subscribeMetadataRequests, subscribeMultiChainAssetMap, subscribeNftCollections, subscribeNftItems, subscribePrice, subscribeProcessingCampaign, subscribeRewardHistory, subscribeSigningRequests, subscribeSwapPairs, subscribeTransactionRequests, subscribeTxHistory, subscribeUiSettings, subscribeWalletConnectSessions, subscribeWCNotSupportRequests, subscribeXcmRefMap, subscribeYieldMinAmountPercent, subscribeYieldPoolInfo, subscribeYieldPositionInfo, subscribeYieldReward } from '@subwallet/extension-web-ui/stores/utils';
 import Bowser from 'bowser';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -206,6 +206,7 @@ export const DataContextProvider = ({ children }: DataContextProviderProps) => {
   _DataContext.addHandler({ ...subscribeMantaPaySyncingState, name: 'subscribeMantaPaySyncingState', relatedStores: ['mantaPay'], isStartImmediately: true });
 
   _DataContext.addHandler({ ...subscribeProcessingCampaign, name: 'subscribeProcessingCampaign', relatedStores: ['campaign'], isStartImmediately: true });
+  _DataContext.addHandler({ ...subscribeCampaignPopupVisibility, name: 'subscribeCampaignPopupVisibility', relatedStores: ['campaign'], isStartImmediately: true });
 
   _DataContext.addHandler({ ...subscribeBuyTokens, name: 'subscribeBuyTokens', relatedStores: ['buyService'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeBuyServices, name: 'subscribeBuyServices', relatedStores: ['buyService'], isStartImmediately: true });

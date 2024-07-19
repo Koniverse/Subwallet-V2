@@ -12,6 +12,7 @@ import { BalanceMap, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, Ear
 import { SwapPair } from '@subwallet/extension-base/types/swap';
 import { DAppCategory, DAppInfo } from '@subwallet/extension-web-ui/types/dapp';
 import { MissionInfo } from '@subwallet/extension-web-ui/types/missionPool';
+import { AppBannerData, AppConfirmationData, AppPopupData, PopupHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
 import { SessionTypes } from '@walletconnect/types';
 
 import { SettingsStruct } from '@polkadot/ui-settings/types';
@@ -130,7 +131,17 @@ export interface BalanceStore extends BaseReduxStore {
 }
 
 export interface CampaignStore extends BaseReduxStore {
-  banners: CampaignBanner[]
+  banners: CampaignBanner[],
+  isPopupVisible: boolean
+}
+
+export interface AppOnlineContent {
+  appPopupData: AppPopupData[];
+  appBannerData: AppBannerData[];
+  appConfirmationData: AppConfirmationData[];
+  popupHistoryMap: Record<string, PopupHistoryData>;
+  bannerHistoryMap: Record<string, PopupHistoryData>;
+  confirmationHistoryMap: Record<string, PopupHistoryData>;
 }
 
 export interface BuyServiceStore extends BaseReduxStore {
