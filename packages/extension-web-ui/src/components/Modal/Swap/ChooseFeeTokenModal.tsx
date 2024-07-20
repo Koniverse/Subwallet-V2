@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { BaseModal } from '@subwallet/extension-web-ui/components';
 import ChooseFeeItem from '@subwallet/extension-web-ui/components/Field/Swap/ChooseFeeItem';
@@ -19,13 +20,15 @@ type Props = ThemeProps & {
   items: string[] | undefined,
   onSelectItem: (slug: string) => void,
   selectedItem?: string,
+  isSwapHydraDX?: boolean,
+  address: string,
+  extrinsicType: ExtrinsicType
 }
 const numberMetadata = { maxNumberFormat: 8 };
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, estimatedFee, items, modalId, onSelectItem, selectedItem } = props;
+  const { address, className, estimatedFee, extrinsicType, isSwapHydraDX, items, modalId, onSelectItem, selectedItem } = props;
   const { currencyData } = useSelector((state: RootState) => state.price);
-
   const { inactiveModal } = useContext(ModalContext);
 
   const onCancel = useCallback(() => {
@@ -44,7 +47,7 @@ const Component: React.FC<Props> = (props: Props) => {
       >
         <div className={'__choose-fee-wrapper'}>
           <div className={'__estimate-fee'}>
-            <span className={'__title'}>Estimated  fee</span>
+            <span className={'__title'}>{ isSwapHydraDX ? 'Network fee' : 'Estimated  fee'}</span>
             <Number
               className={'__value'}
               customFormatter={swapCustomFormatter}
@@ -60,11 +63,14 @@ const Component: React.FC<Props> = (props: Props) => {
           </div>
           {items && items.map((item, index) => (
             <ChooseFeeItem
+              address={address}
               amountToPay={estimatedFee}
               key={index}
+              modalId={modalId}
               onSelect={onSelectItem}
-              selected={!!selectedItem}
+              selected={item === selectedItem}
               slug={item}
+              extrinsicType={extrinsicType}
             />
           ))}
         </div>

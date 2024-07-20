@@ -10,7 +10,7 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
-import { GenSwapStepFunc, OptimalSwapPathParams, SwapEarlyValidation, SwapErrorType, SwapFeeType, SwapProvider, SwapProviderId, SwapQuote, SwapRequest, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { GenSwapStepFunc, OptimalSwapPathParams, SwapEarlyValidation, SwapErrorType, SwapFeeType, SwapProvider, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { formatNumber } from '@subwallet/extension-base/utils';
 import BigNumber from 'bignumber.js';
 import { t } from 'i18next';
@@ -178,6 +178,10 @@ export class SwapBaseHandler {
     // check balance to pay transaction fee
     // check balance against spending amount
     if (!params.selectedQuote) {
+      return Promise.resolve([new TransactionError(BasicTxErrorType.INTERNAL_ERROR)]);
+    }
+
+    if (params.process.steps.findIndex((step) => step.type === SwapStepType.SWAP) <= -1) {
       return Promise.resolve([new TransactionError(BasicTxErrorType.INTERNAL_ERROR)]);
     }
 
