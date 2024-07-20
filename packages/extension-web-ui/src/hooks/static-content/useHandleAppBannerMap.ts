@@ -31,7 +31,7 @@ export const useHandleAppBannerMap = (
       const activeList = data && data.length ? data.filter(({ info }) => checkPopupExistTime(info)) : [];
       const filteredData = activeList
         .filter(({ info }) => {
-          return info.platforms.includes('extension');
+          return info.platforms.includes('web');
         })
         .sort((a, b) => a.priority - b.priority);
 

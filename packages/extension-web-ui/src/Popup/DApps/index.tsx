@@ -36,8 +36,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { activeModal } = useContext(ModalContext);
   const { isWebUI } = useContext(ScreenContext);
   const { categories, dApps, featureDApps } = useSelector((state: RootState) => state.dApp);
-
-  console.log('featureDApps', featureDApps);
   const [sliderDisplayCount, setSliderDisplayCount] = useState<number>(0);
 
   const sliderSettings: Settings = useMemo(() => {

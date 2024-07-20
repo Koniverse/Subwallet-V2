@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { PhosphorIcon } from '@subwallet/extension-koni-ui/types/index';
+import { PhosphorIcon } from '@subwallet/extension-web-ui/types/index';
 
 export type PopupFrequency = 'once' | 'daily' | 'weekly' | 'monthly' | 'every_time' | null;
 

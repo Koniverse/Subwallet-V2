@@ -127,14 +127,27 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   }, [pathname]);
 
   const isShowReloadNft = useMemo(() => pathname.startsWith('/home/nfts/collections'), [pathname]);
-  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', 'aleph-NATIVE-AZERO');
+  const tokenGroupSlug = useMemo(() => {
+    if (pathname.startsWith('/home/tokens/detail')) {
+      return pathname.split('/').pop();
+    }
+
+    return undefined;
+  }, [pathname]);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token');
+  const { banners: bannersDetails } = useGetBannerByScreen('token_detail', tokenGroupSlug);
 
   return (
     <div className={CN(className, 'portfolio-container')}>
       <div className='portfolio-header'>
         <Headers.Balance className={'portfolio-balance'} />
         <div className={'token-detail-banner-wrapper'}>
-          {!!banners.length && (<BannerGenerator
+          {!!tokenGroupSlug && (<BannerGenerator
+            banners={bannersDetails}
+            dismissBanner={dismissBanner}
+            onClickBanner={onClickBanner}
+          />)}
+          {!tokenGroupSlug && !!banners.length && (<BannerGenerator
             banners={banners}
             dismissBanner={dismissBanner}
             onClickBanner={onClickBanner}

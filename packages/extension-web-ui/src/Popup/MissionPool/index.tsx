@@ -5,9 +5,10 @@ import { FilterModal } from '@subwallet/extension-web-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-web-ui/components/FilterTabs';
 import NoContent, { PAGE_TYPE } from '@subwallet/extension-web-ui/components/NoContent';
 import Search from '@subwallet/extension-web-ui/components/Search';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
-import { useFilterModal, useSelector } from '@subwallet/extension-web-ui/hooks';
+import { useFilterModal, useGetBannerByScreen, useSelector } from '@subwallet/extension-web-ui/hooks';
 import { MissionDetailModal, PoolDetailModalId } from '@subwallet/extension-web-ui/Popup/MissionPool/MissionDetailModal';
 import MissionItem from '@subwallet/extension-web-ui/Popup/MissionPool/MissionItem';
 import { missionCategories, MissionCategoryType } from '@subwallet/extension-web-ui/Popup/MissionPool/predefined';
@@ -61,6 +62,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const location = useLocation();
 
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('missionPools');
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(MissionCategoryType.ALL);
   const [searchInput, setSearchInput] = useState<string>('');
   const { activeModal } = useContext(ModalContext);
@@ -175,6 +177,15 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             title={t('Mission Pools')}
           />)
       }
+      {!!banners.length && (
+        <div className={'banner-container'}>
+          <BannerGenerator
+            banners={banners}
+            dismissBanner={dismissBanner}
+            onClickBanner={onClickBanner}
+          />
+        </div>
+      )}
 
       <div className={'__tool-area'}>
         <FilterTabs

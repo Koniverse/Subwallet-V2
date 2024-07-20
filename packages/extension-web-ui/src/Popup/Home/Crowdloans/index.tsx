@@ -45,7 +45,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { isShowBalance } = useSelector((state) => state.settings);
 
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
-  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', 'aleph-NATIVE-AZERO');
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('crowdloan');
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(FilterValue.ALL);
 
   console.log('banners', banners);

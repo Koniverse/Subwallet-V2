@@ -75,7 +75,7 @@ function Component ({ className, earningPositions, setEntryView }: Props) {
   const currentAccount = useSelector((state) => state.accountState.currentAccount);
 
   const isShowBalance = useSelector((state) => state.settings.isShowBalance);
-  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', 'aleph-NATIVE-AZERO');
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
   const { accountBalance: { tokenBalanceMap } } = useContext(HomeContext);
 
   const [, setEarnStorage] = useLocalStorage(EARN_TRANSACTION, DEFAULT_EARN_PARAMS);
