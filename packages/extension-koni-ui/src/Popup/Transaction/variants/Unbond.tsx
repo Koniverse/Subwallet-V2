@@ -376,6 +376,7 @@ const Component: React.FC = () => {
               defaultValue={persistValidator}
               disabled={!fromValue}
               label={t(`Select ${handleValidatorLabel}`)}
+              networkPrefix={networkPrefix}
               nominators={nominators}
             />
           </Form.Item>

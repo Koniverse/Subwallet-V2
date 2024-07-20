@@ -3,6 +3,7 @@
 
 import { NominationInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { formatBalance, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Web3Block } from '@subwallet/react-ui';
@@ -11,6 +12,7 @@ import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps & {
@@ -20,7 +22,9 @@ type Props = ThemeProps & {
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, isSelected, nominationInfo } = props;
+  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const { chain } = nominationInfo;
+  const networkPrefix = chainInfoMap[chain]?.substrateInfo?.addressPrefix;
 
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
@@ -35,6 +39,7 @@ const Component: React.FC<Props> = (props: Props) => {
         className={'validator-item-content'}
         leftItem={
           <SwAvatar
+            identPrefix={networkPrefix}
             size={40}
             value={nominationInfo.validatorAddress}
           />
