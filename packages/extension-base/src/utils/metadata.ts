@@ -5,25 +5,25 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 
 import { getSpecExtensions, getSpecTypes } from '@polkadot/types-known';
-import { u8aToHex } from '@polkadot/util';
+// import { u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
-import { ExtraInfo, merkleizeMetadata } from '@polkadot-api/merkleize-metadata';
+// import { ExtraInfo, merkleizeMetadata } from '@polkadot-api/merkleize-metadata';
 
 export const _isRuntimeUpdated = (signedExtensions?: string[]): boolean => {
   return signedExtensions ? signedExtensions.includes('CheckMetadataHash') : false;
 };
 
-export const calculateMetadataHash = (extraInfo: ExtraInfo, metadataV15: HexString): string => {
-  const _merkleizeMetadata = merkleizeMetadata(metadataV15, extraInfo);
-
-  return u8aToHex(_merkleizeMetadata.digest());
-};
-
-export const getShortMetadata = (blob: HexString, extraInfo: ExtraInfo, metadata: HexString): string => {
-  const _merkleizeMetadata = merkleizeMetadata(metadata, extraInfo);
-
-  return u8aToHex(_merkleizeMetadata.getProofForExtrinsicPayload(blob));
-};
+// export const calculateMetadataHash = (extraInfo: ExtraInfo, metadataV15: HexString): string => {
+//   const _merkleizeMetadata = merkleizeMetadata(metadataV15, extraInfo);
+//
+//   return u8aToHex(_merkleizeMetadata.digest());
+// };
+//
+// export const getShortMetadata = (blob: HexString, extraInfo: ExtraInfo, metadata: HexString): string => {
+//   const _merkleizeMetadata = merkleizeMetadata(metadata, extraInfo);
+//
+//   return u8aToHex(_merkleizeMetadata.getProofForExtrinsicPayload(blob));
+// };
 
 export const cacheMetadata = (
   chain: string,

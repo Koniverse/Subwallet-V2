@@ -21,7 +21,7 @@ import Web3 from 'web3';
 
 import { logger as createLogger } from '@polkadot/util/logger';
 import { HexString, Logger } from '@polkadot/util/types';
-import { ExtraInfo } from '@polkadot-api/merkleize-metadata';
+// import { ExtraInfo } from '@polkadot-api/merkleize-metadata';
 
 const filterChainInfoMap = (data: Record<string, _ChainInfo>, ignoredChains: string[]): Record<string, _ChainInfo> => {
   return Object.fromEntries(
@@ -2017,45 +2017,45 @@ export class ChainService {
     return this.dbService.stores.metadata.getMetadataByGenesisHash(hash);
   }
 
-  getExtraInfo (chain: string): Omit<ExtraInfo, 'specVersion' | 'specName'> {
-    const chainInfo = this.getChainInfoByKey(chain);
+  // getExtraInfo (chain: string): Omit<ExtraInfo, 'specVersion' | 'specName'> {
+  //   const chainInfo = this.getChainInfoByKey(chain);
+  //
+  //   return {
+  //     decimals: chainInfo.substrateInfo?.decimals ?? 0,
+  //     tokenSymbol: chainInfo.substrateInfo?.symbol ?? 'Unit',
+  //     base58Prefix: chainInfo.substrateInfo?.addressPrefix ?? 42
+  //   };
+  // }
 
-    return {
-      decimals: chainInfo.substrateInfo?.decimals ?? 0,
-      tokenSymbol: chainInfo.substrateInfo?.symbol ?? 'Unit',
-      base58Prefix: chainInfo.substrateInfo?.addressPrefix ?? 42
-    };
-  }
+  // async calculateMetadataHash (chain: string): Promise<string | undefined> {
+  //   const metadata = await this.getMetadata(chain);
+  //
+  //   if (!metadata || !metadata.hexV15) {
+  //     return undefined;
+  //   }
+  //
+  //   const extraInfo = this.getExtraInfo(chain);
+  //   const specVersion = parseInt(metadata.specVersion);
+  //   const specName = metadata.specName;
+  //   const hexV15 = metadata.hexV15;
+  //
+  //   return calculateMetadataHash({ ...extraInfo, specVersion, specName }, hexV15);
+  // }
 
-  async calculateMetadataHash (chain: string): Promise<string | undefined> {
-    const metadata = await this.getMetadata(chain);
-
-    if (!metadata || !metadata.hexV15) {
-      return undefined;
-    }
-
-    const extraInfo = this.getExtraInfo(chain);
-    const specVersion = parseInt(metadata.specVersion);
-    const specName = metadata.specName;
-    const hexV15 = metadata.hexV15;
-
-    return calculateMetadataHash({ ...extraInfo, specVersion, specName }, hexV15);
-  }
-
-  async shortenMetadata (chain: string, txBlob: string): Promise<string | undefined> {
-    const metadata = await this.getMetadata(chain);
-
-    if (!metadata || !metadata.hexV15) {
-      return undefined;
-    }
-
-    const extraInfo = this.getExtraInfo(chain);
-    const specVersion = parseInt(metadata.specVersion);
-    const specName = metadata.specName;
-    const hexV15 = metadata.hexV15;
-
-    return getShortMetadata(txBlob as HexString, { ...extraInfo, specVersion, specName }, hexV15);
-  }
+  // async shortenMetadata (chain: string, txBlob: string): Promise<string | undefined> {
+  //   const metadata = await this.getMetadata(chain);
+  //
+  //   if (!metadata || !metadata.hexV15) {
+  //     return undefined;
+  //   }
+  //
+  //   const extraInfo = this.getExtraInfo(chain);
+  //   const specVersion = parseInt(metadata.specVersion);
+  //   const specName = metadata.specName;
+  //   const hexV15 = metadata.hexV15;
+  //
+  //   return getShortMetadata(txBlob as HexString, { ...extraInfo, specVersion, specName }, hexV15);
+  // }
 
   /* Metadata */
 
