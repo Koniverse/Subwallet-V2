@@ -33,8 +33,14 @@ const _availSpec: OverrideBundleDefinition = {
   signedExtensions: availSpec.signedExtensions
 };
 
+// Override avail goldberg spec for signedExtensions
+const _goldbergSpec: OverrideBundleDefinition = {
+  signedExtensions: availSpec.signedExtensions
+};
+
 if (typesBundle.spec) {
   typesBundle.spec.avail = _availSpec;
+  typesBundle.spec['data-avail'] = _goldbergSpec;
 }
 
 export class SubstrateApi implements _SubstrateApi {
@@ -193,9 +199,10 @@ export class SubstrateApi implements _SubstrateApi {
     this.api = this.createApi(this.provider);
   }
 
-  connect (): void {
+  connect (_callbackUpdateMetadata?: (substrateApi: _SubstrateApi) => void): void {
     if (this.api.isConnected) {
       this.updateConnectionStatus(_ChainConnectionStatus.CONNECTED);
+      _callbackUpdateMetadata?.(this);
     } else {
       this.updateConnectionStatus(_ChainConnectionStatus.CONNECTING);
 
@@ -203,6 +210,7 @@ export class SubstrateApi implements _SubstrateApi {
         .then(() => {
           this.api.isReady.then(() => {
             this.updateConnectionStatus(_ChainConnectionStatus.CONNECTED);
+            _callbackUpdateMetadata?.(this);
           }).catch(console.error);
         }).catch(console.error);
     }
