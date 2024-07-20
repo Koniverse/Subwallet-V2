@@ -8,7 +8,7 @@ import { _getAssetDecimals, _getAssetOriginChain, _getAssetPriceId, _getAssetSym
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { CommonFeeComponent, CommonOptimalPath, CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
+import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType } from '@subwallet/extension-base/types/swap';
 import { formatNumberString, isAccountAll, swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { AccountSelector, AddMoreBalanceModal, AddressInput, AlertBox, ChooseFeeTokenModal, HiddenInput, MetaInfo, PageWrapper, QuoteResetTime, SlippageModal, SwapFromField, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapRoute, SwapTermsOfServiceModal, SwapToField } from '@subwallet/extension-web-ui/components';
 import { BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, DEFAULT_SWAP_PARAMS, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-web-ui/constants';
@@ -650,7 +650,7 @@ const Component = () => {
             let latestOptimalQuote = currentQuote;
 
             if (currentOptimalSwapPath.steps.length > 2 &&
-              (currentOptimalSwapPath.steps[step].type === SwapStepType.SET_FEE_TOKEN || currentOptimalSwapPath.steps[step].type === SwapStepType.SWAP)) {
+              (currentOptimalSwapPath.steps[step].type === CommonStepType.SET_FEE_TOKEN || currentOptimalSwapPath.steps[step].type === SwapStepType.SWAP)) {
               if (currentQuoteRequest) {
                 const latestSwapQuote = await getLatestSwapQuote(currentQuoteRequest);
 
