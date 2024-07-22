@@ -7,6 +7,6 @@ import { ModifyPairStoreData } from '@subwallet/extension-base/types';
 
 export default class ModifyPairStore extends SubscribableStore<ModifyPairStoreData> {
   constructor () {
-    super(EXTENSION_PREFIX ? `${EXTENSION_PREFIX}group_account` : null);
+    super(EXTENSION_PREFIX ? `${EXTENSION_PREFIX}pair_modify` : null);
   }
 }

@@ -6,11 +6,11 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getEvmChainId, _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { CurrentAccountStore } from '@subwallet/extension-base/stores';
-import AccountGroupStore from '@subwallet/extension-base/stores/AccountGroupStore';
+import AccountProxyStore from '@subwallet/extension-base/stores/AccountProxyStore';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
 import ModifyPairStore from '@subwallet/extension-base/stores/ModifyPairStore';
-import { AccountGroupData, AccountGroupMap, AccountGroupStoreData, AccountJson, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { isAddressValidWithAuthType, transformAccount, transformAccounts } from '@subwallet/extension-base/utils';
+import { AccountJson, AccountProxyData, AccountProxyMap, AccountProxyStoreData, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { isAddressValidWithAuthType, transformAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -19,7 +19,7 @@ import { t } from 'i18next';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 
 import { hexStripPrefix, hexToU8a, isHex, stringShorten } from '@polkadot/util';
-import { keyExtractSuri } from '@polkadot/util-crypto';
+import { keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
 
 const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
@@ -30,7 +30,7 @@ const getSuri = (seed: string, type?: KeypairType): string => type === 'ethereum
 
 const CURRENT_ACCOUNT_KEY = 'CurrentAccountInfo';
 const MODIFY_PAIRS_KEY = 'ModifyPairs';
-const ACCOUNT_GROUPS_KEY = 'AccountGroups';
+const ACCOUNT_PROXIES_KEY = 'AccountProxies';
 
 export class AccountContext {
   // Current account
@@ -38,8 +38,8 @@ export class AccountContext {
   public readonly currentAccountSubject = new BehaviorSubject<CurrentAccountInfo>({ address: '' });
 
   // Account groups
-  private readonly accountGroupsStore = new AccountGroupStore();
-  public readonly accountGroupsSubject = new BehaviorSubject<AccountGroupStoreData>({});
+  private readonly accountProxiesStore = new AccountProxyStore();
+  public readonly accountProxiesSubject = new BehaviorSubject<AccountProxyStoreData>({});
 
   // Modify pairs
   private readonly modifyPairsStore = new ModifyPairStore();
@@ -48,7 +48,7 @@ export class AccountContext {
   // Observable of accounts, pairs and contacts
   public readonly contactSubject = keyring.addresses.subject;
   public readonly pairSubject = keyring.accounts.subject;
-  public readonly accountSubject = new BehaviorSubject<AccountGroupMap>({});
+  public readonly accountSubject = new BehaviorSubject<AccountProxyMap>({});
 
   // Old from Polkadot-js
   private readonly accountRefStore = new AccountRefStore();
@@ -71,9 +71,9 @@ export class AccountContext {
         this.modifyPairsStore.get(MODIFY_PAIRS_KEY, (rs) => {
           rs && this.modifyPairsSubject.next(rs);
         });
-        // Load account groups
-        this.accountGroupsStore.get(ACCOUNT_GROUPS_KEY, (rs) => {
-          rs && this.accountGroupsSubject.next(rs);
+        // Load account proxies
+        this.accountProxiesStore.get(ACCOUNT_PROXIES_KEY, (rs) => {
+          rs && this.accountProxiesSubject.next(rs);
         });
         this.subscribeAccounts().catch(console.error);
       })
@@ -112,17 +112,17 @@ export class AccountContext {
 
     const pairs = this.pairSubject.asObservable();
     const modifyPairs = this.modifyPairsSubject.asObservable();
-    const accountGroups = this.accountGroupsSubject.asObservable();
+    const accountGroups = this.accountProxiesSubject.asObservable();
 
     combineLatest([pairs, modifyPairs, accountGroups]).subscribe(([pairs, modifyPairs, accountGroups]) => {
-      const result: AccountGroupMap = {};
+      const result: AccountProxyMap = {};
 
       for (const [address, pair] of Object.entries(pairs)) {
         const modifyPair = modifyPairs[address];
         const account: AccountJson = transformAccount(pair);
 
-        if (modifyPair && modifyPair.applied && modifyPair.accountGroupId) {
-          const accountGroup = accountGroups[modifyPair.accountGroupId];
+        if (modifyPair && modifyPair.applied && modifyPair.accountProxyId) {
+          const accountGroup = accountGroups[modifyPair.accountProxyId];
 
           if (accountGroup) {
             if (!result[accountGroup.id]) {
@@ -137,7 +137,7 @@ export class AccountContext {
         result[address] = { id: address, name: account.name || account.address, accounts: [account] };
       }
 
-      this.accountGroupsSubject.next(result);
+      this.accountProxiesSubject.next(result);
     });
   }
 
@@ -149,7 +149,7 @@ export class AccountContext {
     return this.contactSubject.value;
   }
 
-  get accounts (): AccountGroupMap {
+  get accounts (): AccountProxyMap {
     return this.accountSubject.value;
   }
 
@@ -223,15 +223,19 @@ export class AccountContext {
 
   /* Upsert account group */
 
-  private upsertAccountGroup (data: AccountGroupData, callback?: () => void) {
-    this.accountGroupsStore.get(ACCOUNT_GROUPS_KEY, (rs) => {
+  private upsertAccountProxy (data: AccountProxyData, callback?: () => void) {
+    this.accountProxiesStore.get(ACCOUNT_PROXIES_KEY, (rs) => {
       const accountGroups = rs || {};
 
       accountGroups[data.id] = data;
-      this.accountGroupsSubject.next(accountGroups);
-      this.accountGroupsStore.set(ACCOUNT_GROUPS_KEY, accountGroups, callback);
+      this.accountProxiesSubject.next(accountGroups);
+      this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, accountGroups, callback);
     });
   }
+
+  // private createAccountGroupId (_suri: string) {
+  //   bcrypt.
+  // }
 
   /* Account group */
 
@@ -253,6 +257,8 @@ export class AccountContext {
 
     // const currentAccount = this.#koniState.keyringService.context.currentAccount;
     // const allGenesisHash = currentAccount?.allGenesisHash || undefined;
+
+    const entropy = mnemonicToEntropy(_suri);
 
     types?.forEach((type) => {
       const suri = getSuri(_suri, type);

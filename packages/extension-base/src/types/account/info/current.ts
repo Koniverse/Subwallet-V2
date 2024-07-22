@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountGroup } from './group';
+import { AccountProxy } from './group';
 
 // all Accounts and the address of the current Account
 export interface AccountsWithCurrentAddress {
-  accounts: AccountGroup[];
+  accounts: AccountProxy[];
   currentAddress?: string;
 }
 

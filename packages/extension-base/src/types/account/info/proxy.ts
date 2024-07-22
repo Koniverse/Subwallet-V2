@@ -3,24 +3,24 @@
 
 import { AccountJson } from './keyring';
 
-export interface AccountGroupData {
+export interface AccountProxyData {
   id: string;
   name: string;
 }
 
-export type AccountGroupStoreData = Record<string, AccountGroupData>;
+export type AccountProxyStoreData = Record<string, AccountProxyData>;
 
-export interface AccountGroup extends AccountGroupData {
+export interface AccountProxy extends AccountProxyData {
   accounts: AccountJson[];
 }
 
-export type AccountGroupMap = Record<string, AccountGroup>
+export type AccountProxyMap = Record<string, AccountProxy>
 
 export interface ModifyPairData {
   key: string;
   applied: boolean;
   migrated: boolean;
-  accountGroupId?: string;
+  accountProxyId?: string;
 }
 
 export type ModifyPairStoreData = Record<string, ModifyPairData>;

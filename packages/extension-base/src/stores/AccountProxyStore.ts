@@ -3,10 +3,10 @@
 
 import { EXTENSION_PREFIX } from '@subwallet/extension-base/defaults';
 import SubscribableStore from '@subwallet/extension-base/stores/SubscribableStore';
-import { AccountGroupStoreData } from '@subwallet/extension-base/types';
+import { AccountProxyStoreData } from '@subwallet/extension-base/types';
 
-export default class AccountGroupStore extends SubscribableStore<AccountGroupStoreData> {
+export default class AccountProxyStore extends SubscribableStore<AccountProxyStoreData> {
   constructor () {
-    super(EXTENSION_PREFIX ? `${EXTENSION_PREFIX}pair_modify` : null);
+    super(EXTENSION_PREFIX ? `${EXTENSION_PREFIX}account_proxy` : null);
   }
 }
