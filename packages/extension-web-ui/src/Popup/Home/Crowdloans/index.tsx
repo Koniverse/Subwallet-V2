@@ -48,9 +48,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('crowdloan');
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(FilterValue.ALL);
 
-  console.log('banners', banners);
-  console.log('dismissBanner', dismissBanner);
-  console.log('dismissBanner', dismissBanner);
   const filterOptions = useMemo(() => [
     { label: t('Polkadot parachain'), value: FilterValue.POLKADOT_PARACHAIN },
     { label: t('Kusama parachain'), value: FilterValue.KUSAMA_PARACHAIN },
