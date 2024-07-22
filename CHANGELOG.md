@@ -1,5 +1,207 @@
 # CHANGELOG
 
+## 1.2.16
+Build date: Jul 19, 2024.
+
+Features & Update:
+- Move step shorten metadata and calculate metadataHash to client (#3305)
+- Add support Ledger for Polkadex (#3231)
+- Improve the staking reward information retrieval (#3326)
+- Update Vara token sdk version (#3270)
+- Update chain-list
+  - Remove Avail Goldberg testnet
+  - Add support for Aleph Zero EVM testnet
+  - Add support for Cere Network
+  - Add KOL / Kolkadot on PAH, Hydration
+
+Bugs fixed:
+- Fix bug connecting to uquid dapp with Wallet Connect (#3275)
+
+
+## 1.2.15
+Build date: Jul 12, 2024.
+
+Features & Update:
+- Update chain-list
+  - Add support for Aura Network
+  - Update SQD token logo
+  - Support Decoded collection from Unique
+  - Add multi-chain asset for some token
+- Update chain-list health-check and report RPC connect status (#3243)
+- Update fallback API for SubWallet API (Price, Exchange rate) (#3183)
+- Add validate account in case sign transaction with Ledger account (#3263)
+
+Bugs fixed:
+- Fix bug calculating balance for relaychain (#3312)
+- Fix bug show withdraw information for the Acala liquid staking (#2965)
+
+
+## 1.2.14
+Build date: Jul 09, 2024.
+
+Features & Update:
+- Add support Swap Asset Hub (#3272)
+
+Bugs fixed:
+- Fix bug Cannot read properties of undefined (reading 'filter') related to Mission pool (#3289)
+- Hotfix update chain-list stable version
+- Fix bug transaction has a bad signature when transfer AVL token (#3300)
+
+## 1.2.13
+Build date: Jul 05, 2024.
+
+Features & Update:
+- Update chain-list
+  - Add support for MYTH token
+  - Add support for WIFD token
+- Update UI for the Signature request screen from dApp (#3260)
+- Update UI for Mission pool feature (#3212)
+- Change token type from GRC-20 to VFT (#3268)
+
+Bugs fixed:
+- Fix bug Do not show account to get address when stand on All accounts mode (#3283)
+
+
+## 1.2.12
+Build date: Jul 03, 2024.
+
+Features & Update:
+- Update chainlist:
+  - Add support for Berachain testnet
+  - Add support for Atleta Testnet
+- Remove Interlay lending (#3226)
+
+Bugs fixed:
+- Fix bug Cannot read properties of undefined (reading 'includes') (#3259)
+- Fix bug Do not show Interlay's earning position (#3234)
+- Fix bug not showing popup Swap confirmation when swap with Injected account (#3230)
+
+## 1.2.11
+Build date: Jun 29, 2024.
+
+Features & Update:
+- Integrate Polkadot Ledger app from Zondax (#2453)
+
+Bugs fixed:
+- Fix bug Show incorrect screen when perform earning actions with Ledger's EVM account (#3254)
+
+
+## 1.2.10
+Build date: Jun 25, 2024.
+
+Features & Update:
+- Update subwallet-react-ui (#3228)
+- Fix bug Screen flickering error when interacting with extensions (#3131)
+- Fix bug Show incorrect Amount on Transaction history, Transaction confirmation for transfer NFT (#3133)
+
+
+## 1.2.9
+Build date: Jun 24, 2024.
+
+Features & Update:
+- Update chain-list (#3214)
+  - Add support for Analog Testnet
+  - Add support for more tokens on HydraDX
+  - Add support for tokens listed on StellaSwap Pulsar
+  - Add support for Karura assets
+  - Update logo for some tokens
+  - Update chain type for some chains
+- Support SnowBridge (#1984)
+
+Bugs fixed:
+- Fix bug Error can't read properties of undefined (reading 'filter')
+
+
+## 1.2.8
+Build date: Jun 21, 2024.
+
+Bugs fixed:
+- Fix bug Error can't read properties of undefined (reading 'filter') (#3218)
+
+
+## 1.2.7
+Build date: Jun 20, 2024.
+
+Features & Update:
+- Support MV3 on Firefox (#3108)
+
+
+## 1.2.6
+Build date: Jun 19, 2024.
+
+Features & Update:
+- Improve the Marketing Campaign application mechanism (#2806)
+- Update chain-list (#3185)
+  - Add vASTR token
+  - Remove priceid vETH
+  - Update provider
+- Show nomination pool with block status (#3043)
+- Hide the popup Remind backup seed phrase (#3198)
+- Support transfer between PAH - KAH (#3095)
+
+Bugs fixed:
+- Check error logs in earning feature (#3197)
+- Fixed bug related to earning feature ( Round 5) (#2995)
+
+## 1.2.5
+Build date: Jun 11, 2024.
+
+Features & Update:
+- Add CheckMetadataHash signed extension support (#3175)
+- Improve the Substrate Provider to meet the demands of dApps utilizing both EVM and Substrate (#2869)
+- Refactoring code earning service (#3000)
+
+Bugs fixed:
+- Fixed bug Sign transaction failed for some tokens with Aleph Zero Ledger account (#3145)
+
+
+## 1.2.4
+Build date: Jun 08, 2024.
+
+Features & Update:
+- Update Parallel liquid staking (#3139)
+- Update lock time of MV3 extension (#3144)
+- Support more XCM channels (#3134)
+  - Support transfer between PAH - KAH
+  - Add XCM support for Pendulum:
+    - USDT: Polkadot Asset Hub **<-->** Pendulum
+    - USDC: Polkadot Asset Hub **<-->** Pendulum
+    - DOT: Polkadot **<-->** Pendulum
+- Update chainlist
+  - Add support for BORK token
+  - Update HydraDX information
+- Add the "View on explorer" button on the Token details screen (#3053)
+- Update some message related to earning feature (#3150)
+- Update transferable formula for system pallet v1 (#3166)
+
+## 1.2.3
+Build date: Jun 03, 2024.
+
+Features & Update:
+- Update chain-list (#3094)
+  - Remove bit.country testnet, Ethereum Goerli
+  - Add support for Ink Whale token INW2
+  - Add support for Kreivo Network
+  - Add support Bitlayer
+  - Add support Bsquared network
+  - Add support BounceBit
+- Improve swap quote fetching speed (#3104)
+- Update transferable balance calculation formula (2118)
+
+## 1.2.2
+Build date: May 30, 2024.
+
+Features & Update:
+- Remove support for Moonbeam on Polkadot vault (#3056)
+- Update UI for Earning position details (#3127)
+- Remove the logic that differentiates between Native tokens and Local tokens in case show sub-logo (#3075)
+- Show duplicate transaction history when transfer local token (#2613)
+
+Bugs fixed:
+- Fixed some bug related to MV3 (#3146)
+  - Timing logic to display seed phrase backup prompt popup
+  - Bug disconnect port
+
 ## 1.2.1
 Build date: May 28, 2024.
 
@@ -228,7 +430,6 @@ Features & Update:
 Build date: Mar 28, 2024.
 
 Features & Update:
-Nội dung release:
 - Integrate asset online (#2790)
 - Add Swap button (#2784)
 - Update chain-list (#2805)

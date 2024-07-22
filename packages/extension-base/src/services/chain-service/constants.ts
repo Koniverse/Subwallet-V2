@@ -37,7 +37,7 @@ export const _BALANCE_CHAIN_GROUP = {
   statemine: ['statemine', 'astar', 'shiden', 'statemint', 'moonbeam', 'moonbase', 'moonriver', 'crabParachain', 'darwinia2', 'parallel', 'calamari', 'manta_network', 'rococo_assethub', 'liberlandTest', 'liberland', 'dentnet', 'pangolin', 'crust', 'phala', 'shibuya', 'dbcchain'],
   kusama: ['kusama', 'kintsugi', 'kintsugi_test', 'interlay', 'acala', 'statemint', 'karura', 'bifrost'], // perhaps there are some runtime updates
   centrifuge: ['centrifuge'],
-  supportBridged: ['rococo_assethub']
+  supportBridged: ['rococo_assethub', 'statemint', 'statemine']
 };
 
 export const _BALANCE_TOKEN_GROUP = {
@@ -52,6 +52,7 @@ export const _NFT_CHAIN_GROUP = {
   statemine: ['statemine'],
   statemint: ['statemint'],
   unique_network: ['unique_network', 'quartz', 'opal'],
+  unique_evm: ['unique_evm'],
   bitcountry: ['bitcountry', 'pioneer', 'continuum_network'],
   vara: ['vara_network']
 };
@@ -246,8 +247,8 @@ export const _DEFAULT_MANTA_ZK_CHAIN = 'calamari';
 // XCM------------------------------------------------------------------------------------------------------------------
 
 export const _XCM_CHAIN_GROUP = {
-  polkadotXcm: ['astar', 'shiden', 'statemine', 'statemint', 'equilibrium_parachain'],
-  xcmPallet: ['polkadot', 'kusama']
+  polkadotXcm: ['astar', 'shiden', 'statemine', 'statemint', 'equilibrium_parachain', 'rococo_assethub'],
+  xcmPallet: ['polkadot', 'kusama', 'rococo']
   // default is xTokens pallet
 };
 
