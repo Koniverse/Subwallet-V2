@@ -21,8 +21,6 @@ import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContex
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import { isEthereumAddress } from '@polkadot/util-crypto';
-
 interface Props extends ThemeProps, BasicInputWrapper {
   slug: string;
   chain: string;
@@ -204,6 +202,10 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
       return [];
     }
   }, [chain, items, selectedFilters, sortSelection]);
+
+  const selectedAddress = useMemo(() => {
+    return resultList.filter((item) => item.idStr === value)[0]?.address;
+  }, [resultList, value]);
 
   const isDisabled = useMemo(() =>
     disabled ||
@@ -402,9 +404,9 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
         placeholder={placeholder || t('Select pool')}
         prefix={(
           <Avatar
+            identPrefix={networkPrefix}
             size={20}
-            theme={value ? isEthereumAddress(value) ? 'ethereum' : 'polkadot' : undefined}
-            value={value}
+            value={selectedAddress}
           />
         )}
         renderItem={renderItem}

@@ -4,6 +4,7 @@
 import { UnstakingInfo, UnstakingStatus } from '@subwallet/extension-base/types';
 import { Avatar } from '@subwallet/extension-koni-ui/components';
 import { useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Number, Web3Block } from '@subwallet/react-ui';
@@ -11,6 +12,7 @@ import CN from 'classnames';
 import { CheckCircle, Spinner } from 'phosphor-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps & {
@@ -20,7 +22,9 @@ type Props = ThemeProps & {
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, isSelected, unstakingInfo } = props;
+  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const { chain, claimable, status, validatorAddress } = unstakingInfo;
+  const networkPrefix = chainInfoMap[chain]?.substrateInfo?.addressPrefix;
 
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
@@ -31,9 +35,12 @@ const Component: React.FC<Props> = (props: Props) => {
     if (!validatorAddress) {
       return undefined;
     } else {
-      return <Avatar value={validatorAddress} />;
+      return (<Avatar
+        identPrefix={networkPrefix}
+        value={validatorAddress}
+      />);
     }
-  }, [validatorAddress]);
+  }, [networkPrefix, validatorAddress]);
 
   const middleItem = useMemo((): React.ReactNode => {
     return (
