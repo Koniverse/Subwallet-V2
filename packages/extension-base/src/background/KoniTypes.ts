@@ -829,7 +829,6 @@ export type ResponseSeedValidateV2 = ResponseSeedCreateV2
 
 export interface RequestAccountCreateSuriV2 {
   name: string;
-  genesisHash?: string | null;
   password?: string;
   suri: string;
   types?: Array<KeypairType>;

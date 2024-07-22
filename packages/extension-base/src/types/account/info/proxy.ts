@@ -18,7 +18,6 @@ export type AccountProxyMap = Record<string, AccountProxy>
 
 export interface ModifyPairData {
   key: string;
-  applied: boolean;
   migrated: boolean;
   accountProxyId?: string;
 }

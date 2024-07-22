@@ -19,7 +19,8 @@ import { t } from 'i18next';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 
 import { hexStripPrefix, hexToU8a, isHex, stringShorten } from '@polkadot/util';
-import { keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
+import { blake2AsHex, keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
+import { validateMnemonic } from '@polkadot/util-crypto/mnemonic/bip39';
 import { KeypairType } from '@polkadot/util-crypto/types';
 
 const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
@@ -121,7 +122,7 @@ export class AccountContext {
         const modifyPair = modifyPairs[address];
         const account: AccountJson = transformAccount(pair);
 
-        if (modifyPair && modifyPair.applied && modifyPair.accountProxyId) {
+        if (modifyPair && modifyPair.accountProxyId) {
           const accountGroup = accountGroups[modifyPair.accountProxyId];
 
           if (accountGroup) {
@@ -233,15 +234,32 @@ export class AccountContext {
     });
   }
 
-  // private createAccountGroupId (_suri: string) {
-  //   bcrypt.
-  // }
+  private createAccountGroupId (_suri: string) {
+    if (validateMnemonic(_suri)) {
+      const entropy = mnemonicToEntropy(_suri);
+
+      return blake2AsHex(entropy, 256);
+    } else {
+      return blake2AsHex(_suri, 256);
+    }
+  }
 
   /* Account group */
 
+  /* Modify pairs */
+
+  /* Upsert modify pairs */
+
+  private upsertModifyPairs (data: ModifyPairStoreData) {
+    this.modifyPairsStore.set(MODIFY_PAIRS_KEY, data);
+    this.modifyPairsSubject.next(data);
+  }
+
+  /* Modify pairs */
+
   /* Add accounts from seed */
   public async accountsCreateSuriV2 (request: RequestAccountCreateSuriV2): Promise<ResponseAccountCreateSuriV2> {
-    const { genesisHash, isAllowed, name, password, suri: _suri, types } = request;
+    const { isAllowed, name, password, suri: _suri, types } = request;
     const addressDict = {} as Record<KeypairType, string>;
     let changedAccount = false;
     const hasMasterPassword = keyring.keyring.hasMasterPassword;
@@ -255,23 +273,50 @@ export class AccountContext {
       }
     }
 
+    if (!types || !types.length) {
+      throw Error(t('Please choose at least one account type'));
+    }
+
     // const currentAccount = this.#koniState.keyringService.context.currentAccount;
     // const allGenesisHash = currentAccount?.allGenesisHash || undefined;
 
-    const entropy = mnemonicToEntropy(_suri);
+    const multiChain = types.length > 1;
+    const proxyId = multiChain ? this.createAccountGroupId(_suri) : '';
+    const modifiedPairs = this.modifyPairsSubject.value;
 
-    types?.forEach((type) => {
+    types.forEach((type) => {
       const suri = getSuri(_suri, type);
-      const address = keyring.createFromUri(suri, {}, type).address;
+      const newAccountName = (() => {
+        if (!proxyId) {
+          return name;
+        }
+
+        let network = '';
+
+        switch (type) {
+          case 'sr25519':
+          case 'ed25519':
+          case 'ecdsa':
+            network = 'Substrate';
+            break;
+          case 'ethereum':
+            network = 'EVM';
+            break;
+        }
+
+        return network ? [name, network].join(' - ') : name;
+      })();
+      const rs = keyring.addUri(suri, { name: newAccountName }, type);
+      const address = rs.pair.address;
+
+      modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
 
       addressDict[type] = address;
-      const newAccountName = type === 'ethereum' ? `${name} - EVM` : name;
 
-      keyring.addUri(suri, { genesisHash, name: newAccountName }, type);
       this._addAddressToAuthList(address, isAllowed);
 
       if (!changedAccount) {
-        if (types.length === 1) {
+        if (!multiChain) {
           this.setCurrentAccount({ address });
         } else {
           this._setCurrentAccount({ address: ALL_ACCOUNT_KEY }, undefined, true);
@@ -280,6 +325,12 @@ export class AccountContext {
         changedAccount = true;
       }
     });
+
+    if (proxyId) {
+      this.upsertAccountProxy({ id: proxyId, name });
+    }
+
+    this.upsertModifyPairs(modifiedPairs);
 
     await new Promise<void>((resolve) => {
       this.addAccountRef(Object.values(addressDict), () => {
