@@ -396,7 +396,7 @@ function Component ({ className, earningPositions, setEntryView }: Props) {
           isWebUI
             ? (
               <>
-                <div className={'token-detail-banner-wrapper'}>
+                <div className={'earning-option-banner-wrapper'}>
                   {!!banners.length && (<BannerGenerator
                     banners={banners}
                     dismissBanner={dismissBanner}

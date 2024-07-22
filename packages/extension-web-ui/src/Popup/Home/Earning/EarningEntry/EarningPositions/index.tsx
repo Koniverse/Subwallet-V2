@@ -537,7 +537,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
             ? (
               <>
                 <EarningPositionBalance items={items} />
-                <div className={'token-detail-banner-wrapper'}>
+                <div className={'earning-position-banner-wrapper'}>
                   {!!banners.length && (<BannerGenerator
                     banners={banners}
                     dismissBanner={dismissBanner}
