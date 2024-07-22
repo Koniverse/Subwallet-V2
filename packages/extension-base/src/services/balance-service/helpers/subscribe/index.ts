@@ -3,10 +3,9 @@
 
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getSubstrateGenesisHash, _isChainEvmCompatible, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { BalanceItem } from '@subwallet/extension-base/types';
+import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
 import { categoryAddresses, filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 

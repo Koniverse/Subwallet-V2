@@ -8,7 +8,7 @@ export default class MigrateRemoveGenesisHash extends BaseMigrationJob {
     try {
       return new Promise((resolve) => {
         try {
-          this.state.keyringService.removeNoneHardwareGenesisHash();
+          this.state.keyringService.context.removeNoneHardwareGenesisHash();
         } catch (e) {
           console.error(e);
         }

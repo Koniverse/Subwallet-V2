@@ -58,7 +58,7 @@ export default class AuthRequestHandler {
   }
 
   private getAddressList (value = false): Record<string, boolean> {
-    const addressList = Object.keys(this.keyringService.accounts);
+    const addressList = Object.keys(this.keyringService.context.pairs);
 
     return addressList.reduce((addressList, v) => ({ ...addressList, [v]: value }), {});
   }

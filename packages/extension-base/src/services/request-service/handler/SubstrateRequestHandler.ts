@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import RequestExtrinsicSign from '@subwallet/extension-base/background/RequestExtrinsicSign';
-import { AccountJson, RequestSign, Resolver, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
+import { RequestSign, Resolver, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { SignRequest } from '@subwallet/extension-base/services/request-service/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { getId } from '@subwallet/extension-base/utils/getId';
 import { isInternalRequest } from '@subwallet/extension-base/utils/request';
 import keyring from '@subwallet/ui-keyring';

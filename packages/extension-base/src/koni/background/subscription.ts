@@ -66,7 +66,7 @@ export class KoniSubscription {
 
   async start () {
     await Promise.all([this.state.eventService.waitCryptoReady, this.state.eventService.waitKeyringReady, this.state.eventService.waitAssetReady]);
-    const currentAddress = this.state.keyringService.currentAccount?.address;
+    const currentAddress = this.state.keyringService.context.currentAccount?.address;
 
     if (currentAddress) {
       this.subscribeCrowdloans(currentAddress, this.state.getSubstrateApiMap());
@@ -155,7 +155,7 @@ export class KoniSubscription {
   }
 
   async reloadCrowdloan () {
-    const currentAddress = this.state.keyringService.currentAccount?.address;
+    const currentAddress = this.state.keyringService.context.currentAccount?.address;
 
     this.subscribeCrowdloans(currentAddress, this.state.getSubstrateApiMap());
 

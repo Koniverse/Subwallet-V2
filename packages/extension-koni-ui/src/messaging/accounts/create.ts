@@ -34,10 +34,6 @@ export async function createAccountWithSecret (request: RequestAccountCreateWith
 }
 
 // Qr, read-only
-export async function createAccountExternal (name: string, address: string, genesisHash: string): Promise<boolean> {
-  return sendMessage('pri(accounts.create.external)', { address, genesisHash, name });
-}
-
 export async function createAccountExternalV2 (request: RequestAccountCreateExternalV2): Promise<AccountExternalError[]> {
   return sendMessage('pri(accounts.create.externalV2)', request);
 }

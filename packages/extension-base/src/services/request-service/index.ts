@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthRequestV2, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, RequestConfirmationComplete } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountAuthType, AccountJson, AuthorizeRequest, MetadataRequest, RequestAuthorizeTab, RequestSign, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
+import { AccountAuthType, AuthorizeRequest, MetadataRequest, RequestAuthorizeTab, RequestSign, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 import { BehaviorSubject } from 'rxjs';
 
@@ -54,7 +55,7 @@ export default class RequestService {
   }
 
   getAddressList (value = false): Record<string, boolean> {
-    const addressList = Object.keys(this.keyringService.accounts);
+    const addressList = Object.keys(this.keyringService.context.pairs);
 
     return addressList.reduce((addressList, v) => ({ ...addressList, [v]: value }), {});
   }

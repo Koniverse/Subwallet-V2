@@ -1,7 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountAuthType, AccountJson, RequestSign, Resolver, ResponseSigning } from '@subwallet/extension-base/background/types';
+import { AccountAuthType, RequestSign, Resolver, ResponseSigning } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 
 export interface SignRequest extends Resolver<ResponseSigning> {

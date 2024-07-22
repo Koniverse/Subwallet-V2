@@ -5,9 +5,9 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { isSubscriptionRunning, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AccountRefMap, AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, BasicTxErrorType, ChainStakingMetadata, ChainType, ConfirmationsQueue, CrowdloanItem, CrowdloanJson, CurrencyType, CurrentAccountInfo, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestCheckPublicAndSecretKey, RequestConfirmationComplete, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ResponseCheckPublicAndSecretKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY, ALL_GENESIS_HASH, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
+import { AccountRefMap, AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, BasicTxErrorType, ChainStakingMetadata, ChainType, ConfirmationsQueue, CrowdloanItem, CrowdloanJson, CurrencyType, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestCheckPublicAndSecretKey, RequestConfirmationComplete, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ResponseCheckPublicAndSecretKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
+import { ALL_ACCOUNT_KEY, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import BuyService from '@subwallet/extension-base/services/buy-service';
@@ -38,7 +38,7 @@ import { TransactionEventResponse } from '@subwallet/extension-base/services/tra
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
-import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
+import { AccountJson, BalanceItem, BalanceMap, CurrentAccountInfo, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
 import { isAccountAll, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
@@ -151,7 +151,7 @@ export default class KoniState {
 
     this.eventService = new EventService();
     this.dbService = new DatabaseService(this.eventService);
-    this.keyringService = new KeyringService(this.eventService);
+    this.keyringService = new KeyringService(this);
 
     this.notificationService = new NotificationService();
     this.chainService = new ChainService(this.dbService, this.eventService);
@@ -284,9 +284,9 @@ export default class KoniState {
   public generateDefaultBalanceMap (_addresses?: string[]): BalanceMap {
     const balanceMap: BalanceMap = {};
     const activeChains = this.chainService.getActiveChainInfoMap();
-    const isAllAccount = isAccountAll(this.keyringService.currentAccount.address);
+    const isAllAccount = isAccountAll(this.keyringService.context.currentAccount.address);
 
-    const addresses = _addresses || (isAllAccount ? Object.keys(this.keyringService.accounts) : [this.keyringService.currentAccount.address]);
+    const addresses = _addresses || (isAllAccount ? Object.keys(this.keyringService.context.pairs) : [this.keyringService.context.currentAccount.address]);
 
     addresses.forEach((address) => {
       const temp: Record<string, BalanceItem> = {};
@@ -415,7 +415,7 @@ export default class KoniState {
   }
 
   getAddressList (value = false): Record<string, boolean> {
-    const addressList = Object.keys(this.keyringService.accounts);
+    const addressList = Object.keys(this.keyringService.context.pairs);
 
     return addressList.reduce((addressList, v) => ({ ...addressList, [v]: value }), {});
   }
@@ -651,29 +651,24 @@ export default class KoniState {
   }
 
   public setCurrentAccount (data: CurrentAccountInfo, callback?: () => void, preventOneAccount?: boolean): void {
-    const { address, currentGenesisHash } = data;
+    const { address } = data;
 
     const result: CurrentAccountInfo = { ...data };
 
     if (address === ALL_ACCOUNT_KEY) {
       const pairs = keyring.getAccounts();
       const pair = pairs[0];
-      const pairGenesisHash = pair?.meta.genesisHash as string || '';
 
       if (pairs.length > 1 || !pair) {
-        result.allGenesisHash = currentGenesisHash || undefined;
+        // Empty
       } else {
         if (!preventOneAccount) {
           result.address = pair.address;
-          result.currentGenesisHash = pairGenesisHash || '';
-          result.allGenesisHash = pairGenesisHash || undefined;
-        } else {
-          result.allGenesisHash = currentGenesisHash || undefined;
         }
       }
     }
 
-    this.keyringService.setCurrentAccount(result);
+    this.keyringService.context.setCurrentAccount(result);
     callback && callback();
   }
 
@@ -686,11 +681,9 @@ export default class KoniState {
       keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash });
     }
 
-    const accountInfo = this.keyringService.currentAccount;
+    const accountInfo = this.keyringService.context.currentAccount;
 
     if (address === accountInfo.address) {
-      accountInfo.currentGenesisHash = genesisHash as string || ALL_GENESIS_HASH;
-
       this.setCurrentAccount(accountInfo);
     }
 
@@ -717,7 +710,7 @@ export default class KoniState {
   public async switchNetworkAccount (id: string, url: string, networkKey: string, changeAddress?: string): Promise<boolean> {
     const chainInfo = this.chainService.getChainInfoByKey(networkKey);
     const chainState = this.chainService.getChainStateByKey(networkKey);
-    const { address, currentGenesisHash } = this.keyringService.currentAccount;
+    const { address } = this.keyringService.context.currentAccount;
 
     return this.requestService.addConfirmation(id, url, 'switchNetworkRequest', {
       networkKey,
@@ -739,10 +732,9 @@ export default class KoniState {
             keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash: _getSubstrateGenesisHash(chainInfo) });
           }
 
-          if (address !== changeAddress || _getSubstrateGenesisHash(chainInfo) !== currentGenesisHash || isApproved) {
+          if (address !== changeAddress || isApproved) {
             this.setCurrentAccount({
-              address: useAddress,
-              currentGenesisHash: _getSubstrateGenesisHash(chainInfo)
+              address: useAddress
             });
           }
         }
@@ -837,7 +829,7 @@ export default class KoniState {
   }
 
   public getAccountAddress (): string | null {
-    const address = this.keyringService.currentAccount.address;
+    const address = this.keyringService.context.currentAccount.address;
 
     if (address === '') {
       return null;
@@ -916,7 +908,7 @@ export default class KoniState {
   }
 
   private updateCrowdloanStore (networkKey: string, item: CrowdloanItem) {
-    const currentAccountInfo = this.keyringService.currentAccount;
+    const currentAccountInfo = this.keyringService.context.currentAccount;
 
     this.dbService.updateCrowdloanStore(networkKey, currentAccountInfo.address, item).catch((e) => this.logger.warn(e));
   }
@@ -1137,7 +1129,7 @@ export default class KoniState {
     return {
       chainInfoMap: this.chainService.getChainInfoMap(),
       chainApiMap: this.getApiMap(),
-      currentAccountInfo: this.keyringService.currentAccount,
+      currentAccountInfo: this.keyringService.context.currentAccount,
       assetRegistry: this.chainService.getAssetRegistry(),
       chainStateMap: this.chainService.getChainStateMap()
     };
@@ -1715,7 +1707,7 @@ export default class KoniState {
         }
       };
 
-      const subscription = this.keyringService.currentAccountSubject.subscribe(handleRemind);
+      const subscription = this.keyringService.context.currentAccountSubject.subscribe(handleRemind);
     }
   }
 
@@ -1925,7 +1917,7 @@ export default class KoniState {
   }
 
   public async reloadNft () {
-    const currentAddress = this.keyringService.currentAccount.address;
+    const currentAddress = this.keyringService.context.currentAccount.address;
 
     await this.dbService.removeNftsByAddress(currentAddress);
 
@@ -2121,7 +2113,7 @@ export default class KoniState {
   public subscribeMantaPayBalance () {
     let interval: NodeJS.Timer | undefined;
 
-    this.chainService?.mantaPay?.getMantaPayConfig(this.keyringService.currentAccount.address, _DEFAULT_MANTA_ZK_CHAIN)
+    this.chainService?.mantaPay?.getMantaPayConfig(this.keyringService.context.currentAccount.address, _DEFAULT_MANTA_ZK_CHAIN)
       .then((config: MantaPayConfig) => {
         if (config && config.enabled && config.isInitialSync) {
           this.getMantaZkBalance();

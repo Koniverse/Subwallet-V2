@@ -290,7 +290,7 @@ export default class KoniTabs {
     anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.accounts, anyType, authInfo, authInfo?.accountAuthType || accountAuthType);
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthType || accountAuthType);
   }
 
   private accountsSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
@@ -303,7 +303,7 @@ export default class KoniTabs {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
             const accountAuthType_ = authInfo?.accountAuthType || accountAuthType;
-            const accounts = this.#koniState.keyringService.accounts;
+            const accounts = this.#koniState.keyringService.context.pairs;
 
             return cb(transformAccountsV2(accounts, false, authInfo, accountAuthType_));
           })
@@ -349,11 +349,11 @@ export default class KoniTabs {
   private async getEvmCurrentAccount (url: string): Promise<string[]> {
     return await new Promise((resolve) => {
       this.getAuthInfo(url).then((authInfo) => {
-        const allAccounts = this.#koniState.keyringService.accounts;
+        const allAccounts = this.#koniState.keyringService.context.pairs;
         const accountList = transformAccountsV2(allAccounts, false, authInfo, 'evm').map((a) => a.address);
         let accounts: string[] = [];
 
-        const address = this.#koniState.keyringService.currentAccount.address;
+        const address = this.#koniState.keyringService.context.currentAccount.address;
 
         if (address === ALL_ACCOUNT_KEY || !address) {
           accounts = accountList;
@@ -716,7 +716,7 @@ export default class KoniTabs {
       }
     };
 
-    const accountListSubscription = this.#koniState.keyringService.currentAccountSubject
+    const accountListSubscription = this.#koniState.keyringService.context.currentAccountSubject
       .subscribe(() => {
         onCurrentAccountChanged().catch(console.error);
       });

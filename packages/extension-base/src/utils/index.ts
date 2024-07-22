@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CrowdloanParaState, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountAuthType, AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { getRandomIpfsGateway, SUBWALLET_IPFS } from '@subwallet/extension-base/koni/api/nft/config';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { t } from 'i18next';
 
 import { assert, BN, hexToU8a, isHex } from '@polkadot/util';
@@ -425,6 +426,7 @@ export function wait (milliseconds: number) {
 export * from './account';
 export * from './array';
 export * from './asset';
+export * from './auth';
 export * from './environment';
 export * from './eth';
 export * from './fetchEvmChainInfo';

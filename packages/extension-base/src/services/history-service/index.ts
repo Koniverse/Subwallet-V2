@@ -52,7 +52,7 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
     const historyRecords = [] as TransactionHistoryItem[];
 
     // Fill additional info
-    const accountMap = Object.entries(this.keyringService.accounts).reduce((map, [address, account]) => {
+    const accountMap = Object.entries(this.keyringService.context.pairs).reduce((map, [address, account]) => {
       map[address.toLowerCase()] = account.json.meta.name || address;
 
       return map;

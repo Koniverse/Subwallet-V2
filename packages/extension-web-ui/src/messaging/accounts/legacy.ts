@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountsWithCurrentAddress, OptionInputAddress } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { OptionInputAddress } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountJson, AccountsWithCurrentAddress } from '@subwallet/extension-base/types';
 
 import { sendMessage } from '../base';
 

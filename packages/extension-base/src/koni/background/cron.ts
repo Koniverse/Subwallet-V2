@@ -78,7 +78,7 @@ export class KoniCron {
 
     await Promise.all([this.state.eventService.waitKeyringReady, this.state.eventService.waitAssetReady]);
 
-    const currentAccountInfo = this.state.keyringService.currentAccount;
+    const currentAccountInfo = this.state.keyringService.context.currentAccount;
 
     const commonReloadEvents: EventType[] = [
       'account.add',
@@ -213,7 +213,7 @@ export class KoniCron {
   };
 
   public async reloadNft () {
-    const address = this.state.keyringService.currentAccount.address;
+    const address = this.state.keyringService.context.currentAccount.address;
     const serviceInfo = this.state.getServiceInfo();
 
     this.resetNft(address);
@@ -226,7 +226,7 @@ export class KoniCron {
   }
 
   public async reloadStaking () {
-    const address = this.state.keyringService.currentAccount.address;
+    const address = this.state.keyringService.context.currentAccount.address;
 
     console.log('reload staking', address);
 

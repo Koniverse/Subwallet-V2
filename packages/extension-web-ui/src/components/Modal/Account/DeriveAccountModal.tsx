@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { canDerive } from '@subwallet/extension-base/utils';
 import AccountItemWithName from '@subwallet/extension-web-ui/components/Account/Item/AccountItemWithName';
 import BackIcon from '@subwallet/extension-web-ui/components/Icon/BackIcon';
