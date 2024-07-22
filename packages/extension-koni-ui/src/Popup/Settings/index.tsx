@@ -150,7 +150,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: Rocket,
           leftIconBgColor: token['cyan-5'],
           rightIcon: CaretRight,
-          title: t('Crowdloans'),
+          title: t('settings.Screen.settingsEntry.Item.crowdloan'),
           onClick: () => {
             navigate('/settings/crowdloans', { state: true });
           }

@@ -3,6 +3,7 @@
   "settings.Screen.settingsEntry.Item.generalSettings": "General settings",
   "settings.Screen.settingsEntry.Item.securitySettings": "Security settings",
   "settings.Screen.settingsEntry.Item.missionPools": "Mission pools",
+  "settings.Screen.settingsEntry.Item.crowdloan": "Crowdloans",
   "settings.Screen.settingsEntry.SectionTitle.websiteAccess": "Website access",
   "settings.Screen.settingsEntry.Item.manageWebsiteAccess": "Manage website access",
   "settings.Screen.settingsEntry.Item.walletConnect": "WalletConnect",

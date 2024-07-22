@@ -3,6 +3,7 @@
   "settings.Screen.settingsEntry.Item.generalSettings": "通用设置",
   "settings.Screen.settingsEntry.Item.securitySettings": "安全设置",
   "settings.Screen.settingsEntry.Item.missionPools": "Mission pools",
+  "settings.Screen.settingsEntry.Item.crowdloan": "众贷",
   "settings.Screen.crowdloans.title": "众贷",
   "settings.Screen.settingsEntry.SectionTitle.websiteAccess": "网站访问",
   "settings.Screen.settingsEntry.Item.manageWebsiteAccess": "管理网站访问",

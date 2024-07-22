@@ -3,6 +3,7 @@
   "settings.Screen.settingsEntry.Item.generalSettings": "一般設定",
   "settings.Screen.settingsEntry.Item.securitySettings": "セキュリティ設定",
   "settings.Screen.settingsEntry.Item.missionPools": "Mission pools",
+  "settings.Screen.settingsEntry.Item.crowdloan": "クラウドローン",
   "settings.Screen.settingsEntry.SectionTitle.websiteAccess": "ウェブサイトへのアクセス",
   "settings.Screen.settingsEntry.Item.manageWebsiteAccess": "ウェブサイトへのアクセスを管理",
   "settings.Screen.settingsEntry.Item.walletConnect": "WalletConnect",

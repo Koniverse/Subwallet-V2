@@ -3,6 +3,7 @@
   "settings.Screen.settingsEntry.Item.generalSettings": "Общие настройки",
   "settings.Screen.settingsEntry.Item.securitySettings": "Настройки безопасности",
   "settings.Screen.settingsEntry.Item.missionPools": "Mission pools",
+  "settings.Screen.settingsEntry.Item.crowdloan": "Краудлоуны",
   "settings.Screen.settingsEntry.SectionTitle.websiteAccess": "Доступ к веб-сайту",
   "settings.Screen.settingsEntry.Item.manageWebsiteAccess": "Управление доступом к веб-сайту",
   "settings.Screen.settingsEntry.Item.walletConnect": "WalletConnect",

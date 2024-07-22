@@ -3,6 +3,7 @@
   "settings.Screen.settingsEntry.Item.generalSettings": "Cài đặt chung",
   "settings.Screen.settingsEntry.Item.securitySettings": "Cài đặt bảo mật",
   "settings.Screen.settingsEntry.Item.missionPools": "Mission pools",
+  "settings.Screen.settingsEntry.Item.crowdloan": "Crowdloans",
   "settings.Screen.settingsEntry.SectionTitle.websiteAccess": "Truy cập trang web",
   "settings.Screen.settingsEntry.Item.manageWebsiteAccess": "Quản lý truy cập",
   "settings.Screen.settingsEntry.Item.walletConnect": "WalletConnect",
