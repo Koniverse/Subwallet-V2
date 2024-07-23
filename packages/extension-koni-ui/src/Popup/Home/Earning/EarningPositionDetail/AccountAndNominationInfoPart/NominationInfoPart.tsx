@@ -6,8 +6,7 @@ import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning
 import { YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
 import { Avatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
-import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
+import { useGetChainPrefixBySlug, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
@@ -24,14 +23,12 @@ function Component ({ className, compound,
   inputAsset,
   poolInfo }: Props) {
   const { t } = useTranslation();
-  const { chainInfoMap } = useSelector((state: RootState) => state.chainStore);
 
   const isAllAccount = useMemo(() => isAccountAll(compound.address), [compound.address]);
 
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(poolInfo.chain), [poolInfo.chain]);
 
-  const poolChain = poolInfo?.chain || '';
-  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
+  const networkPrefix = useGetChainPrefixBySlug(poolInfo.chain);
   const haveNomination = useMemo(() => {
     return [YieldPoolType.NOMINATION_POOL, YieldPoolType.NATIVE_STAKING].includes(poolInfo.type);
   }, [poolInfo.type]);

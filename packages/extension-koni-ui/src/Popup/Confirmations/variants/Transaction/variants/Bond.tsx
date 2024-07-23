@@ -5,9 +5,8 @@ import { RequestBondingSubmit, StakingType } from '@subwallet/extension-base/bac
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import CommonTransactionInfo from '@subwallet/extension-koni-ui/components/Confirmation/CommonTransactionInfo';
 import MetaInfo from '@subwallet/extension-koni-ui/components/MetaInfo/MetaInfo';
-import { useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainPrefixBySlug } from '@subwallet/extension-koni-ui/hooks';
 import useGetNativeTokenBasicInfo from '@subwallet/extension-koni-ui/hooks/common/useGetNativeTokenBasicInfo';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,10 +22,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const handleValidatorLabel = useMemo(() => {
     return getValidatorLabel(transaction.chain);
   }, [transaction.chain]);
-  const { chainInfoMap } = useSelector((state: RootState) => state.chainStore);
-
-  const poolChain = transaction.chain || '';
-  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
+  const networkPrefix = useGetChainPrefixBySlug(transaction.chain);
 
   const { t } = useTranslation();
 

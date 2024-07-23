@@ -918,10 +918,10 @@ const Component = () => {
                   name={'from'}
                 >
                   <AccountSelector
+                    addressPrefix={networkPrefix}
                     disabled={!isAllAccount}
                     doFilter={false}
                     externalAccounts={accountSelectorList}
-                    addressPrefix={networkPrefix}
                   />
                 </Form.Item>
 

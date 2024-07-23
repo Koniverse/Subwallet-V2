@@ -8,8 +8,7 @@ import { Avatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui
 import { InfoItemBase } from '@subwallet/extension-koni-ui/components/MetaInfo/parts';
 import { EarningNominationModal } from '@subwallet/extension-koni-ui/components/Modal/Earning';
 import { EARNING_NOMINATION_MODAL, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
-import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
+import { useGetChainPrefixBySlug, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { EarningTagType, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { createEarningTypeTags, findAccountByAddress, isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
@@ -63,10 +62,7 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
 
   const { assetRegistry } = useSelector((state) => state.assetRegistry);
   const { accounts } = useSelector((state) => state.accountState);
-  const { chainInfoMap } = useSelector((state: RootState) => state.chainStore);
-
-  const poolChain = poolInfo?.chain || '';
-  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
+  const networkPrefix = useGetChainPrefixBySlug(poolInfo.chain);
   const sliderSettings: Settings = useMemo(() => {
     return {
       dots: false,

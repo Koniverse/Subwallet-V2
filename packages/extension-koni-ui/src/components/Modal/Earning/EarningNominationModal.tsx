@@ -6,14 +6,13 @@ import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning
 import { YieldPositionInfo } from '@subwallet/extension-base/types';
 import { Avatar, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { EARNING_NOMINATION_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useGetChainPrefixBySlug } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -24,8 +23,7 @@ type Props = ThemeProps & {
 
 function Component ({ className, inputAsset, item, onCancel }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
-  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
-  const networkPrefix = item?.chain && chainInfoMap[item?.chain]?.substrateInfo?.addressPrefix;
+  const networkPrefix = useGetChainPrefixBySlug(item?.chain);
 
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(item?.chain || ''), [item?.chain]);
 
@@ -55,7 +53,7 @@ function Component ({ className, inputAsset, item, onCancel }: Props): React.Rea
                   label={(
                     <>
                       <Avatar
-                        identPrefix={networkPrefix || undefined}
+                        identPrefix={networkPrefix}
                         size={24}
                         value={nomination.validatorAddress}
                       />
