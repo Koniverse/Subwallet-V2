@@ -492,7 +492,6 @@ export default class KoniExtension {
       responseData.accounts = transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP }, ...transformedAccounts] : [];
       responseData.currentAddress = currentAccount?.address;
 
-      console.log('subscriptionAccountGroups', responseData);
       cb(responseData);
     });
 

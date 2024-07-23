@@ -138,7 +138,7 @@ export class AccountContext {
         result[address] = { id: address, name: account.name || account.address, accounts: [account] };
       }
 
-      this.accountProxiesSubject.next(result);
+      this.accountSubject.next(result);
     });
   }
 
