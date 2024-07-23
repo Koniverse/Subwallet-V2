@@ -427,6 +427,14 @@ export default class NominationPoolHandler extends BasePoolHandler {
 
       const poolName = isHex(poolMetadata) ? hexToString(poolMetadata) : poolMetadata;
 
+      if (this.chain === 'avail_mainnet') {
+        if (!poolName.includes('SubWallet Official')) {
+          return;
+        }
+      } else {
+        return;
+      }
+
       const isPoolOpen = bondedPool.state === 'Open';
       const isPoolNominating = !!nominations && nominations.targets.length > 0;
       const isPoolEarningReward = bondedPool.points > minimumActiveStake;
