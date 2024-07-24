@@ -61,7 +61,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
 
     const unsub = await (substrateApi.api.query.staking?.currentEra(async (_currentEra: Codec) => {
       if (cancel) {
-        unsub();
+        unsub?.();
 
         return;
       }
@@ -108,7 +108,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
       const bnTotalIssuance = new BN(rawTotalIssuance);
 
       const inflation = calculateInflation(bnTotalEraStake, bnTotalIssuance, numAuctions, chainInfo.slug);
-      const expectedReturn = calculateChainStakedReturnV2(chainInfo, rawTotalIssuance, erasPerDay, lastTotalStaked, validatorEraReward, true);
+      const expectedReturn = calculateChainStakedReturnV2(chainInfo, rawTotalIssuance, erasPerDay, lastTotalStaked, validatorEraReward, new BigN(inflation), true);
       const eraTime = _STAKING_ERA_LENGTH_MAP[chainInfo.slug] || _STAKING_ERA_LENGTH_MAP.default; // in hours
       const unlockingPeriod = parseInt(unlockingEras) * eraTime; // in hours
       const farmerCount = _counterForNominators.toPrimitive() as number;
@@ -152,7 +152,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
 
     return () => {
       cancel = true;
-      unsub();
+      unsub?.();
     };
   }
 
@@ -301,7 +301,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
 
     const unsub = await substrateApi.api.query.staking?.ledger.multi(useAddresses, async (ledgers: Codec[]) => {
       if (cancel) {
-        unsub();
+        unsub?.();
 
         return;
       }
@@ -355,7 +355,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
 
     return () => {
       cancel = true;
-      unsub();
+      unsub?.();
     };
   }
 
