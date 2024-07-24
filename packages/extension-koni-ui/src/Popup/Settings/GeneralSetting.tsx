@@ -203,19 +203,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         key: 'popup',
         leftIcon: ArrowSquareUpRight,
         leftIconBgColor: token['volcano-6'],
-        title: t('Popup')
+        title: t('settings.Screen.generalSetting.Selector.notification.Item.popup')
       },
       {
         key: 'extension',
         leftIcon: LayoutIcon,
         leftIconBgColor: token['volcano-6'],
-        title: t('Extension')
+        title: t('settings.Screen.generalSetting.Selector.notification.Item.extension')
       },
       {
         key: 'window',
         leftIcon: CornersOut,
         leftIconBgColor: token['volcano-6'],
-        title: t('Window')
+        title: t('settings.Screen.generalSetting.Selector.notification.Item.window')
       }
     ];
   }, [t, token]);
@@ -358,7 +358,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             selected={_language}
             shape='round'
             size='small'
-            title={t('settings.Screen.generalSetting.language.selectLanguage.title')}
+            title={t('settings.Screen.generalSetting.Selector.language.title')}
           />
 
           <SelectModal
@@ -380,7 +380,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             selected={_browserConfirmationType}
             shape='round'
             size='small'
-            title={t('settings.Screen.generalSetting.notification.selectPlatform.title')}
+            title={t('settings.Screen.generalSetting.Selector.notification.title')}
           />
         </div>
       </Layout.WithSubHeaderOnly>

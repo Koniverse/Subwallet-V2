@@ -53,7 +53,7 @@ export default class Backend {
         languageCache[lng] = await response.json() as Record<string, string>;
       }
 
-      if (responseOnline.ok) {
+      if (!responseOnline.ok) {
         languageCacheOnline[lng] = await responseOnline.json() as Record<string, string>;
       }
 
