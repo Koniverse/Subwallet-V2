@@ -9,7 +9,7 @@ import { CurrentAccountStore } from '@subwallet/extension-base/stores';
 import AccountProxyStore from '@subwallet/extension-base/stores/AccountProxyStore';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
 import ModifyPairStore from '@subwallet/extension-base/stores/ModifyPairStore';
-import { AccountJson, AccountProxyData, AccountProxyMap, AccountProxyStoreData, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { isAddressValidWithAuthType, transformAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
@@ -116,7 +116,7 @@ export class AccountContext {
     const accountGroups = this.accountProxiesSubject.asObservable();
 
     combineLatest([pairs, modifyPairs, accountGroups]).subscribe(([pairs, modifyPairs, accountGroups]) => {
-      const result: AccountProxyMap = {};
+      const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};
 
       for (const [address, pair] of Object.entries(pairs)) {
         const modifyPair = modifyPairs[address];
@@ -126,17 +126,46 @@ export class AccountContext {
           const accountGroup = accountGroups[modifyPair.accountProxyId];
 
           if (accountGroup) {
-            if (!result[accountGroup.id]) {
-              result[accountGroup.id] = { ...accountGroup, accounts: [] };
+            if (!temp[accountGroup.id]) {
+              temp[accountGroup.id] = { ...accountGroup, accounts: [] };
             }
 
-            result[accountGroup.id].accounts.push(account);
+            temp[accountGroup.id].accounts.push(account);
             continue;
           }
         }
 
-        result[address] = { id: address, name: account.name || account.address, accounts: [account] };
+        temp[address] = { id: address, name: account.name || account.address, accounts: [account] };
       }
+
+      const result: AccountProxyMap = Object.fromEntries(
+        Object.entries(temp)
+          .map(([key, value]): [string, AccountProxy] => {
+            let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
+
+            if (value.accounts.length > 1) {
+              accountType = AccountProxyType.MULTI;
+            } else if (value.accounts.length === 1) {
+              const account = value.accounts[0];
+
+              if (account.isInjected) {
+                accountType = AccountProxyType.INJECTED;
+              } else if (account.isExternal) {
+                if (account.isHardware) {
+                  accountType = AccountProxyType.LEDGER;
+                } else if (account.isReadOnly) {
+                  accountType = AccountProxyType.READ_ONLY;
+                } else {
+                  accountType = AccountProxyType.QR;
+                }
+              } else {
+                accountType = AccountProxyType.SINGLE;
+              }
+            }
+
+            return [key, { ...value, accountType }];
+          })
+      );
 
       this.accountSubject.next(result);
     });
@@ -282,7 +311,24 @@ export class AccountContext {
 
     const multiChain = types.length > 1;
     const proxyId = multiChain ? this.createAccountGroupId(_suri) : '';
+
+    // Upsert account group first, to avoid combine latest have no account group data.
+    if (proxyId) {
+      this.upsertAccountProxy({ id: proxyId, name });
+    }
+
     const modifiedPairs = this.modifyPairsSubject.value;
+
+    types.forEach((type) => {
+      const suri = getSuri(_suri, type);
+      const pair = keyring.createFromUri(suri, {}, type);
+      const address = pair.address;
+
+      modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
+    });
+
+    // Upsert modify pair before add account to keyring
+    this.upsertModifyPairs(modifiedPairs);
 
     types.forEach((type) => {
       const suri = getSuri(_suri, type);
@@ -309,10 +355,7 @@ export class AccountContext {
       const rs = keyring.addUri(suri, { name: newAccountName }, type);
       const address = rs.pair.address;
 
-      modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
-
       addressDict[type] = address;
-
       this._addAddressToAuthList(address, isAllowed);
 
       if (!changedAccount) {
@@ -325,12 +368,6 @@ export class AccountContext {
         changedAccount = true;
       }
     });
-
-    if (proxyId) {
-      this.upsertAccountProxy({ id: proxyId, name });
-    }
-
-    this.upsertModifyPairs(modifiedPairs);
 
     await new Promise<void>((resolve) => {
       this.addAccountRef(Object.values(addressDict), () => {

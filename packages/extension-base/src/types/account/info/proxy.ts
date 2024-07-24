@@ -28,6 +28,17 @@ export interface AccountProxyData {
  */
 export type AccountProxyStoreData = Record<string, AccountProxyData>;
 
+export enum AccountProxyType {
+  ALL_ACCOUNT = 'all',
+  SINGLE = 'single-chain',
+  MULTI = 'multi-chain',
+  QR = 'qr',
+  LEDGER = 'ledger',
+  READ_ONLY = 'readonly',
+  INJECTED = 'injected',
+  UNKNOWN = 'unknown'
+}
+
 /**
  * @interface AccountProxy
  * @extends AccountProxyData - Inherits properties from AccountProxyData.
@@ -35,6 +46,7 @@ export type AccountProxyStoreData = Record<string, AccountProxyData>;
  */
 export interface AccountProxy extends AccountProxyData {
   accounts: AccountJson[];
+  accountType: AccountProxyType;
 }
 
 export type AccountProxyMap = Record<string, AccountProxy>
