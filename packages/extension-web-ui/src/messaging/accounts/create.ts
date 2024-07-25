@@ -1,8 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateSuriV2, RequestAccountCreateWithSecretKey, ResponseAccountCreateSuriV2, ResponseAccountCreateWithSecretKey, ResponseSeedCreateV2 } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, ResponseAccountCreateWithSecretKey, ResponseSeedCreateV2 } from '@subwallet/extension-base/background/KoniTypes';
 import { SeedLengths } from '@subwallet/extension-base/background/types';
+import { RequestAccountCreateSuriV2, ResponseAccountCreateSuriV2 } from '@subwallet/extension-base/types';
 import { sendMessage } from '@subwallet/extension-web-ui/messaging/base';
 
 import { KeypairType } from '@polkadot/util-crypto/types';

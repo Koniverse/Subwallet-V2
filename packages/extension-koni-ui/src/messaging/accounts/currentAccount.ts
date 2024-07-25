@@ -6,5 +6,5 @@ import { CurrentAccountInfo } from '@subwallet/extension-base/types';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging/base';
 
 export async function saveCurrentAccountAddress (data: RequestCurrentAccountAddress): Promise<CurrentAccountInfo> {
-  return sendMessage('pri(currentAccount.saveAddress)', data);
+  return sendMessage('pri(accounts.saveCurrentProxy)', data);
 }

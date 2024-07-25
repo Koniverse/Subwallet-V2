@@ -3,32 +3,11 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountJson, AccountMetadataData, AccountSignMode, AddressJson } from '@subwallet/extension-base/types';
-import { reformatAddress } from '@subwallet/extension-base/utils/index';
+import { AccountJson, AccountMetadataData, AccountSignMode } from '@subwallet/extension-base/types';
 import { KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
-
-export const simpleAddress = (address: string): string => {
-  if (isEthereumAddress(address)) {
-    return address;
-  }
-
-  return encodeAddress(decodeAddress(address));
-};
-
-export function quickFormatAddressToCompare (address?: string) {
-  if (!isAddress(address)) {
-    return address;
-  }
-
-  return reformatAddress(address, 42).toLowerCase();
-}
-
-export const convertSubjectInfoToAddresses = (subjectInfo: SubjectInfo): AddressJson[] => {
-  return Object.values(subjectInfo).map((info): AddressJson => ({ address: info.json.address, type: info.type, ...info.json.meta }));
-};
+import { KeypairType } from '@polkadot/util-crypto/types';
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
   const meta = _meta as AccountMetadataData;
@@ -62,8 +41,7 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
   }
 };
 
-export const transformAccount = (account: SingleAddress): AccountJson => {
-  const { json: { address, meta }, type } = account;
+export const transformAccount = (address: string, type?: KeypairType, meta?: KeyringPair$Meta): AccountJson => {
   const accountActions: string[] = [];
   const transactionActions: ExtrinsicType[] = [];
   const signMode = getAccountSignMode(address, meta);
@@ -78,20 +56,8 @@ export const transformAccount = (account: SingleAddress): AccountJson => {
   };
 };
 
-export const transformAccountFromPair = (account: KeyringPair): AccountJson => {
-  const { address, meta, type } = account;
-  const accountActions: string[] = [];
-  const transactionActions: ExtrinsicType[] = [];
-  const signMode = getAccountSignMode(address, meta);
+export const singleAddressToAccount = ({ json: { address, meta }, type }: SingleAddress): AccountJson => transformAccount(address, type, meta);
 
-  return {
-    address,
-    ...meta,
-    type,
-    accountActions,
-    transactionActions,
-    signMode
-  };
-};
+export const pairToAccount = ({ address, meta, type }: KeyringPair): AccountJson => transformAccount(address, type, meta);
 
-export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map(transformAccount);
+export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map(singleAddressToAccount);

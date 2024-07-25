@@ -1,27 +1,26 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountExternalError, AccountExternalErrorCode, AccountRefMap, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateSuriV2, RequestAccountCreateWithSecretKey, ResponseAccountCreateSuriV2, ResponseAccountCreateWithSecretKey } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountExternalError, AccountExternalErrorCode, AccountRefMap, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestBatchRestoreV2, RequestJsonRestoreV2, ResponseAccountCreateWithSecretKey } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getEvmChainId, _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
-import { CurrentAccountStore } from '@subwallet/extension-base/stores';
-import AccountProxyStore from '@subwallet/extension-base/stores/AccountProxyStore';
-import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
-import ModifyPairStore from '@subwallet/extension-base/stores/ModifyPairStore';
-import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { isAddressValidWithAuthType, transformAccount } from '@subwallet/extension-base/utils';
+import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
+import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseGetDeriveAccounts } from '@subwallet/extension-base/types';
+import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
+import { isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
-import { KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { createPair } from '@subwallet/keyring';
+import { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { t } from 'i18next';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 
-import { hexStripPrefix, hexToU8a, isHex, stringShorten } from '@polkadot/util';
-import { blake2AsHex, keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
+import { assert, hexStripPrefix, hexToU8a, isHex, stringShorten, u8aToHex, u8aToString } from '@polkadot/util';
+import { base64Decode, blake2AsHex, jsonDecrypt, keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
 import { validateMnemonic } from '@polkadot/util-crypto/mnemonic/bip39';
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { EncryptedJson, KeypairType, Prefix } from '@polkadot/util-crypto/types';
 
 const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
 
@@ -120,7 +119,7 @@ export class AccountContext {
 
       for (const [address, pair] of Object.entries(pairs)) {
         const modifyPair = modifyPairs[address];
-        const account: AccountJson = transformAccount(pair);
+        const account: AccountJson = singleAddressToAccount(pair);
 
         if (modifyPair && modifyPair.accountProxyId) {
           const accountGroup = accountGroups[modifyPair.accountProxyId];
@@ -197,7 +196,6 @@ export class AccountContext {
 
   public _setCurrentAccount (data: CurrentAccountInfo, callback?: () => void, preventOneAccount?: boolean): void {
     const { address } = data;
-
     const result: CurrentAccountInfo = { ...data };
 
     if (address === ALL_ACCOUNT_KEY) {
@@ -235,13 +233,17 @@ export class AccountContext {
 
   /* Current account */
 
-  private _addAddressToAuthList (address: string, isAllowed: boolean): void {
+  /* Auth address */
+
+  private _addAddressesToAuthList (addresses: string[], isAllowed: boolean): void {
     this.parent.state.getAuthorize((value) => {
       if (value && Object.keys(value).length) {
         Object.keys(value).forEach((url) => {
-          if (isAddressValidWithAuthType(address, value[url].accountAuthType)) {
-            value[url].isAllowedMap[address] = isAllowed;
-          }
+          addresses.forEach((address) => {
+            if (isAddressValidWithAuthType(address, value[url].accountAuthType)) {
+              value[url].isAllowedMap[address] = isAllowed;
+            }
+          });
         });
 
         this.parent.state.setAuthorize(value);
@@ -249,10 +251,15 @@ export class AccountContext {
     });
   }
 
+  private _addAddressToAuthList (address: string, isAllowed: boolean): void {
+    this._addAddressesToAuthList([address], isAllowed);
+  }
+
+  /* Auth address */
+
   /* Account groups */
 
   /* Upsert account group */
-
   private upsertAccountProxy (data: AccountProxyData, callback?: () => void) {
     this.accountProxiesStore.get(ACCOUNT_PROXIES_KEY, (rs) => {
       const accountGroups = rs || {};
@@ -263,14 +270,36 @@ export class AccountContext {
     });
   }
 
-  private createAccountGroupId (_suri: string) {
+  /* Delete account group */
+  private deleteAccountProxy (key: string, callback?: () => void) {
+    this.accountProxiesStore.get(ACCOUNT_PROXIES_KEY, (rs) => {
+      const accountGroups = rs || {};
+
+      delete accountGroups[key];
+      this.accountProxiesSubject.next(accountGroups);
+      this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, accountGroups, callback);
+    });
+  }
+
+  /* Create group id */
+  private createAccountGroupId (_suri: string, derivationPath?: string) {
+    let data: string = _suri;
+
     if (validateMnemonic(_suri)) {
       const entropy = mnemonicToEntropy(_suri);
 
-      return blake2AsHex(entropy, 256);
-    } else {
-      return blake2AsHex(_suri, 256);
+      data = u8aToHex(entropy);
+
+      if (derivationPath) {
+        data = blake2AsHex(data, 256);
+      }
     }
+
+    if (derivationPath) {
+      data = hexStripPrefix(data).concat(derivationPath);
+    }
+
+    return blake2AsHex(data, 256);
   }
 
   /* Account group */
@@ -278,7 +307,6 @@ export class AccountContext {
   /* Modify pairs */
 
   /* Upsert modify pairs */
-
   private upsertModifyPairs (data: ModifyPairStoreData) {
     this.modifyPairsStore.set(MODIFY_PAIRS_KEY, data);
     this.modifyPairsSubject.next(data);
@@ -286,8 +314,76 @@ export class AccountContext {
 
   /* Modify pairs */
 
+  /* Modify accounts */
+
+  public accountsEdit ({ name, proxyId }: RequestAccountProxyEdit): boolean {
+    const accountProxies = this.accountProxiesSubject.value;
+    const modifyPairs = this.modifyPairsSubject.value;
+
+    if (!accountProxies[proxyId]) {
+      const pair = keyring.getPair(proxyId);
+
+      assert(pair, t('Unable to find account'));
+
+      keyring.saveAccountMeta(pair, { ...pair.meta, name });
+    } else {
+      const accountGroup = accountProxies[proxyId];
+      const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
+
+      accountGroup.name = name;
+      this.upsertAccountProxy(accountGroup);
+
+      for (const address of addresses) {
+        const pair = keyring.getPair(address);
+
+        assert(pair, t('Unable to find account'));
+
+        const _name = modifyAccountName(pair.type, name, true);
+
+        keyring.saveAccountMeta(pair, { ...pair.meta, name: _name });
+      }
+    }
+
+    return true;
+  }
+
+  public async accountProxyForget ({ proxyId }: RequestAccountProxyForget): Promise<string[]> {
+    const accountProxies = this.accountProxiesSubject.value;
+    const modifyPairs = this.modifyPairsSubject.value;
+
+    let addresses: string[];
+
+    if (!accountProxies[proxyId]) {
+      addresses = [proxyId];
+    } else {
+      addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
+
+      this.deleteAccountProxy(proxyId);
+    }
+
+    for (const address of addresses) {
+      delete modifyPairs[address];
+    }
+
+    this.upsertModifyPairs(modifyPairs);
+
+    for (const address of addresses) {
+      keyring.forgetAccount(address);
+    }
+
+    await Promise.all(addresses.map((address) => new Promise<void>((resolve) => this.removeAccountRef(address, resolve))));
+
+    await new Promise<void>((resolve) => {
+      this._setCurrentAccount({ address: ALL_ACCOUNT_KEY }, resolve);
+    });
+
+    return addresses;
+  }
+
+  /* Modify accounts */
+
   /* Add accounts from seed */
-  public async accountsCreateSuriV2 (request: RequestAccountCreateSuriV2): Promise<ResponseAccountCreateSuriV2> {
+  public accountsCreateSuriV2 (request: RequestAccountCreateSuriV2): ResponseAccountCreateSuriV2 {
     const { isAllowed, name, password, suri: _suri, types } = request;
     const addressDict = {} as Record<KeypairType, string>;
     let changedAccount = false;
@@ -325,6 +421,7 @@ export class AccountContext {
       const address = pair.address;
 
       modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
+      addressDict[type] = address;
     });
 
     // Upsert modify pair before add account to keyring
@@ -332,47 +429,21 @@ export class AccountContext {
 
     types.forEach((type) => {
       const suri = getSuri(_suri, type);
-      const newAccountName = (() => {
-        if (!proxyId) {
-          return name;
-        }
-
-        let network = '';
-
-        switch (type) {
-          case 'sr25519':
-          case 'ed25519':
-          case 'ecdsa':
-            network = 'Substrate';
-            break;
-          case 'ethereum':
-            network = 'EVM';
-            break;
-        }
-
-        return network ? [name, network].join(' - ') : name;
-      })();
+      const newAccountName = modifyAccountName(type, name, !!proxyId);
       const rs = keyring.addUri(suri, { name: newAccountName }, type);
       const address = rs.pair.address;
 
-      addressDict[type] = address;
       this._addAddressToAuthList(address, isAllowed);
 
       if (!changedAccount) {
-        if (!multiChain) {
+        if (!proxyId) {
           this.setCurrentAccount({ address });
         } else {
-          this._setCurrentAccount({ address: ALL_ACCOUNT_KEY }, undefined, true);
+          this._setCurrentAccount({ address: proxyId }, undefined, true);
         }
 
         changedAccount = true;
       }
-    });
-
-    await new Promise<void>((resolve) => {
-      this.addAccountRef(Object.values(addressDict), () => {
-        resolve();
-      });
     });
 
     return addressDict;
@@ -380,7 +451,7 @@ export class AccountContext {
 
   /* Add QR-signer, read-only */
   public async accountsCreateExternalV2 (request: RequestAccountCreateExternalV2): Promise<AccountExternalError[]> {
-    const { address, genesisHash, isAllowed, isEthereum, isReadOnly, name } = request;
+    const { address, isAllowed, isEthereum, isReadOnly, name } = request;
 
     try {
       let result: KeyringPair;
@@ -398,37 +469,24 @@ export class AccountContext {
       }
 
       if (isEthereum) {
-        const chainInfoMap = this.parent.state.getChainInfoMap();
-        let _gen = '';
-
-        if (genesisHash) {
-          for (const network of Object.values(chainInfoMap)) {
-            if (_getEvmChainId(network) === parseInt(genesisHash)) {
-              // TODO: pure EVM chains do not have genesisHash
-              _gen = _getSubstrateGenesisHash(network);
-            }
-          }
-        }
-
         result = keyring.keyring.addFromAddress(address, {
           name,
           isExternal: true,
           isReadOnly,
-          genesisHash: _gen
+          genesisHash: ''
         }, null, 'ethereum');
 
         keyring.saveAccount(result);
       } else {
-        result = keyring.addExternal(address, { genesisHash, name, isReadOnly }).pair;
+        result = keyring.addExternal(address, { genesisHash: '', name, isReadOnly }).pair;
       }
 
       const _address = result.address;
+      const modifiedPairs = this.modifyPairsSubject.value;
 
-      await new Promise<void>((resolve) => {
-        this.parent.state.addAccountRef([_address], () => {
-          resolve();
-        });
-      });
+      modifiedPairs[_address] = { migrated: true, key: _address };
+
+      this.upsertModifyPairs(modifiedPairs);
 
       await new Promise<void>((resolve) => {
         this._saveCurrentAccountAddress(_address, () => {
@@ -459,12 +517,11 @@ export class AccountContext {
     const result = key.pair;
 
     const _address = result.address;
+    const modifiedPairs = this.modifyPairsSubject.value;
 
-    await new Promise<void>((resolve) => {
-      this.addAccountRef([_address], () => {
-        resolve();
-      });
-    });
+    modifiedPairs[_address] = { migrated: true, key: _address };
+
+    this.upsertModifyPairs(modifiedPairs);
 
     await new Promise<void>((resolve) => {
       this._saveCurrentAccountAddress(_address, () => {
@@ -485,6 +542,7 @@ export class AccountContext {
     }
 
     const slugMap: Record<string, string> = {};
+    const modifiedPairs = this.modifyPairsSubject.value;
 
     for (const account of accounts) {
       const { accountIndex, address, addressOffset, genesisHash, hardwareType, isEthereum, isGeneric, name } = account;
@@ -525,6 +583,7 @@ export class AccountContext {
 
       const _address = result.address;
 
+      modifiedPairs[_address] = { migrated: true, key: _address };
       addresses.push(_address);
 
       await new Promise<void>((resolve) => {
@@ -536,17 +595,13 @@ export class AccountContext {
     // const currentAccount = this.#koniState.keyringService.context.currentAccount;
     // const allGenesisHash = currentAccount?.allGenesisHash || undefined;
 
+    this.upsertModifyPairs(modifiedPairs);
+
     if (addresses.length <= 1) {
       this._setCurrentAccount({ address: addresses[0] });
     } else {
       this._setCurrentAccount({ address: ALL_ACCOUNT_KEY });
     }
-
-    await new Promise<void>((resolve) => {
-      this.addAccountRef(addresses, () => {
-        resolve();
-      });
-    });
 
     if (Object.keys(slugMap).length) {
       for (const chainSlug of Object.keys(slugMap)) {
@@ -559,8 +614,96 @@ export class AccountContext {
 
   /* Ledger */
 
-  /* Add with secret and public key */
+  /* JSON */
 
+  public decodeAddress = (key: string | Uint8Array, ignoreChecksum?: boolean, ss58Format?: Prefix): Uint8Array => {
+    return keyring.decodeAddress(key, ignoreChecksum, ss58Format);
+  };
+
+  public encodeAddress = (key: string | Uint8Array, ss58Format?: Prefix): string => {
+    return keyring.encodeAddress(key, ss58Format);
+  };
+
+  private validatePassword (json: KeyringPair$Json, password: string): boolean {
+    const cryptoType = Array.isArray(json.encoding.content) ? json.encoding.content[1] : 'ed25519';
+    const encType = Array.isArray(json.encoding.type) ? json.encoding.type : [json.encoding.type];
+    const pair = createPair(
+      { toSS58: this.encodeAddress, type: cryptoType as KeypairType },
+      { publicKey: this.decodeAddress(json.address, true) },
+      json.meta,
+      isHex(json.encoded) ? hexToU8a(json.encoded) : base64Decode(json.encoded),
+      encType
+    );
+
+    // unlock then lock (locking cleans secretKey, so needs to be last)
+    try {
+      pair.decodePkcs8(password);
+      pair.lock();
+
+      return true;
+    } catch (e) {
+      console.error(e);
+
+      return false;
+    }
+  }
+
+  public jsonRestoreV2 ({ address, file, isAllowed, password, withMasterPassword }: RequestJsonRestoreV2): void {
+    const isPasswordValidated = this.validatePassword(file, password);
+
+    if (isPasswordValidated) {
+      try {
+        this._saveCurrentAccountAddress(address, () => {
+          const newAccount = keyring.restoreAccount(file, password, withMasterPassword);
+
+          // genesisHash is not used in SubWallet => reset it to empty string, if it is not hardware wallet
+          if (!newAccount.meta?.isHardware && newAccount.meta?.genesisHash !== '') {
+            keyring.saveAccountMeta(newAccount, { ...newAccount.meta, genesisHash: '' });
+          }
+
+          this._addAddressToAuthList(address, isAllowed);
+        });
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
+    } else {
+      throw new Error(t('Wrong password'));
+    }
+  }
+
+  private validatedAccountsPassword (json: EncryptedJson, password: string): boolean {
+    try {
+      u8aToString(jsonDecrypt(json, password));
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  public batchRestoreV2 ({ accountsInfo, file, isAllowed, password }: RequestBatchRestoreV2): void {
+    const addressList: string[] = accountsInfo.map((acc) => acc.address);
+    const isPasswordValidated = this.validatedAccountsPassword(file, password);
+
+    if (isPasswordValidated) {
+      try {
+        this._saveCurrentAccountAddress(ALL_ACCOUNT_KEY, () => {
+          keyring.restoreAccounts(file, password);
+
+          this.removeNoneHardwareGenesisHash();
+          this._addAddressesToAuthList(addressList, isAllowed);
+        });
+      } catch (error) {
+        throw new Error((error as Error).message);
+      }
+    } else {
+      throw new Error(t('Wrong password'));
+    }
+  }
+
+  /* JSON */
+
+  /* Add with secret and public key */
   public async accountsCreateWithSecret (request: RequestAccountCreateWithSecretKey): Promise<ResponseAccountCreateWithSecretKey> {
     const { isAllow, isEthereum, name, publicKey, secretKey } = request;
 
@@ -596,12 +739,11 @@ export class AccountContext {
       }
 
       const _address = keyringPair.address;
+      const modifiedPairs = this.modifyPairsSubject.value;
 
-      await new Promise<void>((resolve) => {
-        this.addAccountRef([_address], () => {
-          resolve();
-        });
-      });
+      modifiedPairs[_address] = { migrated: true, key: _address };
+
+      this.upsertModifyPairs(modifiedPairs);
 
       await new Promise<void>((resolve) => {
         this._saveCurrentAccountAddress(_address, () => {
@@ -621,6 +763,288 @@ export class AccountContext {
       };
     }
   }
+
+  /* Derive */
+
+  /* Derive multi account */
+  public derivationCreateMultiple ({ isAllowed, items, parentAddress }: RequestDeriveCreateMultiple): boolean {
+    const parentPair = keyring.getPair(parentAddress);
+    const isEvm = parentPair.type === 'ethereum';
+
+    if (parentPair.isLocked) {
+      keyring.unlockPair(parentPair.address);
+    }
+
+    const createChild = ({ name, suri }: CreateDeriveAccountInfo): KeyringPair => {
+      const meta: KeyringPair$Meta = {
+        name: name,
+        parentAddress
+      };
+
+      if (isEvm) {
+        let index = 0;
+
+        try {
+          const reg = /^\d+$/;
+          const path = suri.split('//')[1];
+
+          if (reg.test(path)) {
+            index = parseInt(path);
+          }
+        } catch (e) {
+
+        }
+
+        if (!index) {
+          throw Error(t('Invalid derive path'));
+        }
+
+        meta.suri = `//${index}`;
+
+        return parentPair.deriveEvm(index, meta);
+      } else {
+        meta.suri = suri;
+
+        return parentPair.derive(suri, meta);
+      }
+    };
+
+    const result: KeyringPair[] = [];
+
+    for (const item of items) {
+      try {
+        const childPair = createChild(item);
+        const address = childPair.address;
+
+        keyring.addPair(childPair, true);
+        this._addAddressToAuthList(address, isAllowed);
+        result.push(childPair);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+
+    if (result.length === 1) {
+      this._saveCurrentAccountAddress(result[0].address);
+    } else {
+      this._setCurrentAccount({ address: ALL_ACCOUNT_KEY });
+    }
+
+    return true;
+  }
+
+  /* Auto create derive account */
+  public derivationCreateV3 ({ address: parentAddress }: RequestDeriveCreateV3): boolean {
+    const parentPair = keyring.getPair(parentAddress);
+    const isEvm = parentPair.type === 'ethereum';
+
+    if (parentPair.isLocked) {
+      keyring.unlockPair(parentPair.address);
+    }
+
+    const pairs = keyring.getPairs();
+    const children = pairs.filter((p) => p.meta.parentAddress === parentAddress);
+    const name = `Account ${pairs.length}`;
+
+    let index = isEvm ? 1 : 0;
+    let valid = false;
+
+    do {
+      const exist = children.find((p) => p.meta.suri === `//${index}`);
+
+      if (exist) {
+        index++;
+      } else {
+        valid = true;
+      }
+    } while (!valid);
+
+    const meta = {
+      name,
+      parentAddress,
+      suri: `//${index}`
+    };
+    const childPair = isEvm ? parentPair.deriveEvm(index, meta) : parentPair.derive(meta.suri, meta);
+    const address = childPair.address;
+
+    this._saveCurrentAccountAddress(address, () => {
+      keyring.addPair(childPair, true);
+      this._addAddressToAuthList(address, true);
+    });
+
+    return true;
+  }
+
+  /* Validate derivation path */
+  public validateDerivePath ({ parentAddress, suri }: RequestDeriveValidateV2): ResponseDeriveValidateV2 {
+    const parentPair = keyring.getPair(parentAddress);
+    const isEvm = parentPair.type === 'ethereum';
+
+    if (parentPair.isLocked) {
+      keyring.unlockPair(parentPair.address);
+    }
+
+    const meta: KeyringPair$Meta = {
+      parentAddress
+    };
+
+    let childPair: KeyringPair;
+
+    if (isEvm) {
+      let index = 0;
+
+      try {
+        const reg = /^\d+$/;
+        const path = suri.split('//')[1];
+
+        if (reg.test(path)) {
+          index = parseInt(path);
+        }
+      } catch (e) {
+
+      }
+
+      if (!index) {
+        throw Error(t('Invalid derive path'));
+      }
+
+      meta.suri = `//${index}`;
+
+      childPair = parentPair.deriveEvm(index, meta);
+    } else {
+      meta.suri = suri;
+      childPair = parentPair.derive(suri, meta);
+    }
+
+    return {
+      address: childPair.address,
+      suri: meta.suri as string
+    };
+  }
+
+  /* Get a derivation account list */
+  public getListDeriveAccounts ({ limit, page, parentAddress }: RequestGetDeriveAccounts): ResponseGetDeriveAccounts {
+    const parentPair = keyring.getPair(parentAddress);
+    const isEvm = parentPair.type === 'ethereum';
+
+    if (parentPair.isLocked) {
+      keyring.unlockPair(parentPair.address);
+    }
+
+    const start = (page - 1) * limit + (isEvm ? 1 : 0);
+    const end = start + limit;
+
+    const result: DeriveAccountInfo[] = [];
+
+    for (let i = start; i < end; i++) {
+      const suri = `//${i}`;
+      const pair = isEvm ? parentPair.deriveEvm(i, {}) : parentPair.derive(suri, {});
+
+      result.push({ address: pair.address, suri: suri });
+    }
+
+    return {
+      result: result
+    };
+  }
+
+  /**
+   * Derive account proxy
+   * @todo: finish this method
+   *  */
+  public derivationAccountProxyCreate ({ proxyId, suri }: RequestDeriveAccountProxy): boolean {
+    const pairs = keyring.getPairs();
+
+    const newProxyName = 'Account 1';
+    // const modifyPairs = this.modifyPairsSubject.value;
+    const accountProxies = this.accountProxiesSubject.value;
+
+    if (!accountProxies[proxyId]) {
+      const parentAddress = proxyId;
+      const parentPair = keyring.getPair(parentAddress);
+      const isEvm = parentPair.type === 'ethereum';
+
+      if (!parentPair) {
+        throw Error(t('Cannot find account'));
+      }
+
+      const pairs = keyring.getPairs();
+      const children = pairs.filter((p) => p.meta.parentAddress === parentAddress);
+      const name = `Account ${pairs.length}`;
+
+      let index = isEvm ? 1 : 0;
+      let valid = false;
+
+      do {
+        const exist = children.find((p) => p.meta.suri === `//${index}`);
+
+        if (exist) {
+          index++;
+        } else {
+          valid = true;
+        }
+      } while (!valid);
+
+      const meta = {
+        name,
+        parentAddress,
+        suri: `//${index}`
+      };
+      const childPair = isEvm ? parentPair.deriveEvm(index, meta) : parentPair.derive(meta.suri, meta);
+      const address = childPair.address;
+
+      this._saveCurrentAccountAddress(address, () => {
+        keyring.addPair(childPair, true);
+        this._addAddressToAuthList(address, true);
+      });
+
+      return true;
+    } else {
+      // Empty
+    }
+
+    pairs.forEach((pair) => {
+      if (pair.meta.proxyId !== proxyId) {
+        return;
+      }
+
+      const isEvm = pair.type === 'ethereum';
+
+      if (pair.isLocked) {
+        keyring.unlockPair(pair.address);
+      }
+
+      const children = pairs.filter((p) => p.meta.parentAddress === pair.address);
+
+      let index = 1;
+      let valid = false;
+
+      do {
+        const exist = children.find((p) => p.meta.suri === `//${index}`);
+
+        if (exist) {
+          index++;
+        } else {
+          valid = true;
+        }
+      } while (!valid);
+
+      const meta = {
+        name: newProxyName,
+        parentAddress: pair.address,
+        suri: `//${index}`
+      };
+
+      // todo: will update logic if support more type
+      const childPair = isEvm ? pair.deriveEvm(index, meta) : pair.derive(index.toString(), meta);
+
+      keyring.addPair(childPair, true);
+    });
+
+    return true;
+  }
+
+  /* Derive */
 
   /* Inject */
 

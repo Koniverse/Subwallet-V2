@@ -1,10 +1,6 @@
 // Copyright 2019-2022 @polkadot/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExtDef } from '@polkadot/types/extrinsic/signedExtensions/types';
-import { SignerResult } from '@polkadot/types/types/extrinsic';
-import { KeypairType } from '@polkadot/util-crypto/types';
-import { HexString } from '@polkadot/util/types';
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _FundStatus, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AuthUrls, Resolver } from '@subwallet/extension-base/background/handlers/State';
@@ -15,7 +11,8 @@ import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCus
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseEarlyValidateYield, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
+import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
+import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapErrorType, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
@@ -27,6 +24,11 @@ import { DexieExportJsonStructure } from 'dexie-export-import';
 import Web3 from 'web3';
 import { RequestArguments, TransactionConfig } from 'web3-core';
 import { JsonRpcPayload, JsonRpcResponse } from 'web3-core-helpers';
+
+import { ExtDef } from '@polkadot/types/extrinsic/signedExtensions/types';
+import { SignerResult } from '@polkadot/types/types/extrinsic';
+import { HexString } from '@polkadot/util/types';
+import { KeypairType } from '@polkadot/util-crypto/types';
 
 import { TransactionWarning } from './warnings/TransactionWarning';
 
@@ -827,62 +829,7 @@ export type ResponseSeedValidateV2 = ResponseSeedCreateV2
 
 // Create account with suri
 
-export interface RequestAccountCreateSuriV2 {
-  name: string;
-  password?: string;
-  suri: string;
-  types?: Array<KeypairType>;
-  isAllowed: boolean;
-}
-
-export type ResponseAccountCreateSuriV2 = Record<KeypairType, string>
-
 // Create derive account
-
-export interface RequestDeriveCreateV2 {
-  name: string;
-  genesisHash?: string | null;
-  suri: string;
-  parentAddress: string;
-  isAllowed: boolean;
-}
-
-export interface CreateDeriveAccountInfo {
-  name: string;
-  suri: string;
-}
-
-export interface RequestDeriveCreateV3 {
-  address: string;
-}
-
-export interface RequestDeriveCreateMultiple {
-  parentAddress: string;
-  isAllowed: boolean;
-  items: CreateDeriveAccountInfo[];
-}
-
-export interface DeriveAccountInfo {
-  address: string;
-  suri: string;
-}
-
-export interface RequestDeriveValidateV2 {
-  suri: string;
-  parentAddress: string;
-}
-
-export type ResponseDeriveValidateV2 = DeriveAccountInfo;
-
-export interface RequestGetDeriveAccounts {
-  page: number;
-  limit: number;
-  parentAddress: string;
-}
-
-export interface ResponseGetDeriveAccounts {
-  result: DeriveAccountInfo[];
-}
 
 // Restore account with json file (single account)
 
@@ -2138,22 +2085,21 @@ export interface KoniRequestSignatures {
   'pri(accounts.inject.add)': [RequestAddInjectedAccounts, boolean];
   'pri(accounts.inject.remove)': [RequestRemoveInjectedAccounts, boolean];
 
-  // Derive
-  'pri(derivation.createV2)': [RequestDeriveCreateV2, boolean]; // Substrate
-
   // Restore by json
-  'pri(json.restoreV2)': [RequestJsonRestoreV2, void];
-  'pri(json.batchRestoreV2)': [RequestBatchRestoreV2, void];
+  'pri(accounts.json.restoreV2)': [RequestJsonRestoreV2, void];
+  'pri(accounts.json.batchRestoreV2)': [RequestBatchRestoreV2, void];
 
   // Export account
   'pri(accounts.batchExportV2)': [RequestAccountBatchExportV2, ResponseAccountBatchExportV2];
   'pri(accounts.exportPrivateKey)': [RequestAccountExportPrivateKey, ResponseAccountExportPrivateKey];
 
   // Current account
-  'pri(accounts.subscribeWithCurrentAddress)': [RequestAccountSubscribe, AccountsWithCurrentAddress, AccountsWithCurrentAddress];
-  'pri(accounts.updateCurrentAddress)': [string, boolean]; // old
-  'pri(currentAccount.saveAddress)': [RequestCurrentAccountAddress, CurrentAccountInfo];
-  'pri(accounts.get.meta)': [RequestAccountMeta, ResponseAccountMeta];
+  'pri(accounts.subscribeWithCurrentProxy)': [RequestAccountSubscribe, AccountsWithCurrentAddress, AccountsWithCurrentAddress];
+  'pri(accounts.saveCurrentProxy)': [RequestCurrentAccountAddress, CurrentAccountInfo];
+
+  // Edit account
+  'pri(accounts.edit)': [RequestAccountProxyEdit, boolean];
+  'pri(accounts.forget)': [RequestAccountProxyForget, boolean];
 
   // Address book
   'pri(accounts.saveRecent)': [RequestSaveRecentAccount, KeyringAddress];

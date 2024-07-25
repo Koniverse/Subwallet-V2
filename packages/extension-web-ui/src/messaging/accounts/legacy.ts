@@ -23,7 +23,7 @@ export async function subscribeAccounts (cb: (accounts: AccountJson[]) => void):
 }
 
 export async function subscribeAccountsWithCurrentAddress (cb: (data: AccountsWithCurrentAddress) => void): Promise<AccountsWithCurrentAddress> {
-  return sendMessage('pri(accounts.subscribeWithCurrentAddress)', {}, cb);
+  return sendMessage('pri(accounts.subscribeWithCurrentProxy)', {}, cb);
 }
 
 export async function subscribeAccountsInputAddress (cb: (data: OptionInputAddress) => void): Promise<string> {

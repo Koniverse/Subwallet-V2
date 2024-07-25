@@ -87,10 +87,8 @@ export interface RequestSignatures extends KoniRequestSignatures {
   'pri(ping)': [null, string];
   'pri(accounts.create.hardware)': [RequestAccountCreateHardware, boolean];
   'pri(accounts.create.suri)': [RequestAccountCreateSuri, boolean];
-  'pri(accounts.edit)': [RequestAccountEdit, boolean];
   'pri(accounts.export)': [RequestAccountExport, ResponseAccountExport];
   'pri(accounts.batchExport)': [RequestAccountBatchExport, ResponseAccountsExport]
-  'pri(accounts.forget)': [RequestAccountForget, boolean];
   'pri(accounts.show)': [RequestAccountShow, boolean];
   'pri(accounts.tie)': [RequestAccountTie, boolean];
   'pri(accounts.subscribe)': [RequestAccountSubscribe, AccountJson[], AccountJson[]];
@@ -222,17 +220,6 @@ export interface RequestAccountChangePassword {
   address: string;
   oldPass: string;
   newPass: string;
-}
-
-export interface RequestAccountEdit {
-  address: string;
-  genesisHash?: string | null;
-  name: string;
-}
-
-export interface RequestAccountForget {
-  address: string;
-  lockAfter: boolean;
 }
 
 export interface RequestAccountShow {

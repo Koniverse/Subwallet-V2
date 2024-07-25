@@ -39,7 +39,7 @@ import WalletConnectService from '@subwallet/extension-base/services/wallet-conn
 import { SWStorage } from '@subwallet/extension-base/storage';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
 import { AccountJson, BalanceItem, BalanceMap, CurrentAccountInfo, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
-import { isAccountAll, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
+import { isAccountAll, pairToAccount, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
@@ -1361,7 +1361,7 @@ export default class KoniState {
       throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unable to find account'));
     }
 
-    const account: AccountJson = { address: pair.address, ...pair.meta };
+    const account: AccountJson = pairToAccount(pair);
 
     let hashPayload = '';
     let canSign = false;
@@ -1549,7 +1549,7 @@ export default class KoniState {
       throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unable to find account'));
     }
 
-    const account: AccountJson = { address: pair.address, ...pair.meta };
+    const account: AccountJson = pairToAccount(pair);
 
     // Validate balance
     const balance = new BN(await web3.eth.getBalance(fromAddress) || 0);

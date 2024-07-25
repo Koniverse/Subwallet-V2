@@ -14,3 +14,25 @@ export const isAddressValidWithAuthType = (address: string, accountAuthType?: Ac
 
   return true;
 };
+
+// export const isAddressValidWithAuthType = (address: string, accountAuthType?: AccountAuthType): boolean => {
+//   const keypairType = getKeypairTypeByAddress(address);
+//
+//   if (!['ethereum', 'bitcoin-84', 'bitcoin-86', 'bittest-84', 'bittest-86'].includes(keypairType)) {
+//     return false;
+//   }
+//
+//   if (accountAuthType === 'both') {
+//     return true;
+//   }
+//
+//   if (accountAuthType === 'evm') {
+//     return keypairType === 'ethereum';
+//   }
+//
+//   if (accountAuthType === 'bitcoin') {
+//     return ['bitcoin-86', 'bittest-86', 'bitcoin-84', 'bittest-84'].includes(keypairType);
+//   }
+//
+//   return false;
+// };

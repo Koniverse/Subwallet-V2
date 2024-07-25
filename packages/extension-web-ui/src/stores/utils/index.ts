@@ -27,7 +27,7 @@ export const updateAccountData = (data: AccountsWithCurrentAddress) => {
   const accounts = data.accounts;
 
   accounts.forEach((accountJson) => {
-    if (accountJson.address === data.currentAddress) {
+    if (accountJson.address === data.currentAccountProxy) {
       currentAccountJson = accountJson;
     }
   });
@@ -53,7 +53,7 @@ export const updateAccountsContext = (data: AccountsContext) => {
   }, 300, 2400);
 };
 
-export const subscribeAccountsData = lazySubscribeMessage('pri(accounts.subscribeWithCurrentAddress)', {}, updateAccountData, updateAccountData);
+export const subscribeAccountsData = lazySubscribeMessage('pri(accounts.subscribeWithCurrentProxy)', {}, updateAccountData, updateAccountData);
 
 export const updateKeyringState = (data: KeyringState) => {
   addLazy('updateKeyringState', () => {
@@ -147,7 +147,7 @@ export const subscribeAssetLogoMaps = lazySubscribeMessage('pri(settings.logo.as
 //   store.dispatch({ type: 'accountState/updateCurrentAccount', payload: data });
 // };
 //
-// export const subscribeAppSettings = lazySubscribeMessage('pri(accounts.subscribeWithCurrentAddress)', {}, updateCurrentAccountState, updateCurrentAccountState);
+// export const subscribeAppSettings = lazySubscribeMessage('pri(accounts.subscribeWithCurrentProxy)', {}, updateCurrentAccountState, updateCurrentAccountState);
 //
 export const updateAuthUrls = (data: AuthUrls) => {
   store.dispatch({ type: 'settings/updateAuthUrls', payload: data });
@@ -159,7 +159,7 @@ export const subscribeAuthUrls = lazySubscribeMessage('pri(authorize.subscribe)'
 //   store.dispatch({ type: 'accountState/updateCurrentAccount', payload: data });
 // };
 //
-// export const subscribeMediaAllowance = lazySubscribeMessage('pri(accounts.subscribeWithCurrentAddress)', {}, updateCurrentAccountState, updateCurrentAccountState);
+// export const subscribeMediaAllowance = lazySubscribeMessage('pri(accounts.subscribeWithCurrentProxy)', {}, updateCurrentAccountState, updateCurrentAccountState);
 
 export const updateChainInfoMap = (data: Record<string, _ChainInfo>) => {
   store.dispatch({ type: 'chainStore/updateChainInfoMap', payload: data });
