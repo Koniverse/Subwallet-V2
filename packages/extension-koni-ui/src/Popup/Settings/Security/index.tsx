@@ -353,7 +353,7 @@ const Component: React.FC<Props> = (props: Props) => {
           className={className}
           id={editUnlockTypeModalId}
           onCancel={onCloseUnlockTypeModal}
-          title={t('settings.Screen.securitySetting.Item.authPassword')}
+          title={t('settings.security.Modal.authPassword.title')}
         >
           <div className='modal-body-container'>
             <SettingItem

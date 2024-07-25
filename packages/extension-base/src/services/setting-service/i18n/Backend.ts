@@ -16,7 +16,7 @@ const PRODUCTION_BRANCHES = ['master', 'webapp', 'webapp-dev'];
 const PROJECT_ID = 'subwallet-extension';
 const branchName = process.env.BRANCH_NAME || 'koni-dev';
 const envTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'prod' : 'dev';
-const fetchTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'https://subwallet-static-content.pages.dev/' : 'https://sw-static-data-dev.pages.dev/';
+const fetchTarget = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'https://subwallet-static-content.pages.dev' : 'https://sw-static-data-dev.pages.dev';
 const fetchFile = `${fetchTarget}/localization-contents/${PROJECT_ID}/${envTarget}`;
 
 export default class Backend {
@@ -41,19 +41,33 @@ export default class Backend {
 
   async createLoader (lng: string): Promise<LoadResult> {
     try {
-      const responseOnline = await fetch(`${fetchFile}/${lng}.json`);
-      const response = await fetch(`locales/${lng}/translation.json`);
-      // TODO: this URL is temporary for testing
+      let responseOnline;
+      let response;
 
-      if (!responseOnline.ok && !response.ok) {
-        return [`i18n: failed loading ${lng}`, response.status >= 500 && response.status < 600];
+      try {
+        responseOnline = await fetch(`${fetchFile}/${lng}.json`);
+      } catch (e) {
+        console.warn(`Failed to fetch online:  ${(e as Error).message}`);
       }
 
-      if (response.ok) {
+      try {
+        response = await fetch(`locales/${lng}/translation.json`);
+        console.log('UI_response', response);
+      } catch (e) {
+        console.warn(`Failed to fetch local:  ${(e as Error).message}`);
+      }
+
+      if ((!responseOnline || !responseOnline.ok) && (!response || !response.ok)) {
+        const isServerError = response ? (response.status >= 500 && response.status < 600) : false;
+
+        return [`i18n: failed loading ${lng}`, isServerError];
+      }
+
+      if (response && response.ok) {
         languageCache[lng] = await response.json() as Record<string, string>;
       }
 
-      if (!responseOnline.ok) {
+      if (responseOnline && responseOnline.ok) {
         languageCacheOnline[lng] = await responseOnline.json() as Record<string, string>;
       }
 

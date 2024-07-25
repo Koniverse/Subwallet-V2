@@ -173,7 +173,7 @@ const Component: React.FC<Props> = (props: Props) => {
       className={CN(className)}
       onBack={goBack}
       rightFooterButton={{
-        children: t('Connect'),
+        children: t('settings.Screen.walletConnect.Modal.Connect.Button.connect'),
         onClick: form.submit,
         loading: loading,
         icon: (

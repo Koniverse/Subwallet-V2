@@ -17,15 +17,15 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*])[A-Za-z\d
 export const renderBasePasswordRules = (fieldName: string, t: TFunction): FormRule[] => {
   return [
     {
-      message: t('{{fieldName}} must be at least {{minLen}} characters in length', { replace: { minLen: MinPasswordLength, fieldName: fieldName } }),
+      message: t('settings.security.Screen.changePassword.FormRules.lengthPassword', { replace: { minLen: MinPasswordLength, fieldName: fieldName } }),
       min: MinPasswordLength
     },
     {
-      message: t('{{fieldName}} is required', { replace: { fieldName: fieldName } }),
+      message: t('settings.security.Screen.changePassword.FormRules.requiredPassword', { replace: { fieldName: fieldName } }),
       required: true
     },
     {
-      message: t('{{fieldName}} should be at least 1 uppercase letter, 1 number, and 1 special character', { replace: { fieldName: fieldName } }),
+      message: t('settings.security.Screen.changePassword.FormRules.letterPassword', { replace: { fieldName: fieldName } }),
       pattern: passwordRegex,
       warningOnly: true
     }

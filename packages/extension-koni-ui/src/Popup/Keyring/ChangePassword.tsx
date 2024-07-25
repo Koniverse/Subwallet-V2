@@ -103,7 +103,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={goBack}
         rightFooterButton={{
-          children: t('Save'),
+          children: t('common.Button.save'),
           onClick: form.submit,
           loading: loading,
           disabled: isDisabled,
@@ -200,7 +200,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               <Checkbox
                 className={'checkbox'}
               >
-                {t('settings.security.Screen.changePassword.confirmAgreement')}
+                {t('settings.security.Screen.changePassword.confirmAgreement')}&nbsp;
                 <a
                   href={TERMS_OF_SERVICE_URL}
                   rel='noreferrer'

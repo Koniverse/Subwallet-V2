@@ -68,8 +68,8 @@ const Component: React.FC<Props> = (props: Props) => {
   const renderEmptyList = useCallback(() => {
     return (
       <EmptyList
-        emptyMessage={t('emptyContent.websiteAccess.description')}
-        emptyTitle={t('emptyContent.websiteAccess.title')}
+        emptyMessage={t('emptyContent.walletConnect.description')}
+        emptyTitle={t('emptyContent.walletConnect.title')}
         phosphorIcon={GlobeHemisphereWest}
       />
     );
@@ -112,7 +112,7 @@ const Component: React.FC<Props> = (props: Props) => {
           />
         )
       }}
-      title={t('settings.Screen.settingsEntry.Item.walletConnect')}
+      title={t('settings.Screen.walletConnect.title')}
     >
       <PageWrapper
         className={CN(className)}
@@ -128,7 +128,7 @@ const Component: React.FC<Props> = (props: Props) => {
           rowGap='var(--row-gap)'
           searchFunction={searchFunc}
           searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('settings.Screen.websiteAccess.searchPlaceHolder')}
+          searchPlaceholder={t<string>('settings.Screen.walletConnect.searchPlaceHolder')}
         />
       </PageWrapper>
     </Layout.WithSubHeaderOnly>

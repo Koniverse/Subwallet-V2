@@ -158,7 +158,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             renderWhenEmpty={emptyCrowdloanList}
             searchFunction={searchFunction}
             searchMinCharactersCount={2}
-            searchPlaceholder={t<string>('settings.crowdloan.searchPlaceHolder')}
+            searchPlaceholder={t<string>('settings.Screen.crowdloans.searchPlaceHolder')}
             showActionBtn
           />
         </div>
