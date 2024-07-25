@@ -209,10 +209,11 @@ export class BalanceService implements StoppableServiceInterface {
       const chainInfoMap = this.state.chainService.getChainInfoMap();
       const evmApiMap = this.state.chainService.getEvmApiMap();
       const substrateApiMap = this.state.chainService.getSubstrateApiMap();
+      const tonApiMap = this.state.chainService.getTonApiMap();
 
       let unsub = noop;
 
-      unsub = subscribeBalance([address], [chain], [tSlug], assetMap, chainInfoMap, substrateApiMap, evmApiMap, (result) => {
+      unsub = subscribeBalance([address], [chain], [tSlug], assetMap, chainInfoMap, substrateApiMap, evmApiMap, tonApiMap, (result) => {
         const rs = result[0];
 
         if (rs.tokenSlug === tSlug) {
@@ -360,6 +361,7 @@ export class BalanceService implements StoppableServiceInterface {
     const chainInfoMap = this.state.chainService.getChainInfoMap();
     const evmApiMap = this.state.chainService.getEvmApiMap();
     const substrateApiMap = this.state.chainService.getSubstrateApiMap();
+    const tonApiMap = this.state.chainService.getTonApiMap();
 
     const activeChainSlugs = Object.keys(this.state.getActiveChainInfoMap());
     const assetState = this.state.chainService.subscribeAssetSettings().value;
@@ -369,7 +371,7 @@ export class BalanceService implements StoppableServiceInterface {
       })
       .map((asset) => asset.slug);
 
-    const unsub = subscribeBalance(addresses, activeChainSlugs, assets, assetMap, chainInfoMap, substrateApiMap, evmApiMap, (result) => {
+    const unsub = subscribeBalance(addresses, activeChainSlugs, assets, assetMap, chainInfoMap, substrateApiMap, evmApiMap, tonApiMap, (result) => {
       !cancel && this.setBalanceItem(result);
     }, ExtrinsicType.TRANSFER_BALANCE);
 

@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _BalanceMetadata, APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
+import { _EvmApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 
 import { ApiPromise } from '@polkadot/api';
 import { BN } from '@polkadot/util';
@@ -64,4 +64,8 @@ export interface SubscribeSubstratePalletBalance extends SubscribeBasePalletBala
 
 export interface SubscribeEvmPalletBalance extends SubscribeBasePalletBalance {
   evmApi: _EvmApi;
+}
+
+export interface SubscribeTonPalletBalance extends SubscribeBasePalletBalance {
+  tonApi: _TonApi;
 }

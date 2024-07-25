@@ -12,6 +12,7 @@ import { ApiPromise } from '@polkadot/api';
 import { SubmittableExtrinsicFunction } from '@polkadot/api/promise/types';
 import { ChainProperties, ChainType } from '@polkadot/types/interfaces';
 import { Registry } from '@polkadot/types/types';
+import {TonClient} from "@ton/ton";
 
 export interface _DataMap {
   chainInfoMap: Record<string, _ChainInfo>,
@@ -103,6 +104,11 @@ export interface _EvmApi extends _ChainBaseApi {
   api: Web3;
 
   isReady: Promise<_EvmApi>;
+}
+
+export interface _TonApi extends _ChainBaseApi {
+  api: TonClient;
+  isReady: Promise<_TonApi>;
 }
 
 export type _NetworkUpsertParams = {
