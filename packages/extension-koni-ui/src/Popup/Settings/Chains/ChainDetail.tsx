@@ -38,13 +38,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const showNotification = useNotification();
   const [form] = Form.useForm<ChainDetailForm>();
   const { handleSimpleConfirmModal } = useConfirmModal({
-    title: t<string>('Delete network'),
+    title: t<string>('settings.Screen.addProvider.Modal.deleteNetwork.title'),
     maskClosable: true,
     closable: true,
     type: 'error',
-    subTitle: t<string>('You are about to delete this network'),
-    content: t<string>('Confirm delete this network'),
-    okText: t<string>('Remove')
+    subTitle: t<string>('settings.Screen.addProvider.Modal.deleteNetwork.subTitle'),
+    content: t<string>('settings.Screen.addProvider.Modal.deleteNetwork.content'),
+    okText: t<string>('settings.Screen.addProvider.Modal.deleteNetwork.Button.remove')
   });
 
   const [isChanged, setIsChanged] = useState(false);
@@ -99,18 +99,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             if (result) {
               navigate(-1);
               showNotification({
-                message: t('Deleted network successfully')
+                message: t('settings.Screen.addProvider.Notifications.deleteCustomChain.success')
               });
             } else {
               showNotification({
-                message: t('Error. Please try again')
+                message: t('settings.Screen.addProvider.Notifications.deleteCustomChain.error')
               });
               setIsDeleting(false);
             }
           })
           .catch(() => {
             showNotification({
-              message: t('Error. Please try again')
+              message: t('settings.Screen.addProvider.Notifications.deleteCustomChain.error')
             });
             setIsDeleting(false);
           });
@@ -194,19 +194,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
         if (result) {
           showNotification({
-            message: t('Updated network successfully')
+            message: t('settings.Screen.addProvider.Notifications.updateNetworkSuccess')
           });
           navigate(-1);
         } else {
           showNotification({
-            message: t('An error occurred, please try again')
+            message: t('settings.Screen.addProvider.Notifications.updateNetworkError')
           });
         }
       })
       .catch(() => {
         setLoading(false);
         showNotification({
-          message: t('An error occurred, please try again')
+          message: t('settings.Screen.addProvider.Notifications.updateNetworkError')
         });
       });
   }, [chainInfo.providers, chainInfo.slug, form, navigate, showNotification, t]);
@@ -280,7 +280,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           ),
           loading: loading,
           onClick: onSubmit,
-          children: t('Save')
+          children: t('common.Button.save')
         }}
         showBackButton={true}
         showSubHeader={true}
@@ -288,7 +288,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         subHeaderCenter={true}
         subHeaderIcons={subHeaderButton}
         subHeaderPaddingVertical={true}
-        title={t<string>('common.Text.networkDetail')}
+        title={t<string>('settings.Screen.networkDetail.title')}
       >
         <div className={'chain_detail__container'}>
           <Form

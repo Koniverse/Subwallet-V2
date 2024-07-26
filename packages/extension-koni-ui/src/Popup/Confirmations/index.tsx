@@ -26,7 +26,7 @@ type Props = ThemeProps
 const titleMap: Record<ConfirmationType, string> = {
   addNetworkRequest: detectTranslate('Add network request'),
   addTokenRequest: detectTranslate('Add token request'),
-  authorizeRequest: detectTranslate('Connect with SubWallet'),
+  authorizeRequest: detectTranslate('settings.Popup.authorizeRequest.title'),
   evmSendTransactionRequest: detectTranslate('Transaction request'),
   evmSignatureRequest: detectTranslate('Signature request'),
   metadataRequest: detectTranslate('Update metadata'),

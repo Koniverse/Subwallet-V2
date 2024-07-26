@@ -201,7 +201,7 @@ function Component ({ className, request }: Props) {
           {
             visibleAccounts.length === 0
               ? noAvailableTitle
-              : t('Choose the account(s) you’d like to connect')
+              : t('settings.Popup.authorizeRequest.heading')
           }
         </div>
         {
@@ -240,7 +240,7 @@ function Component ({ className, request }: Props) {
           {
             visibleAccounts.length === 0
               ? noAvailableDescription
-              : t('Make sure you trust this site before connecting')
+              : t('settings.Popup.authorizeRequest.description')
           }
         </div>
       </div>
@@ -268,7 +268,7 @@ function Component ({ className, request }: Props) {
                 loading={loading}
                 onClick={onConfirm}
               >
-                {t('Connect')}
+                {t('settings.Popup.authorizeRequest.Button.connect')}
               </Button>
             </>
           )
@@ -300,7 +300,7 @@ function Component ({ className, request }: Props) {
                   )}
                   onClick={onAddAccount}
                 >
-                  {t('Create one')}
+                  {t('settings.Popup.authorizeRequest.Button.create')}
                 </Button>
               </>
             )
