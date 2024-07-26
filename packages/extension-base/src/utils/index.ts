@@ -6,10 +6,12 @@ import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { getRandomIpfsGateway, SUBWALLET_IPFS } from '@subwallet/extension-base/koni/api/nft/config';
 import { AccountJson } from '@subwallet/extension-base/types';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress } from '@subwallet/keyring';
+import { KeypairType } from '@subwallet/keyring/types';
 import { t } from 'i18next';
 
 import { assert, BN, hexToU8a, isHex } from '@polkadot/util';
-import { decodeAddress, encodeAddress, ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
+import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
 
 export { canDerive } from './canDerive';
 export * from './mv3';
@@ -44,11 +46,13 @@ export function reformatAddress (address: string, networkPrefix = 42, isEthereum
       return ethereumEncode(publicKey);
     }
 
+    const type: KeypairType = getKeypairTypeByAddress(address);
+
     if (networkPrefix < 0) {
       return address;
     }
 
-    return encodeAddress(publicKey, networkPrefix);
+    return encodeAddress(publicKey, networkPrefix, type);
   } catch (e) {
     console.warn('Get error while reformat address', address, e);
 

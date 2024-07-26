@@ -8,7 +8,7 @@ import RequestService from '@subwallet/extension-base/services/request-service';
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { getWCId, parseRequestParams } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { POLKADOT_SIGNING_METHODS } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { isSameAddress } from '@subwallet/extension-base/utils';
+import { isSameAddress, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 import { SignClientTypes } from '@walletconnect/types';
 import { getSdkError } from '@walletconnect/utils';
@@ -59,7 +59,7 @@ export default class PolkadotRequestHandler {
       const address = pair.address;
 
       this.#requestService
-        .sign(url, new RequestBytesSign({ address: address, data: param.message, type: 'bytes' }), { address, ...pair.meta }, getWCId(id))
+        .sign(url, new RequestBytesSign({ address: address, data: param.message, type: 'bytes' }), pairToAccount(pair), getWCId(id))
         .then(async ({ signature }) => {
           await this.#walletConnectService.responseRequest({
             topic: topic,
@@ -75,10 +75,9 @@ export default class PolkadotRequestHandler {
       this.#checkAccount(param.address, sessionAccounts);
 
       const pair = keyring.getPair(param.address);
-      const address = pair.address;
 
       this.#requestService
-        .sign(url, new RequestExtrinsicSign(param.transactionPayload), { address, ...pair.meta }, getWCId(id))
+        .sign(url, new RequestExtrinsicSign(param.transactionPayload), pairToAccount(pair), getWCId(id))
         .then(async ({ signature }) => {
           await this.#walletConnectService.responseRequest({
             topic: topic,

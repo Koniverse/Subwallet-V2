@@ -4,10 +4,8 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountJson, AccountMetadataData, AccountSignMode } from '@subwallet/extension-base/types';
-import { KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { KeypairType, KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
   const meta = _meta as AccountMetadataData;

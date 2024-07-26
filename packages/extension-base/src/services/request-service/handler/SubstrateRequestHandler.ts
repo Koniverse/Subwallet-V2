@@ -6,6 +6,7 @@ import { RequestSign, Resolver, ResponseSigning, SigningRequest } from '@subwall
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { SignRequest } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson } from '@subwallet/extension-base/types';
+import { pairToAccount } from '@subwallet/extension-base/utils';
 import { getId } from '@subwallet/extension-base/utils/getId';
 import { isInternalRequest } from '@subwallet/extension-base/utils/request';
 import keyring from '@subwallet/ui-keyring';
@@ -95,7 +96,7 @@ export default class SubstrateRequestHandler {
 
     return new Promise((resolve, reject): void => {
       const pair = keyring.getPair(address);
-      const account: AccountJson = { address: pair.address, ...pair.meta };
+      const account: AccountJson = pairToAccount(pair);
 
       this.#substrateRequests[id] = {
         ...this.signComplete(id, resolve, reject),

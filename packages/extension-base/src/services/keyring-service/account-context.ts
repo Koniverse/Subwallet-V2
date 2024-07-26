@@ -3,7 +3,6 @@
 
 import { AccountExternalError, AccountExternalErrorCode, AccountRefMap, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestBatchRestoreV2, RequestJsonRestoreV2, ResponseAccountCreateWithSecretKey } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { _getEvmChainId, _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
 import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseGetDeriveAccounts } from '@subwallet/extension-base/types';
@@ -801,11 +800,11 @@ export class AccountContext {
 
         meta.suri = `//${index}`;
 
-        return parentPair.deriveEvm(index, meta);
+        return parentPair.evm.derive(index, meta);
       } else {
         meta.suri = suri;
 
-        return parentPair.derive(suri, meta);
+        return parentPair.substrate.derive(suri, meta);
       }
     };
 
@@ -864,7 +863,7 @@ export class AccountContext {
       parentAddress,
       suri: `//${index}`
     };
-    const childPair = isEvm ? parentPair.deriveEvm(index, meta) : parentPair.derive(meta.suri, meta);
+    const childPair = isEvm ? parentPair.evm.derive(index, meta) : parentPair.substrate.derive(meta.suri, meta);
     const address = childPair.address;
 
     this._saveCurrentAccountAddress(address, () => {
@@ -910,10 +909,10 @@ export class AccountContext {
 
       meta.suri = `//${index}`;
 
-      childPair = parentPair.deriveEvm(index, meta);
+      childPair = parentPair.evm.derive(index, meta);
     } else {
       meta.suri = suri;
-      childPair = parentPair.derive(suri, meta);
+      childPair = parentPair.substrate.derive(suri, meta);
     }
 
     return {
@@ -938,7 +937,7 @@ export class AccountContext {
 
     for (let i = start; i < end; i++) {
       const suri = `//${i}`;
-      const pair = isEvm ? parentPair.deriveEvm(i, {}) : parentPair.derive(suri, {});
+      const pair = isEvm ? parentPair.evm.derive(i, {}) : parentPair.substrate.derive(suri, {});
 
       result.push({ address: pair.address, suri: suri });
     }
@@ -990,7 +989,7 @@ export class AccountContext {
         parentAddress,
         suri: `//${index}`
       };
-      const childPair = isEvm ? parentPair.deriveEvm(index, meta) : parentPair.derive(meta.suri, meta);
+      const childPair = isEvm ? parentPair.evm.derive(index, meta) : parentPair.substrate.derive(meta.suri, meta);
       const address = childPair.address;
 
       this._saveCurrentAccountAddress(address, () => {
@@ -1036,7 +1035,7 @@ export class AccountContext {
       };
 
       // todo: will update logic if support more type
-      const childPair = isEvm ? pair.deriveEvm(index, meta) : pair.derive(index.toString(), meta);
+      const childPair = isEvm ? pair.evm.derive(index, meta) : pair.substrate.derive(index.toString(), meta);
 
       keyring.addPair(childPair, true);
     });

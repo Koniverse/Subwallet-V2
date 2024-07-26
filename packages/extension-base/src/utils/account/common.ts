@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { KeypairType } from '@polkadot/util-crypto/types';
 import { reformatAddress } from '@subwallet/extension-base/utils';
+import { KeypairType } from '@subwallet/keyring/types';
 
 import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 

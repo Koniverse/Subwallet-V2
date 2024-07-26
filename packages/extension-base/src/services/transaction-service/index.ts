@@ -20,7 +20,7 @@ import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { Web3Transaction } from '@subwallet/extension-base/signers/types';
 import { AccountJson, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
-import { _isRuntimeUpdated, anyNumberToBN, reformatAddress } from '@subwallet/extension-base/utils';
+import { _isRuntimeUpdated, anyNumberToBN, pairToAccount, reformatAddress } from '@subwallet/extension-base/utils';
 import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
@@ -840,7 +840,7 @@ export default class TransactionService {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     const accountPair = keyring.getPair(address);
-    const account: AccountJson = { address, ...accountPair.meta };
+    const account: AccountJson = pairToAccount(accountPair);
 
     if (!payload.account) {
       payload.account = account;

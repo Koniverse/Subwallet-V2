@@ -1,8 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { KeyringPair$Meta } from '@subwallet/keyring/types';
-import type { KeypairType } from '@polkadot/util-crypto/types';
+import type { KeypairType, KeyringPair$Meta } from '@subwallet/keyring/types';
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 

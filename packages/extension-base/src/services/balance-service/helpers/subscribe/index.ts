@@ -6,7 +6,7 @@ import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/backgroun
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getSubstrateGenesisHash, _isChainEvmCompatible, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
-import { categoryAddresses, filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
+import { categoryAddresses, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 
 import { subscribeEVMBalance } from './evm';
@@ -26,11 +26,7 @@ export const getAccountJsonByAddress = (address: string): AccountJson | null => 
     const pair = keyring.getPair(address);
 
     if (pair) {
-      return {
-        address: pair.address,
-        type: pair.type,
-        ...pair.meta
-      };
+      return pairToAccount(pair);
     } else {
       return null;
     }

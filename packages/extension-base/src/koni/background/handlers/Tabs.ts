@@ -20,7 +20,7 @@ import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-s
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
-import { canDerive, getEVMChainInfo, stripUrl, singleAddressToAccount } from '@subwallet/extension-base/utils';
+import { canDerive, getEVMChainInfo, pairToAccount, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { KeyringPair } from '@subwallet/keyring/types';
 import keyring from '@subwallet/ui-keyring';
@@ -149,7 +149,7 @@ export default class KoniTabs {
       throw new Error('Account {{address}} not in allowed list'.replace('{{address}}', address));
     }
 
-    return this.#koniState.sign(url, new RequestBytesSign(request), singleAddressToAccount(pair));
+    return this.#koniState.sign(url, new RequestBytesSign(request), pairToAccount(pair));
   }
 
   private async extrinsicSign (url: string, request: SignerPayloadJSON): Promise<ResponseSigning> {
@@ -161,7 +161,7 @@ export default class KoniTabs {
       throw new Error('Account {{address}} not in allowed list'.replace('{{address}}', address));
     }
 
-    return this.#koniState.sign(url, new RequestExtrinsicSign(request), singleAddressToAccount(pair));
+    return this.#koniState.sign(url, new RequestExtrinsicSign(request), pairToAccount(pair));
   }
 
   private metadataProvide (url: string, request: MetadataDef): Promise<boolean> {

@@ -1,12 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { KeypairType, KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
 import { assert } from '@polkadot/util';
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 interface DeriveInfo {
   suri?: string;
@@ -88,7 +87,7 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
     suri: `//${index}`
   };
 
-  const childPair = isEvm ? parentPair.deriveEvm(index, meta) : parentPair.derive(meta.suri, meta);
+  const childPair = isEvm ? parentPair.evm.derive(index, meta) : parentPair.substrate.derive(meta.suri, meta);
   const address = childPair.address;
 
   return {

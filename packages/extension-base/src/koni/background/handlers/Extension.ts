@@ -408,7 +408,7 @@ export default class KoniExtension {
     }
 
     try {
-      return parentPair.derive(suri, metadata);
+      return parentPair.substrate.derive(suri, metadata);
     } catch (err) {
       throw new Error(t('"{{suri}}" is not a valid derivation path', { replace: { suri } }));
     }
@@ -2095,7 +2095,7 @@ export default class KoniExtension {
         data = `0x${message}`;
       }
 
-      signed = await pair.evmSigner.signMessage(data, 'personal_sign');
+      signed = await pair.evm.signMessage(data, 'personal_sign');
     } else {
       const tx: QrTransaction | null = createTransactionFromRLP(message);
 
@@ -2121,7 +2121,7 @@ export default class KoniExtension {
       // @ts-ignore
       const transaction = new LegacyTransaction(txObject, { common });
 
-      const signedTranaction = LegacyTransaction.fromSerializedTx(hexToU8a(pair.evmSigner.signTransaction(transaction)));
+      const signedTranaction = LegacyTransaction.fromSerializedTx(hexToU8a(pair.evm.signTransaction(transaction)));
 
       signed = signatureToHex({
         r: signedTranaction.r?.toString(16) || '',
