@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
-import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
@@ -174,16 +174,20 @@ export class ChainService {
     return this.evmChainHandler.getEvmApiMap();
   }
 
+  public getSubstrateApi (slug: string) {
+    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  }
+
   public getSubstrateApiMap () {
     return this.substrateChainHandler.getSubstrateApiMap();
   }
 
-  public getTonApiMap () {
-    return this.tonChainHandler.getTonApiMap();
+  public getTonApi (slug: string) {
+    return this.tonChainHandler.getTonApiByChain(slug);
   }
 
-  public getSubstrateApi (slug: string) {
-    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  public getTonApiMap () {
+    return this.tonChainHandler.getTonApiMap();
   }
 
   public getChainCurrentProviderByKey (slug: string) {
@@ -914,6 +918,12 @@ export class ChainService {
 
       this.evmChainHandler.setEvmApi(chainInfo.slug, chainApi);
     }
+
+    if (chainInfo.tonInfo !== null && chainInfo.tonInfo !== undefined) {
+      const chainApi = await this.tonChainHandler.initApi(chainInfo.slug, endpoint, { providerName, onUpdateStatus });
+
+      this.tonChainHandler.setTonApi(chainInfo.slug, chainApi);
+    }
   }
 
   private destroyApiForChain (chainInfo: _ChainInfo) {
@@ -922,6 +932,10 @@ export class ChainService {
     }
 
     if (chainInfo.evmInfo !== null) {
+      this.evmChainHandler.destroyEvmApi(chainInfo.slug);
+    }
+
+    if (chainInfo.tonInfo !== null) {
       this.evmChainHandler.destroyEvmApi(chainInfo.slug);
     }
   }
@@ -1235,7 +1249,7 @@ export class ChainService {
               evmInfo: storedChainInfo.evmInfo,
               substrateInfo: storedChainInfo.substrateInfo,
               bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
-              tonInfo: storedChainInfo.tonInfo ?? null,
+              tonInfo: storedChainInfo.tonInfo,
               isTestnet: storedChainInfo.isTestnet,
               chainStatus: storedChainInfo.chainStatus,
               icon: storedChainInfo.icon,
@@ -1443,6 +1457,7 @@ export class ChainService {
 
     let substrateInfo: _SubstrateInfo | null = null;
     let evmInfo: _EvmInfo | null = null;
+    const tonInfo: _TonInfo | null = null;
 
     if (params.chainSpec.genesisHash !== '') {
       substrateInfo = {
@@ -1481,7 +1496,7 @@ export class ChainService {
       substrateInfo,
       evmInfo,
       bitcoinInfo: null,
-      tonInfo: null,
+      tonInfo,
       isTestnet: false,
       chainStatus: _ChainStatus.ACTIVE,
       icon: '', // Todo: Allow update with custom chain,
@@ -1811,7 +1826,8 @@ export class ChainService {
   public async stopAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.sleep(),
-      this.evmChainHandler.sleep()
+      this.evmChainHandler.sleep(),
+      this.tonChainHandler.sleep()
     ]);
 
     this.stopCheckLatestChainData();
@@ -1820,7 +1836,8 @@ export class ChainService {
   public async resumeAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.wakeUp(),
-      this.evmChainHandler.wakeUp()
+      this.evmChainHandler.wakeUp(),
+      this.tonChainHandler.wakeUp()
     ]);
 
     this.checkLatestData();

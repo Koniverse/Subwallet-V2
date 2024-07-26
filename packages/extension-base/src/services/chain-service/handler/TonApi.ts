@@ -78,9 +78,10 @@ export class TonApi implements _TonApi {
   }
 
   connect (): void {
+    this.updateConnectionStatus(_ChainConnectionStatus.CONNECTING);
     // alibaba.
     // There isn't a persistent network connection underlying TonClient. Cant check connection status.
-    this.isApiReadyOnce = true;
+    // this.isApiReadyOnce = true;
     this.onConnect();
   }
 
@@ -113,7 +114,7 @@ export class TonApi implements _TonApi {
     this.updateConnectionStatus(_ChainConnectionStatus.DISCONNECTED);
 
     if (this.isApiConnected) {
-      console.warn(`Disconnected from ${this.chainSlug} of ${this.apiUrl} (TON)`);
+      console.warn(`Disconnected from ${this.chainSlug} of ${this.apiUrl}`);
       this.isApiReady = false;
       this.isReadyHandler = createPromiseHandler<_TonApi>();
     }
