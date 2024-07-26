@@ -140,7 +140,7 @@ export function subscribeBalance (
 
     if (_isPureTonChain(chainInfo)) {
       return subscribeTonBalance({
-        addresses: useAddresses,
+        addresses: ['EQChB2eMoFG4ThuEsZ6ehlBPKJXOjNxlR5B7qKZNGIv256Da'],
         assetMap: chainAssetMap,
         callback,
         chainInfo,

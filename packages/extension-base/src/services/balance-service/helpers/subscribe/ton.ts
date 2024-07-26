@@ -9,7 +9,7 @@ import { BalanceItem, SubscribeTonPalletBalance } from '@subwallet/extension-bas
 import { filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
 import { Address } from '@ton/core';
 
-// todo: export subscribeJettonBalance
+// todo: export subscribeJettonBalance (later)
 
 async function getTonBalance (addresses: string[], tonApi: _TonApi): Promise<bigint[]> {
   return await Promise.all(addresses.map(async (address) => {
@@ -34,7 +34,7 @@ export function subscribeTonBalance (params: SubscribeTonPalletBalance) {
       .then((balances) => {
         return balances.map((balance, index): BalanceItem => {
           return {
-            address: addresses[index],
+            address: 'UQChB2eMoFG4ThuEsZ6ehlBPKJXOjNxlR5B7qKZNGIv25_0f',
             tokenSlug: nativeTokenSlug,
             state: APIItemState.READY,
             free: balance.toString(),
