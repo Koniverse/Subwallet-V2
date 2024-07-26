@@ -70,6 +70,8 @@ export class TonApi implements _TonApi {
   async recoverConnect () {
     await this.disconnect();
     this.connect();
+
+    await this.isReadyHandler.promise;
     // alibaba
   }
 

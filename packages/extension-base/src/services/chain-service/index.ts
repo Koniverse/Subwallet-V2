@@ -936,7 +936,7 @@ export class ChainService {
     }
 
     if (chainInfo.tonInfo !== null) {
-      this.evmChainHandler.destroyEvmApi(chainInfo.slug);
+      this.tonChainHandler.destroyTonApi(chainInfo.slug);
     }
   }
 
@@ -1617,6 +1617,8 @@ export class ChainService {
 
         // TODO: EVM chain might have WS provider
         if (provider.startsWith('http')) {
+          // todo: handle validate ton provider
+
           // HTTP provider is EVM by default
           api = await this.evmChainHandler.initApi('custom', provider);
         } else {
@@ -1821,6 +1823,10 @@ export class ChainService {
 
   public refreshEvmApi (slug: string) {
     this.evmChainHandler.recoverApi(slug).catch(console.error);
+  }
+
+  public refreshTonApi (slug: string) { // alibaba
+    this.tonChainHandler.recoverApi(slug).catch(console.error);
   }
 
   public async stopAllChainApis () {

@@ -62,7 +62,7 @@ export class TonChainHandler extends AbstractChainHandler {
   }
 
   destroyTonApi (chain: string) {
-    const tonApi = this.getApiByChain(chain);
+    const tonApi = this.getTonApiByChain(chain);
 
     tonApi?.destroy().catch(console.error);
   }

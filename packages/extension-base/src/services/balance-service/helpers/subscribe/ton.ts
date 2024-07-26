@@ -34,7 +34,7 @@ export function subscribeTonBalance (params: SubscribeTonPalletBalance) {
       .then((balances) => {
         return balances.map((balance, index): BalanceItem => {
           return {
-            address: 'UQChB2eMoFG4ThuEsZ6ehlBPKJXOjNxlR5B7qKZNGIv25_0f',
+            address: '5HpbHTE8NKRHffnDwUDE7VR1ZtRSK1xWT4NrbvkSv54Fvqxx', // fake address
             tokenSlug: nativeTokenSlug,
             state: APIItemState.READY,
             free: balance.toString(),
