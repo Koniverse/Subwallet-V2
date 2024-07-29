@@ -13,8 +13,13 @@ export function getJettonMasterContract (tonApi: _TonApi, contractAddress: strin
 }
 
 export async function getJettonWalletContract (jettonMasterContract: OpenedContract<JettonMaster>, tonApi: _TonApi, ownerAddress: string) {
+  await sleep(1500);
   const walletAddress = Address.parse(ownerAddress);
+
+  await sleep(1500);
   const jettonWalletAddress = await jettonMasterContract.getWalletAddress(walletAddress);
+
+  await sleep(1500);
 
   return tonApi.api.open(JettonWallet.create(jettonWalletAddress));
 }
@@ -30,3 +35,7 @@ export async function getJettonWalletContract (jettonMasterContract: OpenedContr
 //
 //   return new TonClient({ endpoint });
 // }
+
+export function sleep (ms: number) { // alibaba for test
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
