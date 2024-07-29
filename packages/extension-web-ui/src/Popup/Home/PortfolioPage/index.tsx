@@ -134,8 +134,17 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
     return undefined;
   }, [pathname]);
+
+  const isTokenScreen = useMemo(() => {
+    return pathname.startsWith('/home/tokens');
+  }, [pathname]);
+
+  const isNFTScreen = useMemo(() => {
+    return pathname.startsWith('/home/nfts');
+  }, [pathname]);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token');
-  const { banners: bannersDetails } = useGetBannerByScreen('token_detail', tokenGroupSlug);
+  const { banners: nftLists, dismissBanner: dismissBannerNFT, onClickBanner: onClickBannerNFT } = useGetBannerByScreen('nft');
+  const { banners: bannersDetails, dismissBanner: dimissBannerDetails, onClickBanner: onClickBannerDetails } = useGetBannerByScreen('token_detail', tokenGroupSlug);
 
   return (
     <div className={CN(className, 'portfolio-container')}>
@@ -144,13 +153,18 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         <div className={'token-detail-banner-wrapper'}>
           {!!tokenGroupSlug && (<BannerGenerator
             banners={bannersDetails}
-            dismissBanner={dismissBanner}
-            onClickBanner={onClickBanner}
+            dismissBanner={dimissBannerDetails}
+            onClickBanner={onClickBannerDetails}
           />)}
-          {!tokenGroupSlug && !!banners.length && (<BannerGenerator
+          {!tokenGroupSlug && isTokenScreen && !!banners.length && (<BannerGenerator
             banners={banners}
             dismissBanner={dismissBanner}
             onClickBanner={onClickBanner}
+          />)}
+          {!tokenGroupSlug && isNFTScreen && !!nftLists.length && (<BannerGenerator
+            banners={nftLists}
+            dismissBanner={dismissBannerNFT}
+            onClickBanner={onClickBannerNFT}
           />)}
         </div>
         <div className='menu-bar'>
