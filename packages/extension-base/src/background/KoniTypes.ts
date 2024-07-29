@@ -4,14 +4,14 @@
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _FundStatus, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AuthUrls, Resolver } from '@subwallet/extension-base/background/handlers/State';
-import { AccountAuthType, AuthorizeRequest, ConfirmationRequestBase, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeCancel, RequestAuthorizeReject, RequestAuthorizeSubscribe, RequestAuthorizeTab, RequestCurrentAccountAddress, ResponseAuthorizeList, ResponseJsonGetAccountInfo, SeedLengths } from '@subwallet/extension-base/background/types';
+import { AccountAuthType, AuthorizeRequest, ConfirmationRequestBase, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeCancel, RequestAuthorizeReject, RequestAuthorizeSubscribe, RequestAuthorizeTab, RequestCurrentAccountAddress, ResponseAuthorizeList, ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
+import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapErrorType, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -28,7 +28,6 @@ import { JsonRpcPayload, JsonRpcResponse } from 'web3-core-helpers';
 import { ExtDef } from '@polkadot/types/extrinsic/signedExtensions/types';
 import { SignerResult } from '@polkadot/types/types/extrinsic';
 import { HexString } from '@polkadot/util/types';
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 import { TransactionWarning } from './warnings/TransactionWarning';
 
@@ -794,41 +793,6 @@ export interface ResponseAccountBatchExportV2 {
 
 // Get account info with private key
 
-export interface RequestCheckPublicAndSecretKey {
-  secretKey: string;
-  publicKey: string;
-}
-
-export interface ResponseCheckPublicAndSecretKey {
-  address: string;
-  isValid: boolean;
-  isEthereum: boolean;
-}
-
-// Create seed phase
-
-export interface RequestSeedCreateV2 {
-  length?: SeedLengths;
-  seed?: string;
-  types?: Array<KeypairType>;
-}
-
-export interface ResponseSeedCreateV2 {
-  seed: string,
-  addressMap: Record<KeypairType, string>
-}
-
-// Get account info with suri
-
-export interface RequestSeedValidateV2 {
-  suri: string;
-  types?: Array<KeypairType>;
-}
-
-export type ResponseSeedValidateV2 = ResponseSeedCreateV2
-
-// Create account with suri
-
 // Create derive account
 
 // Restore account with json file (single account)
@@ -848,13 +812,6 @@ export interface RequestBatchRestoreV2 {
   password: string;
   accountsInfo: ResponseJsonGetAccountInfo[];
   isAllowed: boolean;
-}
-
-// Restore account with privateKey
-
-export interface ResponsePrivateKeyValidateV2 {
-  addressMap: Record<KeypairType, string>,
-  autoAddPrefix: boolean
 }
 
 // External account
@@ -2068,12 +2025,12 @@ export interface KoniRequestSignatures {
   /* Account management */
 
   // Validate
-  'pri(seed.validateV2)': [RequestSeedValidateV2, ResponseSeedValidateV2];
-  'pri(privateKey.validateV2)': [RequestSeedValidateV2, ResponsePrivateKeyValidateV2];
-  'pri(accounts.checkPublicAndSecretKey)': [RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey];
+  'pri(accounts.validate.seed)': [RequestMnemonicValidateV2, ResponseMnemonicValidateV2];
+  'pri(accounts.validate.metamask.privateKey)': [RequestPrivateKeyValidateV2, ResponsePrivateKeyValidateV2];
+  'pri(accounts.validate.substrate.publicAndPrivateKey)': [RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey];
 
   // Create account
-  'pri(seed.createV2)': [RequestSeedCreateV2, ResponseSeedCreateV2];
+  'pri(seed.createV2)': [RequestMnemonicCreateV2, ResponseMnemonicCreateV2];
   'pri(accounts.create.suriV2)': [RequestAccountCreateSuriV2, ResponseAccountCreateSuriV2];
   'pri(accounts.create.externalV2)': [RequestAccountCreateExternalV2, AccountExternalError[]];
   'pri(accounts.create.hardwareV2)': [RequestAccountCreateHardwareV2, boolean];
@@ -2089,8 +2046,9 @@ export interface KoniRequestSignatures {
   'pri(accounts.json.batchRestoreV2)': [RequestBatchRestoreV2, void];
 
   // Export account
-  'pri(accounts.batchExportV2)': [RequestAccountBatchExportV2, ResponseAccountBatchExportV2];
-  'pri(accounts.exportPrivateKey)': [RequestAccountExportPrivateKey, ResponseAccountExportPrivateKey];
+  'pri(accounts.export.json.batch)': [RequestAccountBatchExportV2, ResponseAccountBatchExportV2];
+  'pri(accounts.export.privateKey)': [RequestAccountExportPrivateKey, ResponseAccountExportPrivateKey];
+  'pri(accounts.export.mnemonic)': [RequestExportAccountProxyMnemonic, ResponseExportAccountProxyMnemonic];
 
   // Current account
   'pri(accounts.subscribeWithCurrentProxy)': [RequestAccountSubscribe, AccountsWithCurrentAddress, AccountsWithCurrentAddress];

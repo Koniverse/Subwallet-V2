@@ -7,8 +7,8 @@ import { _AssetRef, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { createSubscription } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, AssetSetting, AssetSettingUpdateReq, BasicTxErrorType, BondingOptionParams, BrowserConfirmationType, CampaignBanner, CampaignData, CampaignDataType, ChainType, CronReloadRequest, CrowdloanJson, ExternalRequestPromiseStatus, ExtrinsicType, KeyringState, MantaPayEnableMessage, MantaPayEnableParams, MantaPayEnableResponse, MantaPaySyncState, MetadataItem, NftCollection, NftJson, NftTransactionRequest, NftTransactionResponse, OptionInputAddress, PriceJson, RequestAccountBatchExportV2, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestAddInjectedAccounts, RequestApproveConnectWalletSession, RequestApproveWalletConnectNotSupport, RequestAuthorization, RequestAuthorizationBlock, RequestAuthorizationPerAccount, RequestAuthorizationPerSite, RequestAuthorizeApproveV2, RequestBatchRestoreV2, RequestBondingSubmit, RequestCameraSettings, RequestCampaignBannerComplete, RequestChangeEnableChainPatrol, RequestChangeLanguage, RequestChangeMasterPassword, RequestChangePriceCurrency, RequestChangeShowBalance, RequestChangeShowZeroBalance, RequestChangeTimeAutoLock, RequestCheckPublicAndSecretKey, RequestConfirmationComplete, RequestConnectWalletConnect, RequestCrossChainTransfer, RequestCrowdloanContributions, RequestDeleteContactAccount, RequestDisconnectWalletConnectSession, RequestEditContactAccount, RequestFindRawMetadata, RequestForgetSite, RequestFreeBalance, RequestGetTransaction, RequestJsonRestoreV2, RequestKeyringExportMnemonic, RequestMaxTransferable, RequestMigratePassword, RequestParseEvmContractInput, RequestParseTransactionSubstrate, RequestPassPhishingPage, RequestQrParseRLP, RequestQrSignEvm, RequestQrSignSubstrate, RequestRejectConnectWalletSession, RequestRejectExternalRequest, RequestRejectWalletConnectNotSupport, RequestRemoveInjectedAccounts, RequestResetWallet, RequestResolveExternalRequest, RequestSaveRecentAccount, RequestSeedCreateV2, RequestSeedValidateV2, RequestSettingsType, RequestSigningApprovePasswordV2, RequestStakePoolingBonding, RequestStakePoolingUnbonding, RequestSubscribeHistory, RequestSubstrateNftSubmitTransaction, RequestTransfer, RequestTuringCancelStakeCompound, RequestTuringStakeCompound, RequestUnbondingSubmit, RequestUnlockKeyring, RequestUnlockType, ResolveAddressToDomainRequest, ResolveDomainRequest, ResponseAccountBatchExportV2, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseCheckPublicAndSecretKey, ResponseFindRawMetadata, ResponseKeyringExportMnemonic, ResponseMigratePassword, ResponseParseEvmContractInput, ResponseParseTransactionSubstrate, ResponsePrivateKeyValidateV2, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate, ResponseRejectExternalRequest, ResponseResetWallet, ResponseResolveExternalRequest, ResponseSeedCreateV2, ResponseSeedValidateV2, ResponseSubscribeHistory, ResponseUnlockKeyring, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, StakingTxErrorType, StakingType, ThemeNames, TransactionHistoryItem, TransactionResponse, ValidateNetworkRequest, ValidateNetworkResponse, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountAuthType, AuthorizeRequest, MessageTypes, MetadataRequest, RequestAccountChangePassword, RequestAccountCreateHardware, RequestAccountCreateSuri, RequestAccountExport, RequestAccountShow, RequestAccountTie, RequestAccountValidate, RequestAuthorizeCancel, RequestAuthorizeReject, RequestBatchRestore, RequestCurrentAccountAddress, RequestDeriveCreate, RequestDeriveValidate, RequestJsonRestore, RequestMetadataApprove, RequestMetadataReject, RequestSeedCreate, RequestSeedValidate, RequestSigningApproveSignature, RequestSigningCancel, RequestTypes, ResponseAccountExport, ResponseAuthorizeList, ResponseDeriveValidate, ResponseJsonGetAccountInfo, ResponseSeedCreate, ResponseSeedValidate, ResponseType, SigningRequest, WindowOpenParams } from '@subwallet/extension-base/background/types';
+import { AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, AssetSetting, AssetSettingUpdateReq, BasicTxErrorType, BondingOptionParams, BrowserConfirmationType, CampaignBanner, CampaignData, CampaignDataType, ChainType, CronReloadRequest, CrowdloanJson, ExternalRequestPromiseStatus, ExtrinsicType, KeyringState, MantaPayEnableMessage, MantaPayEnableParams, MantaPayEnableResponse, MantaPaySyncState, MetadataItem, NftCollection, NftJson, NftTransactionRequest, NftTransactionResponse, OptionInputAddress, PriceJson, RequestAccountBatchExportV2, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestAddInjectedAccounts, RequestApproveConnectWalletSession, RequestApproveWalletConnectNotSupport, RequestAuthorization, RequestAuthorizationBlock, RequestAuthorizationPerAccount, RequestAuthorizationPerSite, RequestAuthorizeApproveV2, RequestBatchRestoreV2, RequestBondingSubmit, RequestCameraSettings, RequestCampaignBannerComplete, RequestChangeEnableChainPatrol, RequestChangeLanguage, RequestChangeMasterPassword, RequestChangePriceCurrency, RequestChangeShowBalance, RequestChangeShowZeroBalance, RequestChangeTimeAutoLock, RequestConfirmationComplete, RequestConnectWalletConnect, RequestCrossChainTransfer, RequestCrowdloanContributions, RequestDeleteContactAccount, RequestDisconnectWalletConnectSession, RequestEditContactAccount, RequestFindRawMetadata, RequestForgetSite, RequestFreeBalance, RequestGetTransaction, RequestJsonRestoreV2, RequestKeyringExportMnemonic, RequestMaxTransferable, RequestMigratePassword, RequestParseEvmContractInput, RequestParseTransactionSubstrate, RequestPassPhishingPage, RequestQrParseRLP, RequestQrSignEvm, RequestQrSignSubstrate, RequestRejectConnectWalletSession, RequestRejectExternalRequest, RequestRejectWalletConnectNotSupport, RequestRemoveInjectedAccounts, RequestResetWallet, RequestResolveExternalRequest, RequestSaveRecentAccount, RequestSettingsType, RequestSigningApprovePasswordV2, RequestStakePoolingBonding, RequestStakePoolingUnbonding, RequestSubscribeHistory, RequestSubstrateNftSubmitTransaction, RequestTransfer, RequestTuringCancelStakeCompound, RequestTuringStakeCompound, RequestUnbondingSubmit, RequestUnlockKeyring, RequestUnlockType, ResolveAddressToDomainRequest, ResolveDomainRequest, ResponseAccountBatchExportV2, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseFindRawMetadata, ResponseKeyringExportMnemonic, ResponseMigratePassword, ResponseParseEvmContractInput, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate, ResponseRejectExternalRequest, ResponseResetWallet, ResponseResolveExternalRequest, ResponseSubscribeHistory, ResponseUnlockKeyring, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, StakingTxErrorType, StakingType, ThemeNames, TransactionHistoryItem, TransactionResponse, ValidateNetworkRequest, ValidateNetworkResponse, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountAuthType, AuthorizeRequest, MessageTypes, MetadataRequest, RequestAccountChangePassword, RequestAccountCreateHardware, RequestAccountExport, RequestAccountShow, RequestAccountTie, RequestAccountValidate, RequestAuthorizeCancel, RequestAuthorizeReject, RequestBatchRestore, RequestCurrentAccountAddress, RequestDeriveCreate, RequestDeriveValidate, RequestJsonRestore, RequestMetadataApprove, RequestMetadataReject, RequestSigningApproveSignature, RequestSigningCancel, RequestTypes, ResponseAccountExport, ResponseAuthorizeList, ResponseDeriveValidate, ResponseJsonGetAccountInfo, ResponseType, SigningRequest, WindowOpenParams } from '@subwallet/extension-base/background/types';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
 import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
@@ -41,7 +41,9 @@ import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectN
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
-import { AccountProxy, AccountProxyType, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
+import {
+  AccountProxy, AccountProxyType, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType
+} from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -66,16 +68,7 @@ import { Metadata, TypeRegistry } from '@polkadot/types';
 import { ChainProperties } from '@polkadot/types/interfaces';
 import { Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
-import { decodeAddress, isAddress, isEthereumAddress, keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
-import { KeypairType } from '@polkadot/util-crypto/types';
-
-const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
-
-function getSuri (seed: string, type?: KeypairType): string {
-  return type === 'ethereum'
-    ? `${seed}${ETH_DERIVE_DEFAULT}`
-    : seed;
-}
+import { decodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 const ACCOUNT_ALL_GROUP: AccountProxy = {
   id: ALL_ACCOUNT_KEY,
@@ -147,12 +140,6 @@ export default class KoniExtension {
     hardwareType,
     name }: RequestAccountCreateHardware): boolean {
     keyring.addHardware(address, hardwareType, { accountIndex, addressOffset, genesisHash, name });
-
-    return true;
-  }
-
-  private accountsCreateSuri ({ genesisHash, name, suri, type }: RequestAccountCreateSuri): boolean {
-    keyring.addUri(getSuri(suri, type), { genesisHash, name }, type);
 
     return true;
   }
@@ -299,32 +286,6 @@ export default class KoniExtension {
       console.error(e);
       throw new Error((e as Error).message);
     }
-  }
-
-  private seedCreate ({ length = SEED_DEFAULT_LENGTH, seed: _seed, type }: RequestSeedCreate): ResponseSeedCreate {
-    const seed = _seed || mnemonicGenerate(length);
-
-    return {
-      address: keyring.createFromUri(getSuri(seed, type), {}, type).address,
-      seed
-    };
-  }
-
-  private seedValidate ({ suri, type }: RequestSeedValidate): ResponseSeedValidate {
-    const { phrase } = keyExtractSuri(suri);
-
-    if (isHex(phrase)) {
-      assert(isHex(phrase, 256), t('Invalid seed phrase. Please try again.'));
-    } else {
-      // sadly isHex detects as string, so we need a cast here
-      assert(SEED_LENGTHS.includes((phrase).split(' ').length), t('Seed phrase needs to contain {{x}} words', { replace: { x: SEED_LENGTHS.join(', ') } }));
-      assert(mnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
-    }
-
-    return {
-      address: keyring.createFromUri(getSuri(suri, type), {}, type).address,
-      suri
-    };
   }
 
   // TODO: move to request service
@@ -1211,69 +1172,16 @@ export default class KoniExtension {
     return true;
   }
 
-  private seedCreateV2 ({ length = SEED_DEFAULT_LENGTH,
-    seed: _seed,
-    types }: RequestSeedCreateV2): ResponseSeedCreateV2 {
-    const seed = _seed || mnemonicGenerate(length);
-    const rs = { seed: seed, addressMap: {} } as ResponseSeedCreateV2;
-
-    types?.forEach((type) => {
-      rs.addressMap[type] = keyring.createFromUri(getSuri(seed, type), {}, type).address;
-    });
-
-    return rs;
+  private seedCreateV2 (request: RequestMnemonicCreateV2): ResponseMnemonicCreateV2 {
+    return this.#koniState.keyringService.context.mnemonicCreateV2(request);
   }
 
-  private seedValidateV2 ({ suri, types }: RequestSeedValidateV2): ResponseSeedValidateV2 {
-    const { phrase } = keyExtractSuri(suri);
-
-    if (isHex(phrase)) {
-      assert(isHex(phrase, 256), t('Invalid seed phrase. Please try again.'));
-    } else {
-      // sadly isHex detects as string, so we need a cast here
-      assert(SEED_LENGTHS.includes((phrase).split(' ').length), t('Seed phrase needs to contain {{x}} words', { replace: { x: SEED_LENGTHS.join(', ') } }));
-      assert(mnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
-    }
-
-    const rs = { seed: suri, addressMap: {} } as ResponseSeedValidateV2;
-
-    types && types.forEach((type) => {
-      rs.addressMap[type] = keyring.createFromUri(getSuri(suri, type), {}, type).address;
-    });
-
-    return rs;
+  private seedValidateV2 (request: RequestMnemonicValidateV2): ResponseMnemonicValidateV2 {
+    return this.#koniState.keyringService.context.mnemonicValidateV2(request);
   }
 
-  private _checkValidatePrivateKey ({ suri,
-    types }: RequestSeedValidateV2, autoAddPrefix = false): ResponsePrivateKeyValidateV2 {
-    const { phrase } = keyExtractSuri(suri);
-    const rs = { autoAddPrefix: autoAddPrefix, addressMap: {} } as ResponsePrivateKeyValidateV2;
-
-    types && types.forEach((type) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      rs.addressMap[type] = '';
-    });
-
-    if (isHex(phrase) && isHex(phrase, 256)) {
-      types && types.forEach((type) => {
-        rs.addressMap[type] = keyring.createFromUri(getSuri(suri, type), {}, type).address;
-      });
-    } else {
-      rs.autoAddPrefix = false;
-      assert(false, t('Invalid private key. Please try again.'));
-    }
-
-    return rs;
-  }
-
-  private metamaskPrivateKeyValidateV2 ({ suri, types }: RequestSeedValidateV2): ResponsePrivateKeyValidateV2 {
-    const isHex = suri.startsWith('0x');
-
-    if (isHex) {
-      return this._checkValidatePrivateKey({ suri, types });
-    } else {
-      return this._checkValidatePrivateKey({ suri: `0x${suri}`, types }, true);
-    }
+  private metamaskPrivateKeyValidateV2 (request: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
+    return this.#koniState.keyringService.context.metamaskPrivateKeyValidateV2(request);
   }
 
   private jsonRestoreV2 (request: RequestJsonRestoreV2): void {
@@ -1306,6 +1214,10 @@ export default class KoniExtension {
         throw error;
       }
     }
+  }
+
+  private exportAccountProxyMnemonic (request: RequestExportAccountProxyMnemonic): ResponseExportAccountProxyMnemonic {
+    return this.#koniState.keyringService.context.exportAccountProxyMnemonic(request);
   }
 
   private getNftCollection (): Promise<NftCollection[]> {
@@ -3803,9 +3715,6 @@ export default class KoniExtension {
       case 'pri(accounts.create.hardware)':
         return this.accountsCreateHardware(request as RequestAccountCreateHardware);
 
-      case 'pri(accounts.create.suri)':
-        return this.accountsCreateSuri(request as RequestAccountCreateSuri);
-
       case 'pri(accounts.changePassword)':
         return this.accountsChangePassword(request as RequestAccountChangePassword);
 
@@ -3850,12 +3759,6 @@ export default class KoniExtension {
 
       case 'pri(json.account.info)':
         return this.jsonGetAccountInfo(request as KeyringPair$Json);
-
-      case 'pri(seed.create)':
-        return this.seedCreate(request as RequestSeedCreate);
-
-      case 'pri(seed.validate)':
-        return this.seedValidate(request as RequestSeedValidate);
 
       case 'pri(signing.approve.signature)':
         return this.signingApproveSignature(request as RequestSigningApproveSignature);
@@ -4028,25 +3931,27 @@ export default class KoniExtension {
       case 'pri(accounts.json.batchRestoreV2)':
         return this.batchRestoreV2(request as RequestBatchRestoreV2);
       case 'pri(seed.createV2)':
-        return this.seedCreateV2(request as RequestSeedCreateV2);
+        return this.seedCreateV2(request as RequestMnemonicCreateV2);
 
       // Remove account
       case 'pri(accounts.forget)':
         return await this.accountsForgetOverride(request as RequestAccountProxyForget);
 
       // Validate account
-      case 'pri(seed.validateV2)':
-        return this.seedValidateV2(request as RequestSeedValidateV2);
-      case 'pri(privateKey.validateV2)':
-        return this.metamaskPrivateKeyValidateV2(request as RequestSeedValidateV2);
-      case 'pri(accounts.checkPublicAndSecretKey)':
+      case 'pri(accounts.validate.seed)':
+        return this.seedValidateV2(request as RequestMnemonicValidateV2);
+      case 'pri(accounts.validate.metamask.privateKey)':
+        return this.metamaskPrivateKeyValidateV2(request as RequestPrivateKeyValidateV2);
+      case 'pri(accounts.validate.substrate.publicAndPrivateKey)':
         return this.checkPublicAndSecretKey(request as RequestCheckPublicAndSecretKey);
 
       // Export account
-      case 'pri(accounts.exportPrivateKey)':
+      case 'pri(accounts.export.privateKey)':
         return this.accountExportPrivateKey(request as RequestAccountExportPrivateKey);
-      case 'pri(accounts.batchExportV2)':
+      case 'pri(accounts.export.json.batch)':
         return this.batchExportV2(request as RequestAccountBatchExportV2);
+      case 'pri(accounts.export.mnemonic)':
+        return this.exportAccountProxyMnemonic(request as RequestExportAccountProxyMnemonic);
 
       // Subscribe account
       case 'pri(accounts.subscribeWithCurrentProxy)':

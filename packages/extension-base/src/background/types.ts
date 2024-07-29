@@ -47,7 +47,7 @@ export type AccountWithChildren = AccountJson & {
   children?: AccountWithChildren[];
 }
 
-export interface FindAccountFunction{
+export interface FindAccountFunction {
   (networkMap: Record<string, NetworkJson>, address: string, genesisHash?: string): AccountJson | undefined;
 }
 
@@ -86,7 +86,6 @@ export interface RequestSignatures extends KoniRequestSignatures {
   // private/internal requests, i.e. from a popup
   'pri(ping)': [null, string];
   'pri(accounts.create.hardware)': [RequestAccountCreateHardware, boolean];
-  'pri(accounts.create.suri)': [RequestAccountCreateSuri, boolean];
   'pri(accounts.export)': [RequestAccountExport, ResponseAccountExport];
   'pri(accounts.batchExport)': [RequestAccountBatchExport, ResponseAccountsExport]
   'pri(accounts.show)': [RequestAccountShow, boolean];
@@ -111,8 +110,6 @@ export interface RequestSignatures extends KoniRequestSignatures {
   'pri(metadata.reject)': [RequestMetadataReject, boolean];
   'pri(metadata.requests)': [RequestMetadataSubscribe, MetadataRequest[], MetadataRequest[]];
   'pri(metadata.list)': [null, MetadataDef[]];
-  'pri(seed.create)': [RequestSeedCreate, ResponseSeedCreate];
-  'pri(seed.validate)': [RequestSeedValidate, ResponseSeedValidate];
   'pri(settings.notification)': [string, boolean];
   'pri(signing.approve.password)': [RequestSigningApprovePassword, boolean];
   'pri(signing.approve.signature)': [RequestSigningApproveSignature, boolean];
@@ -197,14 +194,6 @@ export interface RequestAccountCreateExternal {
   address: string;
   genesisHash?: string | null;
   name: string;
-}
-
-export interface RequestAccountCreateSuri {
-  name: string;
-  genesisHash?: string | null;
-  password: string;
-  suri: string;
-  type?: KeypairType;
 }
 
 export interface RequestAccountCreateHardware {
@@ -317,17 +306,6 @@ export interface ResponseSigningIsLocked {
 
 export type RequestSigningSubscribe = null;
 
-export interface RequestSeedCreate {
-  length?: SeedLengths;
-  seed?: string;
-  type?: KeypairType;
-}
-
-export interface RequestSeedValidate {
-  suri: string;
-  type?: KeypairType;
-}
-
 // Responses
 
 export type ResponseTypes = {
@@ -367,16 +345,6 @@ export interface ResponseSigning {
 }
 
 export interface ResponseDeriveValidate {
-  address: string;
-  suri: string;
-}
-
-export interface ResponseSeedCreate {
-  address: string;
-  seed: string;
-}
-
-export interface ResponseSeedValidate {
   address: string;
   suri: string;
 }

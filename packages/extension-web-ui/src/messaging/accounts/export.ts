@@ -12,7 +12,7 @@ export async function exportAccount (address: string, password: string): Promise
 }
 
 export async function exportAccountPrivateKey (address: string, password: string): Promise<ResponseAccountExportPrivateKey> {
-  return sendMessage('pri(accounts.exportPrivateKey)', { address, password });
+  return sendMessage('pri(accounts.export.privateKey)', { address, password });
 }
 
 export async function exportAccounts (addresses: string[], password: string): Promise<{ exportedJson: KeyringPairs$Json }> {

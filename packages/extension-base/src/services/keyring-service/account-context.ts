@@ -3,21 +3,23 @@
 
 import { AccountExternalError, AccountExternalErrorCode, AccountRefMap, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestBatchRestoreV2, RequestJsonRestoreV2, ResponseAccountCreateWithSecretKey } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { SEED_DEFAULT_LENGTH, SEED_LENGTHS } from '@subwallet/extension-base/koni/background/handlers/Extension';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
-import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseGetDeriveAccounts } from '@subwallet/extension-base/types';
+import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { createPair, getDerivePath, getKeypairTypeByAddress } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
+import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { t } from 'i18next';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 
 import { assert, hexStripPrefix, hexToU8a, isHex, stringShorten, u8aToHex, u8aToString } from '@polkadot/util';
-import { base64Decode, blake2AsHex, jsonDecrypt, keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
+import { base64Decode, blake2AsHex, jsonDecrypt, keyExtractSuri, mnemonicGenerate, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 import { validateMnemonic } from '@polkadot/util-crypto/mnemonic/bip39';
 import { EncryptedJson, Prefix } from '@polkadot/util-crypto/types';
 
@@ -31,6 +33,10 @@ const CURRENT_ACCOUNT_KEY = 'CurrentAccountInfo';
 const MODIFY_PAIRS_KEY = 'ModifyPairs';
 const ACCOUNT_PROXIES_KEY = 'AccountProxies';
 
+/**
+ * @class AccountContext
+ * @note Can convert multiple states into one state and split functions into related handlers
+ * */
 export class AccountContext {
   // Current account
   private readonly currentAccountStore = new CurrentAccountStore();
@@ -381,7 +387,61 @@ export class AccountContext {
 
   /* Modify accounts */
 
-  /* Add accounts from seed */
+  /* Create with mnemonic */
+
+  /* Create seed */
+  public mnemonicCreateV2 ({ length = SEED_DEFAULT_LENGTH, mnemonic: _seed, type = 'general' }: RequestMnemonicCreateV2): ResponseMnemonicCreateV2 {
+    const seed = _seed || mnemonicGenerate(length);
+    // At this point, only 'general' type will be accepted
+    const types: KeypairType[] = type === 'general' ? ['sr25519', 'ethereum', 'ton'] : ['ton-special'];
+    const rs = { mnemonic: seed, addressMap: {} } as ResponseMnemonicCreateV2;
+
+    types?.forEach((type) => {
+      rs.addressMap[type] = keyring.createFromUri(getSuri(seed, type), {}, type).address;
+    });
+
+    return rs;
+  }
+
+  /* Validate seed */
+  public mnemonicValidateV2 ({ mnemonic }: RequestMnemonicValidateV2): ResponseMnemonicValidateV2 {
+    const { phrase } = keyExtractSuri(mnemonic);
+    let mnemonicTypes: MnemonicType = 'general';
+    let pairTypes: KeypairType[] = [];
+
+    if (isHex(phrase)) {
+      assert(isHex(phrase, 256), t('Invalid seed phrase. Please try again.'));
+    } else {
+      // sadly isHex detects as string, so we need a cast here
+      assert(SEED_LENGTHS.includes((phrase).split(' ').length), t('Seed phrase needs to contain {{x}} words', { replace: { x: SEED_LENGTHS.join(', ') } }));
+
+      try {
+        assert(mnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
+
+        mnemonicTypes = 'general';
+        pairTypes = ['sr25519', 'ethereum', 'ton'];
+      } catch (e) {
+        assert(tonMnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
+        mnemonicTypes = 'ton';
+        pairTypes = ['ton-special'];
+      }
+    }
+
+    const rs: ResponseMnemonicValidateV2 = {
+      mnemonic,
+      addressMap: {} as Record<KeypairType, string>,
+      mnemonicTypes,
+      pairTypes
+    };
+
+    pairTypes.forEach((type) => {
+      rs.addressMap[type] = keyring.createFromUri(getSuri(mnemonic, type), {}, type).address;
+    });
+
+    return rs;
+  }
+
+  /* Add accounts from mnemonic */
   public accountsCreateSuriV2 (request: RequestAccountCreateSuriV2): ResponseAccountCreateSuriV2 {
     const { isAllowed, name, password, suri: _suri, types } = request;
     const addressDict = {} as Record<KeypairType, string>;
@@ -448,6 +508,8 @@ export class AccountContext {
     return addressDict;
   }
 
+  /* Create with mnemonic */
+
   /* Add QR-signer, read-only */
   public async accountsCreateExternalV2 (request: RequestAccountCreateExternalV2): Promise<AccountExternalError[]> {
     const { address, isAllowed, isReadOnly, name } = request;
@@ -500,6 +562,40 @@ export class AccountContext {
       return [{ code: AccountExternalErrorCode.KEYRING_ERROR, message: (e as Error).message }];
     }
   }
+
+  /* Import ethereum account with the private key  */
+  public _checkValidatePrivateKey ({ privateKey }: RequestPrivateKeyValidateV2, autoAddPrefix = false): ResponsePrivateKeyValidateV2 {
+    const { phrase } = keyExtractSuri(privateKey);
+    const rs = { autoAddPrefix: autoAddPrefix, addressMap: {} } as ResponsePrivateKeyValidateV2;
+    const types: KeypairType[] = ['ethereum'];
+
+    types.forEach((type) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      rs.addressMap[type] = '';
+    });
+
+    if (isHex(phrase) && isHex(phrase, 256)) {
+      types && types.forEach((type) => {
+        rs.addressMap[type] = keyring.createFromUri(getSuri(privateKey, type), {}, type).address;
+      });
+    } else {
+      rs.autoAddPrefix = false;
+      assert(false, t('Invalid private key. Please try again.'));
+    }
+
+    return rs;
+  }
+
+  public metamaskPrivateKeyValidateV2 ({ privateKey }: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
+    const isHex = privateKey.startsWith('0x');
+
+    if (isHex) {
+      return this._checkValidatePrivateKey({ privateKey });
+    } else {
+      return this._checkValidatePrivateKey({ privateKey: `0x${privateKey}` }, true);
+    }
+  }
+  /* Import ethereum account with the private key  */
 
   /* Ledger */
 
@@ -1045,6 +1141,47 @@ export class AccountContext {
   }
 
   /* Derive */
+
+  /* Export */
+
+  /* Export mnemonic */
+  public exportAccountProxyMnemonic ({ password, proxyId }: RequestExportAccountProxyMnemonic): ResponseExportAccountProxyMnemonic {
+    const accountProxies = this.accountProxiesSubject.value;
+    const modifyPairs = this.modifyPairsSubject.value;
+
+    if (!accountProxies[proxyId]) {
+      const pair = keyring.getPair(proxyId);
+
+      assert(pair, t('Unable to find account'));
+
+      const result = pair.exportMnemonic(password);
+
+      return { result };
+    } else {
+      const accountGroup = accountProxies[proxyId];
+      const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
+
+      this.upsertAccountProxy(accountGroup);
+
+      let pair: KeyringPair | undefined;
+
+      for (const address of addresses) {
+        pair = keyring.getPair(address);
+
+        if (pair && pair.haveEntropy) {
+          break;
+        }
+      }
+
+      assert(pair, t('Unable to find account'));
+
+      const result = pair.exportMnemonic(password) || '';
+
+      return { result };
+    }
+  }
+
+  /* Export */
 
   /* Inject */
 
