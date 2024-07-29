@@ -92,10 +92,8 @@ export interface AccountDeriveData {
  * @interface AccountMetadataData
  * Represents the comprehensive metadata associated with an account. This interface aggregates various aspects of account data to provide a unified view of an account's metadata. It extends from multiple specific metadata interfaces, each covering a different dimension of account information.
  *
- * @interface AccountMetadataData
- * @extends AccountExternalData - Includes data about whether the account is external, hardware, readonly, or hidden.
- * @extends AccountLedgerData - Contains information specific to Ledger hardware wallets, such as account index and genesis hash.
  * @extends AccountExternalData - Includes data about the account's external status, hardware wallet status, read-only status, and hidden status.
+ * @extends AccountLedgerData - Contains information specific to Ledger hardware wallets, such as account index and genesis hash.
  * @extends AccountInjectData - Covers data related to injected accounts, including the source of the injection.
  * @extends AccountDeriveData - Holds information about derived accounts, including the parent address and derivation path (suri).
  */

@@ -876,7 +876,6 @@ export interface RequestAccountCreateExternalV2 {
   address: string;
   genesisHash?: string | null;
   name: string;
-  isEthereum: boolean;
   isAllowed: boolean;
   isReadOnly: boolean;
 }

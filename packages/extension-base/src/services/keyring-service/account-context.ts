@@ -9,8 +9,8 @@ import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountPr
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
-import { createPair } from '@subwallet/keyring';
-import { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { createPair, getDerivePath, getKeypairTypeByAddress } from '@subwallet/keyring';
+import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { t } from 'i18next';
@@ -19,13 +19,13 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import { assert, hexStripPrefix, hexToU8a, isHex, stringShorten, u8aToHex, u8aToString } from '@polkadot/util';
 import { base64Decode, blake2AsHex, jsonDecrypt, keyExtractSuri, mnemonicToEntropy } from '@polkadot/util-crypto';
 import { validateMnemonic } from '@polkadot/util-crypto/mnemonic/bip39';
-import { EncryptedJson, KeypairType, Prefix } from '@polkadot/util-crypto/types';
+import { EncryptedJson, Prefix } from '@polkadot/util-crypto/types';
 
-const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
+function getSuri (seed: string, type?: KeypairType): string {
+  const extraPath = type ? getDerivePath(type)(0) : '';
 
-const getSuri = (seed: string, type?: KeypairType): string => type === 'ethereum'
-  ? `${seed}${ETH_DERIVE_DEFAULT}`
-  : seed;
+  return seed + (extraPath ? '/' + extraPath : '');
+}
 
 const CURRENT_ACCOUNT_KEY = 'CurrentAccountInfo';
 const MODIFY_PAIRS_KEY = 'ModifyPairs';
@@ -450,16 +450,15 @@ export class AccountContext {
 
   /* Add QR-signer, read-only */
   public async accountsCreateExternalV2 (request: RequestAccountCreateExternalV2): Promise<AccountExternalError[]> {
-    const { address, isAllowed, isEthereum, isReadOnly, name } = request;
+    const { address, isAllowed, isReadOnly, name } = request;
+    const type = getKeypairTypeByAddress(address);
 
     try {
-      let result: KeyringPair;
-
       try {
         const exists = keyring.getPair(address);
 
         if (exists) {
-          if (exists.type === (isEthereum ? 'ethereum' : 'sr25519')) {
+          if (exists.type === type) {
             return [{ code: AccountExternalErrorCode.INVALID_ADDRESS, message: t('Account exists') }];
           }
         }
@@ -467,18 +466,20 @@ export class AccountContext {
 
       }
 
-      if (isEthereum) {
-        result = keyring.keyring.addFromAddress(address, {
-          name,
-          isExternal: true,
-          isReadOnly,
-          genesisHash: ''
-        }, null, 'ethereum');
+      const meta: KeyringPair$Meta = {
+        name,
+        isExternal: true,
+        isReadOnly,
+        genesisHash: ''
+      };
 
-        keyring.saveAccount(result);
-      } else {
-        result = keyring.addExternal(address, { genesisHash: '', name, isReadOnly }).pair;
+      if ([...BitcoinKeypairTypes, ...TonKeypairTypes].includes(type)) {
+        meta.noPublicKey = true;
       }
+
+      const result = keyring.keyring.addFromAddress(address, meta, null, type);
+
+      keyring.saveAccount(result);
 
       const _address = result.address;
       const modifiedPairs = this.modifyPairsSubject.value;

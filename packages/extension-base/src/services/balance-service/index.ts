@@ -14,6 +14,8 @@ import DetectAccountBalanceStore from '@subwallet/extension-base/stores/DetectAc
 import { BalanceItem, BalanceJson } from '@subwallet/extension-base/types';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { addLazy, createPromiseHandler, isAccountAll, PromiseHandler, waitTimeout } from '@subwallet/extension-base/utils';
+import { getKeypairTypeByAddress } from '@subwallet/keyring';
+import { EthereumKeypairTypes, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import keyring from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
@@ -404,12 +406,19 @@ export class BalanceService implements StoppableServiceInterface {
     this.setBalanceDetectCache(addresses);
     const assetMap = this.state.chainService.getAssetRegistry();
     const promiseList = addresses.map((address) => {
-      return this.state.subscanService.getMultiChainBalance(address)
-        .catch((e) => {
-          console.error(e);
+      const type = getKeypairTypeByAddress(address);
+      const typeValid = [...SubstrateKeypairTypes, ...EthereumKeypairTypes].includes(type);
 
-          return null;
-        });
+      if (typeValid) {
+        return this.state.subscanService.getMultiChainBalance(address)
+          .catch((e) => {
+            console.error(e);
+
+            return null;
+          });
+      } else {
+        return null;
+      }
     });
 
     const needEnableChains: string[] = [];

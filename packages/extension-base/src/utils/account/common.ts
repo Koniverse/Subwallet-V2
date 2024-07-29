@@ -38,6 +38,10 @@ export const modifyAccountName = (type: KeypairType, name: string, modify: boole
     case 'ethereum':
       network = 'EVM';
       break;
+    case 'ton':
+    case 'ton-special':
+      network = 'Ton';
+      break;
   }
 
   return network ? [name, network].join(' - ') : name;
