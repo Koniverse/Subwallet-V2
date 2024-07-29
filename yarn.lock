@@ -6052,12 +6052,12 @@ __metadata:
 
 "@subwallet/chain-list@file:/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.2.79-beta.0
-  resolution: "@subwallet/chain-list@file:/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build#/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build::hash=06e6dc&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/chain-list@file:/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build#/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build::hash=b001f9&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 65bf980da5abc85881df37f8fffbc40f557369b8f26f3b937a1149ccb5aecdd32e93a8e6d23dd5df87baf410496fd912eaabdba13ff9c80549ff24d9a9b82913
+  checksum: 098c6808c7dfdead9810556011208796cd90e0032f43ac50dcb29cddd28b872b26f3e9eeaea71b25f79611fa1b508532bb53fc708bef2bb25aef9fad522b0211
   languageName: node
   linkType: hard
 
