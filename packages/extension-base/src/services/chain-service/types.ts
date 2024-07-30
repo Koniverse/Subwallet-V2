@@ -99,7 +99,7 @@ export interface _SubstrateApi extends _SubstrateApiState, _ChainBaseApi, _Subst
   systemChain: string;
   systemName: string;
   systemVersion: string;
-  registry?: Registry;
+  registry: Registry;
 
   useLightClient: boolean;
 }
