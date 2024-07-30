@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from './keyring';
+import { AccountJson, AccountNetworkType } from './keyring';
 
 /**
  * Represents the basic data structure for an account proxy.
@@ -30,8 +30,8 @@ export type AccountProxyStoreData = Record<string, AccountProxyData>;
 
 export enum AccountProxyType {
   ALL_ACCOUNT = 'all',
-  SINGLE = 'single-chain',
-  MULTI = 'multi-chain',
+  SOLO = 'solo',
+  UNIFIED = 'unified',
   QR = 'qr',
   LEDGER = 'ledger',
   READ_ONLY = 'readonly',
@@ -42,11 +42,16 @@ export enum AccountProxyType {
 /**
  * @interface AccountProxy
  * @extends AccountProxyData - Inherits properties from AccountProxyData.
+ * @description Represents an account proxy, which includes additional details and associated accounts.
+ *
  * @prop {AccountJson[]} accounts - An array of `AccountJson` objects representing the accounts associated with this proxy.
+ * @prop {AccountProxyType} accountType - The type of the account proxy.
+ * @prop {AccountNetworkType[]} networkTypes - An array of network types associated with this proxy.
  */
 export interface AccountProxy extends AccountProxyData {
   accounts: AccountJson[];
   accountType: AccountProxyType;
+  networkTypes: AccountNetworkType[];
 }
 
 export type AccountProxyMap = Record<string, AccountProxy>
