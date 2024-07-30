@@ -138,6 +138,15 @@ export function _isChainEvmCompatible (chainInfo: _ChainInfo) {
   return !!chainInfo.evmInfo;
 }
 
+export function _isChainBitcoinCompatible (chainInfo: _ChainInfo) {
+  return !!chainInfo.bitcoinInfo;
+}
+
+export function _isChainTonCompatible (chainInfo: _ChainInfo) {
+  // TODO: Add TON chain info
+  return false;
+}
+
 export function _isNativeToken (tokenInfo: _ChainAsset) {
   return tokenInfo.assetType === _AssetType.NATIVE;
 }
