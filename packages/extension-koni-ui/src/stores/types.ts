@@ -8,7 +8,7 @@ import { AccountsContext, AuthorizeRequest, MetadataRequest, SigningRequest } fr
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, BalanceMap, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardItem, NominationPoolInfo, YieldPoolInfo, YieldPoolTarget, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, AccountProxy, BalanceMap, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardItem, NominationPoolInfo, YieldPoolInfo, YieldPoolTarget, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { SwapPair } from '@subwallet/extension-base/types/swap';
 import { MissionInfo } from '@subwallet/extension-koni-ui/types';
 import { SessionTypes } from '@walletconnect/types';
@@ -91,7 +91,8 @@ export interface AppSettings extends LocalUiSettings, UiSettings, Omit<SettingsS
 
 export interface AccountState extends AccountsContext, KeyringState, AddressBookState, BaseReduxStore {
   currentAccount: AccountJson | null
-
+  currentAccountProxy: AccountProxy | null,
+  accountProxies: AccountProxy[],
   isAllAccount: boolean
 }
 

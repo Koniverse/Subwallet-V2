@@ -60,10 +60,7 @@ const Component: React.FC<Props> = ({ actionBtnIcon,
 
 const Search = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-    '.__search-input': {
-      width: 360,
-      height: 48
-    }
+
   };
 });
 

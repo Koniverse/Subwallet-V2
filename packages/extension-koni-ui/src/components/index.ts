@@ -17,6 +17,7 @@ export { default as NetworkTag } from './NetworkTag';
 export * from '../contexts';
 export * from './Common';
 export * from './Account';
+export * from './AccountProxy';
 export * from './Avatar';
 export * from './Confirmation';
 export * from './EmptyList';

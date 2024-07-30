@@ -8,38 +8,38 @@ import { AccountsContext, AuthorizeRequest, ConfirmationRequestBase, MetadataReq
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, AccountProxy, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { SwapPair } from '@subwallet/extension-base/types/swap';
-import { addLazy, canDerive, fetchStaticData } from '@subwallet/extension-base/utils';
+import { addLazy, fetchStaticData } from '@subwallet/extension-base/utils';
 import { lazySubscribeMessage } from '@subwallet/extension-koni-ui/messaging';
 import { store } from '@subwallet/extension-koni-ui/stores';
 import { MissionInfo } from '@subwallet/extension-koni-ui/types';
-import { buildHierarchy } from '@subwallet/extension-koni-ui/utils/account/buildHierarchy';
 import { SessionTypes } from '@walletconnect/types';
 
 // Setup redux stores
 
 // Base
 // AccountState store
-export const updateAccountData = (data: AccountsWithCurrentAddress) => {
-  let currentAccountJson: AccountJson = data.accounts[0];
-  const accounts = data.accounts;
+export const updateCurrentAccountProxy = (accountProxy: AccountProxy) => {
+  store.dispatch({ type: 'accountState/updateCurrentAccountProxy', payload: accountProxy });
+};
 
-  accounts.forEach((accountJson) => {
-    if (accountJson.address === data.currentAccountProxy) {
-      currentAccountJson = accountJson;
+export const updateAccountProxies = (data: AccountProxy[]) => {
+  store.dispatch({ type: 'accountState/updateAccountProxies', payload: data });
+};
+
+export const updateAccountData = (data: AccountsWithCurrentAddress) => {
+  let currentAccountProxy: AccountProxy = data.accounts[0];
+  const accountProxies = data.accounts;
+
+  accountProxies.forEach((ap) => {
+    if (ap.id === data.currentAccountProxy) {
+      currentAccountProxy = ap;
     }
   });
 
-  const hierarchy = buildHierarchy(accounts);
-  const master = hierarchy.find(({ isExternal, type }) => !isExternal && canDerive(type));
-
-  updateCurrentAccountState(currentAccountJson);
-  updateAccountsContext({
-    accounts,
-    hierarchy,
-    master
-  } as AccountsContext);
+  updateCurrentAccountProxy(currentAccountProxy);
+  updateAccountProxies(accountProxies);
 };
 
 export const updateMissionPoolStore = (missions: MissionInfo[]) => {
