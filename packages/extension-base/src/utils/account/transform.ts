@@ -3,8 +3,8 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountJson, AccountMetadataData, AccountSignMode } from '@subwallet/extension-base/types';
-import { KeypairType, KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { AccountJson, AccountMetadataData, AccountNetworkType, AccountSignMode } from '@subwallet/extension-base/types';
+import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
@@ -43,6 +43,15 @@ export const transformAccount = (address: string, type?: KeypairType, meta?: Key
   const accountActions: string[] = [];
   const transactionActions: ExtrinsicType[] = [];
   const signMode = getAccountSignMode(address, meta);
+  const networkType: AccountNetworkType = type
+    ? EthereumKeypairTypes.includes(type)
+      ? AccountNetworkType.ETHEREUM
+      : TonKeypairTypes.includes(type)
+        ? AccountNetworkType.TON
+        : BitcoinKeypairTypes.includes(type)
+          ? AccountNetworkType.BITCOIN
+          : AccountNetworkType.SUBSTRATE
+    : AccountNetworkType.SUBSTRATE;
 
   return {
     address,
@@ -50,7 +59,8 @@ export const transformAccount = (address: string, type?: KeypairType, meta?: Key
     type,
     accountActions,
     transactionActions,
-    signMode
+    signMode,
+    networkType
   };
 };
 
