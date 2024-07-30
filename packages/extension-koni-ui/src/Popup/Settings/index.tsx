@@ -119,7 +119,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: FrameCorners,
           leftIconBgColor: token.colorPrimary,
           rightIcon: ArrowsOut,
-          title: t('Expand view'),
+          title: t('settings.Screen.settingsEntry.Item.expandView'),
           onClick: () => {
             windowOpen({ allowedPath: '/' }).catch(console.error);
           },

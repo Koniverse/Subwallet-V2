@@ -64,7 +64,7 @@ const Component: React.FC<ComponentProps> = (props) => {
 
   const modalProps = useMemo((): Partial<SwModalFuncProps> => ({
     id: disconnectModalId,
-    okText: t('Disconnect'),
+    okText: t('settings.Screen.walletConnect.detail.Modal.disconnect.Button'),
     okButtonProps: {
       icon: (
         <Icon
@@ -73,9 +73,9 @@ const Component: React.FC<ComponentProps> = (props) => {
         />
       )
     },
-    content: t('Once you disconnect, you will no longer see this connection on SubWallet and on your DApp.'),
-    subTitle: t('Are you sure you want to disconnect?'),
-    title: t('Disconnect'),
+    content: t('settings.Screen.walletConnect.detail.Modal.disconnect.description'),
+    subTitle: t('settings.Screen.walletConnect.detail.Modal.disconnect.subTitle'),
+    title: t('settings.Screen.walletConnect.detail.Modal.disconnect.title'),
     type: 'error',
     closable: true
   }), [t]);
@@ -93,7 +93,7 @@ const Component: React.FC<ComponentProps> = (props) => {
             console.log(e);
             notification({
               type: 'error',
-              message: t('Fail to disconnect')
+              message: t('settings.Screen.walletConnect.detail.Modal.connection.error')
             });
           });
       })
@@ -122,7 +122,7 @@ const Component: React.FC<ComponentProps> = (props) => {
     return (
       <NetworkItem
         key={item.slug}
-        name={item.chainInfo?.name || t('Unknown network ({{slug}})', { replace: { slug: item.slug } })}
+        name={item.chainInfo?.name || t('settings.Screen.walletConnect.detail.Modal.connection.unknown', { replace: { slug: item.slug } })}
         networkKey={item.slug}
         networkMainLogoShape='squircle'
         networkMainLogoSize={28}
@@ -133,8 +133,8 @@ const Component: React.FC<ComponentProps> = (props) => {
   const renderAccountEmpty = useCallback(() => {
     return (
       <EmptyList
-        emptyMessage={t('Your accounts will appear here.')}
-        emptyTitle={t('No account found')}
+        emptyMessage={t('emptyContent.walletConnect.connection.description')}
+        emptyTitle={t('emptyContent.walletConnect.connection.title')}
         phosphorIcon={MagnifyingGlass}
       />
     );
@@ -166,12 +166,12 @@ const Component: React.FC<ComponentProps> = (props) => {
             weight='fill'
           />
         ),
-        children: t('Disconnect'),
+        children: t('settings.Screen.walletConnect.detail.Modal.connection.Button.disconnect'),
         schema: 'danger',
         loading: loading,
         onClick: onDisconnect
       }}
-      title={t('WalletConnect')}
+      title={t('settings.Screen.walletConnect.detail.Modal.connection.title.walletConnect')}
     >
       <div className='body-container'>
         <MetaInfo
@@ -193,7 +193,7 @@ const Component: React.FC<ComponentProps> = (props) => {
           </MetaInfo.Default>
           <MetaInfo.Default
             className='network-container'
-            label={t('Network')}
+            label={t('common.Text.network')}
           >
             <div
               className='network-content'
@@ -201,7 +201,7 @@ const Component: React.FC<ComponentProps> = (props) => {
             >
               <WCNetworkAvatarGroup networks={chains} />
               <div className='network-name'>
-                {t('{{number}} network(s)', { replace: { number: chains.length } })}
+                {t('settings.Screen.walletConnect.detail.Modal.connection.networkGroup', { replace: { number: chains.length } })}
               </div>
               <Icon
                 phosphorIcon={Info}
@@ -212,7 +212,7 @@ const Component: React.FC<ComponentProps> = (props) => {
           </MetaInfo.Default>
         </MetaInfo>
         <div className='total-account'>
-          {t('{{number}} account connected', { replace: { number: accountItems.length } })}
+          {t('settings.Screen.walletConnect.detail.Modal.connection.accountConnected', { replace: { number: accountItems.length } })}
         </div>
         <SwList.Section
           className='account-list'
@@ -226,7 +226,7 @@ const Component: React.FC<ComponentProps> = (props) => {
           className={CN(className, 'network-modal')}
           id={networkModalId}
           onCancel={closeNetworkModal}
-          title={t('Connected network')}
+          title={t('settings.Screen.walletConnect.detail.Modal.connected.title')}
         >
           <SwList.Section
             className='network-list'
@@ -237,7 +237,7 @@ const Component: React.FC<ComponentProps> = (props) => {
             renderWhenEmpty={renderNetworkEmpty}
             rowGap='var(--row-gap)'
             searchFunction={searchFunction}
-            searchPlaceholder={t<string>('Network name')}
+            searchPlaceholder={t<string>('common.Text.networkName')}
           />
         </SwModal>
       </div>
