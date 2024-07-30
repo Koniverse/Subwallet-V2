@@ -124,7 +124,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     navigator.clipboard.writeText(contractAddress).then().catch(console.error);
 
     showNotification({
-      message: t('settings.manage.Screen.tokenDetail.Notifications.copyAction')
+      message: t('settings.Screen.tokenDetail.Notifications.copyAction')
     });
   }, [showNotification, t, tokenInfo]);
 
@@ -245,8 +245,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             {
               _isSmartContractToken(tokenInfo) && <Field
                 content={contractAddressInfo()}
-                label={t<string>('settings.manage.Screen.tokenDetail.Field.contractAddress.label')}
-                placeholder={t<string>('settings.manage.Screen.tokenDetail.Field.contractAddress.placeHolder')}
+                label={t<string>('settings.Screen.tokenDetail.Field.contractAddress.label')}
+                placeholder={t<string>('settings.Screen.tokenDetail.Field.contractAddress.placeHolder')}
                 prefix={contractAddressIcon()}
                 suffix={contractAddressSuffix()}
               />

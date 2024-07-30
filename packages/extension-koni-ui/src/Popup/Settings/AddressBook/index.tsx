@@ -98,11 +98,11 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const filterOptions: FilterOption[] = useMemo(() => ([
     {
-      label: t('settings.addressBook.Filter.saveContact'),
+      label: t('settings.manageAddressBook.Filter.saveContact'),
       value: AccountGroup.CONTACT
     },
     {
-      label: t('settings.addressBook.Filter.recent'),
+      label: t('settings.manageAddressBook.Filter.recent'),
       value: AccountGroup.RECENT
     }
   ]), [t]);

@@ -62,7 +62,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const addressValidator = useCallback((rule: RuleObject, address: string): Promise<void> => {
     if (!address) {
-      return Promise.reject(new Error(t('settings.addressBook.Modal.addContact.Input.contact.Error.required')));
+      return Promise.reject(new Error(t('settings.addressBook.Modal.addContact.Input.contactAddress.Error.required')));
     }
 
     if (!isAddress(address)) {
