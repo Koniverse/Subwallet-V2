@@ -122,11 +122,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   setLoading(false);
 
                   if (validationResult.isExist) {
-                    reject(new Error(t('settings.manageTokens.Modal.importTokens.Input.contract.Error.exist')));
+                    reject(new Error(t('settings.Screen.importTokens.Input.contract.Error.exist')));
                   }
 
                   if (validationResult.contractError) {
-                    reject(new Error(t('settings.manageTokens.Modal.importTokens.Input.contract.Error.internalError')));
+                    reject(new Error(t('settings.Screen.importTokens.Input.contract.Error.internalError')));
                   }
 
                   if (!validationResult.isExist && !validationResult.contractError) {
@@ -141,10 +141,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 })
                 .catch(() => {
                   setLoading(false);
-                  reject(new Error(t('settings.manageTokens.Modal.importTokens.Input.contract.Error.internalError')));
+                  reject(new Error(t('settings.Screen.importTokens.Input.contract.Error.internalError')));
                 });
             } else {
-              reject(t('settings.manageTokens.Modal.importTokens.Input.contract.Error.invalid'));
+              reject(t('settings.Screen.importTokens.Input.contract.Error.invalid'));
             }
           });
         }
@@ -211,18 +211,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       .then((result) => {
         if (result) {
           showNotification({
-            message: t('settings.manageTokens.Modal.importTokens.SubmitResponse.success')
+            message: t('settings.Screen.importTokens.SubmitResponse.success')
           });
           goBack();
         } else {
           showNotification({
-            message: t('settings.manageTokens.Modal.importTokens.SubmitResponse.error')
+            message: t('settings.Screen.importTokens.SubmitResponse.error')
           });
         }
       })
       .catch(() => {
         showNotification({
-          message: t('settings.manageTokens.Modal.importTokens.SubmitResponse.error')
+          message: t('settings.Screen.importTokens.SubmitResponse.error')
         });
       })
       .finally(() => {
@@ -313,7 +313,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <AddressInput
                 addressPrefix={chainNetworkPrefix}
                 disabled={!selectedTokenType}
-                label={isSelectGearToken ? t('Program ID') : t('common.Text.contractAddress')}
+                label={isSelectGearToken ? t('common.Text.programID') : t('common.Text.contractAddress')}
                 showScanner={true}
               />
             </Form.Item>

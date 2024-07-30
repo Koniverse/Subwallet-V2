@@ -98,11 +98,11 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const filterOptions: FilterOption[] = useMemo(() => ([
     {
-      label: t('settings.manageAddressBook.Filter.saveContact'),
+      label: t('settings.addressBook.Filter.saveContact'),
       value: AccountGroup.CONTACT
     },
     {
-      label: t('settings.manageAddressBook.Filter.recent'),
+      label: t('settings.addressBook.Filter.recent'),
       value: AccountGroup.RECENT
     }
   ]), [t]);
@@ -196,7 +196,7 @@ const Component: React.FC<Props> = (props: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={goBack}
         subHeaderIcons={subHeaderIcons}
-        title={t('settings.Screen.settingsEntry.Item.manageAddressBook')}
+        title={t('settings.Screen.addressBook.title')}
       >
         <SwList.Section
           actionBtnIcon={(
@@ -221,7 +221,7 @@ const Component: React.FC<Props> = (props: Props) => {
           rowGap='var(--row-gap)'
           searchFunction={searchFunction}
           searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('settings.Screen.manageAddressBook.searchPlaceHolder')}
+          searchPlaceholder={t<string>('settings.Screen.addressBook.searchPlaceHolder')}
           showActionBtn={true}
         />
         <FilterModal

@@ -125,7 +125,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         subHeaderCenter={true}
         subHeaderIcons={subHeaderButton}
         subHeaderPaddingVertical={true}
-        title={t<string>('settings.Screen.settingsEntry.Item.manageTokens')}
+        title={t<string>('settings.Screen.manageTokens.title')}
       >
         <SwList.Section
           actionBtnIcon={(

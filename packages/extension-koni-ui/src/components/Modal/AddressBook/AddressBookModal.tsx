@@ -188,13 +188,13 @@ const Component: React.FC<Props> = (props: Props) => {
 
     switch (_group) {
       case AccountGroup.WALLET:
-        groupLabel = t('Your wallet');
+        groupLabel = t('settings.addressBook.SectionTitle.yourWallet');
         break;
       case AccountGroup.CONTACT:
-        groupLabel = t('Saved contacts');
+        groupLabel = t('settings.addressBook.SectionTitle.saveContact');
         break;
       case AccountGroup.RECENT:
-        groupLabel = t('Recent');
+        groupLabel = t('settings.addressBook.SectionTitle.recent');
         break;
     }
 
@@ -234,7 +234,7 @@ const Component: React.FC<Props> = (props: Props) => {
         className={CN(className)}
         id={id}
         onCancel={onClose}
-        title={t('Address book')}
+        title={t('settings.addressBook.Modal.title')}
       >
         <SwList.Section
           actionBtnIcon={(
@@ -271,7 +271,7 @@ const Component: React.FC<Props> = (props: Props) => {
         onChangeOption={onChangeFilterOption}
         optionSelectionMap={filterSelectionMap}
         options={filterOptions}
-        title={t('Filter address')}
+        title={t('settings.addressBook.Filter.title')}
       />
     </>
   );

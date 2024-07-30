@@ -52,7 +52,6 @@ export default class Backend {
 
       try {
         response = await fetch(`locales/${lng}/translation.json`);
-        console.log('UI_response', response);
       } catch (e) {
         console.warn(`Failed to fetch local:  ${(e as Error).message}`);
       }
