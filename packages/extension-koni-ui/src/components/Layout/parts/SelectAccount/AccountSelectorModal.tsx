@@ -71,7 +71,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         return;
       }
 
-      if (ap.accountType === AccountProxyType.SINGLE || ap.accountType === AccountProxyType.MULTI) {
+      if (ap.accountType === AccountProxyType.SOLO || ap.accountType === AccountProxyType.UNIFIED) {
         masterAccounts.push(ap);
       } else if (ap.accountType === AccountProxyType.QR) {
         qrSignerAccounts.push(ap);

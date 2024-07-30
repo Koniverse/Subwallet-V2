@@ -60,17 +60,17 @@ function Component (props: Props): React.ReactElement<Props> {
   }, [onClickMoreButton]);
 
   const accountProxyTypeIconProps = (() => {
-    if (accountProxy.accountType === AccountProxyType.MULTI) {
+    if (accountProxy.accountType === AccountProxyType.UNIFIED) {
       return {
-        className: '-is-multi',
+        className: '-is-unified',
         value: Strategy,
         weight: 'fill'
       };
     }
 
-    if (accountProxy.accountType === AccountProxyType.SINGLE) {
+    if (accountProxy.accountType === AccountProxyType.SOLO) {
       return {
-        className: '-is-single',
+        className: '-is-solo',
         value: GitCommit,
         weight: 'fill'
       };
@@ -248,11 +248,11 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       justifyContent: 'center',
       borderRadius: '100%',
 
-      '&.-is-multi': {
+      '&.-is-unified': {
         color: token.colorSuccess
       },
 
-      '&.-is-single': {
+      '&.-is-solo': {
         color: token['blue-9']
       },
 
