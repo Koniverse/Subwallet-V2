@@ -159,7 +159,7 @@ export function _isSmartContractToken (tokenInfo: _ChainAsset) {
   return _SMART_CONTRACT_STANDARDS.includes(tokenInfo.assetType);
 }
 
-export function _isSubstrateChain (chainInfo: _ChainInfo) {
+export function _isChainSubstrateCompatible (chainInfo: _ChainInfo) {
   return !!chainInfo.substrateInfo; // fallback to Ethereum
 }
 
