@@ -292,6 +292,13 @@ export class AccountContext {
     });
   }
 
+  /* Is account proxy id */
+  public isUnifiedAccount (proxyId: string): boolean {
+    const accountProxies = this.accounts;
+
+    return Object.values(accountProxies).some((value) => value.accountType === AccountProxyType.UNIFIED && value.id === proxyId);
+  }
+
   /* Create group id */
   private createAccountGroupId (_suri: string, derivationPath?: string) {
     let data: string = _suri;

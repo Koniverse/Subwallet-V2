@@ -76,7 +76,7 @@ export class BalanceService implements StoppableServiceInterface {
   async loadData () {
     const backupBalanceData = await this.state.dbService.getStoredBalance();
 
-    this.balanceMap.updateBalanceItems(backupBalanceData, true);
+    this.balanceMap.updateBalanceItems(backupBalanceData, ALL_ACCOUNT_KEY);
   }
 
   /** Start service */
@@ -311,12 +311,14 @@ export class BalanceService implements StoppableServiceInterface {
       }
 
       addLazy('updateBalanceStore', () => {
-        const isAllAccount = isAccountAll(this.state.keyringService.context.currentAccount.proxyId);
+        const proxyId = this.state.keyringService.context.currentAccount.proxyId;
+        const isUnifiedAccount = this.state.keyringService.context.isUnifiedAccount(proxyId);
+        const isAll = isAccountAll(proxyId);
 
-        this.balanceMap.updateBalanceItems(this.balanceUpdateCache, isAllAccount);
+        this.balanceMap.updateBalanceItems(this.balanceUpdateCache, isUnifiedAccount || isAll ? proxyId : undefined);
 
-        if (isAllAccount) {
-          this.balanceUpdateCache = [...this.balanceUpdateCache, ...Object.values(this.balanceMap.map[ALL_ACCOUNT_KEY])];
+        if (isUnifiedAccount || isAll) {
+          this.balanceUpdateCache = [...this.balanceUpdateCache, ...Object.values(this.balanceMap.map[proxyId])];
         }
 
         this.updateBalanceStore(this.balanceUpdateCache);
