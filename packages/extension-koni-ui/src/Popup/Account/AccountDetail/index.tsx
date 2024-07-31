@@ -276,7 +276,10 @@ const Component: React.FC<Props> = (props: Props) => {
         }
         {
           selectedFilterTab === FilterTabType.DERIVED_ACCOUNT && (
-            <DerivedAccountList className={'list-container'} />
+            <DerivedAccountList
+              accountProxy={accountProxy}
+              className={'list-container'}
+            />
           )
         }
       </Layout.WithSubHeaderOnly>

@@ -209,6 +209,7 @@ function Component (props: Props): React.ReactElement<Props> {
               }
               onClick={_onClickMoreButton}
               size='xs'
+              tooltip={t('View details')}
               type='ghost'
             />
           </div>

@@ -19,6 +19,7 @@ export { default as usePreCheckAction } from './usePreCheckAction';
 export { default as useSetSelectedAccountTypes } from './useSetSelectedAccountTypes';
 export { default as useGetAccountProxyById } from './useGetAccountProxyById';
 export { default as useGetAccountNetworkAddresses } from './useGetAccountNetworkAddresses';
+export { default as useGetDerivedAccountProxies } from './useGetDerivedAccountProxies';
 
 export * from './useGetMantaPayConfig';
 export * from './useGetZkAddress';
