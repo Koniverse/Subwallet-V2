@@ -7,3 +7,4 @@ export { default as AccountProxySelectorAllItem } from './AccountProxySelectorAl
 export { default as AccountProxyItem } from './AccountProxyItem';
 export { default as AccountProxyAvatar } from './AccountProxyAvatar';
 export { default as AccountProxyAvatarGroup } from './AccountProxyAvatarGroup';
+export { default as AccountNetworkAddressItem } from './AccountNetworkAddressItem';

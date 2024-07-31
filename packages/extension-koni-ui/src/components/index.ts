@@ -16,6 +16,7 @@ export { default as NetworkTag } from './NetworkTag';
 
 export * from '../contexts';
 export * from './Common';
+// todo: will merge Account and AccountProxy folder
 export * from './Account';
 export * from './AccountProxy';
 export * from './Avatar';
