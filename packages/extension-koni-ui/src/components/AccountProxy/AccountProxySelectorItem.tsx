@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountNetworkType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -9,7 +9,7 @@ import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, Copy, Eye, GitCommit, GitMerge, Needle, PencilSimpleLine, QrCode, Question, Strategy, Swatches } from 'phosphor-react';
 import { IconWeight } from 'phosphor-react/src/lib';
-import React, { Context, useContext } from 'react';
+import React, { Context, useContext, useMemo } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
 import AccountProxyAvatar from './AccountProxyAvatar';
@@ -25,10 +25,9 @@ type Props = ThemeProps & {
   showDeriveButton?: boolean;
 }
 
-// @ts-ignore
 type AccountProxyTypeIcon = {
   className?: string;
-  value: PhosphorIcon | React.ReactNode,
+  value: PhosphorIcon,
   weight?: IconWeight
 }
 
@@ -41,8 +40,18 @@ function Component (props: Props): React.ReactElement<Props> {
     onClickMoreButton, showDeriveButton } = props;
 
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
+  const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
 
   const { t } = useTranslation();
+
+  const networkTypeLogoMap = useMemo(() => {
+    return {
+      [AccountNetworkType.SUBSTRATE]: logoMap.network.polkadot as string,
+      [AccountNetworkType.ETHEREUM]: logoMap.network.ethereum as string,
+      [AccountNetworkType.BITCOIN]: logoMap.network.bitcoin as string,
+      [AccountNetworkType.TON]: logoMap.network.ton as string
+    };
+  }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
 
   const _onClickDeriveButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();
@@ -59,7 +68,7 @@ function Component (props: Props): React.ReactElement<Props> {
     onClickMoreButton?.();
   }, [onClickMoreButton]);
 
-  const accountProxyTypeIconProps = (() => {
+  const accountProxyTypeIconProps = ((): AccountProxyTypeIcon | null => {
     if (accountProxy.accountType === AccountProxyType.UNIFIED) {
       return {
         className: '-is-unified',
@@ -145,7 +154,20 @@ function Component (props: Props): React.ReactElement<Props> {
         </div>
         <div className='__item-center-part'>
           <div className='__item-name'>{accountProxy.name}</div>
-          <div className='__item-networks'>{accountProxy.name}</div>
+          <div className='__item-network-types'>
+            {
+              accountProxy.networkTypes.map((nt) => {
+                return (
+                  <img
+                    alt='Network type'
+                    className={'__item-network-type-item'}
+                    key={nt}
+                    src={networkTypeLogoMap[nt]}
+                  />
+                );
+              })
+            }
+          </div>
         </div>
         <div className='__item-right-part'>
           <div className='__item-actions'>
@@ -276,10 +298,20 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       overflow: 'hidden',
       'white-space': 'nowrap'
     },
-    '.__item-networks': {
-      fontSize: token.fontSizeSM,
-      color: token.colorTextLight4,
-      lineHeight: '18px'
+    '.__item-network-types': {
+      display: 'flex',
+      paddingTop: 2
+    },
+    '.__item-network-type-item': {
+      display: 'block',
+      boxShadow: '-4px 0px 4px 0px rgba(0, 0, 0, 0.40)',
+      width: token.size,
+      height: token.size,
+      borderRadius: '100%',
+      marginLeft: -token.marginXXS
+    },
+    '.__item-network-type-item:first-of-type': {
+      marginLeft: 0
     },
     '.__item-address': {
       fontSize: token.fontSizeSM,
