@@ -17,6 +17,7 @@ export { default as useIsReadOnlyAccount } from './useIsReadOnlyAccount';
 export { default as usePreCheckAction } from './usePreCheckAction';
 export { default as useSetSelectedAccountTypes } from './useSetSelectedAccountTypes';
 export { default as useGetAccountProxyById } from './useGetAccountProxyById';
+export { default as useGetAccountNetworkAddress } from './useGetAccountNetworkAddress';
 
 export * from './useGetMantaPayConfig';
 export * from './useGetZkAddress';

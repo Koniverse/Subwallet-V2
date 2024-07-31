@@ -266,18 +266,19 @@ const Component: React.FC<Props> = (props: Props) => {
           onSelect={onSelectFilterTab}
           selectedItem={selectedFilterTab}
         />
-        <div className='list-container'>
-          {
-            selectedFilterTab === FilterTabType.ACCOUNT_ADDRESS && (
-              <AccountAddressList />
-            )
-          }
-          {
-            selectedFilterTab === FilterTabType.DERIVED_ACCOUNT && (
-              <DerivedAccountList />
-            )
-          }
-        </div>
+        {
+          selectedFilterTab === FilterTabType.ACCOUNT_ADDRESS && (
+            <AccountAddressList
+              accountProxy={accountProxy}
+              className={'list-container'}
+            />
+          )
+        }
+        {
+          selectedFilterTab === FilterTabType.DERIVED_ACCOUNT && (
+            <DerivedAccountList className={'list-container'} />
+          )
+        }
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );
@@ -319,14 +320,6 @@ const AccountDetail = styled(Component)<Props>(({ theme: { token } }: Props) => 
     '.list-container': {
       flex: 1,
       overflow: 'hidden'
-    },
-
-    '.ant-sw-list-section': {
-      height: '100%'
-    },
-
-    '.ant-sw-list': {
-      paddingBottom: 0
     },
 
     '.filter-tabs-container': {
