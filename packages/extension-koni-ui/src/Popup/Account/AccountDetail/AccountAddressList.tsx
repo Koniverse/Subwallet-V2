@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountProxy } from '@subwallet/extension-base/types';
+import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { useGetAccountNetworkAddress, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
-import { SwList } from '@subwallet/react-ui';
+import { Button, Icon, SwList } from '@subwallet/react-ui';
+import { Strategy } from 'phosphor-react';
 import React, { useCallback } from 'react';
 import styled from 'styled-components';
 
@@ -58,7 +59,6 @@ function Component ({ accountProxy, className }: Props) {
   return (
     <div className={className}>
       <SwList.Section
-        className={className}
         enableSearchInput
         list={items}
         renderItem={renderItem}
@@ -67,13 +67,36 @@ function Component ({ accountProxy, className }: Props) {
         searchMinCharactersCount={2}
         searchPlaceholder={t<string>('Enter network name')}
       />
+
+      {
+        accountProxy.accountType === AccountProxyType.SOLO && (
+          <div className={'update-unified-account-button-wrapper'}>
+            <Button
+              block={true}
+              className={'update-unified-account-button'}
+              icon={(
+                <Icon
+                  phosphorIcon={Strategy}
+                  weight='fill'
+                />
+              )}
+            >
+              {t('Upgrade to Unified account')}
+            </Button>
+          </div>
+        )
+      }
     </div>
   );
 }
 
 export const AccountAddressList = styled(Component)<Props>(({ theme: { token } }: Props) => ({
+  display: 'flex',
+  overflow: 'hidden',
+  flexDirection: 'column',
+
   '.ant-sw-list-section': {
-    height: '100%'
+    flex: 1
   },
 
   '.ant-sw-list': {
@@ -82,5 +105,13 @@ export const AccountAddressList = styled(Component)<Props>(({ theme: { token } }
 
   '.address-item + .address-item': {
     marginTop: token.marginXS
+  },
+
+  '.update-unified-account-button-wrapper': {
+    paddingLeft: token.padding,
+    paddingRight: token.padding,
+    paddingTop: token.paddingSM,
+    paddingBottom: token.paddingXXS
   }
+
 }));

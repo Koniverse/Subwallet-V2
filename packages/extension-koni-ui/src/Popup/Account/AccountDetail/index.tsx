@@ -318,8 +318,7 @@ const AccountDetail = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
 
     '.list-container': {
-      flex: 1,
-      overflow: 'hidden'
+      flex: 1
     },
 
     '.filter-tabs-container': {
