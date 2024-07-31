@@ -167,7 +167,6 @@ function Component (props: Props): React.ReactElement<Props> {
               )
             }
             <Button
-              className='-show-on-hover'
               icon={
                 <Icon
                   phosphorIcon={Copy}
@@ -194,6 +193,9 @@ function Component (props: Props): React.ReactElement<Props> {
           <div className='__item-actions-overlay'>
             {isSelected && (
               <Button
+                className={CN({
+                  '-hide-on-hover': showDeriveButton
+                })}
                 icon={
                   <Icon
                     iconColor={token.colorSuccess}
@@ -304,16 +306,20 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       opacity: 1,
       alignItems: 'center',
       justifyContent: 'flex-end',
-      marginRight: 40,
+      marginRight: 80,
       transition: `opacity ${token.motionDurationMid} ease-in-out`
     },
     '.-show-on-hover': {
       opacity: 0,
       transition: `opacity ${token.motionDurationMid} ease-in-out`
     },
+    '.-hide-on-hover': {
+      opacity: 1,
+      transition: `opacity ${token.motionDurationMid} ease-in-out`
+    },
     '&:hover': {
       background: token.colorBgInput,
-      '.__item-actions-overlay': {
+      '.-hide-on-hover': {
         opacity: 0
       },
       '.-show-on-hover': {
