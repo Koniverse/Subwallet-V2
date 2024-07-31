@@ -6,7 +6,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { SEED_DEFAULT_LENGTH, SEED_LENGTHS } from '@subwallet/extension-base/koni/background/handlers/Extension';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
-import { AccountJson, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountJson, AccountNetworkType, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
@@ -40,7 +40,7 @@ const ACCOUNT_PROXIES_KEY = 'AccountProxies';
 export class AccountContext {
   // Current account
   private readonly currentAccountStore = new CurrentAccountStore();
-  public readonly currentAccountSubject = new BehaviorSubject<CurrentAccountInfo>({ address: '' });
+  public readonly currentAccountSubject = new BehaviorSubject<CurrentAccountInfo>({ proxyId: '' });
 
   // Account groups
   private readonly accountProxiesStore = new AccountProxyStore();
@@ -70,7 +70,9 @@ export class AccountContext {
       .then(() => {
         // Load current account
         this.currentAccountStore.get(CURRENT_ACCOUNT_KEY, (rs) => {
-          rs && this.currentAccountSubject.next(rs);
+          const data: CurrentAccountInfo = rs ? { proxyId: rs.proxyId || rs.address || '' } : { proxyId: '' };
+
+          this.currentAccountSubject.next(data);
         });
         // Load modify pairs
         this.modifyPairsStore.get(MODIFY_PAIRS_KEY, (rs) => {
@@ -131,7 +133,7 @@ export class AccountContext {
 
           if (accountGroup) {
             if (!temp[accountGroup.id]) {
-              temp[accountGroup.id] = { ...accountGroup, accounts: [] };
+              temp[accountGroup.id] = { ...accountGroup, accounts: [], networkTypes: [] };
             }
 
             temp[accountGroup.id].accounts.push(account);
@@ -139,18 +141,22 @@ export class AccountContext {
           }
         }
 
-        temp[address] = { id: address, name: account.name || account.address, accounts: [account] };
+        temp[address] = { id: address, name: account.name || account.address, accounts: [account], networkTypes: [account.networkType] };
       }
 
       const result: AccountProxyMap = Object.fromEntries(
         Object.entries(temp)
           .map(([key, value]): [string, AccountProxy] => {
             let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
+            let networkTypes: AccountNetworkType[] = [];
 
             if (value.accounts.length > 1) {
-              accountType = AccountProxyType.MULTI;
+              accountType = AccountProxyType.UNIFIED;
+              networkTypes = Array.from(value.accounts.reduce<Set<AccountNetworkType>>((rs, account) => rs.add(account.networkType), new Set()));
             } else if (value.accounts.length === 1) {
               const account = value.accounts[0];
+
+              networkTypes = [account.networkType];
 
               if (account.isInjected) {
                 accountType = AccountProxyType.INJECTED;
@@ -163,11 +169,11 @@ export class AccountContext {
                   accountType = AccountProxyType.QR;
                 }
               } else {
-                accountType = AccountProxyType.SINGLE;
+                accountType = AccountProxyType.SOLO;
               }
             }
 
-            return [key, { ...value, accountType }];
+            return [key, { ...value, accountType, networkTypes }];
           })
       );
 
@@ -200,10 +206,10 @@ export class AccountContext {
   }
 
   public _setCurrentAccount (data: CurrentAccountInfo, callback?: () => void, preventOneAccount?: boolean): void {
-    const { address } = data;
+    const { proxyId } = data;
     const result: CurrentAccountInfo = { ...data };
 
-    if (address === ALL_ACCOUNT_KEY) {
+    if (proxyId === ALL_ACCOUNT_KEY) {
       const pairs = keyring.getAccounts();
       const pair = pairs[0];
 
@@ -211,7 +217,7 @@ export class AccountContext {
         // Empty
       } else {
         if (!preventOneAccount) {
-          result.address = pair.address;
+          result.proxyId = pair.address;
         }
       }
     }
@@ -225,10 +231,10 @@ export class AccountContext {
 
     if (!accountInfo) {
       accountInfo = {
-        address
+        proxyId: address
       };
     } else {
-      accountInfo.address = address;
+      accountInfo.proxyId = address;
     }
 
     this._setCurrentAccount(accountInfo, () => {
@@ -379,13 +385,60 @@ export class AccountContext {
     await Promise.all(addresses.map((address) => new Promise<void>((resolve) => this.removeAccountRef(address, resolve))));
 
     await new Promise<void>((resolve) => {
-      this._setCurrentAccount({ address: ALL_ACCOUNT_KEY }, resolve);
+      this._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY }, resolve);
     });
 
     return addresses;
   }
 
   /* Modify accounts */
+
+  /* Get address for another service */
+
+  public getAllAddresses (): string[] {
+    return keyring.getAccounts().map((account) => account.address);
+  }
+
+  public getProxyId (): string | null {
+    const proxyId = this.currentAccount.proxyId;
+
+    if (proxyId === '') {
+      return null;
+    }
+
+    return proxyId;
+  }
+
+  public getDecodedAddresses (accountProxy?: string): string[] {
+    let proxyId: string | null | undefined = accountProxy;
+
+    if (!accountProxy) {
+      proxyId = this.getProxyId();
+    }
+
+    if (!proxyId) {
+      return [];
+    }
+
+    if (proxyId === ALL_ACCOUNT_KEY) {
+      return this.getAllAddresses();
+    }
+
+    const accountProxies = this.accountProxiesSubject.value;
+    const modifyPairs = this.modifyPairsSubject.value;
+
+    if (!accountProxies[proxyId]) {
+      const pair = keyring.getPair(proxyId);
+
+      assert(pair, t('Unable to find account'));
+
+      return [pair.address];
+    } else {
+      return Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
+    }
+  }
+
+  /* Get address for another service */
 
   /* Create with mnemonic */
 
@@ -496,9 +549,9 @@ export class AccountContext {
 
       if (!changedAccount) {
         if (!proxyId) {
-          this.setCurrentAccount({ address });
+          this.setCurrentAccount({ proxyId: address });
         } else {
-          this._setCurrentAccount({ address: proxyId }, undefined, true);
+          this._setCurrentAccount({ proxyId: proxyId }, undefined, true);
         }
 
         changedAccount = true;
@@ -694,9 +747,9 @@ export class AccountContext {
     this.upsertModifyPairs(modifiedPairs);
 
     if (addresses.length <= 1) {
-      this._setCurrentAccount({ address: addresses[0] });
+      this._setCurrentAccount({ proxyId: addresses[0] });
     } else {
-      this._setCurrentAccount({ address: ALL_ACCOUNT_KEY });
+      this._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY });
     }
 
     if (Object.keys(slugMap).length) {
@@ -923,7 +976,7 @@ export class AccountContext {
     if (result.length === 1) {
       this._saveCurrentAccountAddress(result[0].address);
     } else {
-      this._setCurrentAccount({ address: ALL_ACCOUNT_KEY });
+      this._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY });
     }
 
     return true;
@@ -1158,10 +1211,7 @@ export class AccountContext {
 
       return { result };
     } else {
-      const accountGroup = accountProxies[proxyId];
       const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
-
-      this.upsertAccountProxy(accountGroup);
 
       let pair: KeyringPair | undefined;
 
@@ -1201,7 +1251,7 @@ export class AccountContext {
       };
     }));
 
-    const currentAddress = this.currentAccountSubject.value.address;
+    const currentAddress = this.currentAccountSubject.value.proxyId;
     const afterAccounts: Record<string, boolean> = {};
 
     Object.keys(this.pairs).forEach((adr) => {
@@ -1213,9 +1263,9 @@ export class AccountContext {
     });
 
     if (Object.keys(afterAccounts).length === 1) {
-      this.currentAccountSubject.next({ address: Object.keys(afterAccounts)[0] });
+      this.currentAccountSubject.next({ proxyId: Object.keys(afterAccounts)[0] });
     } else if (Object.keys(afterAccounts).indexOf(currentAddress) === -1) {
-      this.currentAccountSubject.next({ address: ALL_ACCOUNT_KEY });
+      this.currentAccountSubject.next({ proxyId: ALL_ACCOUNT_KEY });
     }
 
     if (!this.injected) {
@@ -1232,13 +1282,13 @@ export class AccountContext {
         return address;
       }
     });
-    const currentAddress = this.currentAccountSubject.value.address;
+    const currentAddress = this.currentAccountSubject.value.proxyId;
     const afterAccounts = Object.keys(this.pairs).filter((address) => (addresses.indexOf(address) < 0));
 
     if (afterAccounts.length === 1) {
-      this.currentAccountSubject.next({ address: afterAccounts[0] });
+      this.currentAccountSubject.next({ proxyId: afterAccounts[0] });
     } else if (addresses.indexOf(currentAddress) === -1) {
-      this.currentAccountSubject.next({ address: ALL_ACCOUNT_KEY });
+      this.currentAccountSubject.next({ proxyId: ALL_ACCOUNT_KEY });
     }
 
     keyring.removeInjects(addresses);

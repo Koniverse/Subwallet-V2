@@ -57,7 +57,7 @@ export class KeyringService {
       }, 1500);
     });
     this.updateKeyringState();
-    this.context.currentAccountSubject.next({ address: ALL_ACCOUNT_KEY });
+    this.context.currentAccountSubject.next({ proxyId: ALL_ACCOUNT_KEY });
   }
   /* Reset */
 }

@@ -10,5 +10,7 @@ export interface AccountsWithCurrentAddress {
 }
 
 export interface CurrentAccountInfo {
-  address: string;
+  proxyId: string;
+  /** @deprecated */
+  address?: string;
 }

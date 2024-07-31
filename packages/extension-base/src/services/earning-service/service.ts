@@ -473,7 +473,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
     await this.eventService.waitChainReady;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
     const activeChains = this.state.activeChainSlugs;
     const unsubList: Array<VoidFunction> = [];
 
@@ -533,7 +533,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
     await this.eventService.waitChainReady;
     await this.eventService.waitKeyringReady;
 
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     const existedYieldPosition = await this.dbService.getYieldNominationPoolPosition(addresses, this.state.activeChainSlugs);
 
@@ -608,7 +608,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
     await this.eventService.waitKeyringReady;
     this.runUnsubscribePoolsPosition();
 
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     this.subscribePoolPositions(addresses, (data) => {
       this.updateYieldPosition(data);
@@ -657,7 +657,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
     await this.eventService.waitChainReady;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
     const activeChains = this.state.activeChainSlugs;
     const unsubList: Array<VoidFunction> = [];
 
@@ -697,7 +697,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
   earningsRewardInterval: NodeJS.Timer | undefined;
 
   runSubscribeStakingRewardInterval () {
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;
@@ -725,7 +725,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
     await this.eventService.waitChainReady;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
     const activeChains = this.state.activeChainSlugs;
     const unsubList: Array<VoidFunction> = [];
 
@@ -785,7 +785,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
   runSubscribeEarningRewardHistoryInterval () {
     this.runUnsubscribeEarningRewardHistoryInterval();
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;

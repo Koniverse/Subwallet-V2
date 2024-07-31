@@ -6,8 +6,9 @@ import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { getRandomIpfsGateway, SUBWALLET_IPFS } from '@subwallet/extension-base/koni/api/nft/config';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { decodeAddress, encodeAddress, getKeypairTypeByAddress } from '@subwallet/keyring';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isBitcoinAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
+import { isTonAddress } from '@subwallet/keyring/utils';
 import { t } from 'i18next';
 
 import { assert, BN, hexToU8a, isHex } from '@polkadot/util';
@@ -72,19 +73,30 @@ export function filterAddressByNetworkKey (addresses: string[], networkKey: stri
   }
 }
 
-export function categoryAddresses (addresses: string[]) {
-  const substrateAddresses: string[] = [];
-  const evmAddresses: string[] = [];
+export function categoryAddresses (addresses: string[]): { substrate: string[], evm: string[], ton: string[], bitcoin: string[] } {
+  const substrate: string[] = [];
+  const evm: string[] = [];
+  const ton: string[] = [];
+  const bitcoin: string[] = [];
 
   addresses.forEach((address) => {
     if (isEthereumAddress(address)) {
-      evmAddresses.push(address);
+      evm.push(address);
+    } else if (isTonAddress(address)) {
+      ton.push(address);
+    } else if (isBitcoinAddress(address) !== 'unknown') {
+      bitcoin.push(address);
     } else {
-      substrateAddresses.push(address);
+      substrate.push(address);
     }
   });
 
-  return [substrateAddresses, evmAddresses];
+  return {
+    bitcoin,
+    evm,
+    substrate,
+    ton
+  };
 }
 
 export function categoryNetworks (networks: NetworkJson[]) {

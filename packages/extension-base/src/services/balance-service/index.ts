@@ -51,7 +51,7 @@ export class BalanceService implements StoppableServiceInterface {
    */
   constructor (state: KoniState) {
     this.state = state;
-    this.balanceMap = new BalanceMapImpl();
+    this.balanceMap = new BalanceMapImpl(state);
   }
 
   /** Init service */
@@ -311,7 +311,7 @@ export class BalanceService implements StoppableServiceInterface {
       }
 
       addLazy('updateBalanceStore', () => {
-        const isAllAccount = isAccountAll(this.state.keyringService.context.currentAccount.address);
+        const isAllAccount = isAccountAll(this.state.keyringService.context.currentAccount.proxyId);
 
         this.balanceMap.updateBalanceItems(this.balanceUpdateCache, isAllAccount);
 
@@ -348,7 +348,7 @@ export class BalanceService implements StoppableServiceInterface {
     await Promise.all([this.state.eventService.waitKeyringReady, this.state.eventService.waitChainReady]);
     this.runUnsubscribeBalances();
 
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;

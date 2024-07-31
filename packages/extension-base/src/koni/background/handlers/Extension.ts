@@ -41,9 +41,7 @@ import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectN
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
-import {
-  AccountProxy, AccountProxyType, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType
-} from '@subwallet/extension-base/types';
+import { AccountProxy, AccountProxyType, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountCreateSuriV2, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountCreateSuriV2, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -74,7 +72,8 @@ const ACCOUNT_ALL_GROUP: AccountProxy = {
   id: ALL_ACCOUNT_KEY,
   name: 'All',
   accounts: [],
-  accountType: AccountProxyType.ALL_ACCOUNT
+  accountType: AccountProxyType.ALL_ACCOUNT,
+  networkTypes: []
 };
 
 export const SEED_DEFAULT_LENGTH = 12;
@@ -438,7 +437,7 @@ export default class KoniExtension {
       const transformedAccounts = Object.values(accountGroups);
 
       responseData.accounts = transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP }, ...transformedAccounts] : [];
-      responseData.currentAccountProxy = currentAccount?.address;
+      responseData.currentAccountProxy = currentAccount?.proxyId;
 
       console.debug('subscriptionAccountGroups', responseData);
       cb(responseData);
@@ -1018,7 +1017,7 @@ export default class KoniExtension {
 
   private async saveCurrentAccountAddress (data: RequestCurrentAccountAddress): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
-      this.#koniState.keyringService.context._setCurrentAccount({ address: data.address }, () => {
+      this.#koniState.keyringService.context._setCurrentAccount({ proxyId: data.address }, () => {
         resolve(true);
       });
     });

@@ -353,7 +353,7 @@ export default class KoniTabs {
         const accountList = transformAccountsV2(allAccounts, false, authInfo, 'evm').map((a) => a.address);
         let accounts: string[] = [];
 
-        const address = this.#koniState.keyringService.context.currentAccount.address;
+        const address = this.#koniState.keyringService.context.currentAccount.proxyId;
 
         if (address === ALL_ACCOUNT_KEY || !address) {
           accounts = accountList;

@@ -4,7 +4,7 @@
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getSubstrateGenesisHash, _isChainEvmCompatible, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
 import { categoryAddresses, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
@@ -39,16 +39,19 @@ export const getAccountJsonByAddress = (address: string): AccountJson | null => 
 
 /** Filter addresses to subscribe by chain info */
 const filterAddress = (addresses: string[], chainInfo: _ChainInfo): [string[], string[]] => {
-  const isEvmChain = _isChainEvmCompatible(chainInfo);
-  const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+  const { bitcoin, evm, substrate, ton } = categoryAddresses(addresses);
 
-  if (isEvmChain) {
-    return [evmAddresses, substrateAddresses];
+  if (_isChainEvmCompatible(chainInfo)) {
+    return [evm, [...bitcoin, ...substrate, ...ton]];
+  } else if (_isChainBitcoinCompatible(chainInfo)) {
+    return [bitcoin, [...evm, ...substrate, ...ton]];
+  } else if (_isChainTonCompatible(chainInfo)) {
+    return [ton, [...bitcoin, ...evm, ...substrate]];
   } else {
     const fetchList: string[] = [];
     const unfetchList: string[] = [];
 
-    substrateAddresses.forEach((address) => {
+    substrate.forEach((address) => {
       const account = getAccountJsonByAddress(address);
 
       if (account) {
@@ -73,7 +76,7 @@ const filterAddress = (addresses: string[], chainInfo: _ChainInfo): [string[], s
       }
     });
 
-    return [fetchList, [...unfetchList, ...evmAddresses]];
+    return [fetchList, [...unfetchList, ...bitcoin, ...evm, ...ton]];
   }
 };
 

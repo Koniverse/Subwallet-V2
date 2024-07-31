@@ -284,9 +284,9 @@ export default class KoniState {
   public generateDefaultBalanceMap (_addresses?: string[]): BalanceMap {
     const balanceMap: BalanceMap = {};
     const activeChains = this.chainService.getActiveChainInfoMap();
-    const isAllAccount = isAccountAll(this.keyringService.context.currentAccount.address);
+    const isAllAccount = isAccountAll(this.keyringService.context.currentAccount.proxyId);
 
-    const addresses = _addresses || (isAllAccount ? Object.keys(this.keyringService.context.pairs) : [this.keyringService.context.currentAccount.address]);
+    const addresses = _addresses || (isAllAccount ? Object.keys(this.keyringService.context.pairs) : [this.keyringService.context.currentAccount.proxyId]);
 
     addresses.forEach((address) => {
       const temp: Record<string, BalanceItem> = {};
@@ -450,7 +450,7 @@ export default class KoniState {
   }
 
   public async getStaking (): Promise<StakingJson> {
-    const addresses = this.getDecodedAddresses();
+    const addresses = this.keyringService.context.getDecodedAddresses();
 
     const stakings = await this.dbService.getStakings(addresses, this.activeChainSlugs);
 
@@ -527,7 +527,7 @@ export default class KoniState {
       total: 0
     })).catch((e) => this.logger.warn(e));
 
-    const addresses = this.getDecodedAddresses(newAddress);
+    const addresses = this.keyringService.context.getDecodedAddresses(newAddress);
 
     this.dbService.subscribeNft(addresses, this.activeChainSlugs, (nfts) => {
       this.nftSubject.next({
@@ -552,7 +552,7 @@ export default class KoniState {
   }
 
   public async getNft (): Promise<NftJson | undefined> {
-    const addresses = this.getDecodedAddresses();
+    const addresses = this.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;
@@ -651,11 +651,11 @@ export default class KoniState {
   }
 
   public setCurrentAccount (data: CurrentAccountInfo, callback?: () => void, preventOneAccount?: boolean): void {
-    const { address } = data;
+    const { proxyId } = data;
 
     const result: CurrentAccountInfo = { ...data };
 
-    if (address === ALL_ACCOUNT_KEY) {
+    if (proxyId === ALL_ACCOUNT_KEY) {
       const pairs = keyring.getAccounts();
       const pair = pairs[0];
 
@@ -663,7 +663,7 @@ export default class KoniState {
         // Empty
       } else {
         if (!preventOneAccount) {
-          result.address = pair.address;
+          result.proxyId = pair.address;
         }
       }
     }
@@ -683,7 +683,7 @@ export default class KoniState {
 
     const accountInfo = this.keyringService.context.currentAccount;
 
-    if (address === accountInfo.address) {
+    if (address === accountInfo.proxyId) {
       this.setCurrentAccount(accountInfo);
     }
 
@@ -710,7 +710,7 @@ export default class KoniState {
   public async switchNetworkAccount (id: string, url: string, networkKey: string, changeAddress?: string): Promise<boolean> {
     const chainInfo = this.chainService.getChainInfoByKey(networkKey);
     const chainState = this.chainService.getChainStateByKey(networkKey);
-    const { address } = this.keyringService.context.currentAccount;
+    const { proxyId } = this.keyringService.context.currentAccount;
 
     return this.requestService.addConfirmation(id, url, 'switchNetworkRequest', {
       networkKey,
@@ -718,7 +718,7 @@ export default class KoniState {
     }, { address: changeAddress })
       .then(({ isApproved }) => {
         if (isApproved) {
-          const useAddress = changeAddress || address;
+          const useAddress = changeAddress || proxyId;
 
           if (chainInfo && !_isChainEnabled(chainState)) {
             this.enableChain(networkKey).catch(console.error);
@@ -732,9 +732,9 @@ export default class KoniState {
             keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash: _getSubstrateGenesisHash(chainInfo) });
           }
 
-          if (address !== changeAddress || isApproved) {
+          if (proxyId !== changeAddress || isApproved) {
             this.setCurrentAccount({
-              address: useAddress
+              proxyId: useAddress
             });
           }
         }
@@ -828,34 +828,6 @@ export default class KoniState {
     return this.settingService.getSubject();
   }
 
-  public getAccountAddress (): string | null {
-    const address = this.keyringService.context.currentAccount.address;
-
-    if (address === '') {
-      return null;
-    }
-
-    return address;
-  }
-
-  public getDecodedAddresses (address?: string): string[] {
-    let checkingAddress: string | null | undefined = address;
-
-    if (!address) {
-      checkingAddress = this.getAccountAddress();
-    }
-
-    if (!checkingAddress) {
-      return [];
-    }
-
-    if (checkingAddress === ALL_ACCOUNT_KEY) {
-      return this.getAllAddresses();
-    }
-
-    return [checkingAddress];
-  }
-
   public getAllAddresses (): string[] {
     return keyring.getAccounts().map((account) => account.address);
   }
@@ -875,7 +847,7 @@ export default class KoniState {
       })
       .catch((e) => this.logger.warn(e));
 
-    const addresses = this.getDecodedAddresses(newAddress);
+    const addresses = this.keyringService.context.getDecodedAddresses(newAddress);
 
     this.dbService.subscribeStaking(addresses, this.activeChainSlugs, (stakings) => {
       this.stakingSubject.next({
@@ -910,7 +882,7 @@ export default class KoniState {
   private updateCrowdloanStore (networkKey: string, item: CrowdloanItem) {
     const currentAccountInfo = this.keyringService.context.currentAccount;
 
-    this.dbService.updateCrowdloanStore(networkKey, currentAccountInfo.address, item).catch((e) => this.logger.warn(e));
+    this.dbService.updateCrowdloanStore(networkKey, currentAccountInfo.proxyId, item).catch((e) => this.logger.warn(e));
   }
 
   public subscribeCrowdloan () {
@@ -1692,7 +1664,7 @@ export default class KoniState {
 
     if (!remindStatus || !remindStatus.includes('done')) {
       const handleRemind = (account: CurrentAccountInfo) => {
-        if (account.address !== '') {
+        if (account.proxyId !== '') {
           // Open remind tab
           const url = `${chrome.runtime.getURL('index.html')}#/remind-export-account`;
 
@@ -1917,7 +1889,7 @@ export default class KoniState {
   }
 
   public async reloadNft () {
-    const currentAddress = this.keyringService.context.currentAccount.address;
+    const currentAddress = this.keyringService.context.currentAccount.proxyId;
 
     await this.dbService.removeNftsByAddress(currentAddress);
 
@@ -2113,7 +2085,7 @@ export default class KoniState {
   public subscribeMantaPayBalance () {
     let interval: NodeJS.Timer | undefined;
 
-    this.chainService?.mantaPay?.getMantaPayConfig(this.keyringService.context.currentAccount.address, _DEFAULT_MANTA_ZK_CHAIN)
+    this.chainService?.mantaPay?.getMantaPayConfig(this.keyringService.context.currentAccount.proxyId, _DEFAULT_MANTA_ZK_CHAIN)
       .then((config: MantaPayConfig) => {
         if (config && config.enabled && config.isInitialSync) {
           this.getMantaZkBalance();
