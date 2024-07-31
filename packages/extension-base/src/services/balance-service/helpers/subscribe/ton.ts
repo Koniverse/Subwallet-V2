@@ -70,7 +70,7 @@ async function getTonBalance (addresses: string[], tonApi: _TonApi): Promise<big
     try {
       const tonAddress = Address.parse(address);
 
-      return await tonApi.api.getBalance(tonAddress);
+      return await tonApi.getBalance(tonAddress);
     } catch (e) {
       return 0n;
     }

@@ -4,12 +4,12 @@
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
-import { TonClient } from '@ton/ton';
+import { Address, Contract, OpenedContract, TonClient } from '@ton/ton';
 import { BehaviorSubject } from 'rxjs';
 
 export class TonApi implements _TonApi {
   chainSlug: string;
-  api: TonClient;
+  private api: TonClient;
   apiUrl: string;
   apiError?: string;
   apiRetry = 0;
@@ -120,5 +120,13 @@ export class TonApi implements _TonApi {
       this.isApiReady = false;
       this.isReadyHandler = createPromiseHandler<_TonApi>();
     }
+  }
+
+  async getBalance (address: Address): Promise<bigint> {
+    return await this.api.getBalance(address);
+  }
+
+  open<T extends Contract> (src: T): OpenedContract<T> {
+    return this.api.open(src);
   }
 }

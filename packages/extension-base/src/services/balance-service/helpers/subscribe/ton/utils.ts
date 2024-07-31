@@ -9,7 +9,7 @@ import { JettonMaster, JettonWallet, OpenedContract } from '@ton/ton';
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
   const masterAddress = Address.parse(contractAddress);
 
-  return tonApi.api.open(JettonMaster.create(masterAddress));
+  return tonApi.open(JettonMaster.create(masterAddress));
 }
 
 export async function getJettonWalletContract (jettonMasterContract: OpenedContract<JettonMaster>, tonApi: _TonApi, ownerAddress: string) {
@@ -21,7 +21,7 @@ export async function getJettonWalletContract (jettonMasterContract: OpenedContr
 
   await sleep(1500);
 
-  return tonApi.api.open(JettonWallet.create(jettonWalletAddress));
+  return tonApi.open(JettonWallet.create(jettonWalletAddress));
 }
 
 // export async function getTonClient (isTestnet = false) {
