@@ -34,9 +34,9 @@ export class BalanceMapImpl {
     this.triggerChange();
   }
 
-  public triggerChange (computeAll?: boolean): void {
-    if (computeAll) {
-      this.computeAllAccountBalance();
+  public triggerChange (proxyId?: string): void {
+    if (proxyId) {
+      this.computeBalance(proxyId);
     }
 
     this._mapSubject.next(this._map);
@@ -54,12 +54,12 @@ export class BalanceMapImpl {
     trigger && this.triggerChange();
   }
 
-  public updateBalanceItems (balanceItems: BalanceItem[], computeAll?: boolean): void {
+  public updateBalanceItems (balanceItems: BalanceItem[], proxyId?: string): void {
     balanceItems.forEach((balanceItem) => {
       this.updateBalanceItem(balanceItem);
     });
 
-    this.triggerChange(computeAll);
+    this.triggerChange(proxyId);
   }
 
   public removeBalanceItemByFilter (filter: (balanceItem: BalanceItem) => boolean): void {
@@ -74,7 +74,8 @@ export class BalanceMapImpl {
     this.triggerChange();
   }
 
-  public computeAllAccountBalance () {
+  public computeBalance (_proxyId: string): void {
+    const isAll = isAccountAll(_proxyId);
     const compoundMap: Record<string, Record<string, BalanceItem[]>> = {};
     const accountProxies = this.state.keyringService.context.accounts;
     const unifiedAccountsMap = Object.values(accountProxies)
@@ -86,8 +87,10 @@ export class BalanceMapImpl {
     }, {});
     const revertUnifiedAccountsMap = Object.entries(unifiedAccountsMap)
       .reduce<Record<string, string>>((rs, [proxyId, accounts]) => {
-      for (const account of accounts) {
-        rs[account] = proxyId;
+      if (isAll || proxyId === _proxyId) {
+        for (const account of accounts) {
+          rs[account] = proxyId;
+        }
       }
 
       return rs;
@@ -112,9 +115,9 @@ export class BalanceMapImpl {
           compoundMap[key] = unifiedAccountBalance;
         };
 
-        addItemToMap(ALL_ACCOUNT_KEY);
         const proxyId = revertUnifiedAccountsMap[address];
 
+        isAll && addItemToMap(ALL_ACCOUNT_KEY);
         proxyId && addItemToMap(proxyId);
       });
 
