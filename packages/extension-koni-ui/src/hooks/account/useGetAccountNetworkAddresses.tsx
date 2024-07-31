@@ -25,7 +25,7 @@ function isChainInfoAccordantNetworkType (chainInfo: _ChainInfo, networkType: Ac
 //  - order the result
 //  - support ton, bitcoin
 //  - logic for generic, legacy ledger account
-const useGetAccountNetworkAddress = (accountProxy: AccountProxy): AccountNetworkAddress[] => {
+const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetworkAddress[] => {
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   return useMemo(() => {
@@ -59,4 +59,4 @@ const useGetAccountNetworkAddress = (accountProxy: AccountProxy): AccountNetwork
   }, [accountProxy.accounts, chainInfoMap]);
 };
 
-export default useGetAccountNetworkAddress;
+export default useGetAccountNetworkAddresses;

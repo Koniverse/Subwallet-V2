@@ -3,7 +3,7 @@
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { useGetAccountNetworkAddress, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountNetworkAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
@@ -11,15 +11,13 @@ import { Strategy } from 'phosphor-react';
 import React, { useCallback } from 'react';
 import styled from 'styled-components';
 
-import useNotification from '../../../hooks/common/useNotification';
-
 type Props = ThemeProps & {
   accountProxy: AccountProxy;
 };
 
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
-  const items: AccountNetworkAddress[] = useGetAccountNetworkAddress(accountProxy);
+  const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
   const notify = useNotification();
 
   const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
