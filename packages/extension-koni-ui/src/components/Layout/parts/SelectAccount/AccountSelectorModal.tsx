@@ -187,6 +187,15 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     };
   }, [accountProxies, inactiveModal, location.pathname, navigate, goHome]);
 
+  const onViewAccountDetail = useCallback((accountProxy: AccountProxy) => {
+    return () => {
+      inactiveModal(modalId);
+      setTimeout(() => {
+        navigate(`/accounts/detail/${accountProxy.id}`);
+      }, 100);
+    };
+  }, [inactiveModal, navigate]);
+
   const renderItem = useCallback((item: ListItem): React.ReactNode => {
     if ((item as ListItemGroupLabel).groupLabel) {
       return (
@@ -223,9 +232,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         isSelected={item.id === currentAccountProxy?.id}
         key={item.id}
         onClick={onSelect(item as AccountProxy)}
+        onClickMoreButton={onViewAccountDetail(item as AccountProxy)}
       />
     );
-  }, [onSelect, currentAccountProxy?.id, showAllAccount]);
+  }, [currentAccountProxy?.id, onSelect, onViewAccountDetail, showAllAccount]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value);

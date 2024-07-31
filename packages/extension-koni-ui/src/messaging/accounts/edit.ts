@@ -3,8 +3,8 @@
 
 import { sendMessage } from '../base';
 
-export async function editAccount (address: string, name: string): Promise<boolean> {
-  return sendMessage('pri(accounts.edit)', { proxyId: address, name });
+export async function editAccount (proxyId: string, name: string): Promise<boolean> {
+  return sendMessage('pri(accounts.edit)', { proxyId, name });
 }
 
 export async function forgetAccount (address: string, lockAfter = false): Promise<boolean> {

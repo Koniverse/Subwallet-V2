@@ -347,7 +347,8 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 8
+      gap: 8,
+      cursor: 'pointer'
     },
 
     '.connect-icon': {
