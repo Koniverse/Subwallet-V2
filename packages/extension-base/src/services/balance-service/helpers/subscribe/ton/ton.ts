@@ -35,7 +35,7 @@ export function subscribeJettonBalanceInterval ({ addresses, assetMap, callback,
           } catch (e) {
             console.error(`Error on get balance of account ${address} for token ${tokenInfo.slug}`, e);
 
-            return 0n;
+            return BigInt(0);
           }
         }));
 
@@ -72,7 +72,7 @@ async function getTonBalance (addresses: string[], tonApi: _TonApi): Promise<big
 
       return await tonApi.getBalance(tonAddress);
     } catch (e) {
-      return 0n;
+      return BigInt(0n);
     }
   }));
 }
