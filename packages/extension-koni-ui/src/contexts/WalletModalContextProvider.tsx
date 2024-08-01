@@ -1,18 +1,19 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
+import { AddressQrModal, AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
 import { CustomizeModal } from '@subwallet/extension-koni-ui/components/Modal/Customize/CustomizeModal';
-import { EARNING_INSTRUCTION_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { ADDRESS_QR_MODAL, EARNING_INSTRUCTION_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useGetConfig, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import Confirmations from '@subwallet/extension-koni-ui/Popup/Confirmations';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ModalContext, SwModal, useExcludeModal } from '@subwallet/react-ui';
 import CN from 'classnames';
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
+import { AddressQrModalProps } from '../components/Modal/Global/AddressQrModal';
 import { UnlockModal } from '../components/Modal/UnlockModal';
 
 interface Props {
@@ -52,8 +53,24 @@ export const usePredefinedModal = () => {
   return { openPModal, isOpenPModal };
 };
 
-export const WalletModalContext = ({ children }: Props) => {
-  const { activeModal, hasActiveModal, inactiveAll, inactiveModals } = useContext(ModalContext);
+export interface WalletModalContextType {
+  addressQrModal: {
+    open: (props: AddressQrModalProps) => void,
+    close: VoidFunction
+  }
+}
+
+export const WalletModalContext = React.createContext<WalletModalContextType>({
+  addressQrModal: {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    open: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    close: () => {}
+  }
+});
+
+export const WalletModalContextProvider = ({ children }: Props) => {
+  const { activeModal, hasActiveModal, inactiveAll, inactiveModal, inactiveModals } = useContext(ModalContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasConfirmations } = useSelector((state: RootState) => state.requestState);
   const { hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
@@ -70,6 +87,28 @@ export const WalletModalContext = ({ children }: Props) => {
       return prev;
     });
   }, [setSearchParams]);
+
+  /* Address QR Modal */
+  const [addressQrModalProps, setAddressQrModalProps] = useState<AddressQrModalProps | undefined>();
+
+  const openAddressQrModal = useCallback((props: AddressQrModalProps) => {
+    setAddressQrModalProps(props);
+    activeModal(ADDRESS_QR_MODAL);
+  }, [activeModal]);
+
+  const closeAddressQrModal = useCallback(() => {
+    inactiveModal(ADDRESS_QR_MODAL);
+    setAddressQrModalProps(undefined);
+  }, [inactiveModal]);
+
+  /* Address QR Modal */
+
+  const contextValue: WalletModalContextType = useMemo(() => ({
+    addressQrModal: {
+      open: openAddressQrModal,
+      close: closeAddressQrModal
+    }
+  }), [closeAddressQrModal, openAddressQrModal]);
 
   useEffect(() => {
     if (hasMasterPassword && isLocked) {
@@ -98,7 +137,7 @@ export const WalletModalContext = ({ children }: Props) => {
 
   // todo: will remove ClaimDappStakingRewardsModal after Astar upgrade to v3
 
-  return <>
+  return <WalletModalContext.Provider value={contextValue}>
     <div
       id='popup-container'
       style={{ zIndex: hasActiveModal ? undefined : -1 }}
@@ -127,5 +166,14 @@ export const WalletModalContext = ({ children }: Props) => {
     <RequestCameraAccessModal />
     <CustomizeModal />
     <UnlockModal />
-  </>;
+
+    {
+      !!addressQrModalProps && (
+        <AddressQrModal
+          {...addressQrModalProps}
+          onCancel={closeAddressQrModal}
+        />
+      )
+    }
+  </WalletModalContext.Provider>;
 };

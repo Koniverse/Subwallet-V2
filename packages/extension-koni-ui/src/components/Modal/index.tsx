@@ -10,6 +10,7 @@ export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVers
 export { default as AddNetworkWCModal } from './AddNetworkWCModal';
 export { SortingModal } from './SortingModal';
 
+export * from './Global';
 export * from './Account';
 export * from './AddressBook';
 export * from './ActionModal';
