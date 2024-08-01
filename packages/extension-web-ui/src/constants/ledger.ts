@@ -10,9 +10,9 @@ export const POLKADOT_SLIP_44 = 354;
 
 export const PredefinedLedgerNetwork: LedgerNetwork[] = [
   {
-    accountName: 'Substrate',
-    appName: 'Substrate Generic',
-    networkName: 'Substrate networks',
+    accountName: 'Polkadot new',
+    appName: 'Polkadot',
+    networkName: 'Polkadot (new)',
     genesisHash: '',
     network: 'polkadot',
     icon: 'substrate',
@@ -190,6 +190,19 @@ export const PredefinedLedgerNetwork: LedgerNetwork[] = [
     isGeneric: false,
     isEthereum: false,
     slip44: 595
+  },
+  {
+    accountName: 'Polkadex',
+    appName: 'Polkadex',
+    networkName: 'Polkadex network',
+    genesisHash: ChainInfoMap.polkadex.substrateInfo?.genesisHash || '0x3920bcb4960a1eef5580cd5367ff3f430eef052774f78468852f7b9cb39f8a3c',
+    icon: 'substrate',
+    network: 'polkadex',
+    slug: ChainInfoMap.polkadex.slug,
+    isGeneric: false,
+    isDevMode: false,
+    isEthereum: false,
+    slip44: 799
   }
   // {
   //   displayName: 'Centrifuge',

@@ -39,6 +39,8 @@ export const PINATA_IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
 
 export const VARA_SCAN_ENDPOINT = 'https://nft-explorer.vara-network.io/graphql';
 
+export const AVAIL_LIGHT_CLIENT_NFT = 'https://indexer.availspace.app/graphql'; // 'https://indexer-nft.availspace.app/graphql';
+
 export const UNIQUE_SCAN_ENDPOINT = 'https://api-unique.uniquescan.io/v1/graphql';
 
 export const QUARTZ_SCAN_ENDPOINT = 'https://api-quartz.uniquescan.io/v1/graphql';
@@ -105,6 +107,8 @@ export const SUPPORTED_TRANSFER_EVM_CHAIN = [
   SUPPORTED_TRANSFER_EVM_CHAIN_NAME.shibuya as string
 ];
 
+export const UNSUPPORTED_TRANSFER_EVM_CHAIN_NAME = ['unique_evm'];
+
 export const TRANSFER_CHAIN_ID = {
   [SUPPORTED_TRANSFER_EVM_CHAIN_NAME.moonbase as string]: 1287,
   [SUPPORTED_TRANSFER_EVM_CHAIN_NAME.moonbeam as string]: 1284,
@@ -140,30 +144,35 @@ if (isFirefox) {
 if (RuntimeInfo.protocol && RuntimeInfo.protocol.startsWith('http')) {
   // This is for https
   if (RuntimeInfo.protocol.startsWith('https')) {
-    RANDOM_IPFS_GATEWAY_SETTING.push({
-      provider: IPFS_FLEEK,
-      weight: 4
-    },
-    {
-      provider: IPFS_GATEWAY_4EVERLAND,
-      weight: 2
-    },
-    {
-      provider: IPFS_W3S_LINK,
-      weight: 1
-    },
-    {
-      provider: CF_IPFS_GATEWAY,
-      weight: 4
-    },
-    {
-      provider: PINATA_IPFS_GATEWAY,
-      weight: 1 // Rate limit too low
-    },
-    {
-      provider: IPFS_IO,
-      weight: 5
-    }
+    RANDOM_IPFS_GATEWAY_SETTING.push(
+      // {
+      //   provider: IPFS_FLEEK,
+      //   weight: 4
+      // },
+      // {
+      //   provider: IPFS_GATEWAY_4EVERLAND,
+      //   weight: 2
+      // },
+      // {
+      //   provider: IPFS_W3S_LINK,
+      //   weight: 1
+      // },
+      // {
+      //   provider: CF_IPFS_GATEWAY,
+      //   weight: 4
+      // },
+      // {
+      //   provider: PINATA_IPFS_GATEWAY,
+      //   weight: 1 // Rate limit too low
+      // },
+      // {
+      //   provider: IPFS_IO,
+      //   weight: 5
+      // },
+      {
+        provider: SUBWALLET_IPFS,
+        weight: 10
+      }
     );
   }
 } else {
