@@ -3,8 +3,9 @@
 
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { subscribeTonBalance } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton';
+import { _EvmApi, _SubstrateApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
+import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
 import { categoryAddresses, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
@@ -89,6 +90,7 @@ export function subscribeBalance (
   _chainInfoMap: Record<string, _ChainInfo>,
   substrateApiMap: Record<string, _SubstrateApi>,
   evmApiMap: Record<string, _EvmApi>,
+  tonApiMap: Record<string, _TonApi>,
   callback: (rs: BalanceItem[]) => void,
   extrinsicType?: ExtrinsicType
 ) {
@@ -129,6 +131,18 @@ export function subscribeBalance (
         callback,
         chainInfo,
         evmApi
+      });
+    }
+
+    const tonApi = tonApiMap[chainSlug];
+
+    if (_isPureTonChain(chainInfo)) {
+      return subscribeTonBalance({
+        addresses: ['EQChB2eMoFG4ThuEsZ6ehlBPKJXOjNxlR5B7qKZNGIv256Da'],
+        assetMap: chainAssetMap,
+        callback,
+        chainInfo,
+        tonApi
       });
     }
 
