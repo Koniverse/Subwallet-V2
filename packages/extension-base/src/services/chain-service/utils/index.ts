@@ -147,8 +147,7 @@ export function _isChainBitcoinCompatible (chainInfo: _ChainInfo) {
 }
 
 export function _isChainTonCompatible (chainInfo: _ChainInfo) {
-  // TODO: Add TON chain info
-  return false;
+  return !!chainInfo.tonInfo;
 }
 
 export function _isNativeToken (tokenInfo: _ChainAsset) {

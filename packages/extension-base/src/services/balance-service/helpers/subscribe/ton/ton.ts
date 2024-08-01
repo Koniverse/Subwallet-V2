@@ -41,7 +41,7 @@ export function subscribeJettonBalanceInterval ({ addresses, assetMap, callback,
 
         const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
           return {
-            address: '5HpbHTE8NKRHffnDwUDE7VR1ZtRSK1xWT4NrbvkSv54Fvqxx', // fake address
+            address: addresses[index],
             tokenSlug: tokenInfo.slug,
             free: balance.toString(),
             locked: '0',
@@ -88,7 +88,7 @@ export function subscribeTonBalance (params: SubscribeTonPalletBalance) {
       .then((balances) => {
         return balances.map((balance, index): BalanceItem => {
           return {
-            address: '5HpbHTE8NKRHffnDwUDE7VR1ZtRSK1xWT4NrbvkSv54Fvqxx', // fake address
+            address: addresses[index],
             tokenSlug: nativeTokenSlug,
             state: APIItemState.READY,
             free: balance.toString(),
