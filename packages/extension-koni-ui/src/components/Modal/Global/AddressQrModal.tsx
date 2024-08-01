@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
-import InfoIcon from '@subwallet/extension-koni-ui/components/Icon/InfoIcon';
+import { CloseIcon } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_QR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
@@ -54,20 +54,24 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
     <SwModal
       className={CN(className)}
       closeIcon={
-        <Icon
-          phosphorIcon={CaretLeft}
-          size='md'
-        />
+        onBack
+          ? (
+            <Icon
+              phosphorIcon={CaretLeft}
+              size='md'
+            />
+          )
+          : undefined
       }
       destroyOnClose={true}
       id={modalId}
       onCancel={onBack || onCancel}
       rightIconProps={onBack
-        ? undefined
-        : {
-          icon: <InfoIcon />,
+        ? {
+          icon: <CloseIcon />,
           onClick: onCancel
-        }}
+        }
+        : undefined}
       title={t<string>('Your address')}
     >
       <>
@@ -87,8 +91,8 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
             <Logo
               className='__network-logo'
               network={chainSlug}
-              shape='squircle'
-              size={24}
+              shape='circle'
+              size={28}
             />
 
             <div className='__address'>
@@ -149,7 +153,6 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
     },
 
     '.__address-box': {
-      backgroundColor: token.colorBgSecondary,
       borderRadius: token.borderRadiusLG,
       display: 'flex',
       alignItems: 'center',
