@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountProxy } from '@subwallet/extension-base/types';
 import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { editAccount } from '@subwallet/extension-koni-ui/messaging';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
@@ -15,13 +16,23 @@ import CN from 'classnames';
 import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { AccountAddressList } from './AccountAddressList';
 import { DerivedAccountList } from './DerivedAccountList';
 
+enum FilterTabType {
+  ACCOUNT_ADDRESS = 'account-address',
+  DERIVED_ACCOUNT = 'derived-account',
+}
+
 type Props = ThemeProps;
+type ComponentProps = {
+  accountProxy: AccountProxy;
+  onBack: VoidFunction;
+  requestViewDerivedAccounts?: boolean;
+};
 
 enum FormFieldName {
   NAME = 'name'
@@ -34,31 +45,22 @@ enum ActionType {
   DELETE = 'delete'
 }
 
-enum FilterTabType {
-  ACCOUNT_ADDRESS = 'account-address',
-  DERIVED_ACCOUNT = 'derived-account',
-}
-
 interface DetailFormState {
   [FormFieldName.NAME]: string;
 }
 
-const showDerivedAccounts = false;
-
-const Component: React.FC<Props> = (props: Props) => {
-  const { className } = props;
-
+const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccounts }: ComponentProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { goHome } = useDefaultNavigate();
   const notify = useNotification();
-  const { accountProxyId } = useParams();
+  const showDerivedAccounts = !!accountProxy?.children?.length;
 
-  const [selectedFilterTab, setSelectedFilterTab] = useState<string>(FilterTabType.ACCOUNT_ADDRESS);
+  const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
+    requestViewDerivedAccounts && showDerivedAccounts
+      ? FilterTabType.DERIVED_ACCOUNT
+      : FilterTabType.ACCOUNT_ADDRESS
+  );
 
   const [form] = Form.useForm<DetailFormState>();
-
-  const accountProxy = useGetAccountProxyById(accountProxyId);
 
   const saveTimeOutRef = useRef<NodeJS.Timer>();
 
@@ -84,7 +86,7 @@ const Component: React.FC<Props> = (props: Props) => {
     }
 
     return result;
-  }, [t]);
+  }, [showDerivedAccounts, t]);
 
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value);
@@ -125,7 +127,7 @@ const Component: React.FC<Props> = (props: Props) => {
     clearTimeout(saveTimeOutRef.current);
     const name = values[FormFieldName.NAME];
 
-    if (!accountProxy || name === accountProxy.name) {
+    if (name === accountProxy.name) {
       setSaving(false);
 
       return;
@@ -195,99 +197,116 @@ const Component: React.FC<Props> = (props: Props) => {
     </>;
   })();
 
+  return (
+    <Layout.WithSubHeaderOnly
+      disableBack={false}
+      footer={footerNode}
+      subHeaderIcons={[
+        {
+          icon: <CloseIcon />,
+          onClick: onBack,
+          disabled: false
+        }
+      ]}
+      title={t('Account details')}
+    >
+      <Form
+        className={'account-detail-form'}
+        form={form}
+        initialValues={{
+          [FormFieldName.NAME]: accountProxy.name || ''
+        }}
+        name='account-detail-form'
+        onFieldsChange={onUpdate}
+        onFinish={onSubmit}
+      >
+        <Form.Item
+          className={CN('account-field')}
+          name={FormFieldName.NAME}
+          rules={[
+            {
+              message: t('Account name is required'),
+              transform: (value: string) => value.trim(),
+              required: true
+            }
+          ]}
+          statusHelpAsTooltip={true}
+        >
+          <Input
+            className='account-name-input'
+            disabled={false}
+            label={t('Account name')}
+            onBlur={form.submit}
+            placeholder={t('Account name')}
+            suffix={(
+              <Icon
+                className={CN({ loading: saving })}
+                phosphorIcon={saving ? CircleNotch : FloppyDiskBack}
+                size='sm'
+              />
+            )}
+          />
+        </Form.Item>
+      </Form>
+
+      <FilterTabs
+        className={'filter-tabs-container'}
+        items={filterTabItems}
+        onSelect={onSelectFilterTab}
+        selectedItem={selectedFilterTab}
+      />
+      {
+        selectedFilterTab === FilterTabType.ACCOUNT_ADDRESS && (
+          <AccountAddressList
+            accountProxy={accountProxy}
+            className={'list-container'}
+          />
+        )
+      }
+      {
+        selectedFilterTab === FilterTabType.DERIVED_ACCOUNT && (
+          <DerivedAccountList
+            accountProxy={accountProxy}
+            className={'list-container'}
+          />
+        )
+      }
+    </Layout.WithSubHeaderOnly>
+  );
+};
+
+const Wrapper = ({ className }: Props) => {
+  const { goHome } = useDefaultNavigate();
+  const { accountProxyId } = useParams();
+  const accountProxy = useGetAccountProxyById(accountProxyId);
+  const locationState = useLocation().state as AccountDetailParam | undefined;
+
   useEffect(() => {
     if (!accountProxy) {
       goHome();
     }
-  }, [accountProxy, goHome, navigate]);
+  }, [accountProxy, goHome]);
 
   if (!accountProxy) {
-    return null;
+    return (
+      <></>
+    );
   }
 
   return (
     <PageWrapper
       className={CN(className)}
     >
-      <Layout.WithSubHeaderOnly
-        disableBack={false}
-        footer={footerNode}
-        subHeaderIcons={[
-          {
-            icon: <CloseIcon />,
-            onClick: goHome,
-            disabled: false
-          }
-        ]}
-        title={t('Account details')}
-      >
-        <Form
-          className={'account-detail-form'}
-          form={form}
-          initialValues={{
-            [FormFieldName.NAME]: accountProxy.name || ''
-          }}
-          name='account-detail-form'
-          onFieldsChange={onUpdate}
-          onFinish={onSubmit}
-        >
-          <Form.Item
-            className={CN('account-field')}
-            name={FormFieldName.NAME}
-            rules={[
-              {
-                message: t('Account name is required'),
-                transform: (value: string) => value.trim(),
-                required: true
-              }
-            ]}
-            statusHelpAsTooltip={true}
-          >
-            <Input
-              className='account-name-input'
-              disabled={false}
-              label={t('Account name')}
-              onBlur={form.submit}
-              placeholder={t('Account name')}
-              suffix={(
-                <Icon
-                  className={CN({ loading: saving })}
-                  phosphorIcon={saving ? CircleNotch : FloppyDiskBack}
-                  size='sm'
-                />
-              )}
-            />
-          </Form.Item>
-        </Form>
-
-        <FilterTabs
-          className={'filter-tabs-container'}
-          items={filterTabItems}
-          onSelect={onSelectFilterTab}
-          selectedItem={selectedFilterTab}
-        />
-        {
-          selectedFilterTab === FilterTabType.ACCOUNT_ADDRESS && (
-            <AccountAddressList
-              accountProxy={accountProxy}
-              className={'list-container'}
-            />
-          )
-        }
-        {
-          selectedFilterTab === FilterTabType.DERIVED_ACCOUNT && (
-            <DerivedAccountList
-              accountProxy={accountProxy}
-              className={'list-container'}
-            />
-          )
-        }
-      </Layout.WithSubHeaderOnly>
+      <Component
+        accountProxy={accountProxy}
+        onBack={goHome}
+        requestViewDerivedAccounts={locationState?.requestViewDerivedAccounts}
+      />
     </PageWrapper>
   );
 };
 
-const AccountDetail = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const AccountDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
   return {
     '.ant-sw-screen-layout-body': {
       display: 'flex',

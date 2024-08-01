@@ -22,7 +22,6 @@ type Props = ThemeProps & {
   onClickCopyButton?: VoidFunction;
   onClickDeriveButton?: VoidFunction;
   onClickMoreButton?: VoidFunction;
-  showDeriveButton?: boolean;
 }
 
 type AccountProxyTypeIcon = {
@@ -37,7 +36,7 @@ function Component (props: Props): React.ReactElement<Props> {
     onClick,
     onClickCopyButton,
     onClickDeriveButton,
-    onClickMoreButton, showDeriveButton } = props;
+    onClickMoreButton } = props;
 
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
@@ -122,6 +121,8 @@ function Component (props: Props): React.ReactElement<Props> {
 
     return null;
   })();
+
+  const showDeriveButton = !!accountProxy?.children?.length;
 
   return (
     <>

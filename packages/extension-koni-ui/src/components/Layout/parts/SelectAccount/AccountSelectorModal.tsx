@@ -14,7 +14,7 @@ import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTransla
 import { saveCurrentAccountAddress } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -187,11 +187,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     };
   }, [accountProxies, inactiveModal, location.pathname, navigate, goHome]);
 
-  const onViewAccountDetail = useCallback((accountProxy: AccountProxy) => {
+  const onViewAccountDetail = useCallback((accountProxy: AccountProxy, requestViewDerivedAccounts?: boolean) => {
     return () => {
       inactiveModal(modalId);
       setTimeout(() => {
-        navigate(`/accounts/detail/${accountProxy.id}`);
+        navigate(`/accounts/detail/${accountProxy.id}`, { state: {
+          requestViewDerivedAccounts
+        } as AccountDetailParam });
       }, 100);
     };
   }, [inactiveModal, navigate]);
@@ -232,6 +234,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         isSelected={item.id === currentAccountProxy?.id}
         key={item.id}
         onClick={onSelect(item as AccountProxy)}
+        onClickDeriveButton={onViewAccountDetail(item as AccountProxy, true)}
         onClickMoreButton={onViewAccountDetail(item as AccountProxy)}
       />
     );

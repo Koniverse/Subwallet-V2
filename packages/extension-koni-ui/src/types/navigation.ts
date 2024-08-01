@@ -52,6 +52,14 @@ export type EarningPositionDetailParam = {
   earningSlug: string,
 };
 
+// general
+
 export type RemindBackUpSeedPhraseParamState = {
   from: string;
+}
+
+// account detail
+
+export type AccountDetailParam = {
+  requestViewDerivedAccounts?: boolean
 }

@@ -3,10 +3,12 @@
 
 import { AccountProxy } from '@subwallet/extension-base/types';
 import { AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { useGetDerivedAccountProxies, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { SwList } from '@subwallet/react-ui';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -14,8 +16,28 @@ type Props = ThemeProps & {
 };
 
 function Component ({ accountProxy, className }: Props) {
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+
   const { t } = useTranslation();
-  const items = useGetDerivedAccountProxies(accountProxy);
+
+  // todo: may have to sort the result
+  const items = useMemo<AccountProxy[]>(() => {
+    const result: AccountProxy[] = [];
+
+    if (!accountProxy?.children?.length) {
+      return [];
+    }
+
+    accountProxy.children.forEach((apId) => {
+      const item = accountProxies.find((ap) => ap.id === apId);
+
+      if (item) {
+        result.push(item);
+      }
+    });
+
+    return result;
+  }, [accountProxies, accountProxy.children]);
 
   const renderItem = useCallback(
     (item: AccountProxy) => {
