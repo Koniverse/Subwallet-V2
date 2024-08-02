@@ -20,6 +20,7 @@ export interface AddressQrModalProps {
   address: string;
   chainSlug: string;
   onBack?: VoidFunction;
+  onCancel?: VoidFunction;
 }
 
 type Props = ThemeProps & AddressQrModalProps & {

@@ -101,6 +101,10 @@ export const WalletModalContextProvider = ({ children }: Props) => {
     setAddressQrModalProps(undefined);
   }, [inactiveModal]);
 
+  const onCancelAddressQrModal = useCallback(() => {
+    addressQrModalProps?.onCancel?.() || closeAddressQrModal();
+  }, [addressQrModalProps, closeAddressQrModal]);
+
   /* Address QR Modal */
 
   const contextValue: WalletModalContextType = useMemo(() => ({
@@ -171,7 +175,7 @@ export const WalletModalContextProvider = ({ children }: Props) => {
       !!addressQrModalProps && (
         <AddressQrModal
           {...addressQrModalProps}
-          onCancel={closeAddressQrModal}
+          onCancel={onCancelAddressQrModal}
         />
       )
     }

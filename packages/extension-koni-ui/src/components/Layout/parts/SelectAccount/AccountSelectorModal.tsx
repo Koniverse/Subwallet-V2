@@ -5,10 +5,10 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { CurrentAccountInfo } from '@subwallet/extension-base/background/types';
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { AccountNetworkAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import SelectAccountFooter from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/Footer';
 import Search from '@subwallet/extension-koni-ui/components/Search';
-import { SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { ACCOUNT_NETWORK_ADDRESSES_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useDefaultNavigate, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { saveCurrentAccountAddress } from '@subwallet/extension-koni-ui/messaging';
@@ -36,11 +36,12 @@ type Props = ThemeProps
 const renderEmpty = () => <GeneralEmptyList />;
 
 const modalId = SELECT_ACCOUNT_MODAL;
+const accountNetworkAddressesModalId = ACCOUNT_NETWORK_ADDRESSES_MODAL;
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { inactiveModal } = useContext(ModalContext);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
   const [searchValue, setSearchValue] = useState<string>('');
   const { token } = useTheme() as Theme;
   const { goHome } = useDefaultNavigate();
@@ -49,6 +50,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
+
+  const [idOfAccountProxyToGetAddresses, setIdOfAccountProxyToGetAddresses] = useState<string | undefined>();
+
+  const accountProxyToGetAddresses = useMemo(() => {
+    if (!idOfAccountProxyToGetAddresses) {
+      return undefined;
+    }
+
+    return accountProxies.find((ap) => ap.id === idOfAccountProxyToGetAddresses);
+  }, [accountProxies, idOfAccountProxyToGetAddresses]);
 
   const listItems = useMemo<ListItem[]>(() => {
     let accountAll: AccountProxy | undefined;
@@ -187,13 +198,24 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     };
   }, [accountProxies, inactiveModal, location.pathname, navigate, goHome]);
 
+  const onViewNetworkAddresses = useCallback((accountProxy: AccountProxy) => {
+    return () => {
+      setIdOfAccountProxyToGetAddresses(accountProxy.id);
+      setTimeout(() => {
+        activeModal(accountNetworkAddressesModalId);
+      }, 100);
+    };
+  }, [activeModal]);
+
   const onViewAccountDetail = useCallback((accountProxy: AccountProxy, requestViewDerivedAccounts?: boolean) => {
     return () => {
       inactiveModal(modalId);
       setTimeout(() => {
-        navigate(`/accounts/detail/${accountProxy.id}`, { state: {
-          requestViewDerivedAccounts
-        } as AccountDetailParam });
+        navigate(`/accounts/detail/${accountProxy.id}`, {
+          state: {
+            requestViewDerivedAccounts
+          } as AccountDetailParam
+        });
       }, 100);
     };
   }, [inactiveModal, navigate]);
@@ -234,11 +256,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         isSelected={item.id === currentAccountProxy?.id}
         key={item.id}
         onClick={onSelect(item as AccountProxy)}
+        onClickCopyButton={onViewNetworkAddresses(item as AccountProxy)}
         onClickDeriveButton={onViewAccountDetail(item as AccountProxy, true)}
         onClickMoreButton={onViewAccountDetail(item as AccountProxy)}
       />
     );
-  }, [currentAccountProxy?.id, onSelect, onViewAccountDetail, showAllAccount]);
+  }, [currentAccountProxy?.id, onSelect, onViewAccountDetail, onViewNetworkAddresses, showAllAccount]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value);
@@ -283,28 +306,54 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     });
   }, [t, token.colorHighlight]);
 
+  const closeAccountNetworkAddressesModal = useCallback(() => {
+    inactiveModal(accountNetworkAddressesModalId);
+    setIdOfAccountProxyToGetAddresses(undefined);
+  }, [inactiveModal]);
+
+  const onBackAccountNetworkAddressesModal = useCallback(() => {
+    closeAccountNetworkAddressesModal();
+  }, [closeAccountNetworkAddressesModal]);
+
+  const onCancelAccountNetworkAddressesModal = useCallback(() => {
+    inactiveModal(modalId);
+    closeAccountNetworkAddressesModal();
+  }, [closeAccountNetworkAddressesModal, inactiveModal]);
+
   return (
-    <SwModal
-      className={CN(className)}
-      footer={<SelectAccountFooter />}
-      id={modalId}
-      onCancel={_onCancel}
-      rightIconProps={rightIconProps}
-      title={t('Select account')}
-    >
-      <Search
-        className={'__search-box'}
-        onSearch={handleSearch}
-        placeholder={t<string>('Account name')}
-        searchValue={searchValue}
-      />
-      <SwList
-        className={'__list-container'}
-        list={listItems}
-        renderItem={renderItem}
-        renderWhenEmpty={renderEmpty}
-      />
-    </SwModal>
+    <>
+      <SwModal
+        className={CN(className)}
+        footer={<SelectAccountFooter />}
+        id={modalId}
+        onCancel={_onCancel}
+        rightIconProps={rightIconProps}
+        title={t('Select account')}
+      >
+        <Search
+          className={'__search-box'}
+          onSearch={handleSearch}
+          placeholder={t<string>('Account name')}
+          searchValue={searchValue}
+        />
+        <SwList
+          className={'__list-container'}
+          list={listItems}
+          renderItem={renderItem}
+          renderWhenEmpty={renderEmpty}
+        />
+      </SwModal>
+
+      {
+        accountProxyToGetAddresses && (
+          <AccountNetworkAddressesModal
+            accountProxy={accountProxyToGetAddresses}
+            onBack={onBackAccountNetworkAddressesModal}
+            onCancel={onCancelAccountNetworkAddressesModal}
+          />
+        )
+      }
+    </>
   );
 };
 
@@ -318,7 +367,12 @@ export const AccountSelectorModal = styled(Component)<Props>(({ theme: { token }
       overflow: 'auto',
       display: 'flex',
       flex: 1,
-      flexDirection: 'column'
+      flexDirection: 'column',
+      paddingBottom: 0
+    },
+
+    '.ant-sw-modal-footer.ant-sw-modal-footer': {
+      borderTop: 0
     },
 
     '.list-item-group-label': {
