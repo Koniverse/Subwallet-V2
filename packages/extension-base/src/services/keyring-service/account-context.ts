@@ -6,7 +6,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { SEED_DEFAULT_LENGTH, SEED_LENGTHS } from '@subwallet/extension-base/koni/background/handlers/Extension';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
-import { AccountJson, AccountNetworkType, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
@@ -141,7 +141,7 @@ export class AccountContext {
           }
         }
 
-        temp[address] = { id: address, name: account.name || account.address, accounts: [account], networkTypes: [account.networkType] };
+        temp[address] = { id: address, name: account.name || account.address, accounts: [account], networkTypes: [account.networkType], parentId: account.parentAddress, suri: account.suri };
       }
 
       const result: AccountProxyMap = Object.fromEntries(
@@ -176,6 +176,38 @@ export class AccountContext {
             return [key, { ...value, accountType, networkTypes }];
           })
       );
+
+      const deepSearchParentId = (parentId: string): string => {
+        const parent = result[parentId];
+
+        if (parent && parent.parentId) {
+          return deepSearchParentId(parent.parentId);
+        }
+
+        return parentId;
+      };
+
+      for (const value of Object.values(result)) {
+        if (value.parentId) {
+          value.parentId = deepSearchParentId(value.parentId);
+        }
+      }
+
+      const deepSearchChildren = (id: string): string[] => {
+        const rs: string[] = [];
+
+        for (const accountProxy of Object.values(result)) {
+          if (accountProxy.parentId === id) {
+            rs.push(accountProxy.id);
+          }
+        }
+
+        return rs;
+      };
+
+      for (const value of Object.values(result)) {
+        value.children = deepSearchChildren(value.id);
+      }
 
       this.accountSubject.next(result);
     });
@@ -817,6 +849,7 @@ export class AccountContext {
             keyring.saveAccountMeta(newAccount, { ...newAccount.meta, genesisHash: '' });
           }
 
+          this.updateMetadataForPair();
           this._addAddressToAuthList(address, isAllowed);
         });
       } catch (error) {
@@ -846,7 +879,7 @@ export class AccountContext {
         this._saveCurrentAccountAddress(ALL_ACCOUNT_KEY, () => {
           keyring.restoreAccounts(file, password);
 
-          this.removeNoneHardwareGenesisHash();
+          this.updateMetadataForPair();
           this._addAddressesToAuthList(addressList, isAllowed);
         });
       } catch (error) {
@@ -922,7 +955,12 @@ export class AccountContext {
 
   /* Derive */
 
-  /* Derive multi account */
+  /**
+   * @func derivationCreateMultiple
+   * @desc Derive multi account
+   * Note: Must update before re-use
+   * @deprecated
+   */
   public derivationCreateMultiple ({ isAllowed, items, parentAddress }: RequestDeriveCreateMultiple): boolean {
     const parentPair = keyring.getPair(parentAddress);
     const isEvm = parentPair.type === 'ethereum';
@@ -1078,7 +1116,12 @@ export class AccountContext {
     };
   }
 
-  /* Get a derivation account list */
+  /**
+   * @func getListDeriveAccounts
+   * @desc Get a derivation account list.
+   * Note: Must update before re-use
+   * @deprecated
+   */
   public getListDeriveAccounts ({ limit, page, parentAddress }: RequestGetDeriveAccounts): ResponseGetDeriveAccounts {
     const parentPair = keyring.getPair(parentAddress);
     const isEvm = parentPair.type === 'ethereum';
@@ -1372,6 +1415,61 @@ export class AccountContext {
 
     needUpdatePairs.forEach((pair) => {
       keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash: '' });
+    });
+  }
+
+  updateMetadataForPair () {
+    const pairs = keyring.getPairs();
+    const pairMap = Object.fromEntries(pairs.map((pair) => [pair.address, pair]));
+
+    const needUpdateSet = new Set<string>();
+    const needUpdateGenesisHash = pairs.filter(({ meta: { genesisHash, isHardware } }) => !isHardware && genesisHash && genesisHash !== '').map((pair) => pair.address);
+
+    needUpdateGenesisHash.forEach((address) => {
+      pairMap[address].meta.genesisHash = '';
+      needUpdateSet.add(address);
+    });
+
+    const deepSearchParentId = (_parentAddress: string, _suri: string): [string, string] => {
+      const parent = pairMap[_parentAddress];
+
+      if (parent) {
+        const metadata = parent.meta as AccountMetadataData;
+        const parentAddress = metadata.parentAddress;
+        const parentSuri = metadata.suri;
+        const isExternal = metadata.isExternal;
+
+        if (parentAddress && parentSuri && !isExternal) {
+          const suri = [parentSuri, _suri].join('');
+
+          return deepSearchParentId(parentAddress, suri);
+        }
+      }
+
+      return [_parentAddress, _suri];
+    };
+
+    for (const pair of Object.values(pairMap)) {
+      const address = pair.address;
+      const metadata = pair.meta as AccountMetadataData;
+      const parentAddress = metadata.parentAddress;
+      const parentSuri = metadata.suri;
+
+      if (parentAddress && parentSuri) {
+        const [_parentAddress, _parentSuri] = deepSearchParentId(parentAddress, parentSuri);
+
+        if (parentAddress !== _parentAddress && parentSuri !== _parentSuri) {
+          metadata.parentAddress = _parentAddress;
+          metadata.suri = _parentSuri;
+          needUpdateSet.add(address);
+        }
+      }
+    }
+
+    Array.from(needUpdateSet).forEach((address) => {
+      const pair = pairMap[address];
+
+      console.debug('updateMetadataForPair', pair.address, pair.meta);
     });
   }
 
