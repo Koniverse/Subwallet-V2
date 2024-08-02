@@ -31,7 +31,43 @@ type ListItemGroupLabel = {
 
 type ListItem = AccountProxy | ListItemGroupLabel;
 
-type Props = ThemeProps
+type Props = ThemeProps;
+
+function reorderAccounts (items: AccountProxy[]): AccountProxy[] {
+  const accountMap: Record<string, AccountProxy> = {};
+  const allChildren = new Set<string>();
+  const result: AccountProxy[] = [];
+
+  items.forEach((item) => {
+    accountMap[item.id] = item;
+
+    if (item.children) {
+      item.children.forEach((childId) => allChildren.add(childId));
+    }
+  });
+
+  items.forEach((item) => {
+    if (!allChildren.has(item.id)) {
+      addWithChildren(item);
+    }
+  });
+
+  function addWithChildren (item: AccountProxy) {
+    result.push(item);
+
+    if (item.children) {
+      item.children.forEach((childId) => {
+        const child = accountMap[childId];
+
+        if (child) {
+          addWithChildren(child);
+        }
+      });
+    }
+  }
+
+  return result;
+}
 
 const renderEmpty = () => <GeneralEmptyList />;
 
@@ -64,7 +100,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const listItems = useMemo<ListItem[]>(() => {
     let accountAll: AccountProxy | undefined;
     const result: ListItem[] = [];
-    const masterAccounts: ListItem[] = [];
+    const masterAccounts: AccountProxy[] = [];
     const qrSignerAccounts: ListItem[] = [];
     const watchOnlyAccounts: ListItem[] = [];
     const ledgerAccounts: ListItem[] = [];
@@ -98,7 +134,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     });
 
     if (masterAccounts.length) {
-      result.push(...masterAccounts);
+      result.push(...reorderAccounts(masterAccounts));
     }
 
     if (qrSignerAccounts.length) {
