@@ -52,6 +52,7 @@ export interface AccountProxy extends AccountProxyData {
   accounts: AccountJson[];
   accountType: AccountProxyType;
   networkTypes: AccountNetworkType[];
+  children?: string[];
 }
 
 export type AccountProxyMap = Record<string, AccountProxy>

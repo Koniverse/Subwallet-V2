@@ -6059,14 +6059,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.78":
-  version: 0.2.78
-  resolution: "@subwallet/chain-list@npm:0.2.78"
+"@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.2.80-beta.3
+  resolution: "@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/#../SubWallet-ChainList/packages/chain-list/build/::hash=ca6e93&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 396de6972f065be1b75fd5ef349e61ebe18c5cfb10da54f634a78ba19c7841459f255c8e05175f267dcf5c3883d63c96d4f3ab5576652f331acb969b620c8fc5
+  checksum: 77d9e0ece7f9898baf88ee035941f3a7e29b0453fe4627b2e9c57e90a972b4ccc66a561349af6630e2ac0648835eba4cc5a5b8198657782b79ed25f670076ca1
   languageName: node
   linkType: hard
 
@@ -6108,7 +6108,7 @@ __metadata:
     "@reduxjs/toolkit": ^1.9.1
     "@sora-substrate/type-definitions": ^1.17.7
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.78
+    "@subwallet/chain-list": 0.2.79
     "@subwallet/extension-base": ^1.2.21-0
     "@subwallet/extension-chains": ^1.2.21-0
     "@subwallet/extension-dapp": ^1.2.21-0
@@ -6240,7 +6240,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.78
+    "@subwallet/chain-list": 0.2.79
     "@subwallet/extension-base": ^1.2.21-0
     "@subwallet/extension-chains": ^1.2.21-0
     "@subwallet/extension-dapp": ^1.2.21-0
@@ -6378,7 +6378,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.78
+    "@subwallet/chain-list": 0.2.79
     "@subwallet/extension-base": ^1.2.21-0
     "@subwallet/extension-chains": ^1.2.21-0
     "@subwallet/extension-dapp": ^1.2.21-0
@@ -6842,6 +6842,22 @@ __metadata:
     "@ton/core": ">=0.56.0"
     "@ton/crypto": ">=3.2.0"
   checksum: d017339a5a4d358eb80207f0afb3e1cc05a4edb157229b974f0bf5d397ad8b1ef7edb2c89c119bab3d6a3829fb6336b5b665665060e2a9c139b1998476c3431e
+  languageName: node
+  linkType: hard
+
+"@ton/ton@npm:^14.0.0":
+  version: 14.0.0
+  resolution: "@ton/ton@npm:14.0.0"
+  dependencies:
+    axios: ^1.6.7
+    dataloader: ^2.0.0
+    symbol.inspect: 1.0.1
+    teslabot: ^1.3.0
+    zod: ^3.21.4
+  peerDependencies:
+    "@ton/core": ">=0.56.0"
+    "@ton/crypto": ">=3.2.0"
+  checksum: b0be725460cf12a5c4ef9e71a1a04b93759d1fb917d410ba2249c1bec6bdbc826b8b77a1ae5d4cdb2f7a02ec5d73136c3556f81ab62260649f7203ed77708aea
   languageName: node
   linkType: hard
 
@@ -24821,6 +24837,9 @@ __metadata:
     "@babel/cli": ^7.19.3
     "@babel/core": ^7.19.3
     "@polkadot/dev": ^0.65.23
+    "@ton/core": ^0.56.3
+    "@ton/crypto": ^3.2.0
+    "@ton/ton": ^14.0.0
     "@types/jest": ^29.5.0
     "@types/node": ^17.0.10
     axios: ^1.6.2

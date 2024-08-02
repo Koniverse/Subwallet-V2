@@ -416,7 +416,7 @@ export class AccountContext {
     return proxyId;
   }
 
-  public getDecodedAddresses (accountProxy?: string): string[] {
+  public getDecodedAddresses (accountProxy?: string, allowGetAllAccount = true): string[] {
     let proxyId: string | null | undefined = accountProxy;
 
     if (!accountProxy) {
@@ -428,7 +428,7 @@ export class AccountContext {
     }
 
     if (proxyId === ALL_ACCOUNT_KEY) {
-      return this.getAllAddresses();
+      return allowGetAllAccount ? this.getAllAddresses() : [];
     }
 
     const accountProxies = this.accountProxiesSubject.value;

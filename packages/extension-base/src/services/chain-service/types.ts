@@ -5,6 +5,7 @@
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
+import { Address, Contract, OpenedContract } from '@ton/ton';
 import { BehaviorSubject } from 'rxjs';
 import Web3 from 'web3';
 
@@ -105,6 +106,14 @@ export interface _EvmApi extends _ChainBaseApi {
   isReady: Promise<_EvmApi>;
 }
 
+export interface _TonApi extends _ChainBaseApi, _TonUtilsApi {
+  isReady: Promise<_TonApi>;
+}
+
+export interface _TonUtilsApi {
+  getBalance (address: Address): Promise<bigint>;
+  open<T extends Contract>(src: T): OpenedContract<T>;
+}
 export type _NetworkUpsertParams = {
   mode: 'update' | 'insert',
   chainEditInfo: {

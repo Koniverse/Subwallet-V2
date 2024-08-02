@@ -61,11 +61,15 @@ export function _isEqualSmartContractAsset (asset1: _ChainAsset, asset2: _ChainA
 }
 
 export function _isPureEvmChain (chainInfo: _ChainInfo) {
-  return (chainInfo.evmInfo !== null && chainInfo.substrateInfo === null);
+  return (chainInfo.evmInfo !== null && chainInfo.substrateInfo === null && chainInfo.tonInfo === null);
 }
 
 export function _isPureSubstrateChain (chainInfo: _ChainInfo) {
-  return (chainInfo.evmInfo === null && chainInfo.substrateInfo !== null);
+  return (chainInfo.evmInfo === null && chainInfo.substrateInfo !== null && chainInfo.tonInfo === null);
+}
+
+export function _isPureTonChain (chainInfo: _ChainInfo) {
+  return (chainInfo.evmInfo === null && chainInfo.substrateInfo === null && chainInfo.tonInfo !== null);
 }
 
 export function _getOriginChainOfAsset (assetSlug: string) {
@@ -143,8 +147,7 @@ export function _isChainBitcoinCompatible (chainInfo: _ChainInfo) {
 }
 
 export function _isChainTonCompatible (chainInfo: _ChainInfo) {
-  // TODO: Add TON chain info
-  return false;
+  return !!chainInfo.tonInfo;
 }
 
 export function _isNativeToken (tokenInfo: _ChainAsset) {
@@ -159,7 +162,7 @@ export function _isSmartContractToken (tokenInfo: _ChainAsset) {
   return _SMART_CONTRACT_STANDARDS.includes(tokenInfo.assetType);
 }
 
-export function _isSubstrateChain (chainInfo: _ChainInfo) {
+export function _isChainSubstrateCompatible (chainInfo: _ChainInfo) {
   return !!chainInfo.substrateInfo; // fallback to Ethereum
 }
 

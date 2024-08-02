@@ -61,6 +61,9 @@
     "webapp:watch": "cd packages/webapp && yarn webpack-dev-server --config webpack.config.cjs --mode development"
   },
   "dependencies": {
+    "@ton/core": "^0.56.3",
+    "@ton/crypto": "^3.2.0",
+    "@ton/ton": "^14.0.0",
     "@types/node": "^17.0.10",
     "dexie": "^3.2.2",
     "loglevel": "^1.8.1",
@@ -104,7 +107,7 @@
     "@polkadot/types-support": "^12.0.2",
     "@polkadot/util": "^12.6.2",
     "@polkadot/util-crypto": "^12.6.2",
-    "@subwallet/chain-list": "0.2.78",
+    "@subwallet/chain-list": "file:../SubWallet-ChainList/packages/chain-list/build/",
     "@subwallet/keyring": "file:../SubWallet-Base/packages/keyring/build/",
     "@subwallet/react-ui": "5.1.2-b79",
     "@subwallet/ui-keyring": "file:../SubWallet-Base/packages/ui-keyring/build/",
