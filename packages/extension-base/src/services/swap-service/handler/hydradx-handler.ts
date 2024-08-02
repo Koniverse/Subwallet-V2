@@ -226,7 +226,7 @@ export class HydradxHandler implements SwapBaseInterface {
 
           const convertedFeeAmount = new BigNumber(txFee.partialFee).dividedBy(spotPrice.amount);
 
-          const fee: SwapFeeInfo = {
+          const fee: CommonStepFeeInfo = {
             feeComponent: [{
               feeType: SwapFeeType.NETWORK_FEE,
               amount: convertedFeeAmount.shiftedBy(_getAssetDecimals(selectedFeeTokenInfo)).toFixed(0),
@@ -255,6 +255,7 @@ export class HydradxHandler implements SwapBaseInterface {
       if (!params.selectedQuote) {
         return Promise.resolve(undefined);
       }
+
       const submitStep = {
         name: 'Swap',
         type: SwapStepType.SWAP
@@ -284,7 +285,7 @@ export class HydradxHandler implements SwapBaseInterface {
       const selectedFeeTokenInfo = this.chainService.getAssetBySlug(customFeeTokenSlug);
       const selectedFeeAssetId = _getTokenOnChainAssetId(selectedFeeTokenInfo);
 
-      const convertedFeeInfo: SwapFeeInfo = {
+      const convertedFeeInfo: CommonStepFeeInfo = {
         ...defaultFeeInfo,
         feeComponent: defaultFeeInfo.feeComponent.filter((component) => component.feeType !== SwapFeeType.NETWORK_FEE)
       };
@@ -522,7 +523,7 @@ export class HydradxHandler implements SwapBaseInterface {
     const substrateApi = this.chainService.getSubstrateApi(this.chain());
     const chainApi = await substrateApi.isReady;
 
-    const swapStepIndex = params.process.steps.findIndex((step) => step.type === SwapStepType.SET_FEE_TOKEN);
+    const swapStepIndex = params.process.steps.findIndex((step) => step.type === CommonStepType.SET_FEE_TOKEN);
 
     if (swapStepIndex <= -1) {
       return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR));
