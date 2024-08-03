@@ -6,12 +6,12 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { SEED_DEFAULT_LENGTH, SEED_LENGTHS } from '@subwallet/extension-base/koni/background/handlers/Extension';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
-import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveAccountProxy, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
-import { isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
+import { derivePair, findNextDerivePair, isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { createPair, getDerivePath, getKeypairTypeByAddress } from '@subwallet/keyring';
-import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
+import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -1027,8 +1027,13 @@ export class AccountContext {
     return true;
   }
 
-  /* Auto create derive account */
-  public derivationCreateV3 ({ address: parentAddress }: RequestDeriveCreateV3): boolean {
+  /**
+   * @func getListDeriveAccounts
+   * @desc Get a derivation account list.
+   * Note: Must update before re-use
+   * @deprecated
+   */
+  public getListDeriveAccounts ({ limit, page, parentAddress }: RequestGetDeriveAccounts): ResponseGetDeriveAccounts {
     const parentPair = keyring.getPair(parentAddress);
     const isEvm = parentPair.type === 'ethereum';
 
@@ -1036,37 +1041,21 @@ export class AccountContext {
       keyring.unlockPair(parentPair.address);
     }
 
-    const pairs = keyring.getPairs();
-    const children = pairs.filter((p) => p.meta.parentAddress === parentAddress);
-    const name = `Account ${pairs.length}`;
+    const start = (page - 1) * limit + (isEvm ? 1 : 0);
+    const end = start + limit;
 
-    let index = isEvm ? 1 : 0;
-    let valid = false;
+    const result: DeriveAccountInfo[] = [];
 
-    do {
-      const exist = children.find((p) => p.meta.suri === `//${index}`);
+    for (let i = start; i < end; i++) {
+      const suri = `//${i}`;
+      const pair = isEvm ? parentPair.evm.derive(i, {}) : parentPair.substrate.derive(suri, {});
 
-      if (exist) {
-        index++;
-      } else {
-        valid = true;
-      }
-    } while (!valid);
+      result.push({ address: pair.address, suri: suri });
+    }
 
-    const meta = {
-      name,
-      parentAddress,
-      suri: `//${index}`
+    return {
+      result: result
     };
-    const childPair = isEvm ? parentPair.evm.derive(index, meta) : parentPair.substrate.derive(meta.suri, meta);
-    const address = childPair.address;
-
-    this._saveCurrentAccountAddress(address, () => {
-      keyring.addPair(childPair, true);
-      this._addAddressToAuthList(address, true);
-    });
-
-    return true;
   }
 
   /* Validate derivation path */
@@ -1116,131 +1105,111 @@ export class AccountContext {
     };
   }
 
-  /**
-   * @func getListDeriveAccounts
-   * @desc Get a derivation account list.
-   * Note: Must update before re-use
-   * @deprecated
-   */
-  public getListDeriveAccounts ({ limit, page, parentAddress }: RequestGetDeriveAccounts): ResponseGetDeriveAccounts {
-    const parentPair = keyring.getPair(parentAddress);
-    const isEvm = parentPair.type === 'ethereum';
+  /* Auto create derive account for solo account */
+  public deriveSoloAccount (request: RequestDeriveCreateV3): boolean {
+    const { name, proxyId, suri } = request;
+
+    const parentPair = keyring.getPair(proxyId);
+
+    assert(parentPair, t('Unable to find account'));
+
+    const isSpecialTon = parentPair.type === 'ton-special';
+
+    assert(!isSpecialTon, t('Cannot derive for this account'));
+
+    const isSubstrate = SubstrateKeypairTypes.includes(parentPair.type);
+
+    assert(!isSubstrate ? !suri : true, t('Cannot derive for this account'));
 
     if (parentPair.isLocked) {
       keyring.unlockPair(parentPair.address);
     }
 
-    const start = (page - 1) * limit + (isEvm ? 1 : 0);
-    const end = start + limit;
+    let childPair: KeyringPair | undefined;
 
-    const result: DeriveAccountInfo[] = [];
+    if (suri) {
+      childPair = parentPair.substrate.derive(suri, { name, parentAddress: proxyId, suri });
+    } else {
+      const { deriveIndex } = findNextDerivePair(parentPair.address);
 
-    for (let i = start; i < end; i++) {
-      const suri = `//${i}`;
-      const pair = isEvm ? parentPair.evm.derive(i, {}) : parentPair.substrate.derive(suri, {});
-
-      result.push({ address: pair.address, suri: suri });
+      childPair = derivePair(parentPair, name, deriveIndex);
     }
 
-    return {
-      result: result
-    };
+    if (!childPair) {
+      throw Error(t('Cannot derive for this account'));
+    }
+
+    const address = childPair.address;
+
+    keyring.addPair(childPair, true);
+
+    this.updateMetadataForPair();
+    this._saveCurrentAccountAddress(address, () => {
+      this._addAddressToAuthList(address, true);
+    });
+
+    return true;
+  }
+
+  /* Auto create derive account for solo account */
+  public deriveUnifiedAccount (request: RequestDeriveCreateV3): boolean {
+    const { name, proxyId: parentProxyId, suri: _suri } = request;
+    const accountProxyData = this.accountProxiesSubject.value;
+    const accountProxy = accountProxyData[parentProxyId];
+
+    assert(!accountProxy.parentId && !_suri, t('Cannot derive this account with suri'));
+
+    const modifyPairs = this.modifyPairsSubject.value;
+    const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === parentProxyId);
+    const firstAddress = addresses[0];
+
+    assert(firstAddress, t('Cannot find account'));
+
+    const modifiedPairs = this.modifyPairsSubject.value;
+    const nextDeriveData = findNextDerivePair(firstAddress);
+    const { deriveIndex } = nextDeriveData;
+    const suri = `//${deriveIndex}`;
+    const proxyId = this.createAccountGroupId(parentProxyId, suri);
+    const pairs: KeyringPair[] = [];
+
+    this.upsertAccountProxy({ id: proxyId, name, parentId: parentProxyId, suri: suri });
+
+    for (const parentAddress of addresses) {
+      const parentPair = keyring.getPair(parentAddress);
+      const newAccountName = modifyAccountName(parentPair.type, name, true);
+      const childPair = derivePair(parentPair, newAccountName, deriveIndex);
+      const address = childPair.address;
+
+      modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
+      pairs.push(childPair);
+    }
+
+    this.upsertModifyPairs(modifiedPairs);
+
+    for (const childPair of pairs) {
+      keyring.addPair(childPair, true);
+    }
+
+    this.updateMetadataForPair();
+    this._saveCurrentAccountAddress(proxyId, () => {
+      this._addAddressesToAuthList(pairs.map((pair) => pair.address), true);
+    });
+
+    return true;
   }
 
   /**
    * Derive account proxy
    * @todo: finish this method
    *  */
-  public derivationAccountProxyCreate ({ proxyId, suri }: RequestDeriveAccountProxy): boolean {
-    const pairs = keyring.getPairs();
+  public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
+    const isUnified = this.isUnifiedAccount(request.proxyId);
 
-    const newProxyName = 'Account 1';
-    // const modifyPairs = this.modifyPairsSubject.value;
-    const accountProxies = this.accountProxiesSubject.value;
-
-    if (!accountProxies[proxyId]) {
-      const parentAddress = proxyId;
-      const parentPair = keyring.getPair(parentAddress);
-      const isEvm = parentPair.type === 'ethereum';
-
-      if (!parentPair) {
-        throw Error(t('Cannot find account'));
-      }
-
-      const pairs = keyring.getPairs();
-      const children = pairs.filter((p) => p.meta.parentAddress === parentAddress);
-      const name = `Account ${pairs.length}`;
-
-      let index = isEvm ? 1 : 0;
-      let valid = false;
-
-      do {
-        const exist = children.find((p) => p.meta.suri === `//${index}`);
-
-        if (exist) {
-          index++;
-        } else {
-          valid = true;
-        }
-      } while (!valid);
-
-      const meta = {
-        name,
-        parentAddress,
-        suri: `//${index}`
-      };
-      const childPair = isEvm ? parentPair.evm.derive(index, meta) : parentPair.substrate.derive(meta.suri, meta);
-      const address = childPair.address;
-
-      this._saveCurrentAccountAddress(address, () => {
-        keyring.addPair(childPair, true);
-        this._addAddressToAuthList(address, true);
-      });
-
-      return true;
+    if (!isUnified) {
+      return this.deriveSoloAccount(request);
     } else {
-      // Empty
+      return this.deriveUnifiedAccount(request);
     }
-
-    pairs.forEach((pair) => {
-      if (pair.meta.proxyId !== proxyId) {
-        return;
-      }
-
-      const isEvm = pair.type === 'ethereum';
-
-      if (pair.isLocked) {
-        keyring.unlockPair(pair.address);
-      }
-
-      const children = pairs.filter((p) => p.meta.parentAddress === pair.address);
-
-      let index = 1;
-      let valid = false;
-
-      do {
-        const exist = children.find((p) => p.meta.suri === `//${index}`);
-
-        if (exist) {
-          index++;
-        } else {
-          valid = true;
-        }
-      } while (!valid);
-
-      const meta = {
-        name: newProxyName,
-        parentAddress: pair.address,
-        suri: `//${index}`
-      };
-
-      // todo: will update logic if support more type
-      const childPair = isEvm ? pair.evm.derive(index, meta) : pair.substrate.derive(index.toString(), meta);
-
-      keyring.addPair(childPair, true);
-    });
-
-    return true;
   }
 
   /* Derive */
@@ -1249,10 +1218,9 @@ export class AccountContext {
 
   /* Export mnemonic */
   public exportAccountProxyMnemonic ({ password, proxyId }: RequestExportAccountProxyMnemonic): ResponseExportAccountProxyMnemonic {
-    const accountProxies = this.accountProxiesSubject.value;
-    const modifyPairs = this.modifyPairsSubject.value;
+    const isUnified = this.isUnifiedAccount(proxyId);
 
-    if (!accountProxies[proxyId]) {
+    if (!isUnified) {
       const pair = keyring.getPair(proxyId);
 
       assert(pair, t('Unable to find account'));
@@ -1261,6 +1229,7 @@ export class AccountContext {
 
       return { result };
     } else {
+      const modifyPairs = this.modifyPairsSubject.value;
       const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
 
       let pair: KeyringPair | undefined;
