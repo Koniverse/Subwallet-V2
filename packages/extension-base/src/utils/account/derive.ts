@@ -23,7 +23,7 @@ export const getDerivationInfo = (type: KeypairType, suri?: string): DeriveInfo 
   if (suri) {
     if (/^\/\/\d+$/.test(suri)) {
       const _deriveIndex = parseInt(suri.replace('//', ''), 10);
-      const deriveIndex = isSubstrate ? _deriveIndex : _deriveIndex - 1;
+      const deriveIndex = isSubstrate ? _deriveIndex + 1 : _deriveIndex;
 
       return { suri, deriveIndex };
     } else {
@@ -60,7 +60,7 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
   });
 
   let valid = true;
-  let index = 0;
+  let index = 1;
 
   for (const { deriveIndex, suri } of childrenMetadata) {
     if (!suri || deriveIndex === undefined) {
@@ -80,8 +80,8 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
   const isSubstrate = SubstrateKeypairTypes.includes(parentPair.type);
   const _deriveIndex = index;
 
-  if (!isSubstrate) {
-    index++; // For all non-substrate, we increment by 1
+  if (isSubstrate) {
+    index--; // For substrate account, we decrease by 1
   }
 
   const suri = `//${index}`;
@@ -102,8 +102,8 @@ export const derivePair = (parentPair: KeyringPair, name: string, deriveIndex: n
   const isTon = parentPair.type === 'ton';
   let _deriveIndex = deriveIndex;
 
-  if (!isSubstrate) {
-    _deriveIndex++; // For all non-substrate, we increment by 1
+  if (isSubstrate) {
+    _deriveIndex--; // For substrate account, we decrease by 1
   }
 
   const suri = `//${_deriveIndex}`;

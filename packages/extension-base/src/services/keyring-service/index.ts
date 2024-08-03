@@ -51,13 +51,14 @@ export class KeyringService {
   /* Reset */
   async resetWallet (resetAll: boolean) {
     keyring.resetWallet(resetAll);
+    this.context.resetWallet();
     await new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve();
       }, 1500);
     });
     this.updateKeyringState();
-    this.context.currentAccountSubject.next({ proxyId: ALL_ACCOUNT_KEY });
+    this.context._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY });
   }
   /* Reset */
 }

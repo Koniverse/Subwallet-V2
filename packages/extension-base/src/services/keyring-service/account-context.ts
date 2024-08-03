@@ -305,11 +305,11 @@ export class AccountContext {
   /* Upsert account group */
   private upsertAccountProxy (data: AccountProxyData, callback?: () => void) {
     this.accountProxiesStore.get(ACCOUNT_PROXIES_KEY, (rs) => {
-      const accountGroups = rs || {};
+      const accountProxyData = rs || {};
 
-      accountGroups[data.id] = data;
-      this.accountProxiesSubject.next(accountGroups);
-      this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, accountGroups, callback);
+      accountProxyData[data.id] = data;
+      this.accountProxiesSubject.next(accountProxyData);
+      this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, accountProxyData, callback);
     });
   }
 
@@ -350,6 +350,11 @@ export class AccountContext {
     }
 
     return blake2AsHex(data, 256);
+  }
+
+  private resetAccountProxy () {
+    this.accountProxiesSubject.next({});
+    this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, {});
   }
 
   /* Account group */
@@ -467,11 +472,7 @@ export class AccountContext {
     const modifyPairs = this.modifyPairsSubject.value;
 
     if (!accountProxies[proxyId]) {
-      const pair = keyring.getPair(proxyId);
-
-      assert(pair, t('Unable to find account'));
-
-      return [pair.address];
+      return [proxyId];
     } else {
       return Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
     }
@@ -1443,4 +1444,11 @@ export class AccountContext {
   }
 
   /* Others */
+
+  /* Reset wallet */
+  resetWallet () {
+    this.upsertModifyPairs({});
+    this.resetAccountProxy();
+  }
+  /* Reset wallet */
 }
