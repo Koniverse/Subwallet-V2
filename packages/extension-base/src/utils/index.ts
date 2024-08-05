@@ -3,12 +3,10 @@
 
 import { CrowdloanParaState, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { getRandomIpfsGateway, SUBWALLET_IPFS } from '@subwallet/extension-base/koni/api/nft/config';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isBitcoinAddress } from '@subwallet/keyring';
-import { KeypairType } from '@subwallet/keyring/types';
-import { isTonAddress } from '@subwallet/keyring/utils';
+import { reformatAddress } from '@subwallet/extension-base/utils/account';
+import { decodeAddress, encodeAddress } from '@subwallet/keyring';
 import { t } from 'i18next';
 
 import { assert, BN, hexToU8a, isHex } from '@polkadot/util';
@@ -23,44 +21,9 @@ export const isDef = (x: any) => !notDef(x);
 export const nonEmptyArr = (x: any) => Array.isArray(x) && x.length > 0;
 export const isEmptyArray = (x: any) => !Array.isArray(x) || (Array.isArray(x) && x.length === 0);
 
-export function isAccountAll (address?: string): boolean {
-  return address === ALL_ACCOUNT_KEY;
-}
-
-export function reformatAddress (address: string, networkPrefix = 42, isEthereum = false): string {
-  try {
-    if (!address || address === '') {
-      return '';
-    }
-
-    if (isEthereumAddress(address)) {
-      return address;
-    }
-
-    if (isAccountAll(address)) {
-      return address;
-    }
-
-    const publicKey = decodeAddress(address);
-
-    if (isEthereum) {
-      return ethereumEncode(publicKey);
-    }
-
-    const type: KeypairType = getKeypairTypeByAddress(address);
-
-    if (networkPrefix < 0) {
-      return address;
-    }
-
-    return encodeAddress(publicKey, networkPrefix, type);
-  } catch (e) {
-    console.warn('Get error while reformat address', address, e);
-
-    return address;
-  }
-}
-
+/**
+ * @deprecated
+ * */
 export function filterAddressByNetworkKey (addresses: string[], networkKey: string, isEthereum?: boolean) {
   if (isEthereum) {
     return addresses.filter((address) => {
@@ -73,39 +36,9 @@ export function filterAddressByNetworkKey (addresses: string[], networkKey: stri
   }
 }
 
-export function categoryAddresses (addresses: string[]): { substrate: string[], evm: string[], ton: string[], bitcoin: string[] } {
-  const substrate: string[] = [];
-  const evm: string[] = [];
-  const ton: string[] = [];
-  const bitcoin: string[] = [];
-
-  addresses.forEach((address) => {
-    if (isEthereumAddress(address)) {
-      evm.push(address);
-    } else if (isTonAddress(address)) {
-      ton.push(address);
-    } else if (isBitcoinAddress(address)) {
-      bitcoin.push(address);
-    } else {
-      substrate.push(address);
-    }
-  });
-
-  return {
-    bitcoin,
-    evm,
-    substrate,
-    ton
-  };
-}
-
-export function categoryNetworks (networks: NetworkJson[]) {
-  const substrateAddresses: string[] = [];
-  const evmAddresses: string[] = [];
-
-  return [substrateAddresses, evmAddresses];
-}
-
+/**
+ * @deprecated
+ * */
 export function convertToEvmAddress (substrateAddress: string): string {
   const addressBytes = decodeAddress(substrateAddress);
 

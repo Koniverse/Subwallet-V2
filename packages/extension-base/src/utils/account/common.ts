@@ -1,18 +1,80 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { reformatAddress } from '@subwallet/extension-base/utils';
+import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
 
-export const simpleAddress = (address: string): string => {
-  if (isEthereumAddress(address)) {
+export function isAccountAll (address?: string): boolean {
+  return address === ALL_ACCOUNT_KEY;
+}
+
+export function reformatAddress (address: string, networkPrefix = 42, isEthereum = false): string {
+  try {
+    if (!address || address === '') {
+      return '';
+    }
+
+    if (isEthereumAddress(address)) {
+      return address;
+    }
+
+    if (isAccountAll(address)) {
+      return address;
+    }
+
+    const publicKey = decodeAddress(address);
+
+    if (isEthereum) {
+      return ethereumEncode(publicKey);
+    }
+
+    const type: KeypairType = getKeypairTypeByAddress(address);
+
+    if (networkPrefix < 0) {
+      return address;
+    }
+
+    return encodeAddress(publicKey, networkPrefix, type);
+  } catch (e) {
+    console.warn('Get error while reformat address', address, e);
+
     return address;
   }
+}
 
-  return encodeAddress(decodeAddress(address));
-};
+export function categoryAddresses (addresses: string[]): {
+  substrate: string[],
+  evm: string[],
+  ton: string[],
+  bitcoin: string[]
+} {
+  const substrate: string[] = [];
+  const evm: string[] = [];
+  const ton: string[] = [];
+  const bitcoin: string[] = [];
+
+  addresses.forEach((address) => {
+    if (isEthereumAddress(address)) {
+      evm.push(address);
+    } else if (isTonAddress(address)) {
+      ton.push(address);
+    } else if (isBitcoinAddress(address)) {
+      bitcoin.push(address);
+    } else {
+      substrate.push(address);
+    }
+  });
+
+  return {
+    bitcoin,
+    evm,
+    substrate,
+    ton
+  };
+}
 
 export function quickFormatAddressToCompare (address?: string) {
   if (!isAddress(address)) {

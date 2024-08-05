@@ -68,14 +68,15 @@ export interface ResponseMnemonicValidateV2 {
  * @property {string} name - The name of the account.
  * @property {string} [password] - An optional password for the account.
  * @property {string} suri - The mnemonic phrase or derivation path.
- * @property {Array<KeypairType>} [types] - The types of key pairs to create. Optional.
+ * @property {KeypairType} [type] - The type of key pair to create.
+ * If it is undefined, create a unified account with multiple types.
  * @property {boolean} isAllowed - Indicates if the account creation is allowed.
  */
 export interface RequestAccountCreateSuriV2 {
   name: string;
   password?: string;
   suri: string;
-  types?: Array<KeypairType>;
+  type?: KeypairType;
   isAllowed: boolean;
 }
 

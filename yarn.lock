@@ -6059,14 +6059,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.2.80-beta.3
-  resolution: "@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/#../SubWallet-ChainList/packages/chain-list/build/::hash=ca6e93&locator=root-workspace-0b6124%40workspace%3A."
+"@subwallet/chain-list@npm:0.2.80-beta.4":
+  version: 0.2.80-beta.4
+  resolution: "@subwallet/chain-list@npm:0.2.80-beta.4"
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 77d9e0ece7f9898baf88ee035941f3a7e29b0453fe4627b2e9c57e90a972b4ccc66a561349af6630e2ac0648835eba4cc5a5b8198657782b79ed25f670076ca1
+  checksum: 62cd56fab28aebb176edc0ad0ff63d606aa3ec217ba8e4e7fd1227a6334aab11857283334698e2f6dbe47a02b3e8e057fbb9a9e6a44e44a4199af24511c1a4c0
   languageName: node
   linkType: hard
 
@@ -6108,7 +6108,7 @@ __metadata:
     "@reduxjs/toolkit": ^1.9.1
     "@sora-substrate/type-definitions": ^1.17.7
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.80
+    "@subwallet/chain-list": 0.2.80-beta.4
     "@subwallet/extension-base": ^1.2.23-0
     "@subwallet/extension-chains": ^1.2.23-0
     "@subwallet/extension-dapp": ^1.2.23-0
@@ -6240,7 +6240,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.80
+    "@subwallet/chain-list": 0.2.80-beta.4
     "@subwallet/extension-base": ^1.2.23-0
     "@subwallet/extension-chains": ^1.2.23-0
     "@subwallet/extension-dapp": ^1.2.23-0
@@ -6378,7 +6378,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.80
+    "@subwallet/chain-list": 0.2.80-beta.4
     "@subwallet/extension-base": ^1.2.23-0
     "@subwallet/extension-chains": ^1.2.23-0
     "@subwallet/extension-dapp": ^1.2.23-0
@@ -6451,7 +6451,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.5
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=26a321&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=669423&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@polkadot/util": ^12.2.1
@@ -6470,7 +6470,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 67189715f53188bb57a3e3b6c6ff95357d632ee005fe86e56355597603ef6305c6ae0ea895a2122bb26e264550fa855455ff553307b4f7e63f3afa37755eafd4
+  checksum: 11397830b1c7fad3b9f6c2dde3031454ec413c831c9db608a44b44e8e60dba4c95635eb8434e4cd265700b467c93c7cf8a2c02822e9fbddffa21156cafdaf532
   languageName: node
   linkType: hard
 
