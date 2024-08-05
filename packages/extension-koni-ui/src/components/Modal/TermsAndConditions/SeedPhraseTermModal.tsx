@@ -12,9 +12,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import styled, { useTheme } from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
-interface Props extends ThemeProps {
-  onOk?: () => void
-}
+type Props = ThemeProps
 
 const modalId = TERM_AND_CONDITION_SEED_PHRASE_MODAL;
 
@@ -110,7 +108,7 @@ const Component = ({ className }: Props) => {
         ref={scrollRef}
       >
         <div className={'annotation'}>
-          {t('Tap on all checkboxes to confirm you understand the importance of your seed phrase')}
+          {t('This seed phrase creates a unified account that can be used for Polkadot, Ethereum, Bitcoin and TON ecosystem. Keep in mind that for TON specifically, this seed phrase is not compatible with TON-native wallets.')}
         </div>
         <SwList
           className={'term-list'}
@@ -165,6 +163,7 @@ export const SeedPhraseTermModal = styled(Component)<Props>(({ theme: { token } 
 
     '.annotation': {
       fontSize: token.fontSizeSM,
+      lineHeight: token.lineHeightSM,
       color: token.colorTextLight5,
       textAlign: 'center'
     },
