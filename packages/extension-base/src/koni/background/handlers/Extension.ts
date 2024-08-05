@@ -427,7 +427,7 @@ export default class KoniExtension {
     const transformedAccounts = Object.values(accounts);
     const responseData: AccountsWithCurrentAddress = {
       accounts: transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP }, ...transformedAccounts] : [],
-      currentAccountProxy: currentAccount?.address
+      currentAccountProxy: currentAccount?.proxyId
     };
 
     const accountGroups = keyringService.context.accountSubject;

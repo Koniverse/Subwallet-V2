@@ -352,6 +352,7 @@ export class AccountContext {
     return blake2AsHex(data, 256);
   }
 
+  /* Reset account proxy */
   private resetAccountProxy () {
     this.accountProxiesSubject.next({});
     this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, {});
