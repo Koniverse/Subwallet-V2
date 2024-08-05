@@ -84,7 +84,7 @@ export function categoryAddresses (addresses: string[]): { substrate: string[], 
       evm.push(address);
     } else if (isTonAddress(address)) {
       ton.push(address);
-    } else if (isBitcoinAddress(address) !== 'unknown') {
+    } else if (isBitcoinAddress(address)) {
       bitcoin.push(address);
     } else {
       substrate.push(address);
