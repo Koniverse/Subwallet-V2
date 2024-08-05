@@ -3,15 +3,13 @@
 
 import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, ResponseAccountCreateWithSecretKey } from '@subwallet/extension-base/background/KoniTypes';
 import { SeedLengths } from '@subwallet/extension-base/background/types';
-import { RequestAccountCreateSuriV2, ResponseAccountCreateSuriV2, ResponseMnemonicCreateV2 } from '@subwallet/extension-base/types';
+import { MnemonicType, RequestAccountCreateSuriV2, ResponseAccountCreateSuriV2, ResponseMnemonicCreateV2 } from '@subwallet/extension-base/types';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging/base';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 // Create seed
 
-export async function createSeedV2 (length?: SeedLengths, seed?: string, types?: Array<KeypairType>): Promise<ResponseMnemonicCreateV2> {
-  return sendMessage('pri(seed.createV2)', { length, seed, types });
+export async function createSeedV2 (length?: SeedLengths, mnemonic?: string, type?: MnemonicType): Promise<ResponseMnemonicCreateV2> {
+  return sendMessage('pri(seed.createV2)', { length, mnemonic, type });
 }
 
 /// Suri: seed or private key for evm

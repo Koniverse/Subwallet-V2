@@ -24,7 +24,8 @@ const SwLogosMap: Record<string, string> = {
   [SUBSTRATE_GENERIC_KEY]: DefaultLogosMap[SUBSTRATE_GENERIC_KEY],
   [SwapProviderId.POLKADOT_ASSET_HUB.toLowerCase()]: DefaultLogosMap.polkadot_assethub,
   [SwapProviderId.KUSAMA_ASSET_HUB.toLowerCase()]: DefaultLogosMap.kusama_assethub,
-  [SwapProviderId.ROCOCO_ASSET_HUB.toLowerCase()]: DefaultLogosMap.rococo_assethub
+  [SwapProviderId.ROCOCO_ASSET_HUB.toLowerCase()]: DefaultLogosMap.rococo_assethub,
+  ton: DefaultLogosMap.ton
 };
 
 export default SwLogosMap;

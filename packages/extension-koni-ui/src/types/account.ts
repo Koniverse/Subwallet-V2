@@ -29,3 +29,9 @@ export enum AccountSignMode {
   INJECTED = 'injected',
   UNKNOWN = 'unknown'
 }
+
+export type AccountNetworkAddress = {
+  name: string;
+  slug: string;
+  address: string;
+}

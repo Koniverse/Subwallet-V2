@@ -1,10 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { CloseIcon, Layout, PageWrapper, WordPhrase } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountNameModal, CloseIcon, Layout, PageWrapper, WordPhrase } from '@subwallet/extension-koni-ui/components';
 import { SeedPhraseTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/SeedPhraseTermModal';
-import { CONFIRM_TERM_SEED_PHRASE, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, NEW_SEED_MODAL, SEED_PREVENT_MODAL, SELECTED_ACCOUNT_TYPE, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useGetDefaultAccountName, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, SEED_PREVENT_MODAL, SELECTED_ACCOUNT_TYPE, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, createSeedV2, windowOpen } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -38,7 +39,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const checkUnlock = useUnlockChecker();
 
   const onComplete = useCompleteCreateAccount();
-  const accountName = useGetDefaultAccountName();
   const isPopup = useIsPopup();
 
   const { accounts, hasMasterPassword } = useSelector((state: RootState) => state.accountState);
@@ -61,46 +61,47 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     if (!preventModal) {
       if (!noAccount) {
-        activeModal(NEW_SEED_MODAL);
+        activeModal(CREATE_ACCOUNT_MODAL);
       }
     }
   }, [preventModal, navigate, noAccount, activeModal]);
 
-  const _onCreate = useCallback((): void => {
+  const onConfirmSeedPhrase = useCallback(() => {
     if (!seedPhrase) {
       return;
     }
 
     checkUnlock().then(() => {
-      setLoading(true);
-      setTimeout(() => {
-        createAccountSuriV2({
-          name: accountName,
-          suri: seedPhrase,
-          types: accountTypes,
-          isAllowed: true
-        })
-          .then(() => {
-            onComplete();
-          })
-          .catch((error: Error): void => {
-            notify({
-              message: error.message,
-              type: 'error'
-            });
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }, 500);
+      activeModal(ACCOUNT_NAME_MODAL);
     }).catch(() => {
       // User cancel unlock
     });
-  }, [seedPhrase, checkUnlock, accountName, accountTypes, onComplete, notify]);
+  }, [activeModal, checkUnlock, seedPhrase]);
 
-  const onConfirmTerms = useCallback(() => {
-    _onCreate();
-  }, [_onCreate]);
+  const onSubmit = useCallback((accountName: string) => {
+    setLoading(true);
+    setTimeout(() => {
+      createAccountSuriV2({
+        name: accountName,
+        suri: seedPhrase,
+        types: accountTypes,
+        isAllowed: true
+      })
+        .then(() => {
+          onComplete();
+        })
+        .catch((error: Error): void => {
+          notify({
+            message: error.message,
+            type: 'error'
+          });
+        })
+        .finally(() => {
+          setLoading(false);
+          inactiveModal(ACCOUNT_NAME_MODAL);
+        });
+    }, 500);
+  }, [accountTypes, inactiveModal, notify, onComplete, seedPhrase]);
 
   useEffect(() => {
     if (_isConfirmedTermSeedPhrase === 'nonConfirmed') {
@@ -109,7 +110,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [_isConfirmedTermSeedPhrase, activeModal, inactiveModal]);
 
   useEffect(() => {
-    createSeedV2(undefined, undefined, DEFAULT_ACCOUNT_TYPES)
+    createSeedV2(undefined, undefined, 'general')
       .then((response): void => {
         const phrase = response.mnemonic;
 
@@ -145,9 +146,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         rightFooterButton={{
           children: t('I have kept it somewhere safe'),
           icon: FooterIcon,
-          onClick: onConfirmTerms,
-          disabled: !seedPhrase,
-          loading: loading
+          onClick: onConfirmSeedPhrase,
+          disabled: !seedPhrase
         }}
         subHeaderIcons={[
           {
@@ -167,7 +167,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           />
         </div>
       </Layout.WithSubHeaderOnly>
-      <SeedPhraseTermModal onOk={_onCreate} />
+      <SeedPhraseTermModal />
+      <AccountNameModal
+        accountType={AccountProxyType.UNIFIED}
+        isLoading={loading}
+        onSubmit={onSubmit}
+      />
     </PageWrapper>
   );
 };

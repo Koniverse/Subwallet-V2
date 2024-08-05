@@ -25,7 +25,7 @@ interface Props extends ThemeProps {
 
 const modalId = RECEIVE_QR_MODAL;
 
-// todo: merge with simple QR modal
+// @deprecated
 
 const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Props) => {
   const { t } = useTranslation();
