@@ -110,7 +110,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [_isConfirmedTermSeedPhrase, activeModal, inactiveModal]);
 
   useEffect(() => {
-    createSeedV2(undefined, undefined, DEFAULT_ACCOUNT_TYPES)
+    createSeedV2(undefined, undefined, 'general')
       .then((response): void => {
         const phrase = response.mnemonic;
 
