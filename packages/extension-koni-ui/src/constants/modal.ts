@@ -33,6 +33,7 @@ export const ADD_NETWORK_WALLET_CONNECT_MODAL = 'add-network-wallet-connect-moda
 export const ADDRESS_QR_MODAL = 'address-qr-modal';
 export const ACCOUNT_NETWORK_ADDRESSES_MODAL = 'account-network-addresses-modal';
 export const ACCOUNT_NAME_MODAL = 'account-name-modal';
+export const GLOBAL_ALERT_MODAL = 'global-alert-modal';
 
 /* Campaign */
 export const HOME_CAMPAIGN_BANNER_MODAL = 'home-campaign-banner-modal';

@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AddressQrModal, AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
+import { AddressQrModal, AlertModal, AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
 import { CustomizeModal } from '@subwallet/extension-koni-ui/components/Modal/Customize/CustomizeModal';
-import { ADDRESS_QR_MODAL, EARNING_INSTRUCTION_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useGetConfig, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
+import { ADDRESS_QR_MODAL, EARNING_INSTRUCTION_MODAL, GLOBAL_ALERT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useAlert, useGetConfig, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import Confirmations from '@subwallet/extension-koni-ui/Popup/Confirmations';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
+import { AlertDialogProps } from '@subwallet/extension-koni-ui/types';
 import { ModalContext, SwModal, useExcludeModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -57,6 +58,10 @@ export interface WalletModalContextType {
   addressQrModal: {
     open: (props: AddressQrModalProps) => void,
     close: VoidFunction
+  },
+  alertModal: {
+    open: (props: AlertDialogProps) => void,
+    close: VoidFunction
   }
 }
 
@@ -66,8 +71,16 @@ export const WalletModalContext = React.createContext<WalletModalContextType>({
     open: () => {},
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     close: () => {}
+  },
+  alertModal: {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    open: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    close: () => {}
   }
 });
+
+const alertModalId = GLOBAL_ALERT_MODAL;
 
 export const WalletModalContextProvider = ({ children }: Props) => {
   const { activeModal, hasActiveModal, inactiveAll, inactiveModal, inactiveModals } = useContext(ModalContext);
@@ -76,6 +89,7 @@ export const WalletModalContextProvider = ({ children }: Props) => {
   const { hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
   const { getConfig } = useGetConfig();
   const { onHandleSessionLatest, setTimeBackUp } = useSetSessionLatest();
+  const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
   useExcludeModal('confirmations');
   useExcludeModal(EARNING_INSTRUCTION_MODAL);
@@ -111,8 +125,12 @@ export const WalletModalContextProvider = ({ children }: Props) => {
     addressQrModal: {
       open: openAddressQrModal,
       close: closeAddressQrModal
+    },
+    alertModal: {
+      open: openAlert,
+      close: closeAlert
     }
-  }), [closeAddressQrModal, openAddressQrModal]);
+  }), [closeAddressQrModal, closeAlert, openAddressQrModal, openAlert]);
 
   useEffect(() => {
     if (hasMasterPassword && isLocked) {
@@ -176,6 +194,15 @@ export const WalletModalContextProvider = ({ children }: Props) => {
         <AddressQrModal
           {...addressQrModalProps}
           onCancel={onCancelAddressQrModal}
+        />
+      )
+    }
+
+    {
+      !!alertProps && (
+        <AlertModal
+          modalId={alertModalId}
+          {...alertProps}
         />
       )
     }

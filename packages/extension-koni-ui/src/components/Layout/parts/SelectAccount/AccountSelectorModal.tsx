@@ -31,6 +31,8 @@ type ListItemGroupLabel = {
 
 type ListItem = AccountProxy | ListItemGroupLabel;
 
+const enableExtraction = false;
+
 type Props = ThemeProps;
 
 function reorderAccounts (items: AccountProxy[]): AccountProxy[] {
@@ -309,7 +311,11 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     setStateSelectAccount(true);
   }, [inactiveModal, setStateSelectAccount]);
 
-  const rightIconProps = useMemo((): ButtonProps => {
+  const rightIconProps = useMemo((): ButtonProps | undefined => {
+    if (!enableExtraction) {
+      return;
+    }
+
     return ({
       icon: (
         <Icon

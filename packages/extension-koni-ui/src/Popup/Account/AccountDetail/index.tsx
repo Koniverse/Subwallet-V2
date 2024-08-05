@@ -1,20 +1,22 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountProxy } from '@subwallet/extension-base/types';
 import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
+import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { editAccount } from '@subwallet/extension-koni-ui/messaging';
-import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { editAccount, forgetAccount } from '@subwallet/extension-koni-ui/messaging';
+import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -52,7 +54,9 @@ interface DetailFormState {
 const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccounts }: ComponentProps) => {
   const { t } = useTranslation();
   const notify = useNotification();
-  const showDerivedAccounts = !!accountProxy?.children?.length;
+  const { goHome } = useDefaultNavigate();
+  const showDerivedAccounts = !!accountProxy.children?.length;
+  const { alertModal } = useContext(WalletModalContext);
 
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
     requestViewDerivedAccounts && showDerivedAccounts
@@ -92,9 +96,38 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     setSelectedFilterTab(value);
   }, []);
 
+  const doDelete = useCallback(() => {
+    setDeleting(true);
+    forgetAccount(accountProxy.id)
+      .then(() => {
+        goHome();
+      })
+      .catch((e: Error) => {
+        notify({
+          message: e.message,
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setDeleting(false);
+      });
+  }, [accountProxy.id, goHome, notify]);
+
   const onDelete = useCallback(() => {
-    //
-  }, []);
+    alertModal.open({
+      title: t('Confirmation'),
+      type: NotificationType.WARNING,
+      content: t('You will no longer be able to access this account via this extension'),
+      okButton: {
+        text: t('Remove'),
+        onClick: () => {
+          doDelete();
+          alertModal.close();
+        },
+        schema: 'error'
+      }
+    });
+  }, [alertModal, doDelete, t]);
 
   const onDerive = useCallback(() => {
     //
@@ -166,7 +199,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       <Button
         block={true}
         className={CN('account-button')}
-        disabled={false}
+        disabled={true}
         icon={(
           <Icon
             phosphorIcon={GitMerge}
@@ -182,7 +215,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       <Button
         block={true}
         className={CN('account-button')}
-        disabled={false}
+        disabled={true}
         icon={(
           <Icon
             phosphorIcon={Export}
