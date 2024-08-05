@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { KeypairType, KeyringPair, KeyringPair$Meta } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeypairType, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
@@ -13,22 +13,17 @@ interface DeriveInfo {
 }
 
 interface NextDerivePair {
-  address: string;
   deriveIndex: number;
-  meta: KeyringPair$Meta;
+  suri: string;
 }
 
-const SUBSTRATE_TYPE: KeypairType[] = ['ed25519', 'sr25519', 'ecdsa'];
-
-export const getDerivationInfo = (pair: KeyringPair): DeriveInfo => {
-  const isSubstrate = SUBSTRATE_TYPE.includes(pair.type);
-
-  const suri = pair.meta.suri as string;
+export const getDerivationInfo = (type: KeypairType, suri?: string): DeriveInfo => {
+  const isSubstrate = SubstrateKeypairTypes.includes(type);
 
   if (suri) {
     if (/^\/\/\d+$/.test(suri)) {
       const _deriveIndex = parseInt(suri.replace('//', ''), 10);
-      const deriveIndex = isSubstrate ? _deriveIndex : _deriveIndex - 1;
+      const deriveIndex = isSubstrate ? _deriveIndex + 1 : _deriveIndex;
 
       return { suri, deriveIndex };
     } else {
@@ -39,20 +34,20 @@ export const getDerivationInfo = (pair: KeyringPair): DeriveInfo => {
   }
 };
 
+/**
+ * @func findNextDerivePair
+ * @return {NextDerivePair}
+ * Substrate: index: `n` - suri: `//n`
+ * Ethereum, Ton, Bitcoin: index: `n` - suri: `//n+1` - derivation: `m/44'/60'/0'/0/n+1` (Example)
+ * */
 export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
   const parentPair = keyring.getPair(parentAddress);
 
   assert(parentPair, t('Unable to find account'));
 
-  const isEvm = parentPair.type === 'ethereum';
-
-  if (parentPair.isLocked) {
-    keyring.unlockPair(parentPair.address);
-  }
-
   const pairs = keyring.getPairs();
   const children = pairs.filter((p) => p.meta.parentAddress === parentAddress);
-  const childrenMetadata = children.map(getDerivationInfo).sort((a, b) => {
+  const childrenMetadata = children.map(({ meta: { suri }, type }) => getDerivationInfo(type, suri as string | undefined)).sort((a, b) => {
     if (a.deriveIndex !== undefined && b.deriveIndex !== undefined) {
       return a.deriveIndex - b.deriveIndex;
     } else {
@@ -64,8 +59,8 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
     }
   });
 
-  let valid = false;
-  let index = 0;
+  let valid = true;
+  let index = 1;
 
   for (const { deriveIndex, suri } of childrenMetadata) {
     if (!suri || deriveIndex === undefined) {
@@ -82,17 +77,46 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
 
   assert(valid, t('Unable to find next derive path'));
 
-  const meta = {
-    parentAddress,
-    suri: `//${index}`
-  };
+  const isSubstrate = SubstrateKeypairTypes.includes(parentPair.type);
+  const _deriveIndex = index;
 
-  const childPair = isEvm ? parentPair.evm.derive(index, meta) : parentPair.substrate.derive(meta.suri, meta);
-  const address = childPair.address;
+  if (isSubstrate) {
+    index--; // For substrate account, we decrease by 1
+  }
+
+  const suri = `//${index}`;
 
   return {
-    address,
-    deriveIndex: index,
-    meta
+    deriveIndex: _deriveIndex,
+    suri
   };
+};
+
+export const derivePair = (parentPair: KeyringPair, name: string, deriveIndex: number): KeyringPair => {
+  if (parentPair.isLocked) {
+    keyring.unlockPair(parentPair.address);
+  }
+
+  const isEvm = EthereumKeypairTypes.includes(parentPair.type);
+  const isSubstrate = SubstrateKeypairTypes.includes(parentPair.type);
+  const isTon = parentPair.type === 'ton';
+  let _deriveIndex = deriveIndex;
+
+  if (isSubstrate) {
+    _deriveIndex--; // For substrate account, we decrease by 1
+  }
+
+  const suri = `//${_deriveIndex}`;
+  const meta = {
+    name,
+    parentAddress: parentPair.address,
+    suri: suri
+  };
+
+  return isEvm
+    ? parentPair.evm.derive(_deriveIndex, meta)
+    : isTon
+      ? parentPair.ton.derive(_deriveIndex, meta)
+      : parentPair.substrate.derive(suri, meta)
+  ;
 };

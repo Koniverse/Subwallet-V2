@@ -83,7 +83,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         setSelected(account.address);
         setTimeout(() => {
           deriveAccountV3({
-            address: account.address
+            proxyId: account.address
           }).then(() => {
             inactiveModal(modalId);
             clearSearch();

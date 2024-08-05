@@ -2622,7 +2622,7 @@ export default class KoniExtension {
   }
 
   private derivationCreateV3 (request: RequestDeriveCreateV3): boolean {
-    const rs = this.#koniState.keyringService.context.derivationCreateV3(request);
+    const rs = this.#koniState.keyringService.context.derivationAccountProxyCreate(request);
 
     if (this.#alwaysLock) {
       this.keyringLock();

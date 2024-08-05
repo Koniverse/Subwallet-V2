@@ -6451,14 +6451,13 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.5
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=daaa5f&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=8ee5d2&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@polkadot/util": ^12.2.1
     "@polkadot/util-crypto": ^12.2.1
     "@ton/core": ^0.56.3
     "@ton/crypto": ^3.2.0
-    "@ton/crypto-primitives": ^2.0.0
     "@ton/ton": ^13.11.2
     bcryptjs: ^2.4.3
     bignumber.js: ^9.1.2
@@ -6471,7 +6470,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 408116ccd35266d235ea4b4637a234e104819f2c349ce28663cd0132b56381d829e60bb205f6c9377013cec15d0c4ac31e894202198e88a43f1c7b326ef83b25
+  checksum: 5c34dc10f12e5d05e916889797a0fd880b8c854170a329ca6e5a38e6144712a61f525b09462a0475cc92d43f44297fd6319fb7f38bb9aeea0c68cd6902d436ed
   languageName: node
   linkType: hard
 
@@ -6809,7 +6808,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ton/crypto-primitives@npm:2.0.0, @ton/crypto-primitives@npm:^2.0.0":
+"@ton/crypto-primitives@npm:2.0.0":
   version: 2.0.0
   resolution: "@ton/crypto-primitives@npm:2.0.0"
   dependencies:
