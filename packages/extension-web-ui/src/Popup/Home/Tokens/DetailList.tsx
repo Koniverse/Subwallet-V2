@@ -7,12 +7,13 @@ import { AccountSelectorModal } from '@subwallet/extension-web-ui/components/Mod
 import ReceiveQrModal from '@subwallet/extension-web-ui/components/Modal/ReceiveModal/ReceiveQrModal';
 import { TokensSelectorModal } from '@subwallet/extension-web-ui/components/Modal/ReceiveModal/TokensSelectorModal';
 import NoContent, { PAGE_TYPE } from '@subwallet/extension-web-ui/components/NoContent';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
 import { TokenBalanceDetailItem } from '@subwallet/extension-web-ui/components/TokenItem/TokenBalanceDetailItem';
 import { DEFAULT_TRANSFER_PARAMS, SHOW_BANNER_TOKEN_GROUPS, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { useDefaultNavigate, useNavigateOnChangeAccount, useNotification, useReceiveQR, useSelector } from '@subwallet/extension-web-ui/hooks';
+import { useDefaultNavigate, useGetBannerByScreen, useNavigateOnChangeAccount, useNotification, useReceiveQR, useSelector } from '@subwallet/extension-web-ui/hooks';
 import Banner from '@subwallet/extension-web-ui/Popup/Home/Tokens/Banner';
 import { DetailModal } from '@subwallet/extension-web-ui/Popup/Home/Tokens/DetailModal';
 import { DetailUpperBlock } from '@subwallet/extension-web-ui/Popup/Home/Tokens/DetailUpperBlock';
@@ -89,6 +90,7 @@ function Component (): React.ReactElement {
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const { tokens } = useSelector((state: RootState) => state.buyService);
   const [, setStorage] = useLocalStorage(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', tokenGroupSlug);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const topBlockRef = useRef<HTMLDivElement>(null);
@@ -420,6 +422,13 @@ function Component (): React.ReactElement {
             <div
               className={'__scroll-container'}
             >
+              <div className={'token-detail-banner-wrapper'}>
+                {!!banners.length && (<BannerGenerator
+                  banners={banners}
+                  dismissBanner={dismissBanner}
+                  onClickBanner={onClickBanner}
+                />)}
+              </div>
               {
                 tokenBalanceItems.map((item) => (
                   <TokenBalanceDetailItem
@@ -598,7 +607,7 @@ const Tokens = styled(WrapperComponent)<ThemeProps>(({ theme: { extendToken, tok
       display: 'none'
     },
 
-    '.token-balance-detail-item': {
+    '.token-balance-detail-item .token-detail-banner-wrapper': {
       marginBottom: token.sizeXS
     },
     '.__banner-area': {
