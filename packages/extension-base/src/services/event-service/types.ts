@@ -25,6 +25,8 @@ export interface EventRegistry {
   'account.remove': [string]; // address
   /** Inject account done  */
   'inject.ready': [boolean];
+  /** Remove an account proxy */
+  'accountProxy.remove': [string]; // proxy id
   /* Keyring */
 
   'chain.ready': [boolean]; // chain is ready and migration done

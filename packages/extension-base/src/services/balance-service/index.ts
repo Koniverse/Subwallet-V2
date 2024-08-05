@@ -150,7 +150,7 @@ export class BalanceService implements StoppableServiceInterface {
     }
 
     events.forEach((event) => {
-      if (event.type === 'account.remove') {
+      if (event.type === 'account.remove' || event.type === 'accountProxy.remove') {
         removedAddresses.push(event.data[0] as string);
         lazyTime = 1000;
       }

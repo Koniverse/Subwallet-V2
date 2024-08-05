@@ -352,6 +352,7 @@ export class AccountContext {
     return blake2AsHex(data, 256);
   }
 
+  /* Reset account proxy */
   private resetAccountProxy () {
     this.accountProxiesSubject.next({});
     this.accountProxiesStore.set(ACCOUNT_PROXIES_KEY, {});
@@ -414,6 +415,7 @@ export class AccountContext {
       addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
 
       this.deleteAccountProxy(proxyId);
+      this.parent.state.eventService.emit('accountProxy.remove', proxyId);
     }
 
     for (const address of addresses) {
