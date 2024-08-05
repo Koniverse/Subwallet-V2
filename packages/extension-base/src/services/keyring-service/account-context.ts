@@ -6,9 +6,9 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { SEED_DEFAULT_LENGTH, SEED_LENGTHS } from '@subwallet/extension-base/koni/background/handlers/Extension';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service/index';
 import { AccountProxyStore, AccountRefStore, CurrentAccountStore, ModifyPairStore } from '@subwallet/extension-base/stores';
-import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountMetadataData, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CreateDeriveAccountInfo, CurrentAccountInfo, DeriveAccountInfo, MnemonicType, ModifyPairStoreData, RequestAccountCreateSuriV2, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
-import { derivePair, findNextDerivePair, isAddressValidWithAuthType, modifyAccountName, singleAddressToAccount } from '@subwallet/extension-base/utils';
+import { addLazy, combineAccounts, derivePair, findNextDerivePair, isAddressValidWithAuthType, modifyAccountName } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { createPair, getDerivePath, getKeypairTypeByAddress } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
@@ -122,94 +122,11 @@ export class AccountContext {
     const accountGroups = this.accountProxiesSubject.asObservable();
 
     combineLatest([pairs, modifyPairs, accountGroups]).subscribe(([pairs, modifyPairs, accountGroups]) => {
-      const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};
+      addLazy('combineAccounts', () => {
+        const result = combineAccounts(pairs, modifyPairs, accountGroups);
 
-      for (const [address, pair] of Object.entries(pairs)) {
-        const modifyPair = modifyPairs[address];
-        const account: AccountJson = singleAddressToAccount(pair);
-
-        if (modifyPair && modifyPair.accountProxyId) {
-          const accountGroup = accountGroups[modifyPair.accountProxyId];
-
-          if (accountGroup) {
-            if (!temp[accountGroup.id]) {
-              temp[accountGroup.id] = { ...accountGroup, accounts: [], networkTypes: [] };
-            }
-
-            temp[accountGroup.id].accounts.push(account);
-            continue;
-          }
-        }
-
-        temp[address] = { id: address, name: account.name || account.address, accounts: [account], networkTypes: [account.networkType], parentId: account.parentAddress, suri: account.suri };
-      }
-
-      const result: AccountProxyMap = Object.fromEntries(
-        Object.entries(temp)
-          .map(([key, value]): [string, AccountProxy] => {
-            let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
-            let networkTypes: AccountNetworkType[] = [];
-
-            if (value.accounts.length > 1) {
-              accountType = AccountProxyType.UNIFIED;
-              networkTypes = Array.from(value.accounts.reduce<Set<AccountNetworkType>>((rs, account) => rs.add(account.networkType), new Set()));
-            } else if (value.accounts.length === 1) {
-              const account = value.accounts[0];
-
-              networkTypes = [account.networkType];
-
-              if (account.isInjected) {
-                accountType = AccountProxyType.INJECTED;
-              } else if (account.isExternal) {
-                if (account.isHardware) {
-                  accountType = AccountProxyType.LEDGER;
-                } else if (account.isReadOnly) {
-                  accountType = AccountProxyType.READ_ONLY;
-                } else {
-                  accountType = AccountProxyType.QR;
-                }
-              } else {
-                accountType = AccountProxyType.SOLO;
-              }
-            }
-
-            return [key, { ...value, accountType, networkTypes }];
-          })
-      );
-
-      const deepSearchParentId = (parentId: string): string => {
-        const parent = result[parentId];
-
-        if (parent && parent.parentId) {
-          return deepSearchParentId(parent.parentId);
-        }
-
-        return parentId;
-      };
-
-      for (const value of Object.values(result)) {
-        if (value.parentId) {
-          value.parentId = deepSearchParentId(value.parentId);
-        }
-      }
-
-      const deepSearchChildren = (id: string): string[] => {
-        const rs: string[] = [];
-
-        for (const accountProxy of Object.values(result)) {
-          if (accountProxy.parentId === id) {
-            rs.push(accountProxy.id);
-          }
-        }
-
-        return rs;
-      };
-
-      for (const value of Object.values(result)) {
-        value.children = deepSearchChildren(value.id);
-      }
-
-      this.accountSubject.next(result);
+        this.accountSubject.next(result);
+      }, 300, 1800, false);
     });
   }
 
@@ -404,12 +321,12 @@ export class AccountContext {
   }
 
   public async accountProxyForget ({ proxyId }: RequestAccountProxyForget): Promise<string[]> {
-    const accountProxies = this.accountProxiesSubject.value;
     const modifyPairs = this.modifyPairsSubject.value;
+    const isUnified = this.isUnifiedAccount(proxyId);
 
     let addresses: string[];
 
-    if (!accountProxies[proxyId]) {
+    if (!isUnified) {
       addresses = [proxyId];
     } else {
       addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
@@ -431,7 +348,18 @@ export class AccountContext {
     await Promise.all(addresses.map((address) => new Promise<void>((resolve) => this.removeAccountRef(address, resolve))));
 
     await new Promise<void>((resolve) => {
-      this._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY }, resolve);
+      const accountProxies = this.accountProxiesSubject.value;
+      const modifyPairs = this.modifyPairsSubject.value;
+      const pairs = this.pairSubject.value;
+
+      const data = combineAccounts(pairs, modifyPairs, accountProxies);
+      const accounts = Object.keys(data);
+
+      if (accounts.length === 1) {
+        this._setCurrentAccount({ proxyId: accounts[0] }, resolve);
+      } else {
+        this._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY }, resolve);
+      }
     });
 
     return addresses;
