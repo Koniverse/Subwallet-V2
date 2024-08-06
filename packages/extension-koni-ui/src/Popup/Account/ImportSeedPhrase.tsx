@@ -1,19 +1,21 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { CloseIcon, Layout, PageWrapper, PhraseNumberSelector, SeedPhraseInput } from '@subwallet/extension-koni-ui/components';
-import { DEFAULT_ACCOUNT_TYPES, IMPORT_SEED_MODAL, SELECTED_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
-import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGetDefaultAccountName, useGoBackFromCreateAccount, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
+import { ResponseMnemonicValidateV2 } from '@subwallet/extension-base/types';
+import { AccountNameModal, CloseIcon, Layout, PageWrapper, PhraseNumberSelector, SeedPhraseInput } from '@subwallet/extension-koni-ui/components';
+import { ACCOUNT_NAME_MODAL, IMPORT_SEED_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateSeedV2 } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, FormRule, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, noop, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
-import { Button, Form, Icon, Input } from '@subwallet/react-ui';
+import { Button, Form, Icon, Input, ModalContext } from '@subwallet/react-ui';
 import { wordlists } from 'bip39';
 import CN from 'classnames';
-import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import { CheckCircle, Eye, EyeSlash, FileArrowDown, XCircle } from 'phosphor-react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
 
@@ -39,22 +41,20 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const { t } = useTranslation();
   const { goHome } = useDefaultNavigate();
-  const notification = useNotification();
+  const notify = useNotification();
 
   const onComplete = useCompleteCreateAccount();
   const onBack = useGoBackFromCreateAccount(IMPORT_SEED_MODAL);
-
-  const accountName = useGetDefaultAccountName();
+  const { activeModal, inactiveModal } = useContext(ModalContext);
+  const { alertModal } = useContext(WalletModalContext);
 
   const [form] = Form.useForm<FormState>();
 
   const phraseNumber = Form.useWatch('phraseNumber', form);
 
   const [submitting, setSubmitting] = useState(false);
-  const [storage] = useLocalStorage(SELECTED_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPES);
-
-  const [keyTypes] = useState(storage);
-
+  const [accountCreating, setAccountCreating] = useState(false);
+  const [seedValidationResponse, setSeedValidationResponse] = useState<undefined | ResponseMnemonicValidateV2>();
   const [disabled, setDisabled] = useState(true);
   const [showSeed, setShowSeed] = useState(false);
   const checkUnlock = useUnlockChecker();
@@ -81,7 +81,21 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     setDisabled(empty || error);
   }, [form]);
 
-  const onFinish: FormCallbacks<FormState>['onFinish'] = useCallback((values: FormState) => {
+  const seedValidator = useCallback((rule: FormRule, value: string) => {
+    return new Promise<void>((resolve, reject) => {
+      if (!value) {
+        reject(new Error(t('This field is required')));
+      }
+
+      if (!words.includes(value)) {
+        reject(new Error(t('Invalid word')));
+      }
+
+      resolve();
+    });
+  }, [t]);
+
+  const onSubmit: FormCallbacks<FormState>['onFinish'] = useCallback((values: FormState) => {
     const { phraseNumber: _phraseNumber } = values;
     const seedKeys = Object.keys(values).filter((key) => key.startsWith(fieldNamePrefix));
     const phraseNumber = parseInt(_phraseNumber);
@@ -106,47 +120,93 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       checkUnlock()
         .then(() => {
           setSubmitting(true);
-          validateSeedV2(seed, DEFAULT_ACCOUNT_TYPES)
-            .then(() => {
-              return createAccountSuriV2({
-                name: accountName,
-                suri: seed,
-                isAllowed: true,
-                types: keyTypes
+          validateSeedV2(seed).then((response) => {
+            setSeedValidationResponse(response);
+
+            if (response.mnemonicTypes === 'general') {
+              alertModal.open({
+                closable: false,
+                title: t('Seed phrase incompatibility'),
+                type: NotificationType.WARNING,
+                content: (
+                  <>
+                    <div>
+                      {t('Importing this seed phrase will generate a unified account that can be used on multiple ecosystems including Polkadot, Ethereum, Bitcoin, and TON.')}
+                    </div>
+                    <br />
+                    <div>
+                      {t('However, SubWallet is not compatible with TON-native wallets. This means that with the same seed phrase, SubWallet and TON-native wallets will generate two different TON addresses.')}
+                    </div>
+                  </>
+                ),
+                cancelButton: {
+                  text: t('Cancel'),
+                  icon: XCircle,
+                  iconWeight: 'fill',
+                  onClick: () => {
+                    alertModal.close();
+                    setSubmitting(false);
+                  },
+                  schema: 'secondary'
+                },
+                okButton: {
+                  text: t('Apply'),
+                  icon: CheckCircle,
+                  iconWeight: 'fill',
+                  onClick: () => {
+                    activeModal(ACCOUNT_NAME_MODAL);
+                    alertModal.close();
+                  },
+                  schema: 'primary'
+                }
               });
-            })
-            .then(() => {
-              onComplete();
-            })
+            } else {
+              activeModal(ACCOUNT_NAME_MODAL);
+            }
+          })
             .catch((error: Error): void => {
-              notification({
+              setSeedValidationResponse(undefined);
+              setSubmitting(false);
+              notify({
                 type: 'error',
                 message: error.message
               });
-            })
-            .finally(() => {
-              setSubmitting(false);
             });
         })
         .catch(() => {
           // Unlock is cancelled
         });
     }
-  }, [t, checkUnlock, accountName, keyTypes, onComplete, notification]);
+  }, [t, checkUnlock, alertModal, activeModal, notify]);
 
-  const seedValidator = useCallback((rule: FormRule, value: string) => {
-    return new Promise<void>((resolve, reject) => {
-      if (!value) {
-        reject(new Error(t('This field is required')));
-      }
+  const onCreateAccount = useCallback((accountName: string) => {
+    if (!seedValidationResponse) {
+      return;
+    }
 
-      if (!words.includes(value)) {
-        reject(new Error(t('Invalid word')));
-      }
-
-      resolve();
-    });
-  }, [t]);
+    setAccountCreating(true);
+    createAccountSuriV2({
+      name: accountName,
+      suri: seedValidationResponse.mnemonic,
+      type: seedValidationResponse.mnemonicTypes === 'ton' ? 'ton-special' : undefined,
+      isAllowed: true
+    })
+      .then(() => {
+        onComplete();
+      })
+      .catch((error: Error): void => {
+        notify({
+          message: error.message,
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setSeedValidationResponse(undefined);
+        setAccountCreating(false);
+        setSubmitting(false);
+        inactiveModal(ACCOUNT_NAME_MODAL);
+      });
+  }, [inactiveModal, notify, onComplete, seedValidationResponse]);
 
   const toggleShow = useCallback(() => {
     setShowSeed((value) => !value);
@@ -183,7 +243,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             initialValues={formDefault}
             name={formName}
             onFieldsChange={onFieldsChange}
-            onFinish={onFinish}
+            onFinish={onSubmit}
           >
             <Form.Item name={'phraseNumber'}>
               <PhraseNumberSelector
@@ -243,6 +303,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           </Form>
         </div>
       </Layout.WithSubHeaderOnly>
+      <AccountNameModal
+        isLoading={accountCreating}
+        onSubmit={onCreateAccount}
+      />
     </PageWrapper>
   );
 };

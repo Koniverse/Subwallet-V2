@@ -77,27 +77,25 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onSubmit = useCallback((accountName: string) => {
     setLoading(true);
-    setTimeout(() => {
-      createAccountSuriV2({
-        name: accountName,
-        suri: seedPhrase,
-        type: undefined, // todo: "undefined" means unified account. Will update the value if there are more types to support
-        isAllowed: true
+    createAccountSuriV2({
+      name: accountName,
+      suri: seedPhrase,
+      type: undefined, // todo: "undefined" means unified account. Will update the value if there are more types to support
+      isAllowed: true
+    })
+      .then(() => {
+        onComplete();
       })
-        .then(() => {
-          onComplete();
-        })
-        .catch((error: Error): void => {
-          notify({
-            message: error.message,
-            type: 'error'
-          });
-        })
-        .finally(() => {
-          setLoading(false);
-          inactiveModal(ACCOUNT_NAME_MODAL);
+      .catch((error: Error): void => {
+        notify({
+          message: error.message,
+          type: 'error'
         });
-    }, 500);
+      })
+      .finally(() => {
+        setLoading(false);
+        inactiveModal(ACCOUNT_NAME_MODAL);
+      });
   }, [inactiveModal, notify, onComplete, seedPhrase]);
 
   useEffect(() => {
