@@ -1597,6 +1597,14 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden'
     },
+    '.__minimum-received .ant-number-suffix': {
+      color: `${token.colorTextTertiary} !important`
+    },
+    '.__balance-display-area': {
+      '.ant-number-integer, .ant-number-decimal': {
+        color: `${token.colorWhite} !important`
+      }
+    },
     '.__fee-paid-token': {
       display: 'flex',
       alignItems: 'center'
