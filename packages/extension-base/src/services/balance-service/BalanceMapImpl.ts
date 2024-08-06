@@ -125,7 +125,7 @@ export class BalanceMapImpl {
       const rs: BalanceInfo = {};
 
       Object.entries(balanceMap).forEach(([tokenSlug, balanceItems]) => {
-        rs[tokenSlug] = groupBalance(balanceItems, tokenSlug, tokenSlug);
+        rs[tokenSlug] = groupBalance(balanceItems, compoundKey, tokenSlug);
       });
 
       this._map[compoundKey] = rs;
