@@ -4,7 +4,7 @@
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { ResponseMnemonicValidateV2 } from '@subwallet/extension-base/types';
 import { AccountNameModal, CloseIcon, Layout, PageWrapper, PhraseNumberSelector, SeedPhraseInput } from '@subwallet/extension-koni-ui/components';
-import { ACCOUNT_NAME_MODAL, IMPORT_SEED_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateSeedV2 } from '@subwallet/extension-koni-ui/messaging';
@@ -44,7 +44,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const notify = useNotification();
 
   const onComplete = useCompleteCreateAccount();
-  const onBack = useGoBackFromCreateAccount(IMPORT_SEED_MODAL);
+  const onBack = useGoBackFromCreateAccount(IMPORT_ACCOUNT_MODAL);
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { alertModal } = useContext(WalletModalContext);
 
