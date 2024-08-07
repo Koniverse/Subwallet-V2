@@ -485,16 +485,8 @@ export class AccountContext {
       throw Error(t('Please choose at least one account type'));
     }
 
-    // const currentAccount = this.#koniState.keyringService.context.currentAccount;
-    // const allGenesisHash = currentAccount?.allGenesisHash || undefined;
-
     const multiChain = types.length > 1;
     const proxyId = multiChain ? this.createAccountGroupId(_suri) : '';
-
-    // Upsert account group first, to avoid combine latest have no account group data.
-    if (proxyId) {
-      this.upsertAccountProxy({ id: proxyId, name });
-    }
 
     const modifiedPairs = this.modifyPairsSubject.value;
 
@@ -506,6 +498,11 @@ export class AccountContext {
       modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
       addressDict[type] = address;
     });
+
+    // Upsert account group first, to avoid combine latest have no account group data.
+    if (proxyId) {
+      this.upsertAccountProxy({ id: proxyId, name });
+    }
 
     // Upsert modify pair before add account to keyring
     this.upsertModifyPairs(modifiedPairs);
@@ -559,7 +556,7 @@ export class AccountContext {
         genesisHash: ''
       };
 
-      if ([...BitcoinKeypairTypes, ...TonKeypairTypes].includes(type)) {
+      if ([...BitcoinKeypairTypes, ...TonKeypairTypes].includes(type) && isReadOnly) {
         meta.noPublicKey = true;
       }
 
@@ -1248,8 +1245,8 @@ export class AccountContext {
   /* Inject */
 
   /**
-   * @deprecated
    * Account ref
+   * @deprecated
    * */
 
   /** @deprecated */
