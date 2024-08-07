@@ -157,12 +157,10 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
       borderRadius: token.borderRadiusLG,
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       paddingLeft: token.paddingSM,
       paddingRight: token.paddingXXS,
-      minHeight: 48,
-      maxWidth: 232,
-      marginLeft: 'auto',
-      marginRight: 'auto'
+      minHeight: 48
     },
 
     '.__address': {
@@ -172,7 +170,7 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
       overflow: 'hidden',
       'white-space': 'nowrap',
       color: token.colorTextLight4,
-      flex: 1
+      flexShrink: 1
     },
 
     '.__copy-button': {

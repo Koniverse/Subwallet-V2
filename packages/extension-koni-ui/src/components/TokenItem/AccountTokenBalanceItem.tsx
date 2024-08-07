@@ -22,6 +22,7 @@ interface Props extends ThemeProps {
   item: BalanceItem;
 }
 
+// todo: logic in this file may not be correct in some case, need to recheck
 const Component: React.FC<Props> = (props: Props) => {
   const { className, item } = props;
 

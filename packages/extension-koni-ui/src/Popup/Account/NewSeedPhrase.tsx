@@ -4,7 +4,7 @@
 import { AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNameModal, CloseIcon, Layout, PageWrapper, WordPhrase } from '@subwallet/extension-koni-ui/components';
 import { SeedPhraseTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/SeedPhraseTermModal';
-import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, SEED_PREVENT_MODAL, SELECTED_ACCOUNT_TYPE, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEFAULT_ROUTER_PATH, SEED_PREVENT_MODAL, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, createSeedV2, windowOpen } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -45,11 +45,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const isOpenWindowRef = useRef(false);
 
-  const [typesStorage] = useLocalStorage(SELECTED_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPES);
   const [preventModalStorage] = useLocalStorage(SEED_PREVENT_MODAL, false);
   const [preventModal] = useState(preventModalStorage);
-
-  const [accountTypes] = useState(typesStorage);
 
   const [seedPhrase, setSeedPhrase] = useState('');
   const [loading, setLoading] = useState(false);
@@ -80,28 +77,26 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onSubmit = useCallback((accountName: string) => {
     setLoading(true);
-    setTimeout(() => {
-      createAccountSuriV2({
-        name: accountName,
-        suri: seedPhrase,
-        types: accountTypes,
-        isAllowed: true
+    createAccountSuriV2({
+      name: accountName,
+      suri: seedPhrase,
+      type: undefined, // todo: "undefined" means unified account. Will update the value if there are more types to support
+      isAllowed: true
+    })
+      .then(() => {
+        onComplete();
       })
-        .then(() => {
-          onComplete();
-        })
-        .catch((error: Error): void => {
-          notify({
-            message: error.message,
-            type: 'error'
-          });
-        })
-        .finally(() => {
-          setLoading(false);
-          inactiveModal(ACCOUNT_NAME_MODAL);
+      .catch((error: Error): void => {
+        notify({
+          message: error.message,
+          type: 'error'
         });
-    }, 500);
-  }, [accountTypes, inactiveModal, notify, onComplete, seedPhrase]);
+      })
+      .finally(() => {
+        setLoading(false);
+        inactiveModal(ACCOUNT_NAME_MODAL);
+      });
+  }, [inactiveModal, notify, onComplete, seedPhrase]);
 
   useEffect(() => {
     if (_isConfirmedTermSeedPhrase === 'nonConfirmed') {

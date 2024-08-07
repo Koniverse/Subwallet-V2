@@ -68,7 +68,7 @@ export interface ResponseMnemonicValidateV2 {
  * @property {string} name - The name of the account.
  * @property {string} [password] - An optional password for the account.
  * @property {string} suri - The mnemonic phrase or derivation path.
- * @property {KeypairType} [type] - The type of key pair to create.
+ * @property {KeypairType} [type] - The type of key pair to create. "undefined" means the unified account will be created
  * If it is undefined, create a unified account with multiple types.
  * @property {boolean} isAllowed - Indicates if the account creation is allowed.
  */

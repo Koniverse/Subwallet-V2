@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _isChainEvmCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountNetworkType, AccountProxy } from '@subwallet/extension-base/types';
 import { reformatAddress } from '@subwallet/extension-base/utils';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
@@ -18,12 +18,16 @@ function isChainInfoAccordantNetworkType (chainInfo: _ChainInfo, networkType: Ac
     return _isChainEvmCompatible(chainInfo);
   }
 
+  if (networkType === AccountNetworkType.TON) {
+    return _isChainTonCompatible(chainInfo);
+  }
+
   return false;
 }
 
 // todo:
 //  - order the result
-//  - support ton, bitcoin
+//  - support bitcoin
 //  - logic for generic, legacy ledger account
 const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetworkAddress[] => {
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
@@ -50,6 +54,12 @@ const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetwo
             name: chainInfo.name,
             slug: chainInfo.slug,
             address: a.address
+          });
+        } else if (a.networkType === AccountNetworkType.TON && chainInfo.tonInfo) {
+          result.push({
+            name: chainInfo.name,
+            slug: chainInfo.slug,
+            address: reformatAddress(a.address, chainInfo.isTestnet ? 0 : 1)
           });
         }
       }
