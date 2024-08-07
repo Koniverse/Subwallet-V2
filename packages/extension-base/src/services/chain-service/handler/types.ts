@@ -28,7 +28,14 @@ export interface _ApiOptions {
   providerName?: string,
   metadata?: MetadataItem,
   onUpdateStatus?: (status: _ChainConnectionStatus) => void,
-  externalApiPromise?: ApiPromise
+  externalApiPromise?: ApiPromise,
+  mode?: _SubstrateApiMode
+}
+
+export enum _SubstrateApiMode {
+  POLKADOT_JS = 'POLKADOT_JS',
+  DEDOT = 'DEDOT',
+  PAPI = 'PAPI'
 }
 
 export enum _CHAIN_VALIDATION_ERROR {
