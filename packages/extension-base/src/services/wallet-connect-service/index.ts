@@ -10,6 +10,7 @@ import { IKeyValueStorage } from '@walletconnect/keyvaluestorage';
 import SignClient from '@walletconnect/sign-client';
 import { EngineTypes, SessionTypes, SignClientTypes } from '@walletconnect/types';
 import { getInternalError, getSdkError } from '@walletconnect/utils';
+import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
 
 import PolkadotRequestHandler from './handler/PolkadotRequestHandler';
@@ -237,7 +238,7 @@ export default class WalletConnectService {
     try {
       await this.#client?.pair({ uri });
     } catch (e) {
-      throw this.convertWCErrorMessage(e as Error);
+      throw this.convertWCErrorMessage(e as Error, true);
     }
   }
 
@@ -329,22 +330,28 @@ export default class WalletConnectService {
     this.#updateSessions();
   }
 
-  public convertWCErrorMessage (e: Error) {
+  public convertWCErrorMessage (e: Error, isConnect?: boolean) {
     const message = e.message.toLowerCase();
 
+    console.error(e);
+
     if (message.includes('socket hang up') || message.includes('stalled') || message.includes('interrupted')) {
-      return new Error('There is an issue with the WebSocket connection to WalletConnect. Please try again later.');
+      return new Error(t('There is an issue with the WebSocket connection to WalletConnect. Please try again later.'));
     }
 
     if (message.includes('failed for host')) {
-      return new Error('The WebSocket has been blocked, or the number of socket connections has been limited, so a connection cannot be established.');
+      return new Error(t('The WebSocket has been blocked, or the number of socket connections has been limited, so a connection cannot be established.'));
     }
 
     if (message.includes('pairing already exists')) {
-      return new Error('Connection already exists');
+      return new Error(t('Connection already exists'));
     }
 
-    return new Error('Fail to add connection');
+    if (isConnect) {
+      return t('Fail to add connection');
+    }
+
+    return e;
   }
 
   private findMethodsMissing (methodRequire: (POLKADOT_SIGNING_METHODS | EIP155_SIGNING_METHODS) [], methods: string[]) {

@@ -78,14 +78,14 @@ const Component: React.FC<Props> = (props: Props) => {
 
         notification({
           type: 'error',
-          message: t(errMessage)
+          message: errMessage
         });
         setLoading(false);
       })
       .finally(() => {
         setLoading(false);
       });
-  }, [_onAfterConnect, form, notification, t]);
+  }, [_onAfterConnect, form, notification]);
 
   const onFinish: FormCallbacks<AddConnectionFormState>['onFinish'] = useCallback((values: AddConnectionFormState) => {
     const { uri } = values;
