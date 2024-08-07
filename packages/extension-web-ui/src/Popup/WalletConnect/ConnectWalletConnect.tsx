@@ -75,11 +75,10 @@ const Component: React.FC<Props> = (props: Props) => {
       .catch((e) => {
         console.error(e);
         const errMessage = (e as Error).message;
-        const message = errMessage.includes('Pairing already exists') ? t('Connection already exists') : t('Fail to add connection');
 
         notification({
           type: 'error',
-          message: message
+          message: t(errMessage)
         });
         setLoading(false);
       })
