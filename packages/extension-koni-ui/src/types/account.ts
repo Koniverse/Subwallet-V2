@@ -35,3 +35,9 @@ export type AccountNetworkAddress = {
   slug: string;
   address: string;
 }
+
+export type AccountAddressItemType = {
+  accountName: string;
+  accountProxyId: string;
+  address: string;
+}

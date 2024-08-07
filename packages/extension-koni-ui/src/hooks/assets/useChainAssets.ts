@@ -15,6 +15,7 @@ interface _ChainAssetFilters {
   chainTypes?: 'substrate' | 'evm'
 }
 
+// todo: recheck this hook, refactor if need
 export default function useChainAssets ({ chainTypes, isActive = false, isActiveChain = false, isAvailableChain = true, isFungible = true }: _ChainAssetFilters = {}) {
   const { chainInfoMap, chainStateMap } = useSelector((state: RootState) => state.chainStore);
   const { assetRegistry, assetSettingMap } = useSelector((state: RootState) => state.assetRegistry);

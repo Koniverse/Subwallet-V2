@@ -22,6 +22,7 @@ export const AccountSelectorModalId = 'accountSelectorModalId';
 
 const renderEmpty = () => <GeneralEmptyList />;
 
+// todo: deprecated, will remove
 function Component ({ className = '', id = AccountSelectorModalId, items, onSelectItem }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { checkActive, inactiveModal } = useContext(ModalContext);
