@@ -28,10 +28,11 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers/process';
 import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObject, getPSP34TransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
+import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_AUTO_LOCK_TIME } from '@subwallet/extension-base/services/setting-service/constants';
@@ -49,6 +50,7 @@ import { BN_ZERO, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, refor
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
+import { isTonAddress } from '@subwallet/keyring';
 import { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -1383,7 +1385,7 @@ export default class KoniExtension {
     const [errors, ,] = validateTransferRequest(transferTokenInfo, from, to, value, transferAll);
 
     const warnings: TransactionWarning[] = [];
-    const evmApiMap = this.#koniState.getEvmApiMap();
+    const evmApiMap = this.#koniState.getEvmApiMap(); // todo: simplify this to just getEvmApi(network)
     const chainInfo = this.#koniState.getChainInfo(networkKey);
 
     const nativeTokenInfo = this.#koniState.getNativeTokenInfo(networkKey);
@@ -1419,6 +1421,19 @@ export default class KoniExtension {
       } else if (_isMantaZkAsset(transferTokenInfo)) {
         transaction = undefined;
         transferAmount.value = '0';
+      } else if (isTonAddress(from) && isTonAddress(to) && _isTokenTransferredByTon(transferTokenInfo)) {
+        // todo: handle transfer jetton
+        chainType = ChainType.TON;
+        const tonApi = this.#koniState.getTonApi(networkKey);
+
+        [transaction, transferAmount.value] = await createTonTransaction({
+          from,
+          to,
+          networkKey,
+          value: value || '0',
+          transferAll: !!transferAll,
+          tonApi
+        });
       } else {
         const substrateApi = this.#koniState.getSubstrateApi(networkKey);
 
@@ -2614,6 +2629,50 @@ export default class KoniExtension {
 
     return true;
   }
+
+  // alibaba
+  // @ts-ignore
+  // private async signingTon ({ id }: RequestSigningApprovePasswordV2): Promise<boolean> {
+  //   const queued = this.#koniState.getSignRequest(id);
+  //
+  //   assert(queued, t('Unable to proceed. Please try again'));
+  //
+  //   const { reject, request, resolve } = queued;
+  //   const pair = keyring.getPair(queued.account.address);
+  //
+  //   // unlike queued.account.address the following
+  //   // address is encoded with the default prefix
+  //   // which what is used for password caching mapping
+  //   const { address } = pair;
+  //
+  //   if (!pair) {
+  //     reject(new Error(t('Unable to find account')));
+  //
+  //     return false;
+  //   }
+  //
+  //   if (pair.isLocked) {
+  //     keyring.unlockPair(address);
+  //   }
+  //
+  //   const { payload } = request;
+  //   const data = payload as unknown as Cell;
+  //
+  //   const rs = pair.ton.sign(data);
+  //
+  //   const result = request.sign(registry as unknown as TypeRegistry, pair);
+  //
+  //   resolve({
+  //     id,
+  //     signature: result.signature
+  //   });
+  //
+  //   if (this.#alwaysLock) {
+  //     this.keyringLock();
+  //   }
+  //
+  //   return true;
+  // }
 
   /// Derive account
 

@@ -1,10 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-// import { getHttpEndpoint } from '@orbs-network/ton-access';
+import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
-import { Address } from '@ton/core';
-import { JettonMaster, JettonWallet, OpenedContract } from '@ton/ton';
+import { Address, beginCell, Cell, MessageRelaxed, storeMessage } from '@ton/core';
+import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV4 } from '@ton/ton';
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
   const masterAddress = Address.parse(contractAddress);
@@ -13,29 +13,133 @@ export function getJettonMasterContract (tonApi: _TonApi, contractAddress: strin
 }
 
 export async function getJettonWalletContract (jettonMasterContract: OpenedContract<JettonMaster>, tonApi: _TonApi, ownerAddress: string) {
-  await sleep(1500);
   const walletAddress = Address.parse(ownerAddress);
 
-  await sleep(1500);
+  await sleep(1500); // alibaba
   const jettonWalletAddress = await jettonMasterContract.getWalletAddress(walletAddress);
-
-  await sleep(1500);
 
   return tonApi.open(JettonWallet.create(jettonWalletAddress));
 }
 
-// export async function getTonClient (isTestnet = false) {
-//   if (isTestnet) {
-//     const endpoint = await getHttpEndpoint({ network: 'testnet' });
-//
-//     return new TonClient({ endpoint });
-//   }
-//
-//   const endpoint = await getHttpEndpoint();
-//
-//   return new TonClient({ endpoint });
-// }
-
 export function sleep (ms: number) { // alibaba for test
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function externalMessage (contract: WalletContractV4, seqno: number, body: Cell) {
+  return beginCell()
+    .storeWritable(
+      storeMessage(
+        external({
+          to: contract.address,
+          init: seqno === 0 ? contract.init : undefined,
+          body: body
+        })
+      )
+    )
+    .endCell();
+}
+
+export async function sendTonTransaction (boc: string) {
+  const resp = await fetch(
+    'https://testnet.toncenter.com/api/v2/sendBocReturnHash', { // todo: create function to get this api by chain
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-API-KEY': '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+      },
+      body: JSON.stringify({
+        boc: boc
+      })
+    }
+  );
+
+  const extMsgInfo = await resp.json() as {result: { hash: string}};
+
+  return extMsgInfo.result.hash;
+}
+
+async function getTxByInMsg (extMsgHash: string) {
+  const url = `https://testnet.toncenter.com/api/v3/transactionsByMessage?msg_hash=${extMsgHash}&direction=in`;
+  const resp = await fetch(
+    url, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-API-KEY': '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+      }
+    }
+  );
+
+  return await resp.json() as TxByMsgResponse;
+}
+
+async function retry<T> (fn: () => Promise<T>, options: { retries: number, delay: number }): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let i = 0; i < options.retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (e instanceof Error) {
+        lastError = e;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, options.delay));
+    }
+  }
+
+  throw lastError;
+}
+
+export async function getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> {
+  return retry(async () => {
+    const externalTxInfoRaw = await getTxByInMsg(extMsgHash);
+    const externalTxInfo = externalTxInfoRaw.transactions[0];
+    const isExternalTxCompute = externalTxInfo.description.compute_ph.success;
+    const isExternalTxAction = externalTxInfo.description.action.success;
+    const base64Hex = externalTxInfo.hash;
+    const hex = Buffer.from(base64Hex, 'base64').toString('hex');
+
+    if (!(isExternalTxCompute && isExternalTxAction)) {
+      return [false, hex];
+    }
+
+    const internalMsgHash = externalTxInfo.out_msgs[0].hash;
+
+    if (internalMsgHash) {
+      const internalTxInfoRaw = await getTxByInMsg(extMsgHash);
+      const internalTxInfo = internalTxInfoRaw.transactions[0];
+      const isCompute = internalTxInfo.description.compute_ph.success;
+      const isAction = internalTxInfo.description.action.success;
+      const isBounced = internalTxInfo.out_msgs[0] && internalTxInfo.out_msgs[0].bounced;
+
+      return [isCompute && isAction && !isBounced, hex];
+    }
+
+    throw new Error('Transaction not found');
+  }, { retries: 10, delay: 3000 });
+}
+
+export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxed[], walletContract: WalletContractV4, _seqno?: number) {
+  // todo: optimize estimate tx fee
+  const contract = tonApi.open(walletContract);
+  const seqno = _seqno ?? await contract.getSeqno();
+
+  const simulatedTxCell = contract.createTransfer({
+    secretKey: Buffer.from(new Array(64)),
+    seqno,
+    messages
+  });
+
+  await sleep(1500); // alibaba
+  const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract.address, simulatedTxCell);
+
+  return BigInt(
+    estimateFeeInfo.source_fees.gas_fee +
+    estimateFeeInfo.source_fees.in_fwd_fee +
+    estimateFeeInfo.source_fees.storage_fee +
+    estimateFeeInfo.source_fees.fwd_fee
+  );
 }

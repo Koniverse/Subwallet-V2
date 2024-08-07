@@ -455,7 +455,8 @@ export enum TransactionDirection {
 
 export enum ChainType {
   EVM = 'evm',
-  SUBSTRATE = 'substrate'
+  SUBSTRATE = 'substrate',
+  TON = 'ton'
 }
 
 export enum ExtrinsicType {

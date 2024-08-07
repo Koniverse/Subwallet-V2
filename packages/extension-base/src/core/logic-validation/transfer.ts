@@ -11,7 +11,7 @@ import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
-import { isSubstrateTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { balanceFormatter, formatNumber } from '@subwallet/extension-base/utils';
 import { KeyringPair } from '@subwallet/keyring/types';
@@ -44,6 +44,8 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
   if (isEthereumAddress(from) && isEthereumAddress(to) && _isTokenEvmSmartContract(tokenInfo) && _getContractAddressOfToken(tokenInfo).length === 0) {
     errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('Not found ERC20 address for this token')));
   }
+
+  // todo: also validate jetton address
 
   return [errors, keypair, transferValue];
 }
@@ -148,6 +150,8 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
     try {
       if (isSubstrateTransaction(transaction)) {
         estimateFee.value = (await transaction.paymentInfo(validationResponse.address)).partialFee.toString();
+      } else if (isTonTransaction(transaction)) {
+        estimateFee.value = transaction.estimateFee;
       } else {
         const gasLimit = await evmApi.api.eth.estimateGas(transaction);
 

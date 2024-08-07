@@ -4,6 +4,7 @@
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
+import { Cell } from '@ton/core';
 import { Address, Contract, OpenedContract, TonClient } from '@ton/ton';
 import { BehaviorSubject } from 'rxjs';
 
@@ -64,7 +65,10 @@ export class TonApi implements _TonApi {
 
     // Create new provider and api
     this.apiUrl = apiUrl;
-    this.api = new TonClient({ endpoint: this.apiUrl });
+    this.api = new TonClient({
+      endpoint: this.apiUrl,
+      apiKey: '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+    });
   }
 
   async recoverConnect () {
@@ -76,7 +80,10 @@ export class TonApi implements _TonApi {
   }
 
   private createProvider (apiUrl: string) { // alibaba
-    return new TonClient({ endpoint: apiUrl });
+    return new TonClient({
+      endpoint: apiUrl,
+      apiKey: '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+    });
   }
 
   connect (): void {
@@ -128,5 +135,17 @@ export class TonApi implements _TonApi {
 
   open<T extends Contract> (src: T): OpenedContract<T> {
     return this.api.open(src);
+  }
+
+  estimateExternalMessageFee (address: Address, body: Cell, ignoreSignature?: boolean, initCode?: Cell, initData?: Cell) {
+    return this.api.estimateExternalMessageFee( // recheck
+      address,
+      {
+        body: body,
+        ignoreSignature: ignoreSignature || true,
+        initCode: initCode || null,
+        initData: initData || null
+      }
+    );
   }
 }

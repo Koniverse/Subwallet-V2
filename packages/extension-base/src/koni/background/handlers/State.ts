@@ -1080,6 +1080,14 @@ export default class KoniState {
     return this.chainService.getEvmApi(networkKey);
   }
 
+  public getTonApiMap () {
+    return this.chainService.getTonApiMap();
+  }
+
+  public getTonApi (networkKey: string) {
+    return this.chainService.getTonApi(networkKey);
+  }
+
   public getApiMap () {
     return {
       substrate: this.chainService.getSubstrateApiMap(),

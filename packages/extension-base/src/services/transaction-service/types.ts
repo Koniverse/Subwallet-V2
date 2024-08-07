@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BaseRequestSign, ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import EventEmitter from 'eventemitter3';
 import { TransactionConfig } from 'web3-core';
 
@@ -22,7 +23,7 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
   createdAt: number;
   updatedAt: number;
   estimateFee?: FeeData,
-  transaction: SubmittableExtrinsic | TransactionConfig;
+  transaction: SubmittableExtrinsic | TransactionConfig | TonTransactionConfig;
   additionalValidator?: (inputTransaction: SWTransactionResponse) => Promise<void>;
   eventsHandler?: (eventEmitter: TransactionEmitter) => void;
 }
