@@ -109,6 +109,7 @@ const Component = () => {
   const [handleRequestLoading, setHandleRequestLoading] = useState(true);
   const [requestUserInteractToContinue, setRequestUserInteractToContinue] = useState<boolean>(false);
   const continueRefreshQuoteRef = useRef<boolean>(false);
+  const isSameSwapPair = useRef<string>('');
   const { token } = useTheme() as Theme;
 
   const onIdle = useCallback(() => {
@@ -895,6 +896,15 @@ const Component = () => {
 
     return result;
   }, [chainInfoMap, currentPair, fromAssetInfo, isSwapXCM]);
+
+  useEffect(() => {
+    const prevSlug = _parseAssetRefKey(fromTokenSlugValue, toTokenSlugValue);
+
+    if (prevSlug !== isSameSwapPair.current) {
+      setCurrentFeeOption(fromTokenSlugValue);
+      isSameSwapPair.current = prevSlug;
+    }
+  }, [fromTokenSlugValue, toTokenSlugValue]);
 
   useEffect(() => {
     if (!isWebUI) {
