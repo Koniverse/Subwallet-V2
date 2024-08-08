@@ -10,7 +10,7 @@ import { AccountMetadataData, AccountProxyData, AccountProxyMap, AccountProxySto
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { addLazy, combineAccounts, derivePair, findNextDerivePair, isAddressValidWithAuthType, modifyAccountName } from '@subwallet/extension-base/utils';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
-import { createPair, getDerivePath, getKeypairTypeByAddress } from '@subwallet/keyring';
+import { createPair, getDerivePath, getKeypairTypeByAddress, tonMnemonicGenerate } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Json, KeyringPair$Meta, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { keyring } from '@subwallet/ui-keyring';
@@ -413,10 +413,13 @@ export class AccountContext {
   /* Create with mnemonic */
 
   /* Create seed */
-  public mnemonicCreateV2 ({ length = SEED_DEFAULT_LENGTH, mnemonic: _seed, type = 'general' }: RequestMnemonicCreateV2): ResponseMnemonicCreateV2 {
-    const seed = _seed || mnemonicGenerate(length);
+  public async mnemonicCreateV2 ({ length = SEED_DEFAULT_LENGTH, mnemonic: _seed, type = 'general' }: RequestMnemonicCreateV2): Promise<ResponseMnemonicCreateV2> {
     // At this point, only 'general' type will be accepted
     const types: KeypairType[] = type === 'general' ? ['sr25519', 'ethereum', 'ton'] : ['ton-special'];
+    const seed = _seed ||
+      type === 'general'
+      ? mnemonicGenerate(length)
+      : await tonMnemonicGenerate(length);
     const rs = { mnemonic: seed, addressMap: {} } as ResponseMnemonicCreateV2;
 
     types?.forEach((type) => {
