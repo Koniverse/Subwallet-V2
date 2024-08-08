@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getSubstrateGenesisHash, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountNetworkType } from '@subwallet/extension-base/types';
 
 export const findChainInfoByGenesisHash = (chainMap: Record<string, _ChainInfo>, genesisHash?: string): _ChainInfo | null => {
   if (!genesisHash) {
@@ -30,4 +31,20 @@ export const findChainInfoByChainId = (chainMap: Record<string, _ChainInfo>, cha
   }
 
   return null;
+};
+
+export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, networkType: AccountNetworkType): boolean => {
+  if (networkType === AccountNetworkType.SUBSTRATE) {
+    return _isPureSubstrateChain(chainInfo);
+  }
+
+  if (networkType === AccountNetworkType.ETHEREUM) {
+    return _isChainEvmCompatible(chainInfo);
+  }
+
+  if (networkType === AccountNetworkType.TON) {
+    return _isChainTonCompatible(chainInfo);
+  }
+
+  return false;
 };

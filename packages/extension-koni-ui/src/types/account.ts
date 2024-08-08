@@ -1,11 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { KeypairType } from '@polkadot/util-crypto/types';
-
-export interface NewSeedPhraseState {
-  accountTypes: KeypairType[];
-}
+import type { KeypairType } from '@subwallet/keyring/types';
 
 export interface WordItem {
   index: number;
@@ -39,5 +35,6 @@ export type AccountNetworkAddress = {
 export type AccountAddressItemType = {
   accountName: string;
   accountProxyId: string;
+  accountType: KeypairType;
   address: string;
 }

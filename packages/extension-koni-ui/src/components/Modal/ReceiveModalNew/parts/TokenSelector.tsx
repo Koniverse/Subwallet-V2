@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _getChainName } from '@subwallet/extension-base/services/chain-service/utils';
 import { TokenSelectorItem } from '@subwallet/extension-koni-ui/components';
 import TokenEmptyList from '@subwallet/extension-koni-ui/components/EmptyList/TokenEmptyList';
 import { RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
@@ -48,11 +49,12 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
       <TokenSelectorItem
         className={'token-selector-item'}
         key={item.slug}
+        networkName={_getChainName(chainInfoMap[item.originChain])}
         onClick={onSelect(item)}
         tokenSymbol={item.symbol}
       />
     );
-  }, [onSelect]);
+  }, [chainInfoMap, onSelect]);
 
   useEffect(() => {
     if (!isActive) {

@@ -404,8 +404,8 @@ export function _getAssetOriginChain (assetInfo?: _ChainAsset) {
   return assetInfo?.originChain || '';
 }
 
-export function _getChainName (chainInfo: _ChainInfo) {
-  return chainInfo.name;
+export function _getChainName (chainInfo?: _ChainInfo) {
+  return chainInfo?.name || '';
 }
 
 export function _getAssetDecimals (assetInfo?: _ChainAsset): number {

@@ -10,11 +10,11 @@ interface Props extends ThemeProps {
   onClick?: VoidFunction;
   tokenSlug?: string;
   tokenSymbol: string;
-  networkSlug?: string;
+  chainSlug?: string;
   networkName?: string;
 }
 
-const Component = ({ className, onClick, tokenSymbol }: Props) => {
+const Component = ({ className, networkName, onClick, tokenSymbol }: Props) => {
   return (
     <div
       className={CN(className)}
@@ -26,7 +26,7 @@ const Component = ({ className, onClick, tokenSymbol }: Props) => {
           {tokenSymbol}
         </div>
         <div className='__network-name'>
-
+          {networkName}
         </div>
       </div>
       <div className='__item-right-part'></div>

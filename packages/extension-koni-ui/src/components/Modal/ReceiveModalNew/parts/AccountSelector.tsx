@@ -49,6 +49,7 @@ function Component ({ className = '', items, onBack, onCancel, onSelectItem }: P
     return (
       <AccountAddressItem
         item={item}
+        key={item.address}
         onClick={onSelect(item)}
       />
     );
