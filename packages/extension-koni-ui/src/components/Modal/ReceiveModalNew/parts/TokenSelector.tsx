@@ -47,10 +47,12 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
   const renderItem = useCallback((item: _ChainAsset) => {
     return (
       <TokenSelectorItem
+        chainSlug={item.originChain}
         className={'token-selector-item'}
         key={item.slug}
         networkName={_getChainName(chainInfoMap[item.originChain])}
         onClick={onSelect(item)}
+        tokenSlug={item.slug}
         tokenSymbol={item.symbol}
       />
     );
@@ -87,9 +89,23 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
 
 export const TokenSelectorModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return ({
+    '.ant-sw-modal-content': {
+      height: '100vh'
+    },
+
     '.ant-sw-modal-body': {
       paddingLeft: 0,
-      paddingRight: 0
+      paddingRight: 0,
+      display: 'flex',
+      flexDirection: 'column'
+    },
+
+    '.ant-sw-list-section': {
+      flex: 1
+    },
+
+    '.ant-sw-list': {
+      paddingBottom: 0
     },
 
     '.token-selector-item + .token-selector-item': {

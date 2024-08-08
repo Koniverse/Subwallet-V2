@@ -48,6 +48,7 @@ function Component ({ className = '', items, onBack, onCancel, onSelectItem }: P
   const renderItem = useCallback((item: AccountAddressItemType) => {
     return (
       <AccountAddressItem
+        className={'account-selector-item'}
         item={item}
         key={item.address}
         onClick={onSelect(item)}
@@ -103,6 +104,27 @@ function Component ({ className = '', items, onBack, onCancel, onSelectItem }: P
 
 export const AccountSelectorModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return ({
+    '.ant-sw-modal-content': {
+      height: '100vh'
+    },
 
+    '.ant-sw-modal-body': {
+      paddingLeft: 0,
+      paddingRight: 0,
+      display: 'flex',
+      flexDirection: 'column'
+    },
+
+    '.ant-sw-list-section': {
+      flex: 1
+    },
+
+    '.ant-sw-list': {
+      paddingBottom: 0
+    },
+
+    '.account-selector-item + .account-selector-item': {
+      marginTop: token.marginXS
+    }
   });
 });

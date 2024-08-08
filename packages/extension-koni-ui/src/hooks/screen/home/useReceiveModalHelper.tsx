@@ -32,7 +32,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
   const chainAssets = useChainAssets().chainAssets;
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const setSelectedMnemonicType = useSetSelectedMnemonicType(false);
+  const setSelectedMnemonicType = useSetSelectedMnemonicType(true);
 
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
@@ -47,7 +47,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
 
   const tokenSelectorItems = useMemo<_ChainAsset[]>(() => {
     if (tokenGroupSlug) {
-      return chainAssets.filter((asset) => _getMultiChainAsset(asset) === tokenGroupSlug);
+      return chainAssets.filter((asset) => asset.slug === tokenGroupSlug || _getMultiChainAsset(asset) === tokenGroupSlug);
     }
 
     return chainAssets;

@@ -7,6 +7,8 @@ import CN from 'classnames';
 import React from 'react';
 import styled from 'styled-components';
 
+import AccountProxyAvatar from './AccountProxyAvatar';
+
 type Props = ThemeProps & {
   item: AccountAddressItemType;
   onClick?: VoidFunction;
@@ -24,7 +26,11 @@ function Component (props: Props): React.ReactElement<Props> {
         onClick={onClick}
       >
         <div className='__item-left-part'>
-
+          <AccountProxyAvatar
+            className={'__account-avatar'}
+            size={24}
+            value={item.accountProxyId}
+          />
         </div>
 
         <div className='__item-center-part'>
@@ -44,7 +50,7 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
   return {
     background: token.colorBgSecondary,
     paddingLeft: token.paddingSM,
-    paddingRight: token.paddingXXS,
+    paddingRight: token.paddingSM,
     paddingTop: 6,
     paddingBottom: 6,
     borderRadius: token.borderRadiusLG,
@@ -53,9 +59,12 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
     flexDirection: 'row',
     cursor: 'pointer',
     transition: `background ${token.motionDurationMid} ease-in-out`,
-    gap: token.sizeXXS,
     overflowX: 'hidden',
     minHeight: 52,
+
+    '.__account-avatar': {
+      marginRight: token.marginSM
+    },
 
     '.__item-center-part': {
       display: 'flex',
@@ -63,20 +72,17 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
       'white-space': 'nowrap',
       gap: token.sizeXXS,
       flex: 1,
-      alignItems: 'center'
+      fontSize: token.fontSize,
+      lineHeight: token.lineHeight
     },
 
-    '.__item-account-name': {
-      fontSize: token.fontSize,
-      lineHeight: token.lineHeight,
+    '.__account-name': {
       color: token.colorTextLight1,
       overflow: 'hidden',
       textOverflow: 'ellipsis'
     },
 
-    '.__item-address': {
-      fontSize: token.fontSizeSM,
-      lineHeight: token.lineHeightSM,
+    '.__address': {
       color: token.colorTextLight4
     },
 

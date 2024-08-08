@@ -2,25 +2,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React from 'react';
 import styled from 'styled-components';
 
 interface Props extends ThemeProps {
   onClick?: VoidFunction;
-  tokenSlug?: string;
+  tokenSlug: string;
   tokenSymbol: string;
-  chainSlug?: string;
-  networkName?: string;
+  chainSlug: string;
+  networkName: string;
 }
 
-const Component = ({ className, networkName, onClick, tokenSymbol }: Props) => {
+const Component = ({ chainSlug, className, networkName, onClick, tokenSlug, tokenSymbol }: Props) => {
   return (
     <div
       className={CN(className)}
       onClick={onClick}
     >
-      <div className='__item-left-part'></div>
+      <div className='__item-left-part'>
+        <Logo
+          isShowSubLogo={true}
+          shape={'squircle'}
+          size={40}
+          subLogoShape={'circle'}
+          subNetwork={chainSlug}
+          token={tokenSlug.toLowerCase()}
+        />
+      </div>
       <div className='__item-center-part'>
         <div className='__token-symbol'>
           {tokenSymbol}
@@ -29,7 +39,6 @@ const Component = ({ className, networkName, onClick, tokenSymbol }: Props) => {
           {networkName}
         </div>
       </div>
-      <div className='__item-right-part'></div>
     </div>
   );
 };
@@ -40,7 +49,36 @@ const TokenSelectorItem = styled(Component)<Props>(({ theme: { token } }: Props)
     backgroundColor: token.colorBgSecondary,
     borderRadius: token.borderRadiusLG,
     padding: token.paddingSM,
-    cursor: 'pointer'
+    cursor: 'pointer',
+    gap: token.sizeXS,
+    transition: `background ${token.motionDurationMid} ease-in-out`,
+
+    '.__item-center-part': {
+      overflow: 'hidden',
+      flex: 1
+    },
+
+    '.__token-symbol': {
+      fontSize: token.fontSizeLG,
+      lineHeight: token.lineHeightLG,
+      color: token.colorTextLight1,
+      overflow: 'hidden',
+      'white-space': 'nowrap',
+      textOverflow: 'ellipsis'
+    },
+
+    '.__network-name': {
+      fontSize: token.fontSizeSM,
+      lineHeight: token.lineHeightSM,
+      color: token.colorTextLight3,
+      overflow: 'hidden',
+      'white-space': 'nowrap',
+      textOverflow: 'ellipsis'
+    },
+
+    '&:hover': {
+      background: token.colorBgInput
+    }
   });
 });
 
