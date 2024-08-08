@@ -1171,7 +1171,7 @@ export default class KoniExtension {
     return true;
   }
 
-  private seedCreateV2 (request: RequestMnemonicCreateV2): ResponseMnemonicCreateV2 {
+  private seedCreateV2 (request: RequestMnemonicCreateV2): Promise<ResponseMnemonicCreateV2> {
     return this.#koniState.keyringService.context.mnemonicCreateV2(request);
   }
 
