@@ -72,7 +72,7 @@ function Component ({ className, request, type }: Props) {
             <AlertBox
               className={CN(className, 'alert-box')}
               description={errors[0].message}
-              title={'Error'}
+              title={errors[0].name}
               type={'error'}
             />
           )
@@ -107,6 +107,10 @@ const NetworkConnectionErrorConfirmation = styled(Component)<Props>(({ theme: { 
 
   '.__label': {
     textAlign: 'left'
+  },
+
+  '.alert-box': {
+    width: '100%'
   }
 }));
 

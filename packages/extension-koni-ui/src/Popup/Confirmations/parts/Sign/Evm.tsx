@@ -280,7 +280,7 @@ const Component: React.FC<Props> = (props: Props) => {
           <AlertBox
             className={CN(className, 'alert-box')}
             description={errors[0].message}
-            title={'Error'}
+            title={errors[0].name}
             type={'error'}
           />
         )
