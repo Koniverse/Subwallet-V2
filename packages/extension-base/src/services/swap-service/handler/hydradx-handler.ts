@@ -148,7 +148,7 @@ export class HydradxHandler implements SwapBaseInterface {
       const fee: CommonStepFeeInfo = {
         feeComponent: [{
           feeType: SwapFeeType.NETWORK_FEE,
-          amount: Math.round(xcmFeeInfo.partialFee * 1.2).toString(),
+          amount: Math.round(xcmFeeInfo.partialFee * 1.5).toString(),
           tokenSlug: _getChainNativeTokenSlug(alternativeChainInfo)
         }],
         defaultFeeToken: _getChainNativeTokenSlug(alternativeChainInfo),
