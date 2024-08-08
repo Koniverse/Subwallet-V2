@@ -410,6 +410,24 @@ export class AccountContext {
 
   /* Get address for another service */
 
+  /* Check address exists */
+  private checkAddressExists (addresses: string[]): string {
+    let result = '';
+
+    for (const address of addresses) {
+      try {
+        const pair = keyring.getPair(address);
+
+        if (pair) {
+          result = pair.address;
+          break;
+        }
+      } catch (e) {}
+    }
+
+    return result;
+  }
+
   /* Create with mnemonic */
 
   /* Create seed */
@@ -464,6 +482,10 @@ export class AccountContext {
       rs.addressMap[type] = keyring.createFromUri(getSuri(mnemonic, type), {}, type).address;
     });
 
+    const exists = this.checkAddressExists(Object.values(rs.addressMap));
+
+    assert(!exists, t('Have already created account with this seed: {{address}}', { replace: { address: exists } }));
+
     return rs;
   }
 
@@ -501,6 +523,10 @@ export class AccountContext {
       modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
       addressDict[type] = address;
     });
+
+    const exists = this.checkAddressExists(Object.values(addressDict));
+
+    assert(!exists, t('Have already created account with this seed: {{address}}', { replace: { address: exists } }));
 
     // Upsert account group first, to avoid combine latest have no account group data.
     if (proxyId) {
@@ -607,6 +633,10 @@ export class AccountContext {
       assert(false, t('Invalid private key. Please try again.'));
     }
 
+    const exists = this.checkAddressExists(Object.values(rs.addressMap));
+
+    assert(!exists, t('Have already created account with this private key: {{address}}', { replace: { address: exists } }));
+
     return rs;
   }
 
@@ -623,7 +653,10 @@ export class AccountContext {
 
   /* Ledger */
 
-  /* For custom derive path */
+  /**
+   * For custom derive path
+   * @todo: Add check exist address
+   * */
   public async accountsCreateHardwareV2 (request: RequestAccountCreateHardwareV2): Promise<boolean> {
     const { accountIndex, address, addressOffset, genesisHash, hardwareType, isAllowed, name } = request;
     const key = keyring.addHardware(address, hardwareType, {
@@ -653,7 +686,10 @@ export class AccountContext {
     return true;
   }
 
-  /* For multi select */
+  /**
+   * For multi select
+   * @todo: Add check exist address
+   * */
   public async accountsCreateHardwareMultiple ({ accounts }: RequestAccountCreateHardwareMultiple): Promise<boolean> {
     const addresses: string[] = [];
 
@@ -755,6 +791,10 @@ export class AccountContext {
       encType
     );
 
+    const exists = this.checkAddressExists([pair.address]);
+
+    assert(!exists, t('Account already exists'));
+
     // unlock then lock (locking cleans secretKey, so needs to be last)
     try {
       pair.decodePkcs8(password);
@@ -804,6 +844,10 @@ export class AccountContext {
 
   public batchRestoreV2 ({ accountsInfo, file, isAllowed, password }: RequestBatchRestoreV2): void {
     const addressList: string[] = accountsInfo.map((acc) => acc.address);
+    const exists = this.checkAddressExists(addressList);
+
+    assert(!exists, t('Account already exists account: {{address}}', { replace: { address: exists } }));
+
     const isPasswordValidated = this.validatedAccountsPassword(file, password);
 
     if (isPasswordValidated) {
@@ -841,15 +885,14 @@ export class AccountContext {
           if (isHex(phrase) && isHex(phrase, 256)) {
             const type: KeypairType = 'ethereum';
 
-            keyringPair = keyring.addUri(getSuri(suri, type), { name: name }, type).pair;
+            keyringPair = keyring.createFromUri(getSuri(suri, type), { name: name }, type);
           }
         }
       } else {
-        keyringPair = keyring.keyring.addFromPair({
+        keyringPair = keyring.keyring.createFromPair({
           publicKey: hexToU8a(publicKey),
           secretKey: hexToU8a(secretKey)
-        }, { name });
-        keyring.addPair(keyringPair, true);
+        }, { name }, keyring.keyring.type);
       }
 
       if (!keyringPair) {
@@ -860,11 +903,16 @@ export class AccountContext {
       }
 
       const _address = keyringPair.address;
+      const exists = this.checkAddressExists([_address]);
+
+      assert(!exists, t('Account already exists account: {{address}}', { replace: { address: exists } }));
+
       const modifiedPairs = this.modifyPairsSubject.value;
 
       modifiedPairs[_address] = { migrated: true, key: _address };
 
       this.upsertModifyPairs(modifiedPairs);
+      keyring.addPair(keyringPair, true);
 
       await new Promise<void>((resolve) => {
         this._saveCurrentAccountAddress(_address, () => {
@@ -890,7 +938,7 @@ export class AccountContext {
   /**
    * @func derivationCreateMultiple
    * @desc Derive multi account
-   * Note: Must update before re-use
+   * @todo Must update before re-use
    * @deprecated
    */
   public derivationCreateMultiple ({ isAllowed, items, parentAddress }: RequestDeriveCreateMultiple): boolean {
@@ -962,7 +1010,7 @@ export class AccountContext {
   /**
    * @func getListDeriveAccounts
    * @desc Get a derivation account list.
-   * Note: Must update before re-use
+   * @todo Must update before re-use
    * @deprecated
    */
   public getListDeriveAccounts ({ limit, page, parentAddress }: RequestGetDeriveAccounts): ResponseGetDeriveAccounts {
@@ -1031,6 +1079,10 @@ export class AccountContext {
       childPair = parentPair.substrate.derive(suri, meta);
     }
 
+    const exists = this.checkAddressExists([childPair.address]);
+
+    assert(!exists, t('Account already exists'));
+
     return {
       address: childPair.address,
       suri: meta.suri as string
@@ -1072,6 +1124,10 @@ export class AccountContext {
     }
 
     const address = childPair.address;
+
+    const exists = this.checkAddressExists([childPair.address]);
+
+    assert(!exists, t('Account already exists'));
 
     keyring.addPair(childPair, true);
 
