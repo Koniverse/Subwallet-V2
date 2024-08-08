@@ -151,7 +151,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const crowdloansContent = useMemo(() => {
     return (
       <div className='web-list'>
-        {!!banners.length && (
+        {!!banners.length && isWebUI && (
           <div className={'banner-container'}>
             <BannerGenerator
               banners={banners}

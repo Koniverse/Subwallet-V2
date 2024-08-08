@@ -98,6 +98,7 @@ const Component = ({ className, data, dismissBanner, instructionDataList, onClic
 const Banner = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     position: 'relative',
+    maxWidth: 1600,
 
     '.dismiss-button': {
       position: 'absolute',
@@ -109,9 +110,16 @@ const Banner = styled(Component)<Props>(({ theme: { token } }: Props) => {
     },
     '.__modal-background': {
       height: 88,
-      backgroundPosition: 'center',
-      backgroundSize: 'cover',
-      marginBottom: 16
+      backgroundPosition: 'left',
+      backgroundSize: 'auto 100%',
+      marginBottom: 16,
+      borderRadius: 8,
+      backgroundRepeat: 'no-repeat'
+    },
+    '@media (max-width: 1200px)': {
+      '.__modal-background': {
+        height: 64
+      }
     }
   };
 });
