@@ -246,7 +246,7 @@ const _MetaInfo = styled(Component)<Props>(({ theme: { token } }: Props) => {
       }
     },
 
-    '.__account-name': {
+    '.__account-name, .__chain-name': {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap'
