@@ -291,7 +291,6 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
                 />
               )
             }
-
           </div>
           <Form.Item
             className={CN('account-field')}

@@ -168,7 +168,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       </Layout.WithSubHeaderOnly>
       <SeedPhraseTermModal />
       <AccountNameModal
-        accountType={AccountProxyType.UNIFIED}
+        accountType={selectedMnemonicType === 'general' ? AccountProxyType.UNIFIED : AccountProxyType.SOLO}
         isLoading={loading}
         onSubmit={onSubmit}
       />

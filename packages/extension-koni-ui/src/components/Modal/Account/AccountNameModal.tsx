@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountProxyTypeTag } from '@subwallet/extension-koni-ui/components';
 import { ACCOUNT_NAME_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -23,8 +24,7 @@ interface FormProps {
 
 const modalId = ACCOUNT_NAME_MODAL;
 
-// todo: use prop accountType to make the account type tag (at top of account name input)
-const Component: React.FC<Props> = ({ className, isLoading, onSubmit }: Props) => {
+const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmit }: Props) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<FormProps>();
   const defaultValues = useMemo(() => ({
@@ -65,20 +65,32 @@ const Component: React.FC<Props> = ({ className, isLoading, onSubmit }: Props) =
         name='__form-container'
         onFinish={_onSubmit}
       >
-        {/* todo: account type tag will be here */}
-        <Form.Item
-          className={CN('__account-name-field')}
-          name={'name'}
-          rules={accountNameRules}
-        >
-          <Input
-            className='__account-name-input'
-            disabled={isLoading}
-            label={t('Account name')}
-            onBlur={form.submit}
-            placeholder={t('Enter the account name')}
-          />
-        </Form.Item>
+        <div className='__account-name-field-wrapper'>
+          <div className='__account-type-tag-wrapper'>
+            {
+              accountType && (
+                <AccountProxyTypeTag
+                  className={'__account-type-tag'}
+                  type={accountType}
+                />
+              )
+            }
+          </div>
+
+          <Form.Item
+            className={CN('__account-name-field')}
+            name={'name'}
+            rules={accountNameRules}
+          >
+            <Input
+              className='__account-name-input'
+              disabled={isLoading}
+              label={t('Account name')}
+              onBlur={form.submit}
+              placeholder={t('Enter the account name')}
+            />
+          </Form.Item>
+        </div>
       </Form>
 
       <div className='__submit-button-wrapper'>
@@ -108,6 +120,22 @@ const AccountNameModal = styled(Component)<Props>(({ theme: { token } }: Props) 
       whiteSpace: 'pre-wrap',
       textAlign: 'center',
       marginBottom: token.margin
+    },
+
+    '.__account-name-field-wrapper': {
+      position: 'relative'
+    },
+
+    '.__account-type-tag-wrapper': {
+      position: 'absolute',
+      zIndex: 1,
+      right: token.sizeSM,
+      top: token.sizeXS,
+      display: 'flex'
+    },
+
+    '.__account-type-tag': {
+      marginRight: 0
     }
   };
 });

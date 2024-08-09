@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { ResponseMnemonicValidateV2 } from '@subwallet/extension-base/types';
+import { AccountProxyType, ResponseMnemonicValidateV2 } from '@subwallet/extension-base/types';
 import { AccountNameModal, CloseIcon, Layout, PageWrapper, PhraseNumberSelector, SeedPhraseInput } from '@subwallet/extension-koni-ui/components';
 import { ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
@@ -304,6 +304,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         </div>
       </Layout.WithSubHeaderOnly>
       <AccountNameModal
+        accountType={seedValidationResponse
+          ? seedValidationResponse.mnemonicTypes === 'general' ? AccountProxyType.UNIFIED : AccountProxyType.SOLO
+          : undefined}
         isLoading={accountCreating}
         onSubmit={onCreateAccount}
       />
