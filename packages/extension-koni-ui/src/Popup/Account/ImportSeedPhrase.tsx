@@ -35,6 +35,7 @@ interface FormState extends Record<`seed-phrase-${number}`, string> {
 }
 
 const words = wordlists.english;
+const phraseNumberOptions = [12, 24];
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
@@ -59,13 +60,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [showSeed, setShowSeed] = useState(false);
   const checkUnlock = useUnlockChecker();
 
-  const phraseNumberItems = useMemo(() => [12, 24].map((value) => ({
+  const phraseNumberItems = useMemo(() => phraseNumberOptions.map((value) => ({
     label: t('{{number}} words', { replace: { number: value } }),
-    value: String(value)
+    value: `${value}`
   })), [t]);
 
   const formDefault: FormState = useMemo(() => ({
-    phraseNumber: '12',
+    phraseNumber: `${phraseNumberOptions[0]}`,
     trigger: 'trigger'
   }), []);
 
@@ -94,6 +95,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       resolve();
     });
   }, [t]);
+
+  const handlePaste = useCallback((words: string[]) => {
+    if (phraseNumberOptions.includes(words.length)) {
+      try {
+        form.setFieldValue('phraseNumber', `${words.length}`);
+      } catch (error) {
+        console.error('Error updating phraseNumber field:', error);
+      }
+    }
+  }, [form]);
 
   const onSubmit: FormCallbacks<FormState>['onFinish'] = useCallback((values: FormState) => {
     const { phraseNumber: _phraseNumber } = values;
@@ -290,6 +301,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                         <SeedPhraseInput
                           form={form}
                           formName={formName}
+                          handlePaste={handlePaste}
                           hideText={!showSeed}
                           index={index}
                           prefix={fieldNamePrefix}
