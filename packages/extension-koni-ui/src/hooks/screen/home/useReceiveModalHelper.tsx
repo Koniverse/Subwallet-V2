@@ -183,8 +183,6 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
     }
 
     openAddressQrModal();
-
-    // todo: if is unified account with TON, need show warning about create solo TON account
   }, [addressQrModal, alertModal, navigate, onCloseAccountSelector, selectedNetwork, setSelectedMnemonicType, t]);
 
   /* account Selector --- */

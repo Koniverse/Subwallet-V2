@@ -9,3 +9,4 @@ export { default as AccountProxyAvatar } from './AccountProxyAvatar';
 export { default as AccountProxyAvatarGroup } from './AccountProxyAvatarGroup';
 export { default as AccountNetworkAddressItem } from './AccountNetworkAddressItem';
 export { default as AccountAddressItem } from './AccountAddressItem';
+export { default as AccountProxyTypeTag } from './AccountProxyTypeTag';

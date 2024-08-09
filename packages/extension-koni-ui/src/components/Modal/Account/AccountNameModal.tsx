@@ -31,7 +31,7 @@ const Component: React.FC<Props> = ({ className, isLoading, onSubmit }: Props) =
     name: ''
   }), []);
 
-  const accounNameValue = Form.useWatch('name', form);
+  const accountNameValue = Form.useWatch('name', form);
 
   const accountNameRules = useMemo(() => {
     return [
@@ -85,7 +85,7 @@ const Component: React.FC<Props> = ({ className, isLoading, onSubmit }: Props) =
         <Button
           block={true}
           className='__submit-button'
-          disabled={!accounNameValue || isLoading}
+          disabled={!accountNameValue || isLoading}
           icon={(
             <Icon
               phosphorIcon={CheckCircle}
