@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import PieDonutChart, { DataItem } from '@garvae/react-pie-donut-chart';
+import { _getAssetDecimals, _getAssetPriceId } from '@subwallet/extension-base/services/chain-service/utils';
 import { PageWrapper } from '@subwallet/extension-web-ui/components';
 import NoContent, { PAGE_TYPE } from '@subwallet/extension-web-ui/components/NoContent';
 import { ProgressBar } from '@subwallet/extension-web-ui/components/ProgressBar';
-import { BN_100, BN_TEN, BN_ZERO } from '@subwallet/extension-web-ui/constants';
+import { BN_100, BN_ZERO } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { useGroupYieldPosition, useSelector } from '@subwallet/extension-web-ui/hooks';
@@ -96,9 +97,9 @@ const Component = ({ className }: Props) => {
 
     earningPositions.forEach((item) => {
       const priceToken = assetInfoMap[item.balanceToken];
-      const price = priceMap[priceToken?.priceId || ''] || 0;
+      const price = priceMap[_getAssetPriceId(priceToken)] || 0;
 
-      result = result.plus((new BigN(item.totalStake)).div(BN_TEN.pow(priceToken.decimals || 0)).multipliedBy(price));
+      result = result.plus((new BigN(item.totalStake)).shiftedBy(-_getAssetDecimals(priceToken)).multipliedBy(price));
     });
 
     return result;
