@@ -32,7 +32,7 @@ import { JsonRpcPayload } from 'web3-core-helpers';
 import { checkIfDenied } from '@polkadot/phishing';
 import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
 import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
-import { isNumber } from '@polkadot/util';
+import { isArray, isNumber } from '@polkadot/util';
 
 interface AccountSub {
   subscription: Subscription;
@@ -445,6 +445,38 @@ export default class KoniTabs {
     }];
   }
 
+  private async revokePermissions (url: string, id: string, { params }: RequestArguments) {
+    if (!params || !isArray(params) || params.length === 0) {
+      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, 'No list of permissions found to revoke in the parameters.');
+    }
+
+    const permissions = Object.keys(params[0] as Record<string, any>);
+
+    const permissionPromise = async (permission: string): Promise<void> => {
+      if (permission === 'eth_accounts') {
+        return new Promise((resolve) => {
+          this.#koniState.getAuthorize((value) => {
+            const urlStripped = stripUrl(url);
+
+            if (value && value[urlStripped]) {
+              delete value[urlStripped];
+
+              this.#koniState.setAuthorize(value, () => {
+                resolve();
+              });
+            } else {
+              resolve();
+            }
+          });
+        });
+      }
+    };
+
+    await Promise.all(permissions.map(permissionPromise));
+
+    return null;
+  }
+
   private async switchEvmChain (id: string, url: string, { params }: RequestArguments) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const chainId = params[0].chainId as string;
@@ -731,6 +763,8 @@ export default class KoniTabs {
       // Detect account
       const newAccountList = await this.getEvmCurrentAccount(url);
 
+      console.log(newAccountList, 'accountList');
+
       // Compare to void looping reload
       if (JSON.stringify(currentAccountList) !== JSON.stringify(newAccountList)) {
         // eslint-disable-next-line node/no-callback-literal
@@ -920,6 +954,8 @@ export default class KoniTabs {
           return await this.getEvmPermission(url, id);
         case 'wallet_getPermissions':
           return await this.getEvmPermission(url, id);
+        case 'wallet_revokePermissions':
+          return await this.revokePermissions(url, id, request);
         case 'wallet_addEthereumChain':
           return await this.addEvmChain(id, url, request);
         case 'wallet_switchEthereumChain':
