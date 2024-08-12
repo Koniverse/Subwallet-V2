@@ -68,7 +68,7 @@ const BannerGenerator = styled(Component)<Props>(({ theme: { token } }: Props) =
       paddingInlineStart: 0,
       position: 'absolute',
       bottom: 0,
-      marginBottom: token.sizeXXS,
+      marginBottom: -2,
       width: '100%'
     },
     '.slick-dots li': {
