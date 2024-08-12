@@ -264,7 +264,7 @@ const PortfolioPage = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
 
     '.token-detail-banner-wrapper': {
-      marginTop: -19
+      marginTop: -24
     },
 
     '.portfolio-content': {
