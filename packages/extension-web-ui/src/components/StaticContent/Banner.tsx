@@ -98,7 +98,7 @@ const Component = ({ className, data, dismissBanner, instructionDataList, onClic
 const Banner = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     position: 'relative',
-    maxWidth: 1600,
+    maxWidth: 2420,
 
     '.dismiss-button': {
       position: 'absolute',

@@ -263,6 +263,10 @@ const PortfolioPage = styled(Component)<Props>(({ theme: { token } }: Props) => 
       flex: '0 0 auto'
     },
 
+    '.token-detail-banner-wrapper': {
+      marginTop: -19
+    },
+
     '.portfolio-content': {
       flex: '1 1 500px',
       paddingTop: token.paddingLG,

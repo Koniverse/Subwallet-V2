@@ -36,7 +36,7 @@ const Component = ({ banners, className, dismissBanner, onClickBanner }: Props) 
       slidesToShow: 1,
       slidesToScroll: 1,
       autoplay: true,
-      autoplaySpeed: 2000,
+      autoplaySpeed: 7000,
       arrows: false
     };
   }, []);
@@ -63,12 +63,13 @@ const Component = ({ banners, className, dismissBanner, onClickBanner }: Props) 
 
 const BannerGenerator = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
+    marginBottom: 24,
     '.slick-dots': {
       textAlign: 'center',
       paddingInlineStart: 0,
       position: 'absolute',
+      marginBottom: -3,
       bottom: 0,
-      marginBottom: -2,
       width: '100%'
     },
     '.slick-dots li': {
