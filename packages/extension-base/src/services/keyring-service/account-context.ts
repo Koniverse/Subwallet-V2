@@ -659,6 +659,11 @@ export class AccountContext {
    * */
   public async accountsCreateHardwareV2 (request: RequestAccountCreateHardwareV2): Promise<boolean> {
     const { accountIndex, address, addressOffset, genesisHash, hardwareType, isAllowed, name } = request;
+
+    const exists = this.checkAddressExists([address]);
+
+    assert(!exists, t('Account already exists'));
+
     const key = keyring.addHardware(address, hardwareType, {
       accountIndex,
       addressOffset,
@@ -696,6 +701,10 @@ export class AccountContext {
     if (!accounts.length) {
       throw new Error(t("Can't find an account. Please try again"));
     }
+
+    const exists = this.checkAddressExists(accounts.map((account) => account.address));
+
+    assert(!exists, t('Account already exists account: {{address}}', { replace: { address: exists } }));
 
     const slugMap: Record<string, string> = {};
     const modifiedPairs = this.modifyPairsSubject.value;
