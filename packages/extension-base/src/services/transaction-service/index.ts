@@ -8,7 +8,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { externalMessage, getStatusByExtMsgHash, sendTonTransaction } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -1163,7 +1163,7 @@ export default class TransactionService {
       extrinsicHash: id
     };
 
-    // --// todo: sign messsage by from request service later
+    // --// alibaba todo: sign messsage by from request service later
     const keyPair = keyring.getPair(address);
 
     keyring.unlockKeyring('123123123');
@@ -1195,12 +1195,14 @@ export default class TransactionService {
       this.handleTransactionTimeout(emitter, eventData);
       emitter.emit('send', eventData); // This event is needed after sending transaction with queue
 
-      sendTonTransaction(boc).then((externalMsgHash) => { // the externalMsgHash is the hash of first message, not the hash of transaction.
+      const tonApi = this.state.chainService.getTonApi(chain);
+
+      tonApi.sendTonTransaction(boc).then((externalMsgHash) => { // the externalMsgHash is the hash of first message, not the hash of transaction.
         if (!externalMsgHash) {
           return;
         }
 
-        getStatusByExtMsgHash(externalMsgHash).then(([status, hex]) => {
+        tonApi.getStatusByExtMsgHash(externalMsgHash).then(([status, hex]) => {
           if (status && hex) {
             eventData.extrinsicHash = hex;
             emitter.emit('extrinsicHash', eventData);

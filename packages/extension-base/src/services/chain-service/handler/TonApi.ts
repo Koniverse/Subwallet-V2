@@ -1,7 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { TON_CENTER_API_KEY } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { TON_API_ENDPOINT, TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
+import { getJettonTxStatus, getNativeTonTxStatus, retry } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -12,6 +14,7 @@ import { BehaviorSubject } from 'rxjs';
 export class TonApi implements _TonApi {
   chainSlug: string;
   private api: TonClient;
+  private httpEndPoint: string;
   apiUrl: string;
   apiError?: string;
   apiRetry = 0;
@@ -26,6 +29,7 @@ export class TonApi implements _TonApi {
   constructor (chainSlug: string, apiUrl: string, { providerName }: _ApiOptions) {
     this.chainSlug = chainSlug;
     this.apiUrl = apiUrl;
+    this.httpEndPoint = apiUrl.includes(TON_API_ENDPOINT.TESTNET) ? TON_API_ENDPOINT.TESTNET : TON_API_ENDPOINT.MAINNET;
     this.providerName = providerName || 'unknown';
     this.api = this.createProvider(apiUrl);
     this.isReadyHandler = createPromiseHandler<_TonApi>();
@@ -128,6 +132,8 @@ export class TonApi implements _TonApi {
     }
   }
 
+  // Util functions
+
   async getBalance (address: Address): Promise<bigint> {
     return await this.api.getBalance(address);
   }
@@ -146,5 +152,72 @@ export class TonApi implements _TonApi {
         initData: initData || null
       }
     );
+  }
+
+  async sendTonTransaction (boc: string): Promise<string> {
+    const url = `${this.httpEndPoint}/v2/sendBocReturnHash`;
+    const resp = await fetch(
+      url, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': TON_CENTER_API_KEY
+        },
+        body: JSON.stringify({
+          boc: boc
+        })
+      }
+    );
+
+    const extMsgInfo = await resp.json() as {result: { hash: string}};
+
+    return extMsgInfo.result.hash;
+  }
+
+  async getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse> {
+    const url = `${this.httpEndPoint}/v3/transactionsByMessage?msg_hash=${encodeURIComponent(extMsgHash)}&direction=in`;
+    const resp = await fetch(
+      url, {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': TON_CENTER_API_KEY
+        }
+      }
+    );
+
+    return await resp.json() as TxByMsgResponse;
+  }
+
+  async getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> {
+    return retry(async () => {
+      // get external msg transaction and transaction hex
+      const externalTxInfoRaw = await this.getTxByInMsg(extMsgHash);
+      const externalTxInfo = externalTxInfoRaw.transactions[0];
+      const isExternalTxCompute = externalTxInfo.description.compute_ph.success;
+      const isExternalTxAction = externalTxInfo.description.action.success;
+      const base64Hex = externalTxInfo.hash;
+      const hex = Buffer.from(base64Hex, 'base64').toString('hex');
+
+      if (!(isExternalTxCompute && isExternalTxAction)) {
+        return [false, hex];
+      }
+
+      // get out msg info from tx
+      const internalMsgHash = externalTxInfo.out_msgs[0]?.hash;
+      const opcode = parseInt(externalTxInfo.out_msgs[0]?.opcode || '0');
+
+      if (internalMsgHash) { // notice to update opcode check when supporting more transaction type in ton blockchain
+        const status = opcode === TON_OPCODES.JETTON_TRANSFER
+          ? await getJettonTxStatus(this, internalMsgHash)
+          : await getNativeTonTxStatus(this, internalMsgHash);
+
+        return [status, hex];
+      }
+
+      throw new Error('Transaction not found');
+    }, { retries: 10, delay: 3000 });
   }
 }

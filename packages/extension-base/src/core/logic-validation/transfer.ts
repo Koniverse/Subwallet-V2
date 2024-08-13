@@ -155,7 +155,7 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
       if (isSubstrateTransaction(transaction)) {
         estimateFee.value = (await transaction.paymentInfo(validationResponse.address)).partialFee.toString();
       } else if (isTonTransaction(transaction)) {
-        estimateFee.value = transaction.estimateFee;
+        estimateFee.value = transaction.estimateFee; // todo: might need to update logic estimate fee inside for future actions excluding normal transfer Ton and Jetton
       } else {
         const gasLimit = await evmApi.api.eth.estimateGas(transaction);
 

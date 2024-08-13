@@ -17,6 +17,7 @@ import { Getters } from '@polkadot/api/base/Getters';
 import { SubmittableExtrinsicFunction } from '@polkadot/api/promise/types';
 import { ChainProperties, ChainType, RuntimeVersion } from '@polkadot/types/interfaces';
 import { AnyJson, Registry } from '@polkadot/types/types';
+import {TxByMsgResponse} from "@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types";
 
 export interface _DataMap {
   chainInfoMap: Record<string, _ChainInfo>,
@@ -137,6 +138,9 @@ export interface _TonUtilsApi {
   getBalance (address: Address): Promise<bigint>;
   open<T extends Contract>(src: T): OpenedContract<T>;
   estimateExternalMessageFee (address: Address, body: Cell, ignoreSignature?: boolean, initCode?: Cell, initData?: Cell): Promise<EstimateExternalMessageFee>;
+  sendTonTransaction (boc: string): Promise<string>;
+  getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse>
+  getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]>
 }
 
 export interface EstimateExternalMessageFee {
