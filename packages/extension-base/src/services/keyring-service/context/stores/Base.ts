@@ -16,9 +16,10 @@ export abstract class StoreSubject<T> implements IStoreSubject<T> {
   abstract store: SubscribableStore<T>;
   abstract subject: BehaviorSubject<T>;
   abstract key: string;
+  abstract defaultValue: T;
 
   transformInitData (data: T): T {
-    return data;
+    return data ?? this.defaultValue;
   }
 
   init () {
