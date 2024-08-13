@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { getDerivePath } from '@subwallet/keyring';
 import { EthereumKeypairTypes, KeypairType, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
@@ -119,4 +120,10 @@ export const derivePair = (parentPair: KeyringPair, name: string, deriveIndex: n
       ? parentPair.ton.derive(_deriveIndex, meta)
       : parentPair.substrate.derive(suri, meta)
   ;
+};
+
+export const getSuri = (seed: string, type?: KeypairType): string => {
+  const extraPath = type ? getDerivePath(type)(0) : '';
+
+  return seed + (extraPath ? '/' + extraPath : '');
 };

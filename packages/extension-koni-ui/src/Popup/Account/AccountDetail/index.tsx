@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountProxy } from '@subwallet/extension-base/types';
-import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountProxyTypeTag, CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
@@ -182,6 +182,27 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [accountProxy]);
 
   const footerNode = (() => {
+    if (![AccountProxyType.UNIFIED, AccountProxyType.SOLO].includes(accountProxy.accountType)) {
+      return (
+        <Button
+          block={true}
+          className={CN('account-button')}
+          disabled={false}
+          icon={(
+            <Icon
+              phosphorIcon={Trash}
+              weight='fill'
+            />
+          )}
+          loading={deleting}
+          onClick={onDelete}
+          schema='error'
+        >
+          {t('Delete account')}
+        </Button>
+      );
+    }
+
     return <>
       <Button
         className={CN('account-button')}
@@ -253,33 +274,52 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
         onFieldsChange={onUpdate}
         onFinish={onSubmit}
       >
-        <Form.Item
-          className={CN('account-field')}
-          name={FormFieldName.NAME}
-          rules={[
+        <div className='account-field-wrapper'>
+          <div className='account-type-tag-wrapper'>
+            <AccountProxyTypeTag
+              className={'account-type-tag'}
+              type={accountProxy.accountType}
+            />
+
             {
-              message: t('Account name is required'),
-              transform: (value: string) => value.trim(),
-              required: true
+              !!accountProxy.parentId && (
+                <Icon
+                  className={'derived-account-flag'}
+                  customSize='16px'
+                  phosphorIcon={GitMerge}
+                  weight={'fill'}
+                />
+              )
             }
-          ]}
-          statusHelpAsTooltip={true}
-        >
-          <Input
-            className='account-name-input'
-            disabled={false}
-            label={t('Account name')}
-            onBlur={form.submit}
-            placeholder={t('Account name')}
-            suffix={(
-              <Icon
-                className={CN({ loading: saving })}
-                phosphorIcon={saving ? CircleNotch : FloppyDiskBack}
-                size='sm'
-              />
-            )}
-          />
-        </Form.Item>
+          </div>
+          <Form.Item
+            className={CN('account-field')}
+            name={FormFieldName.NAME}
+            rules={[
+              {
+                message: t('Account name is required'),
+                transform: (value: string) => value.trim(),
+                required: true
+              }
+            ]}
+            statusHelpAsTooltip={true}
+          >
+            <Input
+              className='account-name-input'
+              disabled={false}
+              label={t('Account name')}
+              onBlur={form.submit}
+              placeholder={t('Account name')}
+              suffix={(
+                <Icon
+                  className={CN({ loading: saving })}
+                  phosphorIcon={saving ? CircleNotch : FloppyDiskBack}
+                  size='sm'
+                />
+              )}
+            />
+          </Form.Item>
+        </div>
       </Form>
 
       <FilterTabs
@@ -365,6 +405,27 @@ const AccountDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
 
     '.account-detail-form .ant-form-item': {
       marginBottom: 0
+    },
+
+    '.account-field-wrapper': {
+      position: 'relative'
+    },
+
+    '.account-type-tag-wrapper': {
+      position: 'absolute',
+      zIndex: 1,
+      right: token.sizeSM,
+      top: token.sizeXS,
+      display: 'flex'
+    },
+
+    '.account-type-tag': {
+      marginRight: 0
+    },
+
+    '.account-type-tag + .derived-account-flag': {
+      marginLeft: token.marginXS,
+      color: token.colorTextLight3
     },
 
     '.account-name-input .ant-input-suffix .anticon': {

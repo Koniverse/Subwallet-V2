@@ -4,7 +4,7 @@
 import { AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNameModal, CloseIcon, Layout, PageWrapper, WordPhrase } from '@subwallet/extension-koni-ui/components';
 import { SeedPhraseTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/SeedPhraseTermModal';
-import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEFAULT_ROUTER_PATH, SEED_PREVENT_MODAL, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEFAULT_MNEMONIC_TYPE, DEFAULT_ROUTER_PATH, SEED_PREVENT_MODAL, SELECTED_MNEMONIC_TYPE, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, createSeedV2, windowOpen } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -45,6 +45,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const isOpenWindowRef = useRef(false);
 
+  const [selectedMnemonicType] = useLocalStorage(SELECTED_MNEMONIC_TYPE, DEFAULT_MNEMONIC_TYPE);
   const [preventModalStorage] = useLocalStorage(SEED_PREVENT_MODAL, false);
   const [preventModal] = useState(preventModalStorage);
 
@@ -80,7 +81,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     createAccountSuriV2({
       name: accountName,
       suri: seedPhrase,
-      type: undefined, // todo: "undefined" means unified account. Will update the value if there are more types to support
+      type: selectedMnemonicType === 'ton' ? 'ton-special' : undefined,
       isAllowed: true
     })
       .then(() => {
@@ -96,7 +97,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         setLoading(false);
         inactiveModal(ACCOUNT_NAME_MODAL);
       });
-  }, [inactiveModal, notify, onComplete, seedPhrase]);
+  }, [inactiveModal, notify, onComplete, seedPhrase, selectedMnemonicType]);
 
   useEffect(() => {
     if (_isConfirmedTermSeedPhrase === 'nonConfirmed') {
@@ -105,7 +106,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [_isConfirmedTermSeedPhrase, activeModal, inactiveModal]);
 
   useEffect(() => {
-    createSeedV2(undefined, undefined, 'general')
+    createSeedV2(undefined, undefined, selectedMnemonicType)
       .then((response): void => {
         const phrase = response.mnemonic;
 
@@ -114,7 +115,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       .catch((e: Error) => {
         console.error(e);
       });
-  }, []);
+  }, [selectedMnemonicType]);
 
   useEffect(() => {
     if (isPopup && isFirefox() && hasMasterPassword && !isOpenWindowRef.current) {
@@ -137,19 +138,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       resolve={waitReady}
     >
       <Layout.WithSubHeaderOnly
-        onBack={onBack}
+        onBack={preventModal ? goHome : onBack}
         rightFooterButton={{
           children: t('I have kept it somewhere safe'),
           icon: FooterIcon,
           onClick: onConfirmSeedPhrase,
           disabled: !seedPhrase
         }}
-        subHeaderIcons={[
-          {
-            icon: <CloseIcon />,
-            onClick: goHome
-          }
-        ]}
+        subHeaderIcons={preventModal
+          ? undefined
+          : [
+            {
+              icon: <CloseIcon />,
+              onClick: goHome
+            }
+          ]}
+        subHeaderLeft={preventModal ? <CloseIcon /> : undefined }
         title={t('Your seed phrase')}
       >
         <div className={'container'}>
@@ -164,7 +168,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       </Layout.WithSubHeaderOnly>
       <SeedPhraseTermModal />
       <AccountNameModal
-        accountType={AccountProxyType.UNIFIED}
+        accountType={selectedMnemonicType === 'general' ? AccountProxyType.UNIFIED : AccountProxyType.SOLO}
         isLoading={loading}
         onSubmit={onSubmit}
       />

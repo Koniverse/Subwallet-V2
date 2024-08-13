@@ -145,6 +145,7 @@ export interface AccountJson extends AbstractAddressJson, AccountMetadataData, A
   isSubWallet?: boolean;
   /** Pending migrate password */
   pendingMigrate?: boolean;
+  type: KeypairType;
 }
 
 export interface AddressJson extends AbstractAddressJson {

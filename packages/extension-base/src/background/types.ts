@@ -85,15 +85,8 @@ export interface SigningRequest extends ConfirmationRequestBase {
 export interface RequestSignatures extends KoniRequestSignatures {
   // private/internal requests, i.e. from a popup
   'pri(ping)': [null, string];
-  'pri(accounts.create.hardware)': [RequestAccountCreateHardware, boolean];
-  'pri(accounts.export)': [RequestAccountExport, ResponseAccountExport];
+  'pri(accounts.export.json)': [RequestAccountExport, ResponseAccountExport];
   'pri(accounts.batchExport)': [RequestAccountBatchExport, ResponseAccountsExport]
-  'pri(accounts.show)': [RequestAccountShow, boolean];
-  'pri(accounts.tie)': [RequestAccountTie, boolean];
-  'pri(accounts.subscribe)': [RequestAccountSubscribe, AccountJson[], AccountJson[]];
-  'pri(accounts.validate)': [RequestAccountValidate, boolean];
-  /** @deprecated */
-  'pri(accounts.changePassword)': [RequestAccountChangePassword, boolean];
   'pri(authorize.approve)': [RequestAuthorizeApprove, boolean];
   'pri(authorize.list)': [null, ResponseAuthorizeList];
   'pri(authorize.reject)': [RequestAuthorizeReject, boolean];
@@ -101,7 +94,6 @@ export interface RequestSignatures extends KoniRequestSignatures {
   'pri(authorize.toggle)': [string, ResponseAuthorizeList];
   'pri(derivation.create)': [RequestDeriveCreate, boolean];
   'pri(derivation.validate)': [RequestDeriveValidate, ResponseDeriveValidate];
-  'pri(json.restore)': [RequestJsonRestore, void];
   'pri(json.batchRestore)': [RequestBatchRestore, void];
   'pri(json.validate.password)': [];
   'pri(json.account.info)': [KeyringPair$Json, ResponseJsonGetAccountInfo];
@@ -216,6 +208,7 @@ export interface RequestAccountShow {
   isShowing: boolean;
 }
 
+/** @deprecated */
 export interface RequestAccountTie {
   address: string;
   genesisHash: string | null;

@@ -62,6 +62,7 @@ function isMantaPayEnabled (account: AccountJson | null, configs: MantaPayConfig
   return false;
 }
 
+// todo: deprecated, will remove
 export default function useReceiveQR (tokenGroupSlug?: string) {
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { accounts, currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);

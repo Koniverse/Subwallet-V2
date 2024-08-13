@@ -67,7 +67,7 @@ export const updateAddressBook = (data: AddressBookInfo) => {
   store.dispatch({ type: 'accountState/updateAddressBook', payload: data });
 };
 
-export const subscribeAddressBook = lazySubscribeMessage('pri(accounts.subscribeAddresses)', null, updateAddressBook, updateAddressBook);
+export const subscribeAddressBook = lazySubscribeMessage('pri(addressBook.subscribe)', null, updateAddressBook, updateAddressBook);
 
 function convertConfirmationToMap (data: ConfirmationRequestBase[]) {
   return data.reduce((prev, request) => {
@@ -386,7 +386,7 @@ export const getMissionPoolData = (() => {
     start: () => {
       fetchStaticData<MissionInfo[]>('airdrop-campaigns')
         .then((data) => {
-          handler.resolve?.(data);
+          handler.resolve?.(data || []);
         })
         .catch(handler.reject);
     }

@@ -7,6 +7,7 @@ import { useLocalStorage } from 'usehooks-ts';
 
 import { KeypairType } from '@polkadot/util-crypto/types';
 
+// todo: deprecated, need recheck all usages
 const useSetSelectedAccountTypes = (preventModal: boolean) => {
   const [, setTypesStorage] = useLocalStorage(SELECTED_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPES);
   const [, setPreventModalStorage] = useLocalStorage(SEED_PREVENT_MODAL, preventModal);

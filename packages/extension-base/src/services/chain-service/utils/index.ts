@@ -421,8 +421,8 @@ export function _getAssetOriginChain (assetInfo?: _ChainAsset) {
   return assetInfo?.originChain || '';
 }
 
-export function _getChainName (chainInfo: _ChainInfo) {
-  return chainInfo.name;
+export function _getChainName (chainInfo?: _ChainInfo) {
+  return chainInfo?.name || '';
 }
 
 export function _getAssetDecimals (assetInfo?: _ChainAsset): number {
@@ -517,6 +517,10 @@ export function _isMantaZkAsset (chainAsset: _ChainAsset) {
 
 export function _getChainExistentialDeposit (chainInfo: _ChainInfo): string {
   return chainInfo?.substrateInfo?.existentialDeposit || '0';
+}
+
+export function _getAssetExistentialDeposit (chainAsset: _ChainAsset): string {
+  return chainAsset?.minAmount || '0';
 }
 
 export function randomizeProvider (providers: Record<string, string>, excludedKeys?: string[]) {

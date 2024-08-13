@@ -2,31 +2,42 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { KeyringState } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { keyring } from '@subwallet/ui-keyring';
 import { BehaviorSubject } from 'rxjs';
 
-import { AccountContext } from './account-context';
+import { AccountContext } from './context/account-context';
 
 export class KeyringService {
-  readonly stateSubject = new BehaviorSubject<KeyringState>({
+  private readonly stateSubject = new BehaviorSubject<KeyringState>({
     isReady: false,
     hasMasterPassword: false,
     isLocked: false
   });
 
-  readonly context: AccountContext;
+  public readonly context: AccountContext;
 
-  constructor (public state: KoniState) {
-    this.context = new AccountContext(this);
+  constructor (private state: KoniState) {
+    this.context = new AccountContext(this.state, this);
   }
 
   get keyringState () {
     return this.stateSubject.value;
   }
 
-  updateKeyringState (isReady = true) {
+  public keyringStateSubscribe (callback: (state: KeyringState) => void) {
+    return this.stateSubject.subscribe(callback);
+  }
+
+  public eventInjectReady () {
+    this.state.eventService.emit('inject.ready', true);
+  }
+
+  public eventRemoveAccount (proxyId: string) {
+    this.state.eventService.emit('accountProxy.remove', proxyId);
+  }
+
+  public updateKeyringState (isReady = true) {
     if (!this.keyringState.isReady && isReady) {
       this.state.eventService.waitCryptoReady
         .then(() => {
@@ -49,7 +60,7 @@ export class KeyringService {
   }
 
   /* Reset */
-  async resetWallet (resetAll: boolean) {
+  public async resetWallet (resetAll: boolean) {
     keyring.resetWallet(resetAll);
     this.context.resetWallet();
     await new Promise<void>((resolve) => {
@@ -58,7 +69,6 @@ export class KeyringService {
       }, 1500);
     });
     this.updateKeyringState();
-    this.context._setCurrentAccount({ proxyId: ALL_ACCOUNT_KEY });
   }
   /* Reset */
 }

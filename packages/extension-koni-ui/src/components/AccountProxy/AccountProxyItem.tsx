@@ -69,7 +69,7 @@ const AccountProxyItem = styled(Component)<Props>(({ theme }) => {
   return {
     background: token.colorBgSecondary,
     padding: token.paddingSM,
-    paddingRight: token.paddingXXS,
+    paddingRight: token.paddingSM,
     borderRadius: token.borderRadiusLG,
     alignItems: 'center',
     display: 'flex',
@@ -89,7 +89,8 @@ const AccountProxyItem = styled(Component)<Props>(({ theme }) => {
     '.__checked-icon-wrapper': {
       display: 'flex',
       justifyContent: 'center',
-      minWidth: 40
+      minWidth: 40,
+      marginRight: -token.marginXS
     },
 
     '&:hover': {

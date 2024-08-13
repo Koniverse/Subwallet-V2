@@ -2,16 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import PageWrapper from '@subwallet/extension-koni-ui/components/Layout/PageWrapper';
-import { AccountSelectorModal } from '@subwallet/extension-koni-ui/components/Modal/AccountSelectorModal';
-import ReceiveQrModal from '@subwallet/extension-koni-ui/components/Modal/ReceiveModal/ReceiveQrModal';
-import { TokensSelectorModal } from '@subwallet/extension-koni-ui/components/Modal/ReceiveModal/TokensSelectorModal';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenBalanceDetailItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenBalanceDetailItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useDefaultNavigate, useGetBannerByScreen, useNavigateOnChangeAccount, useNotification, useReceiveQR, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useDefaultNavigate, useGetBannerByScreen, useNavigateOnChangeAccount, useNotification, useReceiveModalHelper, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { DetailModal } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/DetailModal';
 import { DetailUpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/DetailUpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -123,13 +121,7 @@ function Component (): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const topBlockRef = useRef<HTMLDivElement>(null);
 
-  const { accountSelectorItems,
-    onOpenReceive,
-    openSelectAccount,
-    openSelectToken,
-    selectedAccount,
-    selectedNetwork,
-    tokenSelectorItems } = useReceiveQR(tokenGroupSlug);
+  const { onOpenReceive, receiveModalProps } = useReceiveModalHelper(tokenGroupSlug);
 
   useNavigateOnChangeAccount('/home/tokens');
 
@@ -449,20 +441,8 @@ function Component (): React.ReactElement {
         tokenBalanceMap={tokenBalanceMap}
       />
 
-      <AccountSelectorModal
-        items={accountSelectorItems}
-        onSelectItem={openSelectAccount}
-      />
-
-      <TokensSelectorModal
-        address={selectedAccount}
-        items={tokenSelectorItems}
-        onSelectItem={openSelectToken}
-      />
-
-      <ReceiveQrModal
-        address={selectedAccount}
-        selectedNetwork={selectedNetwork}
+      <ReceiveModal
+        {...receiveModalProps}
       />
     </div>
   );
