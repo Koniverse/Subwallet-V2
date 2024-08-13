@@ -23,6 +23,7 @@ const modalId = RECEIVE_MODAL_TOKEN_SELECTOR;
 
 const renderEmpty = () => <TokenEmptyList modalId={modalId} />;
 
+// todo : will move to Modal/Selector if is necessary
 function Component ({ className = '', items, onCancel, onSelectItem }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { checkActive } = useContext(ModalContext);

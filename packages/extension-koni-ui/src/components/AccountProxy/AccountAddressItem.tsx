@@ -1,23 +1,29 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountAddressItemType, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
-import React from 'react';
-import styled from 'styled-components';
+import { CheckCircle } from 'phosphor-react';
+import React, { Context, useContext } from 'react';
+import styled, { ThemeContext } from 'styled-components';
 
 import AccountProxyAvatar from './AccountProxyAvatar';
 
 type Props = ThemeProps & {
   item: AccountAddressItemType;
   onClick?: VoidFunction;
+  isSelected?: boolean;
+  showUnselectIcon?: boolean;
 }
 
 function Component (props: Props): React.ReactElement<Props> {
   const { className,
-    item,
-    onClick } = props;
+    isSelected,
+    item, onClick, showUnselectIcon } = props;
+  const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
 
   return (
     <>
@@ -40,6 +46,19 @@ function Component (props: Props): React.ReactElement<Props> {
           <div className='__address'>
             ({toShort(item.address, 4, 5)})
           </div>
+        </div>
+
+        <div className='__item-right-part'>
+          {(isSelected || showUnselectIcon) && (
+            <div className='__checked-icon-wrapper'>
+              <Icon
+                iconColor={isSelected ? token.colorSuccess : token.colorTextLight4}
+                phosphorIcon={CheckCircle}
+                size='sm'
+                weight='fill'
+              />
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -74,6 +93,17 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
       flex: 1,
       fontSize: token.fontSize,
       lineHeight: token.lineHeight
+    },
+
+    '.__item-right-part': {
+      display: 'flex'
+    },
+
+    '.__checked-icon-wrapper': {
+      display: 'flex',
+      justifyContent: 'center',
+      minWidth: 40,
+      marginRight: -token.marginXS
     },
 
     '.__account-name': {

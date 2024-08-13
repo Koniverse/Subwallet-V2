@@ -87,6 +87,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
         const item = {
           accountName: ap.name,
           accountProxyId: ap.id,
+          accountProxyType: ap.accountType,
           accountType: a.type
         };
 
