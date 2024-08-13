@@ -64,6 +64,8 @@ function Component ({ className, request }: Props) {
   const { accountAuthType, allowedAccounts } = request.request;
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const navigate = useNavigate();
+
+  // todo: deprecated, recheck usage
   const setSelectedAccountTypes = useSetSelectedAccountTypes(true);
 
   // List all of all accounts by auth type

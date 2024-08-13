@@ -9,6 +9,7 @@ export { default as RemindBackupSeedPhraseModal } from './RemindBackupSeedPhrase
 export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVersion';
 export { default as AddNetworkWCModal } from './AddNetworkWCModal';
 export { SortingModal } from './SortingModal';
+export { default as ReceiveModal } from './ReceiveModalNew';
 
 export * from './Global';
 export * from './Account';
@@ -18,6 +19,6 @@ export * from './Campaign';
 export * from './Customize/CustomizeModal';
 export * from './FilterModal';
 export * from './GlobalSearchTokenModal';
-export * from './ReceiveModal';
 export * from './Common';
 export * from './Announcement';
+export * from './Selector';

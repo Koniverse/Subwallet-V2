@@ -7,7 +7,7 @@ import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import { SettingItemSelection } from '@subwallet/extension-koni-ui/components/Setting/SettingItemSelection';
 import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants/account';
 import { CREATE_ACCOUNT_MODAL, DERIVE_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
+import { useSetSelectedMnemonicType, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useClickOutSide from '@subwallet/extension-koni-ui/hooks/dom/useClickOutSide';
 import useGoBackSelectAccount from '@subwallet/extension-koni-ui/hooks/modal/useGoBackSelectAccount';
@@ -44,6 +44,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const isActive = checkActive(modalId);
   const navigate = useNavigate();
+  const setSelectedMnemonicType = useSetSelectedMnemonicType(false);
 
   const onBack = useGoBackSelectAccount(modalId);
 
@@ -82,6 +83,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       label: t('Create with a new seed phrase'),
       onClick: () => {
         inactiveModal(modalId);
+        setSelectedMnemonicType('general');
         navigate('/accounts/new-seed-phrase');
       }
     },
@@ -96,7 +98,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         activeModal(DERIVE_ACCOUNT_MODAL);
       }
     }
-  ]), [token, t, disableDerive, inactiveModal, navigate, activeModal]);
+  ]), [token, t, disableDerive, inactiveModal, setSelectedMnemonicType, navigate, activeModal]);
 
   return (
     <SwModal

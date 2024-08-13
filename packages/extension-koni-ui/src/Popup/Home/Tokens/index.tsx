@@ -1,18 +1,14 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
-import { AccountSelectorModal } from '@subwallet/extension-koni-ui/components/Modal/AccountSelectorModal';
-import ReceiveQrModal from '@subwallet/extension-koni-ui/components/Modal/ReceiveModal/ReceiveQrModal';
-import { TokensSelectorModal } from '@subwallet/extension-koni-ui/components/Modal/ReceiveModal/TokensSelectorModal';
+import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
+import { useReceiveModalHelper, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useReceiveQR from '@subwallet/extension-koni-ui/hooks/screen/home/useReceiveQR';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
@@ -41,13 +37,7 @@ const Component = (): React.ReactElement => {
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
   const notify = useNotification();
-  const { accountSelectorItems,
-    onOpenReceive,
-    openSelectAccount,
-    openSelectToken,
-    selectedAccount,
-    selectedNetwork,
-    tokenSelectorItems } = useReceiveQR();
+  const { onOpenReceive, receiveModalProps } = useReceiveModalHelper();
 
   const isZkModeSyncing = useSelector((state: RootState) => state.mantaPay.isSyncing);
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
@@ -294,20 +284,8 @@ const Component = (): React.ReactElement => {
         </div>
       </div>
 
-      <AccountSelectorModal
-        items={accountSelectorItems}
-        onSelectItem={openSelectAccount}
-      />
-
-      <TokensSelectorModal
-        address={selectedAccount}
-        items={tokenSelectorItems}
-        onSelectItem={openSelectToken}
-      />
-
-      <ReceiveQrModal
-        address={selectedAccount}
-        selectedNetwork={selectedNetwork}
+      <ReceiveModal
+        {...receiveModalProps}
       />
     </div>
   );

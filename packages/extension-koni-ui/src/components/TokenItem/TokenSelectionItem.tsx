@@ -22,6 +22,7 @@ interface Props extends ThemeProps, Omit<TokenItemProps, 'name' | 'subName' | 's
   onClickQrBtn?: () => void;
 }
 
+// todo: deprecated, will remove
 const Component = (props: Props) => {
   const { address, className, item, onClickCopyBtn, onClickQrBtn, onPressItem, ...restProps } = props;
   const { name, originChain: chain, slug, symbol } = item;
