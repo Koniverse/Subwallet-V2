@@ -184,7 +184,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             title={t('Mission Pools')}
           />)
       }
-      {!!banners.length && (
+      {!!banners.length && isWebUI && (
         <div className={'banner-container'}>
           <BannerGenerator
             banners={banners}
