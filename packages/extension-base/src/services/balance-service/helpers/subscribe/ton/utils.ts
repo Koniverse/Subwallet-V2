@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { EXTRA_TON_ESTIMATE_FEE, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { EXTRA_TON_ESTIMATE_FEE, TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage } from '@ton/core';
@@ -46,7 +46,7 @@ export async function sendTonTransaction (boc: string) {
       headers: {
         accept: 'application/json',
         'Content-Type': 'application/json',
-        'X-API-KEY': '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+        'X-API-KEY': TON_CENTER_API_KEY
       },
       body: JSON.stringify({
         boc: boc
@@ -67,7 +67,7 @@ async function getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse> {
       headers: {
         accept: 'application/json',
         'Content-Type': 'application/json',
-        'X-API-KEY': '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+        'X-API-KEY': TON_CENTER_API_KEY
       }
     }
   );
@@ -93,7 +93,7 @@ async function retry<T> (fn: () => Promise<T>, options: { retries: number, delay
   throw lastError;
 }
 
-async function getMessageTxStatus (txByMsgInfo: TxByMsgResponse) {
+function getMessageTxStatus (txByMsgInfo: TxByMsgResponse) {
   const txDetailInfo = txByMsgInfo.transactions[0];
   const isCompute = txDetailInfo.description?.compute_ph?.success ?? false;
   const isAction = txDetailInfo.description?.action?.success ?? false;
@@ -110,7 +110,7 @@ async function getNativeTonTxStatus (internalMsgHash: string) {
 
 async function getJettonTxStatus (jettonTransferMsgHash: string) {
   const jettonTransferTxInfoRaw = await getTxByInMsg(jettonTransferMsgHash);
-  const status = await getMessageTxStatus(jettonTransferTxInfoRaw);
+  const status = getMessageTxStatus(jettonTransferTxInfoRaw);
 
   if (status) { // Jetton Transfer success -> Check Jetton Internal Transfer
     const jettonInternalTxInfoRaw = await getTxByInMsg(jettonTransferMsgHash);

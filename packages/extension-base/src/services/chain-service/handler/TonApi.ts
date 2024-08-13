@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { TON_CENTER_API_KEY } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -67,7 +68,7 @@ export class TonApi implements _TonApi {
     this.apiUrl = apiUrl;
     this.api = new TonClient({
       endpoint: this.apiUrl,
-      apiKey: '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+      apiKey: TON_CENTER_API_KEY
     });
   }
 
@@ -76,19 +77,17 @@ export class TonApi implements _TonApi {
     this.connect();
 
     await this.isReadyHandler.promise;
-    // alibaba
   }
 
-  private createProvider (apiUrl: string) { // alibaba
+  private createProvider (apiUrl: string) {
     return new TonClient({
       endpoint: apiUrl,
-      apiKey: '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3' // alibaba
+      apiKey: TON_CENTER_API_KEY
     });
   }
 
   connect (): void {
     this.updateConnectionStatus(_ChainConnectionStatus.CONNECTING);
-    // alibaba.
     // There isn't a persistent network connection underlying TonClient. Cant check connection status.
     // this.isApiReadyOnce = true;
     this.onConnect();
