@@ -3,7 +3,7 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { INIT_FEE_JETTON_TRANSFER, TON_OPCODES, WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { estimateTonTxFee, sleep } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { estimateTonTxFee } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken, _isJettonToken, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { keyring } from '@subwallet/ui-keyring';
@@ -62,7 +62,6 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
   const estimateFee = await estimateTonTxFee(tonApi, messages, walletContract);
 
   if (transferAll) {
-    await sleep(1500); // alibaba
     const balance = await tonApi.getBalance(tonAddress);
 
     transferValue = (balance - estimateFee).toString();
@@ -99,12 +98,12 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
 
   const messageBody = beginCell()
     .storeUint(TON_OPCODES.JETTON_TRANSFER, 32) // opcode for jetton transfer
-    .storeUint(0, 64) // query id
+    .storeUint(0, 64) // query id todo: research more about this
     .storeCoins(BigInt(value)) // jetton bigint amount
     .storeAddress(destinationAddress)
     .storeAddress(sendertonAddress) // response destination, who get remain token
     .storeBit(0) // no custom payload
-    .storeCoins(toNano('0.000000001')) // forward amount - if >0, will send notification message
+    .storeCoins(BigInt(1)) // forward amount - if >0, will send notification message
     .storeBit(0) // no forward payload
     // .storeRef(forwardPayload)
     .endCell();
@@ -120,7 +119,6 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
   const estimateFee = toNano(INIT_FEE_JETTON_TRANSFER) > estimateExternalFee ? toNano(INIT_FEE_JETTON_TRANSFER) : estimateExternalFee;
 
   if (transferAll) {
-    await sleep(1500);
     const balance = await jettonWalletContract.getBalance();
 
     transferValue = (balance - estimateFee).toString();

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { EXTRA_TON_ESTIMATE_FEE, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage } from '@ton/core';
@@ -16,7 +16,6 @@ export function getJettonMasterContract (tonApi: _TonApi, contractAddress: strin
 export async function getJettonWalletContract (jettonMasterContract: OpenedContract<JettonMaster>, tonApi: _TonApi, ownerAddress: string) {
   const walletAddress = Address.parse(ownerAddress);
 
-  await sleep(1500); // alibaba
   const jettonWalletAddress = await jettonMasterContract.getWalletAddress(walletAddress);
 
   return tonApi.open(JettonWallet.create(jettonWalletAddress));
@@ -153,7 +152,6 @@ export async function getStatusByExtMsgHash (extMsgHash: string): Promise<[boole
 }
 
 export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxed[], walletContract: WalletContractV4, _seqno?: number) {
-  // todo: optimize estimate tx fee
   const contract = tonApi.open(walletContract);
   const seqno = _seqno ?? await contract.getSeqno();
 
@@ -163,13 +161,15 @@ export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxe
     messages
   });
 
-  await sleep(1500); // alibaba
   const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract.address, simulatedTxCell);
+
+  console.log('estimateFeeInfo', estimateFeeInfo);
+  console.log('estimateFee', (estimateFeeInfo.source_fees.gas_fee + estimateFeeInfo.source_fees.in_fwd_fee + estimateFeeInfo.source_fees.storage_fee + estimateFeeInfo.source_fees.fwd_fee).toString());
 
   return BigInt(
     estimateFeeInfo.source_fees.gas_fee +
     estimateFeeInfo.source_fees.in_fwd_fee +
     estimateFeeInfo.source_fees.storage_fee +
     estimateFeeInfo.source_fees.fwd_fee
-  );
+  ) + EXTRA_TON_ESTIMATE_FEE;
 }

@@ -10,3 +10,5 @@ export enum TON_OPCODES {
   NFT_TRANSFER = 0x5fcc3d14,
   STONFI_SWAP = 0x25938561
 }
+
+export const EXTRA_TON_ESTIMATE_FEE = BigInt(500);
