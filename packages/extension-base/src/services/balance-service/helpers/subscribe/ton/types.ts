@@ -18,12 +18,13 @@ interface TxDetailInfo {
     action: {
       success: boolean
     }
-  }
+  },
   in_msg: Msg,
   out_msgs: Msg[]
 }
 
 interface Msg {
   hash: string,
-  bounced: boolean
+  bounced: boolean,
+  opcode: string
 }

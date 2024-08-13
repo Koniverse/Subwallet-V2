@@ -121,13 +121,14 @@ export function _checkSmartContractSupportByChain (chainInfo: _ChainInfo, contra
   return (chainInfo.substrateInfo.supportSmartContract !== null && chainInfo.substrateInfo.supportSmartContract.includes(contractType));
 }
 
-export function _isJettonToken(tokenInfo: _ChainAsset) {
-  return tokenInfo.metadata?.assetType === _AssetType.TEP74 && !!tokenInfo.metadata?.contractAddress;
+export function _isJettonToken (tokenInfo: _ChainAsset) {
+  return tokenInfo.assetType === _AssetType.TEP74 && !!tokenInfo.metadata?.contractAddress;
 }
 
 export function _isTokenTransferredByTon (tokenInfo: _ChainAsset) {
   return _isJettonToken(tokenInfo) || _isNativeToken(tokenInfo);
 }
+
 // Utils for balance functions
 export function _getTokenOnChainAssetId (tokenInfo: _ChainAsset): string {
   return tokenInfo.metadata?.assetId as string || '-1';

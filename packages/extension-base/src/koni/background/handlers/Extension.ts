@@ -1406,6 +1406,7 @@ export default class KoniExtension {
         const txVal: string = transferAll ? transferTokenAvailable.value : (value || '0');
         const evmApi = evmApiMap[networkKey];
 
+        // todo: refactor: merge getERC20TransactionObject & getEVMTransactionObject
         // Estimate with EVM API
         if (_isTokenEvmSmartContract(transferTokenInfo) || _isLocalToken(transferTokenInfo)) {
           [
@@ -1422,11 +1423,11 @@ export default class KoniExtension {
         transaction = undefined;
         transferAmount.value = '0';
       } else if (isTonAddress(from) && isTonAddress(to) && _isTokenTransferredByTon(transferTokenInfo)) {
-        // todo: handle transfer jetton
         chainType = ChainType.TON;
         const tonApi = this.#koniState.getTonApi(networkKey);
 
         [transaction, transferAmount.value] = await createTonTransaction({
+          tokenInfo: transferTokenInfo,
           from,
           to,
           networkKey,

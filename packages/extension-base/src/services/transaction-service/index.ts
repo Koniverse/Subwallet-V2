@@ -1201,11 +1201,7 @@ export default class TransactionService {
           return;
         }
 
-        console.log('externalMsgHash', externalMsgHash); // alibaba
-
         getStatusByExtMsgHash(externalMsgHash).then(([status, hex]) => {
-          console.log('hex', hex); // alibaba
-
           if (status && hex) {
             eventData.extrinsicHash = hex;
             emitter.emit('extrinsicHash', eventData);

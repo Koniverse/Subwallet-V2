@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage } from '@ton/core';
@@ -59,8 +60,8 @@ export async function sendTonTransaction (boc: string) {
   return extMsgInfo.result.hash;
 }
 
-async function getTxByInMsg (extMsgHash: string) {
-  const url = `https://testnet.toncenter.com/api/v3/transactionsByMessage?msg_hash=${extMsgHash}&direction=in`;
+async function getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse> {
+  const url = `https://testnet.toncenter.com/api/v3/transactionsByMessage?msg_hash=${encodeURIComponent(extMsgHash)}&direction=in`;
   const resp = await fetch(
     url, {
       method: 'GET',
@@ -93,8 +94,37 @@ async function retry<T> (fn: () => Promise<T>, options: { retries: number, delay
   throw lastError;
 }
 
+async function getMessageTxStatus (txByMsgInfo: TxByMsgResponse) {
+  const txDetailInfo = txByMsgInfo.transactions[0];
+  const isCompute = txDetailInfo.description?.compute_ph?.success ?? false;
+  const isAction = txDetailInfo.description?.action?.success ?? false;
+  const isBounced = txDetailInfo.out_msgs[0]?.bounced ?? false;
+
+  return isCompute && isAction && !isBounced;
+}
+
+async function getNativeTonTxStatus (internalMsgHash: string) {
+  const internalTxInfoRaw = await getTxByInMsg(internalMsgHash);
+
+  return getMessageTxStatus(internalTxInfoRaw);
+}
+
+async function getJettonTxStatus (jettonTransferMsgHash: string) {
+  const jettonTransferTxInfoRaw = await getTxByInMsg(jettonTransferMsgHash);
+  const status = await getMessageTxStatus(jettonTransferTxInfoRaw);
+
+  if (status) { // Jetton Transfer success -> Check Jetton Internal Transfer
+    const jettonInternalTxInfoRaw = await getTxByInMsg(jettonTransferMsgHash);
+
+    return getMessageTxStatus(jettonInternalTxInfoRaw); // Jetton Internal Transfer success -> Receiver successfully receiver fund!
+  }
+
+  return false;
+}
+
 export async function getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> {
   return retry(async () => {
+    // get external msg transaction and transaction hex
     const externalTxInfoRaw = await getTxByInMsg(extMsgHash);
     const externalTxInfo = externalTxInfoRaw.transactions[0];
     const isExternalTxCompute = externalTxInfo.description.compute_ph.success;
@@ -106,16 +136,16 @@ export async function getStatusByExtMsgHash (extMsgHash: string): Promise<[boole
       return [false, hex];
     }
 
-    const internalMsgHash = externalTxInfo.out_msgs[0].hash;
+    // get out msg info from tx
+    const internalMsgHash = externalTxInfo.out_msgs[0]?.hash;
+    const opcode = parseInt(externalTxInfo.out_msgs[0]?.opcode || '0');
 
-    if (internalMsgHash) {
-      const internalTxInfoRaw = await getTxByInMsg(extMsgHash);
-      const internalTxInfo = internalTxInfoRaw.transactions[0];
-      const isCompute = internalTxInfo.description.compute_ph.success;
-      const isAction = internalTxInfo.description.action.success;
-      const isBounced = internalTxInfo.out_msgs[0] && internalTxInfo.out_msgs[0].bounced;
+    if (internalMsgHash) { // notice to update opcode check when supporting more transaction type in ton blockchain
+      const status = opcode === TON_OPCODES.JETTON_TRANSFER
+        ? await getJettonTxStatus(internalMsgHash)
+        : await getNativeTonTxStatus(internalMsgHash);
 
-      return [isCompute && isAction && !isBounced, hex];
+      return [status, hex];
     }
 
     throw new Error('Transaction not found');

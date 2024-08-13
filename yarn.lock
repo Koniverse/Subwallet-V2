@@ -6061,12 +6061,12 @@ __metadata:
 
 "@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.2.80-beta.3
-  resolution: "@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/#../SubWallet-ChainList/packages/chain-list/build/::hash=ca6e93&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/chain-list@file:../SubWallet-ChainList/packages/chain-list/build/#../SubWallet-ChainList/packages/chain-list/build/::hash=4da360&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 77d9e0ece7f9898baf88ee035941f3a7e29b0453fe4627b2e9c57e90a972b4ccc66a561349af6630e2ac0648835eba4cc5a5b8198657782b79ed25f670076ca1
+  checksum: 8d059237e5c1a6aefbc9d5c180f9edbb9187d2b1f5c6ebaaf80a6d51db486c7678d298711efabba2abd0afdcfcbc96e0ebd0af40536ce9e0c4bbe495c9d079bf
   languageName: node
   linkType: hard
 
