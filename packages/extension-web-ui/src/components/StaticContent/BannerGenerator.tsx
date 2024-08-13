@@ -63,7 +63,7 @@ const Component = ({ banners, className, dismissBanner, onClickBanner }: Props) 
 
 const BannerGenerator = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-    marginBottom: 24,
+    marginBottom: 8,
     '.slick-dots': {
       textAlign: 'center',
       paddingInlineStart: 0,

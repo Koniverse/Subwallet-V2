@@ -264,7 +264,7 @@ const PortfolioPage = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
 
     '.token-detail-banner-wrapper': {
-      marginTop: -24
+      marginTop: -19
     },
 
     '.portfolio-content': {
@@ -334,6 +334,12 @@ const PortfolioPage = styled(Component)<Props>(({ theme: { token } }: Props) => 
         '.search-input': {
           width: 360,
           height: 50
+        }
+      },
+
+      '@media (max-width: 1200px)': {
+        '.right-section .search-input': {
+          width: 344
         }
       }
     }
