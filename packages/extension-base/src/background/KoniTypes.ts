@@ -2059,10 +2059,10 @@ export interface KoniRequestSignatures {
   'pri(accounts.forget)': [RequestAccountProxyForget, boolean];
 
   // Address book
-  'pri(accounts.saveRecent)': [RequestSaveRecentAccount, KeyringAddress];
-  'pri(accounts.subscribeAddresses)': [null, AddressBookInfo, AddressBookInfo];
-  'pri(accounts.editContact)': [RequestEditContactAccount, boolean];
-  'pri(accounts.deleteContact)': [RequestDeleteContactAccount, boolean];
+  'pri(addressBook.saveRecent)': [RequestSaveRecentAccount, KeyringAddress];
+  'pri(addressBook.subscribe)': [null, AddressBookInfo, AddressBookInfo];
+  'pri(addressBook.edit)': [RequestEditContactAccount, boolean];
+  'pri(addressBook.delete)': [RequestDeleteContactAccount, boolean];
 
   // Domain name
   'pri(accounts.resolveDomainToAddress)': [ResolveDomainRequest, string | undefined];

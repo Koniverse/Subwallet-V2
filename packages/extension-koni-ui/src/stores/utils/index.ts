@@ -98,7 +98,7 @@ export const updateAddressBook = (data: AddressBookInfo) => {
   store.dispatch({ type: 'accountState/updateAddressBook', payload: data });
 };
 
-export const subscribeAddressBook = lazySubscribeMessage('pri(accounts.subscribeAddresses)', null, updateAddressBook, updateAddressBook);
+export const subscribeAddressBook = lazySubscribeMessage('pri(addressBook.subscribe)', null, updateAddressBook, updateAddressBook);
 
 function convertConfirmationToMap (data: ConfirmationRequestBase[]) {
   return data.reduce((prev, request) => {

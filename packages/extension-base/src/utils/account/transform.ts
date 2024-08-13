@@ -3,9 +3,33 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { getKeypairTypeByAddress } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
+
+import { hexStripPrefix, u8aToHex } from '@polkadot/util';
+import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
+
+export const createAccountProxyId = (_suri: string, derivationPath?: string) => {
+  let data: string = _suri;
+
+  if (mnemonicValidate(_suri)) {
+    const entropy = mnemonicToEntropy(_suri);
+
+    data = u8aToHex(entropy);
+
+    if (derivationPath) {
+      data = blake2AsHex(data, 256);
+    }
+  }
+
+  if (derivationPath) {
+    data = hexStripPrefix(data).concat(derivationPath);
+  }
+
+  return blake2AsHex(data, 256);
+};
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
   const meta = _meta as AccountMetadataData;
@@ -39,10 +63,11 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
   }
 };
 
-export const transformAccount = (address: string, type?: KeypairType, meta?: KeyringPair$Meta): AccountJson => {
+export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta): AccountJson => {
   const accountActions: string[] = [];
   const transactionActions: ExtrinsicType[] = [];
   const signMode = getAccountSignMode(address, meta);
+  const type = _type || getKeypairTypeByAddress(address);
   const networkType: AccountNetworkType = type
     ? EthereumKeypairTypes.includes(type)
       ? AccountNetworkType.ETHEREUM
@@ -69,6 +94,15 @@ export const singleAddressToAccount = ({ json: { address, meta }, type }: Single
 export const pairToAccount = ({ address, meta, type }: KeyringPair): AccountJson => transformAccount(address, type, meta);
 
 export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map(singleAddressToAccount);
+
+export const transformAddress = (address: string, meta?: KeyringPair$Meta): AddressJson => {
+  return {
+    address,
+    ...meta
+  };
+};
+
+export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address, meta } }) => transformAddress(address, meta));
 
 export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData) => {
   const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};

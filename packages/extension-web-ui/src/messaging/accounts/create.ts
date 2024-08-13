@@ -29,10 +29,6 @@ export async function createAccountExternalV2 (request: RequestAccountCreateExte
 
 // Hardware
 
-export async function createAccountHardware (address: string, hardwareType: string, accountIndex: number, addressOffset: number, name: string, genesisHash: string): Promise<boolean> {
-  return sendMessage('pri(accounts.create.hardware)', { accountIndex, address, addressOffset, genesisHash, hardwareType, name });
-}
-
 export async function createAccountHardwareV2 (request: RequestAccountCreateHardwareV2): Promise<boolean> {
   return sendMessage('pri(accounts.create.hardwareV2)', request);
 }

@@ -8,7 +8,7 @@ import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 
 // JSON
 export async function exportAccount (address: string, password: string): Promise<{ exportedJson: KeyringPair$Json }> {
-  return sendMessage('pri(accounts.export)', { address, password });
+  return sendMessage('pri(accounts.export.json)', { address, password });
 }
 
 export async function exportAccountPrivateKey (address: string, password: string): Promise<ResponseAccountExportPrivateKey> {

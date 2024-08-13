@@ -12,14 +12,6 @@ export async function jsonGetAccountInfo (json: KeyringPair$Json): Promise<Respo
   return sendMessage('pri(json.account.info)', json);
 }
 
-export async function jsonRestore (file: KeyringPair$Json, password: string, address: string): Promise<void> {
-  return sendMessage('pri(json.restore)', { file, password, address });
-}
-
-export async function batchRestore (file: KeyringPairs$Json, password: string, address: string): Promise<void> {
-  return sendMessage('pri(json.batchRestore)', { file, password, address });
-}
-
 export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<void> {
   return sendMessage('pri(accounts.json.restoreV2)', request);
 }

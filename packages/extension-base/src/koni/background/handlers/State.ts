@@ -5,7 +5,7 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { isSubscriptionRunning, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AccountRefMap, AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, BasicTxErrorType, ChainStakingMetadata, ChainType, ConfirmationsQueue, CrowdloanItem, CrowdloanJson, CurrencyType, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestConfirmationComplete, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
+import { AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, BasicTxErrorType, ChainStakingMetadata, ChainType, ConfirmationsQueue, CrowdloanItem, CrowdloanJson, CurrencyType, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestConfirmationComplete, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
@@ -37,35 +37,29 @@ import TransactionService from '@subwallet/extension-base/services/transaction-s
 import { TransactionEventResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
-import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
-import { AccountJson, BalanceItem, BalanceMap, CurrentAccountInfo, EvmFeeInfo, RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey, StorageDataInterface } from '@subwallet/extension-base/types';
-import { isAccountAll, pairToAccount, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
+import { AccountJson, BalanceItem, CurrentAccountInfo, EvmFeeInfo, RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey, StorageDataInterface } from '@subwallet/extension-base/types';
+import { pairToAccount, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { decodePair } from '@subwallet/keyring/pair/decode';
 import { keyring } from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
 import BN from 'bn.js';
-import SimpleKeyring from 'eth-simple-keyring';
 import { t } from 'i18next';
 import { interfaces } from 'manta-extension-sdk';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { TransactionConfig } from 'web3-core';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
-import { assert, hexStripPrefix, hexToU8a, isHex, logger as createLogger, noop, u8aToHex } from '@polkadot/util';
+import { assert, logger as createLogger, noop } from '@polkadot/util';
 import { Logger } from '@polkadot/util/types';
-import { base64Decode, isEthereumAddress, keyExtractSuri } from '@polkadot/util-crypto';
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { KoniCron } from '../cron';
 import { KoniSubscription } from '../subscription';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 const passworder = require('browser-passworder');
-
-const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
 
 // List of providers passed into constructor. This is the list of providers
 // exposed by the extension.
@@ -75,12 +69,6 @@ type Providers = Record<string, {
   // provider.
   start: () => ProviderInterface;
 }>
-
-const getSuri = (seed: string, type?: KeypairType): string => {
-  return type === 'ethereum'
-    ? `${seed}${ETH_DERIVE_DEFAULT}`
-    : seed;
-};
 
 const generateDefaultCrowdloanMap = (): Record<string, CrowdloanItem> => {
   const crowdloanMap: Record<string, CrowdloanItem> = {};
@@ -94,7 +82,6 @@ export default class KoniState {
   private injectedProviders = new Map<chrome.runtime.Port, ProviderInterface>();
   private readonly providers: Providers;
   private readonly unsubscriptionMap: Record<string, () => void> = {};
-  private readonly accountRefStore = new AccountRefStore();
   private externalRequest: Record<string, ExternalRequestPromise> = {};
 
   private crowdloanMap: Record<string, CrowdloanItem> = generateDefaultCrowdloanMap();
@@ -281,36 +268,6 @@ export default class KoniState {
     return this.requestService.authSubjectV2;
   }
 
-  public generateDefaultBalanceMap (_addresses?: string[]): BalanceMap {
-    const balanceMap: BalanceMap = {};
-    const activeChains = this.chainService.getActiveChainInfoMap();
-    const isAllAccount = isAccountAll(this.keyringService.context.currentAccount.proxyId);
-
-    const addresses = _addresses || (isAllAccount ? Object.keys(this.keyringService.context.pairs) : [this.keyringService.context.currentAccount.proxyId]);
-
-    addresses.forEach((address) => {
-      const temp: Record<string, BalanceItem> = {};
-
-      Object.values(activeChains).forEach((chainInfo) => {
-        const chainAssetMap = this.chainService.getFungibleTokensByChain(chainInfo.slug);
-
-        Object.keys(chainAssetMap).forEach((assetSlug) => {
-          temp[assetSlug] = {
-            address,
-            tokenSlug: assetSlug,
-            free: '',
-            locked: '',
-            state: APIItemState.PENDING
-          };
-        });
-      });
-
-      balanceMap[address] = temp;
-    });
-
-    return balanceMap;
-  }
-
   private afterChainServiceInit () {
     this.subscanService.setSubscanChainMap(this.chainService.getSubscanChainMap());
   }
@@ -412,12 +369,6 @@ export default class KoniState {
 
   public getAuthList (): Promise<AuthUrls> {
     return this.requestService.getAuthList();
-  }
-
-  getAddressList (value = false): Record<string, boolean> {
-    const addressList = Object.keys(this.keyringService.context.pairs);
-
-    return addressList.reduce((addressList, v) => ({ ...addressList, [v]: value }), {});
   }
 
   public async authorizeUrlV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
@@ -594,100 +545,12 @@ export default class KoniState {
     this.stakingRewardSubject.next(this.stakingRewardState);
   }
 
-  public getAccountRefMap (callback: (refMap: Record<string, Array<string>>) => void) {
-    const refMap: AccountRefMap = {};
-
-    this.accountRefStore.get('refList', (refList) => {
-      if (refList) {
-        refList.forEach((accRef) => {
-          accRef.forEach((acc) => {
-            refMap[acc] = [...accRef].filter((r) => !(r === acc));
-          });
-        });
-      }
-
-      callback(refMap);
-    });
-  }
-
-  public addAccountRef (addresses: string[], callback: () => void) {
-    this.accountRefStore.get('refList', (refList) => {
-      const newList = refList ? [...refList] : [];
-
-      newList.push(addresses);
-
-      this.accountRefStore.set('refList', newList, callback);
-    });
-  }
-
-  public removeAccountRef (address: string, callback: () => void) {
-    this.accountRefStore.get('refList', (refList) => {
-      if (refList) {
-        refList.forEach((accRef) => {
-          if (accRef.indexOf(address) > -1) {
-            accRef.splice(accRef.indexOf(address), 1);
-          }
-
-          if (accRef.length < 2) {
-            refList.splice(refList.indexOf(accRef), 1);
-          }
-        });
-
-        this.accountRefStore.set('refList', refList, () => {
-          callback();
-        });
-      } else {
-        callback();
-      }
-    });
-  }
-
   public getStakingReward (update: (value: StakingRewardJson) => void): void {
     update(this.stakingRewardState);
   }
 
   public subscribeStakingReward () {
     return this.stakingRewardSubject;
-  }
-
-  public setCurrentAccount (data: CurrentAccountInfo, callback?: () => void, preventOneAccount?: boolean): void {
-    const { proxyId } = data;
-
-    const result: CurrentAccountInfo = { ...data };
-
-    if (proxyId === ALL_ACCOUNT_KEY) {
-      const pairs = keyring.getAccounts();
-      const pair = pairs[0];
-
-      if (pairs.length > 1 || !pair) {
-        // Empty
-      } else {
-        if (!preventOneAccount) {
-          result.proxyId = pair.address;
-        }
-      }
-    }
-
-    this.keyringService.context.setCurrentAccount(result);
-    callback && callback();
-  }
-
-  public setAccountTie (address: string, genesisHash: string | null): boolean {
-    if (address !== ALL_ACCOUNT_KEY) {
-      const pair = keyring.getPair(address);
-
-      assert(pair, t('Unable to find account'));
-
-      keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash });
-    }
-
-    const accountInfo = this.keyringService.context.currentAccount;
-
-    if (address === accountInfo.proxyId) {
-      this.setCurrentAccount(accountInfo);
-    }
-
-    return true;
   }
 
   public async switchEvmNetworkByUrl (shortenUrl: string, networkKey: string): Promise<void> {
@@ -733,9 +596,9 @@ export default class KoniState {
           }
 
           if (proxyId !== changeAddress || isApproved) {
-            this.setCurrentAccount({
-              proxyId: useAddress
-            });
+            // this.setCurrentAccount({
+            //   proxyId: useAddress
+            // });
           }
         }
 
@@ -826,10 +689,6 @@ export default class KoniState {
 
   public subscribeSettingsSubject (): Subject<RequestSettingsType> {
     return this.settingService.getSubject();
-  }
-
-  public getAllAddresses (): string[] {
-    return keyring.getAccounts().map((account) => account.address);
   }
 
   public async resetCrowdloanMap (newAddress: string) {
@@ -1229,71 +1088,12 @@ export default class KoniState {
     return (Object.values(_PREDEFINED_SINGLE_MODES)).find((item) => (item.networkKeys.includes(networkKey)));
   }
 
-  public accountExportPrivateKey ({ address,
-    password }: RequestAccountExportPrivateKey): ResponseAccountExportPrivateKey {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const exportedJson = keyring.backupAccount(keyring.getPair(address), password);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const decoded = decodePair(password, base64Decode(exportedJson.encoded), exportedJson.encoding.type);
-
-    return {
-      privateKey: u8aToHex(decoded.secretKey),
-      publicKey: u8aToHex(decoded.publicKey)
-    };
+  public accountExportPrivateKey (request: RequestAccountExportPrivateKey): ResponseAccountExportPrivateKey {
+    return this.keyringService.context.accountExportPrivateKey(request);
   }
 
-  public checkPublicAndSecretKey ({ publicKey,
-    secretKey }: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
-    try {
-      const _secret = hexStripPrefix(secretKey);
-
-      if (_secret.length === 64) {
-        const suri = `0x${_secret}`;
-        const { phrase } = keyExtractSuri(suri);
-
-        if (isHex(phrase) && isHex(phrase, 256)) {
-          const type: KeypairType = 'ethereum';
-          const address = keyring.createFromUri(getSuri(suri, type), {}, type).address;
-
-          return {
-            address: address,
-            isValid: true,
-            isEthereum: true
-          };
-        } else {
-          return {
-            address: '',
-            isValid: false,
-            isEthereum: true
-          };
-        }
-      }
-
-      const keyPair = keyring.keyring.addFromPair({ publicKey: hexToU8a(publicKey), secretKey: hexToU8a(secretKey) });
-
-      return {
-        address: keyPair.address,
-        isValid: true,
-        isEthereum: false
-      };
-    } catch (e) {
-      console.error(e);
-
-      return {
-        address: '',
-        isValid: false,
-        isEthereum: false
-      };
-    }
-  }
-
-  public getEthKeyring (address: string, password: string): Promise<SimpleKeyring> {
-    return new Promise<SimpleKeyring>((resolve) => {
-      const { privateKey } = this.accountExportPrivateKey({ address, password: password });
-      const ethKeyring = new SimpleKeyring([privateKey]);
-
-      resolve(ethKeyring);
-    });
+  public checkPublicAndSecretKey (request: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
+    return this.keyringService.context.checkPublicAndSecretKey(request);
   }
 
   public async evmSign (id: string, url: string, method: string, params: any, allowedAccounts: string[]): Promise<string | undefined> {
@@ -1679,7 +1479,7 @@ export default class KoniState {
         }
       };
 
-      const subscription = this.keyringService.context.currentAccountSubject.subscribe(handleRemind);
+      const subscription = this.keyringService.context.observable.currentAccount.subscribe(handleRemind);
     }
   }
 
@@ -1938,7 +1738,6 @@ export default class KoniState {
     // await this.handleResetBalance(ALL_ACCOUNT_KEY, true);
     await this.earningService.resetWallet();
     await this.dbService.resetWallet(resetAll);
-    this.accountRefStore.set('refList', []);
 
     if (resetAll) {
       await this.priceService.setPriceCurrency(DEFAULT_CURRENCY);

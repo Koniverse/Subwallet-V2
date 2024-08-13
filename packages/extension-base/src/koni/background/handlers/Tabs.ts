@@ -22,7 +22,7 @@ import { AuthUrls } from '@subwallet/extension-base/services/request-service/typ
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, pairToAccount, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { KeyringPair } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import keyring from '@subwallet/ui-keyring';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { t } from 'i18next';
@@ -41,6 +41,7 @@ interface AccountSub {
   url: string;
 }
 
+// TODO: Update logic
 function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthType?: AccountAuthType): InjectedAccount[] {
   const accountSelected = authInfo
     ? (
@@ -56,9 +57,9 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
   let authTypeFilter = ({ type }: SingleAddress) => true;
 
   if (accountAuthType === 'substrate') {
-    authTypeFilter = ({ type }: SingleAddress) => (type !== 'ethereum');
+    authTypeFilter = ({ type }: SingleAddress) => (!!type && SubstrateKeypairTypes.includes(type));
   } else if (accountAuthType === 'evm') {
-    authTypeFilter = ({ type }: SingleAddress) => (type === 'ethereum');
+    authTypeFilter = ({ type }: SingleAddress) => (!!type && EthereumKeypairTypes.includes(type));
   }
 
   return Object
@@ -286,6 +287,7 @@ export default class KoniTabs {
     return authList[shortenUrl];
   }
 
+  // TODO: Update logic
   private async accountsListV2 (url: string, { accountAuthType,
     anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
@@ -293,6 +295,7 @@ export default class KoniTabs {
     return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthType || accountAuthType);
   }
 
+  // TODO: Update logic
   private accountsSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
     const cb = createSubscription<'pub(accounts.subscribeV2)'>(id, port);
     const authInfoSubject = this.#koniState.requestService.subscribeAuthorizeUrlSubject;
@@ -346,6 +349,7 @@ export default class KoniTabs {
     }
   }
 
+  // TODO: Update logic
   private async getEvmCurrentAccount (url: string): Promise<string[]> {
     return await new Promise((resolve) => {
       this.getAuthInfo(url).then((authInfo) => {
@@ -353,19 +357,26 @@ export default class KoniTabs {
         const accountList = transformAccountsV2(allAccounts, false, authInfo, 'evm').map((a) => a.address);
         let accounts: string[] = [];
 
-        const address = this.#koniState.keyringService.context.currentAccount.proxyId;
+        const proxyId = this.#koniState.keyringService.context.currentAccount.proxyId;
 
-        if (address === ALL_ACCOUNT_KEY || !address) {
+        if (proxyId === ALL_ACCOUNT_KEY || !proxyId) {
           accounts = accountList;
         } else {
-          if (accountList.includes(address)) {
-            const result = accountList.filter((adr) => adr !== address);
+          const addresses = this.#koniState.keyringService.context.addressesByProxyId(proxyId);
 
-            result.unshift(address);
-            accounts = result;
-          } else {
-            accounts = accountList;
+          const result: string[] = [];
+          const inList: string[] = [];
+
+          for (const account of accountList) {
+            if (!addresses.includes(account)) {
+              result.push(account);
+            } else {
+              inList.push(account);
+            }
           }
+
+          result.unshift(...inList);
+          accounts = result;
         }
 
         resolve(accounts);
@@ -692,6 +703,7 @@ export default class KoniTabs {
     return evmState.chainId || '0x0';
   }
 
+  // TODO: Update logic
   private async evmSubscribeEvents (url: string, id: string, port: chrome.runtime.Port) {
     // This method will be called after DApp request connect to extension
     const cb = createSubscription<'evm(events.subscribe)'>(id, port);
@@ -716,7 +728,7 @@ export default class KoniTabs {
       }
     };
 
-    const accountListSubscription = this.#koniState.keyringService.context.currentAccountSubject
+    const accountListSubscription = this.#koniState.keyringService.context.observable.currentAccount
       .subscribe(() => {
         onCurrentAccountChanged().catch(console.error);
       });
@@ -884,9 +896,10 @@ export default class KoniTabs {
     }
   }
 
+  // TODO: Update logic
   public async evmSendTransaction (id: string, url: string, { params }: RequestArguments) {
     const transactionParams = (params as EvmSendTransactionParams[])[0];
-    const canUseAccount = transactionParams.from && this.canUseAccount(transactionParams.from, url);
+    const canUseAccount = transactionParams.from && await this.canUseAccount(transactionParams.from, url);
     const evmState = await this.getEvmState(url);
     const networkKey = evmState.networkKey;
 

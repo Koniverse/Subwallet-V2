@@ -130,8 +130,6 @@ export class BalanceMapImpl {
 
       this._map[compoundKey] = rs;
     });
-
-    console.debug('balanceMap', this._map);
   }
 
   // Remove balance items buy address or tokenSlug
