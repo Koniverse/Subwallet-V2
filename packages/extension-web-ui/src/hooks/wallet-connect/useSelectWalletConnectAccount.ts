@@ -115,6 +115,7 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
   , [chainInfoMap, params.requiredNamespaces]
   );
 
+  const isExitedAnotherUnsupportedNamespace = useMemo(() => params.requiredNamespaces && Object.keys(params.requiredNamespaces).some((namespace) => !isSupportWalletConnectNamespace(namespace)), [params.requiredNamespaces]);
   const supportOneChain = useMemo(() => supportedChains.length === 1, [supportedChains]);
   const supportOneNamespace = useMemo(() => Object.keys(namespaces).length === 1, [namespaces]);
   const noNetwork = useMemo((): boolean => {
@@ -240,6 +241,7 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
     onApplyAccounts,
     onCancelSelectAccounts,
     onSelectAccount,
+    isExitedAnotherUnsupportedNamespace,
     supportOneChain,
     supportOneNamespace,
     supportedChains

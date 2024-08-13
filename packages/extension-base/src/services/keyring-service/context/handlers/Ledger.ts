@@ -70,7 +70,7 @@ export class AccountLedgerHandler extends AccountBaseHandler {
     const modifyPairs = this.state.modifyPairs;
 
     for (const account of accounts) {
-      const { accountIndex, address, addressOffset, genesisHash, hardwareType, isEthereum, isGeneric, name } = account;
+      const { accountIndex, address, addressOffset, genesisHash, hardwareType, isEthereum, isGeneric, name, originGenesisHash } = account;
 
       let result: KeyringPair;
 
@@ -80,7 +80,7 @@ export class AccountLedgerHandler extends AccountBaseHandler {
         accountIndex,
         addressOffset,
         genesisHash,
-        originGenesisHash: genesisHash,
+        originGenesisHash,
         isGeneric
       };
 
