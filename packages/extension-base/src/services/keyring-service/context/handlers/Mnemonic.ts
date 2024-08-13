@@ -27,7 +27,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
   /* Create seed */
   public async mnemonicCreateV2 ({ length = SEED_DEFAULT_LENGTH, mnemonic: _seed, type = 'general' }: RequestMnemonicCreateV2): Promise<ResponseMnemonicCreateV2> {
-    const types: KeypairType[] = type === 'general' ? ['sr25519', 'ethereum', 'ton'] : ['ton-special'];
+    const types: KeypairType[] = type === 'general' ? ['sr25519', 'ethereum', 'ton'] : ['ton-native'];
     const seed = _seed ||
     type === 'general'
       ? mnemonicGenerate(length)
@@ -61,7 +61,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
       } catch (e) {
         assert(tonMnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
         mnemonicTypes = 'ton';
-        pairTypes = ['ton-special'];
+        pairTypes = ['ton-native'];
       }
     }
 

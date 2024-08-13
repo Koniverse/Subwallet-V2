@@ -16,7 +16,7 @@ import { AccountBaseHandler } from './Base';
 /**
  * @class AccountModifyHandler
  * @extends AccountBaseHandler
- * @description Handler for modify account actions
+ * @description Handler for modify account actions (change master password, migrate master password, edit account, forget account, ...)
  * */
 export class AccountModifyHandler extends AccountBaseHandler {
   public keyringChangeMasterPassword (request: RequestChangeMasterPassword, callback: () => void): ResponseChangeMasterPassword {

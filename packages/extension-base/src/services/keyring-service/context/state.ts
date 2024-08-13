@@ -59,6 +59,7 @@ export class AccountState {
     const pairs = this.pairSubject.asObservable();
     const modifyPairs = this._modifyPair.observable;
     const accountGroups = this._accountProxy.observable;
+    const chainInfoMap = this.koniState.chainService.subscribeChainInfoMap().asObservable();
 
     pairs.subscribe((subjectInfo) => {
       // Check if accounts changed
@@ -86,9 +87,9 @@ export class AccountState {
       this.beforeAccount = { ...subjectInfo };
     });
 
-    combineLatest([pairs, modifyPairs, accountGroups]).subscribe(([pairs, modifyPairs, accountGroups]) => {
+    combineLatest([pairs, modifyPairs, accountGroups, chainInfoMap]).subscribe(([pairs, modifyPairs, accountGroups, chainInfoMap]) => {
       addLazy('combineAccounts', () => {
-        const result = combineAccounts(pairs, modifyPairs, accountGroups);
+        const result = combineAccounts(pairs, modifyPairs, accountGroups, chainInfoMap);
 
         this.accountSubject.next(result);
       }, 300, 1800, false);

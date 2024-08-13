@@ -81,7 +81,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     createAccountSuriV2({
       name: accountName,
       suri: seedPhrase,
-      type: selectedMnemonicType === 'ton' ? 'ton-special' : undefined,
+      type: selectedMnemonicType === 'ton' ? 'ton-native' : undefined,
       isAllowed: true
     })
       .then(() => {
