@@ -10,6 +10,7 @@ export { default as NominationSelector } from './NominationSelector';
 export { default as PhraseNumberSelector } from './PhraseNumberSelector';
 export { default as PrivateKeyInput } from './PrivateKeyInput';
 export { default as SeedPhraseInput } from './SeedPhraseInput';
+export { default as AccountAddressSelector } from './AccountAddressSelector';
 
 export * from './AccountSelector';
 export * from './AddressInput';

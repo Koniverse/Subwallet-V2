@@ -30,6 +30,7 @@ function defaultFiler (account: AccountJson): boolean {
   return !isAccountAll(account.address);
 }
 
+// todo: deprecated, may remove after migrating all usages
 const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElement<Props> => {
   const { addressPrefix, className = '', disabled, doFilter = true, externalAccounts, filter, id = 'account-selector', label, placeholder, readOnly, statusHelp, value } = props;
   const accounts = useSelector((state) => state.accountState.accounts);
