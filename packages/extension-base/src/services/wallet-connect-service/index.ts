@@ -336,11 +336,11 @@ export default class WalletConnectService {
     console.error(e);
 
     if (message.includes('socket hang up') || message.includes('stalled') || message.includes('interrupted')) {
-      return new Error(t('There is an issue with the WebSocket connection to WalletConnect. Please try again later.'));
+      return new Error(t('Connection unsuccessful. Turn off VPN/ad blocker apps, reload the dApp, and try again. If the issue persists, contact support at agent@subwallet.app'));
     }
 
     if (message.includes('failed for host')) {
-      return new Error(t('The WebSocket has been blocked, or the number of socket connections has been limited, so a connection cannot be established.'));
+      return new Error(t('Connection unsuccessful. Turn off some networks on the wallet or close any privacy protection apps (e.g. VPN, ad blocker apps) and try again. If the issue persists, contact support at agent@subwallet.app'));
     }
 
     if (message.includes('pairing already exists')) {
@@ -348,7 +348,7 @@ export default class WalletConnectService {
     }
 
     if (isConnect) {
-      return t('Fail to add connection');
+      return new Error(t('Fail to add connection'));
     }
 
     return e;
