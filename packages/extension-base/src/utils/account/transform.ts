@@ -1,9 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountActions, AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -34,7 +36,7 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
   const meta = _meta as AccountMetadataData;
 
-  if (!address) {
+  if (!address || !meta) {
     return AccountSignMode.UNKNOWN;
   } else {
     if (address === ALL_ACCOUNT_KEY) {
@@ -63,8 +65,24 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
   }
 };
 
-export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta): AccountJson => {
-  const accountActions: string[] = [];
+/**
+ * Transforms account data into an `AccountJson` object.
+ *
+ * @param {string} address - The address of the account.
+ * @param {KeypairType} [_type] - The type of the keypair (optional).
+ * @param {KeyringPair$Meta} [meta] - Metadata associated with the keyring pair (optional).
+ * @param {Record<string, _ChainInfo>} [chainInfoMap] - A map of chain information (optional).
+ * If chain information is provided, add full data to account.
+ * @returns {AccountJson} The transformed account data.
+ *
+ * This function performs the following steps:
+ * 1. Determines the sign mode of the account based on the address and metadata.
+ * 2. Determines the network type of the account based on the keypair type.
+ * 3. If chain information is provided, add full data (accountActions, transactionActions) to account.
+ * 4. Returns an `AccountJson` object containing the transformed account data.
+ */
+export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => {
+  const accountActions: AccountActions[] = [];
   const transactionActions: ExtrinsicType[] = [];
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
@@ -77,6 +95,72 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
           ? AccountNetworkType.BITCOIN
           : AccountNetworkType.SUBSTRATE
     : AccountNetworkType.SUBSTRATE;
+  let specialNetworks: string[] | undefined;
+
+  if (!chainInfoMap) {
+    return {
+      address,
+      ...meta,
+      type,
+      accountActions,
+      transactionActions,
+      signMode,
+      networkType
+    };
+  }
+
+  const genesisHash = meta?.genesisHash;
+
+  if (chainInfoMap && signMode === AccountSignMode.LEGACY_LEDGER && genesisHash) {
+    const chainInfo = Object.values(chainInfoMap).find((info) => _getSubstrateGenesisHash(info) === genesisHash);
+
+    if (chainInfo) {
+      specialNetworks = [chainInfo.slug];
+    }
+  }
+
+  /* Account actions */
+
+  // JSON
+  if (signMode === AccountSignMode.PASSWORD) {
+    accountActions.push(AccountActions.EXPORT_JSON);
+  }
+
+  // Mnemonic
+  if (meta) {
+    const _meta = meta as AccountMetadataData;
+
+    if (_meta.isMasterAccount) {
+      accountActions.push(AccountActions.EXPORT_MNEMONIC);
+    }
+  }
+
+  // Private key
+  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.ETHEREUM) {
+    accountActions.push(AccountActions.EXPORT_PRIVATE_KEY);
+  }
+
+  // QR
+  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.SUBSTRATE) {
+    accountActions.push(AccountActions.EXPORT_QR);
+  }
+
+  // Derive
+  if (signMode === AccountSignMode.PASSWORD) {
+    if (networkType === AccountNetworkType.SUBSTRATE) {
+      accountActions.push(AccountActions.DERIVE);
+    } else if (type !== 'ton-native') {
+      if (meta) {
+        const _meta = meta as AccountMetadataData;
+
+        if (_meta.isMasterAccount) {
+          accountActions.push(AccountActions.DERIVE);
+        }
+      }
+    }
+  }
+
+  /* Account actions */
 
   return {
     address,
@@ -85,15 +169,16 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     accountActions,
     transactionActions,
     signMode,
-    networkType
+    networkType,
+    specialNetworks
   };
 };
 
-export const singleAddressToAccount = ({ json: { address, meta }, type }: SingleAddress): AccountJson => transformAccount(address, type, meta);
+export const singleAddressToAccount = ({ json: { address, meta }, type }: SingleAddress, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
 
-export const pairToAccount = ({ address, meta, type }: KeyringPair): AccountJson => transformAccount(address, type, meta);
+export const pairToAccount = ({ address, meta, type }: KeyringPair, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
 
-export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map(singleAddressToAccount);
+export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map((data) => singleAddressToAccount(data));
 
 export const transformAddress = (address: string, meta?: KeyringPair$Meta): AddressJson => {
   return {
@@ -104,12 +189,12 @@ export const transformAddress = (address: string, meta?: KeyringPair$Meta): Addr
 
 export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address, meta } }) => transformAddress(address, meta));
 
-export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData) => {
+export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
   const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};
 
   for (const [address, pair] of Object.entries(pairs)) {
     const modifyPair = modifyPairs[address];
-    const account: AccountJson = singleAddressToAccount(pair);
+    const account: AccountJson = singleAddressToAccount(pair, chainInfoMap);
 
     if (modifyPair && modifyPair.accountProxyId) {
       const accountGroup = accountProxies[modifyPair.accountProxyId];
@@ -139,6 +224,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
       .map(([key, value]): [string, AccountProxy] => {
         let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
         let networkTypes: AccountNetworkType[] = [];
+        let specialNetworks: string[] | undefined;
 
         if (value.accounts.length > 1) {
           accountType = AccountProxyType.UNIFIED;
@@ -148,22 +234,34 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
           networkTypes = [account.networkType];
 
-          if (account.isInjected) {
-            accountType = AccountProxyType.INJECTED;
-          } else if (account.isExternal) {
-            if (account.isHardware) {
+          switch (account.signMode) {
+            case AccountSignMode.GENERIC_LEDGER:
+            case AccountSignMode.LEGACY_LEDGER:
               accountType = AccountProxyType.LEDGER;
-            } else if (account.isReadOnly) {
-              accountType = AccountProxyType.READ_ONLY;
-            } else {
+              specialNetworks = account.specialNetworks;
+              break;
+            case AccountSignMode.QR:
               accountType = AccountProxyType.QR;
-            }
-          } else {
-            accountType = AccountProxyType.SOLO;
+              break;
+            case AccountSignMode.READ_ONLY:
+              accountType = AccountProxyType.READ_ONLY;
+              break;
+            case AccountSignMode.INJECTED:
+              accountType = AccountProxyType.INJECTED;
+              break;
+            case AccountSignMode.PASSWORD:
+              accountType = AccountProxyType.SOLO;
+              break;
+            case AccountSignMode.ALL_ACCOUNT:
+              accountType = AccountProxyType.ALL_ACCOUNT;
+              break;
+            case AccountSignMode.UNKNOWN:
+              accountType = AccountProxyType.UNKNOWN;
+              break;
           }
         }
 
-        return [key, { ...value, accountType, networkTypes }];
+        return [key, { ...value, accountType, networkTypes, specialNetworks }];
       })
   );
 

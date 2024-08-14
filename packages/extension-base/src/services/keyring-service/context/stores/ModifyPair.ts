@@ -11,4 +11,5 @@ export class ModifyPairStoreSubject extends StoreSubject<ModifyPairStoreData> {
   store = new ModifyPairStore();
   subject = new BehaviorSubject<ModifyPairStoreData>({});
   key = 'ModifyPairs';
+  defaultValue = {};
 }

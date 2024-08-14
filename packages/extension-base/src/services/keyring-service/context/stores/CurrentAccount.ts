@@ -11,8 +11,9 @@ export class CurrentAccountStoreSubject extends StoreSubject<CurrentAccountInfo>
   store = new CurrentAccountStore();
   subject = new BehaviorSubject<CurrentAccountInfo>({ proxyId: '' });
   key = 'CurrentAccountInfo';
+  defaultValue = { proxyId: '' };
 
   override transformInitData (rs: CurrentAccountInfo) {
-    return rs ? { proxyId: rs.proxyId || rs.address || '' } : { proxyId: '' };
+    return rs ? { proxyId: rs.proxyId || rs.address || '' } : this.defaultValue;
   }
 }

@@ -11,6 +11,7 @@ export class AccountProxyStoreSubject extends StoreSubject<AccountProxyStoreData
   store = new AccountProxyStore();
   subject = new BehaviorSubject<AccountProxyStoreData>({});
   key = 'AccountProxies';
+  defaultValue = {};
 
   public upsertByKey (data: AccountProxyData, callback?: () => void) {
     const proxyData = this.value;
