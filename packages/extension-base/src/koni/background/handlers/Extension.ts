@@ -1083,7 +1083,7 @@ export default class KoniExtension {
   }
 
   private async batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {
-    return this.#koniState.keyringService.context.batchExportV2(request)
+    return this.#koniState.keyringService.context.batchExportV2(request);
   }
 
   private exportAccountProxyMnemonic (request: RequestExportAccountProxyMnemonic): ResponseExportAccountProxyMnemonic {

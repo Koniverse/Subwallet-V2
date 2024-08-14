@@ -65,6 +65,204 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
   }
 };
 
+export const getAccountActions = (signMode: AccountSignMode, networkType: AccountNetworkType, type?: KeypairType, _meta?: KeyringPair$Meta): AccountActions[] => {
+  const result: AccountActions[] = [];
+  const meta = _meta as AccountMetadataData;
+
+  // JSON
+  if (signMode === AccountSignMode.PASSWORD) {
+    result.push(AccountActions.EXPORT_JSON);
+  }
+
+  // Mnemonic
+  if (meta && meta.isMasterAccount) {
+    result.push(AccountActions.EXPORT_MNEMONIC);
+  }
+
+  // Private key
+  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.ETHEREUM) {
+    result.push(AccountActions.EXPORT_PRIVATE_KEY);
+  }
+
+  // QR
+  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.SUBSTRATE) {
+    result.push(AccountActions.EXPORT_QR);
+  }
+
+  // Derive
+  if (signMode === AccountSignMode.PASSWORD) {
+    if (networkType === AccountNetworkType.SUBSTRATE) {
+      result.push(AccountActions.DERIVE);
+    } else if (type !== 'ton-native') {
+      if (meta && meta.isMasterAccount) {
+        result.push(AccountActions.DERIVE);
+      }
+    }
+  }
+
+  return result;
+};
+
+const BASE_TRANSFER_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.TRANSFER_BALANCE,
+  ExtrinsicType.TRANSFER_TOKEN
+];
+
+const NATIVE_STAKE_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.STAKING_BOND,
+  ExtrinsicType.STAKING_UNBOND,
+  ExtrinsicType.STAKING_WITHDRAW,
+  // ExtrinsicType.STAKING_COMPOUNDING,
+  // ExtrinsicType.STAKING_CANCEL_COMPOUNDING,
+  ExtrinsicType.STAKING_CANCEL_UNSTAKE
+];
+
+const POOL_STAKE_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.STAKING_JOIN_POOL,
+  ExtrinsicType.STAKING_LEAVE_POOL,
+  ExtrinsicType.STAKING_POOL_WITHDRAW,
+  ExtrinsicType.STAKING_CLAIM_REWARD,
+  ExtrinsicType.JOIN_YIELD_POOL
+];
+
+const EARN_VDOT_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.MINT_VDOT,
+  ExtrinsicType.REDEEM_VDOT,
+  ExtrinsicType.UNSTAKE_VDOT
+];
+
+const EARN_LDOT_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.MINT_LDOT,
+  ExtrinsicType.REDEEM_LDOT,
+  ExtrinsicType.UNSTAKE_LDOT
+];
+
+const EARN_SDOT_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.MINT_SDOT,
+  ExtrinsicType.REDEEM_SDOT,
+  ExtrinsicType.UNSTAKE_SDOT
+];
+
+const EARN_QDOT_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.MINT_QDOT,
+  ExtrinsicType.REDEEM_QDOT,
+  ExtrinsicType.UNSTAKE_QDOT
+];
+
+const EARN_STDOT_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.MINT_STDOT,
+  ExtrinsicType.REDEEM_STDOT,
+  ExtrinsicType.UNSTAKE_STDOT
+];
+
+const EARN_VMANTA_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.MINT_VMANTA,
+  ExtrinsicType.REDEEM_VMANTA,
+  ExtrinsicType.UNSTAKE_VMANTA
+];
+
+const EVM_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.TOKEN_SPENDING_APPROVAL,
+  ExtrinsicType.EVM_EXECUTE
+];
+
+const OTHER_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.TRANSFER_XCM,
+  ExtrinsicType.SEND_NFT,
+  ExtrinsicType.SWAP,
+  ExtrinsicType.CROWDLOAN
+];
+
+export const getAccountTransactionActions = (signMode: AccountSignMode, networkType: AccountNetworkType, type?: KeypairType, _meta?: KeyringPair$Meta, _specialNetwork?: string): ExtrinsicType[] => {
+  if ([AccountSignMode.PASSWORD, AccountSignMode.INJECTED].includes(signMode)) {
+    switch (networkType) {
+      case AccountNetworkType.SUBSTRATE:
+        return [
+          ...BASE_TRANSFER_ACTIONS,
+          ...NATIVE_STAKE_ACTIONS,
+          ...POOL_STAKE_ACTIONS,
+          ...EARN_VDOT_ACTIONS,
+          ...EARN_LDOT_ACTIONS,
+          ...EARN_SDOT_ACTIONS,
+          ...EARN_QDOT_ACTIONS,
+          ...EARN_VMANTA_ACTIONS,
+          ...OTHER_ACTIONS
+        ];
+      case AccountNetworkType.ETHEREUM:
+        return [
+          ...BASE_TRANSFER_ACTIONS,
+          ...NATIVE_STAKE_ACTIONS,
+          ...POOL_STAKE_ACTIONS,
+          ...EARN_STDOT_ACTIONS,
+          ...OTHER_ACTIONS,
+          ...EVM_ACTIONS
+        ];
+      case AccountNetworkType.TON:
+        return [
+          ...BASE_TRANSFER_ACTIONS
+        ];
+    }
+  } else if (signMode === AccountSignMode.QR || signMode === AccountSignMode.GENERIC_LEDGER) {
+    switch (networkType) {
+      case AccountNetworkType.SUBSTRATE:
+        return [
+          ...BASE_TRANSFER_ACTIONS,
+          ...NATIVE_STAKE_ACTIONS,
+          ...POOL_STAKE_ACTIONS,
+          ...EARN_VDOT_ACTIONS,
+          ...EARN_LDOT_ACTIONS,
+          ...EARN_SDOT_ACTIONS,
+          ...EARN_QDOT_ACTIONS,
+          ...EARN_VMANTA_ACTIONS,
+          ...OTHER_ACTIONS
+        ];
+      case AccountNetworkType.ETHEREUM:
+        return [
+          ...BASE_TRANSFER_ACTIONS,
+          ...EARN_STDOT_ACTIONS,
+          ...EVM_ACTIONS,
+          ExtrinsicType.SEND_NFT,
+          ExtrinsicType.SWAP
+        ];
+      case AccountNetworkType.TON:
+        return [
+          ...BASE_TRANSFER_ACTIONS
+        ];
+    }
+  } else if (signMode === AccountSignMode.LEGACY_LEDGER) { // Only for Substrate
+    const result: ExtrinsicType[] = [];
+    const specialNetwork = _specialNetwork || '';
+
+    result.push(...BASE_TRANSFER_ACTIONS, ...NATIVE_STAKE_ACTIONS, ...POOL_STAKE_ACTIONS, ExtrinsicType.SWAP, ExtrinsicType.CROWDLOAN);
+
+    // NFT
+    if (!['astar', 'avail_mainnet'].includes(specialNetwork)) {
+      result.push(ExtrinsicType.SEND_NFT);
+    }
+
+    // Earning
+    if (specialNetwork === 'bifrost') {
+      result.push(...EARN_VDOT_ACTIONS, ...EARN_VMANTA_ACTIONS);
+    }
+
+    if (specialNetwork === 'acala') {
+      result.push(...EARN_LDOT_ACTIONS);
+    }
+
+    if (specialNetwork === 'parallel') {
+      result.push(...EARN_SDOT_ACTIONS);
+    }
+
+    if (specialNetwork === 'interlay') {
+      result.push(...EARN_QDOT_ACTIONS);
+    }
+
+    return result;
+  }
+
+  return [];
+};
+
 /**
  * Transforms account data into an `AccountJson` object.
  *
@@ -82,8 +280,6 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
  * 4. Returns an `AccountJson` object containing the transformed account data.
  */
 export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => {
-  const accountActions: AccountActions[] = [];
-  const transactionActions: ExtrinsicType[] = [];
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
   const networkType: AccountNetworkType = type
@@ -95,15 +291,15 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
           ? AccountNetworkType.BITCOIN
           : AccountNetworkType.SUBSTRATE
     : AccountNetworkType.SUBSTRATE;
-  let specialNetworks: string[] | undefined;
+  let specialNetwork: string | undefined;
 
   if (!chainInfoMap) {
     return {
       address,
       ...meta,
       type,
-      accountActions,
-      transactionActions,
+      accountActions: [],
+      transactionActions: [],
       signMode,
       networkType
     };
@@ -115,50 +311,12 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     const chainInfo = Object.values(chainInfoMap).find((info) => _getSubstrateGenesisHash(info) === genesisHash);
 
     if (chainInfo) {
-      specialNetworks = [chainInfo.slug];
+      specialNetwork = chainInfo.slug;
     }
   }
 
-  /* Account actions */
-
-  // JSON
-  if (signMode === AccountSignMode.PASSWORD) {
-    accountActions.push(AccountActions.EXPORT_JSON);
-  }
-
-  // Mnemonic
-  if (meta) {
-    const _meta = meta as AccountMetadataData;
-
-    if (_meta.isMasterAccount) {
-      accountActions.push(AccountActions.EXPORT_MNEMONIC);
-    }
-  }
-
-  // Private key
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.ETHEREUM) {
-    accountActions.push(AccountActions.EXPORT_PRIVATE_KEY);
-  }
-
-  // QR
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.SUBSTRATE) {
-    accountActions.push(AccountActions.EXPORT_QR);
-  }
-
-  // Derive
-  if (signMode === AccountSignMode.PASSWORD) {
-    if (networkType === AccountNetworkType.SUBSTRATE) {
-      accountActions.push(AccountActions.DERIVE);
-    } else if (type !== 'ton-native') {
-      if (meta) {
-        const _meta = meta as AccountMetadataData;
-
-        if (_meta.isMasterAccount) {
-          accountActions.push(AccountActions.DERIVE);
-        }
-      }
-    }
-  }
+  const accountActions = getAccountActions(signMode, networkType, type, meta);
+  const transactionActions = getAccountTransactionActions(signMode, networkType, type, meta, specialNetwork);
 
   /* Account actions */
 
@@ -170,13 +328,16 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     transactionActions,
     signMode,
     networkType,
-    specialNetworks
+    specialNetwork
   };
 };
 
-export const singleAddressToAccount = ({ json: { address, meta }, type }: SingleAddress, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
+export const singleAddressToAccount = ({ json: { address, meta },
+  type }: SingleAddress, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
 
-export const pairToAccount = ({ address, meta, type }: KeyringPair, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
+export const pairToAccount = ({ address,
+  meta,
+  type }: KeyringPair, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
 
 export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map((data) => singleAddressToAccount(data));
 
@@ -187,7 +348,8 @@ export const transformAddress = (address: string, meta?: KeyringPair$Meta): Addr
   };
 };
 
-export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address, meta } }) => transformAddress(address, meta));
+export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address,
+  meta } }) => transformAddress(address, meta));
 
 export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
   const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};
@@ -224,7 +386,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
       .map(([key, value]): [string, AccountProxy] => {
         let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
         let networkTypes: AccountNetworkType[] = [];
-        let specialNetworks: string[] | undefined;
+        let specialNetwork: string | undefined;
 
         if (value.accounts.length > 1) {
           accountType = AccountProxyType.UNIFIED;
@@ -238,7 +400,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
               accountType = AccountProxyType.LEDGER;
-              specialNetworks = account.specialNetworks;
+              specialNetwork = account.specialNetwork;
               break;
             case AccountSignMode.QR:
               accountType = AccountProxyType.QR;
@@ -261,7 +423,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
           }
         }
 
-        return [key, { ...value, accountType, networkTypes, specialNetworks }];
+        return [key, { ...value, accountType, networkTypes, specialNetwork }];
       })
   );
 
