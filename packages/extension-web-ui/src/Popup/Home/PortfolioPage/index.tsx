@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Headers from '@subwallet/extension-web-ui/components/Layout/parts/Header';
-import { useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
+import { useGetBannerByScreen, useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { reloadCron } from '@subwallet/extension-web-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { ActivityIndicator, Button, Icon, Input, SwSubHeader } from '@subwallet/react-ui';
@@ -126,11 +127,53 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   }, [pathname]);
 
   const isShowReloadNft = useMemo(() => pathname.startsWith('/home/nfts/collections'), [pathname]);
+  const tokenGroupSlug = useMemo(() => {
+    if (pathname.startsWith('/home/tokens/detail')) {
+      return pathname.split('/').pop();
+    }
+
+    return undefined;
+  }, [pathname]);
+
+  const isTokenScreen = useMemo(() => {
+    return pathname.startsWith('/home/tokens');
+  }, [pathname]);
+
+  const isNFTScreen = useMemo(() => {
+    return pathname.startsWith('/home/nfts');
+  }, [pathname]);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token');
+  const { banners: nftLists, dismissBanner: dismissBannerNFT, onClickBanner: onClickBannerNFT } = useGetBannerByScreen('nft');
+  const { banners: bannersDetails, dismissBanner: dimissBannerDetails, onClickBanner: onClickBannerDetails } = useGetBannerByScreen('token_detail', tokenGroupSlug);
+
+  const outletValue = useMemo(() => ({
+    searchInput,
+    setDetailTitle,
+    setSearchPlaceholder,
+    setShowSearchInput
+  }), [searchInput]);
 
   return (
     <div className={CN(className, 'portfolio-container')}>
       <div className='portfolio-header'>
         <Headers.Balance className={'portfolio-balance'} />
+        <div className={'token-detail-banner-wrapper'}>
+          {!!tokenGroupSlug && (<BannerGenerator
+            banners={bannersDetails}
+            dismissBanner={dimissBannerDetails}
+            onClickBanner={onClickBannerDetails}
+          />)}
+          {!tokenGroupSlug && isTokenScreen && !!banners.length && (<BannerGenerator
+            banners={banners}
+            dismissBanner={dismissBanner}
+            onClickBanner={onClickBanner}
+          />)}
+          {!tokenGroupSlug && isNFTScreen && !!nftLists.length && (<BannerGenerator
+            banners={nftLists}
+            dismissBanner={dismissBannerNFT}
+            onClickBanner={onClickBannerNFT}
+          />)}
+        </div>
         <div className='menu-bar'>
           {
             !isDetail
@@ -205,12 +248,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
       <div className='portfolio-content'>
         <Outlet
-          context={{
-            searchInput,
-            setDetailTitle,
-            setSearchPlaceholder,
-            setShowSearchInput
-          }}
+          context={outletValue}
         />
       </div>
     </div>
@@ -225,6 +263,10 @@ const PortfolioPage = styled(Component)<Props>(({ theme: { token } }: Props) => 
 
     '.portfolio-header': {
       flex: '0 0 auto'
+    },
+
+    '.token-detail-banner-wrapper': {
+      marginTop: -19
     },
 
     '.portfolio-content': {
@@ -294,6 +336,12 @@ const PortfolioPage = styled(Component)<Props>(({ theme: { token } }: Props) => 
         '.search-input': {
           width: 360,
           height: 50
+        }
+      },
+
+      '@media (max-width: 1200px)': {
+        '.right-section .search-input': {
+          width: 344
         }
       }
     }

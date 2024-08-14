@@ -60,12 +60,14 @@ const Component: React.FC<Props> = (props: Props) => {
         <Number
           decimal={0}
           suffix={_getAssetSymbol(fromAssetInfo)}
+          unitOpacity={0.45}
           value={1}
         />
         <span>&nbsp;~&nbsp;</span>
         <Number
           decimal={0}
           suffix={_getAssetSymbol(toAssetInfo)}
+          unitOpacity={0.45}
           value={data.quote.rate}
         />
       </div>

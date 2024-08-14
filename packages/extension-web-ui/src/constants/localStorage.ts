@@ -29,6 +29,7 @@ export const CONFIRM_SWAP_TERM = 'swap.term-and-service';
 export const CONFIRM_TERM_SEED_PHRASE = 'seed-phrase.term-and-condition';
 
 export const DAPPS_FAVORITE = 'dapps.favorite';
+export const APP_INSTRUCTION_DATA = 'static.instruction-data';
 
 export const CREATE_RETURN = 'account.create-return';
 

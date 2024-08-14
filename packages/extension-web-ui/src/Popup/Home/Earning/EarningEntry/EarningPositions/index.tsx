@@ -7,9 +7,10 @@ import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning
 import { EarningRewardItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { AlertModal, BaseModal, EarningInstructionModal, EarningPositionDesktopItem, EarningPositionItem, EmptyList, FilterModal, Layout } from '@subwallet/extension-web-ui/components';
 import { FilterTabsNode } from '@subwallet/extension-web-ui/components/FilterTabsNode';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
 import { ASTAR_PORTAL_URL, BN_TEN, CANCEL_UN_STAKE_TRANSACTION, CLAIM_REWARD_TRANSACTION, DEFAULT_CANCEL_UN_STAKE_PARAMS, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_EARN_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, EARN_TRANSACTION, EARNING_INSTRUCTION_MODAL, TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL, TRANSACTION_YIELD_CLAIM_MODAL, TRANSACTION_YIELD_UNSTAKE_MODAL, TRANSACTION_YIELD_WITHDRAW_MODAL, UN_STAKE_TRANSACTION, WITHDRAW_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { useAlert, useFilterModal, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import { useAlert, useFilterModal, useGetBannerByScreen, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { reloadCron } from '@subwallet/extension-web-ui/messaging';
 import EarningPositionBalance from '@subwallet/extension-web-ui/Popup/Home/Earning/EarningEntry/EarningPositions/EarningPositionsBalance';
 import { Toolbar } from '@subwallet/extension-web-ui/Popup/Home/Earning/shared/desktop/Toolbar';
@@ -74,6 +75,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const earningRewards = useSelector((state) => state.earning.earningRewards);
   const assetRegistry = useSelector((state) => state.assetRegistry.assetRegistry);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
 
   const [, setEarnStorage] = useLocalStorage(EARN_TRANSACTION, DEFAULT_EARN_PARAMS);
   const [, setUnStakeStorage] = useLocalStorage(UN_STAKE_TRANSACTION, DEFAULT_UN_STAKE_PARAMS);
@@ -535,6 +537,13 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
             ? (
               <>
                 <EarningPositionBalance items={items} />
+                <div className={'earning-position-banner-wrapper'}>
+                  {!!banners.length && (<BannerGenerator
+                    banners={banners}
+                    dismissBanner={dismissBanner}
+                    onClickBanner={onClickBanner}
+                  />)}
+                </div>
                 <div className={'action-wrapper'}>
                   <FilterTabsNode
                     className={'filter-tabs-container'}

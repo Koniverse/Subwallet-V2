@@ -31,6 +31,7 @@ export const EDIT_UNLOCK_TYPE_MODAL = 'edit-unlock-type-modal';
 export const RESET_WALLET_MODAL = 'reset-wallet-modal';
 export const SEED_PHRASE_MODAL = 'seed-phrase-modal';
 export const ADD_CONNECTION_MODAL = 'add-connection-modal';
+export const ADD_NETWORK_WALLET_CONNECT_MODAL = 'add-network-wallet-connect-modal';
 
 export const TRANSFER_NFT_MODAL = 'transfer-nft-modal';
 
@@ -85,6 +86,11 @@ export const TRANSACTION_YIELD_CLAIM_MODAL = 'transaction-yield-claim-modal';
 /* Campaign */
 export const HOME_CAMPAIGN_BANNER_MODAL = 'home-campaign-banner-modal';
 /* Campaign */
+
+/* AppPopup */
+export const APP_POPUP_MODAL = 'app-popup-modal';
+export const APP_INSTRUCTION_MODAL = 'app-instruction-modal';
+/* AppPopup */
 
 /* Terms and Conditions */
 export const GENERAL_TERM_AND_CONDITION_MODAL = 'general-term-and-condition-modal';
