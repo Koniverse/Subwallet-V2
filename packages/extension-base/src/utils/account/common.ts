@@ -101,7 +101,7 @@ export const modifyAccountName = (type: KeypairType, name: string, modify: boole
       network = 'EVM';
       break;
     case 'ton':
-    case 'ton-special':
+    case 'ton-native':
       network = 'Ton';
       break;
   }

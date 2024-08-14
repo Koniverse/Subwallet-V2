@@ -199,7 +199,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     createAccountSuriV2({
       name: accountName,
       suri: seedValidationResponse.mnemonic,
-      type: seedValidationResponse.mnemonicTypes === 'ton' ? 'ton-special' : undefined,
+      type: seedValidationResponse.mnemonicTypes === 'ton' ? 'ton-native' : undefined,
       isAllowed: true
     })
       .then(() => {

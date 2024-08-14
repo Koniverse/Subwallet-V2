@@ -178,7 +178,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
     assert(parentPair, t('Unable to find account'));
 
-    const isSpecialTon = parentPair.type === 'ton-special';
+    const isSpecialTon = parentPair.type === 'ton-native';
 
     assert(!isSpecialTon, t('Cannot derive for this account'));
 
