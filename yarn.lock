@@ -6451,7 +6451,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.5
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=20c591&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=128909&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@polkadot/util": ^12.2.1
@@ -6470,7 +6470,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 8adac28ccfbd29b6314023f6db8d2d929b8e083a156ba0b620f334c09499902714869d9c086913d86e595c6d7376ac23a5bf29cc42e3d1c2e27b043ce672ec14
+  checksum: 94dfca45959d54a204d427e758d456bbd3eec7911b5ee349aa9288c0e26fa82ef201c3c68aff4531acc42601f7e50b53b2df6acb9e8d25410c50760274c354f3
   languageName: node
   linkType: hard
 
@@ -6554,7 +6554,7 @@ __metadata:
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.5
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=49ace5&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=9447e0&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
@@ -6564,7 +6564,7 @@ __metadata:
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: 7e29c84602f0c6d004929707079e74ce7aeed2cdf3d4b6e73a32debb06dbbba517c713243839d43a43d82bce6225b39c3fb660e26d9542c42c71269ff71c4746
+  checksum: ee4c18439aefa5826f17c507a95014b641354972283de661b583c990d0935ea05ab3ebd7384d8bf398eaacd84a88ffa5d21871cf4d0bbc4f2af53e2b2fdf681b
   languageName: node
   linkType: hard
 
