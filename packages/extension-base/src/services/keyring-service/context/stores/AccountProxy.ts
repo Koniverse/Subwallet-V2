@@ -5,7 +5,7 @@ import { AccountProxyStore } from '@subwallet/extension-base/stores';
 import { AccountProxyData, AccountProxyStoreData } from '@subwallet/extension-base/types';
 import { BehaviorSubject } from 'rxjs';
 
-import { StoreSubject } from './base';
+import { StoreSubject } from './Base';
 
 export class AccountProxyStoreSubject extends StoreSubject<AccountProxyStoreData> {
   store = new AccountProxyStore();
