@@ -7,9 +7,10 @@ import CrowdloanTable from '@subwallet/extension-web-ui/components/CrowdloanTabl
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-web-ui/components/FilterTabs';
 import NoContent, { PAGE_TYPE } from '@subwallet/extension-web-ui/components/NoContent';
 import Search from '@subwallet/extension-web-ui/components/Search';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { useSelector, useSetCurrentPage } from '@subwallet/extension-web-ui/hooks';
+import { useGetBannerByScreen, useSelector, useSetCurrentPage } from '@subwallet/extension-web-ui/hooks';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { useFilterModal } from '@subwallet/extension-web-ui/hooks/modal/useFilterModal';
 import useGetCrowdloanList from '@subwallet/extension-web-ui/hooks/screen/crowdloan/useGetCrowdloanList';
@@ -44,6 +45,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { isShowBalance } = useSelector((state) => state.settings);
 
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('crowdloan');
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(FilterValue.ALL);
 
   const filterOptions = useMemo(() => [
@@ -149,6 +151,15 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const crowdloansContent = useMemo(() => {
     return (
       <div className='web-list'>
+        {!!banners.length && isWebUI && (
+          <div className={'banner-container'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         <div className='web-list-tool-area'>
           {
             isWebUI && (
@@ -191,7 +202,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         </div>
       </div>
     );
-  }, [isWebUI, filterTabItems, onSelectFilterTab, selectedFilterTab, onClickActionBtn, handleSearch, searchInput, filteredItems, isShowBalance]);
+  }, [banners, dismissBanner, onClickBanner, isWebUI, filterTabItems, onSelectFilterTab, selectedFilterTab, onClickActionBtn, handleSearch, searchInput, filteredItems, isShowBalance]);
 
   return (
     <PageWrapper

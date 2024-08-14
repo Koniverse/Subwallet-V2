@@ -7,6 +7,7 @@ import { CampaignStore, ReduxStatus } from '@subwallet/extension-web-ui/stores/t
 
 const initialState: CampaignStore = {
   banners: [],
+  isPopupVisible: true,
   reduxStatus: ReduxStatus.INIT
 };
 
@@ -18,6 +19,13 @@ const campaignSlice = createSlice({
       return {
         ...state,
         banners: action.payload,
+        reduxStatus: ReduxStatus.READY
+      };
+    },
+    updatePopupVisibility (state, action: PayloadAction<boolean>) {
+      return {
+        ...state,
+        isPopupVisible: action.payload,
         reduxStatus: ReduxStatus.READY
       };
     }

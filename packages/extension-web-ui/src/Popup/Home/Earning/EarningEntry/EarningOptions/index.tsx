@@ -8,10 +8,11 @@ import { YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/exte
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { EarningInstructionModal, EarningOptionDesktopItem, EmptyList, FilterModal, Layout } from '@subwallet/extension-web-ui/components';
 import { EarningOptionItem } from '@subwallet/extension-web-ui/components/Earning';
+import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
 import { ASTAR_PORTAL_URL, DEFAULT_EARN_PARAMS, EARN_TRANSACTION, EARNING_INSTRUCTION_MODAL } from '@subwallet/extension-web-ui/constants';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { useFilterModal, useHandleChainConnection, useSelector, useTranslation, useYieldGroupInfo } from '@subwallet/extension-web-ui/hooks';
+import { useFilterModal, useGetBannerByScreen, useHandleChainConnection, useSelector, useTranslation, useYieldGroupInfo } from '@subwallet/extension-web-ui/hooks';
 import { getBalanceValue } from '@subwallet/extension-web-ui/hooks/screen/home/useAccountBalance';
 import { ChainConnectionWrapper } from '@subwallet/extension-web-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { Toolbar } from '@subwallet/extension-web-ui/Popup/Home/Earning/shared/desktop/Toolbar';
@@ -74,6 +75,7 @@ function Component ({ className, earningPositions, setEntryView }: Props) {
   const currentAccount = useSelector((state) => state.accountState.currentAccount);
 
   const isShowBalance = useSelector((state) => state.settings.isShowBalance);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
   const { accountBalance: { tokenBalanceMap } } = useContext(HomeContext);
 
   const [, setEarnStorage] = useLocalStorage(EARN_TRANSACTION, DEFAULT_EARN_PARAMS);
@@ -394,6 +396,13 @@ function Component ({ className, earningPositions, setEntryView }: Props) {
           isWebUI
             ? (
               <>
+                <div className={'earning-option-banner-wrapper'}>
+                  {!!banners.length && (<BannerGenerator
+                    banners={banners}
+                    dismissBanner={dismissBanner}
+                    onClickBanner={onClickBanner}
+                  />)}
+                </div>
                 <Toolbar
                   className={'__desktop-toolbar'}
                   inputPlaceholder={t<string>('Search token')}
