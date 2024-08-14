@@ -79,11 +79,11 @@ function Component ({ className, request }: Props) {
   const noAvailableTitle = useMemo(() => {
     switch (accountAuthType) {
       case 'substrate':
-        return t('settings.Screen.authorize.Confirmation.title.substrate');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.substrate');
       case 'evm':
-        return t('settings.Screen.authorize.Confirmation.title.evm');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.evm');
       default:
-        return t('settings.Screen.authorize.Confirmation.title.default');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.default');
     }
   }, [accountAuthType, t]);
 

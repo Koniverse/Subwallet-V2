@@ -47,11 +47,11 @@ const Component: React.FC<Props> = (props: Props) => {
   const noAccountTitle = useMemo(() => {
     switch (namespace) {
       case 'polkadot':
-        return t('settings.Screen.walletConnect.accountSelector.title.substrate');
+        return t('settings.Screen.walletConnect.accountSelector.noAccountTitle.substrate');
       case 'eip155':
-        return t('settings.Screen.walletConnect.accountSelector.title.evm');
+        return t('settings.Screen.walletConnect.accountSelector.noAccountTitle.evm');
       default:
-        return t('settings.Screen.walletConnect.accountSelector.title.default');
+        return t('settings.Screen.walletConnect.accountSelector.noAccountTitle.default');
     }
   }, [namespace, t]);
 

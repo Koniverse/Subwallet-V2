@@ -64,7 +64,7 @@ const Component: React.FC<ComponentProps> = (props) => {
 
   const modalProps = useMemo((): Partial<SwModalFuncProps> => ({
     id: disconnectModalId,
-    okText: t('settings.Screen.walletConnect.detail.Modal.disconnect.Button'),
+    okText: t('settings.Screen.walletConnect.detail.Modal.connection.Button.disconnect'),
     okButtonProps: {
       icon: (
         <Icon

@@ -138,19 +138,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
         if (result) {
           showNotification({
-            message: t('settings.Screen.importNetwork.successfully')
+            message: t('settings.Screen.importNetwork.SubmitResponse.successfully')
           });
           location?.useGoHome ? navigate(DEFAULT_ROUTER_PATH) : navigate(-1);
         } else {
           showNotification({
-            message: t('settings.Screen.importNetwork.error')
+            message: t('settings.Screen.importNetwork.SubmitResponse.error')
           });
         }
       })
       .catch(() => {
         setLoading(false);
         showNotification({
-          message: t('settings.Screen.importNetwork.error')
+          message: t('settings.Screen.importNetwork.SubmitResponse.error')
         });
       });
   }, [existentialDeposit, form, genesisHash, isPureEvmChain, location, navigate, showNotification, t]);
