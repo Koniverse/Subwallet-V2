@@ -13,7 +13,8 @@ export enum TON_OPCODES {
 
 export const EXTRA_TON_ESTIMATE_FEE = BigInt(500);
 
-export const TON_CENTER_API_KEY = '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3'; // alibaba
+// export const TON_CENTER_API_KEY = '98b3eaf42da2981d265bfa6aea2c8d390befb6f677f675fefd3b12201bdf1bc3'; // alibaba
+export const TON_CENTER_API_KEY = '870ff97c30ad16dc4297bcac8bcf2243a4daffeba6c6d6c31553e342811e673a'; // alibaba
 
 export enum TON_API_ENDPOINT {
   MAINNET = 'https://toncenter.com/api',

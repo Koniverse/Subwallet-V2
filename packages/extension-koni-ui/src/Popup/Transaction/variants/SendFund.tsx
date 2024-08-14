@@ -814,7 +814,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       networkKey: 'ton_testnet',
       to: '0QBbamQ89OMv8DkcR2RW_tW9sX7xClXLt8KYDHbUqtB4dQd_',
       tokenSlug: 'ton_testnet-NATIVE-TON',
-      value: '3000000',
+      value: '300000',
       transferAll: false
     });
   }, []);
