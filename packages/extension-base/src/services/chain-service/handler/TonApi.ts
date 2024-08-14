@@ -191,7 +191,7 @@ export class TonApi implements _TonApi {
     return await resp.json() as TxByMsgResponse;
   }
 
-  async getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> {
+  async getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> { // noted: can move this function to utils file for more flexible uses
     return retry(async () => {
       // get external msg transaction and transaction hex
       const externalTxInfoRaw = await this.getTxByInMsg(extMsgHash);
@@ -218,6 +218,6 @@ export class TonApi implements _TonApi {
       }
 
       throw new Error('Transaction not found');
-    }, { retries: 10, delay: 3000 });
+    }, { retries: 10, delay: 5000 });
   }
 }

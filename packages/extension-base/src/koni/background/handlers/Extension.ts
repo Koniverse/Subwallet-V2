@@ -1256,7 +1256,6 @@ export default class KoniExtension {
     const [errors, ,] = validateTransferRequest(transferTokenInfo, from, to, value, transferAll);
 
     const warnings: TransactionWarning[] = [];
-    const evmApiMap = this.#koniState.getEvmApiMap(); // todo: simplify this to just getEvmApi(network)
     const chainInfo = this.#koniState.getChainInfo(networkKey);
 
     const nativeTokenInfo = this.#koniState.getNativeTokenInfo(networkKey);
@@ -1275,7 +1274,7 @@ export default class KoniExtension {
       if (isEthereumAddress(from) && isEthereumAddress(to) && _isTokenTransferredByEvm(transferTokenInfo)) {
         chainType = ChainType.EVM;
         const txVal: string = transferAll ? transferTokenAvailable.value : (value || '0');
-        const evmApi = evmApiMap[networkKey];
+        const evmApi = this.#koniState.getEvmApi(networkKey);
 
         // todo: refactor: merge getERC20TransactionObject & getEVMTransactionObject
         // Estimate with EVM API

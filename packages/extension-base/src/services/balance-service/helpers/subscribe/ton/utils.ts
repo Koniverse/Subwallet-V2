@@ -77,13 +77,12 @@ export async function getJettonTxStatus (tonApi: TonApi, jettonTransferMsgHash: 
   const jettonTransferTxInfoRaw = await tonApi.getTxByInMsg(jettonTransferMsgHash);
   const status = getMessageTxStatus(jettonTransferTxInfoRaw);
 
-  const jettonTransferTxInfo = jettonTransferTxInfoRaw.transactions[0];
-  const jettonInternalTransferHash = jettonTransferTxInfo.out_msgs[0].hash;
-
   if (status) { // Jetton Transfer success -> Check Jetton Internal Transfer
-    const jettonInternalTxInfoRaw = await tonApi.getTxByInMsg(jettonInternalTransferHash);
+    const jettonTransferTxInfo = jettonTransferTxInfoRaw.transactions[0];
+    const jettonInternalTransferHash = jettonTransferTxInfo.out_msgs[0]?.hash;
+    const jettonInternalTransferTxInfoRaw = await tonApi.getTxByInMsg(jettonInternalTransferHash);
 
-    return getMessageTxStatus(jettonInternalTxInfoRaw); // Jetton Internal Transfer success -> Receiver successfully receiver fund!
+    return getMessageTxStatus(jettonInternalTransferTxInfoRaw); // Jetton Internal Transfer success -> Receiver successfully receiver fund!
   }
 
   return false;
