@@ -1,5 +1,40 @@
 # CHANGELOG
 
+## 1.2.24
+Build date: Aug 09, 2024.
+
+Features & Update:
+- Allow to use Migration Polkadot App to attach Ledger account (#3307, #3402)
+- Hide direct api usage of polkadot/js (#3308)
+- Improve performance upon showing Marketing Campaign (#3414)
+- Update chainlist (#3425)
+  - Add support for Pendulum assets (ASTR, vDOT, BNC)
+  - Add support for Exosama network
+
+
+## 1.2.23
+Build date: Aug 03, 2024.
+
+Features & Update:
+- Update chain-list (#3403)
+  - Add support for ROUTE token
+  - Add support for Aleph Zero EVM (mainnet)
+  - Update price-id for AZERO EVM
+
+
+## 1.2.22
+Build date: Jul 31, 2024.
+
+Features & Update:
+- Update chain-list (#3385)
+- Integrate Avail Ledger app (#2982)
+
+Bugs fixed:
+- Fix bug Show incorrect withdrawal information of the Bifrost liquid staking when all accounts mode (#3327)
+- Fix bug do not show root screen after remove account (#3148)
+- Fix bug Show blank screen when attach account (#3054)
+
+
 ## 1.2.21
 Build date: Jul 24, 2024.
 
