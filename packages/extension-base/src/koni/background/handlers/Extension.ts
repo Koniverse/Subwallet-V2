@@ -46,7 +46,7 @@ import { AccountJson, AccountProxy, AccountProxyType, AccountsWithCurrentAddress
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { BN_ZERO, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { BN_ZERO, calculateAllAccountNetworkTypes, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
@@ -296,7 +296,7 @@ export default class KoniExtension {
     const accounts = keyringService.context.accounts;
     const transformedAccounts = Object.values(accounts);
     const responseData: AccountsWithCurrentAddress = {
-      accounts: transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP }, ...transformedAccounts] : [],
+      accounts: transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP, networkTypes: calculateAllAccountNetworkTypes(transformedAccounts) }, ...transformedAccounts] : [],
       currentAccountProxy: currentAccount?.proxyId
     };
 
@@ -306,7 +306,7 @@ export default class KoniExtension {
     const subscriptionAccountGroups = combineLatest({ accountProxies: accountProxyMapObservable, currentAccount: currentAccountInfoObservable }).subscribe(({ accountProxies, currentAccount }) => {
       const transformedAccounts = Object.values(accountProxies);
 
-      responseData.accounts = transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP }, ...transformedAccounts] : [];
+      responseData.accounts = transformedAccounts?.length ? [{ ...ACCOUNT_ALL_GROUP, networkTypes: calculateAllAccountNetworkTypes(transformedAccounts) }, ...transformedAccounts] : [];
       responseData.currentAccountProxy = currentAccount?.proxyId;
 
       console.debug('subscriptionAccountGroups', responseData);

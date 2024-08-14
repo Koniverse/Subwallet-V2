@@ -299,3 +299,20 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
   return result;
 };
+
+export const calculateAllAccountNetworkTypes = (accountProxies: AccountProxy[]): AccountNetworkType[] => {
+  const result = new Set<AccountNetworkType>();
+
+  for (const accountProxy of accountProxies) {
+    // Have 4 network types, but at the moment, we only support 3 network types
+    if (result.size === 3) {
+      break;
+    }
+
+    for (const networkType of accountProxy.networkTypes) {
+      result.add(networkType);
+    }
+  }
+
+  return Array.from(result);
+};
