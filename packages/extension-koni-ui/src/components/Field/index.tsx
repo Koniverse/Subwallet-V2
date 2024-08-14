@@ -14,6 +14,7 @@ export { default as AccountAddressSelector } from './AccountAddressSelector';
 
 export * from './AccountSelector';
 export * from './AddressInput';
+export * from './AddressInputNew';
 export * from './BuyTokens/ServiceSelector';
 export * from './ChainSelector';
 export * from './ProviderSelector';
