@@ -220,7 +220,7 @@
   "settings.Screen.authorize.Confirmation.title.substrate": "No available Substrate account",
   "settings.Screen.walletConnect.accountSelector.title.substrate": "No available Substrate account",
   "settings.Screen.walletConnect.accountSelector.title.evm": "No available EVM account",
-  "settings.Screen.walletConnect.accountSelector.title.default": "No available account",
+  "settings.Screen.walletConnect.accountSelector.title.default": "Нет доступного аккаунта",
   "settings.Screen.walletConnect.accountSelector.description.substrate": "You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.",
   "settings.Screen.walletConnect.accountSelector.description.evm": "You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.",
   "settings.Screen.walletConnect.accountSelector.description.default": "You don't have any account to connect. Please create one or skip this step by hitting Cancel.",
