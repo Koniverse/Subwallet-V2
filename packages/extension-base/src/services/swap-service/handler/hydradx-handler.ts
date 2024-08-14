@@ -185,7 +185,7 @@ export class HydradxHandler implements SwapBaseInterface {
 
       const userRequestChangeFeeToken = !!customFeeTokenSlug && !_isNativeTokenBySlug(customFeeTokenSlug);
 
-      if (!userRequestChangeFeeToken) {
+      if (userRequestChangeFeeToken || !customFeeTokenSlug) {
         const isCurrentFeeTokenNative = !currentFeeAssetId || nativeTokenAssetId === currentFeeAssetId;
 
         if (!isCurrentFeeTokenNative) {

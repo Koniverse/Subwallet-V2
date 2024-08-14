@@ -906,7 +906,7 @@ const Component = () => {
     const currentSlugSwapPair = _parseAssetRefKey(fromTokenSlugValue, toTokenSlugValue);
 
     if (currentSlugSwapPair !== currentSlugSwapPairRef.current) {
-      setCurrentFeeOption(fromTokenSlugValue);
+      setCurrentFeeOption(undefined);
       currentSlugSwapPairRef.current = currentSlugSwapPair;
     }
   }, [fromTokenSlugValue, toTokenSlugValue]);
