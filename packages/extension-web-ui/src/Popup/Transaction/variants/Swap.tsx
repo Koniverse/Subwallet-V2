@@ -758,16 +758,21 @@ const Component = () => {
               )
               : (
                 <>
-                  <div className={'__slippage-title-wrapper'}>Slippage
-                    <Icon
-                      customSize={'16px'}
-                      iconColor={token.colorSuccess}
-                      phosphorIcon={Info}
-                      size='sm'
-                      weight='fill'
-                    />
+                  <Tooltip
+                    placement={'topRight'}
+                    title={'Click to set your slippage tolerance'}
+                  >
+                    <div className={'__slippage-title-wrapper'}>Slippage
+                      <Icon
+                        customSize={'16px'}
+                        iconColor={token.colorSuccess}
+                        phosphorIcon={Info}
+                        size='sm'
+                        weight='fill'
+                      />
                     :
-                  </div>
+                    </div>
+                  </Tooltip>
                     &nbsp;<span>{currentSlippage.slippage.multipliedBy(100).toString()}%</span>
                 </>
               )}
@@ -1596,6 +1601,14 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
       overflow: 'hidden'
+    },
+    '.__minimum-received .ant-number-suffix': {
+      color: `${token.colorTextTertiary} !important`
+    },
+    '.__balance-display-area': {
+      '.ant-number-integer, .ant-number-decimal': {
+        color: `${token.colorWhite} !important`
+      }
     },
     '.__fee-paid-token': {
       display: 'flex',
