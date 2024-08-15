@@ -21,28 +21,43 @@ export class AccountLedgerHandler extends AccountBaseHandler {
 
   /* For custom derive path */
   public async accountsCreateHardwareV2 (request: RequestAccountCreateHardwareV2): Promise<boolean> {
-    const { accountIndex, address, addressOffset, genesisHash, hardwareType, isAllowed, name } = request;
+    const { accountIndex, address, addressOffset, genesisHash, hardwareType, isAllowed, isEthereum, isGeneric, name, originGenesisHash } = request;
 
     const exists = this.state.checkAddressExists([address]);
 
     assert(!exists, t('Account already exists'));
 
-    const key = keyring.addHardware(address, hardwareType, {
+    const baseMeta: KeyringPair$Meta = {
+      name,
+      hardwareType,
       accountIndex,
       addressOffset,
       genesisHash,
-      name,
-      originGenesisHash: genesisHash
-    });
+      originGenesisHash,
+      isGeneric
+    };
 
-    const result = key.pair;
+    const type = isEthereum ? 'ethereum' : 'sr25519';
+    const pair = keyring.keyring.createFromAddress(
+      address,
+      {
+        ...baseMeta,
+        isExternal: true,
+        isHardware: true,
+        availableGenesisHashes: isGeneric ? undefined : [genesisHash]
+      },
+      null,
+      type
+    );
 
-    const _address = result.address;
+    const _address = pair.address;
     const modifiedPairs = this.state.modifyPairs;
 
     modifiedPairs[_address] = { migrated: true, key: _address };
 
     this.state.upsertModifyPairs(modifiedPairs);
+
+    keyring.addPair(pair, false);
 
     await new Promise<void>((resolve) => {
       this.state.saveCurrentAccountProxyId(_address, () => {
@@ -68,11 +83,10 @@ export class AccountLedgerHandler extends AccountBaseHandler {
 
     const slugMap: Record<string, string> = {};
     const modifyPairs = this.state.modifyPairs;
+    const pairs: KeyringPair[] = [];
 
     for (const account of accounts) {
       const { accountIndex, address, addressOffset, genesisHash, hardwareType, isEthereum, isGeneric, name, originGenesisHash } = account;
-
-      let result: KeyringPair;
 
       const baseMeta: KeyringPair$Meta = {
         name,
@@ -84,21 +98,22 @@ export class AccountLedgerHandler extends AccountBaseHandler {
         isGeneric
       };
 
-      if (isEthereum) {
-        result = keyring.keyring.addFromAddress(address, {
+      const type = isEthereum ? 'ethereum' : 'sr25519';
+      const pair = keyring.keyring.createFromAddress(
+        address,
+        {
           ...baseMeta,
           isExternal: true,
-          isHardware: true
-        }, null, 'ethereum');
+          isHardware: true,
+          availableGenesisHashes: isGeneric ? undefined : [genesisHash]
+        },
+        null,
+        type
+      );
 
-        keyring.saveAccount(result);
+      if (isEthereum) {
         slugMap.ethereum = 'ethereum';
       } else {
-        result = keyring.addHardware(address, hardwareType, {
-          ...baseMeta,
-          availableGenesisHashes: [genesisHash]
-        }).pair;
-
         const slug = this.state.findNetworkKeyByGenesisHash(genesisHash);
 
         if (slug) {
@@ -106,21 +121,26 @@ export class AccountLedgerHandler extends AccountBaseHandler {
         }
       }
 
-      const _address = result.address;
+      const _address = pair.address;
 
       modifyPairs[_address] = { migrated: true, key: _address };
       addresses.push(_address);
-
-      await new Promise<void>((resolve) => {
-        this.state._addAddressToAuthList(_address, true);
-        resolve();
-      });
+      pairs.push(pair);
     }
 
     // const currentAccount = this.#koniState.keyringService.context.currentAccount;
     // const allGenesisHash = currentAccount?.allGenesisHash || undefined;
 
     this.state.upsertModifyPairs(modifyPairs);
+
+    for (const pair of pairs) {
+      keyring.addPair(pair, false);
+    }
+
+    await new Promise<void>((resolve) => {
+      this.state._addAddressesToAuthList(addresses, true);
+      resolve();
+    });
 
     if (addresses.length <= 1) {
       this.state.saveCurrentAccountProxyId(addresses[0]);
