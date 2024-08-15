@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _AssetType } from '@subwallet/chain-list/types';
+
 import { AccountJson, AccountNetworkType } from './keyring';
 
 /**
@@ -48,6 +50,7 @@ export enum AccountProxyType {
  * @prop {AccountProxyType} accountType - The type of the account proxy.
  * @prop {AccountNetworkType[]} networkTypes - An array of network types associated with this proxy.
  * @prop {string} [specialNetwork] - Optional the special networks, which account proxy can only be used on
+ * @prop {_AssetType[]} tokenTypes - Asset types, which account proxy can be used
  */
 export interface AccountProxy extends AccountProxyData {
   accounts: AccountJson[];
@@ -55,6 +58,7 @@ export interface AccountProxy extends AccountProxyData {
   networkTypes: AccountNetworkType[];
   specialNetwork?: string;
   children?: string[];
+  tokenTypes: _AssetType[];
 }
 
 export type AccountProxyMap = Record<string, AccountProxy>
