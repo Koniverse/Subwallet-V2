@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountProxyType } from '@subwallet/extension-base/types';
 import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
@@ -36,6 +37,7 @@ const Component = (): React.ReactElement => {
   const { accountBalance: { tokenGroupBalanceMap,
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
+  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const notify = useNotification();
   const { onOpenReceive, receiveModalProps } = useReceiveModalHelper();
 
@@ -133,7 +135,7 @@ const Component = (): React.ReactElement => {
   }, [navigate]);
 
   const onOpenSendFund = useCallback(() => {
-    if (currentAccount && currentAccount.isReadOnly) {
+    if (currentAccountProxy && currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
       notify({
         message: t('The account you are using is watch-only, you cannot send assets with it'),
         type: 'info',
@@ -143,15 +145,15 @@ const Component = (): React.ReactElement => {
       return;
     }
 
-    const address = currentAccount ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
+    const fromAccountProxy = currentAccountProxy ? currentAccountProxy.id : '';
 
     setStorage({
       ...DEFAULT_TRANSFER_PARAMS,
-      from: address
+      fromAccountProxy
     });
     navigate('/transaction/send-fund');
   },
-  [currentAccount, navigate, notify, t, setStorage]
+  [currentAccountProxy, setStorage, navigate, notify, t]
   );
 
   const onOpenBuyTokens = useCallback(() => {
