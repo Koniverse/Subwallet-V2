@@ -109,7 +109,7 @@ const Component = () => {
   const [handleRequestLoading, setHandleRequestLoading] = useState(true);
   const [requestUserInteractToContinue, setRequestUserInteractToContinue] = useState<boolean>(false);
   const continueRefreshQuoteRef = useRef<boolean>(false);
-  const currentSlugSwapPairRef = useRef<string>('');
+  const currentSwapPairSlugRef = useRef<string>('');
   const { token } = useTheme() as Theme;
 
   const onIdle = useCallback(() => {
@@ -335,7 +335,7 @@ const Component = () => {
   }, [currentQuote]);
 
   const estimatedFeeValue = useMemo(() => {
-    let totalBalance = BN_ZERO;
+    let result = BN_ZERO;
 
     currentQuote?.feeInfo.feeComponent.forEach((feeItem) => {
       const asset = assetRegistryMap[feeItem.tokenSlug];
@@ -344,15 +344,15 @@ const Component = () => {
         const { decimals, priceId } = asset;
         const price = priceMap[priceId || ''] || 0;
 
-        totalBalance = totalBalance.plus(new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price));
+        result = result.plus(new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price));
       }
     });
 
-    return totalBalance;
+    return result;
   }, [assetRegistryMap, currentQuote?.feeInfo.feeComponent, priceMap]);
 
-  const networkFeeHydraDX = useMemo(() => {
-    let totalBalance = BN_ZERO;
+  const hydraDXNetworkFee = useMemo(() => {
+    let result = BN_ZERO;
 
     if (isSwapHydraDX) {
       const feeItem = currentQuote?.feeInfo.feeComponent.find((feeItem) => feeItem.feeType === SwapFeeType.NETWORK_FEE);
@@ -364,12 +364,12 @@ const Component = () => {
           const { decimals, priceId } = asset;
           const price = priceMap[priceId || ''] || 0;
 
-          totalBalance = new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price);
+          result = new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price);
         }
       }
     }
 
-    return totalBalance;
+    return result;
   }, [assetRegistryMap, currentQuote?.feeInfo.feeComponent, isSwapHydraDX, priceMap]);
 
   const getConvertedBalance = useCallback((feeItem: CommonFeeComponent) => {
@@ -567,8 +567,8 @@ const Component = () => {
       return undefined;
     }
 
-    return new BigN(networkFeeHydraDX).div(priceMap[_getAssetPriceId(feeAssetInfo)] || 0);
-  }, [networkFeeHydraDX, feeAssetInfo, priceMap]);
+    return new BigN(hydraDXNetworkFee).div(priceMap[_getAssetPriceId(feeAssetInfo)] || 0);
+  }, [hydraDXNetworkFee, feeAssetInfo, priceMap]);
 
   const onSubmit: FormCallbacks<SwapParams>['onFinish'] = useCallback((values: SwapParams) => {
     if (chainValue && !checkChainConnected(chainValue)) {
@@ -903,11 +903,11 @@ const Component = () => {
   }, [chainInfoMap, currentPair, fromAssetInfo, isSwapXCM]);
 
   useEffect(() => {
-    const currentSlugSwapPair = _parseAssetRefKey(fromTokenSlugValue, toTokenSlugValue);
+    const currentSwapPairSlug = _parseAssetRefKey(fromTokenSlugValue, toTokenSlugValue);
 
-    if (currentSlugSwapPair !== currentSlugSwapPairRef.current) {
+    if (currentSwapPairSlug !== currentSwapPairSlugRef.current) {
       setCurrentFeeOption(undefined);
-      currentSlugSwapPairRef.current = currentSlugSwapPair;
+      currentSwapPairSlugRef.current = currentSwapPairSlug;
     }
   }, [fromTokenSlugValue, toTokenSlugValue]);
 
@@ -1659,9 +1659,9 @@ const Component = () => {
 
       <ChooseFeeTokenModal
         address={fromValue}
-        estimatedFee={isSwapHydraDX ? networkFeeHydraDX : estimatedFeeValue}
+        estimatedFeeTitle={isSwapHydraDX ? 'Network fee' : 'Estimated  fee'}
+        estimatedFeeValue={isSwapHydraDX ? hydraDXNetworkFee : estimatedFeeValue}
         extrinsicType={ExtrinsicType.SWAP}
-        isSwapHydraDX={isSwapHydraDX}
         items={feeOptions}
         modalId={SWAP_CHOOSE_FEE_TOKEN_MODAL}
         onSelectItem={onSelectFeeOption}
