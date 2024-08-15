@@ -95,7 +95,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists(Object.values(rs.addressMap));
 
-    assert(!exists, t('Have already created account with this private key: {{address}}', { replace: { address: exists } }));
+    assert(!exists, t('Have already created account with this private key: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     return rs;
   }
@@ -146,7 +146,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
       const _address = keyringPair.address;
       const exists = this.state.checkAddressExists([_address]);
 
-      assert(!exists, t('Account already exists account: {{address}}', { replace: { address: exists } }));
+      assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
       const modifyPairs = this.state.modifyPairs;
 

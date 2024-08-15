@@ -207,7 +207,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const address = childPair.address;
     const exists = this.state.checkAddressExists([childPair.address]);
 
-    assert(!exists, t('Account already exists'));
+    assert(!exists, t('Account already exists: {{name}}', { replace: { name: exists?.name || exists?.address || childPair.address } }));
 
     keyring.addPair(childPair, true);
 
@@ -267,10 +267,17 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
   /**
    * Derive account proxy
-   * @todo: finish this method
    *  */
   public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
     const isUnified = this.state.isUnifiedAccount(request.proxyId);
+
+    if (!isUnified) {
+      const belongUnifiedAccount = this.state.belongUnifiedAccount(request.proxyId);
+
+      if (belongUnifiedAccount) {
+        throw Error(t('Cannot derive this account')); // TODO: Change message
+      }
+    }
 
     if (!isUnified) {
       return this.deriveSoloAccount(request);
