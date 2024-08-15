@@ -37,6 +37,9 @@ const defaultAddressBookModalId = 'input-account-address-book-modal';
 
 const addressLength = 9;
 
+// todo:
+//  - Deprecated, will remove after migrating all usages
+
 function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactElement<Props> {
   const { addressPrefix, allowDomain,
     chain, className = '', disabled, fitNetwork, id, label, networkGenesisHash, onBlur,

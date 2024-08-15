@@ -5,7 +5,7 @@ import { CurrentAccountStore } from '@subwallet/extension-base/stores';
 import { CurrentAccountInfo } from '@subwallet/extension-base/types';
 import { BehaviorSubject } from 'rxjs';
 
-import { StoreSubject } from './base';
+import { StoreSubject } from './Base';
 
 export class CurrentAccountStoreSubject extends StoreSubject<CurrentAccountInfo> {
   store = new CurrentAccountStore();

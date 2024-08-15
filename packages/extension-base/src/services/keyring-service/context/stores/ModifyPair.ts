@@ -5,7 +5,7 @@ import { ModifyPairStore } from '@subwallet/extension-base/stores';
 import { ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { BehaviorSubject } from 'rxjs';
 
-import { StoreSubject } from './base';
+import { StoreSubject } from './Base';
 
 export class ModifyPairStoreSubject extends StoreSubject<ModifyPairStoreData> {
   store = new ModifyPairStore();

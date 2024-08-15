@@ -6,7 +6,6 @@ import { MantaPayConfig } from '@subwallet/extension-base/background/KoniTypes';
 import { _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _getMultiChainAsset, _isAssetFungibleToken, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { AccountSelectorModalId } from '@subwallet/extension-koni-ui/components/Modal/AccountSelectorModal';
 import { RECEIVE_QR_MODAL, RECEIVE_TOKEN_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -61,6 +60,8 @@ function isMantaPayEnabled (account: AccountJson | null, configs: MantaPayConfig
 
   return false;
 }
+
+const AccountSelectorModalId = 'accountSelectorModalId';
 
 // todo: deprecated, will remove
 export default function useReceiveQR (tokenGroupSlug?: string) {

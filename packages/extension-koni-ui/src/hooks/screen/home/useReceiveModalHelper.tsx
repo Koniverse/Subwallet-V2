@@ -4,15 +4,13 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getMultiChainAsset } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountNetworkType } from '@subwallet/extension-base/types';
-import { reformatAddress } from '@subwallet/extension-base/utils';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ReceiveModalProps } from '@subwallet/extension-koni-ui/types';
-import { isChainInfoAccordantNetworkType } from '@subwallet/extension-koni-ui/utils';
+import { getReformatedAddressRelatedToNetwork } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';
 import { CheckCircle, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
@@ -80,31 +78,15 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
 
     accountProxies.forEach((ap) => {
       ap.accounts.forEach((a) => {
-        if (!isChainInfoAccordantNetworkType(chainInfo, a.networkType)) {
-          return;
-        }
+        const reformatedAddress = getReformatedAddressRelatedToNetwork(a, chainInfo);
 
-        const item = {
-          accountName: ap.name,
-          accountProxyId: ap.id,
-          accountProxyType: ap.accountType,
-          accountType: a.type
-        };
-
-        if (a.networkType === AccountNetworkType.SUBSTRATE && chainInfo.substrateInfo) {
+        if (reformatedAddress) {
           result.push({
-            ...item,
-            address: reformatAddress(a.address, chainInfo.substrateInfo.addressPrefix)
-          });
-        } else if (a.networkType === AccountNetworkType.ETHEREUM && chainInfo.evmInfo) {
-          result.push({
-            ...item,
-            address: a.address
-          });
-        } else if (a.networkType === AccountNetworkType.TON && chainInfo.tonInfo) {
-          result.push({
-            ...item,
-            address: reformatAddress(a.address, chainInfo.isTestnet ? 0 : 1)
+            accountName: ap.name,
+            accountProxyId: ap.id,
+            accountProxyType: ap.accountType,
+            accountType: a.type,
+            address: reformatedAddress
           });
         }
       });
