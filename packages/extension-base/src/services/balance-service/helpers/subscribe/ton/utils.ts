@@ -5,7 +5,7 @@ import { EXTRA_TON_ESTIMATE_FEE } from '@subwallet/extension-base/services/balan
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { TonApi } from '@subwallet/extension-base/services/chain-service/handler/TonApi';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
-import { Address, beginCell, Cell, MessageRelaxed, storeMessage } from '@ton/core';
+import { Address, beginCell, Cell, MessageRelaxed, storeMessage, storeMessageRelaxed } from '@ton/core';
 import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV4 } from '@ton/ton';
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
@@ -100,13 +100,18 @@ export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxe
 
   const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract.address, simulatedTxCell);
 
-  console.log('estimateFeeInfo', estimateFeeInfo);
-  console.log('estimateFee', (estimateFeeInfo.source_fees.gas_fee + estimateFeeInfo.source_fees.in_fwd_fee + estimateFeeInfo.source_fees.storage_fee + estimateFeeInfo.source_fees.fwd_fee).toString());
-
   return BigInt(
     estimateFeeInfo.source_fees.gas_fee +
     estimateFeeInfo.source_fees.in_fwd_fee +
     estimateFeeInfo.source_fees.storage_fee +
     estimateFeeInfo.source_fees.fwd_fee
   ) + EXTRA_TON_ESTIMATE_FEE;
+}
+
+export function messageRelaxedToCell (message: MessageRelaxed) {
+  return beginCell().store(storeMessageRelaxed(message)).endCell();
+}
+
+export function cellToBase64Str (cell: Cell) {
+  return cell.toBoc().toString('base64');
 }
