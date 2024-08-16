@@ -9,6 +9,8 @@ export const PROJECT_ID_EXTENSION = '6da34c0b48164d27681924dd9a46d6be';
 export const PROJECT_ID_MOBILE = '6da34c0b48164d27681924dd9a46d6be';
 export const RELAY_URL = 'wss://relay.walletconnect.com';
 
+export const RELAY_FALLBACK_URL = 'wss://relay.walletconnect.org';
+
 export const DEFAULT_WALLET_CONNECT_OPTIONS: SignClientTypes.Options = {
   logger: 'error',
   projectId: targetIsMobile ? PROJECT_ID_MOBILE : PROJECT_ID_EXTENSION,
