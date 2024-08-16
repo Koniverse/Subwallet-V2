@@ -365,8 +365,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                       ? (
                         <Field
                           content={paraId > -1 ? paraId : undefined}
-                          placeholder={t('ParaId')}
-                          tooltip={t('ParaId')}
+                          placeholder={t('common.Text.paraId')}
+                          tooltip={t('common.Text.paraId')}
                           tooltipPlacement={'topLeft'}
                         />
                       )

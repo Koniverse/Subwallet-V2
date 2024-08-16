@@ -50,7 +50,7 @@ export default function useChainChecker () {
           schema={'warning'}
           size={'xs'}
         >
-          {t('Turn it on')}
+          {t('common.Button.chainChecker')}
         </Button>;
 
         notify({
