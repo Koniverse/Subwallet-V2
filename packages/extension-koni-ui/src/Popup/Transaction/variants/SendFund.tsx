@@ -827,7 +827,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
-              showAddressBook={false}
+              showAddressBook={true}
               showScanner={true}
             />
           </Form.Item>

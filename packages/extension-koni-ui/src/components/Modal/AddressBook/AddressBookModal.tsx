@@ -1,11 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson, AccountJson } from '@subwallet/extension-base/types';
 import { BackIcon } from '@subwallet/extension-koni-ui/components';
-import { useFilterModal, useFormatAddress, useGetChainInfoByGenesisHash, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useChainInfo, useFilterModal, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { funcSortByName, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { getReformatedAddressRelatedToNetwork, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Badge, Icon, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
@@ -14,7 +13,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'reac
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isAddress } from '@polkadot/util-crypto';
 
 import { AccountItemWithName } from '../../Account';
 import { GeneralEmptyList } from '../../EmptyList';
@@ -23,9 +22,8 @@ import { FilterModal } from '../FilterModal';
 interface Props extends ThemeProps {
   value?: string;
   id: string;
-  addressPrefix?: number;
+  chainSlug?: string;
   onSelect: (val: string) => void;
-  networkGenesisHash?: string;
 }
 
 enum AccountGroup {
@@ -39,7 +37,9 @@ interface FilterOption {
   value: AccountGroup;
 }
 
-interface AccountItem extends AbstractAddressJson {
+interface AccountItem {
+  address: string;
+  name?: string;
   group: AccountGroup;
 }
 
@@ -57,12 +57,8 @@ const getGroupPriority = (item: AccountItem): number => {
   }
 };
 
-const checkLedger = (account: AccountJson, networkGenesisHash?: string): boolean => {
-  return !networkGenesisHash || !account.isHardware || account.isGeneric || (account.availableGenesisHashes || []).includes(networkGenesisHash);
-};
-
 const Component: React.FC<Props> = (props: Props) => {
-  const { addressPrefix, className, id, networkGenesisHash, onSelect, value = '' } = props;
+  const { chainSlug, className, id, onSelect, value = '' } = props;
 
   const { t } = useTranslation();
 
@@ -70,11 +66,9 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const isActive = checkActive(id);
 
-  const { accounts, contacts, recent } = useSelector((state) => state.accountState);
+  const { accountProxies, contacts, recent } = useSelector((state) => state.accountState);
 
-  const formatAddress = useFormatAddress(addressPrefix);
-  const chainInfo = useGetChainInfoByGenesisHash(networkGenesisHash);
-  const chain = chainInfo?.slug || '';
+  const chainInfo = useChainInfo(chainSlug);
 
   const filterModal = useMemo(() => `${id}-filter-modal`, [id]);
 
@@ -103,31 +97,43 @@ const Component: React.FC<Props> = (props: Props) => {
     (!selectedFilters.length || selectedFilters.includes(AccountGroup.RECENT)) && recent.forEach((acc) => {
       const chains = acc.recentChainSlugs || [];
 
-      if (chains.includes(chain)) {
+      if (chainSlug && chains.includes(chainSlug)) {
         const address = isAddress(acc.address) ? reformatAddress(acc.address) : acc.address;
 
-        result.push({ ...acc, address: address, group: AccountGroup.RECENT });
+        result.push({ name: acc.name, address: address, group: AccountGroup.RECENT });
       }
     });
 
     (!selectedFilters.length || selectedFilters.includes(AccountGroup.CONTACT)) && contacts.forEach((acc) => {
       const address = isAddress(acc.address) ? reformatAddress(acc.address) : acc.address;
 
-      result.push({ ...acc, address: address, group: AccountGroup.CONTACT });
+      result.push({ name: acc.name, address: address, group: AccountGroup.CONTACT });
     });
 
-    (!selectedFilters.length || selectedFilters.includes(AccountGroup.WALLET)) && accounts.filter((acc) => !isAccountAll(acc.address)).forEach((acc) => {
-      const address = isAddress(acc.address) ? reformatAddress(acc.address) : acc.address;
-
-      if (checkLedger(acc, networkGenesisHash)) {
-        result.push({ ...acc, address: address, group: AccountGroup.WALLET });
+    (!selectedFilters.length || selectedFilters.includes(AccountGroup.WALLET)) && chainInfo && accountProxies.forEach((ap) => {
+      if (isAccountAll(ap.id)) {
+        return;
       }
+
+      // todo: recheck with ledger
+
+      ap.accounts.forEach((a) => {
+        const address = getReformatedAddressRelatedToNetwork(a, chainInfo);
+
+        if (address) {
+          result.push({ name: ap.name, address: address, group: AccountGroup.WALLET });
+        }
+      });
     });
+
+    // todo: may need better solution for this sorting below
 
     return result
-      .sort(funcSortByName)
+      .sort((a: AccountItem, b: AccountItem) => {
+        return ((a?.name || '').toLowerCase() > (b?.name || '').toLowerCase()) ? 1 : -1;
+      })
       .sort((a, b) => getGroupPriority(b) - getGroupPriority(a));
-  }, [accounts, chain, contacts, networkGenesisHash, recent, selectedFilters]);
+  }, [accountProxies, chainInfo, chainSlug, contacts, recent, selectedFilters]);
 
   const searchFunction = useCallback((item: AccountItem, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
@@ -147,24 +153,15 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const onSelectItem = useCallback((item: AccountItem) => {
     return () => {
-      const address = reformatAddress(item.address, addressPrefix);
-
       inactiveModal(id);
-      onSelect(address);
+      onSelect(item.address);
       onResetFilter();
     };
-  }, [addressPrefix, id, inactiveModal, onResetFilter, onSelect]);
+  }, [id, inactiveModal, onResetFilter, onSelect]);
 
   const renderItem = useCallback((item: AccountItem) => {
-    const address = formatAddress(item);
+    const address = item.address;
     const isRecent = item.group === AccountGroup.RECENT;
-    let selected: boolean;
-
-    if (isEthereumAddress(value)) {
-      selected = value.toLowerCase() === address.toLowerCase();
-    } else {
-      selected = value === address;
-    }
 
     return (
       <AccountItemWithName
@@ -174,12 +171,12 @@ const Component: React.FC<Props> = (props: Props) => {
         addressSufLength={isRecent ? 9 : 4}
         avatarSize={24}
         fallbackName={false}
-        isSelected={selected}
+        isSelected={value.toLowerCase() === address.toLowerCase()}
         key={`${item.address}_${item.group}`}
         onClick={onSelectItem(item)}
       />
     );
-  }, [formatAddress, onSelectItem, value]);
+  }, [onSelectItem, value]);
 
   const groupSeparator = useCallback((group: AccountItem[], idx: number, groupKey: string) => {
     const _group = groupKey as AccountGroup;

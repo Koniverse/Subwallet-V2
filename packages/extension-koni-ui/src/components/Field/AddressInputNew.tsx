@@ -12,6 +12,7 @@ import { Book, Scan } from 'phosphor-react';
 import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { AddressBookModal } from '../Modal';
 import { QrScannerErrorNotice } from '../Qr';
 import { BasicInputWrapper } from './Base';
 
@@ -26,7 +27,7 @@ type OptionType = ResponseOption & {
 }
 
 interface Props extends BasicInputWrapper, ThemeProps {
-  chainSlug: string;
+  chainSlug?: string;
   inputResolver: (input: string, chainSlug: string) => Promise<ResponseOption[]>;
   showAddressBook?: boolean;
   showScanner?: boolean;
@@ -34,6 +35,7 @@ interface Props extends BasicInputWrapper, ThemeProps {
 }
 
 const defaultScannerModalId = 'input-account-address-scanner-modal';
+const defaultAddressBookModalId = 'input-account-address-book-modal';
 
 // todo:
 //  - Update fetch option logic for auto complete
@@ -47,13 +49,14 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     showAddressBook, showScanner, status, statusHelp, value } = props;
   const { t } = useTranslation();
 
-  const { inactiveModal } = useContext(ModalContext);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
 
   // @ts-ignore
   const [options, setOptions] = useState<OptionType[]>([]);
   const [inputValue, setInputValue] = useState<string | undefined>(value);
 
   const scannerId = useMemo(() => id ? `${id}-scanner-modal` : defaultScannerModalId, [id]);
+  const addressBookId = useMemo(() => id ? `${id}-address-book-modal` : defaultAddressBookModalId, [id]);
 
   const fieldRef = useForwardFieldRef<BaseSelectRef>(ref);
   const [scanError, setScanError] = useState('');
@@ -82,7 +85,16 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
   const onOpenAddressBook = useCallback((e?: SyntheticEvent) => {
     e && e.stopPropagation();
-  }, []);
+    activeModal(addressBookId);
+  }, [activeModal, addressBookId]);
+
+  const onSelectAddressBook = useCallback((value: string) => {
+    fieldRef?.current?.focus();
+    setInputValue(value);
+    setTimeout(() => {
+      fieldRef?.current?.blur();
+    }, 300);
+  }, [fieldRef]);
 
   // scanner
 
@@ -251,6 +263,18 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
             onError={onScanError}
             onSuccess={onSuccessScan}
             overlay={scanError && <QrScannerErrorNotice message={scanError} />}
+          />
+        )
+      }
+
+      {
+        showAddressBook &&
+        (
+          <AddressBookModal
+            chainSlug={chainSlug}
+            id={addressBookId}
+            onSelect={onSelectAddressBook}
+            value={value}
           />
         )
       }
