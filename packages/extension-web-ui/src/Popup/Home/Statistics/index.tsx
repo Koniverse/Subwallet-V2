@@ -2,17 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import PieDonutChart, { DataItem } from '@garvae/react-pie-donut-chart';
+import { _getAssetDecimals, _getAssetPriceId } from '@subwallet/extension-base/services/chain-service/utils';
 import { PageWrapper } from '@subwallet/extension-web-ui/components';
 import NoContent, { PAGE_TYPE } from '@subwallet/extension-web-ui/components/NoContent';
 import { ProgressBar } from '@subwallet/extension-web-ui/components/ProgressBar';
 import { BN_100, BN_ZERO } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
+import { useGroupYieldPosition, useSelector } from '@subwallet/extension-web-ui/hooks';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { Theme } from '@subwallet/extension-web-ui/themes';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { sortTokenByValue } from '@subwallet/extension-web-ui/utils';
 import { Logo, Number } from '@subwallet/react-ui';
+import BigN from 'bignumber.js';
 import React, { Context, useContext, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import styled, { ThemeContext } from 'styled-components';
@@ -40,6 +43,11 @@ const Component = ({ className }: Props) => {
   const outletContext: {
     setShowSearchInput: React.Dispatch<React.SetStateAction<boolean>>
   } = useOutletContext();
+
+  const earningPositions = useGroupYieldPosition();
+  const { assetRegistry: assetInfoMap } = useSelector((state) => state.assetRegistry);
+  const priceMap = useSelector((state) => state.price.priceMap);
+
   const setShowSearchInput = outletContext?.setShowSearchInput;
 
   useEffect(() => {
@@ -54,7 +62,6 @@ const Component = ({ className }: Props) => {
     }
 
     const balanceItems = Object.values(tokenGroupBalanceMap).sort(sortTokenByValue);
-
     const results: PresentItem[] = [];
 
     const itemLength = balanceItems.length < 6 ? balanceItems.length : 6;
@@ -84,6 +91,68 @@ const Component = ({ className }: Props) => {
 
     return results;
   }, [isTotalZero, tokenGroupBalanceMap, totalBalanceInfo.convertedValue]);
+
+  const totalValue = useMemo(() => {
+    let result = BN_ZERO;
+
+    earningPositions.forEach((item) => {
+      const priceToken = assetInfoMap[item.balanceToken];
+      const price = priceMap[_getAssetPriceId(priceToken)] || 0;
+
+      result = result.plus((new BigN(item.totalStake)).shiftedBy(-_getAssetDecimals(priceToken)).multipliedBy(price));
+    });
+
+    return result;
+  }, [assetInfoMap, earningPositions, priceMap]);
+
+  const transferablePercent = (() => {
+    if (isTotalZero) {
+      return 0;
+    }
+
+    return +totalBalanceInfo.freeValue.multipliedBy(BN_100).dividedBy(totalBalanceInfo.convertedValue).toFixed(2);
+  })();
+
+  const stakingPercent = (() => {
+    if (isTotalZero) {
+      return 0;
+    }
+
+    return +totalValue.multipliedBy(BN_100).dividedBy(totalBalanceInfo.convertedValue).toFixed(2);
+  })();
+
+  const otherPercent = (() => {
+    if (isTotalZero) {
+      return 0;
+    }
+
+    const result = (10000 - transferablePercent * 100 - stakingPercent * 100) / 100;
+
+    return result > 0 ? result : 0;
+  })();
+
+  const chartItems: ChartItem[] = [
+    {
+      id: 'Transferable',
+      value: transferablePercent,
+      color: token['colorPrimary-6'],
+      label: t('Transferable')
+    },
+    {
+      id: 'Staking',
+      value: stakingPercent,
+      color: token.colorSecondary,
+      label: t('Staking')
+    },
+    {
+      id: 'Other',
+      value: otherPercent,
+      color: token['magenta-6'],
+      label: t('Other')
+    }
+  ];
+
+  const chartData: ChartItem[] = chartItems.filter((i) => i.value > 0);
 
   const renderPresentItem = (item: PresentItem) => {
     return (
@@ -140,74 +209,6 @@ const Component = ({ className }: Props) => {
     );
   };
 
-  const transferablePercent = (() => {
-    if (isTotalZero) {
-      return 0;
-    }
-
-    return +totalBalanceInfo.freeValue.multipliedBy(BN_100).dividedBy(totalBalanceInfo.convertedValue).toFixed(2);
-  })();
-
-  // const stakingPercent = (() => {
-  //   if (isTotalZero) {
-  //     return 0;
-  //   }
-  //
-  //   let stakingBigN = new BigN(0);
-  //
-  //   for (const si of earningPositions) {
-  //     if (!si.staking.balance || BN_ZERO.eq(si.staking.balance)) {
-  //       continue;
-  //     }
-  //
-  //     const balanceValue = getBalanceValue(si.staking.balance || '0', si.decimals);
-  //     const convertedBalanceValue = getConvertedBalanceValue(balanceValue, +`${priceMap[si.staking.chain]}` || 0);
-  //
-  //     stakingBigN = stakingBigN.plus(convertedBalanceValue);
-  //   }
-  //
-  //   if (stakingBigN.gt(totalBalanceInfo.convertedValue)) {
-  //     return 0;
-  //   }
-  //
-  //   return +stakingBigN.multipliedBy(BN_100).dividedBy(totalBalanceInfo.convertedValue).toFixed(2);
-  // })();
-
-  const stakingPercent = 0;
-
-  const otherPercent = (() => {
-    if (isTotalZero) {
-      return 0;
-    }
-
-    const result = (10000 - transferablePercent * 100 - stakingPercent * 100) / 100;
-
-    return result > 0 ? result : 0;
-  })();
-
-  const chartItems: ChartItem[] = [
-    {
-      id: 'Transferable',
-      value: transferablePercent,
-      color: token['colorPrimary-6'],
-      label: t('Transferable')
-    },
-    // {
-    //   id: 'Staking',
-    //   value: stakingPercent,
-    //   color: token.colorSecondary,
-    //   label: t('Staking')
-    // },
-    {
-      id: 'Other',
-      value: otherPercent,
-      color: token['magenta-6'],
-      label: t('Other')
-    }
-  ];
-
-  const chartData: ChartItem[] = chartItems.filter((i) => i.value > 0);
-
   return (
     <PageWrapper
       className={className}
@@ -254,7 +255,7 @@ const Component = ({ className }: Props) => {
                   </div>
 
                   <div className='__legend-area'>
-                    {chartItems.map(renderLegendItem)}
+                    {chartData.map(renderLegendItem)}
                   </div>
                 </div>
               </div>
