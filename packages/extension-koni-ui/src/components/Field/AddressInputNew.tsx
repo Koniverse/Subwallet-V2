@@ -149,82 +149,96 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
   return (
     <>
-      <AutoComplete
-        className={className}
-        onBlur={_onBlur}
-        onChange={onChangeInputValue}
-        onFocus={onFocus}
-        onSelect={onSelectAutoComplete}
-        options={options}
-        ref={fieldRef}
-        value={inputValue}
-      >
-        <Input
-          className={CN({
-            '-label-horizontal': labelStyle === 'horizontal',
-            '-has-overlay': !!currentOption
-          })}
-          disabled={disabled}
-          id={id}
-          label={label || t('Account address')}
-          placeholder={placeholder || t('Please type or paste an address')}
-          prefix={
-            <>
-              {
-                currentOption && (
-                  <div className={'__overlay'}>
-                    <div className={CN('__name common-text')}>
-                      {currentOption.name}
+      <div className={className}>
+        <AutoComplete
+          onBlur={_onBlur}
+          onChange={onChangeInputValue}
+          onFocus={onFocus}
+          onSelect={onSelectAutoComplete}
+          options={options}
+          ref={fieldRef}
+          value={inputValue}
+        >
+          <Input
+            className={CN({
+              '-label-horizontal': labelStyle === 'horizontal',
+              '-has-overlay': !!currentOption
+            })}
+            disabled={disabled}
+            id={id}
+            label={label || t('Account address')}
+            placeholder={placeholder || t('Please type or paste an address')}
+            prefix={
+              <>
+                {
+                  currentOption && (
+                    <div className={'__overlay'}>
+                      <div className={CN('__name common-text')}>
+                        {currentOption.name}
+                      </div>
+                      <div className={'__address common-text'}>
+                         &nbsp;({toShort(currentOption.address, 4, 4)})
+                      </div>
                     </div>
-                    <div className={'__address common-text'}>
-                       &nbsp;({toShort(currentOption.address, 4, 4)})
-                    </div>
-                  </div>
-                )
-              }
-            </>
-          }
-          readOnly={readOnly}
-          status={status}
-          statusHelp={statusHelp}
-          suffix={(
-            <>
-              {
-                showAddressBook &&
-              (
-                <Button
-                  icon={(
-                    <Icon
-                      phosphorIcon={Book}
-                      size='sm'
-                    />
+                  )
+                }
+              </>
+            }
+            readOnly={readOnly}
+            status={status}
+            statusHelp={statusHelp}
+            suffix={(
+              <>
+                {
+                  showAddressBook &&
+                (
+                  <div className={'__button-placeholder'}></div>
+                )}
+                {
+                  showScanner &&
+                  (
+                    <div className={'__button-placeholder'}></div>
                   )}
-                  onClick={onOpenAddressBook}
-                  size='xs'
-                  type='ghost'
-                />
-              )}
-              {
-                showScanner &&
-              (
-                <Button
-                  disabled={disabled}
-                  icon={(
-                    <Icon
-                      phosphorIcon={Scan}
-                      size='sm'
-                    />
-                  )}
-                  onClick={onOpenScanner}
-                  size='xs'
-                  type='ghost'
-                />
-              )}
-            </>
-          )}
-          value={value}
-        />
-      </AutoComplete>
+              </>
+            )}
+            value={value}
+          />
+        </AutoComplete>
+
+        <div className={'__action-buttons'}>
+          {
+            showAddressBook &&
+            (
+              <Button
+                icon={(
+                  <Icon
+                    phosphorIcon={Book}
+                    size='sm'
+                  />
+                )}
+                onClick={onOpenAddressBook}
+                size='xs'
+                type='ghost'
+              />
+            )}
+          {
+            showScanner &&
+            (
+              <Button
+                disabled={disabled}
+                icon={(
+                  <Icon
+                    phosphorIcon={Scan}
+                    size='sm'
+                  />
+                )}
+                onClick={onOpenScanner}
+                size='xs'
+                type='ghost'
+              />
+            )}
+        </div>
+      </div>
 
       {
         showScanner &&
@@ -246,6 +260,24 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
 export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { token } }: Props) => {
   return ({
+    '&': {
+      position: 'relative'
+    },
+
+    '.__action-buttons': {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      display: 'flex',
+      zIndex: 2,
+      paddingRight: token.paddingXXS,
+      paddingBottom: token.paddingXXS
+    },
+
+    '.__button-placeholder': {
+      minWidth: 40
+    },
+
     '.__overlay': {
       position: 'absolute',
       top: 2,
