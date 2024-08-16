@@ -378,6 +378,10 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     return Promise.resolve();
   }, [decimals, maxTransfer, t]);
 
+  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
+    return Promise.resolve([]);
+  }, []);
+
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
       const validateField: string[] = [];
@@ -818,6 +822,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
             statusHelpAsTooltip={true}
           >
             <AddressInputNew
+              chainSlug={destChainValue}
+              inputResolver={addressInputResolver}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
@@ -829,8 +835,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           <FreeBalance
             address={fromValue}
             chain={chainValue}
-            extrinsicType={extrinsicType}
             className={'free-balance-block'}
+            extrinsicType={extrinsicType}
             onBalanceReady={setIsBalanceReady}
             tokenSlug={assetValue}
           />
