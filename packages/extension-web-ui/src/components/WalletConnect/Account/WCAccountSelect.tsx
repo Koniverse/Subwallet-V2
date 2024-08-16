@@ -47,22 +47,22 @@ const Component: React.FC<Props> = (props: Props) => {
   const noAccountTitle = useMemo(() => {
     switch (namespace) {
       case 'polkadot':
-        return t('No available Substrate account');
+        return t('settings.Screen.walletConnect.accountSelector.noAccountTitle.substrate');
       case 'eip155':
-        return t('No available EVM account');
+        return t('settings.Screen.walletConnect.accountSelector.noAccountTitle.evm');
       default:
-        return t('No available account');
+        return t('settings.Screen.walletConnect.accountSelector.noAccountTitle.default');
     }
   }, [namespace, t]);
 
   const noAccountDescription = useMemo(() => {
     switch (namespace) {
       case 'polkadot':
-        return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.walletConnect.accountSelector.description.substrate');
       case 'eip155':
-        return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.walletConnect.accountSelector.description.evm');
       default:
-        return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.walletConnect.accountSelector.description.default');
     }
   }, [namespace, t]);
 
@@ -136,12 +136,12 @@ const Component: React.FC<Props> = (props: Props) => {
                       )}
                       onClick={_onApply}
                     >
-                      {t('Apply {{number}} accounts', { replace: { number: selectedAccounts.length } })}
+                      {t('settings.Screen.walletConnect.accountSelector.Button.apply', { replace: { number: selectedAccounts.length } })}
                     </Button>
                   )}
                   id={id}
                   onCancel={onCloseModal}
-                  title={t('Select account')}
+                  title={t('settings.Screen.walletConnect.accountSelector.title')}
                 >
                   <SwList.Section
                     className='account-list'
@@ -154,7 +154,7 @@ const Component: React.FC<Props> = (props: Props) => {
                     rowGap='var(--row-gap)'
                     searchFunction={searchAccountFunction}
                     searchMinCharactersCount={2}
-                    searchPlaceholder={t<string>('Search account')}
+                    searchPlaceholder={t<string>('settings.Screen.walletConnect.accountSelector.searchPlaceHolder')}
                   />
                 </BaseModal>
               </>
@@ -190,7 +190,7 @@ const Component: React.FC<Props> = (props: Props) => {
                   })}
                 </div>
                 <div className={CN(className, 'additional-content')}>
-                  {t('Make sure you trust this site before connecting')}
+                  {t('settings.Screen.walletConnect.accountSelector.additionalContent')}
                 </div>
               </>
             )

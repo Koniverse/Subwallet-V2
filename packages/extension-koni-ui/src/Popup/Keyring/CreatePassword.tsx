@@ -210,12 +210,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               <Checkbox
                 className={'checkbox'}
               >
-                I understand that SubWallet can’t recover the password. <a
+                {t('settings.security.Screen.changePassword.confirmAgreement')}&nbsp;<a
                   href={TERMS_OF_SERVICE_URL}
                   rel='noreferrer'
                   style={{ textDecoration: 'underline' }}
                   target={'_blank'}
-                >Learn more.</a>
+                >{t('settings.security.Screen.changePassword.Link.learnMore')}</a>
               </Checkbox>
             </Form.Item>
           </Form>

@@ -79,22 +79,22 @@ function Component ({ className, request }: Props) {
   const noAvailableTitle = useMemo(() => {
     switch (accountAuthType) {
       case 'substrate':
-        return t('No available Substrate account');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.substrate');
       case 'evm':
-        return t('No available EVM account');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.evm');
       default:
-        return t('No available account');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.default');
     }
   }, [accountAuthType, t]);
 
   const noAvailableDescription = useMemo(() => {
     switch (accountAuthType) {
       case 'substrate':
-        return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.authorize.Confirmation.description.substrate');
       case 'evm':
-        return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.authorize.Confirmation.description.evm');
       default:
-        return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.authorize.Confirmation.description.default');
     }
   }, [accountAuthType, t]);
 

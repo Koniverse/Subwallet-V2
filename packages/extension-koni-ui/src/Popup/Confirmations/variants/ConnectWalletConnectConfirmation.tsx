@@ -47,8 +47,8 @@ function Component ({ className, request }: Props) {
   const [networkNeedToImport, setNetworkNeedToImport] = useState<string[]>([]);
 
   const nameSpaceNameMap = useMemo((): Record<string, string> => ({
-    [WALLET_CONNECT_EIP155_NAMESPACE]: t('EVM networks'),
-    [WALLET_CONNECT_POLKADOT_NAMESPACE]: t('Substrate networks')
+    [WALLET_CONNECT_EIP155_NAMESPACE]: t('settings.Screen.walletConnect.Modal.Connect.evmNetwork'),
+    [WALLET_CONNECT_POLKADOT_NAMESPACE]: t('settings.Screen.walletConnect.Modal.Connect.substrateNetwork')
   }), [t]);
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
@@ -193,8 +193,8 @@ function Component ({ className, request }: Props) {
           (isUnSupportCase || blockAddNetwork) && (
             <>
               <AlertBox
-                description={t('There is at least 1 chosen network unavailable')}
-                title={t('Unsupported network')}
+                description={t('settings.Screen.walletConnect.Confirmation.unSupportNetwork.description')}
+                title={t('settings.Screen.walletConnect.Confirmation.unSupportNetwork.title')}
                 type='warning'
               />
               <WCNetworkSupported
@@ -208,8 +208,8 @@ function Component ({ className, request }: Props) {
           noNetwork && (
             (
               <AlertBox
-                description={t('We are unable to detect any network from the dApp through WalletConnect')}
-                title={t('Network undetected')}
+                description={t('settings.Screen.walletConnect.Confirmation.unDetected.description')}
+                title={t('settings.Screen.walletConnect.Confirmation.unDetected.title')}
                 type='warning'
               />
             )
@@ -219,8 +219,8 @@ function Component ({ className, request }: Props) {
           !isUnSupportCase && !noNetwork && isExpired && (
             <>
               <AlertBox
-                description={t('Connection expired. Please create a new connection from dApp')}
-                title={t('Connection expired')}
+                description={t('settings.Screen.walletConnect.Confirmation.connectionExpired.description')}
+                title={t('settings.Screen.walletConnect.Confirmation.connectionExpired.title')}
                 type='warning'
               />
             </>
@@ -321,7 +321,7 @@ function Component ({ className, request }: Props) {
                 loading={loading}
                 onClick={onConfirm}
               >
-                {t('Approve')}
+                {t('common.Button.Approve')}
               </Button>
             </>
           )
@@ -353,7 +353,7 @@ function Component ({ className, request }: Props) {
                   )}
                   onClick={onAddAccount}
                 >
-                  {t('Create one')}
+                  {t('common.Button.createOne')}
                 </Button>
               </>
             )

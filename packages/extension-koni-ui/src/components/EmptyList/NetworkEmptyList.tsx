@@ -29,7 +29,7 @@ const NetworkEmptyList: React.FC<Props> = (props: Props) => {
           weight='fill'
         />
       ),
-      children: t('Add network'),
+      children: t('settings.Screen.manageNetworks.Button.addNetwork'),
       shape: 'circle',
       size: 'xs',
       onClick: () => {

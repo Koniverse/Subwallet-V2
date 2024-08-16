@@ -43,7 +43,7 @@ export const renderBaseConfirmPasswordRules = (passwordFieldName: string, t: TFu
           return Promise.resolve();
         }
 
-        return Promise.reject(new Error(t('Confirm password do not match!')));
+        return Promise.reject(new Error(t('settings.security.Screen.confirmPassword.FormRules.notMatch')));
       }
     })
   ];
