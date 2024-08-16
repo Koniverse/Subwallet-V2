@@ -18,6 +18,7 @@ import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, formatBalance, getReformatedAddressRelatedToNetwork, isChainInfoAccordantNetworkType, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { isAddress } from '@subwallet/keyring';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -29,7 +30,7 @@ import styled from 'styled-components';
 import { useIsFirstRender } from 'usehooks-ts';
 
 import { BN, BN_ZERO } from '@polkadot/util';
-import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
 
@@ -754,28 +755,6 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   useRestoreTransaction(form);
   useInitValidateTransaction(validateFields, form, defaultData);
 
-  // useEffect(() => { // alibaba
-  //   makeTransfer({
-  //     from: '0QCDV2euuWnDhFhy1GM_u6_fIPkvfO0frg95gErAnzMqGea9',
-  //     networkKey: 'ton_testnet',
-  //     to: '0QBbamQ89OMv8DkcR2RW_tW9sX7xClXLt8KYDHbUqtB4dQd_',
-  //     tokenSlug: 'ton_testnet-NATIVE-TON',
-  //     value: '3000000',
-  //     transferAll: false
-  //   });
-  // }, []);
-
-  useEffect(() => { // alibaba
-    makeTransfer({
-      from: '0QCDV2euuWnDhFhy1GM_u6_fIPkvfO0frg95gErAnzMqGea9',
-      networkKey: 'ton_testnet',
-      to: '0QBbamQ89OMv8DkcR2RW_tW9sX7xClXLt8KYDHbUqtB4dQd_',
-      tokenSlug: 'ton_testnet-NATIVE-TON',
-      value: '300000',
-      transferAll: false
-    });
-  }, []);
-
   return (
     <>
       <TransactionContent className={CN(`${className} -transaction-content`)}>
@@ -851,8 +830,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           <FreeBalance
             address={fromValue}
             chain={chainValue}
-            extrinsicType={extrinsicType}
             className={'free-balance-block'}
+            extrinsicType={extrinsicType}
             onBalanceReady={setIsBalanceReady}
             tokenSlug={assetValue}
           />
