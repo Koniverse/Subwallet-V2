@@ -1,17 +1,23 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { CloseIcon, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
-import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants/account';
-import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import {
+  AccountNameModal,
+  CloseIcon,
+  Layout,
+  PageWrapper,
+  PrivateKeyInput
+} from '@subwallet/extension-koni-ui/components';
+import {ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL} from '@subwallet/extension-koni-ui/constants/modal';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGetDefaultAccountName, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
-import { Button, Form, Icon } from '@subwallet/react-ui';
+import {Button, Form, Icon, ModalContext} from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {useCallback, useContext, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
+import {AccountProxyType} from "@subwallet/extension-base/types";
 
 type Props = ThemeProps;
 
@@ -45,6 +51,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
   const [changed, setChanged] = useState(false);
+  const [ privatekeySubmit, setPrivateKeySubmit ] = useState('');
+  const { activeModal, inactiveModal } = useContext(ModalContext);
   const [form] = Form.useForm<FormState>();
   const checkUnlock = useUnlockChecker();
 
@@ -59,32 +67,37 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     const { [fieldName]: privateKey } = values;
 
     checkUnlock().then(() => {
-      if (privateKey?.trim()) {
-        setLoading(true);
-        createAccountSuriV2({
-          name: accountName,
-          suri: privateKey.trim(),
-          isAllowed: true,
-          types: [EVM_ACCOUNT_TYPE]
-        })
-          .then(() => {
-            onComplete();
-          })
-          .catch((error: Error): void => {
-            setValidateState({
-              status: 'error',
-              message: error.message
-            });
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }
+      setPrivateKeySubmit(privateKey);
     })
       .catch(() => {
       // User cancel unlock
       });
   }, [accountName, checkUnlock, onComplete]);
+
+
+  const onSubmitFinal = useCallback((name : string) => {
+    if (privatekeySubmit?.trim()) {
+      setLoading(true);
+      createAccountSuriV2({
+        name: name,
+        suri: privatekeySubmit.trim(),
+        isAllowed: true
+      })
+        .then(() => {
+          onComplete();
+        })
+        .catch((error: Error): void => {
+          setValidateState({
+            status: 'error',
+            message: error.message
+          });
+        })
+        .finally(() => {
+          inactiveModal(ACCOUNT_NAME_MODAL)
+          setLoading(false);
+        });
+    }
+  }, [privatekeySubmit, onComplete])
 
   useEffect(() => {
     let amount = true;
@@ -102,7 +115,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         });
 
         timeOutRef.current = setTimeout(() => {
-          validateMetamaskPrivateKeyV2(privateKey.trim(), [EVM_ACCOUNT_TYPE])
+          validateMetamaskPrivateKeyV2(privateKey.trim())
             .then(({ autoAddPrefix }) => {
               if (amount) {
                 if (autoAddPrefix) {
@@ -140,6 +153,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       amount = false;
     };
   }, [privateKey, form, changed, t]);
+
+  useEffect(() => {
+    if(privatekeySubmit.trim()){
+      activeModal(ACCOUNT_NAME_MODAL);
+    }
+  }, [activeModal, privatekeySubmit]);
 
   const onValuesChange: FormCallbacks<FormState>['onValuesChange'] = useCallback((changedValues: Partial<FormState>) => {
     if (fieldName in changedValues) {
@@ -211,6 +230,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             </div>
           </Form>
         </div>
+
+        <AccountNameModal
+          isLoading={loading}
+          accountType={AccountProxyType.SOLO}
+          onSubmit={onSubmitFinal}
+        />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );

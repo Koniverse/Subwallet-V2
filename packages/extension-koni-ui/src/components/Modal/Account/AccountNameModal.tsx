@@ -15,16 +15,15 @@ import styled from 'styled-components';
 type Props = ThemeProps & {
   isLoading?: boolean;
   accountType?: AccountProxyType; // for display account proxy tag
-  onSubmit?: (name: string) => void
+  onSubmit?: (name: string) => void;
+  modalId?: string;
 };
 
 interface FormProps {
   name: string;
 }
 
-const modalId = ACCOUNT_NAME_MODAL;
-
-const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmit }: Props) => {
+const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmit, modalId }: Props) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<FormProps>();
   const defaultValues = useMemo(() => ({
@@ -51,7 +50,7 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
     <SwModal
       className={CN(className)}
       closable={false}
-      id={modalId}
+      id={modalId || ACCOUNT_NAME_MODAL}
       maskClosable={false}
       title={t<string>('Account name')}
     >

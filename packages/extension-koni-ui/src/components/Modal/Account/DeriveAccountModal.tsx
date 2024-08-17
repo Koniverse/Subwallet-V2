@@ -32,7 +32,7 @@ import {AccountNameModal, AccountProxyItem} from "@subwallet/extension-koni-ui/c
 type Props = ThemeProps;
 
 const modalId = DERIVE_ACCOUNT_MODAL;
-
+const accountNameModalId = 'derive.' + ACCOUNT_NAME_MODAL
 const renderEmpty = () => <GeneralEmptyList />;
 
 const renderLoaderIcon = (x: React.ReactNode): React.ReactNode => {
@@ -109,7 +109,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             });
           }).finally(() => {
             setSelected('');
-            inactiveModal(ACCOUNT_NAME_MODAL)
+            inactiveModal(accountNameModalId)
           });
         }, 500);
       }
@@ -117,7 +117,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   useEffect(() => {
     if(accountSelected) {
-      activeModal(ACCOUNT_NAME_MODAL);
+      activeModal(accountNameModalId);
     }
   }, [accountSelected, activeModal])
 
@@ -165,6 +165,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
       <AccountNameModal
         onSubmit={onSubmitAccount}
+        modalId={accountNameModalId}
         accountType={accountSelected?.accountType}
         isLoading={!!selected}
       />
