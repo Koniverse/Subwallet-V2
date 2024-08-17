@@ -16,6 +16,8 @@ type Props = ThemeProps & {
   accountProxy: AccountProxy;
 };
 
+const isHide = false;
+
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
@@ -47,6 +49,7 @@ function Component ({ accountProxy, className }: Props) {
           className={'address-item'}
           item={item}
           key={item.slug}
+          onClick={onShowQr(item)}
           onClickCopyButton={onCopyAddress(item)}
           onClickQrButton={onShowQr(item)}
         />
@@ -61,7 +64,7 @@ function Component ({ accountProxy, className }: Props) {
 
   const searchFunction = useCallback(
     (item: AccountNetworkAddress, searchText: string) => {
-      return item.name.toLowerCase().includes(searchText.toLowerCase());
+      return item.name.toLowerCase().includes(searchText.toLowerCase()) || item.address.toLowerCase().includes(searchText.toLowerCase());
     },
     []
   );
@@ -75,11 +78,11 @@ function Component ({ accountProxy, className }: Props) {
         renderWhenEmpty={emptyList}
         searchFunction={searchFunction}
         searchMinCharactersCount={2}
-        searchPlaceholder={t<string>('Enter network name')}
+        searchPlaceholder={t<string>('Enter network name or address ')}
       />
 
       {
-        accountProxy.accountType === AccountProxyType.SOLO && (
+        isHide && accountProxy.accountType === AccountProxyType.SOLO && (
           <div className={'update-unified-account-button-wrapper'}>
             <Button
               block={true}

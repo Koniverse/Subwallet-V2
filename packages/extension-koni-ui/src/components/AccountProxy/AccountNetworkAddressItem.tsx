@@ -11,6 +11,7 @@ import styled from 'styled-components';
 
 type Props = ThemeProps & {
   item: AccountNetworkAddress;
+  onClick?: VoidFunction;
   onClickCopyButton?: VoidFunction;
   onClickQrButton?: VoidFunction;
 }
@@ -18,7 +19,7 @@ type Props = ThemeProps & {
 function Component (props: Props): React.ReactElement<Props> {
   const { className,
     item,
-    onClickCopyButton, onClickQrButton } = props;
+    onClickCopyButton, onClickQrButton, onClick } = props;
 
   const _onClickCopyButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();
@@ -30,10 +31,16 @@ function Component (props: Props): React.ReactElement<Props> {
     onClickQrButton?.();
   }, [onClickQrButton]);
 
+  const _onClickButton: React.MouseEventHandler<HTMLAnchorElement | HTMLDivElement> = React.useCallback((event) => {
+    event.stopPropagation();
+    onClick?.();
+  }, [onClickQrButton]);
+
   return (
     <>
       <div
         className={CN(className)}
+        onClick={_onClickButton}
       >
         <div className='__item-left-part'>
           <Logo

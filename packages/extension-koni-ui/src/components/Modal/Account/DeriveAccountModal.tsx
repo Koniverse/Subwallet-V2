@@ -210,7 +210,7 @@ const DeriveAccountModal = styled(Component)<Props>(({ theme: { token } }: Props
     },
 
     '.account-derive-item': {
-      display: 'flex !important'
+      display: 'flex'
     }
   };
 });

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountProxy } from '@subwallet/extension-base/types';
+import {AccountProxy} from '@subwallet/extension-base/types';
 import { AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -57,6 +57,10 @@ function Component ({ accountProxy, className }: Props) {
 
   const searchFunction = useCallback(
     (item: AccountProxy, searchText: string) => {
+      if(item.accounts.length === 1){
+         return item.name.toLowerCase().includes(searchText.toLowerCase()) || item.accounts[0].address.toLowerCase().includes(searchText.toLowerCase());
+      }
+
       return item.name.toLowerCase().includes(searchText.toLowerCase());
     },
     []
@@ -71,7 +75,7 @@ function Component ({ accountProxy, className }: Props) {
         renderWhenEmpty={emptyList}
         searchFunction={searchFunction}
         searchMinCharactersCount={2}
-        searchPlaceholder={t<string>('Enter account name')}
+        searchPlaceholder={t<string>('Enter account name or address')}
       />
     </div>
   );
