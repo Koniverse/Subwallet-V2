@@ -7,7 +7,7 @@ import { cellToBase64Str, estimateTonTxFee, messageRelaxedToCell } from '@subwal
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken, _isJettonToken, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { keyring } from '@subwallet/ui-keyring';
-import { beginCell, fromNano, internal, toNano } from '@ton/core';
+import { beginCell, fromNano, internal, MessageRelaxed, toNano } from '@ton/core';
 import { Address, JettonMaster, JettonWallet, WalletContractV4 } from '@ton/ton';
 
 interface TonTransactionConfigProps {
@@ -25,7 +25,8 @@ export interface TonTransactionConfig {
   to: string,
   networkKey: string,
   value: string,
-  payload: string,
+  messagePayload: string,
+  messages: MessageRelaxed[]; // hide before passing to request service
   estimateFee: string;
   seqno: number
 }
@@ -58,7 +59,7 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
       bounce: false // todo: check and update the send bounced logic
     });
 
-  const payload = cellToBase64Str(messageRelaxedToCell(messages));
+  const messagePayload = cellToBase64Str(messageRelaxedToCell(messages));
 
   const estimateFee = await estimateTonTxFee(tonApi, [messages], walletContract);
 
@@ -73,7 +74,8 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
     to,
     networkKey,
     value: transferValue ?? value,
-    payload,
+    messagePayload,
+    messages: [messages],
     estimateFee: estimateFee.toString(),
     seqno
   } as unknown as TonTransactionConfig;
@@ -116,7 +118,7 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
     body: messageBody
   });
 
-  const payload = cellToBase64Str(messageRelaxedToCell(messages));
+  const messagePayload = cellToBase64Str(messageRelaxedToCell(messages));
 
   const estimateExternalFee = await estimateTonTxFee(tonApi, [messages], walletContract);
   const estimateFee = toNano(INIT_FEE_JETTON_TRANSFER) > estimateExternalFee ? toNano(INIT_FEE_JETTON_TRANSFER) : estimateExternalFee;
@@ -132,7 +134,8 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
     to,
     networkKey,
     value: transferValue ?? value,
-    payload,
+    messagePayload,
+    messages: [messages],
     estimateFee: estimateFee.toString(),
     seqno
   } as unknown as TonTransactionConfig;

@@ -26,7 +26,7 @@ export const isSubstrateTransaction = (tx: SWTransaction['transaction']): tx is 
 export const isTonTransaction = (tx: SWTransaction['transaction']): tx is TonTransactionConfig => {
   const tonTransactionConfig = tx as TonTransactionConfig;
 
-  return !!tonTransactionConfig.payload && !!tonTransactionConfig.seqno;
+  return !!tonTransactionConfig.messagePayload && !!tonTransactionConfig.seqno;
 };
 
 const typeName = (type: SWTransaction['extrinsicType']) => {

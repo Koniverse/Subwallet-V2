@@ -51,8 +51,7 @@ import { BN_ZERO, calculateAllAccountNetworkTypes, createTransactionFromRLP, isS
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
-import { isTonAddress } from '@subwallet/keyring';
-import { getKeypairTypeByAddress } from '@subwallet/keyring';
+import { getKeypairTypeByAddress, isTonAddress } from '@subwallet/keyring';
 import { EthereumKeypairTypes, KeyringPair$Json, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
