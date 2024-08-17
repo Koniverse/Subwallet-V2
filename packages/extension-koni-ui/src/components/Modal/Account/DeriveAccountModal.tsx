@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/types';
-import { canDerive } from '@subwallet/extension-base/utils';
-import AccountItemWithName from '@subwallet/extension-koni-ui/components/Account/Item/AccountItemWithName';
+import {AccountActions, AccountProxy} from '@subwallet/extension-base/types';
 import BackIcon from '@subwallet/extension-koni-ui/components/Icon/BackIcon';
-import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants/account';
-import { CREATE_ACCOUNT_MODAL, DERIVE_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import {
+  ACCOUNT_NAME_MODAL,
+  CREATE_ACCOUNT_MODAL,
+  DERIVE_ACCOUNT_MODAL
+} from '@subwallet/extension-koni-ui/constants/modal';
 import { useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
@@ -15,17 +16,18 @@ import useClickOutSide from '@subwallet/extension-koni-ui/hooks/dom/useClickOutS
 import useSwitchModal from '@subwallet/extension-koni-ui/hooks/modal/useSwitchModal';
 import { deriveAccountV3 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import {Theme, ThemeProps} from '@subwallet/extension-koni-ui/types';
 import { searchAccountFunction } from '@subwallet/extension-koni-ui/utils/account/account';
 import { renderModalSelector } from '@subwallet/extension-koni-ui/utils/common/dom';
 import { ActivityIndicator, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
 
 import { GeneralEmptyList } from '../../EmptyList';
+import {AccountNameModal, AccountProxyItem} from "@subwallet/extension-koni-ui/components";
 
 type Props = ThemeProps;
 
@@ -49,22 +51,21 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { token } = useTheme() as Theme;
   const notify = useNotification();
   const sectionRef = useRef<SwListSectionRef>(null);
-
-  const { checkActive, inactiveModal } = useContext(ModalContext);
+  const [accountSelected, setAccountSelected] = useState<AccountProxy>()
+  const { checkActive, inactiveModal, activeModal } = useContext(ModalContext);
   const { setStateSelectAccount } = useSetSessionLatest();
   const checkUnlock = useUnlockChecker();
 
-  const { accounts } = useSelector((state: RootState) => state.accountState);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
 
   const isActive = checkActive(modalId);
 
   const [selected, setSelected] = useState('');
 
   const filtered = useMemo(
-    () => accounts
-      .filter(({ isExternal, isInjected }) => !isExternal && !isInjected)
-      .filter(({ isMasterAccount, type }) => canDerive(type) && (type !== EVM_ACCOUNT_TYPE || (isMasterAccount && type === EVM_ACCOUNT_TYPE))),
-    [accounts]
+    () => accountProxies
+      .filter(({ accountActions }) => accountActions.includes(AccountActions.DERIVE)),
+    [accountProxies]
   );
 
   const clearSearch = useCallback(() => {
@@ -79,13 +80,24 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   useClickOutSide(isActive || !!selected, renderModalSelector(className), onCancel);
 
-  const onSelectAccount = useCallback((account: AccountJson): () => void => {
+  const onSelectAccount = useCallback((account: AccountProxy): () => void => {
     return () => {
       checkUnlock().then(() => {
-        setSelected(account.address);
+        setAccountSelected(account);
+      }).catch(() => {
+        // User cancel unlock
+      });
+    };
+  }, [checkUnlock, clearSearch, inactiveModal, notify, setStateSelectAccount]);
+
+  const onSubmitAccount = useCallback((name: string) => {
+      if(accountSelected) {
+        setSelected(accountSelected.id);
         setTimeout(() => {
           deriveAccountV3({
-            proxyId: account.address
+            proxyId: accountSelected.id,
+            name,
+            suri: accountSelected.suri
           }).then(() => {
             inactiveModal(modalId);
             setStateSelectAccount(true);
@@ -97,27 +109,30 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             });
           }).finally(() => {
             setSelected('');
+            inactiveModal(ACCOUNT_NAME_MODAL)
           });
         }, 500);
-      }).catch(() => {
-        // User cancel unlock
-      });
-    };
-  }, [checkUnlock, clearSearch, inactiveModal, notify, setStateSelectAccount]);
+      }
+  }, [accountSelected])
 
-  const renderItem = useCallback((account: AccountJson): React.ReactNode => {
+  useEffect(() => {
+    if(accountSelected) {
+      activeModal(ACCOUNT_NAME_MODAL);
+    }
+  }, [accountSelected, activeModal])
+
+  const renderItem = useCallback((account: AccountProxy): React.ReactNode => {
     const disabled = !!selected;
-    const isSelected = account.address === selected;
+    const isSelected = account.id === selected;
 
     return (
-      <React.Fragment key={account.address}>
-        <AccountItemWithName
-          accountName={account.name}
-          address={account.address}
-          avatarSize={token.sizeLG}
-          className={CN({ disabled: disabled && !isSelected }) }
+      <React.Fragment key={account.id}>
+        <AccountProxyItem
+          accountProxy={account}
+          className={CN({ disabled: disabled && !isSelected }, 'account-derive-item') }
           onClick={disabled ? undefined : onSelectAccount(account)}
-          renderRightItem={isSelected ? renderLoaderIcon : undefined}
+          showUnselectIcon={false}
+          renderRightPart={isSelected ? renderLoaderIcon : undefined}
         />
       </React.Fragment>
     );
@@ -126,26 +141,35 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const onBack = useSwitchModal(modalId, CREATE_ACCOUNT_MODAL, clearSearch);
 
   return (
-    <SwModal
-      className={className}
-      closeIcon={(<BackIcon />)}
-      id={modalId}
-      maskClosable={false}
-      onCancel={selected ? undefined : onBack}
-      title={t('Select account')}
-    >
-      <SwList.Section
-        displayRow={true}
-        enableSearchInput={true}
-        list={filtered}
-        ref={sectionRef}
-        renderItem={renderItem}
-        renderWhenEmpty={renderEmpty}
-        rowGap='var(--row-gap)'
-        searchFunction={searchAccountFunction}
-        searchPlaceholder={t<string>('Account name')}
+    <>
+      <SwModal
+        className={className}
+        closeIcon={(<BackIcon />)}
+        id={modalId}
+        maskClosable={false}
+        onCancel={selected ? undefined : onBack}
+        title={t('Select account')}
+      >
+        <SwList.Section
+          displayRow={true}
+          enableSearchInput={true}
+          list={filtered}
+          ref={sectionRef}
+          renderItem={renderItem}
+          renderWhenEmpty={renderEmpty}
+          rowGap='var(--row-gap)'
+          searchFunction={searchAccountFunction}
+          searchPlaceholder={t<string>('Account name')}
+        />
+      </SwModal>
+
+      <AccountNameModal
+        onSubmit={onSubmitAccount}
+        accountType={accountSelected?.accountType}
+        isLoading={!!selected}
       />
-    </SwModal>
+    </>
+
   );
 };
 
@@ -182,6 +206,10 @@ const DeriveAccountModal = styled(Component)<Props>(({ theme: { token } }: Props
           backgroundColor: token['gray-1']
         }
       }
+    },
+
+    '.account-derive-item': {
+      display: 'flex !important'
     }
   };
 });
