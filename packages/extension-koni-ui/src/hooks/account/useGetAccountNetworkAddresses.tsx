@@ -4,7 +4,7 @@
 import { AccountProxy } from '@subwallet/extension-base/types';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress } from '@subwallet/extension-koni-ui/types';
-import { getReformatedAddressRelatedToNetwork } from '@subwallet/extension-koni-ui/utils';
+import { getChainsByAccountType, getReformatedAddressRelatedToNetwork } from '@subwallet/extension-koni-ui/utils';
 import { useMemo } from 'react';
 
 // todo:
@@ -16,10 +16,11 @@ const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetwo
 
   return useMemo(() => {
     const result: AccountNetworkAddress[] = [];
+    const chains: string[] = getChainsByAccountType(chainInfoMap, accountProxy.networkTypes, accountProxy.specialNetwork);
 
     accountProxy.accounts.forEach((a) => {
-      for (const chainSlug in chainInfoMap) {
-        const chainInfo = chainInfoMap[chainSlug];
+      for (const chain of chains) {
+        const chainInfo = chainInfoMap[chain];
         const reformatedAddress = getReformatedAddressRelatedToNetwork(a, chainInfo);
 
         if (reformatedAddress) {
@@ -33,7 +34,7 @@ const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetwo
     });
 
     return result;
-  }, [accountProxy.accounts, chainInfoMap]);
+  }, [accountProxy, chainInfoMap]);
 };
 
 export default useGetAccountNetworkAddresses;

@@ -502,6 +502,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountProxy => {
   const networkTypes = new Set<AccountNetworkType>();
   const tokenTypes = new Set<_AssetType>();
+  const specialNetwork: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialNetwork : undefined;
 
   for (const accountProxy of accountProxies) {
     // Have 4 network types, but at the moment, we only support 3 network types
@@ -526,6 +527,7 @@ export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountP
     accounts: [],
     accountType: AccountProxyType.ALL_ACCOUNT,
     networkTypes: Array.from(networkTypes),
-    tokenTypes: Array.from(tokenTypes)
+    tokenTypes: Array.from(tokenTypes),
+    specialNetwork
   };
 };

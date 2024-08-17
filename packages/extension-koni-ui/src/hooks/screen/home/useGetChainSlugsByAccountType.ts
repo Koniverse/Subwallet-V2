@@ -1,94 +1,70 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountJson } from '@subwallet/extension-base/types';
+import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { AccountNetworkType } from '@subwallet/extension-base/types';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { AccountType } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
-import { findAccountByAddress } from '@subwallet/extension-koni-ui/utils/account/account';
-import { findNetworkJsonByGenesisHash } from '@subwallet/extension-koni-ui/utils/chain/getNetworkJsonByGenesisHash';
+import { findAccountByAddress, getChainsByAccountType, isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { isEthereumAddress } from '@polkadot/util-crypto';
-
-function getChainsAccountType (accountType: AccountType, chainInfoMap: Record<string, _ChainInfo>, accountNetworks?: string[]): string[] {
-  const result: string[] = [];
-
-  Object.keys(chainInfoMap).forEach((chain) => {
-    if (accountNetworks) {
-      if (accountNetworks.includes(chain)) {
-        result.push(chain);
-      }
-    } else {
-      const isChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[chain]);
-
-      if (isChainEvmCompatible) {
-        if (accountType === 'ALL' || accountType === 'ETHEREUM') {
-          result.push(chain);
-        }
-      } else {
-        if (accountType === 'ALL' || accountType === 'SUBSTRATE') {
-          result.push(chain);
-        }
-      }
-    }
-  });
-
-  return result;
-}
-
-export function useGetChainSlugsByAccountType (address?: string): string[] {
+export const useGetChainSlugsByAccountType = (address?: string): string[] => {
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
-  const { accounts, currentAccount } = useSelector((state: RootState) => state.accountState);
+  const { accountProxies, accounts, currentAccountProxy } = useSelector((state: RootState) => state.accountState);
 
-  const accountType = useMemo(() => {
-    let accountType: AccountType = 'ALL';
+  const networkTypes = useMemo((): AccountNetworkType[] => {
+    const _address = address || currentAccountProxy?.id;
 
-    if (address) {
-      if (isAccountAll(address)) {
-        return 'ALL';
+    if (_address) {
+      if (isAccountAll(_address)) {
+        const allAccount = accountProxies.find((proxy) => proxy.id === ALL_ACCOUNT_KEY);
+
+        return allAccount?.networkTypes || [];
       }
 
-      if (isEthereumAddress(address)) {
-        accountType = 'ETHEREUM';
-      } else {
-        accountType = 'SUBSTRATE';
+      const proxy = accountProxies.find((proxy) => proxy.id === _address);
+
+      if (proxy) {
+        return proxy.networkTypes;
       }
-    } else if (currentAccount?.type) {
-      if (currentAccount.type === 'ethereum') {
-        accountType = 'ETHEREUM';
-      } else if (['ed25519', 'sr25519', 'ecdsa'].includes(currentAccount.type)) {
-        accountType = 'SUBSTRATE';
+
+      const account = findAccountByAddress(accounts, _address);
+
+      if (account) {
+        return [account.networkType];
       }
     }
 
-    return accountType;
-  }, [address, currentAccount?.type]);
+    return [];
+  }, [accountProxies, accounts, address, currentAccountProxy]);
 
-  const accountNetwork = useMemo(() => {
-    let account: AccountJson | null = currentAccount;
+  const specialNetwork = useMemo((): string | undefined => {
+    const _address = address || currentAccountProxy?.id;
 
-    if (address) {
-      account = findAccountByAddress(accounts, address);
-    }
+    if (_address) {
+      if (isAccountAll(_address)) {
+        const allAccount = accountProxies.find((proxy) => proxy.id === ALL_ACCOUNT_KEY);
 
-    if (account?.isHardware) {
-      if (account.isGeneric) {
-        return undefined;
-      } else {
-        const availableGen: string[] = account.availableGenesisHashes || [];
-
-        return availableGen.map((gen) => findNetworkJsonByGenesisHash(chainInfoMap, gen)?.slug || '');
+        return allAccount?.specialNetwork;
       }
-    } else {
-      return undefined;
+
+      const proxy = accountProxies.find((proxy) => proxy.id === _address);
+
+      if (proxy) {
+        return proxy.specialNetwork;
+      }
+
+      const account = findAccountByAddress(accounts, _address);
+
+      if (account) {
+        return account.specialNetwork;
+      }
     }
-  }, [accounts, address, chainInfoMap, currentAccount]);
+
+    return undefined;
+  }, [accountProxies, accounts, address, currentAccountProxy?.id]);
 
   return useMemo<string[]>(() => {
-    return getChainsAccountType(accountType, chainInfoMap, accountNetwork);
-  }, [accountType, chainInfoMap, accountNetwork]);
-}
+    return getChainsByAccountType(chainInfoMap, networkTypes, specialNetwork);
+  }, [networkTypes, chainInfoMap, specialNetwork]);
+};

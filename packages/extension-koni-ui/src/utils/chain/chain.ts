@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _getSubstrateGenesisHash, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountNetworkType } from '@subwallet/extension-base/types';
 
 export const findChainInfoByGenesisHash = (chainMap: Record<string, _ChainInfo>, genesisHash?: string): _ChainInfo | null => {
@@ -47,4 +47,32 @@ export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, networkTy
   }
 
   return false;
+};
+
+export const getChainsByAccountType = (chainInfoMap: Record<string, _ChainInfo>, networkTypes: AccountNetworkType[], specialNetwork?: string): string[] => {
+  if (specialNetwork) {
+    return Object.keys(chainInfoMap).filter((chain) => specialNetwork === chain);
+  } else {
+    const result: string[] = [];
+
+    for (const chainInfo of Object.values(chainInfoMap)) {
+      const chain = chainInfo.slug;
+      const isEvmChain = _isChainEvmCompatible(chainInfo);
+      const isTonChain = _isChainTonCompatible(chainInfo);
+      const isSubstrateChain = _isChainSubstrateCompatible(chainInfo);
+      const isBitcoinChain = _isChainBitcoinCompatible(chainInfo);
+
+      if (isEvmChain && networkTypes.includes(AccountNetworkType.ETHEREUM)) {
+        result.push(chain);
+      } else if (isTonChain && networkTypes.includes(AccountNetworkType.TON)) {
+        result.push(chain);
+      } else if (isSubstrateChain && networkTypes.includes(AccountNetworkType.SUBSTRATE)) {
+        result.push(chain);
+      } else if (isBitcoinChain && networkTypes.includes(AccountNetworkType.BITCOIN)) {
+        result.push(chain);
+      }
+    }
+
+    return result;
+  }
 };

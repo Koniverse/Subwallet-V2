@@ -65,7 +65,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           name: accountName,
           suri: privateKey.trim(),
           isAllowed: true,
-          types: [EVM_ACCOUNT_TYPE]
+          type: EVM_ACCOUNT_TYPE
         })
           .then(() => {
             onComplete();
@@ -102,7 +102,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         });
 
         timeOutRef.current = setTimeout(() => {
-          validateMetamaskPrivateKeyV2(privateKey.trim(), [EVM_ACCOUNT_TYPE])
+          validateMetamaskPrivateKeyV2(privateKey.trim())
             .then(({ autoAddPrefix }) => {
               if (amount) {
                 if (autoAddPrefix) {
