@@ -61,14 +61,14 @@ export function _validateBalanceToSwap (fromToken: _ChainAsset, feeToken: _Chain
     return new TransactionError(BasicTxErrorType.NOT_ENOUGH_BALANCE, `You don't have enough ${feeToken.symbol} (${feeTokenChainInfo.name}) to pay transaction fee`);
   }
 
+  if (isXcmOk) { // assume that the swap is valid if XCM is in the process and it was successful
+    return undefined;
+  }
+
   if (fromToken.slug === feeToken.slug) { // todo: need review and refactor
     if (bnFromTokenBalance.lte(new BigN(feeAmount).plus(swapAmount))) {
       return new TransactionError(BasicTxErrorType.NOT_ENOUGH_BALANCE, `Insufficient balance. Deposit ${fromToken.symbol} and try again.`);
     }
-  }
-
-  if (isXcmOk) { // assume that the swap is valid if XCM is in the process and it was successful
-    return undefined;
   }
 
   if (minSwap) {

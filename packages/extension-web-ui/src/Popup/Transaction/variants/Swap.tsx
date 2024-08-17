@@ -4,11 +4,11 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { _getAssetDecimals, _getAssetOriginChain, _getAssetSymbol, _getChainNativeTokenSlug, _getOriginChainOfAsset, _isChainEvmCompatible, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetOriginChain, _getAssetPriceId, _getAssetSymbol, _getChainNativeTokenSlug, _getOriginChainOfAsset, _isChainEvmCompatible, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { CommonFeeComponent, CommonOptimalPath, CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
+import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType } from '@subwallet/extension-base/types/swap';
 import { formatNumberString, isAccountAll, swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { AccountSelector, AddMoreBalanceModal, AddressInput, AlertBox, ChooseFeeTokenModal, HiddenInput, MetaInfo, PageWrapper, QuoteResetTime, SlippageModal, SwapFromField, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapRoute, SwapTermsOfServiceModal, SwapToField } from '@subwallet/extension-web-ui/components';
 import { BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, DEFAULT_SWAP_PARAMS, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-web-ui/constants';
@@ -109,6 +109,7 @@ const Component = () => {
   const [handleRequestLoading, setHandleRequestLoading] = useState(true);
   const [requestUserInteractToContinue, setRequestUserInteractToContinue] = useState<boolean>(false);
   const continueRefreshQuoteRef = useRef<boolean>(false);
+  const currentSwapPairSlugRef = useRef<string>('');
   const { token } = useTheme() as Theme;
 
   const onIdle = useCallback(() => {
@@ -329,8 +330,12 @@ const Component = () => {
     persistData(values);
   }, [persistData]);
 
+  const isSwapHydraDX = useMemo(() => {
+    return currentQuote && [SwapProviderId.HYDRADX_TESTNET, SwapProviderId.HYDRADX_MAINNET].includes(currentQuote?.provider.id);
+  }, [currentQuote]);
+
   const estimatedFeeValue = useMemo(() => {
-    let totalBalance = BN_ZERO;
+    let result = BN_ZERO;
 
     currentQuote?.feeInfo.feeComponent.forEach((feeItem) => {
       const asset = assetRegistryMap[feeItem.tokenSlug];
@@ -339,12 +344,33 @@ const Component = () => {
         const { decimals, priceId } = asset;
         const price = priceMap[priceId || ''] || 0;
 
-        totalBalance = totalBalance.plus(new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price));
+        result = result.plus(new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price));
       }
     });
 
-    return totalBalance;
+    return result;
   }, [assetRegistryMap, currentQuote?.feeInfo.feeComponent, priceMap]);
+
+  const hydraDXNetworkFee = useMemo(() => {
+    let result = BN_ZERO;
+
+    if (isSwapHydraDX) {
+      const feeItem = currentQuote?.feeInfo.feeComponent.find((feeItem) => feeItem.feeType === SwapFeeType.NETWORK_FEE);
+
+      if (feeItem) {
+        const asset = assetRegistryMap[feeItem.tokenSlug];
+
+        if (asset) {
+          const { decimals, priceId } = asset;
+          const price = priceMap[priceId || ''] || 0;
+
+          result = new BigN(feeItem.amount).div(BN_TEN.pow(decimals || 0)).multipliedBy(price);
+        }
+      }
+    }
+
+    return result;
+  }, [assetRegistryMap, currentQuote?.feeInfo.feeComponent, isSwapHydraDX, priceMap]);
 
   const getConvertedBalance = useCallback((feeItem: CommonFeeComponent) => {
     const asset = assetRegistryMap[feeItem.tokenSlug];
@@ -536,6 +562,14 @@ const Component = () => {
     [notify, onDone, onError, t]
   );
 
+  const convertedNetworkFee = useMemo(() => {
+    if (!priceMap[_getAssetPriceId(feeAssetInfo)] || !priceMap[_getAssetPriceId(feeAssetInfo)]) {
+      return undefined;
+    }
+
+    return new BigN(hydraDXNetworkFee).div(priceMap[_getAssetPriceId(feeAssetInfo)] || 0);
+  }, [hydraDXNetworkFee, feeAssetInfo, priceMap]);
+
   const onSubmit: FormCallbacks<SwapParams>['onFinish'] = useCallback((values: SwapParams) => {
     if (chainValue && !checkChainConnected(chainValue)) {
       openAlert({
@@ -613,7 +647,8 @@ const Component = () => {
           } else {
             let latestOptimalQuote = currentQuote;
 
-            if (currentOptimalSwapPath.steps.length > 2 && isLastStep) {
+            if (currentOptimalSwapPath.steps.length > 2 &&
+              (currentOptimalSwapPath.steps[step].type === CommonStepType.SET_FEE_TOKEN || currentOptimalSwapPath.steps[step].type === SwapStepType.SWAP)) {
               if (currentQuoteRequest) {
                 const latestSwapQuote = await getLatestSwapQuote(currentQuoteRequest);
 
@@ -868,6 +903,15 @@ const Component = () => {
   }, [chainInfoMap, currentPair, fromAssetInfo, isSwapXCM]);
 
   useEffect(() => {
+    const currentSwapPairSlug = _parseAssetRefKey(fromTokenSlugValue, toTokenSlugValue);
+
+    if (currentSwapPairSlug !== currentSwapPairSlugRef.current) {
+      setCurrentFeeOption(undefined);
+      currentSwapPairSlugRef.current = currentSwapPairSlug;
+    }
+  }, [fromTokenSlugValue, toTokenSlugValue]);
+
+  useEffect(() => {
     if (!isWebUI) {
       setBackProps((prev) => ({
         ...prev,
@@ -941,7 +985,8 @@ const Component = () => {
             },
             fromAmount: fromAmountValue,
             slippage: currentSlippage.slippage.toNumber(),
-            recipient: recipientValue || undefined
+            recipient: recipientValue || undefined,
+            feeToken: currentFeeOption
           };
 
           handleSwapRequest(currentRequest).then((result) => {
@@ -961,7 +1006,7 @@ const Component = () => {
               setCurrentQuote(result.quote.optimalQuote);
               setQuoteAliveUntil(result.quote.aliveUntil);
               setFeeOptions(result.quote.optimalQuote?.feeInfo?.feeOptions || []);
-              setCurrentFeeOption(result.quote.optimalQuote?.feeInfo?.feeOptions?.[0]);
+              !currentFeeOption && setCurrentFeeOption(result.quote.optimalQuote?.feeInfo?.feeOptions?.[0]);
               setSwapError(result.quote.error);
               optimalQuoteRef.current = result.quote.optimalQuote;
               setHandleRequestLoading(false);
@@ -987,7 +1032,7 @@ const Component = () => {
       sync = false;
       clearTimeout(timeout);
     };
-  }, [currentSlippage, form, fromAmountValue, fromTokenSlugValue, fromValue, recipientValue, showRecipientField, toTokenSlugValue]);
+  }, [currentFeeOption, currentSlippage, form, fromAmountValue, fromTokenSlugValue, fromValue, recipientValue, showRecipientField, toTokenSlugValue]);
 
   useEffect(() => {
     // eslint-disable-next-line prefer-const
@@ -1458,72 +1503,154 @@ const Component = () => {
               </>
             </div>
 
-            {
-              !!currentQuote && !handleRequestLoading && !isFormInvalid && (
-                <MetaInfo
-                  className={CN('__quote-fee-info-block')}
-                  hasBackgroundWrapper
-                  labelColorScheme={'gray'}
-                  spaceSize={'xs'}
-                  valueColorScheme={'gray'}
-                >
-                  <MetaInfo.Number
-                    className={'__total-fee-value'}
-                    decimals={0}
-                    label={t('Estimated fee')}
-                    onClickValue={onToggleFeeDetails}
-                    prefix={(currencyData.isPrefix && currencyData.symbol) || ''}
-                    suffix={(!currencyData.isPrefix && currencyData.symbol) || ''}
-                    suffixNode={
-                      <Icon
-                        className={'__estimated-fee-button'}
-                        customSize={'20px'}
-                        phosphorIcon={isViewFeeDetails ? CaretUp : CaretDown}
-                      />
+            { !isSwapHydraDX
+              ? (
+                !!currentQuote && !handleRequestLoading && !isFormInvalid && (
+                  <MetaInfo
+                    className={CN('__quote-fee-info-block')}
+                    hasBackgroundWrapper
+                    labelColorScheme={'gray'}
+                    spaceSize={'xs'}
+                    valueColorScheme={'gray'}
+                  >
+                    <MetaInfo.Number
+                      className={'__total-fee-value'}
+                      decimals={0}
+                      label={t('Estimated fee')}
+                      onClickValue={onToggleFeeDetails}
+                      prefix={(currencyData.isPrefix && currencyData.symbol) || ''}
+                      suffix={(!currencyData.isPrefix && currencyData.symbol) || ''}
+                      suffixNode={
+                        <Icon
+                          className={'__estimated-fee-button'}
+                          customSize={'20px'}
+                          phosphorIcon={isViewFeeDetails ? CaretUp : CaretDown}
+                        />
+                      }
+                      value={estimatedFeeValue}
+                    />
+
+                    {
+                      isViewFeeDetails && (
+                        <div className={'__quote-fee-details-block'}>
+                          {feeItems.map((item) => (
+                            <MetaInfo.Number
+                              decimals={0}
+                              key={item.type}
+                              label={t(item.label)}
+                              prefix={item.prefix}
+                              suffix={item.suffix}
+                              value={item.value}
+                            />
+                          ))}
+                        </div>
+                      )
                     }
-                    value={estimatedFeeValue}
-                  />
 
-                  {
-                    isViewFeeDetails && (
-                      <div className={'__quote-fee-details-block'}>
-                        {feeItems.map((item) => (
-                          <MetaInfo.Number
-                            decimals={0}
-                            key={item.type}
-                            label={t(item.label)}
-                            prefix={item.prefix}
-                            suffix={item.suffix}
-                            value={item.value}
-                          />
-                        ))}
+                    <div className={'__separator'}></div>
+                    <div className={'__fee-paid-wrapper'}>
+                      <div className={'__fee-paid-label'}>Fee paid in</div>
+                      <div
+                        className={'__fee-paid-token'}
+                        onClick={openChooseFeeToken}
+                      >
+                        <Logo
+                          className='token-logo'
+                          isShowSubLogo={false}
+                          shape='circle'
+                          size={24}
+                          token={feeAssetInfo && feeAssetInfo.slug.toLowerCase()}
+                        />
+                        <div className={'__fee-paid-token-symbol'}>{_getAssetSymbol(feeAssetInfo)}</div>
+                        <Icon
+                          className={'__edit-token'}
+                          customSize={'20px'}
+                          phosphorIcon={PencilSimpleLine}
+                        />
                       </div>
-                    )
-                  }
-
-                  <div className={'__separator'}></div>
-                  <div className={'__fee-paid-wrapper'}>
-                    <div className={'__fee-paid-label'}>Fee paid in</div>
-                    <div
-                      className={'__fee-paid-token'}
-                      onClick={openChooseFeeToken}
-                    >
-                      <Logo
-                        className='token-logo'
-                        isShowSubLogo={false}
-                        shape='circle'
-                        size={24}
-                        token={feeAssetInfo && feeAssetInfo.slug.toLowerCase()}
-                      />
-                      <div className={'__fee-paid-token-symbol'}>{_getAssetSymbol(feeAssetInfo)}</div>
-                      <Icon
-                        className={'__edit-token'}
-                        customSize={'20px'}
-                        phosphorIcon={PencilSimpleLine}
-                      />
                     </div>
-                  </div>
-                </MetaInfo>
+                  </MetaInfo>
+                ))
+              : (
+                !!currentQuote && !handleRequestLoading && !isFormInvalid && (
+                  <MetaInfo
+                    className={CN('__quote-fee-info-block')}
+                    hasBackgroundWrapper
+                    labelColorScheme={'gray'}
+                    spaceSize={'xs'}
+                    valueColorScheme={'gray'}
+                  >
+
+                    <div className={'__quote-fee-block'}>
+                      {feeItems.map((item, index) => (
+                        <div key={`${item.type}-${index}`}>
+                          {item.type === SwapFeeType.NETWORK_FEE
+                            ? (
+                              <div className={'__fee-paid-token-wrapper'}>
+                                <MetaInfo.Number
+                                  decimals={0}
+                                  label={t(item.label)}
+                                  prefix={item.prefix}
+                                  suffix={item.suffix}
+                                  value={item.value}
+                                />
+                                <div
+                                  className={'__fee-paid-token'}
+                                  onClick={openChooseFeeToken}
+                                >
+                                  {convertedNetworkFee && (
+                                    <>
+                                      <span>~&nbsp;</span>
+                                      <Number
+                                        className={'__network-fee-info'}
+                                        customFormatter={swapCustomFormatter}
+                                        decimal={0}
+                                        formatType={'custom'}
+                                        metadata={numberMetadata}
+                                        suffix={_getAssetSymbol(feeAssetInfo)}
+                                        unitOpacity={0.45}
+                                        value={convertedNetworkFee}
+                                      />
+                                    </>
+                                  )}
+                                  <Logo
+                                    className='token-logo'
+                                    isShowSubLogo={false}
+                                    shape='circle'
+                                    size={16}
+                                    token={feeAssetInfo && feeAssetInfo.slug.toLowerCase()}
+                                  />
+                                  <Icon
+                                    className={'__edit-token'}
+                                    customSize={'20px'}
+                                    phosphorIcon={PencilSimpleLine}
+                                  />
+                                </div>
+                              </div>
+                            )
+                            : (
+                              <MetaInfo.Number
+                                decimals={0}
+                                label={t(item.label)}
+                                prefix={item.prefix}
+                                suffix={item.suffix}
+                                value={item.value}
+                              />
+                            )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className={'__separator'}></div>
+                    <MetaInfo.Number
+                      className={'__total-fee-value'}
+                      decimals={0}
+                      label={t('Estimated fee')}
+                      prefix={'$'}
+                      value={estimatedFeeValue}
+                    />
+                  </MetaInfo>
+                )
               )
             }
           </>
@@ -1531,7 +1658,10 @@ const Component = () => {
       </>
 
       <ChooseFeeTokenModal
-        estimatedFee={estimatedFeeValue}
+        address={fromValue}
+        estimatedFeeTitle={isSwapHydraDX ? 'Network fee' : 'Estimated  fee'}
+        estimatedFeeValue={isSwapHydraDX ? hydraDXNetworkFee : estimatedFeeValue}
+        extrinsicType={ExtrinsicType.SWAP}
         items={feeOptions}
         modalId={SWAP_CHOOSE_FEE_TOKEN_MODAL}
         onSelectItem={onSelectFeeOption}
@@ -1591,8 +1721,13 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       color: token.colorTextTertiary,
       display: 'flex',
       justifyContent: 'space-between',
-      alignItems: 'center',
-      cursor: 'pointer'
+      alignItems: 'center'
+    },
+    '.__fee-paid-token-wrapper': {
+      marginBottom: token.marginSM,
+      '.__fee-paid-token': {
+        marginTop: token.marginXXS
+      }
     },
     '.__xcm-notification, .__assethub-notification': {
       marginBottom: token.marginSM
@@ -1612,11 +1747,23 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
     },
     '.__fee-paid-token': {
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      cursor: 'pointer'
     },
     '.__fee-paid-token-symbol': {
       paddingLeft: 8,
       color: token.colorWhite
+    },
+    '.__network-fee-token-symbol': {
+      color: token.colorWhite
+    },
+    '.token-logo .ant-image': {
+      display: 'flex',
+      alignItems: 'center'
+    },
+    '.__network-fee-info': {
+      paddingRight: 4
     },
     '.__quote-icon-info': {
       fontSize: 16,
@@ -1686,7 +1833,8 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       paddingLeft: token.paddingXXS
     },
     '.__edit-token': {
-      paddingLeft: token.paddingXXS
+      paddingLeft: token.paddingXXS,
+      color: token.colorTextTertiary
     },
 
     '.free-balance': {
@@ -1804,6 +1952,27 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
     '.__quote-fee-details-block': {
       marginTop: token.marginXS,
       paddingLeft: token.paddingXS,
+      fontSize: token.fontSize,
+      lineHeight: token.lineHeight,
+      fontWeight: token.bodyFontWeight,
+      color: token.colorWhite,
+
+      '.ant-number-integer': {
+        color: `${token.colorWhite} !important`,
+        fontSize: 'inherit !important',
+        fontWeight: 'inherit !important',
+        lineHeight: 'inherit'
+      },
+
+      '.ant-number-decimal, .ant-number-prefix': {
+        color: `${token.colorWhite} !important`,
+        fontSize: `${token.fontSize}px !important`,
+        fontWeight: 'inherit !important',
+        lineHeight: token.colorTextLight2
+      }
+    },
+    '.__quote-fee-block': {
+      marginTop: token.marginXS,
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
       fontWeight: token.bodyFontWeight,

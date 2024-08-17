@@ -528,7 +528,7 @@ export enum ExtrinsicType {
 
   SWAP = 'swap',
 
-  // SET_FEE_TOKEN = 'set_fee-token',
+  SET_FEE_TOKEN = 'set_fee-token',
 
   EVM_EXECUTE = 'evm.execute',
   UNKNOWN = 'unknown'
@@ -583,7 +583,8 @@ export interface ExtrinsicDataTypeMap {
 
   [ExtrinsicType.EVM_EXECUTE]: TransactionConfig,
   [ExtrinsicType.CROWDLOAN]: any,
-  [ExtrinsicType.SWAP]: SwapTxData
+  [ExtrinsicType.SWAP]: SwapTxData,
+  [ExtrinsicType.SET_FEE_TOKEN]: RequestChangeFeeToken,
   [ExtrinsicType.UNKNOWN]: any
 }
 
@@ -631,6 +632,7 @@ export interface AmountData extends BasicTokenInfo {
 
 export interface FeeData extends AmountData {
   tooHigh?: boolean;
+  feeTokenSlug: string;
 }
 
 export interface AmountDataWithId extends AmountData {
@@ -1516,6 +1518,7 @@ export interface ResponseQrSignEvm {
 export interface RequestChangeFeeToken {
   currentFeeToken?: string;
   selectedFeeToken: string;
+  convertedFeeAmount: string;
 }
 
 /// Transfer

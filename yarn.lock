@@ -2510,62 +2510,70 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@galacticcouncil/math-lbp@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "@galacticcouncil/math-lbp@npm:0.2.1"
-  checksum: 441857c4517a765f57d916cd492949d4de9bd1445307c25611c01c3b87ad77cd2e39dcd79e59dd7e1390e38fd4d402ce64987e2ad22079711168906892f46128
+"@galacticcouncil/math-lbp@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@galacticcouncil/math-lbp@npm:1.0.0"
+  checksum: a18f8f780cada186fcf720f09538604948acb9f51da1d4a5507d6b0faf7d0cb375206ee4c0ddea1e76bfda78f8a3e48154b6cb87515bb9dbae62972163119f60
   languageName: node
   linkType: hard
 
-"@galacticcouncil/math-omnipool@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@galacticcouncil/math-omnipool@npm:0.2.0"
-  checksum: 40f6af95461c7bf47a814196318207dcf6bf9f1b098aa60a5689a0b34747807fa3d3aaaefe8a9a1406d0211f3f8371c6b5e7ed5922f488a9bc59ece7c14783f7
+"@galacticcouncil/math-liquidity-mining@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@galacticcouncil/math-liquidity-mining@npm:1.0.0"
+  checksum: 911d2ffe466316ded05cbe1a844e15aff35a2ecb08bcadca82e96b83cc71289d0f6630b70d32e6790251951dcdf8fd8b0782b3fb1201b4cdd2440a874c8580af
   languageName: node
   linkType: hard
 
-"@galacticcouncil/math-stableswap@npm:^0.2.2":
-  version: 0.2.2
-  resolution: "@galacticcouncil/math-stableswap@npm:0.2.2"
-  checksum: 96a2767a84654665a8e7f8e447f21bec99daca18d40bf4a020aa49fe3b3c593fcc25453b93f17c159c681385748c7486055fdf7bb23a37d31283dd6eeab586bd
+"@galacticcouncil/math-omnipool@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@galacticcouncil/math-omnipool@npm:1.0.0"
+  checksum: e036cd0a413e77a53559912c9ad51f258e179bc30714fe754c799ab5e0611fc11a68c8ed2a58eb2f93e90aa3506e51b272f4d4a301fdf63c749c126541235491
   languageName: node
   linkType: hard
 
-"@galacticcouncil/math-xyk@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "@galacticcouncil/math-xyk@npm:0.2.0"
-  checksum: 96a3ed6e501eec2cb9cbbcfc7bf664e8f353b1197bb6d321e988452bf19fa4a3dd9b0253e2250653bab84b06f617322d087d44cc783c60117637cd7d1ea2c651
+"@galacticcouncil/math-stableswap@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@galacticcouncil/math-stableswap@npm:1.0.0"
+  checksum: b4f0e2f741de4302d992dda56d5836899fa69f9c02247a7a48da6a6e2d3b619ac9928331d8786908fc8c5bfd56069f600098ae383a4156bb96ef317b6119688a
   languageName: node
   linkType: hard
 
-"@galacticcouncil/sdk@npm:^2.1.0":
-  version: 2.2.1
-  resolution: "@galacticcouncil/sdk@npm:2.2.1"
+"@galacticcouncil/math-xyk@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@galacticcouncil/math-xyk@npm:1.0.0"
+  checksum: 9d4e85f4598c519918a9183092ebca77cc781dd1d0c5c2f90c733cd87990c99e72c0aa0d0af5e2fe14e2cd32aea85f78ca998843f56bc5d8d29ecd21289681e5
+  languageName: node
+  linkType: hard
+
+"@galacticcouncil/sdk@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "@galacticcouncil/sdk@npm:4.2.0"
   dependencies:
-    "@galacticcouncil/math-lbp": ^0.2.1
-    "@galacticcouncil/math-omnipool": ^0.2.0
-    "@galacticcouncil/math-stableswap": ^0.2.2
-    "@galacticcouncil/math-xyk": ^0.2.0
+    "@galacticcouncil/math-lbp": ^1.0.0
+    "@galacticcouncil/math-liquidity-mining": ^1.0.0
+    "@galacticcouncil/math-omnipool": ^1.0.0
+    "@galacticcouncil/math-stableswap": ^1.0.0
+    "@galacticcouncil/math-xyk": ^1.0.0
     "@thi.ng/cache": ^2.1.35
     bignumber.js: ^9.1.0
     lodash.clonedeep: ^4.5.0
   peerDependencies:
-    "@polkadot/api": ^10.9.1
-    "@polkadot/api-augment": ^10.9.1
-    "@polkadot/api-base": ^10.9.1
-    "@polkadot/api-derive": ^10.9.1
-    "@polkadot/keyring": ^12.3.2
-    "@polkadot/rpc-augment": ^10.9.1
-    "@polkadot/rpc-core": ^10.9.1
-    "@polkadot/rpc-provider": ^10.9.1
-    "@polkadot/types": ^10.9.1
-    "@polkadot/types-augment": ^10.9.1
-    "@polkadot/types-codec": ^10.9.1
-    "@polkadot/types-create": ^10.9.1
-    "@polkadot/types-known": ^10.9.1
-    "@polkadot/util": ^12.3.2
-    "@polkadot/util-crypto": ^12.3.2
-  checksum: 88b009db014e461ee1a72fb7b689e5a93eb53668f4e1ede17d3acf353f43b28a47aaea0a39c5a33ff39629ccb2da33d4b3cc238c49939dfd5794ab3d6e5cc9dd
+    "@polkadot/api": ^12.1.1
+    "@polkadot/api-augment": ^12.1.1
+    "@polkadot/api-base": ^12.1.1
+    "@polkadot/api-derive": ^12.1.1
+    "@polkadot/keyring": ^12.6.2
+    "@polkadot/rpc-augment": ^12.1.1
+    "@polkadot/rpc-core": ^12.1.1
+    "@polkadot/rpc-provider": ^12.1.1
+    "@polkadot/types": ^12.1.1
+    "@polkadot/types-augment": ^12.1.1
+    "@polkadot/types-codec": ^12.1.1
+    "@polkadot/types-create": ^12.1.1
+    "@polkadot/types-known": ^12.1.1
+    "@polkadot/util": ^12.6.2
+    "@polkadot/util-crypto": ^12.6.2
+  checksum: c552c62338f7ae3969881a50da07f9dc6e3f13c952ed6b1a9c760453c7074656033df8774fe6a8f0df8c394048f97104d0e6579c499286ec5edd17cc928dc4a7
   languageName: node
   linkType: hard
 
@@ -6073,7 +6081,7 @@ __metadata:
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
     "@ethersproject/abi": ^5.7.0
-    "@galacticcouncil/sdk": ^2.1.0
+    "@galacticcouncil/sdk": ^4.2.0
     "@gear-js/api": ^0.38.1
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/safe-event-emitter": ^2.0.0

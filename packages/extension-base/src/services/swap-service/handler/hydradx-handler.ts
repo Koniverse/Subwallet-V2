@@ -11,7 +11,7 @@ import { _getEarlyHydradxValidationError } from '@subwallet/extension-base/core/
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { createXcmExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getAssetDecimals, _getChainNativeTokenSlug, _getTokenOnChainAssetId, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getChainNativeTokenSlug, _getTokenOnChainAssetId, _isNativeToken, _isNativeTokenBySlug } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { calculateSwapRate, getSwapAlternativeAsset, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { RuntimeDispatchInfo } from '@subwallet/extension-base/types';
@@ -148,7 +148,7 @@ export class HydradxHandler implements SwapBaseInterface {
       const fee: CommonStepFeeInfo = {
         feeComponent: [{
           feeType: SwapFeeType.NETWORK_FEE,
-          amount: Math.round(xcmFeeInfo.partialFee * 1.2).toString(),
+          amount: Math.round(xcmFeeInfo.partialFee * 1.5).toString(),
           tokenSlug: _getChainNativeTokenSlug(alternativeChainInfo)
         }],
         defaultFeeToken: _getChainNativeTokenSlug(alternativeChainInfo),
@@ -166,73 +166,167 @@ export class HydradxHandler implements SwapBaseInterface {
       return Promise.resolve(undefined);
     }
 
-    const selectedFeeToken = params.selectedQuote.feeInfo.selectedFeeToken;
-
-    if (!selectedFeeToken) {
-      return undefined;
-    }
-
     const feeStep: BaseStepDetail = {
       name: 'Set fee token',
       type: CommonStepType.SET_FEE_TOKEN
     };
 
     try {
+      const customFeeTokenSlug = params.request.feeToken;
+
       const substrateApi = this.chainService.getSubstrateApi(this.chain());
       const chainApi = await substrateApi.isReady;
 
       const _currentFeeAssetId = await chainApi.api.query.multiTransactionPayment.accountCurrencyMap(params.request.address);
-      const currentFeeAssetId = _currentFeeAssetId.toString();
+      const currentFeeAssetId = _currentFeeAssetId?.toString();
 
-      const selectedFeeAsset = this.chainService.getAssetBySlug(selectedFeeToken);
-      const assetId = _getTokenOnChainAssetId(selectedFeeAsset);
+      const nativeTokenInfo = this.chainService.getNativeTokenInfo(this.chain());
+      const nativeTokenAssetId = _getTokenOnChainAssetId(nativeTokenInfo);
 
-      if (currentFeeAssetId === assetId) {
-        return;
+      const userRequestChangeFeeToken = !!customFeeTokenSlug && !_isNativeTokenBySlug(customFeeTokenSlug);
+
+      if (!userRequestChangeFeeToken) {
+        const isCurrentFeeTokenNative = !currentFeeAssetId || nativeTokenAssetId === currentFeeAssetId;
+
+        if (!isCurrentFeeTokenNative) {
+          const setFeeTx = chainApi.api.tx.multiTransactionPayment.setCurrency(nativeTokenAssetId);
+          const _txFee = await setFeeTx.paymentInfo(params.request.address);
+          const txFee = _txFee.toPrimitive() as unknown as RuntimeDispatchInfo;
+
+          const fee: CommonStepFeeInfo = {
+            feeComponent: [{
+              feeType: SwapFeeType.NETWORK_FEE,
+              amount: new BigNumber(txFee.partialFee).toString(),
+              tokenSlug: nativeTokenInfo.slug
+            }],
+            selectedFeeToken: nativeTokenInfo.slug,
+            defaultFeeToken: nativeTokenInfo.slug,
+            feeOptions: [nativeTokenInfo.slug]
+          };
+
+          return [
+            feeStep,
+            fee
+          ];
+        }
+      } else {
+        const selectedFeeTokenInfo = this.chainService.getAssetBySlug(customFeeTokenSlug);
+        const selectedFeeAssetId = _getTokenOnChainAssetId(selectedFeeTokenInfo);
+        const isCurrentFeeTokenSameAsRequest = currentFeeAssetId && selectedFeeAssetId === currentFeeAssetId;
+
+        if (!isCurrentFeeTokenSameAsRequest) {
+          const setFeeTx = chainApi.api.tx.multiTransactionPayment.setCurrency(selectedFeeAssetId);
+          const _txFee = await setFeeTx.paymentInfo(params.request.address);
+          const txFee = _txFee.toPrimitive() as unknown as RuntimeDispatchInfo;
+          const spotPrice = await this.tradeRouter?.getBestSpotPrice(selectedFeeAssetId, nativeTokenAssetId);
+
+          if (!spotPrice) {
+            return; // todo: should handle this better, can potentially cause failed transaction in the following steps
+          }
+
+          const convertedFeeAmount = new BigNumber(txFee.partialFee).dividedBy(spotPrice.amount);
+
+          const fee: CommonStepFeeInfo = {
+            feeComponent: [{
+              feeType: SwapFeeType.NETWORK_FEE,
+              amount: convertedFeeAmount.shiftedBy(_getAssetDecimals(selectedFeeTokenInfo)).toFixed(0),
+              tokenSlug: selectedFeeTokenInfo.slug
+            }],
+            selectedFeeToken: selectedFeeTokenInfo.slug,
+            defaultFeeToken: selectedFeeTokenInfo.slug,
+            feeOptions: [selectedFeeTokenInfo.slug]
+          };
+
+          return [
+            feeStep,
+            fee
+          ];
+        }
       }
 
-      const setFeeTx = chainApi.api.tx.multiTransactionPayment.setCurrency(assetId);
-      const _txFee = await setFeeTx.paymentInfo(params.request.address);
-      const txFee = _txFee.toPrimitive() as unknown as RuntimeDispatchInfo;
-
-      const fee: CommonStepFeeInfo = {
-        feeComponent: [{
-          feeType: SwapFeeType.NETWORK_FEE,
-          amount: Math.round(txFee.partialFee).toString(),
-          tokenSlug: selectedFeeAsset.slug
-        }],
-        selectedFeeToken: selectedFeeAsset.slug,
-        defaultFeeToken: selectedFeeAsset.slug,
-        feeOptions: [selectedFeeAsset.slug]
-      };
-
-      return [
-        feeStep,
-        fee
-      ];
+      return undefined;
     } catch (e) {
       return undefined;
     }
   }
 
   async getSubmitStep (params: OptimalSwapPathParams): Promise<[BaseStepDetail, CommonStepFeeInfo] | undefined> {
-    if (params.selectedQuote) {
+    try {
+      if (!params.selectedQuote) {
+        return Promise.resolve(undefined);
+      }
+
       const submitStep = {
         name: 'Swap',
         type: SwapStepType.SWAP
       };
 
-      return Promise.resolve([submitStep, params.selectedQuote.feeInfo]);
-    }
+      const defaultFeeInfo = params.selectedQuote.feeInfo;
 
-    return Promise.resolve(undefined);
+      const customFeeTokenSlug = params.request.feeToken;
+      const userRequestChangeFeeToken = !!customFeeTokenSlug && !_isNativeTokenBySlug(customFeeTokenSlug);
+
+      if (!userRequestChangeFeeToken) {
+        return Promise.resolve([submitStep, defaultFeeInfo]);
+      }
+
+      // if user changed fee token, then calculate & override the default fee info
+      const networkFee = defaultFeeInfo.feeComponent.find((fee) => fee.feeType === SwapFeeType.NETWORK_FEE);
+
+      if (defaultFeeInfo.selectedFeeToken !== params.request.feeToken || !networkFee) { // invalid data
+        return Promise.resolve(undefined);
+      }
+
+      const substrateApi = this.chainService.getSubstrateApi(this.chain());
+      const chainApi = await substrateApi.isReady;
+
+      const nativeTokenInfo = this.chainService.getNativeTokenInfo(this.chain());
+      const nativeTokenAssetId = _getTokenOnChainAssetId(nativeTokenInfo);
+      const selectedFeeTokenInfo = this.chainService.getAssetBySlug(customFeeTokenSlug);
+      const selectedFeeAssetId = _getTokenOnChainAssetId(selectedFeeTokenInfo);
+
+      const convertedFeeInfo: CommonStepFeeInfo = {
+        ...defaultFeeInfo,
+        feeComponent: defaultFeeInfo.feeComponent.filter((component) => component.feeType !== SwapFeeType.NETWORK_FEE)
+      };
+
+      // add set fee and set referral to total fee
+      // convert to selected tokens
+      const batchTx = chainApi.api.tx.utility.batchAll([
+        chainApi.api.tx.multiTransactionPayment.setCurrency(nativeTokenAssetId),
+        chainApi.api.tx.referrals.linkCode(this.referralCode)
+      ]);
+      const _batchTxFee = await batchTx.paymentInfo(params.request.address);
+      const batchTxFee = _batchTxFee.toPrimitive() as unknown as RuntimeDispatchInfo;
+
+      const bnTotalFee = new BigNumber(networkFee.amount).plus(batchTxFee.partialFee);
+      const spotPrice = await this.tradeRouter?.getBestSpotPrice(selectedFeeAssetId, nativeTokenAssetId);
+
+      if (!spotPrice) {
+        return Promise.resolve(undefined); // todo: should handle this better, can potentially cause failed transaction in the following steps
+      }
+
+      const convertedFeeAmount = bnTotalFee.dividedBy(spotPrice.amount);
+
+      convertedFeeInfo.feeComponent.push({
+        feeType: SwapFeeType.NETWORK_FEE,
+        amount: convertedFeeAmount.shiftedBy(_getAssetDecimals(selectedFeeTokenInfo)).toFixed(0),
+        tokenSlug: selectedFeeTokenInfo.slug
+      });
+
+      return Promise.resolve([submitStep, convertedFeeInfo]);
+    } catch (e) {
+      console.error('error getting submit step', e);
+
+      return Promise.resolve(undefined);
+    }
   }
 
   generateOptimalProcess (params: OptimalSwapPathParams): Promise<CommonOptimalPath> {
     return this.swapBaseHandler.generateOptimalProcess(params, [
-      this.getXcmStep,
-      // this.getFeeOptionStep.bind(this),
-      this.getSubmitStep
+      this.getXcmStep.bind(this),
+      this.getFeeOptionStep.bind(this),
+      this.getSubmitStep.bind(this)
     ]);
   }
 
@@ -329,7 +423,7 @@ export class HydradxHandler implements SwapBaseInterface {
 
         switch (defaultError) {
           case PoolError.InsufficientTradingAmount:
-            return new SwapError(SwapErrorType.SWAP_NOT_ENOUGH_BALANCE);
+            return new SwapError(SwapErrorType.NOT_MEET_MIN_SWAP);
           case PoolError.TradeNotAllowed:
             return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
           case PoolError.MaxInRatioExceeded:
@@ -341,15 +435,13 @@ export class HydradxHandler implements SwapBaseInterface {
         }
       }
 
-      // const feeTokenOptions = this.chainService.getFeeTokensByChain(this.chain());
-      const feeTokenOptions = [fromChainNativeTokenSlug];
+      const feeTokenOptions = this.chainService.getFeeTokensByChain(this.chain());
 
-      // if (request.feeToken && !feeTokenOptions.includes(request.feeToken)) {
-      //   return new SwapError(SwapErrorType.UNKNOWN);
-      // }
+      if (request.feeToken && !feeTokenOptions.includes(request.feeToken)) {
+        return new SwapError(SwapErrorType.UNKNOWN);
+      }
 
-      // const selectedFeeToken = request.feeToken || fromChainNativeTokenSlug;
-      const selectedFeeToken = fromChainNativeTokenSlug;
+      const selectedFeeToken = request.feeToken || fromChainNativeTokenSlug;
 
       return {
         pair: request.pair,
@@ -431,7 +523,7 @@ export class HydradxHandler implements SwapBaseInterface {
     const substrateApi = this.chainService.getSubstrateApi(this.chain());
     const chainApi = await substrateApi.isReady;
 
-    const swapStepIndex = params.process.steps.findIndex((step) => step.type === SwapStepType.SWAP);
+    const swapStepIndex = params.process.steps.findIndex((step) => step.type === CommonStepType.SET_FEE_TOKEN);
 
     if (swapStepIndex <= -1) {
       return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR));
@@ -444,14 +536,14 @@ export class HydradxHandler implements SwapBaseInterface {
     const extrinsic = chainApi.api.tx.multiTransactionPayment.setCurrency(_getTokenOnChainAssetId(selectedFeeAsset));
 
     const txData: RequestChangeFeeToken = {
-      selectedFeeToken: selectedFeeTokenSlug
+      selectedFeeToken: selectedFeeTokenSlug,
+      convertedFeeAmount: swapFeeInfo.feeComponent[0].amount
     };
 
     return {
       txChain: this.chain(),
       extrinsic,
-      // extrinsicType: ExtrinsicType.SET_FEE_TOKEN,
-      extrinsicType: ExtrinsicType.SWAP,
+      extrinsicType: ExtrinsicType.SET_FEE_TOKEN,
       chainType: ChainType.SUBSTRATE,
       txData
     } as SwapSubmitStepData;
@@ -490,9 +582,7 @@ export class HydradxHandler implements SwapBaseInterface {
     if (!needSetReferral && !needSetFeeToken) {
       extrinsic = swapTx;
     } else {
-      if (needSetReferral) {
-        txList.push(chainApi.api.tx.referrals.linkCode(this.referralCode));
-      }
+      needSetReferral && txList.push(chainApi.api.tx.referrals.linkCode(this.referralCode));
 
       if (needSetFeeToken) {
         const nativeTokenInfo = this.chainService.getNativeTokenInfo(this.chain());

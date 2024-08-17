@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { BaseModal } from '@subwallet/extension-web-ui/components';
 import ChooseFeeItem from '@subwallet/extension-web-ui/components/Field/Swap/ChooseFeeItem';
@@ -15,17 +16,19 @@ import styled from 'styled-components';
 
 type Props = ThemeProps & {
   modalId: string,
-  estimatedFee: string | number | BigN,
+  estimatedFeeValue: string | number | BigN,
   items: string[] | undefined,
   onSelectItem: (slug: string) => void,
   selectedItem?: string,
+  estimatedFeeTitle: string,
+  address: string,
+  extrinsicType: ExtrinsicType
 }
 const numberMetadata = { maxNumberFormat: 8 };
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, estimatedFee, items, modalId, onSelectItem, selectedItem } = props;
+  const { address, className, estimatedFeeTitle, estimatedFeeValue, extrinsicType, items, modalId, onSelectItem, selectedItem } = props;
   const { currencyData } = useSelector((state: RootState) => state.price);
-
   const { inactiveModal } = useContext(ModalContext);
 
   const onCancel = useCallback(() => {
@@ -44,7 +47,7 @@ const Component: React.FC<Props> = (props: Props) => {
       >
         <div className={'__choose-fee-wrapper'}>
           <div className={'__estimate-fee'}>
-            <span className={'__title'}>Estimated  fee</span>
+            <span className={'__title'}>{estimatedFeeTitle}</span>
             <Number
               className={'__value'}
               customFormatter={swapCustomFormatter}
@@ -54,16 +57,19 @@ const Component: React.FC<Props> = (props: Props) => {
               metadata={numberMetadata}
               prefix={(currencyData.isPrefix && currencyData.symbol) || ''}
               size={30}
-              value={estimatedFee}
+              value={estimatedFeeValue}
             />
             <span className={'__pay-with'}>Pay with token:</span>
           </div>
           {items && items.map((item, index) => (
             <ChooseFeeItem
-              amountToPay={estimatedFee}
+              address={address}
+              amountToPay={estimatedFeeValue}
+              extrinsicType={extrinsicType}
               key={index}
+              modalId={modalId}
               onSelect={onSelectItem}
-              selected={!!selectedItem}
+              selected={item === selectedItem}
               slug={item}
             />
           ))}

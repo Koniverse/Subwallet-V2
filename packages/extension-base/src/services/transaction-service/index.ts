@@ -9,7 +9,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getChainNativeTokenSlug, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
@@ -594,6 +594,12 @@ export default class TransactionService {
 
         historyItem.amount = { value: data.quote.fromAmount, symbol: _getAssetSymbol(inputAsset), decimals: _getAssetDecimals(inputAsset) };
         historyItem.additionalInfo = data;
+
+        break;
+      }
+
+      case ExtrinsicType.SET_FEE_TOKEN: {
+        historyItem.additionalInfo = parseTransactionData<ExtrinsicType.SET_FEE_TOKEN>(transaction.data);
 
         break;
       }
