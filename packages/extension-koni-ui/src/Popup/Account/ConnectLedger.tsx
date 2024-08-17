@@ -3,9 +3,9 @@
 
 import { LedgerNetwork, MigrationLedgerNetwork } from '@subwallet/extension-base/background/KoniTypes';
 import { reformatAddress } from '@subwallet/extension-base/utils';
-import { AccountItemWithName, AccountWithNameSkeleton, BasicOnChangeFunction, ChainSelector, CloseIcon, DualLogo, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
-import { ATTACH_ACCOUNT_MODAL, SUBSTRATE_MIGRATION_KEY } from '@subwallet/extension-koni-ui/constants';
-import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useGetSupportedLedger, useGoBackFromCreateAccount, useLedger } from '@subwallet/extension-koni-ui/hooks';
+import { AccountItemWithName, AccountWithNameSkeleton, BasicOnChangeFunction, ChainSelector, DualLogo, InfoIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { ATTACH_ACCOUNT_MODAL, SUBSTRATE_MIGRATION_KEY, USER_GUIDE_URL } from '@subwallet/extension-koni-ui/constants';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useGetSupportedLedger, useGoBackFromCreateAccount, useLedger } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountHardwareMultiple } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainItemType, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -32,6 +32,7 @@ export const funcSortByName = (a: ChainItemType, b: ChainItemType) => {
 };
 
 const LIMIT_PER_PAGE = 5;
+const CONNECT_LEDGER_USER_GUIDE_URL = `${USER_GUIDE_URL}/account-management/connect-ledger-device`;
 
 const FooterIcon = (
   <Icon
@@ -46,7 +47,6 @@ const Component: React.FC<Props> = (props: Props) => {
   const { className } = props;
 
   const { t } = useTranslation();
-  const { goHome } = useDefaultNavigate();
 
   const [supportedLedger, migrateSupportLedger] = useGetSupportedLedger();
   const onComplete = useCompleteCreateAccount();
@@ -61,10 +61,12 @@ const Component: React.FC<Props> = (props: Props) => {
       slug: network.slug
     })), [supportedLedger]);
 
-  const networkMigrates = useMemo((): ChainItemType[] => migrateSupportLedger.map((network) => ({
-    name: network.networkName.replace(' network', ''),
-    slug: network.slug
-  })).sort(funcSortByName), [migrateSupportLedger]);
+  const networkMigrates = useMemo((): ChainItemType[] => migrateSupportLedger
+    .map((network) => ({
+      disabled: network.isHide,
+      name: network.networkName.replace(' network', ''),
+      slug: network.slug
+    })).sort(funcSortByName), [migrateSupportLedger]);
 
   const [chain, setChain] = useState(supportedLedger[0].slug);
   const [chainMigrateMode, setChainMigrateMode] = useState<string | undefined>();
@@ -96,6 +98,10 @@ const Component: React.FC<Props> = (props: Props) => {
   const onPreviousStep = useCallback(() => {
     setFirstStep(true);
     setSelectedAccounts([]);
+  }, []);
+
+  const goUserGuide = useCallback(() => {
+    window.open(CONNECT_LEDGER_USER_GUIDE_URL);
   }, []);
 
   const onChainChange: BasicOnChangeFunction = useCallback((event) => {
@@ -213,7 +219,7 @@ const Component: React.FC<Props> = (props: Props) => {
       return (
         <AccountItemWithName
           accountName={item.name}
-          address={chainMigrateMode ? originAddress : item.address}
+          address={item.address}
           className={CN({ disabled: disabled })}
           direction='vertical'
           genesisHash={selectedChain?.genesisHash}
@@ -224,7 +230,7 @@ const Component: React.FC<Props> = (props: Props) => {
         />
       );
     };
-  }, [accounts, chainMigrateMode, onClickItem, selectedChain?.genesisHash]);
+  }, [accounts, onClickItem, selectedChain?.genesisHash]);
 
   const onSubmit = useCallback(() => {
     if (!selectedAccounts.length || !selectedChain) {
@@ -280,15 +286,21 @@ const Component: React.FC<Props> = (props: Props) => {
         }}
         subHeaderIcons={[
           {
-            icon: <CloseIcon />,
-            onClick: goHome
+            icon: <InfoIcon />,
+            onClick: goUserGuide
           }
         ]}
         title={t('Connect Ledger device')}
       >
         <div className={CN('container')}>
           <div className='sub-title'>
-            {t('Connect and unlock your Ledger, then open the selected network on your Ledger')}
+            {t('Unlock your Ledger and open the selected app. For more information regarding Polkadot and Polkadot Migration app, click ')}
+            <a
+              href={CONNECT_LEDGER_USER_GUIDE_URL}
+              target='__blank'
+            >
+              {t('here')}
+            </a>
           </div>
           {
             firstStep && (
@@ -297,20 +309,23 @@ const Component: React.FC<Props> = (props: Props) => {
                   <DualLogo
                     leftLogo={(
                       <Image
-                        height={56}
+                        height={52}
                         shape='squircle'
                         src={DefaultLogosMap.subwallet}
-                        width={56}
+                        width={52}
                       />
                     )}
                     rightLogo={(
                       <Image
-                        height={56}
+                        height={52}
                         shape='squircle'
                         src={DefaultLogosMap.ledger}
-                        width={56}
+                        width={52}
                       />
                     )}
+                    innerSize={52}
+                    sizeLinkIcon={36}
+                    sizeSquircleBorder={108}
                   />
                 </div>
                 <ChainSelector
@@ -326,6 +341,7 @@ const Component: React.FC<Props> = (props: Props) => {
                     id={'migrate-chain-select-modal-id'}
                     items={networkMigrates}
                     label={t('Select network')}
+                    messageTooltip={'To use this network, choose Polkadot Ledger app'}
                     onChange={onMigrateChainChange}
                     placeholder={t('Select network')}
                     value={chainMigrateMode}
@@ -442,7 +458,7 @@ const ConnectLedger = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
 
     '.ledger-button': {
-      marginTop: token.margin - 2,
+      marginTop: token.marginXS,
       padding: `0 ${token.paddingSM}px`,
       '--icon-bg-color': token['gray-4'],
 
@@ -488,7 +504,7 @@ const ConnectLedger = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
 
     '.ledger-chain-migrate-select': {
-      marginTop: token.marginXS - 2
+      marginTop: token.marginXS
     }
   };
 });
