@@ -3,7 +3,7 @@
 
 import { _AssetType } from '@subwallet/chain-list/types';
 
-import { AccountJson, AccountNetworkType } from './keyring';
+import { AccountActions, AccountJson, AccountNetworkType } from './keyring';
 
 /**
  * Represents the basic data structure for an account proxy.
@@ -51,6 +51,8 @@ export enum AccountProxyType {
  * @prop {AccountNetworkType[]} networkTypes - An array of network types associated with this proxy.
  * @prop {string} [specialNetwork] - Optional the special networks, which account proxy can only be used on
  * @prop {_AssetType[]} tokenTypes - Asset types, which account proxy can be used
+ * @prop {AccountActions[]} accountActions - A list of account-specific actions.
+ * These could be actions like 'derive', 'export', etc., that are applicable to the account.
  */
 export interface AccountProxy extends AccountProxyData {
   accounts: AccountJson[];
@@ -59,6 +61,7 @@ export interface AccountProxy extends AccountProxyData {
   specialNetwork?: string;
   children?: string[];
   tokenTypes: _AssetType[];
+  accountActions: AccountActions[];
 }
 
 export type AccountProxyMap = Record<string, AccountProxy>
