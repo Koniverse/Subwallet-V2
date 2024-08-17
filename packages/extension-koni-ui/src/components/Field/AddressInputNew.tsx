@@ -5,12 +5,14 @@ import type { BaseSelectRef } from 'rc-select';
 
 import { useForwardFieldRef, useOpenQrScanner, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ScannerResult, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { AutoComplete, AutoCompleteProps, Button, Icon, Input, ModalContext, SwQrScanner } from '@subwallet/react-ui';
+import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { AutoComplete, Button, Icon, Input, ModalContext, SwQrScanner } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Book, Scan } from 'phosphor-react';
 import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import { AddressBookModal } from '../Modal';
 import { QrScannerErrorNotice } from '../Qr';
 import { BasicInputWrapper } from './Base';
 
@@ -19,16 +21,21 @@ type ResponseOption = {
   name: string;
 }
 
+type OptionType = ResponseOption & {
+  value: string,
+  label: React.ReactNode
+}
+
 interface Props extends BasicInputWrapper, ThemeProps {
-  inputResolver?: (input: string, chainSlug: string) => Promise<ResponseOption[]>;
+  chainSlug?: string;
+  inputResolver: (input: string, chainSlug: string) => Promise<ResponseOption[]>;
   showAddressBook?: boolean;
   showScanner?: boolean;
   labelStyle?: 'horizontal' | 'vertical';
 }
 
 const defaultScannerModalId = 'input-account-address-scanner-modal';
-
-const enableMockOptions = false;
+const defaultAddressBookModalId = 'input-account-address-book-modal';
 
 // todo:
 //  - Update fetch option logic for auto complete
@@ -37,18 +44,19 @@ const enableMockOptions = false;
 //  - Rename to AddressInput, after this component is done
 
 function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.ReactElement<Props> {
-  const { className = '', disabled, id, label, labelStyle,
-    onBlur, onChange, onFocus, placeholder, readOnly, showAddressBook, showScanner,
-    status, statusHelp, value } = props;
+  const { chainSlug, className = '', disabled, id, inputResolver,
+    label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly,
+    showAddressBook, showScanner, status, statusHelp, value } = props;
   const { t } = useTranslation();
 
-  const { inactiveModal } = useContext(ModalContext);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
 
   // @ts-ignore
-  const [options, setOptions] = useState<AutoCompleteProps['options']>([]);
-  const [inputValue, setInputValue] = useState<string | undefined>();
+  const [options, setOptions] = useState<OptionType[]>([]);
+  const [inputValue, setInputValue] = useState<string | undefined>(value);
 
   const scannerId = useMemo(() => id ? `${id}-scanner-modal` : defaultScannerModalId, [id]);
+  const addressBookId = useMemo(() => id ? `${id}-address-book-modal` : defaultAddressBookModalId, [id]);
 
   const fieldRef = useForwardFieldRef<BaseSelectRef>(ref);
   const [scanError, setScanError] = useState('');
@@ -60,26 +68,11 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, [onChange]);
 
   const onSelectAutoComplete = useCallback((data: string) => {
-    parseAndChangeValue(data);
-  }, [parseAndChangeValue]);
-
-  const onChangeInputValue = useCallback((data: string) => {
     setInputValue(data);
   }, []);
 
-  const onSearchAutoComplete = useCallback((data: string) => {
-    setOptions(() => {
-      if (!enableMockOptions) {
-        return [];
-      }
-
-      // todo: this is mock data, will update the real one later
-
-      return ['op1', 'op2', 'op3'].map((option) => ({
-        label: `${data} - ${option}`,
-        value: `${data}||${option}`
-      }));
-    });
+  const onChangeInputValue = useCallback((data: string) => {
+    setInputValue(data);
   }, []);
 
   const _onBlur: React.FocusEventHandler<HTMLInputElement> = useCallback((event) => {
@@ -92,7 +85,16 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
   const onOpenAddressBook = useCallback((e?: SyntheticEvent) => {
     e && e.stopPropagation();
-  }, []);
+    activeModal(addressBookId);
+  }, [activeModal, addressBookId]);
+
+  const onSelectAddressBook = useCallback((value: string) => {
+    fieldRef?.current?.focus();
+    setInputValue(value);
+    setTimeout(() => {
+      fieldRef?.current?.blur();
+    }, 300);
+  }, [fieldRef]);
 
   // scanner
 
@@ -125,83 +127,130 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     fieldRef?.current?.blur();
   }, [fieldRef]);
 
+  const currentOption = useMemo(() => {
+    if (!inputValue || !options.length) {
+      return undefined;
+    }
+
+    return options.find((o) => o.value === inputValue);
+  }, [inputValue, options]);
+
   useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+    let sync = true;
+
+    if (!inputValue || !chainSlug) {
+      setOptions([]);
+    } else {
+      inputResolver(inputValue, chainSlug).then((res) => {
+        if (!sync) {
+          return;
+        }
+
+        setOptions(res.map((item) => ({
+          ...item,
+          value: item.address,
+          label: item.name
+        })));
+      }).catch(console.error);
+    }
+
+    return () => {
+      sync = false;
+    };
+  }, [chainSlug, inputResolver, inputValue]);
 
   return (
     <>
-      <AutoComplete
-        className={className}
-        onBlur={_onBlur}
-        onChange={onChangeInputValue}
-        onFocus={onFocus}
-        onSearch={onSearchAutoComplete}
-        onSelect={onSelectAutoComplete}
-        options={options}
-        ref={fieldRef}
-        value={inputValue}
-      >
-        <Input
-          className={CN({
-            '-label-horizontal': labelStyle === 'horizontal'
-          })}
-          disabled={disabled}
-          id={id}
-          label={label || t('Account address')}
-          placeholder={placeholder || t('Please type or paste an address')}
-          prefix={
-            <>
-              {/* { */}
-              {/*  value && ( */}
-              {/*    <div className={'__overlay'}> */}
+      <div className={className}>
+        <AutoComplete
+          onBlur={_onBlur}
+          onChange={onChangeInputValue}
+          onFocus={onFocus}
+          onSelect={onSelectAutoComplete}
+          options={options}
+          ref={fieldRef}
+          value={inputValue}
+        >
+          <Input
+            className={CN({
+              '-label-horizontal': labelStyle === 'horizontal',
+              '-has-overlay': !!currentOption
+            })}
+            disabled={disabled}
+            id={id}
+            label={label || t('Account address')}
+            placeholder={placeholder || t('Please type or paste an address')}
+            prefix={
+              <>
+                {
+                  currentOption && (
+                    <div className={'__overlay'}>
+                      <div className={CN('__name common-text')}>
+                        {currentOption.name}
+                      </div>
+                      <div className={'__address common-text'}>
+                         &nbsp;({toShort(currentOption.address, 4, 4)})
+                      </div>
+                    </div>
+                  )
+                }
+              </>
+            }
+            readOnly={readOnly}
+            status={status}
+            statusHelp={statusHelp}
+            suffix={(
+              <>
+                {
+                  showAddressBook &&
+                (
+                  <div className={'__button-placeholder'}></div>
+                )}
+                {
+                  showScanner &&
+                  (
+                    <div className={'__button-placeholder'}></div>
+                  )}
+              </>
+            )}
+            value={value}
+          />
+        </AutoComplete>
 
-              {/*    </div> */}
-              {/*  ) */}
-              {/* } */}
-            </>
-          }
-          readOnly={readOnly}
-          status={status}
-          statusHelp={statusHelp}
-          suffix={(
-            <>
-              {
-                showAddressBook &&
-              (
-                <Button
-                  icon={(
-                    <Icon
-                      phosphorIcon={Book}
-                      size='sm'
-                    />
-                  )}
-                  onClick={onOpenAddressBook}
-                  size='xs'
-                  type='ghost'
-                />
-              )}
-              {
-                showScanner &&
-              (
-                <Button
-                  disabled={disabled}
-                  icon={(
-                    <Icon
-                      phosphorIcon={Scan}
-                      size='sm'
-                    />
-                  )}
-                  onClick={onOpenScanner}
-                  size='xs'
-                  type='ghost'
-                />
-              )}
-            </>
-          )}
-          value={value}
-        />
-      </AutoComplete>
+        <div className={'__action-buttons'}>
+          {
+            showAddressBook &&
+            (
+              <Button
+                icon={(
+                  <Icon
+                    phosphorIcon={Book}
+                    size='sm'
+                  />
+                )}
+                onClick={onOpenAddressBook}
+                size='xs'
+                type='ghost'
+              />
+            )}
+          {
+            showScanner &&
+            (
+              <Button
+                disabled={disabled}
+                icon={(
+                  <Icon
+                    phosphorIcon={Scan}
+                    size='sm'
+                  />
+                )}
+                onClick={onOpenScanner}
+                size='xs'
+                type='ghost'
+              />
+            )}
+        </div>
+      </div>
 
       {
         showScanner &&
@@ -217,12 +266,77 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
           />
         )
       }
+
+      {
+        showAddressBook &&
+        (
+          <AddressBookModal
+            chainSlug={chainSlug}
+            id={addressBookId}
+            onSelect={onSelectAddressBook}
+            value={value}
+          />
+        )
+      }
     </>
   );
 }
 
 export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { token } }: Props) => {
   return ({
+    '&': {
+      position: 'relative'
+    },
+
+    '.__action-buttons': {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      display: 'flex',
+      zIndex: 2,
+      paddingRight: token.paddingXXS,
+      paddingBottom: token.paddingXXS
+    },
+
+    '.__button-placeholder': {
+      minWidth: 40
+    },
+
+    '.__overlay': {
+      position: 'absolute',
+      top: 2,
+      left: 2,
+      bottom: 2,
+      right: 118,
+      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'center',
+      paddingLeft: token.paddingSM,
+      whiteSpace: 'nowrap',
+      fontWeight: token.headingFontWeight
+    },
+
+    '.__name': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      color: token.colorTextLight1,
+      flexShrink: 1
+    },
+
+    '.__address': {
+      color: token.colorTextLight4
+    },
+
+    '.ant-input': {
+      color: token.colorTextLight1,
+      fontWeight: token.headingFontWeight
+    },
+
+    '.ant-input-prefix': {
+      pointerEvents: 'none',
+      paddingRight: 0
+    },
+
     '.ant-input-container.-label-horizontal': {
       display: 'flex',
       flexDirection: 'row',
@@ -244,65 +358,25 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
         paddingLeft: 0
       },
 
-      '.ant-input-prefix': {
-        paddingRight: 0
-      }
-    },
-
-    '.__overlay': {
-      position: 'absolute',
-      backgroundColor: token.colorBgSecondary,
-      top: 0,
-      left: 2,
-      bottom: 2,
-      right: 2,
-      borderRadius: token.borderRadiusLG,
-      overflow: 'hidden',
-      display: 'flex',
-      alignItems: 'center',
-      paddingLeft: 40,
-      paddingRight: 84,
-      whiteSpace: 'nowrap'
-    },
-
-    '.__name': {
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      color: token.colorTextLight1,
-
-      '&.limit-width': {
-        maxWidth: 136
-      }
-    },
-
-    '.__address': {
-      paddingLeft: token.sizeXXS
-    },
-
-    '.ant-input-prefix': {
-      pointerEvents: 'none'
-    },
-
-    '&.-status-error': {
       '.__overlay': {
-        pointerEvents: 'none',
-        opacity: 0
+        left: 0,
+        paddingLeft: 0
       }
     },
 
-    // Not support firefox
-    '&:has(input:focus)': {
-      '.__overlay': {
-        pointerEvents: 'none',
+    '.ant-input-container.-has-overlay': {
+      '.ant-input': {
         opacity: 0
-      }
-    },
+      },
 
-    // Support firefox
-    '.ant-input-affix-wrapper-focused': {
-      '.__overlay': {
-        pointerEvents: 'none',
-        opacity: 0
+      '&:focus-within': {
+        '.ant-input': {
+          opacity: 1
+        },
+
+        '.__overlay': {
+          opacity: 0
+        }
       }
     }
   });

@@ -25,7 +25,7 @@ export class AccountLedgerHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists([address]);
 
-    assert(!exists, t('Account already exists'));
+    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || address } }));
 
     const baseMeta: KeyringPair$Meta = {
       name,
@@ -79,7 +79,7 @@ export class AccountLedgerHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists(accounts.map((account) => account.address));
 
-    assert(!exists, t('Account already exists account: {{address}}', { replace: { address: exists } }));
+    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     const slugMap: Record<string, string> = {};
     const modifyPairs = this.state.modifyPairs;

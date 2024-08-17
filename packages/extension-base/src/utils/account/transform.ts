@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
+import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
@@ -263,6 +263,30 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
   return [];
 };
 
+export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
+  switch (type) {
+    case 'ethereum':
+      return [_AssetType.NATIVE, _AssetType.LOCAL, _AssetType.ERC20, _AssetType.ERC721];
+    case 'sr25519':
+    case 'ed25519':
+    case 'ecdsa':
+      return [_AssetType.NATIVE, _AssetType.LOCAL, _AssetType.PSP22, _AssetType.PSP34, _AssetType.GRC20, _AssetType.ERC721, _AssetType.VFT];
+    case 'ton':
+    case 'ton-native':
+      return [_AssetType.NATIVE, _AssetType.TEP74];
+    case 'bitcoin-44':
+    case 'bittest-44':
+    case 'bitcoin-84':
+    case 'bittest-84':
+      return [_AssetType.NATIVE];
+    case 'bitcoin-86':
+    case 'bittest-86':
+      return [_AssetType.NATIVE, _AssetType.RUNE, _AssetType.BRC20];
+    default:
+      return [];
+  }
+};
+
 /**
  * Transforms account data into an `AccountJson` object.
  *
@@ -300,6 +324,7 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
       type,
       accountActions: [],
       transactionActions: [],
+      tokenTypes: [],
       signMode,
       networkType
     };
@@ -317,6 +342,7 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
 
   const accountActions = getAccountActions(signMode, networkType, type, meta);
   const transactionActions = getAccountTransactionActions(signMode, networkType, type, meta, specialNetwork);
+  const tokenTypes = getAccountTokenTypes(type);
 
   /* Account actions */
 
@@ -328,7 +354,8 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     transactionActions,
     signMode,
     networkType,
-    specialNetwork
+    specialNetwork,
+    tokenTypes
   };
 };
 
@@ -363,7 +390,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
       if (accountGroup) {
         if (!temp[accountGroup.id]) {
-          temp[accountGroup.id] = { ...accountGroup, accounts: [], networkTypes: [] };
+          temp[accountGroup.id] = { ...accountGroup, accounts: [], networkTypes: [], tokenTypes: [] };
         }
 
         temp[accountGroup.id].accounts.push(account);
@@ -377,7 +404,8 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
       accounts: [account],
       networkTypes: [account.networkType],
       parentId: account.parentAddress,
-      suri: account.suri
+      suri: account.suri,
+      tokenTypes: account.tokenTypes
     };
   }
 
@@ -386,15 +414,24 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
       .map(([key, value]): [string, AccountProxy] => {
         let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
         let networkTypes: AccountNetworkType[] = [];
+        let tokenTypes: _AssetType[] = [];
         let specialNetwork: string | undefined;
 
         if (value.accounts.length > 1) {
           accountType = AccountProxyType.UNIFIED;
           networkTypes = Array.from(value.accounts.reduce<Set<AccountNetworkType>>((rs, account) => rs.add(account.networkType), new Set()));
+          tokenTypes = Array.from(value.accounts.reduce<Set<_AssetType>>((rs, account) => {
+            for (const tokenType of account.tokenTypes) {
+              rs.add(tokenType);
+            }
+
+            return rs;
+          }, new Set()));
         } else if (value.accounts.length === 1) {
           const account = value.accounts[0];
 
           networkTypes = [account.networkType];
+          tokenTypes = account.tokenTypes;
 
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
@@ -423,7 +460,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
           }
         }
 
-        return [key, { ...value, accountType, networkTypes, specialNetwork }];
+        return [key, { ...value, accountType, networkTypes, specialNetwork, tokenTypes }];
       })
   );
 
@@ -462,19 +499,35 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
   return result;
 };
 
-export const calculateAllAccountNetworkTypes = (accountProxies: AccountProxy[]): AccountNetworkType[] => {
-  const result = new Set<AccountNetworkType>();
+export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountProxy => {
+  const networkTypes = new Set<AccountNetworkType>();
+  const tokenTypes = new Set<_AssetType>();
+  const specialNetwork: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialNetwork : undefined;
 
   for (const accountProxy of accountProxies) {
     // Have 4 network types, but at the moment, we only support 3 network types
-    if (result.size === 3) {
+    if (networkTypes.size === 3) {
       break;
     }
 
     for (const networkType of accountProxy.networkTypes) {
-      result.add(networkType);
+      networkTypes.add(networkType);
     }
   }
 
-  return Array.from(result);
+  for (const accountProxy of accountProxies) {
+    for (const tokenType of accountProxy.tokenTypes) {
+      tokenTypes.add(tokenType);
+    }
+  }
+
+  return {
+    id: ALL_ACCOUNT_KEY,
+    name: 'All',
+    accounts: [],
+    accountType: AccountProxyType.ALL_ACCOUNT,
+    networkTypes: Array.from(networkTypes),
+    tokenTypes: Array.from(tokenTypes),
+    specialNetwork
+  };
 };

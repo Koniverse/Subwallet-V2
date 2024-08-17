@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainLogoMap } from '@subwallet/chain-list';
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountWithChildren } from '@subwallet/extension-base/background/types';
@@ -85,10 +84,6 @@ export const NFT_GRID_HEIGHT_THRESHOLD = 600;
 export const NFT_HEADER_HEIGHT = 202;
 
 export const NFT_PER_ROW = 3;
-
-export function getLogoByNetworkKey (networkKey: string, defaultLogo = 'default'): string {
-  return ChainLogoMap[networkKey] || ChainLogoMap[defaultLogo] || ChainLogoMap.default;
-}
 
 export const subscanByNetworkKey: Record<string, string> = {
   acala: 'https://acala.subscan.io',

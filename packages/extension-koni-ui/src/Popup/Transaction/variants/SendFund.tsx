@@ -7,7 +7,7 @@ import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/exten
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getContractAddressOfToken, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountProxy } from '@subwallet/extension-base/types';
+import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
@@ -266,7 +266,12 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     const result: AccountAddressItemType[] = [];
 
     accountProxies.forEach((ap) => {
-      if (!(isAccountAll(ap.id) || ap.id === fromAccountProxy)) {
+      if (!(isAccountAll(fromAccountProxy) || ap.id === fromAccountProxy)) {
+        return;
+      }
+
+      // todo: support ledger later
+      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
         return;
       }
 
@@ -378,6 +383,10 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
     return Promise.resolve();
   }, [decimals, maxTransfer, t]);
+
+  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
+    return Promise.resolve([]);
+  }, []);
 
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
@@ -819,10 +828,12 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
             statusHelpAsTooltip={true}
           >
             <AddressInputNew
+              chainSlug={destChainValue}
+              inputResolver={addressInputResolver}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
-              showAddressBook={false}
+              showAddressBook={true}
               showScanner={true}
             />
           </Form.Item>

@@ -3,6 +3,7 @@
 
 import type { KeypairType, KeyringPair$Meta } from '@subwallet/keyring/types';
 
+import { _AssetType } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 
 export interface AbstractAddressJson extends KeyringPair$Meta {
@@ -133,6 +134,7 @@ export enum AccountActions {
  * @prop {ExtrinsicType[]} transactionActions - A list of transaction types that the account can initiate. This is dependent on the blockchain's supported extrinsic types, such as 'transfer', 'bond', etc.
  * @prop {AccountSignMode} signMode - Account sign mode
  * @prop {string} [specialNetwork] - Optional the special network, which account can only be used on
+ * @prop {_AssetType[]} tokenTypes - Asset types, which account can be used
  */
 export interface AccountActionData {
   networkType: AccountNetworkType;
@@ -140,6 +142,7 @@ export interface AccountActionData {
   transactionActions: ExtrinsicType[];
   signMode: AccountSignMode;
   specialNetwork?: string;
+  tokenTypes: _AssetType[];
 }
 
 /**
