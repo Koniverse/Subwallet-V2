@@ -1,10 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import {AccountNameModal, Layout, PageWrapper} from '@subwallet/extension-koni-ui/components';
 import { AddressInput } from '@subwallet/extension-koni-ui/components/Field/AddressInput';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
-import { ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import {ACCOUNT_NAME_MODAL, ATTACH_ACCOUNT_MODAL} from '@subwallet/extension-koni-ui/constants/modal';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
 import useGetDefaultAccountName from '@subwallet/extension-koni-ui/hooks/account/useGetDefaultAccountName';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
@@ -16,14 +16,15 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils/form/form';
 import { readOnlyScan } from '@subwallet/extension-koni-ui/utils/scanner/attach';
-import { Form, Icon, PageIcon } from '@subwallet/react-ui';
+import {Form, Icon, ModalContext, PageIcon} from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye } from 'phosphor-react';
 import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useContext, useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
+import {AccountProxyType} from "@subwallet/extension-base/types";
 
 type Props = ThemeProps;
 
@@ -47,7 +48,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const { t } = useTranslation();
   const { goHome } = useDefaultNavigate();
-
+  const { activeModal, inactiveModal } = useContext(ModalContext);
   const onComplete = useCompleteCreateAccount();
   const accountName = useGetDefaultAccountName();
 
@@ -59,7 +60,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const [reformatAddress, setReformatAddress] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isEthereum, setIsEthereum] = useState(false);
   const [isDisable, setIsDisable] = useState(true);
 
   const handleResult = useCallback((val: string) => {
@@ -67,7 +67,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     if (result) {
       setReformatAddress(result.content);
-      setIsEthereum(result.isEthereum);
     }
   }, []);
 
@@ -107,34 +106,36 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [accounts, t]);
 
   const onSubmit = useCallback(() => {
-    setLoading(true);
-
     if (reformatAddress) {
-      createAccountExternalV2({
-        name: accountName,
-        address: reformatAddress,
-        genesisHash: '',
-        isEthereum: isEthereum,
-        isAllowed: true,
-        isReadOnly: true
-      })
-        .then((errors) => {
-          if (errors.length) {
-            form.setFields([{ name: fieldName, errors: errors.map((e) => e.message) }]);
-          } else {
-            onComplete();
-          }
-        })
-        .catch((error: Error) => {
-          form.setFields([{ name: fieldName, errors: [error.message] }]);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
+      activeModal(ACCOUNT_NAME_MODAL);
     }
-  }, [form, reformatAddress, accountName, isEthereum, onComplete]);
+  }, [activeModal, reformatAddress]);
+
+
+  const onSubmitFinal = useCallback((name: string) => {
+    setLoading(true);
+    createAccountExternalV2({
+      name: name,
+      address: reformatAddress,
+      genesisHash: '',
+      isAllowed: true,
+      isReadOnly: true
+    })
+      .then((errors) => {
+        if (errors.length) {
+          form.setFields([{ name: fieldName, errors: errors.map((e) => e.message) }]);
+        } else {
+          onComplete();
+        }
+      })
+      .catch((error: Error) => {
+        form.setFields([{ name: fieldName, errors: [error.message] }]);
+      })
+      .finally(() => {
+        inactiveModal(ACCOUNT_NAME_MODAL);
+        setLoading(false);
+      });
+  }, [form, reformatAddress, accountName, onComplete, inactiveModal]);
 
   useFocusById(modalId);
 
@@ -198,6 +199,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             </Form.Item>
           </Form>
         </div>
+
+        <AccountNameModal
+          isLoading={loading}
+          onSubmit={onSubmitFinal}
+          accountType={AccountProxyType.READ_ONLY}
+        />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );

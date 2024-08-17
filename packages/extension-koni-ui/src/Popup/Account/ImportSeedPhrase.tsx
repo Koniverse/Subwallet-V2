@@ -28,7 +28,7 @@ const FooterIcon = (
 
 const formName = 'import-seed-phrase-form';
 const fieldNamePrefix = 'seed-phrase-';
-const accountNameModalId = 'seedPhrase.' + ACCOUNT_NAME_MODAL
+const accountNameModalId =  ACCOUNT_NAME_MODAL;
 
 interface FormState extends Record<`seed-phrase-${number}`, string> {
   phraseNumber: string;

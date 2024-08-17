@@ -51,7 +51,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
   const [changed, setChanged] = useState(false);
-  const [ privatekeySubmit, setPrivateKeySubmit ] = useState('');
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const [form] = Form.useForm<FormState>();
   const checkUnlock = useUnlockChecker();
@@ -67,20 +66,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     const { [fieldName]: privateKey } = values;
 
     checkUnlock().then(() => {
-      setPrivateKeySubmit(privateKey);
+      if(privateKey?.trim()){
+        activeModal(ACCOUNT_NAME_MODAL);
+      }
     })
       .catch(() => {
       // User cancel unlock
       });
-  }, [accountName, checkUnlock, onComplete]);
+  }, [accountName, checkUnlock, onComplete, activeModal]);
 
 
   const onSubmitFinal = useCallback((name : string) => {
-    if (privatekeySubmit?.trim()) {
+    if (privateKey?.trim()) {
       setLoading(true);
       createAccountSuriV2({
         name: name,
-        suri: privatekeySubmit.trim(),
+        suri: privateKey.trim(),
         isAllowed: true
       })
         .then(() => {
@@ -97,7 +98,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           setLoading(false);
         });
     }
-  }, [privatekeySubmit, onComplete])
+  }, [privateKey, onComplete])
 
   useEffect(() => {
     let amount = true;
@@ -154,11 +155,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     };
   }, [privateKey, form, changed, t]);
 
-  useEffect(() => {
-    if(privatekeySubmit.trim()){
-      activeModal(ACCOUNT_NAME_MODAL);
-    }
-  }, [activeModal, privatekeySubmit]);
 
   const onValuesChange: FormCallbacks<FormState>['onValuesChange'] = useCallback((changedValues: Partial<FormState>) => {
     if (fieldName in changedValues) {

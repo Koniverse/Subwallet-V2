@@ -28,7 +28,7 @@ const FooterIcon = (
   />
 );
 
-const accountNameModalId = 'seedPhrase.' + ACCOUNT_NAME_MODAL
+const accountNameModalId = ACCOUNT_NAME_MODAL;
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
