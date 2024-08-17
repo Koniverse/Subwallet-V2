@@ -8,7 +8,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { cellToBase64Str, externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -40,7 +40,7 @@ import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { Signer, SignerOptions, SignerResult } from '@polkadot/api/types';
 import { EventRecord } from '@polkadot/types/interfaces';
 import { SignerPayloadJSON } from '@polkadot/types/types/extrinsic';
-import { isHex } from '@polkadot/util';
+import { hexToU8a, isHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
@@ -1155,6 +1155,7 @@ export default class TransactionService {
   }
 
   private async signAndSendTonTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+    const keyPair = keyring.getPair(address);
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1163,17 +1164,17 @@ export default class TransactionService {
       extrinsicHash: id
     };
 
-    // --// alibaba todo: sign messsage by from request service later
-    const keyPair = keyring.getPair(address);
-
-    keyring.unlockKeyring('123123123');
-
-    if (keyPair.isLocked) {
-      keyring.unlockPair(address);
-    }
+    const payload = transaction as TonTransactionConfig;
 
     const signer = (message: Cell): Promise<Buffer> => {
-      return Promise.resolve(keyPair.ton.sign(message));
+      return new Promise<Buffer>((resolve) => {
+        this.state.requestService.addConfirmationTon(id, url || EXTENSION_REQUEST_URL, 'tonSendTransactionRequest', { ...payload, messagePayload: cellToBase64Str(message), messages: [] }, {})
+          .then(async ({ isApproved, payload }) => {
+            if (payload) {
+              resolve(Buffer.from(hexToU8a(payload)));
+            }
+          });
+      });
     };
     // --//
 
