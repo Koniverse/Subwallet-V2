@@ -6,6 +6,7 @@
 import type { ApiInterfaceRx } from '@polkadot/api/types';
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
+import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { Cell } from '@ton/core';
 import { Address, Contract, OpenedContract } from '@ton/ton';
@@ -17,7 +18,6 @@ import { Getters } from '@polkadot/api/base/Getters';
 import { SubmittableExtrinsicFunction } from '@polkadot/api/promise/types';
 import { ChainProperties, ChainType, RuntimeVersion } from '@polkadot/types/interfaces';
 import { AnyJson, Registry } from '@polkadot/types/types';
-import {TxByMsgResponse} from "@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types";
 
 export interface _DataMap {
   chainInfoMap: Record<string, _ChainInfo>,

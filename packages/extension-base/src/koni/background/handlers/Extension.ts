@@ -1786,7 +1786,7 @@ export default class KoniExtension {
       this.cancelSubscription(id);
     });
 
-    return this.#koniState.getConfirmationsQueueSubject().getValue();
+    return this.#koniState.getConfirmationsQueueSubjectTon().getValue();
   }
 
   private async completeConfirmation (request: RequestConfirmationComplete) {
@@ -2453,50 +2453,6 @@ export default class KoniExtension {
 
     return true;
   }
-
-  // alibaba
-  // @ts-ignore
-  // private async signingTon ({ id }: RequestSigningApprovePasswordV2): Promise<boolean> {
-  //   const queued = this.#koniState.getSignRequest(id);
-  //
-  //   assert(queued, t('Unable to proceed. Please try again'));
-  //
-  //   const { reject, request, resolve } = queued;
-  //   const pair = keyring.getPair(queued.account.address);
-  //
-  //   // unlike queued.account.address the following
-  //   // address is encoded with the default prefix
-  //   // which what is used for password caching mapping
-  //   const { address } = pair;
-  //
-  //   if (!pair) {
-  //     reject(new Error(t('Unable to find account')));
-  //
-  //     return false;
-  //   }
-  //
-  //   if (pair.isLocked) {
-  //     keyring.unlockPair(address);
-  //   }
-  //
-  //   const { payload } = request;
-  //   const data = payload as unknown as Cell;
-  //
-  //   const rs = pair.ton.sign(data);
-  //
-  //   const result = request.sign(registry as unknown as TypeRegistry, pair);
-  //
-  //   resolve({
-  //     id,
-  //     signature: result.signature
-  //   });
-  //
-  //   if (this.#alwaysLock) {
-  //     this.keyringLock();
-  //   }
-  //
-  //   return true;
-  // }
 
   /// Derive account
 
