@@ -176,11 +176,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             }
           })
             .catch((error: Error): void => {
+              const message = error.message.includes('with this seed') ? t('Have already created account with this seed') : error.message;
               setSeedValidationResponse(undefined);
               setSubmitting(false);
               notify({
                 type: 'error',
-                message: error.message
+                message
               });
             });
         })

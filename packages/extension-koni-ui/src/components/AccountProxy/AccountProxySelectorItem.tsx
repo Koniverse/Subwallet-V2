@@ -122,6 +122,8 @@ function Component (props: Props): React.ReactElement<Props> {
     return null;
   })();
 
+  console.log(accountProxy, '-' , accountProxy.children);
+
   const showDeriveButton = !!accountProxy?.children?.length;
 
   return (

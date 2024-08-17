@@ -81,14 +81,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       backgroundColor: token['orange-7'],
       icon: FileJs,
       key: 'restore-json',
-      label: t('Import from Polkadot.{js}'),
+      label: t('Import from JSON file'),
       onClick: onClickJson
     },
     {
       backgroundColor: token['gray-3'],
       icon: Wallet,
       key: 'import-private-key',
-      label: t('Import by MetaMask private key'),
+      label: t('Import from private key'),
       onClick: onClickItem('/accounts/import-private-key')
     },
     {
