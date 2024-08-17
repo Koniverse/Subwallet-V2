@@ -57,18 +57,9 @@ export const getChainsByAccountType = (chainInfoMap: Record<string, _ChainInfo>,
 
     for (const chainInfo of Object.values(chainInfoMap)) {
       const chain = chainInfo.slug;
-      const isEvmChain = _isChainEvmCompatible(chainInfo);
-      const isTonChain = _isChainTonCompatible(chainInfo);
-      const isSubstrateChain = _isChainSubstrateCompatible(chainInfo);
-      const isBitcoinChain = _isChainBitcoinCompatible(chainInfo);
+      const isChainCompatible = networkTypes.some((networkType) => isChainInfoAccordantNetworkType(chainInfo, networkType));
 
-      if (isEvmChain && networkTypes.includes(AccountNetworkType.ETHEREUM)) {
-        result.push(chain);
-      } else if (isTonChain && networkTypes.includes(AccountNetworkType.TON)) {
-        result.push(chain);
-      } else if (isSubstrateChain && networkTypes.includes(AccountNetworkType.SUBSTRATE)) {
-        result.push(chain);
-      } else if (isBitcoinChain && networkTypes.includes(AccountNetworkType.BITCOIN)) {
+      if (isChainCompatible) {
         result.push(chain);
       }
     }

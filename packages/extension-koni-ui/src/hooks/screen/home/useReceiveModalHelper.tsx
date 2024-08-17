@@ -6,7 +6,7 @@ import { NotificationType } from '@subwallet/extension-base/background/KoniTypes
 import { _getMultiChainAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetChainSlugsByAccountType, useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainSlugsByAccount, useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ReceiveModalProps } from '@subwallet/extension-koni-ui/types';
@@ -36,7 +36,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const [selectedNetwork, setSelectedNetwork] = useState<string | undefined>();
   const { addressQrModal, alertModal } = useContext(WalletModalContext);
-  const chainSupported = useGetChainSlugsByAccountType();
+  const chainSupported = useGetChainSlugsByAccount();
 
   const onOpenReceive = useCallback(() => {
     activeModal(tokenSelectorModalId);
