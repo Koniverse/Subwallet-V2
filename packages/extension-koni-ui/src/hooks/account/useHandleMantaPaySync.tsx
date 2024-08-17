@@ -60,7 +60,7 @@ export default function useHandleMantaPaySync () {
           schema={'secondary'}
           size={'xs'}
         >
-          {t('Cancel')}
+          {t('common.Button.cancel')}
         </Button>
       </div>
     );

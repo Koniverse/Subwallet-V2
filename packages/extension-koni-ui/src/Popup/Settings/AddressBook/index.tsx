@@ -98,11 +98,11 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const filterOptions: FilterOption[] = useMemo(() => ([
     {
-      label: t('Saved contacts'),
+      label: t('settings.manageAddressBook.Filter.saveContact'),
       value: AccountGroup.CONTACT
     },
     {
-      label: t('Recent'),
+      label: t('settings.manageAddressBook.Filter.recent'),
       value: AccountGroup.RECENT
     }
   ]), [t]);
@@ -136,10 +136,10 @@ const Component: React.FC<Props> = (props: Props) => {
 
     switch (_group) {
       case AccountGroup.CONTACT:
-        groupLabel = t('Saved contacts');
+        groupLabel = t('settings.manageAddressBook.Filter.saveContact');
         break;
       case AccountGroup.RECENT:
-        groupLabel = t('Recent');
+        groupLabel = t('settings.manageAddressBook.Filter.recent');
         break;
     }
 
@@ -196,7 +196,7 @@ const Component: React.FC<Props> = (props: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={goBack}
         subHeaderIcons={subHeaderIcons}
-        title={t('Manage address book')}
+        title={t('settings.Screen.addressBook.title')}
       >
         <SwList.Section
           actionBtnIcon={(
@@ -221,7 +221,7 @@ const Component: React.FC<Props> = (props: Props) => {
           rowGap='var(--row-gap)'
           searchFunction={searchFunction}
           searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('Account name')}
+          searchPlaceholder={t<string>('settings.Screen.addressBook.searchPlaceHolder')}
           showActionBtn={true}
         />
         <FilterModal
@@ -232,7 +232,7 @@ const Component: React.FC<Props> = (props: Props) => {
           onChangeOption={onChangeFilterOption}
           optionSelectionMap={filterSelectionMap}
           options={filterOptions}
-          title={t('Filter')}
+          title={t('common.Text.filter')}
         />
         <AddContactModal />
         {selectedItem && <EditContactModal addressJson={selectedItem} />}

@@ -103,7 +103,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={goBack}
         rightFooterButton={{
-          children: t('Save'),
+          children: t('common.Button.save'),
           onClick: form.submit,
           loading: loading,
           disabled: isDisabled,
@@ -120,7 +120,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             onClick: goHome
           }
         ]}
-        title={t('Change password')}
+        title={t('settings.security.Screen.changePassword.title')}
       >
         <div className='body-container'>
           <div className='page-icon'>
@@ -133,7 +133,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             />
           </div>
           <div className='title'>
-            {t('Change your password')}
+            {t('settings.security.Screen.changePassword.bodyTitle')}
           </div>
           <Form
             form={form}
@@ -151,7 +151,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               name={FormFieldName.OLD_PASSWORD}
               rules={[
                 {
-                  message: t('Password is required'),
+                  message: t('settings.security.Screen.changePassword.FormRules.currentPassword'),
                   required: true
                 }
               ]}
@@ -159,7 +159,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             >
               <Input.Password
                 disabled={loading}
-                placeholder={t('Current password')}
+                placeholder={t('settings.security.Screen.changePassword.Input.currentPassword.placeHolder')}
                 type='password'
               />
             </Form.Item>
@@ -171,7 +171,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               <Input.Password
                 disabled={loading}
                 onChange={onChangePassword}
-                placeholder={t('New password')}
+                placeholder={t('settings.security.Screen.changePassword.Input.newPassword.placeHolder')}
                 type='password'
               />
             </Form.Item>
@@ -182,7 +182,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             >
               <Input.Password
                 disabled={loading}
-                placeholder={t('Confirm new password')}
+                placeholder={t('settings.security.Screen.changePassword.Input.confirmPassword')}
                 type='password'
               />
             </Form.Item>
@@ -200,13 +200,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               <Checkbox
                 className={'checkbox'}
               >
-                {t('I understand that SubWallet can’t recover the password.')}
+                {t('settings.security.Screen.changePassword.confirmAgreement')}&nbsp;
                 <a
                   href={TERMS_OF_SERVICE_URL}
                   rel='noreferrer'
                   style={{ textDecoration: 'underline' }}
                   target={'_blank'}
-                >Learn more.</a>
+                >{t('settings.security.Screen.changePassword.Link.learnMore')}</a>
               </Checkbox>
             </Form.Item>
             <Form.Item

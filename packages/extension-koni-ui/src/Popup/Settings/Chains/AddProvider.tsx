@@ -136,19 +136,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
         if (result) {
           showNotification({
-            message: t('Added a provider successfully')
+            message: t('settings.Screen.addProvider.Notifications.addProviderSuccess')
           });
           navigate(-1);
         } else {
           showNotification({
-            message: t('An error occurred, please try again')
+            message: t('settings.Screen.addProvider.Notifications.updateNetworkError')
           });
         }
       })
       .catch(() => {
         setLoading(false);
         showNotification({
-          message: t('An error occurred, please try again')
+          message: t('settings.Screen.addProvider.Notifications.updateNetworkError')
         });
       });
   }, [chainInfo.providers, chainInfo.slug, form, navigate, showNotification, t]);
@@ -160,13 +160,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const handleErrorMessage = useCallback((errorCode: _CHAIN_VALIDATION_ERROR) => {
     switch (errorCode) {
       case _CHAIN_VALIDATION_ERROR.CONNECTION_FAILURE:
-        return t('Cannot connect to this provider');
+        return t('settings.Screen.addProvider.ErrorTooltip.cannotConnect');
       case _CHAIN_VALIDATION_ERROR.EXISTED_PROVIDER:
-        return t('This provider has already been added');
+        return t('settings.Screen.addProvider.ErrorTooltip.alreadyAdded');
       case _CHAIN_VALIDATION_ERROR.PROVIDER_NOT_SAME_CHAIN:
-        return t('This provider is not for this network');
+        return t('settings.Screen.addProvider.ErrorTooltip.notForNetwork');
       default:
-        return t('Error validating this provider');
+        return t('settings.Screen.addProvider.ErrorTooltip.validating');
     }
   }, [t]);
 
@@ -231,11 +231,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           })
           .catch(() => {
             setIsValidating(false);
-            reject(new Error(t('Error validating this provider')));
+            reject(new Error(t('settings.Screen.addProvider.ErrorTooltip.validating')));
             setProviderValidation({ status: 'error', message: t('Error validating this provider') });
           });
       } else {
-        reject(new Error(t('Provider URL is not valid')));
+        reject(new Error(t('settings.Screen.addProvider.providerUrl.ErrorTooltip.invalid')));
         setProviderValidation({ status: '' });
         setIsShowConnectionStatus(false);
       }
@@ -250,7 +250,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       <Layout.Base
         leftFooterButton={{
           onClick: onCancel,
-          children: t('Cancel')
+          children: t('common.Button.cancel')
         }}
         onBack={onBack}
         rightFooterButton={{
@@ -270,11 +270,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           }
         ]}
         subHeaderPaddingVertical={true}
-        title={t<string>('Add new provider')}
+        title={t<string>('settings.Screen.addProvider.title')}
       >
         <div className={'add_provider__container'}>
           <div className='description'>
-            {t('Currently support WSS provider for Substrate networks and HTTP provider for EVM network')}
+            {t('settings.Screen.addProvider.bodyTitle')}
           </div>
           <Form
             form={form}
@@ -289,7 +289,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               >
                 <Input
                   disabled={isValidating}
-                  placeholder={t('Provider URL')}
+                  placeholder={t('common.Text.providerUrl')}
                   prefix={<Icon
                     customSize={'24px'}
                     iconColor={token['gray-4']}
@@ -306,7 +306,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   <Form.Item name={'name'}>
                     <Input
                       disabled={true}
-                      placeholder={t('Network name')}
+                      placeholder={t('common.Text.networkName')}
                       prefix={(
                         <Icon
                           customSize={'24px'}
@@ -316,7 +316,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                           weight={'bold'}
                         />
                       )}
-                      tooltip={t('Network name')}
+                      tooltip={t('common.Text.networkName')}
                       tooltipPlacement='topLeft'
                       value={chainInfo.name}
                     />
@@ -329,8 +329,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   >
                     <Input
                       disabled={true}
-                      placeholder={t('Symbol')}
-                      tooltip={t('Symbol')}
+                      placeholder={t('common.Text.networkType')}
+                      tooltip={t('common.Text.symbol')}
                       tooltipPlacement='topLeft'
                       value={chainInfo.slug}
                     />
@@ -341,8 +341,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <Form.Item name={'chainType'}>
                 <Input
                   disabled={true}
-                  placeholder={t('Network type')}
-                  tooltip={t('Network type')}
+                  placeholder={t('common.Text.networkType')}
+                  tooltip={t('common.Text.networkType')}
                   tooltipPlacement='topLeft'
                   value={chainInfo.slug}
                 />

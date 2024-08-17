@@ -79,22 +79,22 @@ function Component ({ className, request }: Props) {
   const noAvailableTitle = useMemo(() => {
     switch (accountAuthType) {
       case 'substrate':
-        return t('No available Substrate account');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.substrate');
       case 'evm':
-        return t('No available EVM account');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.evm');
       default:
-        return t('No available account');
+        return t('settings.Screen.authorize.Confirmation.noAvailableTitle.default');
     }
   }, [accountAuthType, t]);
 
   const noAvailableDescription = useMemo(() => {
     switch (accountAuthType) {
       case 'substrate':
-        return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.authorize.Confirmation.description.substrate');
       case 'evm':
-        return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.authorize.Confirmation.description.evm');
       default:
-        return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+        return t('settings.Screen.authorize.Confirmation.description.default');
     }
   }, [accountAuthType, t]);
 
@@ -201,7 +201,7 @@ function Component ({ className, request }: Props) {
           {
             visibleAccounts.length === 0
               ? noAvailableTitle
-              : t('Choose the account(s) you’d like to connect')
+              : t('settings.Popup.authorizeRequest.heading')
           }
         </div>
         {
@@ -240,7 +240,7 @@ function Component ({ className, request }: Props) {
           {
             visibleAccounts.length === 0
               ? noAvailableDescription
-              : t('Make sure you trust this site before connecting')
+              : t('settings.Popup.authorizeRequest.description')
           }
         </div>
       </div>
@@ -261,14 +261,14 @@ function Component ({ className, request }: Props) {
                 onClick={onCancel}
                 schema={'secondary'}
               >
-                {t('Cancel')}
+                {t('common.Button.cancel')}
               </Button>
               <Button
                 disabled={isDisableConnect}
                 loading={loading}
                 onClick={onConfirm}
               >
-                {t('Connect')}
+                {t('settings.Popup.authorizeRequest.Button.connect')}
               </Button>
             </>
           )
@@ -288,7 +288,7 @@ function Component ({ className, request }: Props) {
                   onClick={onCancel}
                   schema={'secondary'}
                 >
-                  {t('Cancel')}
+                  {t('common.Button.cancel')}
                 </Button>
                 <Button
                   disabled={loading}
@@ -300,7 +300,7 @@ function Component ({ className, request }: Props) {
                   )}
                   onClick={onAddAccount}
                 >
-                  {t('Create one')}
+                  {t('settings.Popup.authorizeRequest.Button.create')}
                 </Button>
               </>
             )

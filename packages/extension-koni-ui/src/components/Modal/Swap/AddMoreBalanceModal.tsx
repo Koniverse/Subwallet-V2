@@ -42,7 +42,7 @@ const Component: React.FC<Props> = (props: Props) => {
                 onClick={onCancel}
                 schema={'secondary'}
               >
-                {'Cancel'}
+                {'common.Button.cancel'}
               </Button>
             )}
             <Button

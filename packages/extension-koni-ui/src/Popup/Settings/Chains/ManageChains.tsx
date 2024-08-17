@@ -42,11 +42,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
 
   const FILTER_OPTIONS = useMemo((): OptionType[] => ([
-    { label: t('EVM networks'), value: FilterValue.EVM },
-    { label: t('Substrate networks'), value: FilterValue.SUBSTRATE },
-    { label: t('Custom networks'), value: FilterValue.CUSTOM },
-    { label: t('Enabled networks'), value: FilterValue.ENABLED },
-    { label: t('Disabled networks'), value: FilterValue.DISABLED }
+    { label: t('settings.Screen.manageNetworks.Filter.evm'), value: FilterValue.EVM },
+    { label: t('settings.Screen.manageNetworks.Filter.substrate'), value: FilterValue.SUBSTRATE },
+    { label: t('settings.Screen.manageNetworks.Filter.custom'), value: FilterValue.CUSTOM },
+    { label: t('settings.Screen.manageNetworks.Filter.enabled'), value: FilterValue.ENABLED },
+    { label: t('settings.Screen.manageNetworks.Filter.disabled'), value: FilterValue.DISABLED }
   ]), [t]);
 
   const filterFunction = useMemo<(item: ChainInfoWithState) => boolean>(() => {
@@ -147,7 +147,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         subHeaderCenter={true}
         subHeaderIcons={subHeaderButton}
         subHeaderPaddingVertical={true}
-        title={t<string>('Manage networks')}
+        title={t<string>('settings.Screen.manageNetworks.title')}
       >
         <SwList.Section
           actionBtnIcon={(
@@ -168,7 +168,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           renderWhenEmpty={renderEmpty}
           searchFunction={searchToken}
           searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('Search network')}
+          searchPlaceholder={t<string>('settings.Screen.manageNetworks.searchPlaceHolder')}
           showActionBtn
         />
 

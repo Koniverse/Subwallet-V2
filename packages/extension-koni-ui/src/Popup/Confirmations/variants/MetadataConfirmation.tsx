@@ -79,7 +79,7 @@ function Component ({ className, request }: Props) {
           onClick={onCancel}
           schema={'secondary'}
         >
-          {t('Cancel')}
+          {t('common.Button.cancel')}
         </Button>
         <Button
           icon={(

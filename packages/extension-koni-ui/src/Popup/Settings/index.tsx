@@ -119,7 +119,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: FrameCorners,
           leftIconBgColor: token.colorPrimary,
           rightIcon: ArrowsOut,
-          title: t('Expand view'),
+          title: t('settings.Screen.settingsEntry.Item.expandView'),
           onClick: () => {
             windowOpen({ allowedPath: '/' }).catch(console.error);
           },
@@ -130,7 +130,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: GlobeHemisphereEast,
           leftIconBgColor: token['magenta-6'],
           rightIcon: CaretRight,
-          title: t('General settings'),
+          title: t('settings.Screen.settingsEntry.Item.generalSettings'),
           onClick: () => {
             navigate('/settings/general');
           }
@@ -140,7 +140,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: ShieldCheck,
           leftIconBgColor: token['green-6'],
           rightIcon: CaretRight,
-          title: t('Security settings'),
+          title: t('settings.Screen.settingsEntry.Item.securitySettings'),
           onClick: () => {
             navigate('/settings/security', { state: true });
           }
@@ -150,7 +150,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: Rocket,
           leftIconBgColor: token['cyan-5'],
           rightIcon: CaretRight,
-          title: t('Crowdloans'),
+          title: t('settings.Screen.settingsEntry.Item.crowdloan'),
           onClick: () => {
             navigate('/settings/crowdloans', { state: true });
           }
@@ -159,14 +159,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     },
     {
       key: 'website-access',
-      label: t('Website access'),
+      label: t('settings.Screen.settingsEntry.SectionTitle.websiteAccess'),
       items: [
         {
           key: 'manage-website-access',
           leftIcon: GlobeHemisphereEast,
           leftIconBgColor: token['blue-7'],
           rightIcon: CaretRight,
-          title: t('Manage website access'),
+          title: t('settings.Screen.settingsEntry.Item.manageWebsiteAccess'),
           onClick: () => {
             navigate('/settings/dapp-access');
           }
@@ -181,7 +181,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           ),
           leftIconBgColor: token['geekblue-6'],
           rightIcon: CaretRight,
-          title: t('WalletConnect'),
+          title: t('settings.Screen.settingsEntry.Item.walletConnect'),
           onClick: () => {
             navigate('/wallet-connect/list');
           }
@@ -190,14 +190,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     },
     {
       key: 'assets-&-addresses',
-      label: t('Assets & addresses'),
+      label: t('settings.Screen.settingsEntry.Item.assetsAddresses'),
       items: [
         {
           key: 'manage-networks',
           leftIcon: ShareNetwork,
           leftIconBgColor: token['purple-7'],
           rightIcon: CaretRight,
-          title: t('Manage networks'),
+          title: t('settings.Screen.settingsEntry.Item.manageNetworks'),
           onClick: () => {
             navigate('/settings/chains/manage');
           }
@@ -207,7 +207,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: Coin,
           leftIconBgColor: token['gold-6'],
           rightIcon: CaretRight,
-          title: t('Manage tokens'),
+          title: t('settings.Screen.settingsEntry.Item.manageTokens'),
           onClick: () => {
             navigate('/settings/tokens/manage');
           }
@@ -217,7 +217,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: BookBookmark,
           leftIconBgColor: token['blue-6'],
           rightIcon: CaretRight,
-          title: t('Manage address book'),
+          title: t('settings.Screen.settingsEntry.Item.manageAddressBook'),
           onClick: () => {
             navigate('/settings/address-book');
           }
@@ -226,14 +226,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     },
     {
       key: 'community-&-support',
-      label: t('Community & support'),
+      label: t('settings.Screen.settingsEntry.SectionTitle.communitySupport'),
       items: [
         {
           key: 'contact-support',
           leftIcon: EnvelopeSimple,
           leftIconBgColor: token['geekblue-6'],
           rightIcon: ArrowSquareOut,
-          title: t('Contact support'),
+          title: t('settings.Screen.settingsEntry.Item.contactSupport'),
           onClick: () => {
             window.open(`${SUPPORT_MAIL}?subject=[Extension - In-app support]`, '_self');
           }
@@ -243,7 +243,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: Book,
           leftIconBgColor: token['green-6'],
           rightIcon: ArrowSquareOut,
-          title: t('User guide'),
+          title: t('settings.Screen.settingsEntry.Item.userGuide'),
           onClick: openInNewTab(WIKI_URL)
         },
         {
@@ -251,7 +251,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: ChatTeardropText,
           leftIconBgColor: token['magenta-7'],
           rightIcon: ArrowSquareOut,
-          title: t('Request a feature'),
+          title: t('settings.Screen.settingsEntry.Item.requestFeature'),
           onClick: () => {
             window.open(`${SUPPORT_MAIL}?subject=[SubWallet In-app Feedback]`, '_self');
           }
@@ -269,7 +269,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           ),
           leftIconBgColor: token['magenta-7'],
           rightIcon: CaretRight,
-          title: t('About SubWallet'),
+          title: t('settings.Screen.settingsEntry.Item.aboutSubwallet'),
           onClick: () => {
             activeModal(modalId);
           }
@@ -286,7 +286,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         leftIcon: Globe,
         rightIcon: ArrowSquareOut,
         leftIconBgColor: token['purple-7'],
-        title: t('Website'),
+        title: t('settings.entry.Modal.aboutSubwallet.website'),
         onClick: openInNewTab(WEBSITE_URL)
       },
       {
@@ -294,7 +294,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         leftIcon: BookBookmark,
         rightIcon: ArrowSquareOut,
         leftIconBgColor: token['volcano-7'],
-        title: t('Terms of use'),
+        title: t('settings.entry.Modal.aboutSubwallet.ToS'),
         onClick: openInNewTab(TERMS_OF_SERVICE_URL)
       },
       {
@@ -309,7 +309,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         ),
         rightIcon: ArrowSquareOut,
         leftIconBgColor: token.colorBgSecondary,
-        title: t('X (Twitter)'),
+        title: t('settings.entry.Modal.aboutSubwallet.xTwitter'),
         onClick: openInNewTab(TWITTER_URL)
       }
     ];
@@ -345,7 +345,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           rightButtons={headerIcons}
           showLeftButton={true}
         >
-          {t('Settings')}
+          {t('settings.Screen.settingsEntry.title')}
         </SwHeader>
 
         <div className={'__scroll-container'}>
@@ -397,7 +397,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             onClick={onLock}
             schema={'secondary'}
           >
-            {t('Lock')}
+            {t('settings.Screen.settingsEntry.Button.lock')}
           </Button>
 
           <div className={'__version'}>
@@ -409,7 +409,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           className={CN(className, 'about-subwallet-modal')}
           id={modalId}
           onCancel={closeModal}
-          title={t('About SubWallet')}
+          title={t('settings.entry.Modal.aboutSubwallet.title')}
         >
           {aboutSubwalletType.map((item) => (
             <div

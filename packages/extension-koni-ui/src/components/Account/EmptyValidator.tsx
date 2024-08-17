@@ -43,7 +43,7 @@ const Component: React.FC<Props> = ({ className, isDataEmpty, onClickReload, val
         }}
       />
       <div className='message'>
-        {t('No results found')}
+        {t('emptyContent.common.title')}
       </div>
       {
         isDataEmpty

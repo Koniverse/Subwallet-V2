@@ -29,7 +29,7 @@ const NetworkEmptyList: React.FC<Props> = (props: Props) => {
           weight='fill'
         />
       ),
-      children: t('Add network'),
+      children: t('settings.Screen.manageNetworks.Button.addNetwork'),
       shape: 'circle',
       size: 'xs',
       onClick: () => {
@@ -45,8 +45,8 @@ const NetworkEmptyList: React.FC<Props> = (props: Props) => {
   return (
     <EmptyList
       buttonProps={buttonProps}
-      emptyMessage={t('Try adding one manually')}
-      emptyTitle={t('No networks found')}
+      emptyMessage={t('emptyContent.manageNetworks.description')}
+      emptyTitle={t('emptyContent.manageNetworks.title')}
       phosphorIcon={ListChecks}
     />
   );

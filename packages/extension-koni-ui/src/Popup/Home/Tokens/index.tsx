@@ -276,8 +276,8 @@ const Component = (): React.ReactElement => {
           !tokenGroupBalanceItems.length && (
             <EmptyList
               className={'__empty-list'}
-              emptyMessage={t('Try searching or importing one')}
-              emptyTitle={t('No tokens found')}
+              emptyMessage={t('emptyContent.tokens.description')}
+              emptyTitle={t('emptyContent.manageTokens.title')}
               phosphorIcon={Coins}
             />
           )
@@ -289,7 +289,7 @@ const Component = (): React.ReactElement => {
             size={'xs'}
             type={'ghost'}
           >
-            {t('Manage tokens')}
+            {t('common.Button.manageToken')}
           </Button>
         </div>
       </div>

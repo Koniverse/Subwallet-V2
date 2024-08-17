@@ -49,13 +49,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [loading, setLoading] = useState(false);
 
   const { handleSimpleConfirmModal } = useConfirmModal({
-    title: t<string>('Delete token'),
+    title: t<string>('settings.Screen.tokenDetail.Modal.deleteToken.title'),
     maskClosable: true,
     closable: true,
     type: 'error',
-    subTitle: t<string>('You are about to delete this token'),
-    content: t<string>('Confirm delete this token'),
-    okText: t<string>('Remove')
+    subTitle: t<string>('settings.Screen.tokenDetail.Modal.deleteToken.subTitle'),
+    content: t<string>('settings.Screen.tokenDetail.Modal.deleteToken.content'),
+    okText: t<string>('settings.Screen.addProvider.Modal.deleteNetwork.Button.remove')
   });
 
   const handleDeleteToken = useCallback(() => {
@@ -65,17 +65,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           if (result) {
             goBack();
             showNotification({
-              message: t('Deleted token successfully')
+              message: t('settings.Screen.tokenDetail.Notifications.deleteToken.success')
             });
           } else {
             showNotification({
-              message: t('Deleted token unsuccessfully')
+              message: t('settings.Screen.tokenDetail.Notifications.deleteToken.unSuccess')
             });
           }
         })
         .catch(() => {
           showNotification({
-            message: t('Deleted token unsuccessfully')
+            message: t('settings.Screen.tokenDetail.Notifications.deleteToken.unSuccess')
           });
         });
     }).catch(console.log);
@@ -124,7 +124,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     navigator.clipboard.writeText(contractAddress).then().catch(console.error);
 
     showNotification({
-      message: t('Copied to clipboard')
+      message: t('settings.Screen.tokenDetail.Notifications.copyAction')
     });
   }, [showNotification, t, tokenInfo]);
 
@@ -167,14 +167,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         } else {
           setLoading(false);
           showNotification({
-            message: t('Error')
+            message: t('common.Text.error')
           });
         }
       })
       .catch(() => {
         setLoading(false);
         showNotification({
-          message: t('Error')
+          message: t('common.Text.error')
         });
       });
   }, [goBack, priceId, showNotification, t, tokenInfo]);
@@ -187,7 +187,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     return _isCustomAsset(tokenInfo.slug)
       ? {
         onClick: goBackToSettingList,
-        children: t('Cancel')
+        children: t('common.Button.cancel')
       }
       : undefined;
   }, [goBackToSettingList, tokenInfo.slug, t]);
@@ -205,7 +205,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         ),
         loading,
         onClick: onSubmit,
-        children: t('Save')
+        children: t('common.Button.save')
       }
       : undefined;
   }, [isSubmitDisabled, loading, onSubmit, t, tokenInfo.slug]);
@@ -225,7 +225,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         subHeaderCenter={true}
         subHeaderIcons={subHeaderButton}
         subHeaderPaddingVertical={true}
-        title={t<string>('Token detail')}
+        title={t<string>('settings.manageTokens.Screen.tokenDetail.title')}
       >
         <div className={'token_detail__container'}>
           <div className={'token_detail__header_container'}>
@@ -245,16 +245,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             {
               _isSmartContractToken(tokenInfo) && <Field
                 content={contractAddressInfo()}
-                label={t<string>('Contract address')}
-                placeholder={t<string>('Contract address')}
+                label={t<string>('settings.Screen.tokenDetail.Field.contractAddress.label')}
+                placeholder={t<string>('settings.Screen.tokenDetail.Field.contractAddress.placeHolder')}
                 prefix={contractAddressIcon()}
                 suffix={contractAddressSuffix()}
               />
             }
             <Field
               content={originChainInfo.name}
-              label={t<string>('Network')}
-              placeholder={t<string>('Network')}
+              label={t<string>('common.Text.network')}
+              placeholder={t<string>('common.Text.network')}
               prefix={<Logo
                 network={originChainInfo.slug}
                 size={20}
@@ -265,12 +265,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <Col span={12}>
                 <Tooltip
                   placement={'topLeft'}
-                  title={t('Symbol')}
+                  title={t('common.Text.symbol')}
                 >
                   <div>
                     <Field
                       content={tokenInfo.symbol}
-                      placeholder={t<string>('Symbol')}
+                      placeholder={t<string>('common.Text.symbol')}
                       prefix={(
                         <Logo
                           size={20}
@@ -284,12 +284,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <Col span={12}>
                 <Tooltip
                   placement={'topLeft'}
-                  title={t('Token name')}
+                  title={t('common.Text.tokenName')}
                 >
                   <div>
                     <Field
                       content={tokenInfo.name}
-                      placeholder={t<string>('Token name')}
+                      placeholder={t<string>('common.Text.tokenName')}
                     />
                   </div>
                 </Tooltip>
@@ -299,13 +299,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <Col span={12}>
                 <Tooltip
                   placement={'topLeft'}
-                  title={t('Price ID')}
+                  title={t('common.Text.priceId')}
                 >
                   <div>
                     <Input
                       disabled={!_isCustomAsset(tokenInfo.slug)}
                       onChange={onChangePriceId}
-                      placeholder={t('Price ID')}
+                      placeholder={t('common.Text.priceId')}
                       value={priceId}
                     />
                   </div>
@@ -314,12 +314,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <Col span={12}>
                 <Tooltip
                   placement={'topLeft'}
-                  title={t('Decimals')}
+                  title={t('common.Text.decimals')}
                 >
                   <div>
                     <Field
                       content={tokenInfo.decimals}
-                      placeholder={t<string>('Decimals')}
+                      placeholder={t<string>('common.Text.decimals')}
                     />
                   </div>
                 </Tooltip>

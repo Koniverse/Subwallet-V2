@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { detectTranslate } from '@subwallet/extension-base/utils';
 import { MissionCategory } from '@subwallet/extension-koni-ui/types';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import { CheckCircle, Coin, Cube, DiceSix, MegaphoneSimple, SelectionBackground, User } from 'phosphor-react';
@@ -23,15 +24,15 @@ export enum MissionTab {
 export const missionCategoryMap: Record<string, MissionCategory> = {
   [MissionCategoryType.UPCOMING]: {
     slug: MissionCategoryType.UPCOMING,
-    name: 'Upcoming'
+    name: detectTranslate('settings.missionPools.Term.upcoming')
   },
   [MissionCategoryType.LIVE]: {
     slug: MissionCategoryType.LIVE,
-    name: 'Live'
+    name: detectTranslate('settings.missionPools.Term.live')
   },
   [MissionCategoryType.ARCHIVED]: {
     slug: MissionCategoryType.ARCHIVED,
-    name: 'Archived'
+    name: detectTranslate('settings.missionPools.Term.archived')
   }
 };
 

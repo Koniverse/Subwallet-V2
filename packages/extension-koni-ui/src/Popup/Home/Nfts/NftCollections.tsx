@@ -143,8 +143,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     return (
       <EmptyList
         buttonProps={emptyButtonProps}
-        emptyMessage={t('Try adding one manually')}
-        emptyTitle={t('No NFTs found')}
+        emptyMessage={t('emptyContent.nftCollection.description')}
+        emptyTitle={t('emptyContent.nftCollection.title')}
         phosphorIcon={Image}
       />
     );

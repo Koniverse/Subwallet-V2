@@ -134,7 +134,7 @@ function Component (props: Props): React.ReactElement<Props> {
           </div>
           <div className={'__item-timeline'}>{timeline}</div>
           <div className={'__item-rewards'}>
-            <div className='__item-label'>{t('Rewards')}:&nbsp;</div>
+            <div className='__item-label'>{t('common.Text.rewards')}:&nbsp;</div>
             <div className='__item-value'>
               {data.reward}
             </div>

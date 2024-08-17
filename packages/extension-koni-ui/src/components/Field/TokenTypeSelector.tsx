@@ -68,13 +68,13 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
       items={items}
       label={label}
       onSelect={onSelect}
-      placeholder={placeholder || t('Select token type')}
+      placeholder={placeholder || t('common.Text.selectTokenType')}
       renderItem={renderItem}
       renderSelected={renderChainSelected}
       renderWhenEmpty={renderEmpty}
       selected={value || ''}
       statusHelp={statusHelp}
-      title={title || label || placeholder || t('Select token type')}
+      title={title || label || placeholder || t('common.Text.selectTokenType')}
       tooltip={tooltip}
     />
   );

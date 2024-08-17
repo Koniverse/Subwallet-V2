@@ -120,7 +120,7 @@ function Component ({ addresses, className = '' }: Props): React.ReactElement<Pr
             name={FormFieldName.PASSWORD}
             rules={[
               {
-                message: t('Password is required'),
+                message: t('settings.security.Screen.changePassword.FormRules.currentPassword'),
                 required: true
               }
             ]}
@@ -145,7 +145,7 @@ function Component ({ addresses, className = '' }: Props): React.ReactElement<Pr
               onClick={closeModal}
               schema='secondary'
             >
-              {t('Cancel')}
+              {t('common.Button.cancel')}
             </Button>
             <Button
               block={true}

@@ -66,7 +66,7 @@ export default function useAssetChecker () {
         schema={'warning'}
         size={'xs'}
       >
-        {t('Turn it on')}
+        {t('common.Button.assetChecker')}
       </Button>;
 
       notify({

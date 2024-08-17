@@ -668,7 +668,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
             }
           },
           cancelButton: {
-            text: t('Cancel'),
+            text: t('common.Button.cancel'),
             onClick: closeAlert
           }
         });

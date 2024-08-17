@@ -47,7 +47,7 @@ function Component (props: Props): React.ReactElement<Props> {
         }
         onClick={onApplyFilter}
       >
-        {applyFilterButtonTitle || t('Apply filter')}
+        {applyFilterButtonTitle || t('common.Button.applyFilter')}
       </Button>
     );
   }, [t, onApplyFilter, applyFilterButtonTitle]);
@@ -59,7 +59,7 @@ function Component (props: Props): React.ReactElement<Props> {
       footer={filterModalFooter}
       id={id}
       onCancel={onCancel}
-      title={title || t('Filter')}
+      title={title || t('common.Text.filter')}
     >
       <div className={'__options-container'}>
         {

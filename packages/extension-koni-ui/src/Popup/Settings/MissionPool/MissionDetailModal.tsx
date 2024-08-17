@@ -142,13 +142,13 @@ function Component ({ className = '', data }: Props): React.ReactElement<Props> 
                 !!data.chains && data.chains.length === 1 && (
                   <MetaInfo.Chain
                     chain={data.chains[0]}
-                    label={t('Network')}
+                    label={t('common.Text.network')}
                   />
                 )
               }
               <MetaInfo.Default
                 className={'__status-pool'}
-                label={t('Status')}
+                label={t('common.Text.status')}
                 valueColorSchema={valueColorSchema}
               >
                 {status}
@@ -176,32 +176,32 @@ function Component ({ className = '', data }: Props): React.ReactElement<Props> 
 
               <MetaInfo.Default
                 className={'-vertical'}
-                label={t('Description')}
+                label={t('common.Text.description')}
                 valueColorSchema={'gray'}
               >
                 <Markdown>{data.description}</Markdown>
               </MetaInfo.Default>
               {!!data.total_supply && <MetaInfo.Default
                 className={'__total-token-supply'}
-                label={t('Total token supply')}
+                label={t('common.Text.totalTokenSupply')}
                 valueColorSchema={'gray'}
               >
                 {data.total_supply}
               </MetaInfo.Default>}
               <MetaInfo.Default
-                label={t('Total rewards')}
+                label={t('common.Text.totalReward')}
                 valueColorSchema={'gray'}
               >
                 {data.reward}
               </MetaInfo.Default>
               <MetaInfo.Default
-                label={t('Timeline')}
+                label={t('common.Text.timeline')}
                 valueColorSchema={'success'}
               >
                 {timeline}
               </MetaInfo.Default>
               <MetaInfo.Default
-                label={t('Total winners')}
+                label={t('common.Text.totalWinners')}
                 valueColorSchema={'gray'}
               >
                 {data.total_winner}
@@ -253,7 +253,7 @@ function Component ({ className = '', data }: Props): React.ReactElement<Props> 
                   shape={'circle'}
                   size={'xs'}
                 >
-                  {t('Join now')}
+                  {t('common.Button.joinNow')}
                 </Button>
               </div>
             </div>

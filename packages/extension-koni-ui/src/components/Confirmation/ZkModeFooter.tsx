@@ -76,7 +76,7 @@ const Component: React.FC<Props> = (props: Props) => {
           name={'password'}
           rules={[
             {
-              message: t('Password is required'),
+              message: t('settings.security.Screen.changePassword.FormRules.currentPassword'),
               required: true
             }
           ]}
@@ -102,7 +102,7 @@ const Component: React.FC<Props> = (props: Props) => {
           onClick={onClickCancel}
           schema={'secondary'}
         >
-          {t('Cancel')}
+          {t('common.Button.cancel')}
         </Button>
 
         <Button

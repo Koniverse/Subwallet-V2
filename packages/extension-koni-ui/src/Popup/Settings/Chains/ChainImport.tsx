@@ -138,19 +138,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
         if (result) {
           showNotification({
-            message: t('Imported chain successfully')
+            message: t('settings.Screen.importNetwork.SubmitResponse.successfully')
           });
           location?.useGoHome ? navigate(DEFAULT_ROUTER_PATH) : navigate(-1);
         } else {
           showNotification({
-            message: t('An error occurred, please try again')
+            message: t('settings.Screen.importNetwork.SubmitResponse.error')
           });
         }
       })
       .catch(() => {
         setLoading(false);
         showNotification({
-          message: t('An error occurred, please try again')
+          message: t('settings.Screen.importNetwork.SubmitResponse.error')
         });
       });
   }, [existentialDeposit, form, genesisHash, isPureEvmChain, location, navigate, showNotification, t]);
@@ -178,13 +178,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const handleErrorMessage = useCallback((errorCode: _CHAIN_VALIDATION_ERROR) => {
     switch (errorCode) {
       case _CHAIN_VALIDATION_ERROR.CONNECTION_FAILURE:
-        return t('Cannot connect to this provider');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.connectFailure');
       case _CHAIN_VALIDATION_ERROR.EXISTED_PROVIDER:
-        return t('This provider has already been added');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.providerAdded');
       case _CHAIN_VALIDATION_ERROR.EXISTED_CHAIN:
-        return t('This chain has already been added');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.chainAdded');
       default:
-        return t('Error validating this provider');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.validating');
     }
   }, [t]);
 
@@ -245,11 +245,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           })
           .catch(() => {
             setIsValidating(false);
-            reject(new Error(t('Error validating this provider')));
+            reject(new Error(t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.validating')));
             setProviderValidation({ status: 'error', message: t('Error validating this provider') });
           });
       } else {
-        reject(new Error(t('Provider URL is not valid')));
+        reject(new Error(t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.invalid')));
         setProviderValidation({ status: '' });
         setIsShowConnectionStatus(false);
       }
@@ -319,7 +319,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       <Layout.WithSubHeaderOnly
         leftFooterButton={{
           onClick: onBack,
-          children: t('Cancel')
+          children: t('common.Button.cancel')
         }}
         onBack={onBack}
         rightFooterButton={{
@@ -334,7 +334,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           ),
           loading: loading,
           onClick: onSubmit,
-          children: t('Save')
+          children: t('common.Button.save')
         }}
         subHeaderIcons={[
           {
@@ -342,11 +342,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             onClick: handleClickSubheaderButton
           }
         ]}
-        title={t<string>('Import network')}
+        title={t<string>('settings.Screen.manageNetworks.Modal.importNetwork.title')}
       >
         <div className={'chain_import__container'}>
           <div className={'chain_import__header_info'}>
-            {t('Currently support WSS provider for Substrate networks and HTTP provider for EVM network')}
+            {t('settings.Screen.manageNetworks.Modal.importNetwork.bodyTitle')}
           </div>
           <Form
             disabled={loading}
@@ -361,7 +361,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               >
                 <Input
                   disabled={isValidating}
-                  placeholder={t('Provider URL')}
+                  placeholder={t('settings.Screen.importNetwork.Input.providerUrl.placeHolder')}
                   prefix={(
                     <Icon
                       customSize={'24px'}
@@ -372,7 +372,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                     />
                   )}
                   suffix={providerSuffix()}
-                  tooltip={t('Provider URL')}
+                  tooltip={t('settings.Screen.importNetwork.Input.providerUrl.tooltip')}
                   tooltipPlacement={'topLeft'}
                 />
               </Form.Item>
@@ -382,7 +382,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   <Form.Item name={'name'}>
                     <Input
                       disabled={true}
-                      placeholder={t('Network name')}
+                      placeholder={t('common.Text.networkName')}
                       prefix={<Icon
                         customSize={'24px'}
                         iconColor={token['gray-4']}
@@ -390,7 +390,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                         type={'phosphor'}
                         weight={'bold'}
                       />}
-                      tooltip={t('Network name')}
+                      tooltip={t('common.Text.networkName')}
                       tooltipPlacement={'topLeft'}
                     />
                   </Form.Item>
@@ -399,8 +399,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   <Form.Item name={'symbol'}>
                     <Input
                       disabled={true}
-                      placeholder={t('Symbol')}
-                      tooltip={t('Symbol')}
+                      placeholder={t('common.Text.symbol')}
+                      tooltip={t('common.Text.symbol')}
                       tooltipPlacement={'topLeft'}
                     />
                   </Form.Item>
@@ -411,8 +411,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 <Col span={12}>
                   <Form.Item name={'priceId'}>
                     <Input
-                      placeholder={t('Price ID')}
-                      tooltip={t('Price ID')}
+                      placeholder={t('common.Text.priceId')}
+                      tooltip={t('common.Text.priceId')}
                       tooltipPlacement={'topLeft'}
                     />
                   </Form.Item>
@@ -422,8 +422,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   <Form.Item name={'type'}>
                     <Input
                       disabled={true}
-                      placeholder={t('Network type')}
-                      tooltip={t('Network type')}
+                      placeholder={t('common.Text.networkType')}
+                      tooltip={t('common.Text.networkType')}
                       tooltipPlacement={'topLeft'}
                     />
                   </Form.Item>
@@ -436,8 +436,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 statusHelpAsTooltip={true}
               >
                 <Input
-                  placeholder={t('Block explorer')}
-                  tooltip={t('Block explorer')}
+                  placeholder={t('common.Text.blockExplorer')}
+                  tooltip={t('common.Text.blockExplorer')}
                   tooltipPlacement={'topLeft'}
                 />
               </Form.Item>
@@ -448,8 +448,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 statusHelpAsTooltip={true}
               >
                 <Input
-                  placeholder={t('Crowdloan URL')}
-                  tooltip={t('Crowdloan URL')}
+                  placeholder={t('common.Text.crowdloanUrl')}
+                  tooltip={t('common.Text.crowdloanUrl')}
                   tooltipPlacement={'topLeft'}
                 />
               </Form.Item>

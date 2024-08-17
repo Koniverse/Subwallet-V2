@@ -58,11 +58,11 @@ const Component: React.FC<Props> = (props: Props) => {
   const modalProps: SwModalFuncProps = useMemo(() => {
     return {
       closable: true,
-      content: t('You would no longer see this address in your address book'),
+      content: t('settings.addressBook.Modal.delete.content'),
       id: DELETE_ADDRESS_BOOK_MODAL,
-      okText: t('Remove'),
-      subTitle: t('Delete this contact?'),
-      title: t('Confirmation'),
+      okText: t('settings.addressBook.Modal.delete.Button.remove'),
+      subTitle: t('settings.addressBook.Modal.delete.subTitle'),
+      title: t('settings.addressBook.Modal.delete.title'),
       type: 'error',
       maskClosable: true,
       zIndex: 1005
@@ -91,11 +91,11 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const nameValidator = useCallback((rule: RuleObject, name: string): Promise<void> => {
     if (!name) {
-      return Promise.reject(new Error(t('Contact name is required')));
+      return Promise.reject(new Error(t('settings.addressBook.Modal.editContact.Input.contactName.Error.required')));
     }
 
     if (existNames.includes(name)) {
-      return Promise.reject(new Error(t('Contact name must be unique')));
+      return Promise.reject(new Error(t('settings.addressBook.Modal.editContact.Input.contactName.Error.unique')));
     }
 
     return Promise.resolve();
@@ -150,7 +150,7 @@ const Component: React.FC<Props> = (props: Props) => {
       className={CN(className)}
       id={modalId}
       onCancel={(!loading && !deleting) ? onCancel : undefined}
-      title={t('Edit contact')}
+      title={t('settings.addressBook.Modal.editContact.title')}
     >
       <Form
         className='form-space-sm'
@@ -171,7 +171,7 @@ const Component: React.FC<Props> = (props: Props) => {
           statusHelpAsTooltip={true}
         >
           <Input
-            label={t('Contact name')}
+            label={t('settings.addressBook.Modal.editContact.contactName')}
             prefix={(
               <Avatar
                 size={20}
@@ -184,7 +184,7 @@ const Component: React.FC<Props> = (props: Props) => {
           <Field
             className='address-input'
             content={toShort(address, 12, 12)}
-            label={t('Contact address')}
+            label={t('settings.addressBook.Modal.editContact.contactAddress')}
             suffix={(
               <Button
                 className='copy-button'
@@ -222,7 +222,7 @@ const Component: React.FC<Props> = (props: Props) => {
             onClick={onCancel}
             schema='secondary'
           >
-            {t('Cancel')}
+            {t('common.Button.cancel')}
           </Button>
           <Button
             block={true}
@@ -230,7 +230,7 @@ const Component: React.FC<Props> = (props: Props) => {
             htmlType='submit'
             loading={loading}
           >
-            {t('Save')}
+            {t('common.Button.save')}
           </Button>
         </Form.Item>
       </Form>

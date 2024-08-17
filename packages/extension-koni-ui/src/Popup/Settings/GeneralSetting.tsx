@@ -203,19 +203,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         key: 'popup',
         leftIcon: ArrowSquareUpRight,
         leftIconBgColor: token['volcano-6'],
-        title: t('Popup')
+        title: t('settings.Screen.generalSetting.Selector.notification.Item.popup')
       },
       {
         key: 'extension',
         leftIcon: LayoutIcon,
         leftIconBgColor: token['volcano-6'],
-        title: t('Extension')
+        title: t('settings.Screen.generalSetting.Selector.notification.Item.extension')
       },
       {
         key: 'window',
         leftIcon: CornersOut,
         leftIconBgColor: token['volcano-6'],
-        title: t('Window')
+        title: t('settings.Screen.generalSetting.Selector.notification.Item.window')
       }
     ];
   }, [t, token]);
@@ -288,7 +288,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     >
       <Layout.WithSubHeaderOnly
         onBack={goBackToSettingList}
-        title={t('General settings')}
+        title={t('settings.Screen.generalSetting.title')}
       >
         <div className={'__scroll-container'}>
           {isShowWalletTheme &&
@@ -299,7 +299,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 key: 'wallet-theme-trigger',
                 leftIcon: Image as unknown as PhosphorIcon,
                 leftIconBgColor: token.colorPrimary,
-                title: t('Wallet theme')
+                title: t('settings.Screen.generalSetting.walletTheme')
               })}
               id='wallet-theme-select-modal'
               inputWidth={'100%'}
@@ -310,7 +310,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               searchFunction={searchFunction}
               selected={theme}
               shape='round'
-              title={t('Wallet theme')}
+              title={t('settings.Screen.generalSetting.walletTheme')}
             />}
           <SelectModal
             background={'default'}
@@ -319,7 +319,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               key: 'price-currency-trigger',
               leftIcon: CurrencyCircleDollar,
               leftIconBgColor: token['gold-6'],
-              title: t('Currency'),
+              title: t('settings.Screen.generalSetting.Item.currency'),
               subTitle: currency
             })}
             disabled={loadingMap.currency}
@@ -332,11 +332,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             renderWhenEmpty={renderEmpty}
             searchFunction={searchFunction}
             searchMinCharactersCount={2}
-            searchPlaceholder={t<string>('Search currency')}
+            searchPlaceholder={t<string>('settings.Screen.generalSetting.Selector.currency.searchPlaceHolder')}
             selected={currency}
             shape='round'
             size='small'
-            title={t('Select a currency')}
+            title={t('settings.Screen.generalSetting.Selector.currency.title')}
           />
 
           <SelectModal
@@ -346,7 +346,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               key: 'languages-trigger',
               leftIcon: GlobeHemisphereEast,
               leftIconBgColor: token['green-6'],
-              title: t('Language')
+              title: t('settings.Screen.generalSetting.Item.language')
             })}
             disabled={loadingMap.language}
             id='languages-select-modal'
@@ -358,7 +358,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             selected={_language}
             shape='round'
             size='small'
-            title={t('Language')}
+            title={t('settings.Screen.generalSetting.Selector.language.title')}
           />
 
           <SelectModal
@@ -368,7 +368,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               key: 'browser-confirmation-type-trigger',
               leftIcon: BellSimpleRinging,
               leftIconBgColor: token['volcano-6'],
-              title: t('Notifications')
+              title: t('settings.Screen.generalSetting.Item.notifications')
             })}
             disabled={loadingMap.browserConfirmationType}
             id='browser-confirmation-type-select-modal'
@@ -380,7 +380,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             selected={_browserConfirmationType}
             shape='round'
             size='small'
-            title={t('Notifications')}
+            title={t('settings.Screen.generalSetting.Selector.notification.title')}
           />
         </div>
       </Layout.WithSubHeaderOnly>

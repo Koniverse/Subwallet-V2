@@ -161,7 +161,7 @@ const Component: React.FC<Props> = (props: Props) => {
           onClick={onCancel}
           schema={'secondary'}
         >
-          {t('Cancel')}
+          {t('common.Button.cancel')}
         </Button>
         <Button
           disabled={!!slug || !validated || contractError}

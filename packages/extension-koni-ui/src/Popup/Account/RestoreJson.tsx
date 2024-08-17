@@ -277,7 +277,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     if (!value) {
       setSubmitValidateState({
-        message: t('Password is required'),
+        message: t('settings.security.Screen.changePassword.FormRules.currentPassword'),
         status: 'error'
       });
     } else {

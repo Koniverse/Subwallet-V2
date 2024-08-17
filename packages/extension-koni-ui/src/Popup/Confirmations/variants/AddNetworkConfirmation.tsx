@@ -42,13 +42,13 @@ const Component: React.FC<Props> = (props: Props) => {
 
     switch (errorCode) {
       case _CHAIN_VALIDATION_ERROR.CONNECTION_FAILURE:
-        return t('Cannot connect to this provider');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.connectFailure');
       case _CHAIN_VALIDATION_ERROR.EXISTED_PROVIDER:
-        return t('This provider has already been added');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.providerAdded');
       case _CHAIN_VALIDATION_ERROR.EXISTED_CHAIN:
-        return t('This chain has already been added');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.chainAdded');
       default:
-        return t('Error validating this provider');
+        return t('settings.Screen.importNetwork.Input.providerUrl.ErrorTooltip.validating');
     }
   }, [t]);
 
@@ -102,7 +102,7 @@ const Component: React.FC<Props> = (props: Props) => {
         <ConfirmationGeneralInfo request={request} />
         <Field
           content={chainEditInfo.providers[chainEditInfo.currentProvider]}
-          placeholder={t<string>('Provider URL')}
+          placeholder={t<string>('common.Text.providerUrl')}
           prefix={(
             <Icon
               customSize={'24px'}
@@ -115,14 +115,14 @@ const Component: React.FC<Props> = (props: Props) => {
           status={providerError ? 'error' : ''}
           statusHelp={handleErrorMessage(providerError)}
           suffix={providerSuffix}
-          tooltip={t<string>('Provider URL')}
+          tooltip={t<string>('common.Text.providerUrl')}
           tooltipPlacement='topLeft'
         />
         <Row gutter={token.paddingSM}>
           <Col span={16}>
             <Field
               content={chainEditInfo.name || ''}
-              placeholder={t('Network name')}
+              placeholder={t('common.Text.networkName')}
               prefix={(
                 <Icon
                   customSize={'24px'}
@@ -132,15 +132,15 @@ const Component: React.FC<Props> = (props: Props) => {
                   weight={'bold'}
                 />
               )}
-              tooltip={t<string>('Network name')}
+              tooltip={t<string>('common.Text.networkName')}
               tooltipPlacement='topLeft'
             />
           </Col>
           <Col span={8}>
             <Field
               content={chainEditInfo.symbol || ''}
-              placeholder={t('Symbol')}
-              tooltip={t<string>('Symbol')}
+              placeholder={t('common.Text.symbol')}
+              tooltip={t<string>('common.Text.symbol')}
               tooltipPlacement='topLeft'
             />
           </Col>
@@ -149,42 +149,42 @@ const Component: React.FC<Props> = (props: Props) => {
           <Col span={12}>
             <Field
               content={chainSpec?.decimals || 0}
-              placeholder={t('Decimals')}
-              tooltip={t<string>('Decimals')}
+              placeholder={t('common.Text.decimals')}
+              tooltip={t<string>('common.Text.decimals')}
               tooltipPlacement='topLeft'
             />
           </Col>
           <Col span={12}>
             <Field
               content={chainSpec?.evmChainId || 0}
-              placeholder={t('Chain ID')}
-              tooltip={t<string>('Chain ID')}
+              placeholder={t('common.Text.chainId')}
+              tooltip={t<string>('common.Text.chainId')}
               tooltipPlacement='topLeft'
             />
           </Col>
         </Row>
         <Field
           content={chainEditInfo.chainType}
-          placeholder={t('Network type')}
-          tooltip={t<string>('Network type')}
+          placeholder={t('common.Text.networkType')}
+          tooltip={t<string>('common.Text.networkType')}
           tooltipPlacement='topLeft'
         />
         <Field
           content={chainEditInfo.blockExplorer}
-          placeholder={t('Block explorer')}
-          tooltip={t<string>('Block explorer')}
+          placeholder={t('common.Text.blockExplorer')}
+          tooltip={t<string>('common.Text.blockExplorer')}
           tooltipPlacement='topLeft'
         />
         <Field
           content={chainEditInfo.crowdloanUrl}
-          placeholder={t('Crowdloan URL')}
-          tooltip={t<string>('Crowdloan URL')}
+          placeholder={t('common.Text.crowdloanUrl')}
+          tooltip={t<string>('common.Text.crowdloanUrl')}
           tooltipPlacement='topLeft'
         />
       </div>
       <div className='confirmation-footer'>
         {mode === 'update' && (<div className={'warning-message'}>
-          {t('The network already exists')}
+          {t('settings.Screen.importNetwork.Warning.networkExist')}
         </div>)}
         <Button
           disabled={loading}
@@ -197,7 +197,7 @@ const Component: React.FC<Props> = (props: Props) => {
           onClick={onCancel}
           schema={'secondary'}
         >
-          {t('Cancel')}
+          {t('common.Button.cancel')}
         </Button>
         <Button
           disabled={mode === 'update' || unconfirmed || !!providerError}
@@ -210,7 +210,7 @@ const Component: React.FC<Props> = (props: Props) => {
           loading={loading}
           onClick={onApprove}
         >
-          {t('Approve')}
+          {t('common.Button.Approve')}
         </Button>
       </div>
     </>

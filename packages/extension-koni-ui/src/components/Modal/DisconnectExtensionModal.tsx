@@ -54,7 +54,7 @@ const Component: React.FC<Props> = (props: Props) => {
             onClick={closeModal}
             schema='secondary'
           >
-            {t('Cancel')}
+            {t('common.Button.cancel')}
           </Button>
           <Button
             block={true}

@@ -30,7 +30,7 @@ const Component: React.FC<Props> = (props: Props) => {
           supported: false,
           chainInfo: {
             slug: '',
-            name: t('{{number}} unknown network', { replace: { number: unSupportNetworks.length } })
+            name: t('settings.Screen.walletConnect.networkSelected.unSupportNetwork', { replace: { number: unSupportNetworks.length } })
           },
           slug: ''
         }
@@ -45,12 +45,12 @@ const Component: React.FC<Props> = (props: Props) => {
   return (
     <WCNetworkBase
       className={className}
-      content={t('{{number}} networks connected', { replace: { number: networkNumber } })}
+      content={t('settings.Screen.walletConnect.networkSelected.content', { replace: { number: networkNumber } })}
       contentNetworks={connectedNetworks}
       id={id}
       networks={showNetworks}
-      subTitle={t('{{number}} networks selected', { replace: { number: networkNumber } })}
-      title={t('Selected networks')}
+      subTitle={t('settings.Screen.walletConnect.networkSelected.subTitle', { replace: { number: networkNumber } })}
+      title={t('settings.Screen.walletConnect.networkSelected.title')}
     />
   );
 };

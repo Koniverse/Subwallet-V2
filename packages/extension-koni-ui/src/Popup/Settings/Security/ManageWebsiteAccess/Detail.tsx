@@ -65,7 +65,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
         key: isAllowed ? 'block' : 'unblock',
         icon: isAllowed ? ShieldSlash : ShieldCheck,
         iconBackgroundColor: isAllowed ? token.colorError : token.colorSuccess,
-        title: isAllowed ? t('Block this site') : t('Unblock this site'),
+        title: isAllowed ? t('settings.websiteAccess.Screen.detail.Modal.dappConfig.Item.block') : t('settings.websiteAccess.Screen.detail.Modal.dappConfig.Item.unblock'),
         onClick: () => {
           toggleAuthorization(origin)
             .then(({ list }) => {
@@ -79,7 +79,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
         key: 'forget-site',
         icon: X,
         iconBackgroundColor: token.colorWarning,
-        title: t('Forget this site'),
+        title: t('settings.websiteAccess.Screen.detail.Modal.dappConfig.Item.forget'),
         onClick: () => {
           forgetSite(origin, updateAuthUrls).catch(console.error);
           onCloseActionModal();
@@ -93,7 +93,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
           key: 'disconnect-all',
           icon: Plugs,
           iconBackgroundColor: token['gray-3'],
-          title: t('Disconnect all accounts'),
+          title: t('settings.websiteAccess.Screen.detail.Modal.dappConfig.Item.disconnect'),
           onClick: () => {
             changeAuthorization(false, origin, updateAuthUrls).catch(console.error);
             onCloseActionModal();
@@ -103,7 +103,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
           key: 'connect-all',
           icon: PlugsConnected,
           iconBackgroundColor: token['green-6'],
-          title: t('Connect all accounts'),
+          title: t('settings.websiteAccess.Screen.detail.Modal.dappConfig.Item.connect'),
           onClick: () => {
             changeAuthorization(true, origin, updateAuthUrls).catch(console.error);
             onCloseActionModal();
@@ -215,7 +215,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
           rowGap = {'8px'}
           searchFunction={searchFunc}
           searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('Search account')}
+          searchPlaceholder={t<string>('settings.websiteAccess.Screen.detail.searchPlaceHolder')}
         />
 
         <ActionModal
@@ -223,7 +223,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
           className={`${className} action-modal`}
           id={ActionModalId}
           onCancel={onCloseActionModal}
-          title={t('dApp configuration')}
+          title={t('settings.websiteAccess.Screen.detail.Modal.dappConfig.title')}
         />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>

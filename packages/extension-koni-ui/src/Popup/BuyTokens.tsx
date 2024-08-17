@@ -453,7 +453,7 @@ function Component ({ className }: Props) {
                 onClick={onReject}
                 schema={'secondary'}
               >
-                {t('Cancel')}
+                {t('common.Button.cancel')}
               </Button>
               <Button
                 block={true}

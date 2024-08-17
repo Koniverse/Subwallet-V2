@@ -84,15 +84,15 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const filterOptions: FilterOption[] = useMemo(() => ([
     {
-      label: t('Your wallet'),
+      label: t('settings.manageAddressBook.Filter.yourWallet'),
       value: AccountGroup.WALLET
     },
     {
-      label: t('Saved contacts'),
+      label: t('settings.manageAddressBook.Filter.saveContact'),
       value: AccountGroup.CONTACT
     },
     {
-      label: t('Recent'),
+      label: t('settings.manageAddressBook.Filter.recent'),
       value: AccountGroup.RECENT
     }
   ]), [t]);
@@ -188,13 +188,13 @@ const Component: React.FC<Props> = (props: Props) => {
 
     switch (_group) {
       case AccountGroup.WALLET:
-        groupLabel = t('Your wallet');
+        groupLabel = t('settings.addressBook.SectionTitle.yourWallet');
         break;
       case AccountGroup.CONTACT:
-        groupLabel = t('Saved contacts');
+        groupLabel = t('settings.addressBook.SectionTitle.saveContact');
         break;
       case AccountGroup.RECENT:
-        groupLabel = t('Recent');
+        groupLabel = t('settings.addressBook.SectionTitle.recent');
         break;
     }
 
@@ -234,7 +234,7 @@ const Component: React.FC<Props> = (props: Props) => {
         className={CN(className)}
         id={id}
         onCancel={onClose}
-        title={t('Address book')}
+        title={t('settings.addressBook.Modal.title')}
       >
         <SwList.Section
           actionBtnIcon={(
@@ -259,7 +259,7 @@ const Component: React.FC<Props> = (props: Props) => {
           rowGap='var(--row-gap)'
           searchFunction={searchFunction}
           searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('Account name')}
+          searchPlaceholder={t<string>('common.Search.Account.placeHolder')}
           showActionBtn={true}
         />
       </SwModal>
@@ -271,7 +271,7 @@ const Component: React.FC<Props> = (props: Props) => {
         onChangeOption={onChangeFilterOption}
         optionSelectionMap={filterSelectionMap}
         options={filterOptions}
-        title={t('Filter address')}
+        title={t('settings.addressBook.Filter.title')}
       />
     </>
   );

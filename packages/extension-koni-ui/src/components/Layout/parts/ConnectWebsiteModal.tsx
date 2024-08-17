@@ -145,7 +145,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
             onClick={onCancel}
             schema={'secondary'}
           >
-            {t('Cancel')}
+            {t('common.Button.cancel')}
           </Button>
           <Button
             block
@@ -178,7 +178,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
           onClick={onCancel}
           schema={'secondary'}
         >
-          {t('Cancel')}
+          {t('common.Button.cancel')}
         </Button>
         <Button
           block

@@ -177,7 +177,7 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
           title: t('Enter Astar portal'),
           content: t('Navigate to Astar portal to view and manage your stake in Astar dApp staking v3'),
           cancelButton: {
-            text: t('Cancel'),
+            text: t('common.Button.cancel'),
             schema: 'secondary',
             onClick: closeAlert
           },
@@ -375,14 +375,14 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
           showActionBtn
         />
         <FilterModal
-          applyFilterButtonTitle={t('Apply filter')}
+          applyFilterButtonTitle={t('common.Button.applyFilter')}
           id={FILTER_MODAL_ID}
           onApplyFilter={onApplyFilter}
           onCancel={onCloseFilterModal}
           onChangeOption={onChangeFilterOption}
           optionSelectionMap={filterSelectionMap}
           options={filterOptions}
-          title={t('Filter')}
+          title={t('common.Text.filter')}
         />
       </Layout.Base>
     </ChainConnectionWrapper>

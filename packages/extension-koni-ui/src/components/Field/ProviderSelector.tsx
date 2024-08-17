@@ -85,7 +85,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
         />}
         onClick={handleAddProvider}
       >
-        {t('Add new provider')}
+        {t('settings.networkDetail.Modal.SelectProvider.Button.footer')}
       </Button>
     );
   }, [handleAddProvider, t, token.colorTextLight1]);
@@ -101,7 +101,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
       items={providerValueList()}
       label={label}
       onSelect={onSelect}
-      placeholder={placeholder || t('Select provider')}
+      placeholder={placeholder || t('settings.networkDetail.Modal.SelectProvider.placeHolder')}
       prefix={(
         <Icon
           customSize={'24px'}
@@ -115,7 +115,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
       renderSelected={renderSelectedProvider}
       selected={value || ''}
       statusHelp={statusHelp}
-      title={label || placeholder || t('Select provider')}
+      title={label || placeholder || t('settings.networkDetail.Modal.SelectProvider.title')}
     />
   );
 };

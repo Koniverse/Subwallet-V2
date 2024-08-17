@@ -91,7 +91,7 @@ const Component: React.FC<Props> = (props: Props) => {
             {!!apy && (
               <div className='__item-rewards'>
                 <div className='__item-rewards-label'>
-                  {t('Rewards')}:
+                  {t('common.Text.rewards')}:
                 </div>
                 <div className='__item-rewards-value'>
                   <Number

@@ -347,8 +347,8 @@ const Component: React.FC<Props> = (props: Props) => {
               <Form.Item>
                 <Field
                   content={currentAccount.name || ''}
-                  label={t('Account name')}
-                  placeholder={t('Account name')}
+                  label={t('common.Account.label')}
+                  placeholder={t('common.Search.Account.placeHolder')}
                 />
               </Form.Item>
               <Form.Item>
@@ -369,7 +369,7 @@ const Component: React.FC<Props> = (props: Props) => {
                 statusHelpAsTooltip={true}
               >
                 <Input.Password
-                  label={t('Current password')}
+                  label={t('settings.security.Screen.changePassword.Input.currentPassword.placeHolder')}
                   type='password'
                 />
               </Form.Item>

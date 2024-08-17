@@ -331,14 +331,14 @@ function Component ({ poolGroup, symbol }: ComponentProps) {
           showActionBtn
         />
         <FilterModal
-          applyFilterButtonTitle={t('Apply filter')}
+          applyFilterButtonTitle={t('common.Button.applyFilter')}
           id={FILTER_MODAL_ID}
           onApplyFilter={onApplyFilter}
           onCancel={onCloseFilterModal}
           onChangeOption={onChangeFilterOption}
           optionSelectionMap={filterSelectionMap}
           options={filterOptions}
-          title={t('Filter')}
+          title={t('common.Text.filter')}
         />
       </Layout.Base>
     </ChainConnectionWrapper>
