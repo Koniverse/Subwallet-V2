@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { PREDEFINED_EARNING_POOL_PROMISE } from '@subwallet/extension-base/constants';
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { YieldPoolType } from '@subwallet/extension-base/types';
+import { fetchStaticData } from '@subwallet/extension-base/utils';
 import { BaseSelectModal, StakingPoolItem } from '@subwallet/extension-web-ui/components';
 import EmptyValidator from '@subwallet/extension-web-ui/components/Account/EmptyValidator';
 import { Avatar } from '@subwallet/extension-web-ui/components/Avatar';
@@ -57,6 +57,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
     id = 'pool-selector',
     label, onChange,
     onClickBookButton,
+    placeholder,
     setForceFetchValidator,
     slug, statusHelp,
     value } = props;
@@ -114,6 +115,10 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
     {
       label: t('Destroying'),
       value: 'Destroying'
+    },
+    {
+      label: t('Blocked'),
+      value: 'Blocked'
     }
   ]), [t]);
 
@@ -136,16 +141,12 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
 
         if (filters.length) {
           return filters.includes(value.state);
-        } else { // @ts-ignore
-          if (value.state === 'Blocked') {
-            return false;
-          } else {
-            return true;
-          }
+        } else {
+          return true;
         }
       })
       .map((item) => {
-        const disabled = item.isCrowded;
+        const disabled = item.isCrowded || item.state === 'Blocked';
 
         return { ...item, disabled };
       })
@@ -169,9 +170,9 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
                 }
               }
 
-              if (a.isCrowded && !b.isCrowded) {
+              if (a.disabled && !b.disabled) {
                 return 1;
-              } else if (!a.isCrowded && b.isCrowded) {
+              } else if (!a.disabled && b.disabled) {
                 return -1;
               }
 
@@ -274,13 +275,35 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
           </Tooltip>
         )
         : (
-          <StakingPoolItem
-            {...item}
-            className={'pool-item'}
-            key={item.id}
-            onClickMoreBtn={onClickMore(item)}
-            prefixAddress={networkPrefix}
-          />
+          item.state === 'Blocked'
+            ? (
+              <Tooltip
+                key={item.id}
+                placement={'top'}
+                title={t('This pool is blocked. Select another to continue')}
+              >
+                <div
+                  className={'__pool-item-wrapper'}
+                  key={item.id}
+                >
+                  <StakingPoolItem
+                    {...item}
+                    className={'pool-item'}
+                    onClickMoreBtn={onClickMore(item)}
+                    prefixAddress={networkPrefix}
+                  />
+                </div>
+              </Tooltip>
+            )
+            : (
+              <StakingPoolItem
+                {...item}
+                className={'pool-item'}
+                key={item.id}
+                onClickMoreBtn={onClickMore(item)}
+                prefixAddress={networkPrefix}
+              />
+            )
         )
     );
   }, [networkPrefix, onClickMore, t]);
@@ -333,7 +356,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   }, [inactiveModal]);
 
   useEffect(() => {
-    PREDEFINED_EARNING_POOL_PROMISE.then((earningPoolRecommendation) => {
+    fetchStaticData<Record<string, number[]>>('nomination-pool-recommendation').then((earningPoolRecommendation) => {
       setDefaultPoolMap(earningPoolRecommendation);
     }).catch(console.error);
   }, []);
@@ -381,7 +404,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
         loading={false}
         onClickActionBtn={onClickActionBtn}
         onSelect={_onSelectItem}
-        placeholder={t('Select pool')}
+        placeholder={placeholder || t('Select pool')}
         prefix={(
           <Avatar
             size={20}
@@ -404,7 +427,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
         }}
         searchFunction={searchFunction}
         searchMinCharactersCount={2}
-        searchPlaceholder={t<string>('Search pool')}
+        searchPlaceholder={t<string>('Search validator')}
         selected={value || ''}
         showActionBtn
         statusHelp={statusHelp}

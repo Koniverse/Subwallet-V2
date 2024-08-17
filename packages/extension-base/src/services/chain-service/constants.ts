@@ -130,7 +130,8 @@ export const _EXPECTED_BLOCK_TIME: Record<string, number> = { // in seconds
   manta_network: 12,
   enjin_relaychain: 6,
   availTuringTest: 20,
-  avail_mainnet: 20
+  avail_mainnet: 20,
+  dentnet: 3
 };
 
 export const _PARACHAIN_INFLATION_DISTRIBUTION: Record<string, Record<string, number>> = {
@@ -214,7 +215,8 @@ export const _KNOWN_CHAIN_INFLATION_PARAMS: Record<string, _SubstrateInflationPa
   polkadot: { ..._SUBSTRATE_DEFAULT_INFLATION_PARAMS, stakeTarget: 0.75 },
   vara_network: { ..._SUBSTRATE_DEFAULT_INFLATION_PARAMS, stakeTarget: 0.8 },
   vara_testnet: { ..._SUBSTRATE_DEFAULT_INFLATION_PARAMS, stakeTarget: 0.8 },
-  avail_mainnet: { ..._SUBSTRATE_DEFAULT_INFLATION_PARAMS, maxInflation: 0.05, minInflation: 0.01 }
+  avail_mainnet: { ..._SUBSTRATE_DEFAULT_INFLATION_PARAMS, maxInflation: 0.05, minInflation: 0.01 },
+  dentnet: { ..._SUBSTRATE_DEFAULT_INFLATION_PARAMS, falloff: 0.5 }
 };
 
 // Send fund------------------------------------------------------------------------------------------------------------
@@ -249,7 +251,7 @@ export const _DEFAULT_MANTA_ZK_CHAIN = 'calamari';
 // XCM------------------------------------------------------------------------------------------------------------------
 
 export const _XCM_CHAIN_GROUP = {
-  polkadotXcm: ['astar', 'shiden', 'statemine', 'statemint', 'equilibrium_parachain', 'rococo_assethub'],
+  polkadotXcm: ['astar', 'shiden', 'statemine', 'statemint', 'equilibrium_parachain', 'rococo_assethub', 'mythos'],
   xcmPallet: ['polkadot', 'kusama', 'rococo']
   // default is xTokens pallet
 };
@@ -269,7 +271,8 @@ export const EVM_PASS_CONNECT_STATUS: Record<string, string[]> = {
   arbitrum_one: ['*'],
   okxTest: ['*'],
   astarZkEvm: ['*'],
-  xlayer: ['*']
+  xlayer: ['*'],
+  aleph_evm: ['*']
 };
 
 export const EVM_REFORMAT_DECIMALS = {

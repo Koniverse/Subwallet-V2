@@ -4,7 +4,7 @@
 import { ConfirmationDefinitions, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson, AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { detectTranslate } from '@subwallet/extension-base/utils';
+import { _isRuntimeUpdated, detectTranslate } from '@subwallet/extension-base/utils';
 import { AlertModal } from '@subwallet/extension-koni-ui/components';
 import { isProductionMode, NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useConfirmationsInfo, useSelector } from '@subwallet/extension-koni-ui/hooks';
@@ -19,7 +19,7 @@ import { SignerPayloadJSON } from '@polkadot/types/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { ConfirmationHeader } from './parts';
-import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
+import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NetworkConnectionErrorConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
 
 type Props = ThemeProps
 
@@ -33,7 +33,8 @@ const titleMap: Record<ConfirmationType, string> = {
   signingRequest: detectTranslate('Signature request'),
   switchNetworkRequest: detectTranslate('Add network request'),
   connectWCRequest: detectTranslate('WalletConnect'),
-  notSupportWCRequest: detectTranslate('WalletConnect')
+  notSupportWCRequest: detectTranslate('WalletConnect'),
+  errorConnectNetwork: detectTranslate('Transaction request')
 } as Record<ConfirmationType, string>;
 
 const alertModalId = 'confirmation-alert-modal';
@@ -44,7 +45,6 @@ const Component = function ({ className }: Props) {
   const confirmation = confirmationQueue[index] || null;
   const { t } = useTranslation();
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
-
   const { transactionRequest } = useSelector((state) => state.requestState);
 
   const nextConfirmation = useCallback(() => {
@@ -82,7 +82,7 @@ const Component = function ({ className }: Props) {
               const payload = request.request.payload as SignerPayloadJSON;
 
               // Valid even with evm ledger account (evm - availableGenesisHashes is empty)
-              canSign = !!account.availableGenesisHashes?.includes(payload.genesisHash);
+              canSign = !!account.availableGenesisHashes?.includes(payload.genesisHash) || _isRuntimeUpdated(payload?.signedExtensions);
             }
           }
         } else {
@@ -165,6 +165,12 @@ const Component = function ({ className }: Props) {
         );
       case 'notSupportWCRequest':
         return (<NotSupportWCConfirmation request={confirmation.item as WalletConnectNotSupportRequest} />);
+
+      case 'errorConnectNetwork':
+        return (<NetworkConnectionErrorConfirmation
+          request={confirmation.item as ConfirmationDefinitions['errorConnectNetwork'][0]}
+          type={confirmation.type}
+        />);
     }
 
     return null;

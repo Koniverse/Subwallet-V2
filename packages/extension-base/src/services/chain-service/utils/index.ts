@@ -61,11 +61,11 @@ export function _isEqualSmartContractAsset (asset1: _ChainAsset, asset2: _ChainA
 }
 
 export function _isPureEvmChain (chainInfo: _ChainInfo) {
-  return (chainInfo.evmInfo !== null && chainInfo.substrateInfo === null);
+  return (!!chainInfo.evmInfo && !chainInfo.substrateInfo);
 }
 
 export function _isPureSubstrateChain (chainInfo: _ChainInfo) {
-  return (chainInfo.evmInfo === null && chainInfo.substrateInfo !== null);
+  return (!chainInfo.evmInfo && !!chainInfo.substrateInfo);
 }
 
 export function _getOriginChainOfAsset (assetSlug: string) {
@@ -488,6 +488,10 @@ export function _isMantaZkAsset (chainAsset: _ChainAsset) {
 
 export function _getChainExistentialDeposit (chainInfo: _ChainInfo): string {
   return chainInfo?.substrateInfo?.existentialDeposit || '0';
+}
+
+export function _getAssetExistentialDeposit (chainAsset: _ChainAsset): string {
+  return chainAsset?.minAmount || '0';
 }
 
 export function randomizeProvider (providers: Record<string, string>, excludedKeys?: string[]) {
