@@ -393,6 +393,8 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
           temp[accountGroup.id] = { ...accountGroup, accounts: [], networkTypes: [], tokenTypes: [] };
         }
 
+        account.proxyId = accountGroup.id;
+
         temp[accountGroup.id].accounts.push(account);
         continue;
       }
