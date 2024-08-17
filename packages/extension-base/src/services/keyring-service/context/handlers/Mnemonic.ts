@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { MnemonicType, RequestAccountCreateSuriV2, RequestExportAccountProxyMnemonic, RequestMnemonicCreateV2, RequestMnemonicValidateV2, ResponseAccountCreateSuriV2, ResponseExportAccountProxyMnemonic, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2 } from '@subwallet/extension-base/types';
-import { createAccountProxyId, getSuri, modifyAccountName } from '@subwallet/extension-base/utils';
+import { createAccountProxyId, getSuri } from '@subwallet/extension-base/utils';
 import { tonMnemonicGenerate } from '@subwallet/keyring';
 import { KeypairType, KeyringPair } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
@@ -132,8 +132,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
     types.forEach((type) => {
       const suri = getSuri(_suri, type);
-      const newAccountName = modifyAccountName(type, name, !!proxyId);
-      const rs = keyring.addUri(suri, { name: newAccountName }, type);
+      const rs = keyring.addUri(suri, { name: name }, type);
       const address = rs.pair.address;
 
       this.state._addAddressToAuthList(address, isAllowed);
