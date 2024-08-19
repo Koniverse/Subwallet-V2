@@ -191,9 +191,8 @@ export class TonApi implements _TonApi {
     return await resp.json() as TxByMsgResponse;
   }
 
-  async getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> { // noted: can move this function to utils file for more flexible uses
-    return retry(async () => {
-      // get external msg transaction and transaction hex
+  async getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> {
+    return retry<[boolean, string]>(async () => { // retry many times to get transaction status and transaction hex
       const externalTxInfoRaw = await this.getTxByInMsg(extMsgHash);
       const externalTxInfo = externalTxInfoRaw.transactions[0];
       const isExternalTxCompute = externalTxInfo.description.compute_ph.success;

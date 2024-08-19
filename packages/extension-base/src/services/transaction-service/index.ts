@@ -1169,14 +1169,13 @@ export default class TransactionService {
     const signer = (message: Cell): Promise<Buffer> => {
       return new Promise<Buffer>((resolve) => {
         this.state.requestService.addConfirmationTon(id, url || EXTENSION_REQUEST_URL, 'tonSendTransactionRequest', { ...payload, messagePayload: cellToBase64Str(message), messages: [] }, {})
-          .then(async ({ isApproved, payload }) => {
+          .then(({ isApproved, payload }) => {
             if (payload) {
               resolve(Buffer.from(hexToU8a(payload)));
             }
           });
       });
     };
-    // --//
 
     const tonTransactionConfig = transaction as TonTransactionConfig;
     const seqno = tonTransactionConfig.seqno;

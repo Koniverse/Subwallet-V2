@@ -32,7 +32,7 @@ export function externalMessage (contract: WalletContractV4, seqno: number, body
       storeMessage(
         external({
           to: contract.address,
-          init: seqno === 0 ? contract.init : undefined,
+          init: seqno === 0 ? contract.init : undefined, // contract init for first transaction.
           body: body
         })
       )
@@ -51,11 +51,11 @@ export async function retry<T> (fn: () => Promise<T>, options: { retries: number
         lastError = e;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, options.delay));
+      await new Promise((resolve) => setTimeout(resolve, options.delay)); // wait for delay period, then recall the fn()
     }
   }
 
-  throw lastError;
+  throw lastError; // throw only last error, in case no successful result from fn()
 }
 
 export function getMessageTxStatus (txByMsgInfo: TxByMsgResponse) {
