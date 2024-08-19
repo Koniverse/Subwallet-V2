@@ -12,6 +12,11 @@ import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 
+interface ExistsAccount {
+  address: string;
+  name: string;
+}
+
 export class AccountState {
   // Current account
   private readonly _currentAccount = new CurrentAccountStoreSubject();
@@ -212,21 +217,33 @@ export class AccountState {
   /* Current account */
 
   /* Check address exists */
-  public checkAddressExists (addresses: string[]): string {
-    let result = '';
-
+  public checkAddressExists (addresses: string[]): ExistsAccount | undefined {
     for (const address of addresses) {
       try {
         const pair = keyring.getPair(address);
 
         if (pair) {
-          result = pair.address;
-          break;
+          const address = pair.address;
+          const belongsTo = this.belongUnifiedAccount(address);
+
+          if (belongsTo) {
+            const accountProxy = this.accountProxies[belongsTo];
+
+            return {
+              address,
+              name: accountProxy.name
+            };
+          } else {
+            return {
+              address,
+              name: pair.meta?.name as string || address
+            };
+          }
         }
       } catch (e) {}
     }
 
-    return result;
+    return undefined;
   }
 
   /* Auth address */
@@ -270,6 +287,12 @@ export class AccountState {
     const accountProxies = this.accounts;
 
     return Object.values(accountProxies).some((value) => value.accountType === AccountProxyType.UNIFIED && value.id === proxyId);
+  }
+
+  public belongUnifiedAccount (address: string): string | undefined {
+    const modifyPairs = this.modifyPairs;
+
+    return modifyPairs[address]?.accountProxyId;
   }
 
   /* Is account proxy id */

@@ -90,6 +90,31 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         });
     }
   }, [privateKey, onComplete, inactiveModal]);
+        setLoading(true);
+        createAccountSuriV2({
+          name: accountName,
+          suri: privateKey.trim(),
+          isAllowed: true,
+          type: EVM_ACCOUNT_TYPE
+        })
+          .then(() => {
+            onComplete();
+          })
+          .catch((error: Error): void => {
+            setValidateState({
+              status: 'error',
+              message: error.message
+            });
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      }
+    })
+      .catch(() => {
+      // User cancel unlock
+      });
+  }, [accountName, checkUnlock, onComplete]);
 
   useEffect(() => {
     let amount = true;

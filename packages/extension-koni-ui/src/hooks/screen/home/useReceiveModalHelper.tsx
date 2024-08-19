@@ -6,7 +6,7 @@ import { NotificationType } from '@subwallet/extension-base/background/KoniTypes
 import { _getMultiChainAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainSlugsByAccount, useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ReceiveModalProps } from '@subwallet/extension-koni-ui/types';
@@ -27,15 +27,16 @@ const accountSelectorModalId = RECEIVE_MODAL_ACCOUNT_SELECTOR;
 
 export default function useReceiveModalHelper (tokenGroupSlug?: string): HookType {
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const chainAssets = useChainAssets().chainAssets;
+  const { chainAssets } = useChainAssets();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setSelectedMnemonicType = useSetSelectedMnemonicType(true);
 
-  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const { accountProxies } = useSelector((state: RootState) => state.accountState);
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const [selectedNetwork, setSelectedNetwork] = useState<string | undefined>();
   const { addressQrModal, alertModal } = useContext(WalletModalContext);
+  const chainSupported = useGetChainSlugsByAccount();
 
   const onOpenReceive = useCallback(() => {
     activeModal(tokenSelectorModalId);
@@ -44,12 +45,14 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
   /* --- token Selector */
 
   const tokenSelectorItems = useMemo<_ChainAsset[]>(() => {
+    const rawAssets = chainAssets.filter((asset) => chainSupported.includes(asset.originChain));
+
     if (tokenGroupSlug) {
-      return chainAssets.filter((asset) => asset.slug === tokenGroupSlug || _getMultiChainAsset(asset) === tokenGroupSlug);
+      return rawAssets.filter((asset) => asset.slug === tokenGroupSlug || _getMultiChainAsset(asset) === tokenGroupSlug);
     }
 
-    return chainAssets;
-  }, [chainAssets, tokenGroupSlug]);
+    return rawAssets;
+  }, [chainAssets, tokenGroupSlug, chainSupported]);
 
   const onCloseTokenSelector = useCallback(() => {
     inactiveModal(tokenSelectorModalId);

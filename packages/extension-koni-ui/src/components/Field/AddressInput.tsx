@@ -17,7 +17,6 @@ import styled from 'styled-components';
 import { decodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 import { Avatar } from '../Avatar';
-import { AddressBookModal } from '../Modal';
 import { QrScannerErrorNotice } from '../Qr';
 import { BasicInputWrapper } from './Base';
 
@@ -142,6 +141,7 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
     activeModal(addressBookId);
   }, [activeModal, addressBookId]);
 
+  // @ts-ignore
   const onSelectAddressBook = useCallback((value: string) => {
     inputRef?.current?.focus();
     parseAndChangeValue(value);
@@ -304,18 +304,18 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
           />
         )
       }
-      {
-        showAddressBook &&
-        (
-          <AddressBookModal
-            addressPrefix={addressPrefix}
-            id={addressBookId}
-            networkGenesisHash={networkGenesisHash}
-            onSelect={onSelectAddressBook}
-            value={value}
-          />
-        )
-      }
+      {/* { */}
+      {/*  showAddressBook && */}
+      {/*  ( */}
+      {/*    <AddressBookModal */}
+      {/*      addressPrefix={addressPrefix} */}
+      {/*      id={addressBookId} */}
+      {/*      networkGenesisHash={networkGenesisHash} */}
+      {/*      onSelect={onSelectAddressBook} */}
+      {/*      value={value} */}
+      {/*    /> */}
+      {/*  ) */}
+      {/* } */}
     </>
   );
 }

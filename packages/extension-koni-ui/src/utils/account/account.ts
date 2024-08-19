@@ -11,13 +11,15 @@ import { isAccountAll, uniqueStringArray } from '@subwallet/extension-base/utils
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { MODE_CAN_SIGN } from '@subwallet/extension-koni-ui/constants/signing';
 import { AccountAddressType, AccountSignMode, AccountType } from '@subwallet/extension-koni-ui/types';
-import { getLogoByNetworkKey, isChainInfoAccordantNetworkType } from '@subwallet/extension-koni-ui/utils';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
 import { getNetworkKeyByGenesisHash } from '@subwallet/extension-koni-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { AccountInfoByNetwork } from '@subwallet/extension-koni-ui/utils/types';
 
 import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
+
+import { isChainInfoAccordantNetworkType } from '../chain';
+import { getLogoByNetworkKey } from '../common';
 
 export function getAccountType (address: string): AccountType {
   return isAccountAll(address) ? 'ALL' : isEthereumAddress(address) ? 'ETHEREUM' : 'SUBSTRATE';
@@ -179,8 +181,11 @@ export const convertKeyTypes = (authTypes: AccountAuthType[]): KeypairType[] => 
 
 // todo:
 //  - support bitcoin
-//  - logic for generic, legacy ledger account
 export function getReformatedAddressRelatedToNetwork (accountJson: AccountJson, chainInfo: _ChainInfo): string | undefined {
+  if (accountJson.specialNetwork && accountJson.specialNetwork !== chainInfo.slug) {
+    return undefined;
+  }
+
   if (!isChainInfoAccordantNetworkType(chainInfo, accountJson.networkType)) {
     return undefined;
   }

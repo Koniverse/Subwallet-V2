@@ -42,7 +42,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists([pair.address]);
 
-    assert(!exists, t('Account already exists'));
+    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || pair.address } }));
 
     // unlock then lock (locking cleans secretKey, so needs to be last)
     try {
@@ -96,7 +96,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
     const isPasswordValidated = this.validatedAccountsPassword(file, password);
     const exists = this.state.checkAddressExists(addressList);
 
-    assert(!exists, t('Account already exists account: {{address}}', { replace: { address: exists } }));
+    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     if (isPasswordValidated) {
       try {

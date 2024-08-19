@@ -6,4 +6,4 @@ export { default as useGetTokensBySettings } from './useGetTokensBySettings';
 export { default as useReceiveModalHelper } from './useReceiveModalHelper';
 export { default as useTokenGroup } from './useTokenGroup';
 
-export * from './useGetChainSlugsByAccountType';
+export * from './useGetChainSlugsByAccount';

@@ -8,7 +8,7 @@ import { GeneralTermModal } from '@subwallet/extension-koni-ui/components/Modal/
 import { CONFIRM_GENERAL_TERM, DEFAULT_SESSION_VALUE, GENERAL_TERM_AND_CONDITION_MODAL, HOME_CAMPAIGN_BANNER_MODAL, LATEST_SESSION, REMIND_BACKUP_SEED_PHRASE_MODAL, REMIND_UPGRADE_FIREFOX_VERSION } from '@subwallet/extension-koni-ui/constants';
 import { AppOnlineContentContext } from '@subwallet/extension-koni-ui/contexts/AppOnlineContentProvider';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useAccountBalance, useGetChainSlugsByAccountType, useGetMantaPayConfig, useHandleMantaPaySync, useSetSessionLatest, useTokenGroup, useUpgradeFireFoxVersion } from '@subwallet/extension-koni-ui/hooks';
+import { useAccountBalance, useGetChainSlugsByAccount, useGetMantaPayConfig, useHandleMantaPaySync, useSetSessionLatest, useTokenGroup, useUpgradeFireFoxVersion } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { RemindBackUpSeedPhraseParamState, SessionStorage, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isFirefox } from '@subwallet/extension-koni-ui/utils';
@@ -28,7 +28,7 @@ const historyPageIgnoreBanner = 'ignoreBanner';
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const chainsByAccountType = useGetChainSlugsByAccountType();
+  const chainsByAccountType = useGetChainSlugsByAccount();
   const tokenGroupStructure = useTokenGroup(chainsByAccountType);
   const location = useLocation();
   const accountBalance = useAccountBalance(tokenGroupStructure.tokenGroupMap);
