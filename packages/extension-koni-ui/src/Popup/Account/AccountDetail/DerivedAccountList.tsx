@@ -2,23 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxy } from '@subwallet/extension-base/types';
-import { AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { AccountNetworkAddressesModal, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { ACCOUNT_NETWORK_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { SwList } from '@subwallet/react-ui';
-import React, { useCallback, useMemo } from 'react';
+import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ModalContext, SwList } from '@subwallet/react-ui';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
   accountProxy: AccountProxy;
 };
+const accountNetworkAddressesModalId = ACCOUNT_NETWORK_ADDRESSES_MODAL;
 
 function Component ({ accountProxy, className }: Props) {
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
-
   const { t } = useTranslation();
+  const [accountProxyToCopyAddresses, setAccountProxyToCopyAddresses] = useState<AccountProxy>();
+  const { activeModal, inactiveModal } = useContext(ModalContext);
+  const navigate = useNavigate();
 
   // todo: may have to sort the result
   const items = useMemo<AccountProxy[]>(() => {
@@ -39,16 +44,44 @@ function Component ({ accountProxy, className }: Props) {
     return result;
   }, [accountProxies, accountProxy.children]);
 
+  const onCopyAddress = useCallback((item: AccountProxy) => {
+    return () => {
+      setAccountProxyToCopyAddresses(item);
+      setTimeout(() => {
+        activeModal(accountNetworkAddressesModalId);
+      }, 100);
+    };
+  }, [activeModal]);
+
+  const onCancelCopyModal = useCallback(() => {
+    inactiveModal(accountNetworkAddressesModalId);
+  }, [inactiveModal]);
+
+  const onViewAccountDetail = useCallback((accountProxy: AccountProxy) => {
+    return () => {
+      setTimeout(() => {
+        navigate(`/accounts/detail/${accountProxy.id}`, {
+          state: {
+            requestViewDerivedAccounts: false
+          } as AccountDetailParam
+        });
+      }, 100);
+    };
+  }, [navigate]);
+
   const renderItem = useCallback(
     (item: AccountProxy) => {
       return (
         <AccountProxySelectorItem
           accountProxy={item}
           className={'account-item'}
+          onClickCopyButton={onCopyAddress(item)}
+          onClickMoreButton={onViewAccountDetail(item)}
+          showDerivedPath={!!item.parentId}
         />
       );
     },
-    []
+    [onCopyAddress, onViewAccountDetail]
   );
 
   const emptyList = useCallback(() => {
@@ -77,6 +110,14 @@ function Component ({ accountProxy, className }: Props) {
         searchMinCharactersCount={2}
         searchPlaceholder={t<string>('Enter account name or address')}
       />
+
+      {accountProxyToCopyAddresses && (
+        <AccountNetworkAddressesModal
+          accountProxy={accountProxyToCopyAddresses}
+          onBack={onCancelCopyModal}
+          onCancel={onCancelCopyModal}
+        />
+      )}
     </div>
   );
 }

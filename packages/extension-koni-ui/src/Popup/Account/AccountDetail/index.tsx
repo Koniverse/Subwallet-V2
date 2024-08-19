@@ -251,6 +251,16 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     </>;
   })();
 
+  useEffect(() => {
+    if (accountProxy) {
+      form.setFieldValue(FormFieldName.NAME, accountProxy.name);
+    }
+
+    setSelectedFilterTab(requestViewDerivedAccounts && showDerivedAccounts
+      ? FilterTabType.DERIVED_ACCOUNT
+      : FilterTabType.ACCOUNT_ADDRESS);
+  }, [accountProxy, form, requestViewDerivedAccounts, showDerivedAccounts]);
+
   return (
     <Layout.WithSubHeaderOnly
       disableBack={false}
@@ -280,17 +290,6 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
               className={'account-type-tag'}
               type={accountProxy.accountType}
             />
-
-            {
-              !!accountProxy.parentId && (
-                <Icon
-                  className={'derived-account-flag'}
-                  customSize='16px'
-                  phosphorIcon={GitMerge}
-                  weight={'fill'}
-                />
-              )
-            }
           </div>
           <Form.Item
             className={CN('account-field')}

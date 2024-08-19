@@ -829,8 +829,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           <FreeBalance
             address={fromValue}
             chain={chainValue}
-            extrinsicType={extrinsicType}
             className={'free-balance-block'}
+            extrinsicType={extrinsicType}
             onBalanceReady={setIsBalanceReady}
             tokenSlug={assetValue}
           />
