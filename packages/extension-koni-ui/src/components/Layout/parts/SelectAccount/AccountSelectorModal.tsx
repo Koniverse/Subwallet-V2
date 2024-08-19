@@ -437,6 +437,17 @@ export const AccountSelectorModal = styled(Component)<Props>(({ theme: { token }
       '> div + div': {
         marginTop: token.marginXS
       }
+    },
+
+    '.__icon-export-remind': {
+      position: 'absolute',
+      top: '-35%',
+      left: '40%'
+    },
+
+    '.anticon.__export-remind-btn': {
+      height: 23,
+      width: 24
     }
   };
 });

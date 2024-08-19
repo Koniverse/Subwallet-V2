@@ -124,7 +124,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       <React.Fragment key={account.id}>
         <AccountProxyItem
           accountProxy={account}
-          className={CN({ disabled: disabled && !isSelected }, 'account-derive-item') }
+          className={CN({ disabled: disabled && !isSelected }, '__account-derive-item') }
           onClick={disabled ? undefined : onSelectAccount(account)}
           renderRightPart={isSelected ? renderLoaderIcon : undefined}
           showUnselectIcon={false}
@@ -204,8 +204,8 @@ const DeriveAccountModal = styled(Component)<Props>(({ theme: { token } }: Props
       }
     },
 
-    '.account-derive-item': {
-      display: 'flex'
+    '.__account-derive-item': {
+      display: 'flex !important'
     }
   };
 });
