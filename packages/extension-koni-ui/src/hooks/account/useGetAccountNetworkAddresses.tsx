@@ -9,8 +9,6 @@ import { useMemo } from 'react';
 
 // todo:
 //  - order the result
-//  - support bitcoin
-//  - logic for generic, legacy ledger account
 const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetworkAddress[] => {
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 

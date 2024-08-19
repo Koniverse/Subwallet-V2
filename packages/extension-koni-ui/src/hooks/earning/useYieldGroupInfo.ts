@@ -3,7 +3,7 @@
 
 import { calculateReward } from '@subwallet/extension-base/services/earning-service/utils';
 import { BN_ZERO } from '@subwallet/extension-koni-ui/constants';
-import { useAccountBalance, useGetChainSlugsByCurrentAccount, useSelector, useTokenGroup } from '@subwallet/extension-koni-ui/hooks';
+import { useAccountBalance, useGetChainSlugsByAccount, useSelector, useTokenGroup } from '@subwallet/extension-koni-ui/hooks';
 import { BalanceValueInfo, YieldGroupInfo } from '@subwallet/extension-koni-ui/types';
 import { useMemo } from 'react';
 
@@ -11,7 +11,7 @@ const useYieldGroupInfo = (): YieldGroupInfo[] => {
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const { assetRegistry, multiChainAssetMap } = useSelector((state) => state.assetRegistry);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
-  const chainsByAccountType = useGetChainSlugsByCurrentAccount();
+  const chainsByAccountType = useGetChainSlugsByAccount();
   const { tokenGroupMap } = useTokenGroup(chainsByAccountType);
   const { tokenBalanceMap } = useAccountBalance(tokenGroupMap, true);
 

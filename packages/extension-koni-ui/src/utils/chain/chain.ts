@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
+import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
 import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountNetworkType } from '@subwallet/extension-base/types';
 
@@ -46,10 +46,16 @@ export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, networkTy
     return _isChainTonCompatible(chainInfo);
   }
 
+  if (networkType === AccountNetworkType.BITCOIN) {
+    return _isChainBitcoinCompatible(chainInfo);
+  }
+
   return false;
 };
 
-export const getChainsByAccountType = (chainInfoMap: Record<string, _ChainInfo>, networkTypes: AccountNetworkType[], specialNetwork?: string): string[] => {
+export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>, networkTypes: AccountNetworkType[], specialNetwork?: string): string[] => {
+  const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
+
   if (specialNetwork) {
     return Object.keys(chainInfoMap).filter((chain) => specialNetwork === chain);
   } else {
