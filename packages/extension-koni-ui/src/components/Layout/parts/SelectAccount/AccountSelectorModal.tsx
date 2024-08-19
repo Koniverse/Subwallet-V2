@@ -79,7 +79,7 @@ const accountNetworkAddressesModalId = ACCOUNT_NETWORK_ADDRESSES_MODAL;
 const Component: React.FC<Props> = ({ className }: Props) => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { activeModal, inactiveModal} = useContext(ModalContext);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
   const [searchValue, setSearchValue] = useState<string>('');
   const { token } = useTheme() as Theme;
   const { goHome } = useDefaultNavigate();

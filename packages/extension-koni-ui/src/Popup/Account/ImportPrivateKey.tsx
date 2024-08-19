@@ -1,23 +1,17 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  AccountNameModal,
-  CloseIcon,
-  Layout,
-  PageWrapper,
-  PrivateKeyInput
-} from '@subwallet/extension-koni-ui/components';
-import {ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL} from '@subwallet/extension-koni-ui/constants/modal';
-import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGetDefaultAccountName, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountNameModal, CloseIcon, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
+import { ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
-import {Button, Form, Icon, ModalContext} from '@subwallet/react-ui';
+import { Button, Form, Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
-import React, {useCallback, useContext, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import {AccountProxyType} from "@subwallet/extension-base/types";
 
 type Props = ThemeProps;
 
@@ -55,8 +49,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [form] = Form.useForm<FormState>();
   const checkUnlock = useUnlockChecker();
 
-  const accountName = useGetDefaultAccountName();
-
   // Auto-focus field
   useFocusFormItem(form, fieldName);
 
@@ -66,17 +58,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     const { [fieldName]: privateKey } = values;
 
     checkUnlock().then(() => {
-      if(privateKey?.trim()){
+      if (privateKey?.trim()) {
         activeModal(ACCOUNT_NAME_MODAL);
       }
     })
       .catch(() => {
       // User cancel unlock
       });
-  }, [accountName, checkUnlock, onComplete, activeModal]);
+  }, [checkUnlock, activeModal]);
 
-
-  const onSubmitFinal = useCallback((name : string) => {
+  const onSubmitFinal = useCallback((name: string) => {
     if (privateKey?.trim()) {
       setLoading(true);
       createAccountSuriV2({
@@ -94,11 +85,11 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           });
         })
         .finally(() => {
-          inactiveModal(ACCOUNT_NAME_MODAL)
+          inactiveModal(ACCOUNT_NAME_MODAL);
           setLoading(false);
         });
     }
-  }, [privateKey, onComplete])
+  }, [privateKey, onComplete, inactiveModal]);
 
   useEffect(() => {
     let amount = true;
@@ -154,7 +145,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       amount = false;
     };
   }, [privateKey, form, changed, t]);
-
 
   const onValuesChange: FormCallbacks<FormState>['onValuesChange'] = useCallback((changedValues: Partial<FormState>) => {
     if (fieldName in changedValues) {
@@ -228,8 +218,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         </div>
 
         <AccountNameModal
-          isLoading={loading}
           accountType={AccountProxyType.SOLO}
+          isLoading={loading}
           onSubmit={onSubmitFinal}
         />
       </Layout.WithSubHeaderOnly>

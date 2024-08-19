@@ -23,7 +23,7 @@ interface FormProps {
   name: string;
 }
 
-const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmit, modalId }: Props) => {
+const Component: React.FC<Props> = ({ accountType, className, isLoading, modalId, onSubmit }: Props) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<FormProps>();
   const defaultValues = useMemo(() => ({

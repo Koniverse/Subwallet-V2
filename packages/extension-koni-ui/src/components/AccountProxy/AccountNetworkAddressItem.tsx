@@ -19,7 +19,7 @@ type Props = ThemeProps & {
 function Component (props: Props): React.ReactElement<Props> {
   const { className,
     item,
-    onClickCopyButton, onClickQrButton, onClick } = props;
+    onClick, onClickCopyButton, onClickQrButton } = props;
 
   const _onClickCopyButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();
@@ -34,7 +34,7 @@ function Component (props: Props): React.ReactElement<Props> {
   const _onClickButton: React.MouseEventHandler<HTMLAnchorElement | HTMLDivElement> = React.useCallback((event) => {
     event.stopPropagation();
     onClick?.();
-  }, [onClickQrButton]);
+  }, [onClick]);
 
   return (
     <>

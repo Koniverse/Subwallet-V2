@@ -27,8 +27,8 @@ const Component: React.FC<Props> = ({ actionBtnIcon,
   showActionBtn }) => {
   const handleInputChange: ChangeEventHandler<HTMLInputElement> = useCallback((e) => {
     const value = e?.target?.value;
-    onSearch(value);
 
+    onSearch(value);
   },
   [onSearch]
   );

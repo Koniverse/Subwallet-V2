@@ -3,13 +3,12 @@
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountNetworkAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountAddressDetail, useGetAccountNetworkAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
 import { Strategy } from 'phosphor-react';
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -22,16 +21,13 @@ function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
   const notify = useNotification();
-  const { addressQrModal } = useContext(WalletModalContext);
+  const { onSelectAccountSelector } = useGetAccountAddressDetail();
 
   const onShowQr = useCallback((item: AccountNetworkAddress) => {
     return () => {
-      addressQrModal.open({
-        address: item.address,
-        chainSlug: item.slug
-      });
+      onSelectAccountSelector(item);
     };
-  }, [addressQrModal]);
+  }, [onSelectAccountSelector]);
 
   const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
     return () => {

@@ -1,12 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {AccountNameModal, Layout, PageWrapper} from '@subwallet/extension-koni-ui/components';
+import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountNameModal, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { AddressInput } from '@subwallet/extension-koni-ui/components/Field/AddressInput';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
-import {ACCOUNT_NAME_MODAL, ATTACH_ACCOUNT_MODAL} from '@subwallet/extension-koni-ui/constants/modal';
+import { ACCOUNT_NAME_MODAL, ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
-import useGetDefaultAccountName from '@subwallet/extension-koni-ui/hooks/account/useGetDefaultAccountName';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
 import useFocusById from '@subwallet/extension-koni-ui/hooks/form/useFocusById';
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
@@ -16,15 +16,14 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils/form/form';
 import { readOnlyScan } from '@subwallet/extension-koni-ui/utils/scanner/attach';
-import {Form, Icon, ModalContext, PageIcon} from '@subwallet/react-ui';
+import { Form, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye } from 'phosphor-react';
 import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
-import React, {useCallback, useContext, useState} from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-import {AccountProxyType} from "@subwallet/extension-base/types";
 
 type Props = ThemeProps;
 
@@ -50,7 +49,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const onComplete = useCompleteCreateAccount();
-  const accountName = useGetDefaultAccountName();
 
   const accounts = useSelector((root: RootState) => root.accountState.accounts);
 
@@ -111,7 +109,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
   }, [activeModal, reformatAddress]);
 
-
   const onSubmitFinal = useCallback((name: string) => {
     setLoading(true);
     createAccountExternalV2({
@@ -135,7 +132,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         inactiveModal(ACCOUNT_NAME_MODAL);
         setLoading(false);
       });
-  }, [form, reformatAddress, accountName, onComplete, inactiveModal]);
+  }, [form, reformatAddress, onComplete, inactiveModal]);
 
   useFocusById(modalId);
 
@@ -201,9 +198,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         </div>
 
         <AccountNameModal
+          accountType={AccountProxyType.READ_ONLY}
           isLoading={loading}
           onSubmit={onSubmitFinal}
-          accountType={AccountProxyType.READ_ONLY}
         />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>

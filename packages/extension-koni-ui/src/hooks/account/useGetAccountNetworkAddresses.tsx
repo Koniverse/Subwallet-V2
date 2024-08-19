@@ -26,7 +26,8 @@ const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetwo
           result.push({
             name: chainInfo.name,
             slug: chainInfo.slug,
-            address: reformatedAddress
+            address: reformatedAddress,
+            accountType: a.type
           });
         }
       }

@@ -1,13 +1,10 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {AccountActions, AccountProxy} from '@subwallet/extension-base/types';
+import { AccountActions, AccountProxy } from '@subwallet/extension-base/types';
+import { AccountNameModal, AccountProxyItem } from '@subwallet/extension-koni-ui/components';
 import BackIcon from '@subwallet/extension-koni-ui/components/Icon/BackIcon';
-import {
-  ACCOUNT_NAME_MODAL,
-  CREATE_ACCOUNT_MODAL,
-  DERIVE_ACCOUNT_MODAL
-} from '@subwallet/extension-koni-ui/constants/modal';
+import { ACCOUNT_NAME_MODAL, CREATE_ACCOUNT_MODAL, DERIVE_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
@@ -16,23 +13,22 @@ import useClickOutSide from '@subwallet/extension-koni-ui/hooks/dom/useClickOutS
 import useSwitchModal from '@subwallet/extension-koni-ui/hooks/modal/useSwitchModal';
 import { deriveAccountV3 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import {Theme, ThemeProps} from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { searchAccountFunction } from '@subwallet/extension-koni-ui/utils/account/account';
 import { renderModalSelector } from '@subwallet/extension-koni-ui/utils/common/dom';
 import { ActivityIndicator, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
-import React, {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
 
 import { GeneralEmptyList } from '../../EmptyList';
-import {AccountNameModal, AccountProxyItem} from "@subwallet/extension-koni-ui/components";
 
 type Props = ThemeProps;
 
 const modalId = DERIVE_ACCOUNT_MODAL;
-const accountNameModalId = 'derive.' + ACCOUNT_NAME_MODAL
+const accountNameModalId = 'derive.' + ACCOUNT_NAME_MODAL;
 const renderEmpty = () => <GeneralEmptyList />;
 
 const renderLoaderIcon = (x: React.ReactNode): React.ReactNode => {
@@ -48,11 +44,10 @@ const renderLoaderIcon = (x: React.ReactNode): React.ReactNode => {
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   const { t } = useTranslation();
-  const { token } = useTheme() as Theme;
   const notify = useNotification();
   const sectionRef = useRef<SwListSectionRef>(null);
-  const [accountSelected, setAccountSelected] = useState<AccountProxy>()
-  const { checkActive, inactiveModal, activeModal } = useContext(ModalContext);
+  const [accountSelected, setAccountSelected] = useState<AccountProxy>();
+  const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
   const { setStateSelectAccount } = useSetSessionLatest();
   const checkUnlock = useUnlockChecker();
 
@@ -88,38 +83,38 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         // User cancel unlock
       });
     };
-  }, [checkUnlock, clearSearch, inactiveModal, notify, setStateSelectAccount]);
+  }, [checkUnlock]);
 
   const onSubmitAccount = useCallback((name: string) => {
-      if(accountSelected) {
-        setSelected(accountSelected.id);
-        setTimeout(() => {
-          deriveAccountV3({
-            proxyId: accountSelected.id,
-            name,
-            suri: accountSelected.suri
-          }).then(() => {
-            inactiveModal(modalId);
-            setStateSelectAccount(true);
-            clearSearch();
-          }).catch((e: Error) => {
-            notify({
-              message: e.message,
-              type: 'error'
-            });
-          }).finally(() => {
-            setSelected('');
-            inactiveModal(accountNameModalId)
+    if (accountSelected) {
+      setSelected(accountSelected.id);
+      setTimeout(() => {
+        deriveAccountV3({
+          proxyId: accountSelected.id,
+          name,
+          suri: accountSelected.suri
+        }).then(() => {
+          inactiveModal(modalId);
+          setStateSelectAccount(true);
+          clearSearch();
+        }).catch((e: Error) => {
+          notify({
+            message: e.message,
+            type: 'error'
           });
-        }, 500);
-      }
-  }, [accountSelected])
+        }).finally(() => {
+          setSelected('');
+          inactiveModal(accountNameModalId);
+        });
+      }, 500);
+    }
+  }, [accountSelected, clearSearch, inactiveModal, notify, setStateSelectAccount]);
 
   useEffect(() => {
-    if(accountSelected) {
+    if (accountSelected) {
       activeModal(accountNameModalId);
     }
-  }, [accountSelected, activeModal])
+  }, [accountSelected, activeModal]);
 
   const renderItem = useCallback((account: AccountProxy): React.ReactNode => {
     const disabled = !!selected;
@@ -131,12 +126,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           accountProxy={account}
           className={CN({ disabled: disabled && !isSelected }, 'account-derive-item') }
           onClick={disabled ? undefined : onSelectAccount(account)}
-          showUnselectIcon={false}
           renderRightPart={isSelected ? renderLoaderIcon : undefined}
+          showUnselectIcon={false}
         />
       </React.Fragment>
     );
-  }, [onSelectAccount, selected, token.sizeLG]);
+  }, [onSelectAccount, selected]);
 
   const onBack = useSwitchModal(modalId, CREATE_ACCOUNT_MODAL, clearSearch);
 
@@ -164,10 +159,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       </SwModal>
 
       <AccountNameModal
-        onSubmit={onSubmitAccount}
-        modalId={accountNameModalId}
         accountType={accountSelected?.accountType}
         isLoading={!!selected}
+        modalId={accountNameModalId}
+        onSubmit={onSubmitAccount}
       />
     </>
 

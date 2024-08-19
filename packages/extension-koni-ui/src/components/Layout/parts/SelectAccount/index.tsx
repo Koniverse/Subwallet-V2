@@ -5,18 +5,17 @@ import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountProxyBriefInfo } from '@subwallet/extension-koni-ui/components';
 import { AccountSelectorModal } from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/AccountSelectorModal';
 import { SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { CaretDown } from 'phosphor-react';
 import { useGetCurrentAuth, useGetCurrentTab, useIsPopup, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { funcSortByName, isAccountAll } from '@subwallet/extension-koni-ui/utils';
-import {BackgroundIcon, Icon, ModalContext, Tooltip} from '@subwallet/react-ui';
+import { BackgroundIcon, Icon, ModalContext, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { Plug, Plugs, PlugsConnected } from 'phosphor-react';
+import { CaretDown, Plug, Plugs, PlugsConnected } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import styled, {useTheme} from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -210,8 +209,8 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         <Icon
           className={'__caret-icon'}
           customSize={'20px'}
-          phosphorIcon={CaretDown}
           iconColor={token.colorTextTertiary}
+          phosphorIcon={CaretDown}
         />
       </div>
     );

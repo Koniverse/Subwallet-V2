@@ -149,7 +149,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
           schema: 'secondary'
         },
         okButton: {
-          text: t('Apply'),
+          text: t('OK'),
           icon: CheckCircle,
           iconWeight: 'fill',
           onClick: () => {
