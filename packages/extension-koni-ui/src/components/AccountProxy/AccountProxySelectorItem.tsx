@@ -365,15 +365,6 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       opacity: 1,
       transition: `opacity ${token.motionDurationMid} ease-in-out`
     },
-    '&:hover': {
-      background: token.colorBgInput,
-      '.-hide-on-hover': {
-        opacity: 0
-      },
-      '.-show-on-hover': {
-        opacity: 1
-      }
-    },
 
     '.__item-derived-path': {
       display: 'flex',
@@ -385,7 +376,18 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
         color: token.colorTextLight4,
         lineHeight: token.lineHeightSM
       }
+    },
+
+    '&:hover': {
+      background: token.colorBgInput,
+      '.-hide-on-hover': {
+        opacity: 0
+      },
+      '.-show-on-hover': {
+        opacity: 1
+      }
     }
+
   };
 });
 

@@ -23,6 +23,8 @@ interface FormProps {
   name: string;
 }
 
+const modalIdDefault = ACCOUNT_NAME_MODAL;
+
 const Component: React.FC<Props> = ({ accountType, className, isLoading, modalId, onSubmit }: Props) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<FormProps>();
@@ -50,7 +52,7 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, modalId
     <SwModal
       className={CN(className)}
       closable={false}
-      id={modalId || ACCOUNT_NAME_MODAL}
+      id={modalId || modalIdDefault}
       maskClosable={false}
       title={t<string>('Account name')}
     >

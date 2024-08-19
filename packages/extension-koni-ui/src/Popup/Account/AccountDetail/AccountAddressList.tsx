@@ -3,7 +3,7 @@
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { useGetAccountAddressDetail, useGetAccountNetworkAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountNetworkAddresses, useNotification, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
@@ -15,13 +15,13 @@ type Props = ThemeProps & {
   accountProxy: AccountProxy;
 };
 
-const isHide = false;
+const isNotHide = false;
 
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
   const notify = useNotification();
-  const { onSelectAccountSelector } = useGetAccountAddressDetail();
+  const onSelectAccountSelector = useViewAccountAddressQr();
 
   const onShowQr = useCallback((item: AccountNetworkAddress) => {
     return () => {
@@ -78,7 +78,7 @@ function Component ({ accountProxy, className }: Props) {
       />
 
       {
-        isHide && accountProxy.accountType === AccountProxyType.SOLO && (
+        isNotHide && accountProxy.accountType === AccountProxyType.SOLO && (
           <div className={'update-unified-account-button-wrapper'}>
             <Button
               block={true}

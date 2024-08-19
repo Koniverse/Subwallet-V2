@@ -31,16 +31,11 @@ function Component (props: Props): React.ReactElement<Props> {
     onClickQrButton?.();
   }, [onClickQrButton]);
 
-  const _onClickButton: React.MouseEventHandler<HTMLAnchorElement | HTMLDivElement> = React.useCallback((event) => {
-    event.stopPropagation();
-    onClick?.();
-  }, [onClick]);
-
   return (
     <>
       <div
         className={CN(className)}
-        onClick={_onClickButton}
+        onClick={onClick}
       >
         <div className='__item-left-part'>
           <Logo

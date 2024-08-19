@@ -208,7 +208,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         <AccountProxyBriefInfo accountProxy={currentAccountProxy} />
         <Icon
           className={'__caret-icon'}
-          customSize={'20px'}
+          customSize={'12px'}
           iconColor={token.colorTextTertiary}
           phosphorIcon={CaretDown}
         />
@@ -399,6 +399,11 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
     '.anticon.__export-remind-btn': {
       height: 23,
       width: 24
+    },
+
+    '.account-name': {
+      fontSize: token.fontSizeHeading6,
+      fontWeight: 500
     }
   });
 });

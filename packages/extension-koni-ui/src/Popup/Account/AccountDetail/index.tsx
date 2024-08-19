@@ -255,11 +255,13 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     if (accountProxy) {
       form.setFieldValue(FormFieldName.NAME, accountProxy.name);
     }
+  }, [accountProxy, form]);
 
+  useEffect(() => {
     setSelectedFilterTab(requestViewDerivedAccounts && showDerivedAccounts
       ? FilterTabType.DERIVED_ACCOUNT
       : FilterTabType.ACCOUNT_ADDRESS);
-  }, [accountProxy, form, requestViewDerivedAccounts, showDerivedAccounts]);
+  }, [requestViewDerivedAccounts, showDerivedAccounts]);
 
   return (
     <Layout.WithSubHeaderOnly

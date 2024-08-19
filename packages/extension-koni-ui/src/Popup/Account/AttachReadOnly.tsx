@@ -31,6 +31,8 @@ interface ReadOnlyAccountInput {
   address?: string;
 }
 
+const accountNameModalId = ACCOUNT_NAME_MODAL;
+
 const FooterIcon = (
   <Icon
     phosphorIcon={Eye}
@@ -105,7 +107,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onSubmit = useCallback(() => {
     if (reformatAddress) {
-      activeModal(ACCOUNT_NAME_MODAL);
+      activeModal(accountNameModalId);
     }
   }, [activeModal, reformatAddress]);
 
@@ -129,7 +131,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         form.setFields([{ name: fieldName, errors: [error.message] }]);
       })
       .finally(() => {
-        inactiveModal(ACCOUNT_NAME_MODAL);
+        inactiveModal(accountNameModalId);
         setLoading(false);
       });
   }, [form, reformatAddress, onComplete, inactiveModal]);

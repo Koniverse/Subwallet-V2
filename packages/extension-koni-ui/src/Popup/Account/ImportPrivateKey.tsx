@@ -30,6 +30,8 @@ interface FormState {
   [fieldName]: string;
 }
 
+const accountModalId = ACCOUNT_NAME_MODAL;
+
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
 
@@ -60,7 +62,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     checkUnlock().then(() => {
       if (privateKey?.trim()) {
-        activeModal(ACCOUNT_NAME_MODAL);
+        activeModal(accountModalId);
       }
     })
       .catch(() => {
@@ -87,7 +89,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           });
         })
         .finally(() => {
-          inactiveModal(ACCOUNT_NAME_MODAL);
+          inactiveModal(accountModalId);
           setLoading(false);
         });
     }

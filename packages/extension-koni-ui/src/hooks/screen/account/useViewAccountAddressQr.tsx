@@ -6,20 +6,18 @@ import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/Wallet
 import { useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress } from '@subwallet/extension-koni-ui/types';
 import { CheckCircle, XCircle } from 'phosphor-react';
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type HookType = {
-  onSelectAccountSelector: (item: AccountNetworkAddress) => void;
-};
+type HookType = (item: AccountNetworkAddress) => void;
 
-export default function useGetAccountAddressDetail (): HookType {
+export default function useViewAccountAddressQr (): HookType {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setSelectedMnemonicType = useSetSelectedMnemonicType(true);
   const { addressQrModal, alertModal } = useContext(WalletModalContext);
 
-  const onSelectAccountSelector = useCallback((item: AccountNetworkAddress) => {
+  return useCallback((item: AccountNetworkAddress) => {
     const openAddressQrModal = () => {
       addressQrModal.open({
         address: item.address,
@@ -76,6 +74,4 @@ export default function useGetAccountAddressDetail (): HookType {
 
     openAddressQrModal();
   }, [addressQrModal, alertModal, navigate, setSelectedMnemonicType, t]);
-
-  return useMemo(() => ({ onSelectAccountSelector }), [onSelectAccountSelector]);
 }

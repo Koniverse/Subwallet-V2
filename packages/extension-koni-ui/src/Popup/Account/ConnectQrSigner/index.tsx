@@ -34,6 +34,8 @@ const FooterIcon = (
   />
 );
 
+const accountNameModalId = ACCOUNT_NAME_MODAL;
+
 interface Props extends ThemeProps {
   title: string;
   subTitle: string;
@@ -59,15 +61,15 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const [validateState, setValidateState] = useState<ValidateState>({});
   const [loading, setLoading] = useState(false);
-  const [accountScanned, setAccountScanned] = useState<QrAccount>();
+  const [accountQrScanned, setAccountQrScanned] = useState<QrAccount>();
 
   const onSubmit = useCallback((account: QrAccount) => {
     inactiveModal(modalId);
-    setAccountScanned(account);
+    setAccountQrScanned(account);
   }, [inactiveModal]);
 
   const onSubmitFinal = useCallback((name: string) => {
-    if (accountScanned) {
+    if (accountQrScanned) {
       setLoading(true);
       setValidateState({
         message: '',
@@ -77,7 +79,7 @@ const Component: React.FC<Props> = (props: Props) => {
       setTimeout(() => {
         createAccountExternalV2({
           name: accountName,
-          address: accountScanned.content,
+          address: accountQrScanned.content,
           genesisHash: '',
           isAllowed: true,
           isReadOnly: false
@@ -101,17 +103,17 @@ const Component: React.FC<Props> = (props: Props) => {
           })
           .finally(() => {
             setLoading(false);
-            inactiveModal(ACCOUNT_NAME_MODAL);
+            inactiveModal(accountNameModalId);
           });
       }, 300);
     }
-  }, [accountName, accountScanned, inactiveModal, onComplete]);
+  }, [accountName, accountQrScanned, inactiveModal, onComplete]);
 
   useEffect(() => {
-    if (accountScanned) {
-      activeModal(ACCOUNT_NAME_MODAL);
+    if (accountQrScanned) {
+      activeModal(accountNameModalId);
     }
-  }, [accountScanned, activeModal]);
+  }, [accountQrScanned, activeModal]);
 
   const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, qrSignerScan, setValidateState, onSubmit);
 
