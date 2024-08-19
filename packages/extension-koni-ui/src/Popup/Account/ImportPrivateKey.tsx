@@ -3,6 +3,7 @@
 
 import { AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNameModal, CloseIcon, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
+import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
@@ -73,7 +74,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       createAccountSuriV2({
         name: name,
         suri: privateKey.trim(),
-        isAllowed: true
+        isAllowed: true,
+        type: EVM_ACCOUNT_TYPE
       })
         .then(() => {
           onComplete();
@@ -90,31 +92,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         });
     }
   }, [privateKey, onComplete, inactiveModal]);
-        setLoading(true);
-        createAccountSuriV2({
-          name: accountName,
-          suri: privateKey.trim(),
-          isAllowed: true,
-          type: EVM_ACCOUNT_TYPE
-        })
-          .then(() => {
-            onComplete();
-          })
-          .catch((error: Error): void => {
-            setValidateState({
-              status: 'error',
-              message: error.message
-            });
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }
-    })
-      .catch(() => {
-      // User cancel unlock
-      });
-  }, [accountName, checkUnlock, onComplete]);
 
   useEffect(() => {
     let amount = true;
