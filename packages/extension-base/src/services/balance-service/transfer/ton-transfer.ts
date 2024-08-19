@@ -61,12 +61,12 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
 
   const messagePayload = cellToBase64Str(messageRelaxedToCell(messages));
 
-  const estimateFee = await estimateTonTxFee(tonApi, [messages], walletContract);
+  const estimateExternalFee = await estimateTonTxFee(tonApi, [messages], walletContract);
 
   if (transferAll) {
     const balance = await tonApi.getBalance(tonAddress);
 
-    transferValue = (balance - estimateFee).toString();
+    transferValue = (balance - estimateExternalFee).toString();
   }
 
   const transactionObject = {
@@ -76,7 +76,7 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
     value: transferValue ?? value,
     messagePayload,
     messages: [messages],
-    estimateFee: estimateFee.toString(),
+    estimateFee: estimateExternalFee.toString(),
     seqno
   } as unknown as TonTransactionConfig;
 

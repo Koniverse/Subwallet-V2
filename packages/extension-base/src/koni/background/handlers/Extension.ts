@@ -32,7 +32,7 @@ import { createTonTransaction } from '@subwallet/extension-base/services/balance
 import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
@@ -1626,7 +1626,9 @@ export default class KoniExtension {
     const chainInfo = this.#koniState.chainService.getChainInfoByKey(networkKey);
     const api = _isChainEvmCompatible(chainInfo) && _isTokenTransferredByEvm(tokenInfo)
       ? this.#koniState.chainService.getEvmApi(networkKey)
-      : this.#koniState.chainService.getSubstrateApi(networkKey);
+      : _isChainTonCompatible(chainInfo) && _isTokenTransferredByTon(tokenInfo)
+        ? this.#koniState.chainService.getTonApi(networkKey)
+        : this.#koniState.chainService.getSubstrateApi(networkKey);
 
     const [mockTxFee, { value }] = await Promise.all([
       getTransferMockTxFee(address, chainInfo, tokenInfo, api),
