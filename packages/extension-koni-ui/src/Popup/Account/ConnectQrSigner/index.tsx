@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxyType } from '@subwallet/extension-base/types';
-import { detectTranslate } from '@subwallet/extension-base/utils';
+import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountNameModal, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import DualLogo from '@subwallet/extension-koni-ui/components/Logo/DualLogo';
@@ -15,6 +15,7 @@ import useScanAccountQr from '@subwallet/extension-koni-ui/hooks/qr/useScanAccou
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { createAccountExternalV2 } from '@subwallet/extension-koni-ui/messaging';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
 import { QrAccount } from '@subwallet/extension-koni-ui/types/scanner';
 import { qrSignerScan } from '@subwallet/extension-koni-ui/utils/scanner/attach';
@@ -23,6 +24,7 @@ import CN from 'classnames';
 import { QrCode, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import DefaultLogosMap from '../../../assets/logo';
@@ -55,31 +57,53 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const onComplete = useCompleteCreateAccount();
   const onBack = useGoBackFromCreateAccount(ATTACH_ACCOUNT_MODAL);
+  const accounts = useSelector((root: RootState) => root.accountState.accounts);
 
   const accountName = useGetDefaultAccountName();
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
   const [validateState, setValidateState] = useState<ValidateState>({});
   const [loading, setLoading] = useState(false);
-  const [accountQrScanned, setAccountQrScanned] = useState<QrAccount>();
+  const [scannedAccount, setScannedAccount] = useState<QrAccount>();
+
+  const accountAddressValidator = useCallback((scannedAccount: QrAccount) => {
+    if (scannedAccount?.content) {
+      // For each account, check if the address already exists return promise reject
+      for (const account of accounts) {
+        if (isSameAddress(account.address, scannedAccount.content)) {
+          return Promise.reject(new Error(t('Account already exists')));
+        }
+      }
+    }
+
+    return Promise.resolve();
+  }, [accounts, t]);
 
   const onSubmit = useCallback((account: QrAccount) => {
+    setValidateState({
+      message: '',
+      status: 'validating'
+    });
     inactiveModal(modalId);
-    setAccountQrScanned(account);
-  }, [inactiveModal]);
+    accountAddressValidator(account)
+      .then(() => {
+        setScannedAccount(account);
+      }).catch((error: Error) => {
+        setValidateState({
+          message: error.message,
+          status: 'error'
+        });
+      });
+  }, [accountAddressValidator, inactiveModal]);
 
   const onSubmitFinal = useCallback((name: string) => {
-    if (accountQrScanned) {
+    if (scannedAccount) {
       setLoading(true);
-      setValidateState({
-        message: '',
-        status: 'validating'
-      });
 
       setTimeout(() => {
         createAccountExternalV2({
           name: accountName,
-          address: accountQrScanned.content,
+          address: scannedAccount.content,
           genesisHash: '',
           isAllowed: true,
           isReadOnly: false
@@ -107,13 +131,13 @@ const Component: React.FC<Props> = (props: Props) => {
           });
       }, 300);
     }
-  }, [accountName, accountQrScanned, inactiveModal, onComplete]);
+  }, [accountName, scannedAccount, inactiveModal, onComplete]);
 
   useEffect(() => {
-    if (accountQrScanned) {
+    if (scannedAccount) {
       activeModal(accountNameModalId);
     }
-  }, [accountQrScanned, activeModal]);
+  }, [scannedAccount, activeModal]);
 
   const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, qrSignerScan, setValidateState, onSubmit);
 

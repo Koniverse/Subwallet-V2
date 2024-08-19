@@ -21,13 +21,13 @@ function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
   const notify = useNotification();
-  const onSelectAccountSelector = useViewAccountAddressQr();
+  const onViewAccountAddressQr = useViewAccountAddressQr();
 
   const onShowQr = useCallback((item: AccountNetworkAddress) => {
     return () => {
-      onSelectAccountSelector(item);
+      onViewAccountAddressQr(item);
     };
-  }, [onSelectAccountSelector]);
+  }, [onViewAccountAddressQr]);
 
   const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
     return () => {

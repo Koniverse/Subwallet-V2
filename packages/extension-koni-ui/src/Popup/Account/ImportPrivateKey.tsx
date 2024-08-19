@@ -1,17 +1,18 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountNameModal, CloseIcon, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
+import { CloseIcon, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
 import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
-import { ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
-import { Button, Form, Icon, ModalContext } from '@subwallet/react-ui';
+import { simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Callbacks, FieldData } from 'rc-field-form/lib/interface';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps;
@@ -24,13 +25,12 @@ const FooterIcon = (
 );
 
 const formName = 'import-private-key-form';
-const fieldName = 'private-key';
+const fieldPrivateKey = 'private-key';
 
 interface FormState {
-  [fieldName]: string;
+  [fieldPrivateKey]: string;
+  name: string;
 }
-
-const accountModalId = ACCOUNT_NAME_MODAL;
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
@@ -45,55 +45,48 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   // TODO: Change way validate
   const [validateState, setValidateState] = useState<ValidateState>({});
   const [validating, setValidating] = useState(false);
+  const [isDisable, setIsDisable] = useState(false);
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
-  const [changed, setChanged] = useState(false);
-  const { activeModal, inactiveModal } = useContext(ModalContext);
+  const [privateKeyChanged, setPrivateKeyChanged] = useState(false);
   const [form] = Form.useForm<FormState>();
   const checkUnlock = useUnlockChecker();
 
   // Auto-focus field
-  useFocusFormItem(form, fieldName);
+  useFocusFormItem(form, fieldPrivateKey);
 
-  const privateKey = Form.useWatch(fieldName, form);
+  const privateKey = Form.useWatch(fieldPrivateKey, form);
 
   const onSubmit: FormCallbacks<FormState>['onFinish'] = useCallback((values: FormState) => {
-    const { [fieldName]: privateKey } = values;
+    const { name: accountName, [fieldPrivateKey]: privateKey } = values;
 
     checkUnlock().then(() => {
       if (privateKey?.trim()) {
-        activeModal(accountModalId);
+        setLoading(true);
+        createAccountSuriV2({
+          name: accountName,
+          suri: privateKey.trim(),
+          isAllowed: true,
+          type: EVM_ACCOUNT_TYPE
+        })
+          .then(() => {
+            onComplete();
+          })
+          .catch((error: Error): void => {
+            setValidateState({
+              status: 'error',
+              message: error.message
+            });
+          })
+          .finally(() => {
+            setLoading(false);
+          });
       }
     })
       .catch(() => {
-      // User cancel unlock
+        // User cancel unlock
       });
-  }, [checkUnlock, activeModal]);
-
-  const onSubmitFinal = useCallback((name: string) => {
-    if (privateKey?.trim()) {
-      setLoading(true);
-      createAccountSuriV2({
-        name: name,
-        suri: privateKey.trim(),
-        isAllowed: true,
-        type: EVM_ACCOUNT_TYPE
-      })
-        .then(() => {
-          onComplete();
-        })
-        .catch((error: Error): void => {
-          setValidateState({
-            status: 'error',
-            message: error.message
-          });
-        })
-        .finally(() => {
-          inactiveModal(accountModalId);
-          setLoading(false);
-        });
-    }
-  }, [privateKey, onComplete, inactiveModal]);
+  }, [checkUnlock, onComplete]);
 
   useEffect(() => {
     let amount = true;
@@ -115,7 +108,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             .then(({ autoAddPrefix }) => {
               if (amount) {
                 if (autoAddPrefix) {
-                  form.setFieldValue(fieldName, `0x${privateKey}`);
+                  form.setFieldValue(fieldPrivateKey, `0x${privateKey}`);
                 }
 
                 setValidateState({});
@@ -136,7 +129,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             });
         }, 300);
       } else {
-        if (changed) {
+        if (privateKeyChanged) {
           setValidateState({
             status: 'error',
             message: t('Private key is required')
@@ -148,12 +141,18 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     return () => {
       amount = false;
     };
-  }, [privateKey, form, changed, t]);
+  }, [privateKey, form, privateKeyChanged, t]);
 
   const onValuesChange: FormCallbacks<FormState>['onValuesChange'] = useCallback((changedValues: Partial<FormState>) => {
-    if (fieldName in changedValues) {
-      setChanged(true);
+    if (fieldPrivateKey in changedValues) {
+      setPrivateKeyChanged(true);
     }
+  }, []);
+
+  const onFieldsChange: Callbacks<FormState>['onFieldsChange'] = useCallback((changes: FieldData[], allFields: FieldData[]) => {
+    const { empty, error } = simpleCheckForm(allFields);
+
+    setIsDisable(error || empty);
   }, []);
 
   const toggleShow = useCallback(() => {
@@ -168,7 +167,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           children: validating ? t('Validating') : t('Import account'),
           icon: FooterIcon,
           onClick: form.submit,
-          disabled: !privateKey || !!validateState.status,
+          disabled: !privateKey || !!validateState.status || isDisable,
           loading: validating || loading
         }}
         subHeaderIcons={[
@@ -186,13 +185,33 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           <Form
             className='form-container'
             form={form}
-            initialValues={{ [fieldName]: '' }}
+            initialValues={{ [fieldPrivateKey]: '', name: '' }}
             name={formName}
+            onFieldsChange={onFieldsChange}
             onFinish={onSubmit}
             onValuesChange={onValuesChange}
           >
             <Form.Item
-              name={fieldName}
+              className={CN('__account-name-field')}
+              name={'name'}
+              rules={[{
+                message: t('Account name is required'),
+                transform: (value: string) => value.trim(),
+                required: true
+              }
+
+              ]}
+            >
+              <Input
+                className='__account-name-input'
+                disabled={loading}
+                label={t('Account name')}
+                onBlur={form.submit}
+                placeholder={t('Enter the account name')}
+              />
+            </Form.Item>
+            <Form.Item
+              name={fieldPrivateKey}
               validateStatus={validateState.status}
             >
               <PrivateKeyInput
@@ -220,12 +239,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             </div>
           </Form>
         </div>
-
-        <AccountNameModal
-          accountType={AccountProxyType.SOLO}
-          isLoading={loading}
-          onSubmit={onSubmitFinal}
-        />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );

@@ -46,7 +46,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { t } = useTranslation();
   const notify = useNotification();
   const sectionRef = useRef<SwListSectionRef>(null);
-  const [accountSelected, setAccountSelected] = useState<AccountProxy>();
+  const [selectedAccount, setSelectedAccount] = useState<AccountProxy>();
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
   const { setStateSelectAccount } = useSetSessionLatest();
   const checkUnlock = useUnlockChecker();
@@ -78,7 +78,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const onSelectAccount = useCallback((account: AccountProxy): () => void => {
     return () => {
       checkUnlock().then(() => {
-        setAccountSelected(account);
+        setSelectedAccount(account);
       }).catch(() => {
         // User cancel unlock
       });
@@ -86,13 +86,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [checkUnlock]);
 
   const onSubmitAccount = useCallback((name: string) => {
-    if (accountSelected) {
-      setSelected(accountSelected.id);
+    if (selectedAccount) {
+      setSelected(selectedAccount.id);
       setTimeout(() => {
         deriveAccountV3({
-          proxyId: accountSelected.id,
+          proxyId: selectedAccount.id,
           name,
-          suri: accountSelected.suri
+          suri: selectedAccount.suri
         }).then(() => {
           inactiveModal(modalId);
           setStateSelectAccount(true);
@@ -108,13 +108,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         });
       }, 500);
     }
-  }, [accountSelected, clearSearch, inactiveModal, notify, setStateSelectAccount]);
+  }, [selectedAccount, clearSearch, inactiveModal, notify, setStateSelectAccount]);
 
   useEffect(() => {
-    if (accountSelected) {
+    if (selectedAccount) {
       activeModal(accountNameModalId);
     }
-  }, [accountSelected, activeModal]);
+  }, [selectedAccount, activeModal]);
 
   const renderItem = useCallback((account: AccountProxy): React.ReactNode => {
     const disabled = !!selected;
@@ -159,7 +159,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       </SwModal>
 
       <AccountNameModal
-        accountType={accountSelected?.accountType}
+        accountType={selectedAccount?.accountType}
         isLoading={!!selected}
         modalId={accountNameModalId}
         onSubmit={onSubmitAccount}

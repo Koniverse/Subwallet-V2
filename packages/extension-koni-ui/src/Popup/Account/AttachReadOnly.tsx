@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountNameModal, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { isSameAddress } from '@subwallet/extension-base/utils';
+import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { AddressInput } from '@subwallet/extension-koni-ui/components/Field/AddressInput';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
-import { ACCOUNT_NAME_MODAL, ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
 import useFocusById from '@subwallet/extension-koni-ui/hooks/form/useFocusById';
@@ -16,11 +16,11 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils/form/form';
 import { readOnlyScan } from '@subwallet/extension-koni-ui/utils/scanner/attach';
-import { Form, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
+import { Form, Icon, Input, PageIcon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye } from 'phosphor-react';
 import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
@@ -29,9 +29,8 @@ type Props = ThemeProps;
 
 interface ReadOnlyAccountInput {
   address?: string;
+  name: string;
 }
-
-const accountNameModalId = ACCOUNT_NAME_MODAL;
 
 const FooterIcon = (
   <Icon
@@ -49,7 +48,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const { t } = useTranslation();
   const { goHome } = useDefaultNavigate();
-  const { activeModal, inactiveModal } = useContext(ModalContext);
   const onComplete = useCompleteCreateAccount();
 
   const accounts = useSelector((root: RootState) => root.accountState.accounts);
@@ -59,10 +57,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [form] = Form.useForm<ReadOnlyAccountInput>();
 
   const [reformatAddress, setReformatAddress] = useState('');
+  const [isHideAccountNameInput, setIsHideAccountNameInput] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDisable, setIsDisable] = useState(true);
 
   const handleResult = useCallback((val: string) => {
+    // Todo: Recheck this logic with master account
     const result = readOnlyScan(val);
 
     if (result) {
@@ -88,53 +88,56 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     if (result) {
       // For each account, check if the address already exists return promise reject
       for (const account of accounts) {
-        if (account.address === result.content) {
+        if (isSameAddress(account.address, result.content)) {
           setReformatAddress('');
+          setIsHideAccountNameInput(true);
 
           return Promise.reject(t('Account already exists'));
         }
       }
     } else {
       setReformatAddress('');
+      setIsHideAccountNameInput(true);
 
       if (value !== '') {
         return Promise.reject(t('This is not an address'));
       }
     }
 
+    setIsHideAccountNameInput(false);
+
     return Promise.resolve();
   }, [accounts, t]);
 
   const onSubmit = useCallback(() => {
-    if (reformatAddress) {
-      activeModal(accountNameModalId);
-    }
-  }, [activeModal, reformatAddress]);
-
-  const onSubmitFinal = useCallback((name: string) => {
     setLoading(true);
-    createAccountExternalV2({
-      name: name,
-      address: reformatAddress,
-      genesisHash: '',
-      isAllowed: true,
-      isReadOnly: true
-    })
-      .then((errors) => {
-        if (errors.length) {
-          form.setFields([{ name: fieldName, errors: errors.map((e) => e.message) }]);
-        } else {
-          onComplete();
-        }
+    const accountName = form.getFieldValue('name') as string;
+
+    if (reformatAddress && accountName) {
+      createAccountExternalV2({
+        name: accountName,
+        address: reformatAddress,
+        genesisHash: '',
+        isAllowed: true,
+        isReadOnly: true
       })
-      .catch((error: Error) => {
-        form.setFields([{ name: fieldName, errors: [error.message] }]);
-      })
-      .finally(() => {
-        inactiveModal(accountNameModalId);
-        setLoading(false);
-      });
-  }, [form, reformatAddress, onComplete, inactiveModal]);
+        .then((errors) => {
+          if (errors.length) {
+            form.setFields([{ name: fieldName, errors: errors.map((e) => e.message) }]);
+          } else {
+            onComplete();
+          }
+        })
+        .catch((error: Error) => {
+          form.setFields([{ name: fieldName, errors: [error.message] }]);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [form, reformatAddress, onComplete]);
 
   useFocusById(modalId);
 
@@ -172,7 +175,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           </div>
           <Form
             form={form}
-            initialValues={{ address: '' }}
+            initialValues={{ address: '', name: '' }}
             name={formName}
             onFieldsChange={onFieldsChange}
             onFinish={onSubmit}
@@ -196,14 +199,29 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 showScanner={true}
               />
             </Form.Item>
+
+            <Form.Item
+              className={CN('__account-name-field')}
+              hidden={isHideAccountNameInput}
+              name={'name'}
+              rules={[{
+                message: t('Account name is required'),
+                transform: (value: string) => value.trim(),
+                required: true
+              }
+
+              ]}
+            >
+              <Input
+                className='__account-name-input'
+                disabled={loading}
+                label={t('Account name')}
+                onBlur={form.submit}
+                placeholder={t('Enter the account name')}
+              />
+            </Form.Item>
           </Form>
         </div>
-
-        <AccountNameModal
-          accountType={AccountProxyType.READ_ONLY}
-          isLoading={loading}
-          onSubmit={onSubmitFinal}
-        />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );
