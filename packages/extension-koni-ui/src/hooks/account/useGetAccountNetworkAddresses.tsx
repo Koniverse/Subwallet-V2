@@ -14,7 +14,7 @@ const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetwo
 
   return useMemo(() => {
     const result: AccountNetworkAddress[] = [];
-    const chains: string[] = getChainsByAccountType(chainInfoMap, accountProxy.networkTypes, accountProxy.specialNetwork);
+    const chains: string[] = getChainsByAccountType(chainInfoMap, accountProxy.chainTypes, accountProxy.specialChain);
 
     accountProxy.accounts.forEach((a) => {
       for (const chain of chains) {

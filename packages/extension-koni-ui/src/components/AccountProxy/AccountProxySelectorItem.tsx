@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountNetworkType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -45,10 +45,10 @@ function Component (props: Props): React.ReactElement<Props> {
 
   const networkTypeLogoMap = useMemo(() => {
     return {
-      [AccountNetworkType.SUBSTRATE]: logoMap.network.polkadot as string,
-      [AccountNetworkType.ETHEREUM]: logoMap.network.ethereum as string,
-      [AccountNetworkType.BITCOIN]: logoMap.network.bitcoin as string,
-      [AccountNetworkType.TON]: logoMap.network.ton as string
+      [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
+      [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,
+      [AccountChainType.BITCOIN]: logoMap.network.bitcoin as string,
+      [AccountChainType.TON]: logoMap.network.ton as string
     };
   }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
 
@@ -157,7 +157,7 @@ function Component (props: Props): React.ReactElement<Props> {
           <div className='__item-name'>{accountProxy.name}</div>
           <div className='__item-network-types'>
             {
-              accountProxy.networkTypes.map((nt) => {
+              accountProxy.chainTypes.map((nt) => {
                 return (
                   <img
                     alt='Network type'
