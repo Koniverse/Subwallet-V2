@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { EXTRA_TON_ESTIMATE_FEE } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { EXTRA_TON_ESTIMATE_FEE, SW_QUERYID_HEX } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { TonApi } from '@subwallet/extension-base/services/chain-service/handler/TonApi';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage, storeMessageRelaxed } from '@ton/core';
 import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV4 } from '@ton/ton';
+import nacl from 'tweetnacl';
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
   const masterAddress = Address.parse(contractAddress);
@@ -114,4 +115,14 @@ export function messageRelaxedToCell (message: MessageRelaxed) {
 
 export function cellToBase64Str (cell: Cell) {
   return cell.toBoc().toString('base64');
+}
+
+export function getWalletQueryId () {
+  const swSignal = SW_QUERYID_HEX.toString(16);
+
+  const swSignalBuffer = Buffer.from(swSignal, 'hex');
+  const randomBuffer = nacl.randomBytes(4);
+  const buffer = Buffer.concat([swSignalBuffer, randomBuffer]);
+
+  return BigInt('0x' + buffer.toString('hex'));
 }

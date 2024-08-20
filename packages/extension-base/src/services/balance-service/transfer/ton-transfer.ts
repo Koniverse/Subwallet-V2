@@ -3,7 +3,7 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { INIT_FEE_JETTON_TRANSFER, TON_OPCODES, WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { cellToBase64Str, estimateTonTxFee, messageRelaxedToCell } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { cellToBase64Str, estimateTonTxFee, getWalletQueryId, messageRelaxedToCell } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken, _isJettonToken, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { keyring } from '@subwallet/ui-keyring';
@@ -89,7 +89,7 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
 
   const messageBody = beginCell()
     .storeUint(TON_OPCODES.JETTON_TRANSFER, 32) // opcode for jetton transfer
-    .storeUint(0, 64) // query id todo: research more about this
+    .storeUint(getWalletQueryId(), 64) // query id
     .storeCoins(BigInt(value)) // jetton bigint amount
     .storeAddress(destinationAddress)
     .storeAddress(sendertonAddress) // response destination, who get remain token

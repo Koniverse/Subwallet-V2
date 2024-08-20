@@ -11,6 +11,8 @@ export enum TON_OPCODES {
   STONFI_SWAP = 0x25938561
 }
 
+export const SW_QUERYID_HEX = 0x20010503;
+
 export const EXTRA_TON_ESTIMATE_FEE = BigInt(500);
 
 // todo: This is just free API for dev, remove this and set better RPC later
