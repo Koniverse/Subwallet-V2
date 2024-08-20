@@ -503,7 +503,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         transferAll: isTransferAll
       });
     } else {
-      // Make cross chainValue transfer
+      // Make cross chain transfer
       sendPromise = makeCrossChainTransfer({
         destinationNetworkKey: destChain,
         from,
@@ -600,7 +600,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
     if (values.chain !== values.destChain) {
-      const originChainInfo = chainInfoMap[chainValue];
+      const originChainInfo = chainInfoMap[values.chain];
       const destChainInfo = chainInfoMap[values.destChain];
 
       if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
@@ -652,7 +652,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     }
 
     doSubmit(values);
-  }, [assetInfo, chainValue, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
 
   // todo: recheck with ledger account
   useEffect(() => {
@@ -806,8 +806,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
               <ChainSelector
                 disabled={!destChainItems.length}
                 items={destChainItems}
-                title={t('Select destination chainValue')}
-                tooltip={t('Select destination chainValue')}
+                title={t('Select destination chain')}
+                tooltip={t('Select destination chain')}
               />
             </Form.Item>
           </div>
@@ -877,7 +877,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           chainValue !== destChainValue && (
             <div className={'__warning_message_cross_chain'}>
               <AlertBox
-                description={t('Cross-chainValue transfer to an exchange (CEX) will result in loss of funds. Make sure the receiving address is not an exchange address.')}
+                description={t('Cross-chain transfer to an exchange (CEX) will result in loss of funds. Make sure the receiving address is not an exchange address.')}
                 title={t('Pay attention!')}
                 type={'warning'}
               />
