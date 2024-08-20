@@ -9,6 +9,7 @@ export const WEB_BUILD_NUMBER = process.env.PKG_BUILD_NUMBER || '000001';
 export const WIKI_URL = 'https://docs.subwallet.app/';
 export const PRIVACY_AND_POLICY_URL = 'https://docs.subwallet.app/privacy-and-security/privacy-policy';
 export const TERMS_OF_SERVICE_URL = 'https://docs.subwallet.app/privacy-and-security/terms-of-service';
+export const USER_GUIDE_URL = 'https://docs.subwallet.app/main/extension-user-guide';
 export const FAQS_URL = 'https://docs.subwallet.app/main/extension-user-guide/faqs';
 export const WEBSITE_URL = 'https://subwallet.app/';
 export const TELEGRAM_URL = 'https://t.me/subwallet';
