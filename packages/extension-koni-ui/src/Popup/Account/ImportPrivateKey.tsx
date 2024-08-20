@@ -206,7 +206,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 className='__account-name-input'
                 disabled={loading}
                 label={t('Account name')}
-                onBlur={form.submit}
                 placeholder={t('Enter the account name')}
               />
             </Form.Item>

@@ -9,13 +9,11 @@ import { useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnlockChecker';
-import useClickOutSide from '@subwallet/extension-koni-ui/hooks/dom/useClickOutSide';
 import useSwitchModal from '@subwallet/extension-koni-ui/hooks/modal/useSwitchModal';
 import { deriveAccountV3 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { searchAccountFunction } from '@subwallet/extension-koni-ui/utils/account/account';
-import { renderModalSelector } from '@subwallet/extension-koni-ui/utils/common/dom';
 import { ActivityIndicator, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
@@ -47,15 +45,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const notify = useNotification();
   const sectionRef = useRef<SwListSectionRef>(null);
   const [selectedAccount, setSelectedAccount] = useState<AccountProxy>();
-  const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
+  const [loading, setLoading] = useState(false);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
   const { setStateSelectAccount } = useSetSessionLatest();
   const checkUnlock = useUnlockChecker();
 
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
-
-  const isActive = checkActive(modalId);
-
-  const [selected, setSelected] = useState('');
 
   const filtered = useMemo(
     () => accountProxies
@@ -66,14 +61,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const clearSearch = useCallback(() => {
     sectionRef.current?.setSearchValue('');
   }, []);
-
-  const onCancel = useCallback(() => {
-    setStateSelectAccount(true);
-    inactiveModal(modalId);
-    clearSearch();
-  }, [clearSearch, inactiveModal, setStateSelectAccount]);
-
-  useClickOutSide(isActive || !!selected, renderModalSelector(className), onCancel);
 
   const onSelectAccount = useCallback((account: AccountProxy): () => void => {
     return () => {
@@ -87,7 +74,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onSubmitAccount = useCallback((name: string) => {
     if (selectedAccount) {
-      setSelected(selectedAccount.id);
+      setLoading(true);
       setTimeout(() => {
         deriveAccountV3({
           proxyId: selectedAccount.id,
@@ -103,7 +90,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             type: 'error'
           });
         }).finally(() => {
-          setSelected('');
+          setLoading(false);
+          setSelectedAccount(undefined);
           inactiveModal(accountNameModalId);
         });
       }, 500);
@@ -117,8 +105,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [selectedAccount, activeModal]);
 
   const renderItem = useCallback((account: AccountProxy): React.ReactNode => {
-    const disabled = !!selected;
-    const isSelected = account.id === selected;
+    const disabled = !!selectedAccount?.id;
+    const isSelected = account.id === selectedAccount?.id;
 
     return (
       <React.Fragment key={account.id}>
@@ -131,9 +119,15 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         />
       </React.Fragment>
     );
-  }, [onSelectAccount, selected]);
+  }, [onSelectAccount, selectedAccount?.id]);
 
   const onBack = useSwitchModal(modalId, CREATE_ACCOUNT_MODAL, clearSearch);
+
+  const onAccountNameModalCancel = useCallback(() => {
+    setSelectedAccount(undefined);
+    inactiveModal(accountNameModalId);
+    activeModal(modalId);
+  }, [activeModal, inactiveModal]);
 
   return (
     <>
@@ -141,8 +135,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         className={className}
         closeIcon={(<BackIcon />)}
         id={modalId}
-        maskClosable={false}
-        onCancel={selected ? undefined : onBack}
+        maskClosable={true}
+        onCancel={selectedAccount ? undefined : onBack}
         title={t('Select account')}
       >
         <SwList.Section
@@ -160,8 +154,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
       <AccountNameModal
         accountType={selectedAccount?.accountType}
-        isLoading={!!selected}
+        closeable={true}
+        isLoading={loading}
         modalId={accountNameModalId}
+        onCancel={onAccountNameModalCancel}
         onSubmit={onSubmitAccount}
       />
     </>
