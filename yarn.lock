@@ -6050,14 +6050,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.82":
-  version: 0.2.82
-  resolution: "@subwallet/chain-list@npm:0.2.82"
+"@subwallet/chain-list@npm:0.2.83-beta.1":
+  version: 0.2.83-beta.1
+  resolution: "@subwallet/chain-list@npm:0.2.83-beta.1"
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: c3759f08b12ad49c004db2b3312dfd4d27edd800ae97bd579c8fa60ac88dfd2676b987cd8703f9c14b65077c15e69e8f8400002ce41eb440bba4c9c219705bba
+  checksum: c8bfcec30da4e6aa146a85052ea020f0a91750dceebede6cf69788c789dbafe5c82156605b0fa7bffe4faac83c58d2366bb161aeae8e9dae34a14d801ce0c610
   languageName: node
   linkType: hard
 
@@ -6099,7 +6099,7 @@ __metadata:
     "@reduxjs/toolkit": ^1.9.1
     "@sora-substrate/type-definitions": ^1.17.7
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.82
+    "@subwallet/chain-list": 0.2.83-beta.1
     "@subwallet/extension-base": ^1.2.24-2
     "@subwallet/extension-chains": ^1.2.24-2
     "@subwallet/extension-dapp": ^1.2.24-2
@@ -6112,7 +6112,7 @@ __metadata:
     "@walletconnect/sign-client": ^2.13.1
     "@walletconnect/types": ^2.13.1
     "@walletconnect/utils": ^2.13.1
-    avail-js-sdk: ^0.2.12
+    avail-js-sdk: ^0.2.14
     axios: ^1.6.2
     bignumber.js: ^9.1.1
     bn.js: ^5.2.1
@@ -6231,7 +6231,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.82
+    "@subwallet/chain-list": 0.2.83-beta.1
     "@subwallet/extension-base": ^1.2.24-2
     "@subwallet/extension-chains": ^1.2.24-2
     "@subwallet/extension-dapp": ^1.2.24-2
@@ -6369,7 +6369,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.82
+    "@subwallet/chain-list": 0.2.83-beta.1
     "@subwallet/extension-base": ^1.2.24-2
     "@subwallet/extension-chains": ^1.2.24-2
     "@subwallet/extension-dapp": ^1.2.24-2
@@ -9601,12 +9601,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"avail-js-sdk@npm:^0.2.12":
-  version: 0.2.12
-  resolution: "avail-js-sdk@npm:0.2.12"
+"avail-js-sdk@npm:^0.2.14":
+  version: 0.2.14
+  resolution: "avail-js-sdk@npm:0.2.14"
   dependencies:
     "@polkadot/api": ^10.11.3
-  checksum: 83c187c9d1ef34c1cfc815f7da7fc15c0b9e471f9b43335d48da33063e9368969aa69c65cd38bbb3143a044a1f20ca575dacb2876608a408d61574c3192208e7
+    neverthrow: ^7.0.0
+  checksum: 25bfcc3643eac9208afa38be6ebe6b1a43a12c755341491d8c3428733c2676669d8eb773b592c1f19bc72d376eb0797f078cb17e5dd99990a678feb11714da0f
   languageName: node
   linkType: hard
 
@@ -20812,6 +20813,13 @@ __metadata:
   version: 2.6.2
   resolution: "neo-async@npm:2.6.2"
   checksum: deac9f8d00eda7b2e5cd1b2549e26e10a0faa70adaa6fdadca701cc55f49ee9018e427f424bac0c790b7c7e2d3068db97f3093f1093975f2acb8f8818b936ed9
+  languageName: node
+  linkType: hard
+
+"neverthrow@npm:^7.0.0":
+  version: 7.0.1
+  resolution: "neverthrow@npm:7.0.1"
+  checksum: d0863feb1716872b392debda547f0fcd14693b23e80b4477e72ca9a8c443c99418280cae2808b880c5fe806309bf856e2887ed0666fefc308774885f6a32a38f
   languageName: node
   linkType: hard
 

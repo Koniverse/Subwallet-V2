@@ -1,11 +1,12 @@
 // Copyright 2019-2022 @polkadot/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { AssetSetting, ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { substrateAddressToPublicKey } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { _getAssetDecimals, _getContractAddressOfToken, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
@@ -14,6 +15,7 @@ import { AccountSelector, AddressInput, AlertBox, AlertModal, AmountInput, Chain
 import { useAlert, useFetchChainAssetInfo, useGetChainPrefixBySlug, useInitValidateTransaction, useIsMantaPayEnabled, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
+import { ethereumBridgeTuring } from '@subwallet/extension-koni-ui/Popup/Transaction/variants/ethereumBridgeTuring';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
@@ -143,6 +145,16 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
     slug: originChain.slug
   });
 
+  // if (tokenSlug === 'avail_mainnet-NATIVE-AVAIL') {
+  //   result.push({
+  //     name: originChain1.name,
+  //     slug: originChain1.slug
+  //   });
+  // }
+
+  console.log('result', result);
+  console.log('tokenSlug', tokenSlug);
+
   Object.values(xcmRefMap).forEach((xcmRef) => {
     if (xcmRef.srcAsset === tokenSlug) {
       const destinationChain = chainInfoMap[xcmRef.destChain];
@@ -211,6 +223,7 @@ const filterAccountFunc = (
 const hiddenFields: Array<keyof TransferParams> = ['chain'];
 const validateFields: Array<keyof TransferParams> = ['value', 'to'];
 const alertModalId = 'confirmation-alert-modal';
+const NEXT_PUBLIC_BRIDGE_PROXY_CONTRACT = '0x967F7DdC4ec508462231849AE81eeaa68Ad01389';
 
 const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   useSetCurrentPage('/transaction/send-fund');
@@ -264,6 +277,33 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     setForceUpdateMaxValue({});
     setIsTransferAll(value);
   }, []);
+
+  const originChain1 = chainInfoMap[_getOriginChainOfAsset('ethereum-NATIVE-ETH')];
+  const originChain2 = chainInfoMap[_getOriginChainOfAsset('sepolia_ethereum-NATIVE-ETH')];
+  const srcChain = chainInfoMap[_getOriginChainOfAsset('avail_mainnet-NATIVE-AVAIL')];
+  const srcChain2 = chainInfoMap[_getOriginChainOfAsset('availTuringTest-NATIVE-AVAIL')];
+
+  // const tmpXcmRefMap = { ...xcmRefMap };
+  //
+  // tmpXcmRefMap['avail_mainnet-NATIVE-AVAIL___ethereum-NATIVE-ETH'] =
+  //   {
+  //     destAsset: 'ethereum-NATIVE-ETH',
+  //     destChain: originChain1.slug,
+  //     path: _AssetRefPath.XCM,
+  //     srcAsset: 'avail_mainnet-NATIVE-AVAIL',
+  //     srcChain: srcChain.slug
+  //   };
+  //
+  // tmpXcmRefMap['availTuringTest-NATIVE-AVAIL___sepolia_ethereum-NATIVE-ETH'] =
+  //   {
+  //     destAsset: 'sepolia_ethereum-NATIVE-ETH',
+  //     destChain: originChain2.slug,
+  //     path: _AssetRefPath.XCM,
+  //     srcAsset: 'availTuringTest-NATIVE-AVAIL',
+  //     srcChain: srcChain2.slug
+  //   };
+  //
+  // console.log('tmpXcmRefMap', tmpXcmRefMap);
 
   const { onError, onSuccess } = useHandleSubmitMultiTransaction(dispatchProcessState, handleTransferAll);
 
@@ -384,6 +424,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   }, [accounts, chainInfoMap, form, t]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
+    return Promise.resolve();
+
     if (!amount) {
       return Promise.reject(t('Amount is required'));
     }
@@ -511,6 +553,9 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     const addressPrefix = chainInfo?.substrateInfo?.addressPrefix ?? 42;
     const from = reformatAddress(_from, addressPrefix);
 
+    console.log('chain', chain);
+    console.log('destChain', destChain);
+
     if (chain === destChain) {
       // Transfer token or send fund
       sendPromise = makeTransfer({
@@ -523,6 +568,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       });
     } else {
       // Make cross chain transfer
+      console.log('123');
       sendPromise = makeCrossChainTransfer({
         destinationNetworkKey: destChain,
         from,
@@ -532,6 +578,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         value,
         transferAll: isTransferAll
       });
+
+      console.log('sendPromise', sendPromise);
     }
 
     return sendPromise;
@@ -593,6 +641,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           }
         }
       } catch (e) {
+        console.log('Dung nguyen');
         onError(e as Error);
 
         return false;
@@ -724,6 +773,10 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     let cancel = false;
 
     setIsFetchingMaxValue(false);
+    console.log('from', from);
+    console.log('asset', asset);
+    console.log('chain', chain);
+    console.log('destChain', destChain);
 
     if (from && asset) {
       getMaxTransfer({
@@ -734,6 +787,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         destChain
       })
         .then((balance) => {
+          console.log('balance', balance);
+
           if (!cancel) {
             setMaxTransfer(balance.value);
             setIsFetchingMaxValue(true);

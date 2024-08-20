@@ -102,7 +102,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         sessionLatest.remind &&
         (isFromIgnorePage?.from !== historyPageIgnoreRemind)) {
         inactiveModal(HOME_CAMPAIGN_BANNER_MODAL);
-        activeModal(REMIND_BACKUP_SEED_PHRASE_MODAL);
+        // activeModal(REMIND_BACKUP_SEED_PHRASE_MODAL);
         remindBackUpShowed.current = true;
       }
     }

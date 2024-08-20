@@ -14,7 +14,7 @@ import { ALL_ACCOUNT_KEY, ALL_GENESIS_HASH, LATEST_SESSION, XCM_FEE_RATIO } from
 import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
-import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
+import { getERC20Contract, getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { parseSubstrateTransaction } from '@subwallet/extension-base/koni/api/dotsama/parseTransaction';
@@ -1735,11 +1735,18 @@ export default class KoniExtension {
 
   private async makeTransfer (inputData: RequestTransfer): Promise<SWTransactionResponse> {
     const { from, networkKey, to, tokenSlug, transferAll, value } = inputData;
-    const transferTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
+    // const transferTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
+    const transferTokenInfo = this.#koniState.chainService.getAssetBySlug('sepolia_ethereum-NATIVE-ETH');
+
+    console.log('tokenSlug', tokenSlug);
+    console.log('transferTokenInfo', transferTokenInfo);
+    console.log('0x967F7DdC4ec508462231849AE81eeaa68Ad01389');
     const [errors, ,] = validateTransferRequest(transferTokenInfo, from, to, value, transferAll);
 
     const warnings: TransactionWarning[] = [];
     const evmApiMap = this.#koniState.getEvmApiMap();
+
+    console.log('evmApiMap', evmApiMap);
     const chainInfo = this.#koniState.getChainInfo(networkKey);
 
     const nativeTokenInfo = this.#koniState.getNativeTokenInfo(networkKey);
@@ -1758,15 +1765,21 @@ export default class KoniExtension {
       if (isEthereumAddress(from) && isEthereumAddress(to) && _isTokenTransferredByEvm(transferTokenInfo)) {
         chainType = ChainType.EVM;
         const txVal: string = transferAll ? transferTokenAvailable.value : (value || '0');
-        const evmApi = evmApiMap[networkKey];
+        const evmApi = evmApiMap.sepolia_ethereum;
 
         // Estimate with EVM API
+        console.log('eth-avail: transferTokenInfo - 0', transferTokenInfo);
+        console.log('eth-avail: evmApi - 0', evmApi);
+        console.log('eth-avail: _getContractAddressOfToken(transferTokenInfo)', _getContractAddressOfToken(transferTokenInfo));
+
         if (_isTokenEvmSmartContract(transferTokenInfo) || _isLocalToken(transferTokenInfo)) {
+          console.log('eth-avail: transferTokenInfo - 1', transferTokenInfo);
           [
             transaction,
             transferAmount.value
           ] = await getERC20TransactionObject(_getContractAddressOfToken(transferTokenInfo), chainInfo, from, to, txVal, !!transferAll, evmApi);
         } else {
+          console.log('eth-avail: transferTokenInfo - 2', transferTokenInfo);
           [
             transaction,
             transferAmount.value
@@ -1818,6 +1831,12 @@ export default class KoniExtension {
       error && inputTransaction.errors.push(error);
     };
 
+    console.log('from', from);
+    console.log('networkKey', networkKey);
+    console.log('chainType', chainType);
+    console.log('transferNativeAmount', transferNativeAmount);
+    console.log('inputData', inputData);
+
     return this.#koniState.transactionService.handleTransaction({
       errors,
       warnings,
@@ -1841,12 +1860,20 @@ export default class KoniExtension {
     const originTokenInfo = this.#koniState.getAssetBySlug(tokenSlug);
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destinationNetworkKey, tokenSlug);
 
-    const [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
+    let [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
+
+    errors = [];
+
+    console.log('destinationTokenInfo', destinationTokenInfo);
+    console.log('from', from);
+    console.log('value', value);
+    console.log('errors', errors);
+    console.log('originNetworkKey', originNetworkKey);
     let extrinsic: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
 
-    if (errors.length > 0) {
-      return this.#koniState.transactionService.generateBeforeHandleResponseErrors(errors);
-    }
+    // if (errors.length > 0) {
+    //   return this.#koniState.transactionService.generateBeforeHandleResponseErrors(errors);
+    // }
 
     const chainInfoMap = this.#koniState.getChainInfoMap();
     const isFromSnowBridgeXcm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
@@ -1870,14 +1897,48 @@ export default class KoniExtension {
       } else {
         const substrateApi = this.#koniState.getSubstrateApi(originNetworkKey);
 
-        extrinsic = await createXcmExtrinsic({
-          destinationTokenInfo,
-          originTokenInfo,
-          sendingValue: value,
-          recipient: to,
-          chainInfoMap,
-          substrateApi
-        });
+        console.log('extrinsic---xcmExtrinsic');
+
+        try {
+          const evmApiMap = this.#koniState.getEvmApiMap();
+          const evmApi = evmApiMap.sepolia_ethereum;
+          // const evmApi = this.#koniState.getEvmApi('availTuringTest');
+
+          try {
+            const erc20Contract = getERC20Contract('0xb1C3Cb9b5e598d4E95a85870e7812B99f350982d', evmApi);
+
+            console.log('erc20Contract', erc20Contract);
+            const [_decimals, _symbol, _name] = await Promise.all([
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+              erc20Contract.methods.decimals().call() as number,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+              erc20Contract.methods.symbol().call() as string,
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+              erc20Contract.methods.name().call() as string
+            ]);
+
+            console.log('erc20Contract', erc20Contract);
+            // console.log('erc20Contract-bal', bal);
+            console.log('erc20Contract-_decimals', _decimals, _symbol, _name);
+
+            console.log('erc20Contract', erc20Contract.methods.transfer('5CFh4qpiB5PxsQvPEs6dWAhzgAVLHZa8tZKxeE9XsHBg4n9t', '100000000000000000'));
+          } catch (e) {
+            console.error('get contract error');
+          }
+
+          extrinsic = await createXcmExtrinsic({
+            destinationTokenInfo,
+            originTokenInfo,
+            sendingValue: value,
+            recipient: to,
+            chainInfoMap,
+            substrateApi
+          });
+        } catch (e) {
+          console.log('error when validating', e);
+        }
+
+        console.log('extrinsic---xcmExtrinsic', extrinsic?.toHex());
       }
 
       additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
@@ -1914,6 +1975,24 @@ export default class KoniExtension {
         });
       };
     }
+
+    console.log('from', from);
+    console.log('originNetworkKey', originNetworkKey);
+    console.log('inputData', inputData);
+    console.log('originTokenInfo', originTokenInfo);
+    console.log('errors', errors);
+    console.log('inputData', inputData);
+
+    const inputDataSample = {
+      from: '5CFh4qpiB5PxsQvPEs6dWAhzgAVLHZa8tZKxeE9XsHBg4n9t',
+      networkKey: 'availTuringTest',
+      to: '0xdd718f9Ecaf8f144a3140b79361b5D713D3A6b19',
+      tokenSlug: 'availTuringTest-NATIVE-AVAIL',
+      value: '100000000000000000',
+      transferAll: false
+    };
+
+    const originTokenInfo1 = this.#koniState.getAssetBySlug('availTuringTest-NATIVE-AVAIL');
 
     return await this.#koniState.transactionService.handleTransaction({
       url: EXTENSION_REQUEST_URL,
