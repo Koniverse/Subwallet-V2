@@ -8,6 +8,7 @@ export interface RequestInputAccountSubscribe {
 
 export interface AnalyzeAddress {
   address: string;
+  formatedAddress: string;
   domainName?: string;
   accountName?: string;
   displayName?: string;

@@ -17,6 +17,20 @@ interface AddressDataJson extends AbstractAddressJson {
 
 type ValidDataType = 'invalid' | 'valid' | 'extracted';
 
+const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => {
+  const chainType = _chainInfoToChainType(chainInfo);
+
+  if (chainType === AccountChainType.SUBSTRATE) {
+    return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
+  } else if (chainType === AccountChainType.TON) {
+    const isTestnet = chainInfo.isTestnet;
+
+    return reformatAddress(address, isTestnet ? 0 : 1);
+  } else {
+    return address;
+  }
+};
+
 // TODO: Re-confirm to compare without
 const isStrValidWithAddress = (str: string, account: AddressDataJson, chainInfo: _ChainInfo): ValidDataType => {
   if (account.chainType === AccountChainType.SUBSTRATE) {
@@ -77,7 +91,8 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
       const rs: AnalyzeAddress = {
         address: account.address,
         accountName: accountProxy.name,
-        displayName: accountProxy.name
+        displayName: accountProxy.name,
+        formatedAddress: _reformatAddressWithChain(account.address, chainInfo)
       };
 
       if (condition !== 'invalid') {
@@ -113,7 +128,8 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
     const rs: AnalyzeAddress = {
       address: contact.address,
       accountName: name,
-      displayName: name
+      displayName: name,
+      formatedAddress: _reformatAddressWithChain(contact.address, chainInfo)
     };
 
     if (condition !== 'invalid') {
@@ -150,7 +166,8 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
           const rs: AnalyzeAddress = {
             address: _raw,
             displayName: domain,
-            domainName: domain
+            domainName: domain,
+            formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
           };
 
           options.push(rs);
@@ -167,7 +184,8 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
           const rs: AnalyzeAddress = {
             address: address,
             displayName: _raw,
-            domainName: _raw
+            domainName: _raw,
+            formatedAddress: _reformatAddressWithChain(address, chainInfo)
           };
 
           options.push(rs);
