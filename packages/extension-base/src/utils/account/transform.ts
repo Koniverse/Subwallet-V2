@@ -6,8 +6,9 @@ import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { getKeypairTypeByAddress } from '@subwallet/keyring';
+import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
+import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
 import { hexStripPrefix, u8aToHex } from '@polkadot/util';
@@ -24,6 +25,14 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
     if (derivationPath) {
       data = blake2AsHex(data, 256);
     }
+  } else if (tonMnemonicValidate(_suri)) {
+    const entropy = tonMnemonicToEntropy(_suri);
+
+    data = u8aToHex(entropy);
+
+    if (derivationPath) {
+      data = blake2AsHex(data, 256);
+    }
   }
 
   if (derivationPath) {
@@ -31,6 +40,18 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
   }
 
   return blake2AsHex(data, 256);
+};
+
+export const getAccountChainType = (type: KeypairType): AccountChainType => {
+  return type
+    ? EthereumKeypairTypes.includes(type)
+      ? AccountChainType.ETHEREUM
+      : TonKeypairTypes.includes(type)
+        ? AccountChainType.TON
+        : BitcoinKeypairTypes.includes(type)
+          ? AccountChainType.BITCOIN
+          : AccountChainType.SUBSTRATE
+    : AccountChainType.SUBSTRATE;
 };
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
@@ -306,16 +327,8 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
 export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => {
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
-  const networkType: AccountChainType = type
-    ? EthereumKeypairTypes.includes(type)
-      ? AccountChainType.ETHEREUM
-      : TonKeypairTypes.includes(type)
-        ? AccountChainType.TON
-        : BitcoinKeypairTypes.includes(type)
-          ? AccountChainType.BITCOIN
-          : AccountChainType.SUBSTRATE
-    : AccountChainType.SUBSTRATE;
-  let specialNetwork: string | undefined;
+  const chainType: AccountChainType = getAccountChainType(type);
+  let specialChain: string | undefined;
 
   if (!chainInfoMap) {
     return {
@@ -326,7 +339,7 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
       transactionActions: [],
       tokenTypes: [],
       signMode,
-      chainType: networkType
+      chainType
     };
   }
 
@@ -336,12 +349,12 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     const chainInfo = Object.values(chainInfoMap).find((info) => _getSubstrateGenesisHash(info) === genesisHash);
 
     if (chainInfo) {
-      specialNetwork = chainInfo.slug;
+      specialChain = chainInfo.slug;
     }
   }
 
-  const accountActions = getAccountActions(signMode, networkType, type, meta);
-  const transactionActions = getAccountTransactionActions(signMode, networkType, type, meta, specialNetwork);
+  const accountActions = getAccountActions(signMode, chainType, type, meta);
+  const transactionActions = getAccountTransactionActions(signMode, chainType, type, meta, specialChain);
   const tokenTypes = getAccountTokenTypes(type);
 
   /* Account actions */
@@ -353,8 +366,8 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     accountActions,
     transactionActions,
     signMode,
-    chainType: networkType,
-    specialChain: specialNetwork,
+    chainType,
+    specialChain,
     tokenTypes
   };
 };
@@ -369,14 +382,17 @@ export const pairToAccount = ({ address,
 export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map((data) => singleAddressToAccount(data));
 
 export const transformAddress = (address: string, meta?: KeyringPair$Meta): AddressJson => {
+  const type = getKeypairTypeByAddress(address);
+  const chainType: AccountChainType = getAccountChainType(type);
+
   return {
     address,
-    ...meta
+    ...meta,
+    chainType
   };
 };
 
-export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address,
-  meta } }) => transformAddress(address, meta));
+export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address, meta } }) => transformAddress(address, meta));
 
 export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
   const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};

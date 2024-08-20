@@ -162,6 +162,7 @@ export interface AccountJson extends AbstractAddressJson, AccountMetadataData, A
 }
 
 export interface AddressJson extends AbstractAddressJson {
+  chainType: AccountChainType;
   isRecent?: boolean;
   recentChainSlugs?: string[];
 }

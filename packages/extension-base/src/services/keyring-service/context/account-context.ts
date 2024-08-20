@@ -42,6 +42,10 @@ export class AccountContext {
     return this.state.observable;
   }
 
+  get value () {
+    return this.state.value;
+  }
+
   get contacts (): SubjectInfo {
     return this.state.contacts;
   }
