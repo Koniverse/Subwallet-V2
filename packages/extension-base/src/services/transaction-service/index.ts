@@ -5,7 +5,7 @@ import { EvmProviderError } from '@subwallet/extension-base/background/errors/Ev
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, checkTonAddressBounceable, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { cellToBase64Str, externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -117,7 +117,7 @@ export default class TransactionService {
 
     const evmApi = this.state.chainService.getEvmApi(chainInfo.slug);
     const tonApi = this.state.chainService.getTonApi(chainInfo.slug);
-    const isNoEvmApi = transaction && !isSubstrateTransaction(transaction) && !isTonTransaction(transaction) && !evmApi;
+    const isNoEvmApi = transaction && !isSubstrateTransaction(transaction) && !isTonTransaction(transaction) && !evmApi; // todo: should split isEvmTx && isNoEvmApi. Because other chains type also has no Evm Api
     const isNoTonApi = transaction && isTonTransaction(transaction) && !tonApi;
 
     if (isNoEvmApi || isNoTonApi) {
@@ -135,6 +135,11 @@ export default class TransactionService {
 
     // Check available balance against transaction fee
     checkBalanceWithTransactionFee(validationResponse, transactionInput, nativeTokenInfo, nativeTokenAvailable);
+
+    // Warnings Ton address isBounceable
+    if (transaction && isTonTransaction(transaction) && tonApi) {
+      checkTonAddressBounceable(validationResponse);
+    }
 
     // Check additional validations
     additionalValidator && await additionalValidator(validationResponse);

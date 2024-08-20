@@ -736,7 +736,8 @@ export enum TransferTxErrorType {
 export type TransactionErrorType = BasicTxErrorType | TransferTxErrorType | StakingTxErrorType | YieldValidationStatus | SwapErrorType
 
 export enum BasicTxWarningCode {
-  NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'notEnoughExistentialDeposit'
+  NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'notEnoughExistentialDeposit',
+  IS_BOUNCEABLE_ADDRESS = 'isBounceableAddress'
 }
 
 export interface TransactionResponse {
