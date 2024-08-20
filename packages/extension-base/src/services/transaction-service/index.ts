@@ -1154,7 +1154,7 @@ export default class TransactionService {
     return emitter;
   }
 
-  private async signAndSendTonTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private async signAndSendTonTransaction ({ address, chain, extrinsicType, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
     const keyPair = keyring.getPair(address);
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
@@ -1202,7 +1202,7 @@ export default class TransactionService {
           return;
         }
 
-        tonApi.getStatusByExtMsgHash(externalMsgHash).then(([status, hex]) => {
+        tonApi.getStatusByExtMsgHash(externalMsgHash, extrinsicType).then(([status, hex]) => {
           if (status && hex) {
             eventData.extrinsicHash = hex;
             emitter.emit('extrinsicHash', eventData);

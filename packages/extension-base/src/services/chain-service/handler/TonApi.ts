@@ -1,9 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { TON_API_ENDPOINT, TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
-import { getJettonTxStatus, getNativeTonTxStatus, retry } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { getJettonTxStatus, retry } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -191,7 +192,7 @@ export class TonApi implements _TonApi {
     return await resp.json() as TxByMsgResponse;
   }
 
-  async getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]> {
+  async getStatusByExtMsgHash (extMsgHash: string, extrinsicType?: ExtrinsicType): Promise<[boolean, string]> {
     return retry<[boolean, string]>(async () => { // retry many times to get transaction status and transaction hex
       const externalTxInfoRaw = await this.getTxByInMsg(extMsgHash);
       const externalTxInfo = externalTxInfoRaw.transactions[0];
@@ -204,6 +205,10 @@ export class TonApi implements _TonApi {
         return [false, hex];
       }
 
+      if (extrinsicType === ExtrinsicType.TRANSFER_BALANCE) {
+        return [true, hex];
+      }
+
       // get out msg info from tx
       const internalMsgHash = externalTxInfo.out_msgs[0]?.hash;
       const opcode = parseInt(externalTxInfo.out_msgs[0]?.opcode || '0');
@@ -211,7 +216,7 @@ export class TonApi implements _TonApi {
       if (internalMsgHash) { // notice to update opcode check when supporting more transaction type in ton blockchain
         const status = opcode === TON_OPCODES.JETTON_TRANSFER
           ? await getJettonTxStatus(this, internalMsgHash)
-          : await getNativeTonTxStatus(this, internalMsgHash);
+          : false;
 
         return [status, hex];
       }

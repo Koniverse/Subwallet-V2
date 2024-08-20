@@ -68,6 +68,7 @@ export function getMessageTxStatus (txByMsgInfo: TxByMsgResponse) {
   return isCompute && isAction && !isBounced;
 }
 
+// @ts-ignore
 export async function getNativeTonTxStatus (tonApi: TonApi, internalMsgHash: string) {
   const internalTxInfoRaw = await tonApi.getTxByInMsg(internalMsgHash);
 
