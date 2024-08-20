@@ -106,7 +106,7 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme: { token } }:
       'white-space': 'nowrap',
       gap: token.sizeXXS,
       flex: 1,
-      alignItems: 'center'
+      alignItems: 'flex-end'
     },
 
     '.__item-network-name': {
