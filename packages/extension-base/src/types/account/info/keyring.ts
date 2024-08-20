@@ -143,6 +143,7 @@ export interface AccountActionData {
   signMode: AccountSignMode;
   specialNetwork?: string;
   tokenTypes: _AssetType[];
+  proxyId?: string;
 }
 
 /**
