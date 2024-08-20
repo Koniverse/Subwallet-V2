@@ -14,7 +14,7 @@ import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-se
 import { getGRC20ContractPromise, getVFTContractPromise } from '@subwallet/extension-base/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { internal } from '@ton/core';
-import {Address, WalletContractV4} from '@ton/ton';
+import { Address, WalletContractV4 } from '@ton/ton';
 import BigN from 'bignumber.js';
 import { TransactionConfig } from 'web3-core';
 
