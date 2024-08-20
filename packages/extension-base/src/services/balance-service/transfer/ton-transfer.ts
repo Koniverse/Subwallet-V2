@@ -8,7 +8,7 @@ import { _TonApi } from '@subwallet/extension-base/services/chain-service/types'
 import { _getContractAddressOfToken, _isJettonToken, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { beginCell, fromNano, internal, MessageRelaxed, toNano } from '@ton/core';
-import { Address, JettonMaster, JettonWallet, WalletContractV4 } from '@ton/ton';
+import { Address, JettonMaster, WalletContractV4 } from '@ton/ton';
 
 interface TonTransactionConfigProps {
   tokenInfo: _ChainAsset;
@@ -43,14 +43,11 @@ export async function createTonTransaction ({ from, networkKey, to, tokenInfo, t
   return [null, value];
 }
 
-async function createTonNativeTransaction ({ from, networkKey, to, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
+async function createTonNativeTransaction ({ from, networkKey, to, tonApi, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
   const keyPair = keyring.getPair(from);
-  const tonAddress = Address.parse(from);
   const walletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
   const contract = tonApi.open(walletContract);
   const seqno = await contract.getSeqno();
-
-  let transferValue: string | undefined;
 
   const messages =
     internal({
@@ -63,17 +60,11 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
 
   const estimateExternalFee = await estimateTonTxFee(tonApi, [messages], walletContract);
 
-  if (transferAll) {
-    const balance = await tonApi.getBalance(tonAddress);
-
-    transferValue = (balance - estimateExternalFee).toString();
-  }
-
   const transactionObject = {
     from,
     to,
     networkKey,
-    value: transferValue ?? value,
+    value: value,
     messagePayload,
     messages: [messages],
     estimateFee: estimateExternalFee.toString(),
@@ -83,7 +74,7 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
   return [transactionObject, transactionObject.value];
 }
 
-async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
+async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonApi, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
   const keyPair = keyring.getPair(from);
   const sendertonAddress = Address.parse(from);
   const destinationAddress = Address.parse(to);
@@ -91,13 +82,10 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
   const contract = tonApi.open(walletContract);
   const seqno = await contract.getSeqno();
 
-  let transferValue: string | undefined;
-
   // retrieve jetton info
   const jettonContractAddress = Address.parse(_getContractAddressOfToken(tokenInfo));
   const jettonMasterContract = tonApi.open(JettonMaster.create(jettonContractAddress));
   const jettonWalletAddress = await jettonMasterContract.getWalletAddress(sendertonAddress);
-  const jettonWalletContract = tonApi.open(JettonWallet.create(jettonWalletAddress));
 
   const messageBody = beginCell()
     .storeUint(TON_OPCODES.JETTON_TRANSFER, 32) // opcode for jetton transfer
@@ -123,17 +111,11 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
   const estimateExternalFee = await estimateTonTxFee(tonApi, [messages], walletContract);
   const estimateFee = toNano(INIT_FEE_JETTON_TRANSFER) > estimateExternalFee ? toNano(INIT_FEE_JETTON_TRANSFER) : estimateExternalFee;
 
-  if (transferAll) {
-    const balance = await jettonWalletContract.getBalance();
-
-    transferValue = (balance - estimateFee).toString();
-  }
-
   const transactionObject = {
     from,
     to,
     networkKey,
-    value: transferValue ?? value,
+    value,
     messagePayload,
     messages: [messages],
     estimateFee: estimateFee.toString(),

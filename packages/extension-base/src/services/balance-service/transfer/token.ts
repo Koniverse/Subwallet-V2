@@ -14,7 +14,7 @@ import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-se
 import { getGRC20ContractPromise, getVFTContractPromise } from '@subwallet/extension-base/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { internal } from '@ton/core';
-import { WalletContractV4 } from '@ton/ton';
+import {Address, WalletContractV4} from '@ton/ton';
 import BigN from 'bignumber.js';
 import { TransactionConfig } from 'web3-core';
 
@@ -150,10 +150,11 @@ export const getTransferMockTxFee = async (address: string, chainInfo: _ChainInf
     } else if (_isChainTonCompatible(chainInfo) && _isTokenTransferredByTon(tokenInfo)) {
       const keyPair = keyring.getPair(address);
       const tonApi = api as _TonApi;
+      const maxBlance = await tonApi.getBalance(Address.parse(address));
       const mockMessage =
         internal({
           to: address, // anyAddress
-          value: '0.05', // anyValue
+          value: maxBlance, // estimate value
           bounce: false // anyMode
         });
 

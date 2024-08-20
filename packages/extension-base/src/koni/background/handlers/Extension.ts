@@ -1293,7 +1293,7 @@ export default class KoniExtension {
           to,
           networkKey,
           value: value || '0',
-          transferAll: !!transferAll,
+          transferAll: !!transferAll, // currently not used
           tonApi
         });
       } else {
