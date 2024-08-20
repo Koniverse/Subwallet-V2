@@ -1170,7 +1170,15 @@ export default class TransactionService {
       return new Promise<Buffer>((resolve) => {
         this.state.requestService.addConfirmationTon(id, url || EXTENSION_REQUEST_URL, 'tonSendTransactionRequest', { ...payload, messagePayload: cellToBase64Str(message), messages: [] }, {})
           .then(({ isApproved, payload }) => {
-            if (payload) {
+            if (!isApproved) {
+              this.removeTransaction(id);
+              eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+              emitter.emit('error', eventData);
+            } else {
+              if (!payload) {
+                throw new Error('Bad signature');
+              }
+
               resolve(Buffer.from(hexToU8a(payload)));
             }
           });

@@ -199,7 +199,7 @@ export class TonApi implements _TonApi {
       const isExternalTxCompute = externalTxInfo.description.compute_ph.success;
       const isExternalTxAction = externalTxInfo.description.action.success;
       const base64Hex = externalTxInfo.hash;
-      const hex = Buffer.from(base64Hex, 'base64').toString('hex');
+      const hex = '0x'.concat(Buffer.from(base64Hex, 'base64').toString('hex'));
 
       if (!(isExternalTxCompute && isExternalTxAction)) {
         return [false, hex];
