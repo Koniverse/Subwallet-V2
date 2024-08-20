@@ -16,7 +16,7 @@ import { DetailUpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { BuyTokenInfo, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { getAccountType, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
+import { getAccountType, getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';
 import { SwNumberProps } from '@subwallet/react-ui/es/number';
 import classNames from 'classnames';
@@ -65,6 +65,7 @@ function Component (): React.ReactElement {
   const multiChainAssetMap = useSelector((state: RootState) => state.assetRegistry.multiChainAssetMap);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const { tokens } = useSelector((state: RootState) => state.buyService);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
@@ -72,10 +73,6 @@ function Component (): React.ReactElement {
   const [, setStorage] = useLocalStorage(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', tokenGroupSlug);
-
-  const transactionFromValue = useMemo(() => {
-    return currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
-  }, [currentAccount?.address]);
 
   const fromAndToTokenMap = useMemo<Record<string, string[]>>(() => {
     const result: Record<string, string[]> = {};
@@ -292,7 +289,11 @@ function Component (): React.ReactElement {
   }, []);
 
   const onOpenSendFund = useCallback(() => {
-    if (currentAccountProxy && currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
+    if (!currentAccountProxy) {
+      return;
+    }
+
+    if (currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
       notify({
         message: t('The account you are using is watch-only, you cannot send assets with it'),
         type: 'info',
@@ -302,11 +303,9 @@ function Component (): React.ReactElement {
       return;
     }
 
-    const fromAccountProxy = currentAccountProxy ? currentAccountProxy.id : '';
-
     setStorage({
       ...DEFAULT_TRANSFER_PARAMS,
-      fromAccountProxy,
+      fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy),
       defaultSlug: tokenGroupSlug || ''
     });
 
@@ -332,7 +331,11 @@ function Component (): React.ReactElement {
   );
 
   const onOpenSwap = useCallback(() => {
-    if (currentAccount && currentAccount.isReadOnly) {
+    if (!currentAccountProxy) {
+      return;
+    }
+
+    if (currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
       notify({
         message: t('The account you are using is watch-only, you cannot send assets with it'),
         type: 'info',
@@ -342,9 +345,9 @@ function Component (): React.ReactElement {
       return;
     }
 
-    const filteredAccounts = accounts.filter((account) => !isAccountAll(account.address));
+    const filteredAccounts = accountProxies.filter((ap) => !isAccountAll(ap.id));
 
-    const isAllLedger = (filteredAccounts.length > 0 && filteredAccounts.every((account) => account.isHardware)) || (currentAccount && !isAccountAll(currentAccount.address) && (currentAccount.isHardware));
+    const isAllLedger = currentAccountProxy.accountType === AccountProxyType.LEDGER || (filteredAccounts.length > 0 && filteredAccounts.every((ap) => ap.accountType === AccountProxyType.LEDGER));
 
     if ((currentAccount && currentAccount.isHardware) || (isAllLedger)) {
       notify({
@@ -358,11 +361,11 @@ function Component (): React.ReactElement {
 
     setSwapStorage({
       ...DEFAULT_SWAP_PARAMS,
-      from: transactionFromValue,
+      fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy),
       defaultSlug: tokenGroupSlug || ''
     });
     navigate('/transaction/swap');
-  }, [accounts, currentAccount, navigate, notify, setSwapStorage, t, tokenGroupSlug, transactionFromValue]);
+  }, [accountProxies, currentAccount, currentAccountProxy, navigate, notify, setSwapStorage, t, tokenGroupSlug]);
 
   useEffect(() => {
     if (currentTokenInfo) {

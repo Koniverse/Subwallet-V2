@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
-import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountNetworkType } from '@subwallet/extension-base/types';
 
 export const findChainInfoByGenesisHash = (chainMap: Record<string, _ChainInfo>, genesisHash?: string): _ChainInfo | null => {
@@ -53,6 +53,10 @@ export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, networkTy
   return false;
 };
 
+export const isChainCompatibleWithAccountNetworkTypes = (chainInfo: _ChainInfo, networkTypes: AccountNetworkType[]): boolean => {
+  return networkTypes.some((networkType) => isChainInfoAccordantNetworkType(chainInfo, networkType));
+};
+
 export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>, networkTypes: AccountNetworkType[], specialNetwork?: string): string[] => {
   const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
 
@@ -62,11 +66,8 @@ export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>
     const result: string[] = [];
 
     for (const chainInfo of Object.values(chainInfoMap)) {
-      const chain = chainInfo.slug;
-      const isChainCompatible = networkTypes.some((networkType) => isChainInfoAccordantNetworkType(chainInfo, networkType));
-
-      if (isChainCompatible) {
-        result.push(chain);
+      if (isChainCompatibleWithAccountNetworkTypes(chainInfo, networkTypes)) {
+        result.push(chainInfo.slug);
       }
     }
 

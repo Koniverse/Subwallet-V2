@@ -14,7 +14,7 @@ import { useFilterModal, useGroupYieldPosition, useHandleChainConnection, useSel
 import { getBalanceValue } from '@subwallet/extension-koni-ui/hooks/screen/home/useAccountBalance';
 import { ChainConnectionWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { EarningEntryView, EarningPoolsParam, ThemeProps, YieldGroupInfo } from '@subwallet/extension-koni-ui/types';
-import { isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { FadersHorizontal, Vault } from 'phosphor-react';
@@ -129,11 +129,11 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
         ...DEFAULT_EARN_PARAMS,
         slug,
         chain,
-        fromAccountProxy: currentAccountProxy?.id ? currentAccountProxy.id : ''
+        fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
       });
       navigate('/transaction/earn');
     },
-    [currentAccountProxy?.id, navigate, setEarnStorage]
+    [currentAccountProxy, navigate, setEarnStorage]
   );
 
   const onConnectChainSuccess = useCallback(() => {

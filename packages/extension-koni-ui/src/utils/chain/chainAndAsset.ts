@@ -1,10 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { AssetSetting } from '@subwallet/extension-base/background/KoniTypes';
 import { _ChainState } from '@subwallet/extension-base/services/chain-service/types';
-import { _isAssetFungibleToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getOriginChainOfAsset, _isAssetFungibleToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountNetworkType } from '@subwallet/extension-base/types';
+import { isChainCompatibleWithAccountNetworkTypes } from '@subwallet/extension-koni-ui/utils';
 
 export function isTokenAvailable (
   chainAsset: _ChainAsset,
@@ -25,4 +27,19 @@ export function isTokenAvailable (
   }
 
   return isAssetVisible && isAssetFungible && isValidLedger;
+}
+
+export function getChainInfoFromToken (tokenSlug: string, chainInfoMap: Record<string, _ChainInfo>): _ChainInfo | undefined {
+  const chainSlug = _getOriginChainOfAsset(tokenSlug);
+
+  return chainInfoMap[chainSlug];
+}
+
+export function isTokenCompatibleWithAccountNetworkTypes (
+  tokenSlug: string,
+  networkTypes: AccountNetworkType[],
+  chainInfoMap: Record<string, _ChainInfo>): boolean {
+  const chainInfo = getChainInfoFromToken(tokenSlug, chainInfoMap);
+
+  return !!chainInfo && isChainCompatibleWithAccountNetworkTypes(chainInfo, networkTypes);
 }

@@ -4,28 +4,29 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { _getAssetDecimals, _getAssetOriginChain, _getAssetSymbol, _getChainNativeTokenSlug, _getOriginChainOfAsset, _isChainEvmCompatible, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetOriginChain, _getAssetSymbol, _getChainNativeTokenSlug, _getMultiChainAsset, _getOriginChainOfAsset, _isChainEvmCompatible, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { CommonFeeComponent, CommonOptimalPath, CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
 import { formatNumberString, swapCustomFormatter } from '@subwallet/extension-base/utils';
-import { AccountSelector, AddressInput, AlertBox, HiddenInput, MetaInfo, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountAddressSelector, AddressInputNew, AlertBox, HiddenInput, MetaInfo, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { SwapFromField, SwapToField } from '@subwallet/extension-koni-ui/components/Field/Swap';
 import { AddMoreBalanceModal, ChooseFeeTokenModal, SlippageModal, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapTermsOfServiceModal } from '@subwallet/extension-koni-ui/components/Modal/Swap';
 import { QuoteResetTime, SwapRoute } from '@subwallet/extension-koni-ui/components/Swap';
-import { BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, DEFAULT_SWAP_PARAMS, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
-import { useChainConnection, useGetChainPrefixBySlug, useNotification, usePreCheckAction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import { useChainConnection, useDefaultNavigate, useNotification, usePreCheckAction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
 import { getLatestSwapQuote, handleSwapRequest, handleSwapStep, validateSwapProcess } from '@subwallet/extension-koni-ui/messaging/transaction/swap';
 import { FreeBalance, FreeBalanceToEarn, TransactionContent, TransactionFooter } from '@subwallet/extension-koni-ui/Popup/Transaction/parts';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
-import { FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AccountAddressItemType, FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenSelectorItemType } from '@subwallet/extension-koni-ui/types/field';
-import { convertFieldToObject, findAccountByAddress, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToNetwork, isAccountAll, isChainInfoAccordantNetworkType, isTokenCompatibleWithAccountNetworkTypes, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, BackgroundIcon, Button, Form, Icon, Logo, ModalContext, Number, Tooltip } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -39,7 +40,11 @@ import { useLocalStorage } from 'usehooks-ts';
 
 import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
-type Props = ThemeProps;
+type WrapperProps = ThemeProps;
+
+type ComponentProps = {
+  targetAccountProxy: AccountProxy;
+};
 
 interface FeeItem {
   value: BigN,
@@ -49,7 +54,7 @@ interface FeeItem {
   suffix?: string
 }
 
-const hideFields: Array<keyof SwapParams> = ['fromAmount', 'fromTokenSlug', 'toTokenSlug', 'chain'];
+const hideFields: Array<keyof SwapParams> = ['fromAmount', 'fromTokenSlug', 'toTokenSlug', 'chain', 'fromAccountProxy'];
 
 function getTokenSelectorItem (tokenSlugs: string[], assetRegistryMap: Record<string, _ChainAsset>): TokenSelectorItemType[] {
   const result: TokenSelectorItemType[] = [];
@@ -70,11 +75,11 @@ function getTokenSelectorItem (tokenSlugs: string[], assetRegistryMap: Record<st
   return result;
 }
 
-// todo: change to true when it is ready
-
 const numberMetadata = { maxNumberFormat: 8 };
 
-const Component = () => {
+// todo: recheck validation logic, especially recipientAddress
+
+const Component = ({ targetAccountProxy }: ComponentProps) => {
   useSetCurrentPage('/transaction/swap');
   const { t } = useTranslation();
   const notify = useNotification();
@@ -82,7 +87,7 @@ const Component = () => {
 
   const { activeModal, inactiveAll, inactiveModal } = useContext(ModalContext);
 
-  const { accounts, currentAccount, isAllAccount } = useSelector((state) => state.accountState);
+  const { accountProxies, accounts } = useSelector((state) => state.accountState);
   const assetRegistryMap = useSelector((state) => state.assetRegistry.assetRegistry);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
   const { currencyData, priceMap } = useSelector((state) => state.price);
@@ -115,7 +120,7 @@ const Component = () => {
   const continueRefreshQuoteRef = useRef<boolean>(false);
   const { token } = useTheme() as Theme;
 
-  const { defaultSlug: swapSlug } = defaultData;
+  const { defaultSlug } = defaultData;
   const onIdle = useCallback(() => {
     !hasInternalConfirmations && !!confirmedTerm && showQuoteArea && setRequestUserInteractToContinue(true);
   }, [confirmedTerm, hasInternalConfirmations, showQuoteArea]);
@@ -166,30 +171,48 @@ const Component = () => {
     return result;
   }, [swapPairs]);
 
-  const rawFromTokenItems = useMemo<TokenSelectorItemType[]>(() => {
-    return getTokenSelectorItem(Object.keys(fromAndToTokenMap), assetRegistryMap);
-  }, [assetRegistryMap, fromAndToTokenMap]);
-
   const fromTokenItems = useMemo<TokenSelectorItemType[]>(() => {
-    if (!fromValue) {
-      return rawFromTokenItems;
+    const rawTokenSlugs = Object.keys(fromAndToTokenMap);
+    const targetTokenSlugs: string[] = [];
+
+    (() => {
+      // defaultSlug is just TokenSlug
+      if (defaultSlug && rawTokenSlugs.includes(defaultSlug)) {
+        if (isTokenCompatibleWithAccountNetworkTypes(defaultSlug, targetAccountProxy.networkTypes, chainInfoMap)) {
+          targetTokenSlugs.push(defaultSlug);
+        }
+
+        return;
+      }
+
+      rawTokenSlugs.forEach((rts) => {
+        const assetInfo = assetRegistryMap[rts];
+
+        if (!assetInfo) {
+          return;
+        }
+
+        if (defaultSlug) {
+          // defaultSlug is MultiChainAssetSlug
+          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountNetworkTypes(rts, targetAccountProxy.networkTypes, chainInfoMap)) {
+            targetTokenSlugs.push(rts);
+          }
+
+          return;
+        }
+
+        if (isTokenCompatibleWithAccountNetworkTypes(rts, targetAccountProxy.networkTypes, chainInfoMap)) {
+          targetTokenSlugs.push(rts);
+        }
+      });
+    })();
+
+    if (targetTokenSlugs.length) {
+      return getTokenSelectorItem(targetTokenSlugs, assetRegistryMap);
     }
 
-    return rawFromTokenItems.filter((i) => {
-      return chainInfoMap[i.originChain] && isEthereumAddress(fromValue) === _isChainEvmCompatible(chainInfoMap[i.originChain]);
-    });
-  }, [chainInfoMap, fromValue, rawFromTokenItems]);
-
-  const filterFromAssetInfo = useMemo(() => {
-    if (!fromTokenItems || !assetRegistryMap) {
-      return [];
-    }
-
-    const filteredAssets = fromTokenItems.map((item) => assetRegistryMap[item.slug])
-      .filter((chainAsset) => chainAsset.slug === swapSlug || chainAsset.multiChainAsset === swapSlug);
-
-    return filteredAssets;
-  }, [assetRegistryMap, fromTokenItems, swapSlug]);
+    return [];
+  }, [assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, targetAccountProxy.networkTypes]);
 
   const toTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     return getTokenSelectorItem(fromAndToTokenMap[fromTokenSlugValue] || [], assetRegistryMap);
@@ -203,9 +226,7 @@ const Component = () => {
     return assetRegistryMap[toTokenSlugValue] || undefined;
   }, [assetRegistryMap, toTokenSlugValue]);
 
-  const destChain = toAssetInfo?.originChain;
-  const destChainNetworkPrefix = useGetChainPrefixBySlug(destChain);
-  const destChainGenesisHash = chainInfoMap[destChain]?.substrateInfo?.genesisHash || '';
+  const destChainValue = _getAssetOriginChain(toAssetInfo);
 
   const feeAssetInfo = useMemo(() => {
     return (currentFeeOption ? assetRegistryMap[currentFeeOption] : undefined);
@@ -216,15 +237,21 @@ const Component = () => {
       return false;
     }
 
-    if (!fromValue) {
-      return true;
+    return isTokenCompatibleWithAccountNetworkTypes(toTokenSlugValue, targetAccountProxy.networkTypes, chainInfoMap);
+  }, [chainInfoMap, fromAndToTokenMap, targetAccountProxy.networkTypes, toTokenSlugValue]);
+
+  const onSwitchSide = useCallback(() => {
+    if (fromTokenSlugValue && toTokenSlugValue) {
+      form.setFieldsValue({
+        fromTokenSlug: toTokenSlugValue,
+        toTokenSlug: fromTokenSlugValue,
+        from: '',
+        recipient: undefined
+      });
     }
+  }, [form, fromTokenSlugValue, toTokenSlugValue]);
 
-    const toChain = _getAssetOriginChain(toAssetInfo);
-
-    return chainInfoMap[toChain] && isEthereumAddress(fromValue) === _isChainEvmCompatible(chainInfoMap[toChain]);
-  }, [chainInfoMap, fromAndToTokenMap, fromValue, toAssetInfo, toTokenSlugValue]);
-
+  // todo: this logic is only true with substrate, evm address. Make sure it work with ton, bitcoin, and more
   const recipientAddressValidator = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     if (!_recipientAddress) {
       return Promise.reject(t('Recipient address is required'));
@@ -270,18 +297,19 @@ const Component = () => {
   }, [accounts, chainInfoMap, t, toAssetInfo]);
 
   const showRecipientField = useMemo(() => {
-    if (fromValue && toAssetInfo?.originChain &&
-      chainInfoMap[toAssetInfo?.originChain]) {
-      const isAddressEvm = isEthereumAddress(fromValue);
-      const isEvmCompatibleTo = _isChainEvmCompatible(
-        chainInfoMap[toAssetInfo?.originChain]
-      );
-
-      return isAddressEvm !== isEvmCompatibleTo;
+    if (!fromValue || !destChainValue || !chainInfoMap[destChainValue]) {
+      return false;
     }
 
-    return false; // Add a default return value in case none of the conditions are met
-  }, [chainInfoMap, fromValue, toAssetInfo]);
+    // todo: convert this find logic to util
+    const fromAccountJson = accounts.find((account) => account.address === fromValue);
+
+    if (!fromAccountJson) {
+      return false;
+    }
+
+    return !isChainInfoAccordantNetworkType(chainInfoMap[destChainValue], fromAccountJson.networkType);
+  }, [accounts, chainInfoMap, destChainValue, fromValue]);
 
   const onSelectFromToken = useCallback((tokenSlug: string) => {
     form.setFieldValue('fromTokenSlug', tokenSlug);
@@ -333,21 +361,6 @@ const Component = () => {
   const onChangeAmount = useCallback((value: string) => {
     form.setFieldValue('fromAmount', value);
   }, [form]);
-
-  const onSwitchSide = useCallback(() => {
-    if (fromTokenSlugValue && toTokenSlugValue) {
-      form.setFieldsValue({
-        fromTokenSlug: toTokenSlugValue,
-        toTokenSlug: fromTokenSlugValue
-      });
-      form.validateFields(['from', 'recipient']).then(() => {
-        setIsFormInvalid(false);
-      }).catch((e) => {
-        console.log('Error when validating', e);
-        setIsFormInvalid(true);
-      });
-    }
-  }, [form, fromTokenSlugValue, toTokenSlugValue]);
 
   const onFieldsChange: FormCallbacks<SwapParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const values = convertFieldToObject<SwapParams>(allFields);
@@ -834,9 +847,65 @@ const Component = () => {
     return result;
   }, [chainInfoMap, currentPair, fromAssetInfo, isSwapXCM]);
 
-  const fromTokenLists = useMemo(() => {
-    return swapSlug ? filterFromAssetInfo : fromTokenItems;
-  }, [swapSlug, filterFromAssetInfo, fromTokenItems]);
+  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
+    return Promise.resolve([]);
+  }, []);
+
+  const accountAddressItems = useMemo(() => {
+    const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
+
+    if (!chainInfo) {
+      return [];
+    }
+
+    const result: AccountAddressItemType[] = [];
+
+    accountProxies.forEach((ap) => {
+      if (!(isAccountAll(targetAccountProxy.id) || ap.id === targetAccountProxy.id)) {
+        return;
+      }
+
+      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
+        return;
+      }
+
+      ap.accounts.forEach((a) => {
+        const address = getReformatedAddressRelatedToNetwork(a, chainInfo);
+
+        if (address) {
+          result.push({
+            accountName: ap.name,
+            accountProxyId: ap.id,
+            accountProxyType: ap.accountType,
+            accountType: a.type,
+            address
+          });
+        }
+      });
+    });
+
+    return result;
+  }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy.id]);
+
+  useEffect(() => {
+    const updateFromValue = () => {
+      if (!accountAddressItems.length) {
+        return;
+      }
+
+      if (accountAddressItems.length === 1) {
+        if (!fromValue || accountAddressItems[0].address !== fromValue) {
+          form.setFieldValue('from', accountAddressItems[0].address);
+        }
+      } else {
+        if (fromValue && !accountAddressItems.some((i) => i.address === fromValue)) {
+          form.setFieldValue('from', '');
+        }
+      }
+    };
+
+    updateFromValue();
+  }, [accountAddressItems, form, fromValue]);
 
   useEffect(() => {
     setBackProps((prev) => ({
@@ -1026,19 +1095,19 @@ const Component = () => {
   }, [activeModal, inactiveAll, requestUserInteractToContinue]);
 
   useEffect(() => {
-    if (fromTokenLists.length) {
+    if (fromTokenItems.length) {
       if (!fromTokenSlugValue) {
-        form.setFieldValue('fromTokenSlug', fromTokenLists[0].slug);
+        form.setFieldValue('fromTokenSlug', fromTokenItems[0].slug);
       } else {
-        if (!fromTokenLists.some((i) => i.slug === fromTokenSlugValue)) {
-          form.setFieldValue('fromTokenSlug', fromTokenLists[0].slug);
+        if (!fromTokenItems.some((i) => i.slug === fromTokenSlugValue)) {
+          form.setFieldValue('fromTokenSlug', fromTokenItems[0].slug);
         }
       }
     } else {
       form.setFieldValue('fromTokenSlug', '');
       form.setFieldValue('toTokenSlug', '');
     }
-  }, [filterFromAssetInfo, form, fromTokenLists, fromTokenSlugValue, fromValue]);
+  }, [form, fromTokenItems, fromTokenSlugValue]);
 
   useEffect(() => {
     if (toTokenItems.length) {
@@ -1047,31 +1116,6 @@ const Component = () => {
       }
     }
   }, [form, toTokenItems, toTokenSlugValue]);
-
-  const defaultFromValue = useMemo(() => {
-    return currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
-  }, [currentAccount?.address]);
-
-  useEffect(() => {
-    if (defaultData.from !== defaultFromValue && !isAllAccount) {
-      form.setFieldValue('from', defaultFromValue);
-    }
-  }, [defaultData, defaultFromValue, form, fromValue, isAllAccount]);
-
-  useEffect(() => {
-    const restoreFormDefault = () => {
-      persistData({
-        ...DEFAULT_SWAP_PARAMS,
-        from: defaultFromValue
-      });
-    };
-
-    window.addEventListener('beforeunload', restoreFormDefault);
-
-    return () => {
-      window.removeEventListener('beforeunload', restoreFormDefault);
-    };
-  }, [defaultFromValue, persistData]);
 
   useEffect(() => {
     if (altChain && !checkChainConnected(altChain)) {
@@ -1086,10 +1130,6 @@ const Component = () => {
 
     return false;
   }, [altChain, checkChainConnected]);
-
-  const onFilterAccount = useMemo(() => {
-    return accounts.filter((account) => !isAccountAll(account.address) && !account.isHardware);
-  }, [accounts]);
 
   const networkName = useMemo(() => {
     return (isEthereumAddress(fromValue)) ? 'Polkadot' : 'Ethereum';
@@ -1143,17 +1183,6 @@ const Component = () => {
               >
                 <HiddenInput fields={hideFields} />
 
-                <Form.Item
-                  className={CN({ hidden: !isAllAccount })}
-                  name={'from'}
-                >
-                  <AccountSelector
-                    disabled={!isAllAccount}
-                    externalAccounts={onFilterAccount}
-                    label={t('Swap from account')}
-                  />
-                </Form.Item>
-
                 <div className={'__swap-field-area'}>
                   <SwapFromField
                     amountValue={fromAmountValue}
@@ -1161,7 +1190,7 @@ const Component = () => {
                     label={t('From')}
                     onChangeAmount={onChangeAmount}
                     onSelectToken={onSelectFromToken}
-                    tokenSelectorItems={fromTokenLists}
+                    tokenSelectorItems={fromTokenItems}
                     tokenSelectorValue={fromTokenSlugValue}
                   />
 
@@ -1195,7 +1224,17 @@ const Component = () => {
                   />
                 </div>
 
-                {swapSlug && !fromAssetInfo && (
+                <Form.Item
+                  name={'from'}
+                >
+                  <AccountAddressSelector
+                    items={accountAddressItems}
+                    label={`${t('From')}:`}
+                    labelStyle={'horizontal'}
+                  />
+                </Form.Item>
+
+                {defaultSlug && !fromAssetInfo && (
                   <AlertBox
                     description={`No swap pair for this token found. Switch to ${networkName} account to see available swap pairs`}
                     title={'Pay attention!'}
@@ -1212,17 +1251,13 @@ const Component = () => {
                       }
                     ]}
                     statusHelpAsTooltip={true}
-                    validateTrigger='onBlur'
                   >
-                    <AddressInput
-                      addressPrefix={destChainNetworkPrefix}
-                      allowDomain={true}
-                      chain={destChain}
-                      fitNetwork={true}
-                      label={t('Recipient account')}
-                      networkGenesisHash={destChainGenesisHash}
+                    <AddressInputNew
+                      chainSlug={destChainValue}
+                      inputResolver={addressInputResolver}
+                      label={`${t('To')}:`}
+                      labelStyle={'horizontal'}
                       placeholder={t('Input your recipient account')}
-                      saveAddress={true}
                       showAddressBook={true}
                       showScanner={true}
                     />
@@ -1564,21 +1599,46 @@ const Component = () => {
   );
 };
 
-const Wrapper: React.FC<Props> = (props: Props) => {
+const Wrapper: React.FC<WrapperProps> = (props: WrapperProps) => {
   const { className } = props;
   const dataContext = useContext(DataContext);
+  const { defaultData } = useTransactionContext<SwapParams>();
+  const { goHome } = useDefaultNavigate();
+  const accountProxies = useSelector((state) => state.accountState.accountProxies);
+
+  const targetAccountProxy = useMemo(() => {
+    return accountProxies.find((ap) => {
+      if (!defaultData.fromAccountProxy) {
+        return isAccountAll(ap.id);
+      }
+
+      return ap.id === defaultData.fromAccountProxy;
+    });
+  }, [accountProxies, defaultData.fromAccountProxy]);
+
+  useEffect(() => {
+    if (!targetAccountProxy) {
+      goHome();
+    }
+  }, [goHome, targetAccountProxy]);
+
+  if (!targetAccountProxy) {
+    return (
+      <></>
+    );
+  }
 
   return (
     <PageWrapper
       className={CN(className, '-mobile')}
       resolve={dataContext.awaitStores(['swap', 'price'])}
     >
-      <Component />
+      <Component targetAccountProxy={targetAccountProxy} />
     </PageWrapper>
   );
 };
 
-const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
+const Swap = styled(Wrapper)<WrapperProps>(({ theme: { token } }: WrapperProps) => {
   return {
     '.__fee-paid-wrapper': {
       color: token.colorTextTertiary,

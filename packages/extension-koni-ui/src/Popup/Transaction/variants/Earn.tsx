@@ -19,7 +19,7 @@ import { fetchPoolTarget, getOptimalYieldPath, submitJoinYieldPool, validateYiel
 import { DEFAULT_YIELD_PROCESS, EarningActionType, earningReducer } from '@subwallet/extension-koni-ui/reducer';
 import { store } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, EarnParams, FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { convertFieldToObject, getReformatedAddressRelatedToNetwork, isAccountAll, parseNominations, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, getReformatedAddressRelatedToNetwork, parseNominations, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, Button, ButtonProps, Form, Icon, ModalContext, Number } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -248,7 +248,7 @@ const Component = () => {
     const result: AccountAddressItemType[] = [];
 
     accountProxies.forEach((ap) => {
-      if (!(isAccountAll(fromAccountProxy) || ap.id === fromAccountProxy)) {
+      if (!(!fromAccountProxy || ap.id === fromAccountProxy)) {
         return;
       }
 

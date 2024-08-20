@@ -55,7 +55,13 @@ function getTokenItems (
   tokenGroupSlug?: string, // is ether a token slug or a multiChainAsset slug
   isZkModeEnabled?: boolean
 ): TokenItemType[] {
-  const accountProxy = accountProxies.find((ap) => ap.id === accountProxyId);
+  const accountProxy = accountProxies.find((ap) => {
+    if (!accountProxyId) {
+      return isAccountAll(ap.id);
+    }
+
+    return ap.id === accountProxyId;
+  });
 
   if (!accountProxy) {
     return [];
@@ -265,7 +271,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     const result: AccountAddressItemType[] = [];
 
     accountProxies.forEach((ap) => {
-      if (!(isAccountAll(fromAccountProxy) || ap.id === fromAccountProxy)) {
+      if (!(!fromAccountProxy || ap.id === fromAccountProxy)) {
         return;
       }
 
@@ -672,7 +678,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       }
 
       if (accountAddressItems.length === 1) {
-        if (!fromValue || !accountAddressItems.some((i) => i.address === fromValue)) {
+        if (!fromValue || accountAddressItems[0].address !== fromValue) {
           form.setFieldValue('from', accountAddressItems[0].address);
         }
       } else {

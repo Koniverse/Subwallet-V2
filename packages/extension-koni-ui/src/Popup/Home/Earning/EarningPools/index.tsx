@@ -14,6 +14,7 @@ import { useFilterModal, useGroupYieldPosition, useHandleChainConnection, useSel
 import { getBalanceValue } from '@subwallet/extension-koni-ui/hooks/screen/home/useAccountBalance';
 import { ChainConnectionWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { EarningEntryParam, EarningEntryView, EarningPoolsParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { getTransactionFromAccountProxyValue } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -173,11 +174,11 @@ function Component ({ poolGroup, symbol }: ComponentProps) {
         ...DEFAULT_EARN_PARAMS,
         slug: item.slug,
         chain: item.chain,
-        fromAccountProxy: currentAccountProxy?.id ? currentAccountProxy?.id : ''
+        fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
       });
       navigate('/transaction/earn');
     },
-    [currentAccountProxy?.id, navigate, setEarnStorage]
+    [currentAccountProxy, navigate, setEarnStorage]
   );
 
   const onConnectChainSuccess = useCallback(() => {
