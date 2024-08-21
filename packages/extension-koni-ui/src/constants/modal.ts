@@ -33,7 +33,7 @@ export const REMIND_UPGRADE_FIREFOX_VERSION = 'remind-update-firefox-version';
 export const EXPORT_ACCOUNTS_PASSWORD_MODAL = 'export-accounts-password-modal';
 export const ADD_NETWORK_WALLET_CONNECT_MODAL = 'add-network-wallet-connect-modal';
 export const ADDRESS_QR_MODAL = 'address-qr-modal';
-export const ACCOUNT_NETWORK_ADDRESSES_MODAL = 'account-network-addresses-modal';
+export const ACCOUNT_CHAIN_ADDRESSES_MODAL = 'account-chain-addresses-modal';
 export const ACCOUNT_NAME_MODAL = 'account-name-modal';
 export const GLOBAL_ALERT_MODAL = 'global-alert-modal';
 

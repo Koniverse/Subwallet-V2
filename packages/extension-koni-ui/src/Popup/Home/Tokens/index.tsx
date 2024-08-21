@@ -14,7 +14,7 @@ import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/Upper
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwAlert } from '@subwallet/react-ui';
 import classNames from 'classnames';
 import { Coins, FadersHorizontal } from 'phosphor-react';
@@ -33,11 +33,10 @@ const Component = (): React.ReactElement => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const topBlockRef = useRef<HTMLDivElement>(null);
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const { accountBalance: { tokenGroupBalanceMap,
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
-  const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
-  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const notify = useNotification();
   const { onOpenReceive, receiveModalProps } = useReceiveModalHelper();
 
@@ -45,10 +44,6 @@ const Component = (): React.ReactElement => {
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
   const [, setStorage] = useLocalStorage<TransferParams>(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
-
-  const transactionFromValue = useMemo(() => {
-    return currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
-  }, [currentAccount?.address]);
 
   const handleScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
     const topPosition = event.currentTarget.scrollTop;
@@ -135,7 +130,11 @@ const Component = (): React.ReactElement => {
   }, [navigate]);
 
   const onOpenSendFund = useCallback(() => {
-    if (currentAccountProxy && currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
+    if (!currentAccountProxy) {
+      return;
+    }
+
+    if (currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
       notify({
         message: t('The account you are using is watch-only, you cannot send assets with it'),
         type: 'info',
@@ -145,11 +144,9 @@ const Component = (): React.ReactElement => {
       return;
     }
 
-    const fromAccountProxy = currentAccountProxy ? currentAccountProxy.id : '';
-
     setStorage({
       ...DEFAULT_TRANSFER_PARAMS,
-      fromAccountProxy
+      fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
     });
     navigate('/transaction/send-fund');
   },
@@ -163,7 +160,11 @@ const Component = (): React.ReactElement => {
   );
 
   const onOpenSwap = useCallback(() => {
-    if (currentAccount && currentAccount.isReadOnly) {
+    if (!currentAccountProxy) {
+      return;
+    }
+
+    if (currentAccountProxy.accountType === AccountProxyType.READ_ONLY) {
       notify({
         message: t('The account you are using is watch-only, you cannot send assets with it'),
         type: 'info',
@@ -173,11 +174,11 @@ const Component = (): React.ReactElement => {
       return;
     }
 
-    const filteredAccounts = accounts.filter((account) => !isAccountAll(account.address));
+    const filteredAccounts = accountProxies.filter((ap) => !isAccountAll(ap.id));
 
-    const isAllLedger = (filteredAccounts.length > 0 && filteredAccounts.every((account) => account.isHardware)) || (currentAccount && !isAccountAll(currentAccount.address) && (currentAccount.isHardware));
+    const isAllLedger = currentAccountProxy.accountType === AccountProxyType.LEDGER || (filteredAccounts.length > 0 && filteredAccounts.every((ap) => ap.accountType === AccountProxyType.LEDGER));
 
-    if ((currentAccount && currentAccount.isHardware) || (isAllLedger)) {
+    if (isAllLedger) {
       notify({
         message: 'The account you are using is Ledger account, you cannot use this feature with it',
         type: 'error',
@@ -189,10 +190,10 @@ const Component = (): React.ReactElement => {
 
     setSwapStorage({
       ...DEFAULT_SWAP_PARAMS,
-      from: transactionFromValue
+      fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
     });
     navigate('/transaction/swap');
-  }, [accounts, currentAccount, navigate, notify, setSwapStorage, t, transactionFromValue]);
+  }, [accountProxies, currentAccountProxy, navigate, notify, setSwapStorage, t]);
 
   const tokenGroupBalanceItems = useMemo<TokenBalanceItemType[]>(() => {
     const result: TokenBalanceItemType[] = [];

@@ -17,7 +17,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getReformatedAddressRelatedToNetwork, isChainInfoAccordantNetworkType, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getReformatedAddressRelatedToChain, isChainInfoAccordantAccountChainType, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -42,7 +42,7 @@ function isAssetTypeValid (
 ) {
   const chainInfo = chainInfoMap[chainAsset.originChain];
 
-  return !!chainInfo && accountProxy.chainTypes.some((nt) => isChainInfoAccordantNetworkType(chainInfo, nt));
+  return !!chainInfo && accountProxy.chainTypes.some((nt) => isChainInfoAccordantAccountChainType(chainInfo, nt));
 }
 
 // todo: recheck with ledger account, All account
@@ -55,7 +55,13 @@ function getTokenItems (
   tokenGroupSlug?: string, // is ether a token slug or a multiChainAsset slug
   isZkModeEnabled?: boolean
 ): TokenItemType[] {
-  const accountProxy = accountProxies.find((ap) => ap.id === accountProxyId);
+  const accountProxy = accountProxies.find((ap) => {
+    if (!accountProxyId) {
+      return isAccountAll(ap.id);
+    }
+
+    return ap.id === accountProxyId;
+  });
 
   if (!accountProxy) {
     return [];
@@ -265,7 +271,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     const result: AccountAddressItemType[] = [];
 
     accountProxies.forEach((ap) => {
-      if (!(isAccountAll(fromAccountProxy) || ap.id === fromAccountProxy)) {
+      if (!(!fromAccountProxy || ap.id === fromAccountProxy)) {
         return;
       }
 
@@ -275,7 +281,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       }
 
       ap.accounts.forEach((a) => {
-        const address = getReformatedAddressRelatedToNetwork(a, chainInfo);
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
 
         if (address) {
           result.push({
@@ -497,7 +503,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
         transferAll: isTransferAll
       });
     } else {
-      // Make cross chainValue transfer
+      // Make cross chain transfer
       sendPromise = makeCrossChainTransfer({
         destinationNetworkKey: destChain,
         from,
@@ -594,7 +600,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
     if (values.chain !== values.destChain) {
-      const originChainInfo = chainInfoMap[chainValue];
+      const originChainInfo = chainInfoMap[values.chain];
       const destChainInfo = chainInfoMap[values.destChain];
 
       if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
@@ -646,7 +652,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     }
 
     doSubmit(values);
-  }, [assetInfo, chainValue, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
 
   // todo: recheck with ledger account
   useEffect(() => {
@@ -672,7 +678,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       }
 
       if (accountAddressItems.length === 1) {
-        if (!fromValue || !accountAddressItems.some((i) => i.address === fromValue)) {
+        if (!fromValue || accountAddressItems[0].address !== fromValue) {
           form.setFieldValue('from', accountAddressItems[0].address);
         }
       } else {
@@ -800,8 +806,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
               <ChainSelector
                 disabled={!destChainItems.length}
                 items={destChainItems}
-                title={t('Select destination chainValue')}
-                tooltip={t('Select destination chainValue')}
+                title={t('Select destination chain')}
+                tooltip={t('Select destination chain')}
               />
             </Form.Item>
           </div>
@@ -871,7 +877,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           chainValue !== destChainValue && (
             <div className={'__warning_message_cross_chain'}>
               <AlertBox
-                description={t('Cross-chainValue transfer to an exchange (CEX) will result in loss of funds. Make sure the receiving address is not an exchange address.')}
+                description={t('Cross-chain transfer to an exchange (CEX) will result in loss of funds. Make sure the receiving address is not an exchange address.')}
                 title={t('Pay attention!')}
                 type={'warning'}
               />

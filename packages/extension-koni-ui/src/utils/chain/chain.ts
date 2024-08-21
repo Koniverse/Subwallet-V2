@@ -33,7 +33,7 @@ export const findChainInfoByChainId = (chainMap: Record<string, _ChainInfo>, cha
   return null;
 };
 
-export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, chainType: AccountChainType): boolean => {
+export const isChainInfoAccordantAccountChainType = (chainInfo: _ChainInfo, chainType: AccountChainType): boolean => {
   if (chainType === AccountChainType.SUBSTRATE) {
     return _isPureSubstrateChain(chainInfo);
   }
@@ -53,6 +53,10 @@ export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, chainType
   return false;
 };
 
+export const isChainCompatibleWithAccountChainTypes = (chainInfo: _ChainInfo, chainTypes: AccountChainType[]): boolean => {
+  return chainTypes.some((chainType) => isChainInfoAccordantAccountChainType(chainInfo, chainType));
+};
+
 export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>, chainTypes: AccountChainType[], specialChain?: string): string[] => {
   const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
 
@@ -62,11 +66,8 @@ export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>
     const result: string[] = [];
 
     for (const chainInfo of Object.values(chainInfoMap)) {
-      const chain = chainInfo.slug;
-      const isChainCompatible = chainTypes.some((chainType) => isChainInfoAccordantNetworkType(chainInfo, chainType));
-
-      if (isChainCompatible) {
-        result.push(chain);
+      if (isChainCompatibleWithAccountChainTypes(chainInfo, chainTypes)) {
+        result.push(chainInfo.slug);
       }
     }
 

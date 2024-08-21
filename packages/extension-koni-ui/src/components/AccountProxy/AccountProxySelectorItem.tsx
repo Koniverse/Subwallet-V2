@@ -43,7 +43,7 @@ function Component (props: Props): React.ReactElement<Props> {
 
   const { t } = useTranslation();
 
-  const networkTypeLogoMap = useMemo(() => {
+  const chainTypeLogoMap = useMemo(() => {
     return {
       [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
       [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,
@@ -155,15 +155,15 @@ function Component (props: Props): React.ReactElement<Props> {
         </div>
         <div className='__item-center-part'>
           <div className='__item-name'>{accountProxy.name}</div>
-          <div className='__item-network-types'>
+          <div className='__item-chain-types'>
             {
               accountProxy.chainTypes.map((nt) => {
                 return (
                   <img
                     alt='Network type'
-                    className={'__item-network-type-item'}
+                    className={'__item-chain-type-item'}
                     key={nt}
-                    src={networkTypeLogoMap[nt]}
+                    src={chainTypeLogoMap[nt]}
                   />
                 );
               })
@@ -300,11 +300,11 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       overflow: 'hidden',
       'white-space': 'nowrap'
     },
-    '.__item-network-types': {
+    '.__item-chain-types': {
       display: 'flex',
       paddingTop: 2
     },
-    '.__item-network-type-item': {
+    '.__item-chain-type-item': {
       display: 'block',
       boxShadow: '-4px 0px 4px 0px rgba(0, 0, 0, 0.40)',
       width: token.size,
@@ -312,7 +312,7 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       borderRadius: '100%',
       marginLeft: -token.marginXXS
     },
-    '.__item-network-type-item:first-of-type': {
+    '.__item-chain-type-item:first-of-type': {
       marginLeft: 0
     },
     '.__item-address': {
