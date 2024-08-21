@@ -84,6 +84,7 @@ export function quickFormatAddressToCompare (address?: string) {
   return reformatAddress(address, 42).toLowerCase();
 }
 
+/** @deprecated */
 export const modifyAccountName = (type: KeypairType, name: string, modify: boolean) => {
   if (!modify) {
     return name;

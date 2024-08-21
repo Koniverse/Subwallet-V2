@@ -3,7 +3,7 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { CreateDeriveAccountInfo, DeriveAccountInfo, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, ResponseDeriveValidateV2, ResponseGetDeriveAccounts } from '@subwallet/extension-base/types';
-import { createAccountProxyId, derivePair, findNextDerivePair, modifyAccountName } from '@subwallet/extension-base/utils';
+import { createAccountProxyId, derivePair, findNextDerivePair } from '@subwallet/extension-base/utils';
 import { KeyringPair, KeyringPair$Meta, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
@@ -243,8 +243,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
     for (const parentAddress of addresses) {
       const parentPair = keyring.getPair(parentAddress);
-      const newAccountName = modifyAccountName(parentPair.type, name, true);
-      const childPair = derivePair(parentPair, newAccountName, deriveIndex);
+      const childPair = derivePair(parentPair, name, deriveIndex);
       const address = childPair.address;
 
       modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };

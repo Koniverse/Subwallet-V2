@@ -6,6 +6,7 @@ import { BasicTokenInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainState, _CUSTOM_PREFIX, _DataMap, _SMART_CONTRACT_STANDARDS } from '@subwallet/extension-base/services/chain-service/types';
 import { IChain } from '@subwallet/extension-base/services/storage-service/databases';
+import { AccountChainType } from '@subwallet/extension-base/types';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -601,5 +602,25 @@ export function updateLatestChainInfo (currentDataMap: _DataMap, latestChainInfo
     needUpdateChainApiList
   };
 }
+
+export const _chainInfoToChainType = (chainInfo: _ChainInfo): AccountChainType => {
+  if (_isPureSubstrateChain(chainInfo)) {
+    return AccountChainType.SUBSTRATE;
+  }
+
+  if (_isChainEvmCompatible(chainInfo)) {
+    return AccountChainType.ETHEREUM;
+  }
+
+  if (_isChainTonCompatible(chainInfo)) {
+    return AccountChainType.TON;
+  }
+
+  if (_isChainBitcoinCompatible(chainInfo)) {
+    return AccountChainType.BITCOIN;
+  }
+
+  return AccountChainType.SUBSTRATE;
+};
 
 export * from './patch';

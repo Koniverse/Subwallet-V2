@@ -34,6 +34,6 @@ export function shuffle<T = any> (array: T[]) {
   }
 }
 
-export const getLogoByNetworkKey = (networkKey: string, defaultLogo = 'default'): string  =>{
+export const getLogoByNetworkKey = (networkKey: string, defaultLogo = 'default'): string => {
   return ChainLogoMap[networkKey] || ChainLogoMap[defaultLogo] || ChainLogoMap.default;
 };
