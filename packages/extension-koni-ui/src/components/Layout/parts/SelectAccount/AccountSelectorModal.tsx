@@ -5,10 +5,10 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { CurrentAccountInfo } from '@subwallet/extension-base/background/types';
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountNetworkAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { AccountChainAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import SelectAccountFooter from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/Footer';
 import Search from '@subwallet/extension-koni-ui/components/Search';
-import { ACCOUNT_NETWORK_ADDRESSES_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { ACCOUNT_CHAIN_ADDRESSES_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useDefaultNavigate, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { saveCurrentAccountAddress } from '@subwallet/extension-koni-ui/messaging';
@@ -74,7 +74,7 @@ function reorderAccounts (items: AccountProxy[]): AccountProxy[] {
 const renderEmpty = () => <GeneralEmptyList />;
 
 const modalId = SELECT_ACCOUNT_MODAL;
-const accountNetworkAddressesModalId = ACCOUNT_NETWORK_ADDRESSES_MODAL;
+const accountChainAddressesModalId = ACCOUNT_CHAIN_ADDRESSES_MODAL;
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   const location = useLocation();
@@ -237,11 +237,11 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     };
   }, [accountProxies, inactiveModal, location.pathname, navigate, goHome]);
 
-  const onViewNetworkAddresses = useCallback((accountProxy: AccountProxy) => {
+  const onViewChainAddresses = useCallback((accountProxy: AccountProxy) => {
     return () => {
       setIdOfAccountProxyToGetAddresses(accountProxy.id);
       setTimeout(() => {
-        activeModal(accountNetworkAddressesModalId);
+        activeModal(accountChainAddressesModalId);
       }, 100);
     };
   }, [activeModal]);
@@ -295,12 +295,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         isSelected={item.id === currentAccountProxy?.id}
         key={item.id}
         onClick={onSelect(item as AccountProxy)}
-        onClickCopyButton={onViewNetworkAddresses(item as AccountProxy)}
+        onClickCopyButton={onViewChainAddresses(item as AccountProxy)}
         onClickDeriveButton={onViewAccountDetail(item as AccountProxy, true)}
         onClickMoreButton={onViewAccountDetail(item as AccountProxy)}
       />
     );
-  }, [currentAccountProxy?.id, onSelect, onViewAccountDetail, onViewNetworkAddresses, showAllAccount]);
+  }, [currentAccountProxy?.id, onSelect, onViewAccountDetail, onViewChainAddresses, showAllAccount]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchValue(value);
@@ -349,19 +349,19 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     });
   }, [t, token.colorHighlight]);
 
-  const closeAccountNetworkAddressesModal = useCallback(() => {
-    inactiveModal(accountNetworkAddressesModalId);
+  const closeAccountChainAddressesModal = useCallback(() => {
+    inactiveModal(accountChainAddressesModalId);
     setIdOfAccountProxyToGetAddresses(undefined);
   }, [inactiveModal]);
 
-  const onBackAccountNetworkAddressesModal = useCallback(() => {
-    closeAccountNetworkAddressesModal();
-  }, [closeAccountNetworkAddressesModal]);
+  const onBackAccountChainAddressesModal = useCallback(() => {
+    closeAccountChainAddressesModal();
+  }, [closeAccountChainAddressesModal]);
 
-  const onCancelAccountNetworkAddressesModal = useCallback(() => {
+  const onCancelAccountChainAddressesModal = useCallback(() => {
     inactiveModal(modalId);
-    closeAccountNetworkAddressesModal();
-  }, [closeAccountNetworkAddressesModal, inactiveModal]);
+    closeAccountChainAddressesModal();
+  }, [closeAccountChainAddressesModal, inactiveModal]);
 
   return (
     <>
@@ -389,10 +389,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
       {
         accountProxyToGetAddresses && (
-          <AccountNetworkAddressesModal
+          <AccountChainAddressesModal
             accountProxy={accountProxyToGetAddresses}
-            onBack={onBackAccountNetworkAddressesModal}
-            onCancel={onCancelAccountNetworkAddressesModal}
+            onBack={onBackAccountChainAddressesModal}
+            onCancel={onCancelAccountChainAddressesModal}
           />
         )
       }

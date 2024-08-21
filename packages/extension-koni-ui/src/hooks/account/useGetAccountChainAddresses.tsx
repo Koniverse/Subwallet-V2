@@ -3,23 +3,23 @@
 
 import { AccountProxy } from '@subwallet/extension-base/types';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
-import { AccountNetworkAddress } from '@subwallet/extension-koni-ui/types';
-import { getChainsByAccountType, getReformatedAddressRelatedToNetwork } from '@subwallet/extension-koni-ui/utils';
+import { AccountChainAddress } from '@subwallet/extension-koni-ui/types';
+import { getChainsByAccountType, getReformatedAddressRelatedToChain } from '@subwallet/extension-koni-ui/utils';
 import { useMemo } from 'react';
 
 // todo:
 //  - order the result
-const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetworkAddress[] => {
+const useGetAccountChainAddresses = (accountProxy: AccountProxy): AccountChainAddress[] => {
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   return useMemo(() => {
-    const result: AccountNetworkAddress[] = [];
-    const chains: string[] = getChainsByAccountType(chainInfoMap, accountProxy.networkTypes, accountProxy.specialNetwork);
+    const result: AccountChainAddress[] = [];
+    const chains: string[] = getChainsByAccountType(chainInfoMap, accountProxy.chainTypes, accountProxy.specialChain);
 
     accountProxy.accounts.forEach((a) => {
       for (const chain of chains) {
         const chainInfo = chainInfoMap[chain];
-        const reformatedAddress = getReformatedAddressRelatedToNetwork(a, chainInfo);
+        const reformatedAddress = getReformatedAddressRelatedToChain(a, chainInfo);
 
         if (reformatedAddress) {
           result.push({
@@ -36,4 +36,4 @@ const useGetAccountNetworkAddresses = (accountProxy: AccountProxy): AccountNetwo
   }, [accountProxy, chainInfoMap]);
 };
 
-export default useGetAccountNetworkAddresses;
+export default useGetAccountChainAddresses;

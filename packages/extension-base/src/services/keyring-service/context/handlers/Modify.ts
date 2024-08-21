@@ -4,7 +4,6 @@
 import { RequestChangeMasterPassword, RequestMigratePassword, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types';
-import { modifyAccountName } from '@subwallet/extension-base/utils';
 import { KeyringPair$Meta } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
@@ -110,9 +109,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
         assert(pair, t('Unable to find account'));
 
-        const _name = modifyAccountName(pair.type, name, true);
-
-        keyring.saveAccountMeta(pair, { ...pair.meta, name: _name });
+        keyring.saveAccountMeta(pair, { ...pair.meta, name });
       }
     }
 

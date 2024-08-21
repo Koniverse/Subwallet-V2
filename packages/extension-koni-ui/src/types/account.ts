@@ -28,7 +28,7 @@ export enum AccountSignMode {
   UNKNOWN = 'unknown'
 }
 
-export type AccountNetworkAddress = {
+export type AccountChainAddress = {
   name: string;
   slug: string;
   address: string;

@@ -139,7 +139,6 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
 
 const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-
     '.__qr-code-wrapper': {
       paddingTop: token.padding,
       paddingBottom: token.padding

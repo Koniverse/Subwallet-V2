@@ -48,10 +48,10 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
   const renderItem = useCallback((item: _ChainAsset) => {
     return (
       <TokenSelectorItem
+        chainName={_getChainName(chainInfoMap[item.originChain])}
         chainSlug={item.originChain}
         className={'token-selector-item'}
         key={item.slug}
-        networkName={_getChainName(chainInfoMap[item.originChain])}
         onClick={onSelect(item)}
         tokenSlug={item.slug}
         tokenSymbol={item.symbol}

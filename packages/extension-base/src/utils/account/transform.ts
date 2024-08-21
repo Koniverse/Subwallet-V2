@@ -5,9 +5,10 @@ import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountActions, AccountJson, AccountMetadataData, AccountNetworkType, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { getKeypairTypeByAddress } from '@subwallet/keyring';
+import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
+import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
 import { hexStripPrefix, u8aToHex } from '@polkadot/util';
@@ -24,6 +25,14 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
     if (derivationPath) {
       data = blake2AsHex(data, 256);
     }
+  } else if (tonMnemonicValidate(_suri)) {
+    const entropy = tonMnemonicToEntropy(_suri);
+
+    data = u8aToHex(entropy);
+
+    if (derivationPath) {
+      data = blake2AsHex(data, 256);
+    }
   }
 
   if (derivationPath) {
@@ -31,6 +40,18 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
   }
 
   return blake2AsHex(data, 256);
+};
+
+export const getAccountChainType = (type: KeypairType): AccountChainType => {
+  return type
+    ? EthereumKeypairTypes.includes(type)
+      ? AccountChainType.ETHEREUM
+      : TonKeypairTypes.includes(type)
+        ? AccountChainType.TON
+        : BitcoinKeypairTypes.includes(type)
+          ? AccountChainType.BITCOIN
+          : AccountChainType.SUBSTRATE
+    : AccountChainType.SUBSTRATE;
 };
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
@@ -65,7 +86,7 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
   }
 };
 
-export const getAccountActions = (signMode: AccountSignMode, networkType: AccountNetworkType, type?: KeypairType, _meta?: KeyringPair$Meta): AccountActions[] => {
+export const getAccountActions = (signMode: AccountSignMode, networkType: AccountChainType, type?: KeypairType, _meta?: KeyringPair$Meta): AccountActions[] => {
   const result: AccountActions[] = [];
   const meta = _meta as AccountMetadataData;
 
@@ -80,18 +101,18 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
   }
 
   // Private key
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.ETHEREUM) {
+  if (signMode === AccountSignMode.PASSWORD && networkType === AccountChainType.ETHEREUM) {
     result.push(AccountActions.EXPORT_PRIVATE_KEY);
   }
 
   // QR
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountNetworkType.SUBSTRATE) {
+  if (signMode === AccountSignMode.PASSWORD && networkType === AccountChainType.SUBSTRATE) {
     result.push(AccountActions.EXPORT_QR);
   }
 
   // Derive
   if (signMode === AccountSignMode.PASSWORD) {
-    if (networkType === AccountNetworkType.SUBSTRATE) {
+    if (networkType === AccountChainType.SUBSTRATE) {
       result.push(AccountActions.DERIVE);
     } else if (type !== 'ton-native') {
       if (meta && meta.isMasterAccount) {
@@ -173,10 +194,10 @@ const OTHER_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.CROWDLOAN
 ];
 
-export const getAccountTransactionActions = (signMode: AccountSignMode, networkType: AccountNetworkType, type?: KeypairType, _meta?: KeyringPair$Meta, _specialNetwork?: string): ExtrinsicType[] => {
+export const getAccountTransactionActions = (signMode: AccountSignMode, networkType: AccountChainType, type?: KeypairType, _meta?: KeyringPair$Meta, _specialNetwork?: string): ExtrinsicType[] => {
   if ([AccountSignMode.PASSWORD, AccountSignMode.INJECTED].includes(signMode)) {
     switch (networkType) {
-      case AccountNetworkType.SUBSTRATE:
+      case AccountChainType.SUBSTRATE:
         return [
           ...BASE_TRANSFER_ACTIONS,
           ...NATIVE_STAKE_ACTIONS,
@@ -188,7 +209,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_VMANTA_ACTIONS,
           ...OTHER_ACTIONS
         ];
-      case AccountNetworkType.ETHEREUM:
+      case AccountChainType.ETHEREUM:
         return [
           ...BASE_TRANSFER_ACTIONS,
           ...NATIVE_STAKE_ACTIONS,
@@ -197,14 +218,14 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...OTHER_ACTIONS,
           ...EVM_ACTIONS
         ];
-      case AccountNetworkType.TON:
+      case AccountChainType.TON:
         return [
           ...BASE_TRANSFER_ACTIONS
         ];
     }
   } else if (signMode === AccountSignMode.QR || signMode === AccountSignMode.GENERIC_LEDGER) {
     switch (networkType) {
-      case AccountNetworkType.SUBSTRATE:
+      case AccountChainType.SUBSTRATE:
         return [
           ...BASE_TRANSFER_ACTIONS,
           ...NATIVE_STAKE_ACTIONS,
@@ -216,7 +237,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_VMANTA_ACTIONS,
           ...OTHER_ACTIONS
         ];
-      case AccountNetworkType.ETHEREUM:
+      case AccountChainType.ETHEREUM:
         return [
           ...BASE_TRANSFER_ACTIONS,
           ...EARN_STDOT_ACTIONS,
@@ -224,7 +245,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ExtrinsicType.SEND_NFT,
           ExtrinsicType.SWAP
         ];
-      case AccountNetworkType.TON:
+      case AccountChainType.TON:
         return [
           ...BASE_TRANSFER_ACTIONS
         ];
@@ -306,16 +327,8 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
 export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => {
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
-  const networkType: AccountNetworkType = type
-    ? EthereumKeypairTypes.includes(type)
-      ? AccountNetworkType.ETHEREUM
-      : TonKeypairTypes.includes(type)
-        ? AccountNetworkType.TON
-        : BitcoinKeypairTypes.includes(type)
-          ? AccountNetworkType.BITCOIN
-          : AccountNetworkType.SUBSTRATE
-    : AccountNetworkType.SUBSTRATE;
-  let specialNetwork: string | undefined;
+  const chainType: AccountChainType = getAccountChainType(type);
+  let specialChain: string | undefined;
 
   if (!chainInfoMap) {
     return {
@@ -326,7 +339,7 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
       transactionActions: [],
       tokenTypes: [],
       signMode,
-      networkType
+      chainType
     };
   }
 
@@ -336,12 +349,12 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     const chainInfo = Object.values(chainInfoMap).find((info) => _getSubstrateGenesisHash(info) === genesisHash);
 
     if (chainInfo) {
-      specialNetwork = chainInfo.slug;
+      specialChain = chainInfo.slug;
     }
   }
 
-  const accountActions = getAccountActions(signMode, networkType, type, meta);
-  const transactionActions = getAccountTransactionActions(signMode, networkType, type, meta, specialNetwork);
+  const accountActions = getAccountActions(signMode, chainType, type, meta);
+  const transactionActions = getAccountTransactionActions(signMode, chainType, type, meta, specialChain);
   const tokenTypes = getAccountTokenTypes(type);
 
   /* Account actions */
@@ -353,8 +366,8 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     accountActions,
     transactionActions,
     signMode,
-    networkType,
-    specialNetwork,
+    chainType,
+    specialChain,
     tokenTypes
   };
 };
@@ -369,14 +382,17 @@ export const pairToAccount = ({ address,
 export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map((data) => singleAddressToAccount(data));
 
 export const transformAddress = (address: string, meta?: KeyringPair$Meta): AddressJson => {
+  const type = getKeypairTypeByAddress(address);
+  const chainType: AccountChainType = getAccountChainType(type);
+
   return {
     address,
-    ...meta
+    ...meta,
+    chainType
   };
 };
 
-export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address,
-  meta } }) => transformAddress(address, meta));
+export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address, meta } }) => transformAddress(address, meta));
 
 export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
   const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};
@@ -390,7 +406,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
       if (accountGroup) {
         if (!temp[accountGroup.id]) {
-          temp[accountGroup.id] = { ...accountGroup, accounts: [], networkTypes: [], tokenTypes: [], accountActions: [] };
+          temp[accountGroup.id] = { ...accountGroup, accounts: [], chainTypes: [], tokenTypes: [], accountActions: [] };
         }
 
         account.proxyId = accountGroup.id;
@@ -404,7 +420,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
       id: address,
       name: account.name || account.address,
       accounts: [account],
-      networkTypes: [account.networkType],
+      chainTypes: [account.chainType],
       parentId: account.parentAddress,
       suri: account.suri,
       tokenTypes: account.tokenTypes,
@@ -416,14 +432,14 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
     Object.entries(temp)
       .map(([key, value]): [string, AccountProxy] => {
         let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
-        let networkTypes: AccountNetworkType[] = [];
+        let chainTypes: AccountChainType[] = [];
         let tokenTypes: _AssetType[] = [];
         let accountActions: AccountActions[] = [];
-        let specialNetwork: string | undefined;
+        let specialChain: string | undefined;
 
         if (value.accounts.length > 1) {
           accountType = AccountProxyType.UNIFIED;
-          networkTypes = Array.from(value.accounts.reduce<Set<AccountNetworkType>>((rs, account) => rs.add(account.networkType), new Set()));
+          chainTypes = Array.from(value.accounts.reduce<Set<AccountChainType>>((rs, account) => rs.add(account.chainType), new Set()));
           tokenTypes = Array.from(value.accounts.reduce<Set<_AssetType>>((rs, account) => {
             for (const tokenType of account.tokenTypes) {
               rs.add(tokenType);
@@ -446,7 +462,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
         } else if (value.accounts.length === 1) {
           const account = value.accounts[0];
 
-          networkTypes = [account.networkType];
+          chainTypes = [account.chainType];
           tokenTypes = account.tokenTypes;
           accountActions = account.accountActions;
 
@@ -454,7 +470,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
               accountType = AccountProxyType.LEDGER;
-              specialNetwork = account.specialNetwork;
+              specialChain = account.specialChain;
               break;
             case AccountSignMode.QR:
               accountType = AccountProxyType.QR;
@@ -477,7 +493,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
           }
         }
 
-        return [key, { ...value, accountType, networkTypes, specialNetwork, tokenTypes, accountActions }];
+        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes, accountActions }];
       })
   );
 
@@ -517,18 +533,18 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 };
 
 export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountProxy => {
-  const networkTypes = new Set<AccountNetworkType>();
+  const chainTypes = new Set<AccountChainType>();
   const tokenTypes = new Set<_AssetType>();
-  const specialNetwork: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialNetwork : undefined;
+  const specialChain: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialChain : undefined;
 
   for (const accountProxy of accountProxies) {
     // Have 4 network types, but at the moment, we only support 3 network types
-    if (networkTypes.size === 3) {
+    if (chainTypes.size === 3) {
       break;
     }
 
-    for (const networkType of accountProxy.networkTypes) {
-      networkTypes.add(networkType);
+    for (const chainType of accountProxy.chainTypes) {
+      chainTypes.add(chainType);
     }
   }
 
@@ -544,8 +560,8 @@ export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountP
     accounts: [],
     accountActions: [],
     accountType: AccountProxyType.ALL_ACCOUNT,
-    networkTypes: Array.from(networkTypes),
+    chainTypes: Array.from(chainTypes),
     tokenTypes: Array.from(tokenTypes),
-    specialNetwork
+    specialChain
   };
 };

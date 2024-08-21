@@ -10,7 +10,7 @@ import { useGetChainSlugsByAccount, useSetSelectedMnemonicType, useTranslation }
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ReceiveModalProps } from '@subwallet/extension-koni-ui/types';
-import { getReformatedAddressRelatedToNetwork } from '@subwallet/extension-koni-ui/utils';
+import { getReformatedAddressRelatedToChain } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';
 import { CheckCircle, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
@@ -34,7 +34,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
 
   const { accountProxies } = useSelector((state: RootState) => state.accountState);
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
-  const [selectedNetwork, setSelectedNetwork] = useState<string | undefined>();
+  const [selectedChain, setSelectedChain] = useState<string | undefined>();
   const { addressQrModal, alertModal } = useContext(WalletModalContext);
   const chainSupported = useGetChainSlugsByAccount();
 
@@ -59,7 +59,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
   }, [inactiveModal]);
 
   const onSelectTokenSelector = useCallback((item: _ChainAsset) => {
-    setSelectedNetwork(item.originChain);
+    setSelectedChain(item.originChain);
     setTimeout(() => {
       activeModal(accountSelectorModalId);
     }, 100);
@@ -71,7 +71,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
 
   // todo: recheck logic with ledger account
   const accountSelectorItems = useMemo<AccountAddressItemType[]>(() => {
-    const chainInfo = selectedNetwork ? chainInfoMap[selectedNetwork] : undefined;
+    const chainInfo = selectedChain ? chainInfoMap[selectedChain] : undefined;
 
     if (!chainInfo) {
       return [];
@@ -81,7 +81,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
 
     accountProxies.forEach((ap) => {
       ap.accounts.forEach((a) => {
-        const reformatedAddress = getReformatedAddressRelatedToNetwork(a, chainInfo);
+        const reformatedAddress = getReformatedAddressRelatedToChain(a, chainInfo);
 
         if (reformatedAddress) {
           result.push({
@@ -96,7 +96,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
     });
 
     return result;
-  }, [accountProxies, chainInfoMap, selectedNetwork]);
+  }, [accountProxies, chainInfoMap, selectedChain]);
 
   const onBackAccountSelector = useCallback(() => {
     inactiveModal(accountSelectorModalId);
@@ -105,18 +105,18 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
   const onCloseAccountSelector = useCallback(() => {
     inactiveModal(accountSelectorModalId);
     inactiveModal(tokenSelectorModalId);
-    setSelectedNetwork(undefined);
+    setSelectedChain(undefined);
   }, [inactiveModal]);
 
   const onSelectAccountSelector = useCallback((item: AccountAddressItemType) => {
-    if (!selectedNetwork) {
+    if (!selectedChain) {
       return;
     }
 
     const openAddressQrModal = () => {
       addressQrModal.open({
         address: item.address,
-        chainSlug: selectedNetwork,
+        chainSlug: selectedChain,
         onBack: addressQrModal.close,
         onCancel: () => {
           addressQrModal.close();
@@ -170,7 +170,7 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
     }
 
     openAddressQrModal();
-  }, [addressQrModal, alertModal, navigate, onCloseAccountSelector, selectedNetwork, setSelectedMnemonicType, t]);
+  }, [addressQrModal, alertModal, navigate, onCloseAccountSelector, selectedChain, setSelectedMnemonicType, t]);
 
   /* account Selector --- */
 

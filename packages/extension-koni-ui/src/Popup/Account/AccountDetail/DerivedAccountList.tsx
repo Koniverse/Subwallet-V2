@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxy } from '@subwallet/extension-base/types';
-import { AccountNetworkAddressesModal, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { ACCOUNT_NETWORK_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { AccountChainAddressesModal, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { ACCOUNT_CHAIN_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -16,7 +16,7 @@ import styled from 'styled-components';
 type Props = ThemeProps & {
   accountProxy: AccountProxy;
 };
-const accountNetworkAddressesModalId = ACCOUNT_NETWORK_ADDRESSES_MODAL;
+const accountChainAddressesModalId = ACCOUNT_CHAIN_ADDRESSES_MODAL;
 
 function Component ({ accountProxy, className }: Props) {
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
@@ -48,13 +48,13 @@ function Component ({ accountProxy, className }: Props) {
     return () => {
       setAccountProxyToCopyAddresses(item);
       setTimeout(() => {
-        activeModal(accountNetworkAddressesModalId);
+        activeModal(accountChainAddressesModalId);
       }, 100);
     };
   }, [activeModal]);
 
   const onCancelCopyModal = useCallback(() => {
-    inactiveModal(accountNetworkAddressesModalId);
+    inactiveModal(accountChainAddressesModalId);
   }, [inactiveModal]);
 
   const onViewAccountDetail = useCallback((accountProxy: AccountProxy) => {
@@ -112,7 +112,7 @@ function Component ({ accountProxy, className }: Props) {
       />
 
       {accountProxyToCopyAddresses && (
-        <AccountNetworkAddressesModal
+        <AccountChainAddressesModal
           accountProxy={accountProxyToCopyAddresses}
           onBack={onCancelCopyModal}
           onCancel={onCancelCopyModal}

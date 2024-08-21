@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountNetworkType } from '@subwallet/extension-base/types';
+import { AccountChainType } from '@subwallet/extension-base/types';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { findAccountByAddress, getChainsByAccountType, isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { useMemo } from 'react';
@@ -12,52 +12,52 @@ export const useGetChainSlugsByAccount = (address?: string): string[] => {
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const { accountProxies, accounts, currentAccountProxy } = useSelector((state: RootState) => state.accountState);
 
-  const networkTypes = useMemo((): AccountNetworkType[] => {
+  const chainTypes = useMemo((): AccountChainType[] => {
     const _address = address || currentAccountProxy?.id;
 
     if (_address) {
       if (isAccountAll(_address)) {
         const allAccount = accountProxies.find((proxy) => proxy.id === ALL_ACCOUNT_KEY);
 
-        return allAccount?.networkTypes || [];
+        return allAccount?.chainTypes || [];
       }
 
       const proxy = accountProxies.find((proxy) => proxy.id === _address);
 
       if (proxy) {
-        return proxy.networkTypes;
+        return proxy.chainTypes;
       }
 
       const account = findAccountByAddress(accounts, _address);
 
       if (account) {
-        return [account.networkType];
+        return [account.chainType];
       }
     }
 
     return [];
   }, [accountProxies, accounts, address, currentAccountProxy]);
 
-  const specialNetwork = useMemo((): string | undefined => {
+  const specialChain = useMemo((): string | undefined => {
     const _address = address || currentAccountProxy?.id;
 
     if (_address) {
       if (isAccountAll(_address)) {
         const allAccount = accountProxies.find((proxy) => proxy.id === ALL_ACCOUNT_KEY);
 
-        return allAccount?.specialNetwork;
+        return allAccount?.specialChain;
       }
 
       const proxy = accountProxies.find((proxy) => proxy.id === _address);
 
       if (proxy) {
-        return proxy.specialNetwork;
+        return proxy.specialChain;
       }
 
       const account = findAccountByAddress(accounts, _address);
 
       if (account) {
-        return account.specialNetwork;
+        return account.specialChain;
       }
     }
 
@@ -65,6 +65,6 @@ export const useGetChainSlugsByAccount = (address?: string): string[] => {
   }, [accountProxies, accounts, address, currentAccountProxy?.id]);
 
   return useMemo<string[]>(() => {
-    return getChainsByAccountType(chainInfoMap, networkTypes, specialNetwork);
-  }, [networkTypes, chainInfoMap, specialNetwork]);
+    return getChainsByAccountType(chainInfoMap, chainTypes, specialChain);
+  }, [chainTypes, chainInfoMap, specialChain]);
 };

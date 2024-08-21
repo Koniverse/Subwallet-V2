@@ -4,7 +4,7 @@
 import { BackIcon } from '@subwallet/extension-koni-ui/components';
 import { useChainInfo, useFilterModal, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getReformatedAddressRelatedToNetwork, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { getReformatedAddressRelatedToChain, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Badge, Icon, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
@@ -118,7 +118,7 @@ const Component: React.FC<Props> = (props: Props) => {
       // todo: recheck with ledger
 
       ap.accounts.forEach((a) => {
-        const address = getReformatedAddressRelatedToNetwork(a, chainInfo);
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
 
         if (address) {
           result.push({ name: ap.name, address: address, group: AccountGroup.WALLET });

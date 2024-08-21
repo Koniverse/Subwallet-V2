@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { useGetAccountNetworkAddresses, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
-import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AccountChainAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { useGetAccountChainAddresses, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
+import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
 import { Strategy } from 'phosphor-react';
 import React, { useCallback } from 'react';
@@ -18,25 +18,25 @@ const isNotHide = false;
 
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
-  const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
+  const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
   const onViewAccountAddressQr = useViewAccountAddressQr();
 
-  const onShowQr = useCallback((item: AccountNetworkAddress) => {
+  const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
       onViewAccountAddressQr(item);
     };
   }, [onViewAccountAddressQr]);
 
-  const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
+  const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
       onViewAccountAddressQr(item, true);
     };
   }, [onViewAccountAddressQr]);
 
   const renderItem = useCallback(
-    (item: AccountNetworkAddress) => {
+    (item: AccountChainAddress) => {
       return (
-        <AccountNetworkAddressItem
+        <AccountChainAddressItem
           className={'address-item'}
           item={item}
           key={item.slug}
@@ -54,7 +54,7 @@ function Component ({ accountProxy, className }: Props) {
   }, []);
 
   const searchFunction = useCallback(
-    (item: AccountNetworkAddress, searchText: string) => {
+    (item: AccountChainAddress, searchText: string) => {
       return item.name.toLowerCase().includes(searchText.toLowerCase()) || item.address.toLowerCase().includes(searchText.toLowerCase());
     },
     []

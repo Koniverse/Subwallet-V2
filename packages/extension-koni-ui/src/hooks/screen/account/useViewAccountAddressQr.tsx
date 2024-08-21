@@ -4,13 +4,13 @@
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useNotification, useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
-import { AccountNetworkAddress } from '@subwallet/extension-koni-ui/types';
+import { AccountChainAddress } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { CheckCircle, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type HookType = (item: AccountNetworkAddress, isCopy?: boolean) => void;
+type HookType = (item: AccountChainAddress, isCopy?: boolean) => void;
 
 export default function useViewAccountAddressQr (): HookType {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ export default function useViewAccountAddressQr (): HookType {
   const setSelectedMnemonicType = useSetSelectedMnemonicType(true);
   const { addressQrModal, alertModal } = useContext(WalletModalContext);
 
-  return useCallback((item: AccountNetworkAddress, isCopy = false) => {
+  return useCallback((item: AccountChainAddress, isCopy = false) => {
     const handleAfterAlertWarning = () => {
       if (!isCopy) {
         addressQrModal.open({

@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxy } from '@subwallet/extension-base/types';
-import { AccountNetworkAddressItem, CloseIcon, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { ACCOUNT_NETWORK_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { AccountChainAddressItem, CloseIcon, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { ACCOUNT_CHAIN_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountNetworkAddresses, useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountChainAddresses, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Icon, SwList, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -21,15 +21,15 @@ type Props = ThemeProps & {
   onBack?: VoidFunction;
 };
 
-const modalId = ACCOUNT_NETWORK_ADDRESSES_MODAL;
+const modalId = ACCOUNT_CHAIN_ADDRESSES_MODAL;
 
 const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel }: Props) => {
   const { t } = useTranslation();
-  const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
+  const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
   const notify = useNotification();
   const { addressQrModal } = useContext(WalletModalContext);
 
-  const onShowQr = useCallback((item: AccountNetworkAddress) => {
+  const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
       addressQrModal.open({
         address: item.address,
@@ -43,7 +43,7 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
     };
   }, [addressQrModal, onCancel]);
 
-  const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
+  const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
       copyToClipboard(item.address || '');
       notify({
@@ -53,9 +53,9 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
   }, [notify, t]);
 
   const renderItem = useCallback(
-    (item: AccountNetworkAddress) => {
+    (item: AccountChainAddress) => {
       return (
-        <AccountNetworkAddressItem
+        <AccountChainAddressItem
           className={'address-item'}
           item={item}
           key={item.slug}
@@ -72,7 +72,7 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
   }, []);
 
   const searchFunction = useCallback(
-    (item: AccountNetworkAddress, searchText: string) => {
+    (item: AccountChainAddress, searchText: string) => {
       return item.name.toLowerCase().includes(searchText.toLowerCase());
     },
     []
@@ -115,7 +115,7 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
   );
 };
 
-const AccountNetworkAddressesModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const AccountChainAddressesModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.ant-sw-modal-content': {
       height: '200vh',
@@ -152,4 +152,4 @@ const AccountNetworkAddressesModal = styled(Component)<Props>(({ theme: { token 
   };
 });
 
-export default AccountNetworkAddressesModal;
+export default AccountChainAddressesModal;

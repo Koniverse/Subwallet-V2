@@ -12,10 +12,10 @@ interface Props extends ThemeProps {
   tokenSlug: string;
   tokenSymbol: string;
   chainSlug: string;
-  networkName: string;
+  chainName: string;
 }
 
-const Component = ({ chainSlug, className, networkName, onClick, tokenSlug, tokenSymbol }: Props) => {
+const Component = ({ chainName, chainSlug, className, onClick, tokenSlug, tokenSymbol }: Props) => {
   return (
     <div
       className={CN(className)}
@@ -35,8 +35,8 @@ const Component = ({ chainSlug, className, networkName, onClick, tokenSlug, toke
         <div className='__token-symbol'>
           {tokenSymbol}
         </div>
-        <div className='__network-name'>
-          {networkName}
+        <div className='__chain-name'>
+          {chainName}
         </div>
       </div>
     </div>
@@ -67,7 +67,7 @@ const TokenSelectorItem = styled(Component)<Props>(({ theme: { token } }: Props)
       textOverflow: 'ellipsis'
     },
 
-    '.__network-name': {
+    '.__chain-name': {
       fontSize: token.fontSizeSM,
       lineHeight: token.lineHeightSM,
       color: token.colorTextLight3,

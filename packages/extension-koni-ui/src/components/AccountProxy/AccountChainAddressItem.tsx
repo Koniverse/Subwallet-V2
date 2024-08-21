@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -10,7 +10,7 @@ import React from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
-  item: AccountNetworkAddress;
+  item: AccountChainAddress;
   onClick?: VoidFunction;
   onClickCopyButton?: VoidFunction;
   onClickQrButton?: VoidFunction;
@@ -46,7 +46,7 @@ function Component (props: Props): React.ReactElement<Props> {
         </div>
 
         <div className='__item-center-part'>
-          <div className='__item-network-name'>
+          <div className='__item-chain-name'>
             {item.name}
           </div>
           <div className='__item-address'>
@@ -83,7 +83,7 @@ function Component (props: Props): React.ReactElement<Props> {
   );
 }
 
-const AccountProxySelectorItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const AccountChainAddressItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     background: token.colorBgSecondary,
     paddingLeft: token.paddingSM,
@@ -109,7 +109,7 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme: { token } }:
       alignItems: 'flex-end'
     },
 
-    '.__item-network-name': {
+    '.__item-chain-name': {
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
       color: token.colorTextLight1,
@@ -149,4 +149,4 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme: { token } }:
   };
 });
 
-export default AccountProxySelectorItem;
+export default AccountChainAddressItem;
