@@ -398,6 +398,11 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       left: '40%'
     },
 
+    '.account-name': {
+      fontSize: token.fontSizeHeading6,
+      fontWeight: 500
+    },
+
     '.anticon.__export-remind-btn': {
       height: 23,
       width: 24

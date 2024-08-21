@@ -127,7 +127,6 @@ export default function useReceiveModalHelper (tokenGroupSlug?: string): HookTyp
 
     if (item.accountType === 'ton') {
       alertModal.open({
-        longTitle: true,
         closable: false,
         title: t('Seed phrase incompatibility'),
         type: NotificationType.WARNING,

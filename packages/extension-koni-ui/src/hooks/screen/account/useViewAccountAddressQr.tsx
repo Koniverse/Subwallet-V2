@@ -40,7 +40,6 @@ export default function useViewAccountAddressQr (): HookType {
 
     if (item.accountType === 'ton') {
       alertModal.open({
-        longTitle: true,
         closable: false,
         title: t('Seed phrase incompatibility'),
         type: NotificationType.WARNING,

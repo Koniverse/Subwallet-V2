@@ -41,7 +41,6 @@ const Component: React.FC<Props> = (props: Props) => {
     modalId,
     okButton,
     title,
-    longTitle,
     type = NotificationType.INFO } = props;
 
   const { inactiveModal } = useContext(ModalContext);
@@ -53,7 +52,7 @@ const Component: React.FC<Props> = (props: Props) => {
   return (
     <>
       <SwModal
-        className={CN(className, { '-long-title': longTitle })}
+        className={CN(className)}
         closable={closable}
         destroyOnClose={true}
         footer={
@@ -130,10 +129,9 @@ const AlertModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
       gap: token.sizeXXS
     },
 
-    '&.-long-title': {
-      '.ant-sw-header-center-part': {
-        width: 'fit-content'
-      }
+    '.ant-sw-header-center-part': {
+      width: '100%',
+      maxWidth: 292
     },
 
     '.__modal-content': {
