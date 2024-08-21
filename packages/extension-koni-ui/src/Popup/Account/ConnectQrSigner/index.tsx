@@ -9,7 +9,6 @@ import DualLogo from '@subwallet/extension-koni-ui/components/Logo/DualLogo';
 import QrScannerErrorNotice from '@subwallet/extension-koni-ui/components/Qr/Scanner/ErrorNotice';
 import { ACCOUNT_NAME_MODAL, ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
-import useGetDefaultAccountName from '@subwallet/extension-koni-ui/hooks/account/useGetDefaultAccountName';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
 import useScanAccountQr from '@subwallet/extension-koni-ui/hooks/qr/useScanAccountQr';
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
@@ -59,7 +58,6 @@ const Component: React.FC<Props> = (props: Props) => {
   const onBack = useGoBackFromCreateAccount(ATTACH_ACCOUNT_MODAL);
   const accounts = useSelector((root: RootState) => root.accountState.accounts);
 
-  const accountName = useGetDefaultAccountName();
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
   const [validateState, setValidateState] = useState<ValidateState>({});
@@ -102,7 +100,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
       setTimeout(() => {
         createAccountExternalV2({
-          name: accountName,
+          name,
           address: scannedAccount.content,
           genesisHash: '',
           isAllowed: true,
@@ -131,7 +129,7 @@ const Component: React.FC<Props> = (props: Props) => {
           });
       }, 300);
     }
-  }, [accountName, scannedAccount, inactiveModal, onComplete]);
+  }, [scannedAccount, onComplete, inactiveModal]);
 
   useEffect(() => {
     if (scannedAccount) {

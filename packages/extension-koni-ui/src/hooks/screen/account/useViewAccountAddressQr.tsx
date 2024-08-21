@@ -3,34 +3,44 @@
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useNotification, useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress } from '@subwallet/extension-koni-ui/types';
+import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { CheckCircle, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type HookType = (item: AccountNetworkAddress) => void;
+type HookType = (item: AccountNetworkAddress, isCopy?: boolean) => void;
 
 export default function useViewAccountAddressQr (): HookType {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const notify = useNotification();
   const setSelectedMnemonicType = useSetSelectedMnemonicType(true);
   const { addressQrModal, alertModal } = useContext(WalletModalContext);
 
-  return useCallback((item: AccountNetworkAddress) => {
-    const openAddressQrModal = () => {
-      addressQrModal.open({
-        address: item.address,
-        chainSlug: item.slug,
-        onBack: addressQrModal.close,
-        onCancel: () => {
-          addressQrModal.close();
-        }
-      });
+  return useCallback((item: AccountNetworkAddress, isCopy = false) => {
+    const handleAfterAlertWarning = () => {
+      if (!isCopy) {
+        addressQrModal.open({
+          address: item.address,
+          chainSlug: item.slug,
+          onBack: addressQrModal.close,
+          onCancel: () => {
+            addressQrModal.close();
+          }
+        });
+      } else {
+        copyToClipboard(item.address || '');
+        notify({
+          message: t('Copied to clipboard')
+        });
+      }
     };
 
     if (item.accountType === 'ton') {
       alertModal.open({
+        longTitle: true,
         closable: false,
         title: t('Seed phrase incompatibility'),
         type: NotificationType.WARNING,
@@ -51,7 +61,7 @@ export default function useViewAccountAddressQr (): HookType {
           iconWeight: 'fill',
           onClick: () => {
             alertModal.close();
-            openAddressQrModal();
+            handleAfterAlertWarning();
           },
           schema: 'secondary'
         },
@@ -72,6 +82,6 @@ export default function useViewAccountAddressQr (): HookType {
       return;
     }
 
-    openAddressQrModal();
-  }, [addressQrModal, alertModal, navigate, setSelectedMnemonicType, t]);
+    handleAfterAlertWarning();
+  }, [addressQrModal, alertModal, navigate, notify, setSelectedMnemonicType, t]);
 }

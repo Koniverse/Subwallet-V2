@@ -192,24 +192,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             onValuesChange={onValuesChange}
           >
             <Form.Item
-              className={CN('__account-name-field')}
-              name={'name'}
-              rules={[{
-                message: t('Account name is required'),
-                transform: (value: string) => value.trim(),
-                required: true
-              }
-
-              ]}
-            >
-              <Input
-                className='__account-name-input'
-                disabled={loading}
-                label={t('Account name')}
-                placeholder={t('Enter the account name')}
-              />
-            </Form.Item>
-            <Form.Item
               name={fieldPrivateKey}
               validateStatus={validateState.status}
             >
@@ -219,6 +201,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 label={t('Private key')}
                 placeholder={t('Enter private key')}
                 statusHelp={validateState.message}
+              />
+            </Form.Item>
+            <Form.Item
+              className={CN('__account-name-field')}
+              name={'name'}
+              rules={[{
+                message: t('Account name is required'),
+                transform: (value: string) => value.trim(),
+                required: true
+              }]}
+            >
+              <Input
+                className='__account-name-input'
+                disabled={loading}
+                label={t('Account name')}
+                placeholder={t('Enter the account name')}
               />
             </Form.Item>
             <div className='button-container'>

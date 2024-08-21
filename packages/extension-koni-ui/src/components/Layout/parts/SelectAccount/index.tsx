@@ -209,8 +209,9 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         <Icon
           className={'__caret-icon'}
           customSize={'12px'}
-          iconColor={token.colorTextTertiary}
+          iconColor={token.colorTextSecondary}
           phosphorIcon={CaretDown}
+          weight={'bold'}
         />
       </div>
     );
@@ -352,6 +353,7 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
 
     '.selected-account': {
       display: 'flex',
+      width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
       padding: `${token.paddingXS}px  ${token.padding}px`,
@@ -399,11 +401,6 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
     '.anticon.__export-remind-btn': {
       height: 23,
       width: 24
-    },
-
-    '.account-name': {
-      fontSize: token.fontSizeHeading6,
-      fontWeight: 500
     }
   });
 });

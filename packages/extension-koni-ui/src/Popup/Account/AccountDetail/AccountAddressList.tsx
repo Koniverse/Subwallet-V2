@@ -3,9 +3,8 @@
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { useGetAccountNetworkAddresses, useNotification, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountNetworkAddresses, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
 import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
 import { Strategy } from 'phosphor-react';
 import React, { useCallback } from 'react';
@@ -20,7 +19,6 @@ const isNotHide = false;
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
-  const notify = useNotification();
   const onViewAccountAddressQr = useViewAccountAddressQr();
 
   const onShowQr = useCallback((item: AccountNetworkAddress) => {
@@ -31,12 +29,9 @@ function Component ({ accountProxy, className }: Props) {
 
   const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
     return () => {
-      copyToClipboard(item.address || '');
-      notify({
-        message: t('Copied to clipboard')
-      });
+      onViewAccountAddressQr(item, true);
     };
-  }, [notify, t]);
+  }, [onViewAccountAddressQr]);
 
   const renderItem = useCallback(
     (item: AccountNetworkAddress) => {
