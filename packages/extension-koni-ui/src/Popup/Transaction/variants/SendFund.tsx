@@ -42,7 +42,7 @@ function isAssetTypeValid (
 ) {
   const chainInfo = chainInfoMap[chainAsset.originChain];
 
-  return !!chainInfo && accountProxy.networkTypes.some((nt) => isChainInfoAccordantNetworkType(chainInfo, nt));
+  return !!chainInfo && accountProxy.chainTypes.some((nt) => isChainInfoAccordantNetworkType(chainInfo, nt));
 }
 
 // todo: recheck with ledger account, All account

@@ -111,7 +111,7 @@ export enum AccountSignMode {
   UNKNOWN = 'unknown'
 }
 
-export enum AccountNetworkType {
+export enum AccountChainType {
   SUBSTRATE = 'substrate',
   ETHEREUM = 'ethereum',
   BITCOIN = 'bitcoin',
@@ -129,19 +129,19 @@ export enum AccountActions {
 /**
  * Represents the actions associated with an account.
  * @interface AccountActionData
- * @prop {AccountNetworkType} networkType - The network type will account used on
+ * @prop {AccountChainType} chainType - The chain type will account used on
  * @prop {string[]} accountActions - A list of account-specific actions. These could be actions like 'derive', 'export', etc., that are applicable to the account.
  * @prop {ExtrinsicType[]} transactionActions - A list of transaction types that the account can initiate. This is dependent on the blockchain's supported extrinsic types, such as 'transfer', 'bond', etc.
  * @prop {AccountSignMode} signMode - Account sign mode
- * @prop {string} [specialNetwork] - Optional the special network, which account can only be used on
+ * @prop {string} [specialChain] - Optional the special chain, which account can only be used on
  * @prop {_AssetType[]} tokenTypes - Asset types, which account can be used
  */
 export interface AccountActionData {
-  networkType: AccountNetworkType;
+  chainType: AccountChainType;
   accountActions: AccountActions[];
   transactionActions: ExtrinsicType[];
   signMode: AccountSignMode;
-  specialNetwork?: string;
+  specialChain?: string;
   tokenTypes: _AssetType[];
   proxyId?: string;
 }
@@ -163,6 +163,7 @@ export interface AccountJson extends AbstractAddressJson, AccountMetadataData, A
 }
 
 export interface AddressJson extends AbstractAddressJson {
+  chainType: AccountChainType;
   isRecent?: boolean;
   recentChainSlugs?: string[];
 }

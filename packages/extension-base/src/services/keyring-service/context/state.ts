@@ -97,7 +97,7 @@ export class AccountState {
         const result = combineAccounts(pairs, modifyPairs, accountGroups, chainInfoMap);
 
         this.accountSubject.next(result);
-      }, 300, 1800, false);
+      }, 300, 1800, true);
     });
   }
 
@@ -127,6 +127,32 @@ export class AccountState {
 
   get modifyPairs () {
     return this._modifyPair.value;
+  }
+
+  get value () {
+    const pairs = this.pairSubject;
+    const accounts = this.accountSubject;
+    const accountProxy = this._accountProxy;
+    const currentAccount = this._currentAccount;
+    const contacts = this.contactSubject;
+
+    return {
+      get pairs () {
+        return pairs.value;
+      },
+      get accounts () {
+        return accounts.value;
+      },
+      get accountProxy () {
+        return accountProxy.value;
+      },
+      get currentAccount () {
+        return currentAccount.value;
+      },
+      get contacts () {
+        return contacts.value;
+      }
+    };
   }
 
   get observable () {
