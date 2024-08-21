@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
-import { _ERC20_ABI, _ERC20_AVAIL_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { _ERC20_ABI, _ERC20_AVAIL_TOKEN_TURING_ABI, _ERC20_BRIDGE_TURING_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { TransactionConfig } from 'web3-core';
@@ -11,7 +11,13 @@ import { Contract } from 'web3-eth-contract';
 export const getERC20Contract = (assetAddress: string, evmApi: _EvmApi, options = {}): Contract => {
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-  return new evmApi.api.eth.Contract(_ERC20_AVAIL_ABI, assetAddress, options);
+  return new evmApi.api.eth.Contract(_ERC20_AVAIL_TOKEN_TURING_ABI, assetAddress, options);
+};
+
+export const getERC20BridgeContract = (assetAddress: string, evmApi: _EvmApi, options = {}): Contract => {
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
+  return new evmApi.api.eth.Contract(_ERC20_BRIDGE_TURING_ABI, assetAddress, options);
 };
 
 export function getWeb3Contract (contractAddress: _Address, evmApi: _EvmApi, contractAbi: Record<string, any>, options = {}): Contract {
