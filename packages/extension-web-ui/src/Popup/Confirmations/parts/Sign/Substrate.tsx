@@ -90,7 +90,7 @@ const Component: React.FC<Props> = (props: Props) => {
         return CheckCircle;
     }
   }, [signMode]);
-  const chainSlug = useMemo(() => signMode === AccountSignMode.GENERIC_LEDGER ? account.originGenesisHash ? SUBSTRATE_MIGRATION_KEY : SUBSTRATE_GENERIC_KEY : (accountChainInfo?.slug || ''), [account.originGenesisHash, signMode]);
+  const chainSlug = useMemo(() => signMode === AccountSignMode.GENERIC_LEDGER ? account.originGenesisHash ? SUBSTRATE_MIGRATION_KEY : SUBSTRATE_GENERIC_KEY : (accountChainInfo?.slug || ''), [account.originGenesisHash, accountChainInfo?.slug, signMode]);
   const networkName = useMemo(() => chainInfo?.name || chain?.name || toShort(genesisHash), [chainInfo, genesisHash, chain]);
   const isRuntimeUpdated = useMemo(() => {
     const _payload = request.payload;

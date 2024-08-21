@@ -295,7 +295,13 @@ const Component: React.FC<Props> = (props: Props) => {
       >
         <div className={CN('container')}>
           <div className='sub-title'>
-            {t('Connect and unlock your Ledger, then open the selected network on your Ledger')}
+            {t('Unlock your Ledger and open the selected app. For more information regarding Polkadot and Polkadot Migration app, click ')}
+            <a
+              href={CONNECT_LEDGER_USER_GUIDE_URL}
+              target='__blank'
+            >
+              {t('here')}
+            </a>
           </div>
           {
             firstStep && (
@@ -321,10 +327,11 @@ const Component: React.FC<Props> = (props: Props) => {
                   />
                 </div>
                 <ChainSelector
+                  className={'select-ledger-app'}
                   items={networks}
-                  label={t('Select network')}
+                  label={t('Select Ledger app')}
                   onChange={onChainChange}
-                  placeholder={t('Select network')}
+                  placeholder={t('Select Ledger app')}
                   value={chain}
                 />
                 {
@@ -458,7 +465,7 @@ const ConnectLedger = styled(Component)<Props>(({ theme: { token } }: Props) => 
     },
 
     '.ledger-button': {
-      marginTop: token.margin - 2,
+      marginTop: token.marginXS,
       padding: `0 ${token.paddingSM}px`,
       '--icon-bg-color': token['gray-4'],
 
@@ -491,6 +498,17 @@ const ConnectLedger = styled(Component)<Props>(({ theme: { token } }: Props) => 
         paddingTop: token.paddingSM,
         paddingBottom: token.paddingSM
       }
+    },
+
+    '.select-ledger-app, .ledger-chain-migrate-select': {
+      '.ant-image-img': {
+        width: `${token.sizeMD}px !important`,
+        height: `${token.sizeMD}px !important`
+      }
+    },
+
+    '.ledger-chain-migrate-select': {
+      marginTop: token.marginXS
     },
 
     '.ant-sw-list.-display-row': {

@@ -1,9 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-// Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
-// SPDX-License-Identifier: Apache-2.0
-
 import useAccountRecoded from '@subwallet/extension-web-ui/hooks/account/useAccountRecoded';
 import { useMemo } from 'react';
 

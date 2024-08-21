@@ -576,6 +576,7 @@ export const BLOCK_EVM_EXECUTE_LEDGER_NETWORKS: string[] = ['substrate'];
 export const BLOCK_UNKNOWN_LEDGER_NETWORKS: string[] = ['*'];
 
 export const BLOCK_SWAP_LEDGER_NETWORKS: string[] = [];
+export const BLOCK_SET_FEE_TOKEN_LEDGER_NETWORKS: string[] = [];
 
 export const BLOCK_ACTION_LEDGER_NETWORKS: Record<ExtrinsicType, string[]> = {
   /* TRANSFER */
@@ -628,7 +629,7 @@ export const BLOCK_ACTION_LEDGER_NETWORKS: Record<ExtrinsicType, string[]> = {
   /* STAKING */
 
   [ExtrinsicType.SWAP]: BLOCK_SWAP_LEDGER_NETWORKS,
-  [ExtrinsicType.SET_FEE_TOKEN]: BLOCK_SWAP_LEDGER_NETWORKS,
+  [ExtrinsicType.SET_FEE_TOKEN]: BLOCK_SET_FEE_TOKEN_LEDGER_NETWORKS,
 
   [ExtrinsicType.CROWDLOAN]: BLOCK_CROWDLOAN_LEDGER_NETWORKS,
   [ExtrinsicType.EVM_EXECUTE]: BLOCK_EVM_EXECUTE_LEDGER_NETWORKS,
