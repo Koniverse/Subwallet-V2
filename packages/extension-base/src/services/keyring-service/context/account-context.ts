@@ -132,8 +132,8 @@ export class AccountContext {
   }
 
   /* Import ethereum account with the private key  */
-  public metamaskPrivateKeyValidateV2 (request: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
-    return this.secretHandler.metamaskPrivateKeyValidateV2(request);
+  public privateKeyValidateV2 (request: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
+    return this.secretHandler.privateKeyValidateV2(request);
   }
 
   /* Import ethereum account with the private key  */

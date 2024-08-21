@@ -1080,8 +1080,8 @@ export default class KoniExtension {
     return this.#koniState.keyringService.context.mnemonicValidateV2(request);
   }
 
-  private metamaskPrivateKeyValidateV2 (request: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
-    return this.#koniState.keyringService.context.metamaskPrivateKeyValidateV2(request);
+  private privateKeyValidateV2 (request: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
+    return this.#koniState.keyringService.context.privateKeyValidateV2(request);
   }
 
   private jsonRestoreV2 (request: RequestJsonRestoreV2): void {
@@ -3807,8 +3807,8 @@ export default class KoniExtension {
       // Validate account
       case 'pri(accounts.validate.seed)':
         return this.seedValidateV2(request as RequestMnemonicValidateV2);
-      case 'pri(accounts.validate.metamask.privateKey)':
-        return this.metamaskPrivateKeyValidateV2(request as RequestPrivateKeyValidateV2);
+      case 'pri(accounts.validate.privateKey)':
+        return this.privateKeyValidateV2(request as RequestPrivateKeyValidateV2);
       case 'pri(accounts.validate.substrate.publicAndPrivateKey)':
         return this.checkPublicAndSecretKey(request as RequestCheckPublicAndSecretKey);
 

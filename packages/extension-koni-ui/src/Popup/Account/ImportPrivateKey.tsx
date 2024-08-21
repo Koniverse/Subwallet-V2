@@ -1,12 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { CloseIcon, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
-import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants/account';
+import { CloseIcon, HiddenInput, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGetDefaultAccountName, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
@@ -23,10 +23,13 @@ const FooterIcon = (
 );
 
 const formName = 'import-private-key-form';
-const fieldName = 'private-key';
+const privateKeyField = 'private-key';
+const typeField = 'type';
+const hiddenFields = [typeField];
 
 interface FormState {
-  [fieldName]: string;
+  [privateKeyField]: string;
+  [typeField]: KeypairType;
 }
 
 const Component: React.FC<Props> = ({ className }: Props) => {
@@ -51,12 +54,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const accountName = useGetDefaultAccountName();
 
   // Auto-focus field
-  useFocusFormItem(form, fieldName);
+  useFocusFormItem(form, privateKeyField);
 
-  const privateKey = Form.useWatch(fieldName, form);
+  const privateKey = Form.useWatch(privateKeyField, form);
 
   const onSubmit: FormCallbacks<FormState>['onFinish'] = useCallback((values: FormState) => {
-    const { [fieldName]: privateKey } = values;
+    const { [privateKeyField]: privateKey, [typeField]: keypairType } = values;
 
     checkUnlock().then(() => {
       if (privateKey?.trim()) {
@@ -65,7 +68,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           name: accountName,
           suri: privateKey.trim(),
           isAllowed: true,
-          type: EVM_ACCOUNT_TYPE
+          type: keypairType
         })
           .then(() => {
             onComplete();
@@ -103,11 +106,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
         timeOutRef.current = setTimeout(() => {
           validateMetamaskPrivateKeyV2(privateKey.trim())
-            .then(({ autoAddPrefix }) => {
+            .then(({ autoAddPrefix, keyTypes }) => {
               if (amount) {
                 if (autoAddPrefix) {
-                  form.setFieldValue(fieldName, `0x${privateKey}`);
+                  form.setFieldValue(privateKeyField, `0x${privateKey}`);
                 }
+
+                form.setFieldValue(typeField, keyTypes[0]);
 
                 setValidateState({});
               }
@@ -142,7 +147,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [privateKey, form, changed, t]);
 
   const onValuesChange: FormCallbacks<FormState>['onValuesChange'] = useCallback((changedValues: Partial<FormState>) => {
-    if (fieldName in changedValues) {
+    if (privateKeyField in changedValues) {
       setChanged(true);
     }
   }, []);
@@ -177,13 +182,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           <Form
             className='form-container'
             form={form}
-            initialValues={{ [fieldName]: '' }}
+            initialValues={{ [privateKeyField]: '' }}
             name={formName}
             onFinish={onSubmit}
             onValuesChange={onValuesChange}
           >
+            <HiddenInput fields={hiddenFields} />
             <Form.Item
-              name={fieldName}
+              name={privateKeyField}
               validateStatus={validateState.status}
             >
               <PrivateKeyInput

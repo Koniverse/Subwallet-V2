@@ -13,5 +13,5 @@ export async function validateSeedV2 (mnemonic: string): Promise<ResponseMnemoni
 }
 
 export async function validateMetamaskPrivateKeyV2 (privateKey: string): Promise<ResponsePrivateKeyValidateV2> {
-  return sendMessage('pri(accounts.validate.metamask.privateKey)', { privateKey });
+  return sendMessage('pri(accounts.validate.privateKey)', { privateKey });
 }

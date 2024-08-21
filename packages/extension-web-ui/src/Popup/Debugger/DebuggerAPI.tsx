@@ -79,7 +79,7 @@ const API_LIST = [
   // 'pri(signing.requests)',
   // 'pri(seed.validate)',
   // 'pri(accounts.validate.seed)',
-  // 'pri(accounts.validate.metamask.privateKey)',
+  // 'pri(accounts.validate.privateKey)',
   // 'pri(derivation.validate)',
   // 'pri(derivation.create)',
   // 'pri(derivation.createV2)',

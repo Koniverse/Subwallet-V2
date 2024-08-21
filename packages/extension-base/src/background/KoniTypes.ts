@@ -2036,7 +2036,7 @@ export interface KoniRequestSignatures {
 
   // Validate
   'pri(accounts.validate.seed)': [RequestMnemonicValidateV2, ResponseMnemonicValidateV2];
-  'pri(accounts.validate.metamask.privateKey)': [RequestPrivateKeyValidateV2, ResponsePrivateKeyValidateV2];
+  'pri(accounts.validate.privateKey)': [RequestPrivateKeyValidateV2, ResponsePrivateKeyValidateV2];
   'pri(accounts.validate.substrate.publicAndPrivateKey)': [RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey];
 
   // Create account
