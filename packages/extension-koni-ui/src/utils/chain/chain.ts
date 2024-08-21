@@ -3,7 +3,7 @@
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
 import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountNetworkType } from '@subwallet/extension-base/types';
+import { AccountChainType } from '@subwallet/extension-base/types';
 
 export const findChainInfoByGenesisHash = (chainMap: Record<string, _ChainInfo>, genesisHash?: string): _ChainInfo | null => {
   if (!genesisHash) {
@@ -33,40 +33,40 @@ export const findChainInfoByChainId = (chainMap: Record<string, _ChainInfo>, cha
   return null;
 };
 
-export const isChainInfoAccordantNetworkType = (chainInfo: _ChainInfo, networkType: AccountNetworkType): boolean => {
-  if (networkType === AccountNetworkType.SUBSTRATE) {
+export const isChainInfoAccordantAccountChainType = (chainInfo: _ChainInfo, chainType: AccountChainType): boolean => {
+  if (chainType === AccountChainType.SUBSTRATE) {
     return _isPureSubstrateChain(chainInfo);
   }
 
-  if (networkType === AccountNetworkType.ETHEREUM) {
+  if (chainType === AccountChainType.ETHEREUM) {
     return _isChainEvmCompatible(chainInfo);
   }
 
-  if (networkType === AccountNetworkType.TON) {
+  if (chainType === AccountChainType.TON) {
     return _isChainTonCompatible(chainInfo);
   }
 
-  if (networkType === AccountNetworkType.BITCOIN) {
+  if (chainType === AccountChainType.BITCOIN) {
     return _isChainBitcoinCompatible(chainInfo);
   }
 
   return false;
 };
 
-export const isChainCompatibleWithAccountNetworkTypes = (chainInfo: _ChainInfo, networkTypes: AccountNetworkType[]): boolean => {
-  return networkTypes.some((networkType) => isChainInfoAccordantNetworkType(chainInfo, networkType));
+export const isChainCompatibleWithAccountChainTypes = (chainInfo: _ChainInfo, chainTypes: AccountChainType[]): boolean => {
+  return chainTypes.some((chainType) => isChainInfoAccordantAccountChainType(chainInfo, chainType));
 };
 
-export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>, networkTypes: AccountNetworkType[], specialNetwork?: string): string[] => {
+export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>, chainTypes: AccountChainType[], specialChain?: string): string[] => {
   const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
 
-  if (specialNetwork) {
-    return Object.keys(chainInfoMap).filter((chain) => specialNetwork === chain);
+  if (specialChain) {
+    return Object.keys(chainInfoMap).filter((chain) => specialChain === chain);
   } else {
     const result: string[] = [];
 
     for (const chainInfo of Object.values(chainInfoMap)) {
-      if (isChainCompatibleWithAccountNetworkTypes(chainInfo, networkTypes)) {
+      if (isChainCompatibleWithAccountChainTypes(chainInfo, chainTypes)) {
         result.push(chainInfo.slug);
       }
     }

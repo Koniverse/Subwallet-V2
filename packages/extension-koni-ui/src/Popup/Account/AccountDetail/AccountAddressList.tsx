@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountNetworkAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import { AccountChainAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountNetworkAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
-import { AccountNetworkAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { useGetAccountChainAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
 import { Strategy } from 'phosphor-react';
@@ -18,11 +18,11 @@ type Props = ThemeProps & {
 
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
-  const items: AccountNetworkAddress[] = useGetAccountNetworkAddresses(accountProxy);
+  const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
   const notify = useNotification();
   const { addressQrModal } = useContext(WalletModalContext);
 
-  const onShowQr = useCallback((item: AccountNetworkAddress) => {
+  const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
       addressQrModal.open({
         address: item.address,
@@ -31,7 +31,7 @@ function Component ({ accountProxy, className }: Props) {
     };
   }, [addressQrModal]);
 
-  const onCopyAddress = useCallback((item: AccountNetworkAddress) => {
+  const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
       copyToClipboard(item.address || '');
       notify({
@@ -41,9 +41,9 @@ function Component ({ accountProxy, className }: Props) {
   }, [notify, t]);
 
   const renderItem = useCallback(
-    (item: AccountNetworkAddress) => {
+    (item: AccountChainAddress) => {
       return (
-        <AccountNetworkAddressItem
+        <AccountChainAddressItem
           className={'address-item'}
           item={item}
           key={item.slug}
@@ -60,7 +60,7 @@ function Component ({ accountProxy, className }: Props) {
   }, []);
 
   const searchFunction = useCallback(
-    (item: AccountNetworkAddress, searchText: string) => {
+    (item: AccountChainAddress, searchText: string) => {
       return item.name.toLowerCase().includes(searchText.toLowerCase());
     },
     []

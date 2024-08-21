@@ -17,7 +17,7 @@ import { AccountInfoByNetwork } from '@subwallet/extension-koni-ui/utils/types';
 import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
 
-import { isChainInfoAccordantNetworkType } from '../chain';
+import { isChainInfoAccordantAccountChainType } from '../chain';
 import { getLogoByNetworkKey } from '../common';
 
 export function getAccountType (address: string): AccountType {
@@ -180,12 +180,12 @@ export const convertKeyTypes = (authTypes: AccountAuthType[]): KeypairType[] => 
 
 // todo:
 //  - support bitcoin
-export function getReformatedAddressRelatedToNetwork (accountJson: AccountJson, chainInfo: _ChainInfo): string | undefined {
+export function getReformatedAddressRelatedToChain (accountJson: AccountJson, chainInfo: _ChainInfo): string | undefined {
   if (accountJson.specialChain && accountJson.specialChain !== chainInfo.slug) {
     return undefined;
   }
 
-  if (!isChainInfoAccordantNetworkType(chainInfo, accountJson.chainType)) {
+  if (!isChainInfoAccordantAccountChainType(chainInfo, accountJson.chainType)) {
     return undefined;
   }
 

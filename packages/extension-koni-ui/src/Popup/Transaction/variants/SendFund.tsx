@@ -17,7 +17,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getReformatedAddressRelatedToNetwork, isChainInfoAccordantNetworkType, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getReformatedAddressRelatedToChain, isChainInfoAccordantAccountChainType, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -42,7 +42,7 @@ function isAssetTypeValid (
 ) {
   const chainInfo = chainInfoMap[chainAsset.originChain];
 
-  return !!chainInfo && accountProxy.chainTypes.some((nt) => isChainInfoAccordantNetworkType(chainInfo, nt));
+  return !!chainInfo && accountProxy.chainTypes.some((nt) => isChainInfoAccordantAccountChainType(chainInfo, nt));
 }
 
 // todo: recheck with ledger account, All account
@@ -281,7 +281,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       }
 
       ap.accounts.forEach((a) => {
-        const address = getReformatedAddressRelatedToNetwork(a, chainInfo);
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
 
         if (address) {
           result.push({

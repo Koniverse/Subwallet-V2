@@ -5,8 +5,8 @@ import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { AssetSetting } from '@subwallet/extension-base/background/KoniTypes';
 import { _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { _getOriginChainOfAsset, _isAssetFungibleToken } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountNetworkType } from '@subwallet/extension-base/types';
-import { isChainCompatibleWithAccountNetworkTypes } from '@subwallet/extension-koni-ui/utils';
+import { AccountChainType } from '@subwallet/extension-base/types';
+import { isChainCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
 
 export function isTokenAvailable (
   chainAsset: _ChainAsset,
@@ -35,11 +35,11 @@ export function getChainInfoFromToken (tokenSlug: string, chainInfoMap: Record<s
   return chainInfoMap[chainSlug];
 }
 
-export function isTokenCompatibleWithAccountNetworkTypes (
+export function isTokenCompatibleWithAccountChainTypes (
   tokenSlug: string,
-  networkTypes: AccountNetworkType[],
+  chainTypes: AccountChainType[],
   chainInfoMap: Record<string, _ChainInfo>): boolean {
   const chainInfo = getChainInfoFromToken(tokenSlug, chainInfoMap);
 
-  return !!chainInfo && isChainCompatibleWithAccountNetworkTypes(chainInfo, networkTypes);
+  return !!chainInfo && isChainCompatibleWithAccountChainTypes(chainInfo, chainTypes);
 }

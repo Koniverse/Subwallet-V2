@@ -26,7 +26,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountAddressItemType, FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenSelectorItemType } from '@subwallet/extension-koni-ui/types/field';
-import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToNetwork, isAccountAll, isChainInfoAccordantNetworkType, isTokenCompatibleWithAccountNetworkTypes, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, BackgroundIcon, Button, Form, Icon, Logo, ModalContext, Number, Tooltip } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -178,7 +178,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     (() => {
       // defaultSlug is just TokenSlug
       if (defaultSlug && rawTokenSlugs.includes(defaultSlug)) {
-        if (isTokenCompatibleWithAccountNetworkTypes(defaultSlug, targetAccountProxy.networkTypes, chainInfoMap)) {
+        if (isTokenCompatibleWithAccountChainTypes(defaultSlug, targetAccountProxy.chainTypes, chainInfoMap)) {
           targetTokenSlugs.push(defaultSlug);
         }
 
@@ -194,14 +194,14 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
         if (defaultSlug) {
           // defaultSlug is MultiChainAssetSlug
-          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountNetworkTypes(rts, targetAccountProxy.networkTypes, chainInfoMap)) {
+          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
             targetTokenSlugs.push(rts);
           }
 
           return;
         }
 
-        if (isTokenCompatibleWithAccountNetworkTypes(rts, targetAccountProxy.networkTypes, chainInfoMap)) {
+        if (isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
           targetTokenSlugs.push(rts);
         }
       });
@@ -212,7 +212,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     }
 
     return [];
-  }, [assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, targetAccountProxy.networkTypes]);
+  }, [assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, targetAccountProxy.chainTypes]);
 
   const toTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     return getTokenSelectorItem(fromAndToTokenMap[fromTokenSlugValue] || [], assetRegistryMap);
@@ -237,8 +237,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       return false;
     }
 
-    return isTokenCompatibleWithAccountNetworkTypes(toTokenSlugValue, targetAccountProxy.networkTypes, chainInfoMap);
-  }, [chainInfoMap, fromAndToTokenMap, targetAccountProxy.networkTypes, toTokenSlugValue]);
+    return isTokenCompatibleWithAccountChainTypes(toTokenSlugValue, targetAccountProxy.chainTypes, chainInfoMap);
+  }, [chainInfoMap, fromAndToTokenMap, targetAccountProxy.chainTypes, toTokenSlugValue]);
 
   const onSwitchSide = useCallback(() => {
     if (fromTokenSlugValue && toTokenSlugValue) {
@@ -308,7 +308,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       return false;
     }
 
-    return !isChainInfoAccordantNetworkType(chainInfoMap[destChainValue], fromAccountJson.networkType);
+    return !isChainInfoAccordantAccountChainType(chainInfoMap[destChainValue], fromAccountJson.chainType);
   }, [accounts, chainInfoMap, destChainValue, fromValue]);
 
   const onSelectFromToken = useCallback((tokenSlug: string) => {
@@ -870,7 +870,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       }
 
       ap.accounts.forEach((a) => {
-        const address = getReformatedAddressRelatedToNetwork(a, chainInfo);
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
 
         if (address) {
           result.push({
