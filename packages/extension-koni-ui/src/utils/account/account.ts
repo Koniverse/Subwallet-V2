@@ -39,6 +39,7 @@ export const getAccountInfoByNetwork = (networkMap: Record<string, NetworkJson>,
   };
 };
 
+// todo: recheck this function with current account
 export const findAccountByAddress = (accounts: AccountJson[], address?: string): AccountJson | null => {
   try {
     const isAllAccount = address && isAccountAll(address);

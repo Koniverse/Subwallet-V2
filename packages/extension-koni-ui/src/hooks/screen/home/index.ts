@@ -3,7 +3,7 @@
 
 export { default as useAccountBalance } from './useAccountBalance';
 export { default as useGetTokensBySettings } from './useGetTokensBySettings';
-export { default as useReceiveModalHelper } from './useReceiveModalHelper';
+export { default as useCoreReceiveModalHelper } from './useCoreReceiveModalHelper';
 export { default as useTokenGroup } from './useTokenGroup';
 
 export * from './useGetChainSlugsByAccount';
