@@ -10,12 +10,12 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { funcSortByName, isAccountAll } from '@subwallet/extension-koni-ui/utils';
-import { BackgroundIcon, ModalContext, Tooltip } from '@subwallet/react-ui';
+import { BackgroundIcon, Icon, ModalContext, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { Plug, Plugs, PlugsConnected } from 'phosphor-react';
+import { CaretDown, Plug, Plugs, PlugsConnected } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -52,6 +52,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const { accounts: _accounts, currentAccount, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
 
   const [connected, setConnected] = useState(0);
+  const { token } = useTheme() as Theme;
   const [canConnect, setCanConnect] = useState(0);
   const [connectionState, setConnectionState] = useState<ConnectionStatement>(ConnectionStatement.NOT_CONNECTED);
   const currentTab = useGetCurrentTab();
@@ -205,6 +206,13 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         onClick={onOpenSelectAccountModal}
       >
         <AccountProxyBriefInfo accountProxy={currentAccountProxy} />
+        <Icon
+          className={'__caret-icon'}
+          customSize={'12px'}
+          iconColor={token.colorTextSecondary}
+          phosphorIcon={CaretDown}
+          weight={'bold'}
+        />
       </div>
     );
   })();
@@ -345,8 +353,11 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
 
     '.selected-account': {
       display: 'flex',
+      width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
+      padding: `${token.paddingXS}px  ${token.padding}px`,
+      paddingLeft: 0,
       gap: 8,
       cursor: 'pointer'
     },
@@ -385,6 +396,11 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       position: 'absolute',
       top: '-35%',
       left: '40%'
+    },
+
+    '.account-name': {
+      fontSize: token.fontSizeHeading6,
+      fontWeight: 500
     },
 
     '.anticon.__export-remind-btn': {

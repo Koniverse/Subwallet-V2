@@ -3,42 +3,35 @@
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountChainAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountChainAddresses, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountChainAddresses, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
 import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
 import { Strategy } from 'phosphor-react';
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
   accountProxy: AccountProxy;
 };
 
+const isNotHide = false;
+
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
-  const notify = useNotification();
-  const { addressQrModal } = useContext(WalletModalContext);
+  const onViewAccountAddressQr = useViewAccountAddressQr();
 
   const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
-      addressQrModal.open({
-        address: item.address,
-        chainSlug: item.slug
-      });
+      onViewAccountAddressQr(item);
     };
-  }, [addressQrModal]);
+  }, [onViewAccountAddressQr]);
 
   const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
-      copyToClipboard(item.address || '');
-      notify({
-        message: t('Copied to clipboard')
-      });
+      onViewAccountAddressQr(item, true);
     };
-  }, [notify, t]);
+  }, [onViewAccountAddressQr]);
 
   const renderItem = useCallback(
     (item: AccountChainAddress) => {
@@ -47,6 +40,7 @@ function Component ({ accountProxy, className }: Props) {
           className={'address-item'}
           item={item}
           key={item.slug}
+          onClick={onShowQr(item)}
           onClickCopyButton={onCopyAddress(item)}
           onClickQrButton={onShowQr(item)}
         />
@@ -61,7 +55,7 @@ function Component ({ accountProxy, className }: Props) {
 
   const searchFunction = useCallback(
     (item: AccountChainAddress, searchText: string) => {
-      return item.name.toLowerCase().includes(searchText.toLowerCase());
+      return item.name.toLowerCase().includes(searchText.toLowerCase()) || item.address.toLowerCase().includes(searchText.toLowerCase());
     },
     []
   );
@@ -75,11 +69,11 @@ function Component ({ accountProxy, className }: Props) {
         renderWhenEmpty={emptyList}
         searchFunction={searchFunction}
         searchMinCharactersCount={2}
-        searchPlaceholder={t<string>('Enter network name')}
+        searchPlaceholder={t<string>('Enter network name or address ')}
       />
 
       {
-        accountProxy.accountType === AccountProxyType.SOLO && (
+        isNotHide && accountProxy.accountType === AccountProxyType.SOLO && (
           <div className={'update-unified-account-button-wrapper'}>
             <Button
               block={true}

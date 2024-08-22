@@ -129,6 +129,11 @@ const AlertModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
       gap: token.sizeXXS
     },
 
+    '.ant-sw-header-center-part': {
+      width: '100%',
+      maxWidth: 292
+    },
+
     '.__modal-content': {
       fontSize: token.fontSize,
       lineHeight: token.lineHeightHeading6,

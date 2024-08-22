@@ -18,6 +18,7 @@ type Props = ThemeProps & {
   className?: string;
   isSelected?: boolean;
   accountProxy: AccountProxy;
+  showDerivedPath?: boolean;
   onClick?: VoidFunction;
   onClickCopyButton?: VoidFunction;
   onClickDeriveButton?: VoidFunction;
@@ -36,7 +37,8 @@ function Component (props: Props): React.ReactElement<Props> {
     onClick,
     onClickCopyButton,
     onClickDeriveButton,
-    onClickMoreButton } = props;
+    onClickMoreButton,
+    showDerivedPath } = props;
 
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
@@ -157,16 +159,28 @@ function Component (props: Props): React.ReactElement<Props> {
           <div className='__item-name'>{accountProxy.name}</div>
           <div className='__item-chain-types'>
             {
-              accountProxy.chainTypes.map((nt) => {
-                return (
-                  <img
-                    alt='Network type'
-                    className={'__item-chain-type-item'}
-                    key={nt}
-                    src={chainTypeLogoMap[nt]}
+              showDerivedPath && !!accountProxy.parentId
+                ? <div className={'__item-derived-path'}>
+                  <Icon
+                    className={'__derived-account-flag'}
+                    customSize='12px'
+                    phosphorIcon={GitMerge}
+                    weight={'fill'}
                   />
-                );
-              })
+                  <div className={'__derive-account-path'}>
+                    {accountProxy.suri || ''}
+                  </div>
+                </div>
+                : accountProxy.chainTypes.map((nt) => {
+                  return (
+                    <img
+                      alt='Network type'
+                      className={'__item-chain-type-item'}
+                      key={nt}
+                      src={chainTypeLogoMap[nt]}
+                    />
+                  );
+                })
             }
           </div>
         </div>
@@ -351,6 +365,19 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       opacity: 1,
       transition: `opacity ${token.motionDurationMid} ease-in-out`
     },
+
+    '.__item-derived-path': {
+      display: 'flex',
+      gap: token.sizeXS - 2,
+      alignItems: 'center',
+
+      '.__derive-account-path': {
+        fontSize: token.fontSizeSM,
+        color: token.colorTextLight4,
+        lineHeight: token.lineHeightSM
+      }
+    },
+
     '&:hover': {
       background: token.colorBgInput,
       '.-hide-on-hover': {

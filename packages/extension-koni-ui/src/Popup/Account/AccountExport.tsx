@@ -113,7 +113,7 @@ const Component: React.FC<Props> = (props: Props) => {
     }
 
     return result.join(':');
-  }, [account?.name, publicKey, privateKey]);
+  }, [account?.name, privateKey, publicKey]);
 
   const onCopyPrivateKey = useCopy(privateKey);
 

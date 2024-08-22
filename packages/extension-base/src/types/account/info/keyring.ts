@@ -130,7 +130,7 @@ export enum AccountActions {
  * Represents the actions associated with an account.
  * @interface AccountActionData
  * @prop {AccountChainType} chainType - The chain type will account used on
- * @prop {string[]} accountActions - A list of account-specific actions. These could be actions like 'derive', 'export', etc., that are applicable to the account.
+ * @prop {AccountActions[]} accountActions - A list of account-specific actions. These could be actions like 'derive', 'export', etc., that are applicable to the account.
  * @prop {ExtrinsicType[]} transactionActions - A list of transaction types that the account can initiate. This is dependent on the blockchain's supported extrinsic types, such as 'transfer', 'bond', etc.
  * @prop {AccountSignMode} signMode - Account sign mode
  * @prop {string} [specialChain] - Optional the special chain, which account can only be used on

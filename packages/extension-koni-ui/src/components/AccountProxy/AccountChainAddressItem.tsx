@@ -11,6 +11,7 @@ import styled from 'styled-components';
 
 type Props = ThemeProps & {
   item: AccountChainAddress;
+  onClick?: VoidFunction;
   onClickCopyButton?: VoidFunction;
   onClickQrButton?: VoidFunction;
 }
@@ -18,7 +19,7 @@ type Props = ThemeProps & {
 function Component (props: Props): React.ReactElement<Props> {
   const { className,
     item,
-    onClickCopyButton, onClickQrButton } = props;
+    onClick, onClickCopyButton, onClickQrButton } = props;
 
   const _onClickCopyButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();
@@ -34,6 +35,7 @@ function Component (props: Props): React.ReactElement<Props> {
     <>
       <div
         className={CN(className)}
+        onClick={onClick}
       >
         <div className='__item-left-part'>
           <Logo
@@ -104,7 +106,7 @@ const AccountChainAddressItem = styled(Component)<Props>(({ theme: { token } }: 
       'white-space': 'nowrap',
       gap: token.sizeXXS,
       flex: 1,
-      alignItems: 'center'
+      alignItems: 'flex-end'
     },
 
     '.__item-chain-name': {

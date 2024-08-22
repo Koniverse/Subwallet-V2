@@ -30,7 +30,6 @@ type TagType = {
 
 const Component: React.FC<Props> = ({ className, type }: Props) => {
   const { t } = useTranslation();
-
   const tag = useMemo<TagType>(() => {
     const result: TagType = {
       color: 'default',
@@ -44,7 +43,7 @@ const Component: React.FC<Props> = ({ className, type }: Props) => {
       result.label = t('All account');
       result.icon.phosphorIcon = CirclesThreePlus;
     } else if (type === AccountProxyType.SOLO) {
-      result.color = 'secondary';
+      result.color = 'blue';
       result.label = t('Solo account');
       result.icon.phosphorIcon = GitCommit;
     } else if (type === AccountProxyType.UNIFIED) {
@@ -103,6 +102,15 @@ const AccountProxyTypeTag = styled(Component)<Props>(({ theme: { token } }: Prop
         top: 0,
         left: 0,
         zIndex: 1,
+        opacity: 0.1
+      }
+    },
+
+    '&.ant-tag-blue': {
+      color: token['blue-8'],
+
+      '&:before': {
+        backgroundColor: token.blue,
         opacity: 0.1
       }
     }

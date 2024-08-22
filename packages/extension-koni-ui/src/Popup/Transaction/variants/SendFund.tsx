@@ -1,23 +1,23 @@
 // Copyright 2019-2022 @polkadot/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
-import { _getAssetDecimals, _getContractAddressOfToken, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
-import { useAlert, useFetchChainAssetInfo, useInitValidateTransaction, useIsMantaPayEnabled, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getReformatedAddressRelatedToChain, isChainInfoAccordantAccountChainType, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -33,98 +33,40 @@ import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
 
-type Props = ThemeProps;
+type WrapperProps = ThemeProps;
 
-function isAssetTypeValid (
-  chainAsset: _ChainAsset,
-  chainInfoMap: Record<string, _ChainInfo>,
-  accountProxy: AccountProxy
-) {
-  const chainInfo = chainInfoMap[chainAsset.originChain];
+type ComponentProps = {
+  className?: string;
+  targetAccountProxy: AccountProxy;
+};
 
-  return !!chainInfo && accountProxy.chainTypes.some((nt) => isChainInfoAccordantAccountChainType(chainInfo, nt));
-}
-
-// todo: recheck with ledger account, All account
 function getTokenItems (
-  accountProxyId: string,
-  accountProxies: AccountProxy[],
+  accountProxy: AccountProxy,
   chainInfoMap: Record<string, _ChainInfo>,
   assetRegistry: Record<string, _ChainAsset>,
-  multiChainAssetMap: Record<string, _MultiChainAsset>,
-  tokenGroupSlug?: string, // is ether a token slug or a multiChainAsset slug
-  isZkModeEnabled?: boolean
+  tokenGroupSlug?: string // is ether a token slug or a multiChainAsset slug
 ): TokenItemType[] {
-  const accountProxy = accountProxies.find((ap) => {
-    if (!accountProxyId) {
-      return isAccountAll(ap.id);
-    }
-
-    return ap.id === accountProxyId;
-  });
-
-  if (!accountProxy) {
-    return [];
-  }
-
-  const isSetTokenSlug = !!tokenGroupSlug && !!assetRegistry[tokenGroupSlug];
-  const isSetMultiChainAssetSlug = !!tokenGroupSlug && !!multiChainAssetMap[tokenGroupSlug];
-
-  if (tokenGroupSlug) {
-    if (!(isSetTokenSlug || isSetMultiChainAssetSlug)) {
-      return [];
-    }
-  }
-
-  if (isSetTokenSlug) {
-    const chainAsset = assetRegistry[tokenGroupSlug];
-
-    if (isAssetTypeValid(chainAsset, chainInfoMap, accountProxy)) {
-      const { name, originChain, slug, symbol } = assetRegistry[tokenGroupSlug];
-
-      return [
-        {
-          name,
-          slug,
-          symbol,
-          originChain
-        }
-      ];
-    } else {
-      return [];
-    }
-  }
+  const allowedChains = getChainsByAccountType(chainInfoMap, accountProxy.chainTypes, accountProxy.specialChain);
 
   const items: TokenItemType[] = [];
 
   Object.values(assetRegistry).forEach((chainAsset) => {
-    const isTokenFungible = _isAssetFungibleToken(chainAsset);
+    const originChain = _getAssetOriginChain(chainAsset);
 
-    if (!(isTokenFungible && isAssetTypeValid(chainAsset, chainInfoMap, accountProxy))) {
+    if (!allowedChains.includes(originChain)) {
       return;
     }
 
-    if (!isZkModeEnabled && _isMantaZkAsset(chainAsset)) {
+    if (!(chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
       return;
     }
 
-    if (isSetMultiChainAssetSlug) {
-      if (chainAsset.multiChainAsset === tokenGroupSlug) {
-        items.push({
-          name: chainAsset.name,
-          slug: chainAsset.slug,
-          symbol: chainAsset.symbol,
-          originChain: chainAsset.originChain
-        });
-      }
-    } else {
-      items.push({
-        name: chainAsset.name,
-        slug: chainAsset.slug,
-        symbol: chainAsset.symbol,
-        originChain: chainAsset.originChain
-      });
-    }
+    items.push({
+      slug: chainAsset.slug,
+      name: _getAssetName(chainAsset),
+      symbol: _getAssetSymbol(chainAsset),
+      originChain
+    });
   });
 
   return items;
@@ -158,17 +100,17 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
   return result;
 }
 
-const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy'];
+const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
 const validateFields: Array<keyof TransferParams> = ['value', 'to'];
 const alertModalId = 'confirmation-alert-modal';
 
-const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
+const Component = ({ className = '', targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
   useSetCurrentPage('/transaction/send-fund');
   const { t } = useTranslation();
   const notification = useNotification();
 
   const { defaultData, persistData } = useTransactionContext<TransferParams>();
-  const { defaultSlug: sendFundSlug, fromAccountProxy } = defaultData;
+  const { defaultSlug: sendFundSlug } = defaultData;
   const isFirstRender = useIsFirstRender();
 
   const [form] = Form.useForm<TransferParams>();
@@ -188,13 +130,12 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
   const { chainInfoMap, chainStatusMap } = useSelector((root) => root.chainStore);
-  const { assetRegistry, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
+  const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
 
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
-  const isZKModeEnabled = useIsMantaPayEnabled(fromValue);
 
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chainValue];
@@ -251,15 +192,12 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
   const tokenItems = useMemo<TokenItemType[]>(() => {
     return getTokenItems(
-      fromAccountProxy,
-      accountProxies,
+      targetAccountProxy,
       chainInfoMap,
       assetRegistry,
-      multiChainAssetMap,
-      sendFundSlug,
-      isZKModeEnabled
+      sendFundSlug
     );
-  }, [accountProxies, assetRegistry, chainInfoMap, fromAccountProxy, isZKModeEnabled, multiChainAssetMap, sendFundSlug]);
+  }, [assetRegistry, chainInfoMap, sendFundSlug, targetAccountProxy]);
 
   const accountAddressItems = useMemo(() => {
     const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
@@ -270,16 +208,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
 
     const result: AccountAddressItemType[] = [];
 
-    accountProxies.forEach((ap) => {
-      if (!(!fromAccountProxy || ap.id === fromAccountProxy)) {
-        return;
-      }
-
-      // todo: support ledger later
-      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
-        return;
-      }
-
+    const updateResult = (ap: AccountProxy) => {
       ap.accounts.forEach((a) => {
         const address = getReformatedAddressRelatedToChain(a, chainInfo);
 
@@ -293,10 +222,26 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           });
         }
       });
-    });
+    };
+
+    if (isAccountAll(targetAccountProxy.id)) {
+      accountProxies.forEach((ap) => {
+        if (isAccountAll(ap.id)) {
+          return;
+        }
+
+        if ([AccountProxyType.READ_ONLY].includes(ap.accountType)) {
+          return;
+        }
+
+        updateResult(ap);
+      });
+    } else {
+      updateResult(targetAccountProxy);
+    }
 
     return result;
-  }, [accountProxies, chainInfoMap, chainValue, fromAccountProxy]);
+  }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
   const validateRecipientAddress = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     if (!_recipientAddress) {
@@ -915,7 +860,43 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   );
 };
 
-const SendFund = styled(_SendFund)(({ theme }) => {
+const Wrapper: React.FC<WrapperProps> = (props: WrapperProps) => {
+  const { className } = props;
+  const { defaultData } = useTransactionContext<TransferParams>();
+  const { goHome } = useDefaultNavigate();
+  const accountProxies = useSelector((state) => state.accountState.accountProxies);
+
+  const targetAccountProxy = useMemo(() => {
+    return accountProxies.find((ap) => {
+      if (!defaultData.fromAccountProxy) {
+        return isAccountAll(ap.id);
+      }
+
+      return ap.id === defaultData.fromAccountProxy;
+    });
+  }, [accountProxies, defaultData.fromAccountProxy]);
+
+  useEffect(() => {
+    if (!targetAccountProxy) {
+      goHome();
+    }
+  }, [goHome, targetAccountProxy]);
+
+  if (!targetAccountProxy) {
+    return (
+      <></>
+    );
+  }
+
+  return (
+    <Component
+      className={className}
+      targetAccountProxy={targetAccountProxy}
+    />
+  );
+};
+
+const SendFund = styled(Wrapper)(({ theme }) => {
   const token = (theme as Theme).token;
 
   return ({

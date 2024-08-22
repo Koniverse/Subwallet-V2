@@ -31,7 +31,7 @@ type ListItemGroupLabel = {
 
 type ListItem = AccountProxy | ListItemGroupLabel;
 
-const enableExtraction = false;
+const enableExtraction = true;
 
 type Props = ThemeProps;
 
@@ -233,6 +233,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       }
 
       inactiveModal(modalId);
+      setSearchValue('');
     };
   }, [accountProxies, inactiveModal, location.pathname, navigate, goHome]);
 
@@ -436,6 +437,17 @@ export const AccountSelectorModal = styled(Component)<Props>(({ theme: { token }
       '> div + div': {
         marginTop: token.marginXS
       }
+    },
+
+    '.__icon-export-remind': {
+      position: 'absolute',
+      top: '-35%',
+      left: '40%'
+    },
+
+    '.anticon.__export-remind-btn': {
+      height: 23,
+      width: 24
     }
   };
 });

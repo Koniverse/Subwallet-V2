@@ -406,7 +406,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
       if (accountGroup) {
         if (!temp[accountGroup.id]) {
-          temp[accountGroup.id] = { ...accountGroup, accounts: [], chainTypes: [], tokenTypes: [] };
+          temp[accountGroup.id] = { ...accountGroup, accounts: [], chainTypes: [], tokenTypes: [], accountActions: [] };
         }
 
         account.proxyId = accountGroup.id;
@@ -423,7 +423,8 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
       chainTypes: [account.chainType],
       parentId: account.parentAddress,
       suri: account.suri,
-      tokenTypes: account.tokenTypes
+      tokenTypes: account.tokenTypes,
+      accountActions: []
     };
   }
 
@@ -433,6 +434,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
         let accountType: AccountProxyType = AccountProxyType.UNKNOWN;
         let chainTypes: AccountChainType[] = [];
         let tokenTypes: _AssetType[] = [];
+        let accountActions: AccountActions[] = [];
         let specialChain: string | undefined;
 
         if (value.accounts.length > 1) {
@@ -445,11 +447,24 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
             return rs;
           }, new Set()));
+
+          /* Account actions */
+
+          // Mnemonic
+          if (value.accounts.every((account) => account.accountActions.includes(AccountActions.EXPORT_MNEMONIC))) {
+            accountActions.push(AccountActions.EXPORT_MNEMONIC);
+          }
+
+          // Derive
+          if (value.accounts.every((account) => account.accountActions.includes(AccountActions.DERIVE))) {
+            accountActions.push(AccountActions.DERIVE);
+          }
         } else if (value.accounts.length === 1) {
           const account = value.accounts[0];
 
           chainTypes = [account.chainType];
           tokenTypes = account.tokenTypes;
+          accountActions = account.accountActions;
 
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
@@ -478,7 +493,7 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
           }
         }
 
-        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes }];
+        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes, accountActions }];
       })
   );
 
@@ -543,6 +558,7 @@ export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountP
     id: ALL_ACCOUNT_KEY,
     name: 'All',
     accounts: [],
+    accountActions: [],
     accountType: AccountProxyType.ALL_ACCOUNT,
     chainTypes: Array.from(chainTypes),
     tokenTypes: Array.from(tokenTypes),

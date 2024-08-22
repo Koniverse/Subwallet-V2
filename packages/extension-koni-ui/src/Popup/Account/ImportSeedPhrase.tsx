@@ -28,6 +28,7 @@ const FooterIcon = (
 
 const formName = 'import-seed-phrase-form';
 const fieldNamePrefix = 'seed-phrase-';
+const accountNameModalId = ACCOUNT_NAME_MODAL;
 
 interface FormState extends Record<`seed-phrase-${number}`, string> {
   phraseNumber: string;
@@ -165,22 +166,24 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                   icon: CheckCircle,
                   iconWeight: 'fill',
                   onClick: () => {
-                    activeModal(ACCOUNT_NAME_MODAL);
+                    activeModal(accountNameModalId);
                     alertModal.close();
                   },
                   schema: 'primary'
                 }
               });
             } else {
-              activeModal(ACCOUNT_NAME_MODAL);
+              activeModal(accountNameModalId);
             }
           })
             .catch((error: Error): void => {
+              const message = error.message.includes('with this seed') ? t('Have already created account with this seed') : error.message;
+
               setSeedValidationResponse(undefined);
               setSubmitting(false);
               notify({
                 type: 'error',
-                message: error.message
+                message
               });
             });
         })
@@ -215,7 +218,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         setSeedValidationResponse(undefined);
         setAccountCreating(false);
         setSubmitting(false);
-        inactiveModal(ACCOUNT_NAME_MODAL);
+        inactiveModal(accountNameModalId);
       });
   }, [inactiveModal, notify, onComplete, seedValidationResponse]);
 

@@ -310,7 +310,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             onClick: goHome
           }
         ]}
-        title={t<string>('Import from Polkadot.{js}')}
+        title={t<string>('Import from JSON file')}
       >
         <div className={CN('container')}>
           <div className='description'>

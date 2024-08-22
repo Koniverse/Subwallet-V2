@@ -28,6 +28,8 @@ const FooterIcon = (
   />
 );
 
+const accountNameModalId = ACCOUNT_NAME_MODAL;
+
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
   const { t } = useTranslation();
@@ -70,7 +72,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
 
     checkUnlock().then(() => {
-      activeModal(ACCOUNT_NAME_MODAL);
+      activeModal(accountNameModalId);
     }).catch(() => {
       // User cancel unlock
     });
@@ -95,7 +97,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       })
       .finally(() => {
         setLoading(false);
-        inactiveModal(ACCOUNT_NAME_MODAL);
+        inactiveModal(accountNameModalId);
       });
   }, [inactiveModal, notify, onComplete, seedPhrase, selectedMnemonicType]);
 

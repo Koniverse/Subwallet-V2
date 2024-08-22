@@ -32,6 +32,7 @@ export type AccountChainAddress = {
   name: string;
   slug: string;
   address: string;
+  accountType: KeypairType;
 }
 
 export type AccountAddressItemType = {

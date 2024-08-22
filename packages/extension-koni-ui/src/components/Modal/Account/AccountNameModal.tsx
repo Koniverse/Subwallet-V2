@@ -6,27 +6,30 @@ import { AccountProxyTypeTag } from '@subwallet/extension-koni-ui/components';
 import { ACCOUNT_NAME_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, Form, Icon, Input, SwModal } from '@subwallet/react-ui';
+import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
   isLoading?: boolean;
   accountType?: AccountProxyType; // for display account proxy tag
-  onSubmit?: (name: string) => void
+  onSubmit?: (name: string) => void;
+  onCancel?: () => void;
+  closeable?: boolean;
+  modalId?: string;
 };
 
 interface FormProps {
   name: string;
 }
 
-const modalId = ACCOUNT_NAME_MODAL;
-
-const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmit }: Props) => {
+const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmit, onCancel, closeable = false, modalId = ACCOUNT_NAME_MODAL }: Props) => {
   const { t } = useTranslation();
   const [form] = Form.useForm<FormProps>();
+  const { checkActive } = useContext(ModalContext);
+  const isActive = useMemo(() => checkActive(modalId), [checkActive, modalId]);
   const defaultValues = useMemo(() => ({
     name: ''
   }), []);
@@ -47,12 +50,19 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
     onSubmit?.(name);
   }, [onSubmit]);
 
+  useEffect(() => {
+    if (!isActive) {
+      form.resetFields(['name']);
+    }
+  }, [form, isActive]);
+
   return (
     <SwModal
       className={CN(className)}
-      closable={false}
+      closable={closeable}
       id={modalId}
       maskClosable={false}
+      onCancel={onCancel}
       title={t<string>('Account name')}
     >
       <div className={'__brief'}>
@@ -86,7 +96,6 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
               className='__account-name-input'
               disabled={isLoading}
               label={t('Account name')}
-              onBlur={form.submit}
               placeholder={t('Enter the account name')}
             />
           </Form.Item>
