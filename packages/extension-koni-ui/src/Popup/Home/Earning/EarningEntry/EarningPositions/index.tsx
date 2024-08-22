@@ -372,10 +372,6 @@ const EarningPositions = styled(Component)<Props>(({ theme: { token } }: Props) 
   '.ant-sw-sub-header-container': {
     marginBottom: token.marginXS
   },
-  '.__modal-content .info-highlight': {
-    color: token.colorWhite,
-    fontWeight: token.fontWeightStrong
-  },
 
   '.__section-list-container': {
     height: '100%',
