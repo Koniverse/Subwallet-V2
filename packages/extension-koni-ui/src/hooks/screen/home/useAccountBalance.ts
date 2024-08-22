@@ -8,6 +8,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AssetRegistryStore, BalanceStore, ChainStore, PriceStore } from '@subwallet/extension-koni-ui/stores/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
 import { AccountBalanceHookType } from '@subwallet/extension-koni-ui/types/hook';
+import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -139,8 +140,16 @@ function getAccountBalance (
       const balanceItem = balanceMap[address]?.[tokenSlug];
       const decimals = _getAssetDecimals(chainAsset);
 
-      const isTokenBalanceReady = !!balanceItem && (balanceItem.state !== APIItemState.PENDING);
-      const isTokenNotSupport = !!balanceItem && (balanceItem.state === APIItemState.NOT_SUPPORT);
+      let isTokenBalanceReady;
+      let isTokenNotSupport;
+
+      if (isAccountAll(address)) {
+        isTokenNotSupport = false;
+        isTokenBalanceReady = !!balanceItem && (balanceItem.state !== APIItemState.PENDING) && (balanceItem.state !== APIItemState.NOT_SUPPORT);
+      } else {
+        isTokenNotSupport = !!balanceItem && (balanceItem.state === APIItemState.NOT_SUPPORT);
+        isTokenBalanceReady = !!balanceItem && (balanceItem.state !== APIItemState.PENDING);
+      }
 
       tokenGroupNotSupport.push(isTokenNotSupport);
       tokenGroupBalanceReady.push(isTokenBalanceReady);
