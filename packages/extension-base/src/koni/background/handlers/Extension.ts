@@ -1854,7 +1854,7 @@ export default class KoniExtension {
     }
 
     const chainInfoMap = this.#koniState.getChainInfoMap();
-    const isFromSnowBridgeXcm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
+    const isFromSnowBridgeXcm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]); // todo: refactor name to isSnowBridgeEvmTransfer? Reader might misunderstand that this include xcm from polkadot -> eth by only read the name.
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
