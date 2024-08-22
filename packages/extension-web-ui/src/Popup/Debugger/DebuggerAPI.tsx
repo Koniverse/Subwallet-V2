@@ -84,7 +84,7 @@ const API_LIST = [
   // 'pri(derivation.create)',
   // 'pri(derivation.createV2)',
   // 'pri(window.open)',
-  // 'pri(json.account.info)',
+  // 'pri(accounts.json.info)',
   // 'pri(json.restore)',
   // 'pri(json.batchRestore)',
   // 'pri(accounts.json.restoreV2)',

@@ -1,22 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
-import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
-import AvatarGroup from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
-import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
-import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useSelector } from '@subwallet/extension-koni-ui/hooks';
-import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
-import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
-import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnlockChecker';
-import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
-import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { batchRestoreV2, jsonGetAccountInfo, jsonRestoreV2 } from '@subwallet/extension-koni-ui/messaging';
+import { AccountProxy } from '@subwallet/extension-base/types';
+import { AccountProxyAvatarGroup, CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { batchRestoreV2, jsonRestoreV2, parseBatchSingleJson, parseInfoSingleJson } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
-import { findNetworkJsonByGenesisHash, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { isKeyringPairs$Json } from '@subwallet/extension-koni-ui/utils/account/typeGuards';
+import { isKeyringPairs$Json } from '@subwallet/extension-koni-ui/utils';
 import { KeyringPair$Json } from '@subwallet/keyring/types';
 import { Form, Icon, Input, ModalContext, SettingItem, SwList, SwModal, Upload } from '@subwallet/react-ui';
 import { UploadChangeParam, UploadFile } from '@subwallet/react-ui/es/upload/interface';
@@ -28,8 +19,7 @@ import React, { ChangeEventHandler, useCallback, useContext, useEffect, useState
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { hexToU8a, isHex, u8aToHex, u8aToString } from '@polkadot/util';
-import { ethereumEncode, keccakAsU8a, secp256k1Expand } from '@polkadot/util-crypto';
+import { u8aToString } from '@polkadot/util';
 
 type Props = ThemeProps;
 
@@ -74,7 +64,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const onBack = useGoBackFromCreateAccount(IMPORT_ACCOUNT_MODAL);
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   const [form] = Form.useForm();
 
@@ -85,7 +74,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [requirePassword, setRequirePassword] = useState(false);
   const [password, setPassword] = useState('');
   const [jsonFile, setJsonFile] = useState<KeyringPair$Json | KeyringPairs$Json | undefined>(undefined);
-  const [accountsInfo, setAccountsInfo] = useState<ResponseJsonGetAccountInfo[]>([]);
+  const [accountsInfo, setAccountsInfo] = useState<AccountProxy[]>([]);
   const checkUnlock = useUnlockChecker();
 
   const closeModal = useCallback(() => {
@@ -137,50 +126,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           setSubmitValidateState({});
 
           if (isKeyringPairs$Json(json)) {
-            const accounts: ResponseJsonGetAccountInfo[] = json.accounts.map((account) => {
-              const genesisHash: string = account.meta.genesisHash as string;
-
-              let addressPrefix: number | undefined;
-
-              if (account.meta.genesisHash) {
-                addressPrefix = findNetworkJsonByGenesisHash(chainInfoMap, genesisHash)?.substrateInfo?.addressPrefix;
-              }
-
-              let address = account.address;
-
-              if (addressPrefix !== undefined) {
-                address = reformatAddress(account.address, addressPrefix);
-              }
-
-              if (isHex(account.address) && hexToU8a(account.address).length !== 20) {
-                address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
-              }
-
-              return {
-                address: address,
-                genesisHash: account.meta.genesisHash,
-                name: account.meta.name
-              } as ResponseJsonGetAccountInfo;
-            });
-
-            setRequirePassword(true);
-            setAccountsInfo(accounts);
-            setFileValidateState({});
-            setValidating(false);
-          } else {
-            jsonGetAccountInfo(json)
-              .then((accountInfo) => {
-                let address = accountInfo.address;
-
-                if (isHex(accountInfo.address) && hexToU8a(accountInfo.address).length !== 20) {
-                  address = u8aToHex(keccakAsU8a(secp256k1Expand(hexToU8a(accountInfo.address))));
-                }
-
-                accountInfo.address = address;
+            parseBatchSingleJson({
+              json,
+              password: '123123123'
+            })
+              .then(({ accountProxies }) => {
                 setRequirePassword(true);
-                setAccountsInfo([accountInfo]);
+                setAccountsInfo(accountProxies);
                 setFileValidateState({});
-                setValidating(false);
               })
               .catch((e: Error) => {
                 setRequirePassword(false);
@@ -188,6 +141,28 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                   status: 'error',
                   message: e.message
                 });
+              })
+              .finally(() => {
+                setValidating(false);
+              });
+          } else {
+            parseInfoSingleJson({
+              json,
+              password: '123123123'
+            })
+              .then(({ accountProxy }) => {
+                setRequirePassword(true);
+                setAccountsInfo([accountProxy]);
+                setFileValidateState({});
+              })
+              .catch((e: Error) => {
+                setRequirePassword(false);
+                setFileValidateState({
+                  status: 'error',
+                  message: e.message
+                });
+              })
+              .finally(() => {
                 setValidating(false);
               });
           }
@@ -207,7 +182,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         });
         setValidating(false);
       });
-  }, [validating, jsonFile, chainInfoMap, t]);
+  }, [validating, jsonFile, t]);
 
   const onSubmit = useCallback(() => {
     if (!jsonFile) {
@@ -225,11 +200,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         const isMultiple = isKeyringPairs$Json(jsonFile);
 
         (isMultiple
-          ? batchRestoreV2(jsonFile, password, accountsInfo, true)
+          ? batchRestoreV2({
+            file: jsonFile,
+            password,
+            isAllowed: true,
+            proxyIds: undefined
+          })
           : jsonRestoreV2({
             file: jsonFile,
             password: password,
-            address: accountsInfo[0].address,
+            address: accountsInfo[0].id,
             isAllowed: true,
             withMasterPassword: true
           }))
@@ -258,16 +238,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     });
   }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, navigate, onComplete]);
 
-  const renderItem = useCallback((account: ResponseJsonGetAccountInfo): React.ReactNode => {
+  const renderItem = useCallback((account: AccountProxy): React.ReactNode => {
     return (
       <AccountCard
         accountName={account.name}
-        address={account.address}
+        address={account.id}
         addressPreLength={9}
         addressSufLength={9}
         avatarIdentPrefix={42}
         className='account-item'
-        key={account.address}
+        key={account.id}
       />
     );
   }, []);
@@ -343,7 +323,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                       ? (
                         <SettingItem
                           className='account-list-item'
-                          leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
+                          leftItemIcon={<AccountProxyAvatarGroup accountProxies={accountsInfo} />}
                           name={t('Import {{number}} accounts', { replace: { number: String(accountsInfo.length).padStart(2, '0') } })}
                           onPressItem={openModal}
                           rightItem={(
@@ -357,7 +337,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                       : (
                         <SettingItem
                           className='account-list-item'
-                          leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
+                          leftItemIcon={<AccountProxyAvatarGroup accountProxies={accountsInfo} />}
                           name={accountsInfo[0].name}
                         />
                       )

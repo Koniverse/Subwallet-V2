@@ -1,7 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestAccountBatchExportV2, ResponseAccountExportPrivateKey } from '@subwallet/extension-base/background/KoniTypes';
+import { ResponseAccountExportPrivateKey } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestAccountBatchExportV2 } from '@subwallet/extension-base/types';
 import { sendMessage } from '@subwallet/extension-web-ui/messaging';
 import { KeyringPair$Json } from '@subwallet/keyring/types';
 import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';

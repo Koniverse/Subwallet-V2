@@ -1,13 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountExternalError, RequestAccountBatchExportV2, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestBatchRestoreV2, RequestChangeMasterPassword, RequestJsonRestoreV2, RequestMigratePassword, ResponseAccountBatchExportV2, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
-import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
+import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestChangeMasterPassword, RequestMigratePassword, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
-import { AccountProxyMap, CurrentAccountInfo, RequestAccountCreateSuriV2, RequestAccountProxyEdit, RequestAccountProxyForget, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountCreateSuriV2, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountProxyMap, CurrentAccountInfo, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountProxyEdit, RequestAccountProxyForget, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseJsonGetAccountInfo, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
-import { KeyringPair$Json } from '@subwallet/keyring/types';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
 import { AccountDeriveHandler, AccountInjectHandler, AccountJsonHandler, AccountLedgerHandler, AccountMnemonicHandler, AccountModifyHandler, AccountSecretHandler } from './handlers';
@@ -154,16 +152,20 @@ export class AccountContext {
 
   /* JSON */
 
+  public parseInfoSingleJson (request: RequestJsonGetAccountInfo): ResponseJsonGetAccountInfo {
+    return this.jsonHandler.parseInfoSingleJson(request);
+  }
+
   public jsonRestoreV2 (request: RequestJsonRestoreV2): void {
     this.jsonHandler.jsonRestoreV2(request);
   }
 
-  public batchRestoreV2 (request: RequestBatchRestoreV2): void {
-    this.jsonHandler.batchRestoreV2(request);
+  public parseInfoMultiJson (request: RequestBatchJsonGetAccountInfo): ResponseBatchJsonGetAccountInfo {
+    return this.jsonHandler.parseInfoMultiJson(request);
   }
 
-  public jsonGetAccountInfo (json: KeyringPair$Json): ResponseJsonGetAccountInfo {
-    return this.jsonHandler.jsonGetAccountInfo(json);
+  public batchRestoreV2 (request: RequestBatchRestoreV2): void {
+    this.jsonHandler.batchRestoreV2(request);
   }
 
   public batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {

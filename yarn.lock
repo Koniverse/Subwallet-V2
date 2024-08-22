@@ -6451,7 +6451,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.5
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=9b4004&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=c6202a&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@polkadot/util": ^12.2.1
@@ -6470,7 +6470,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: d67582b3b2f32125488f3f4a59635a581d5b18ae53e10c3cf253539ec5e6a3e9a434604faa48f69003ef832b4c4eecc86376960c2e4b7900fc235907382cbee6
+  checksum: 47216f7e390d267da5ab6bda3cc7e5097ba9585c9c4b24eda7729d3461b092e9cea3aca087c6c24cf463be959b20d4c540a33ce86ea485ea5d3fb4a595a04b17
   languageName: node
   linkType: hard
 
@@ -6554,7 +6554,7 @@ __metadata:
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.5
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=9447e0&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=8162e9&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
@@ -6564,7 +6564,7 @@ __metadata:
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: ee4c18439aefa5826f17c507a95014b641354972283de661b583c990d0935ea05ab3ebd7384d8bf398eaacd84a88ffa5d21871cf4d0bbc4f2af53e2b2fdf681b
+  checksum: 555c015e51c25d5cc18805ea6bd3293b2c02d11181128020d6f2525d4f9ffbbd172fd94e216eb9a1b7a367bfa8941f0a6c78cde80247ead3c3550a84490c4826
   languageName: node
   linkType: hard
 

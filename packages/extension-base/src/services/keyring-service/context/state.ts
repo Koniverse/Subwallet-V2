@@ -6,8 +6,8 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
-import { AccountMetadataData, AccountProxyData, AccountProxyMap, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { addLazy, combineAccounts, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
+import { AccountMetadataData, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -94,7 +94,7 @@ export class AccountState {
 
     combineLatest([pairs, modifyPairs, accountGroups, chainInfoMap]).subscribe(([pairs, modifyPairs, accountGroups, chainInfoMap]) => {
       addLazy('combineAccounts', () => {
-        const result = combineAccounts(pairs, modifyPairs, accountGroups, chainInfoMap);
+        const result = combineAccountsWithSubjectInfo(pairs, modifyPairs, accountGroups, chainInfoMap);
 
         this.accountSubject.next(result);
       }, 300, 1800, true);
@@ -135,6 +135,7 @@ export class AccountState {
     const accountProxy = this._accountProxy;
     const currentAccount = this._currentAccount;
     const contacts = this.contactSubject;
+    const modifyPair = this._modifyPair;
 
     return {
       get pairs () {
@@ -151,6 +152,9 @@ export class AccountState {
       },
       get contacts () {
         return contacts.value;
+      },
+      get modifyPair () {
+        return modifyPair.value;
       }
     };
   }
@@ -221,7 +225,7 @@ export class AccountState {
       const accountProxies = this.accountProxies;
       const modifyPairs = this.modifyPairs;
 
-      const data = combineAccounts(pairs, modifyPairs, accountProxies);
+      const data = combineAccountsWithSubjectInfo(pairs, modifyPairs, accountProxies);
       const accounts = Object.keys(data);
       const firstAccount = accounts[0];
 
@@ -299,7 +303,11 @@ export class AccountState {
   /* Account groups */
 
   /* Upsert account group */
-  public upsertAccountProxy (data: AccountProxyData, callback?: () => void) {
+  public upsertAccountProxy (data: AccountProxyStoreData, callback?: () => void) {
+    this._accountProxy.upsertData(data, callback);
+  }
+
+  public upsertAccountProxyByKey (data: AccountProxyData, callback?: () => void) {
     this._accountProxy.upsertByKey(data, callback);
   }
 
