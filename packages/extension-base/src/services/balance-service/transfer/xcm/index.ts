@@ -61,9 +61,9 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
   const chainApi = await substrateApi.isReady;
   const api = chainApi.api;
 
-  const isSpecialCase = ['astar', 'shiden'].includes(originChainInfo.slug) && _isNativeToken(originTokenInfo);
+  const polkadotXcmSpecialCases = _XCM_CHAIN_GROUP.polkadotXcmSpecialCases.includes(originChainInfo.slug) && _isNativeToken(originTokenInfo);
 
-  if (_XCM_CHAIN_GROUP.polkadotXcm.includes(originTokenInfo.originChain) || isSpecialCase) {
+  if (_XCM_CHAIN_GROUP.polkadotXcm.includes(originTokenInfo.originChain) || polkadotXcmSpecialCases) {
     return getExtrinsicByPolkadotXcmPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
   }
 
