@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetOriginChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountProxyType, BuyTokenInfo } from '@subwallet/extension-base/types';
 import { ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import PageWrapper from '@subwallet/extension-koni-ui/components/Layout/PageWrapper';
@@ -25,8 +25,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps;
 
@@ -63,13 +61,10 @@ function Component (): React.ReactElement {
 
   const assetRegistryMap = useSelector((root: RootState) => root.assetRegistry.assetRegistry);
   const multiChainAssetMap = useSelector((state: RootState) => state.assetRegistry.multiChainAssetMap);
-  const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const { tokens } = useSelector((state: RootState) => state.buyService);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
-  const chainInfoMap = useSelector((root) => root.chainStore.chainInfoMap);
   const [, setStorage] = useLocalStorage(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', tokenGroupSlug);
@@ -89,34 +84,17 @@ function Component (): React.ReactElement {
     return result;
   }, [swapPairs]);
 
-  const filterFromAssetInfo = useMemo(() => {
-    const filteredAccounts = accounts.filter((account) => !isAccountAll(account.address));
+  const isEnableSwapButton = useMemo(() => {
+    return Object.keys(fromAndToTokenMap).some((tokenSlug) => {
+      const chainAsset = assetRegistryMap[tokenSlug];
 
-    const isAllEthereum = (filteredAccounts.length > 0 && filteredAccounts.every((account) => isEthereumAddress(account.address))) || (currentAccount && !isAccountAll(currentAccount.address) && isEthereumAddress(currentAccount.address));
-    const isAllNonEthereum = (filteredAccounts.length > 0 && filteredAccounts.every((account) => !isEthereumAddress(account.address))) || (currentAccount && !isAccountAll(currentAccount.address) && !isEthereumAddress(currentAccount.address));
-
-    const filteredAssets = Object.keys(fromAndToTokenMap).map((slug) => assetRegistryMap[slug]);
-
-    const filteredAssetsByChain = filteredAssets.filter((chainAsset) => {
-      const chainInfo = chainInfoMap[chainAsset.originChain];
-
-      if (isAllEthereum && _isChainEvmCompatible(chainInfo)) {
-        return true;
+      if (chainAsset && !allowedChains.includes(_getAssetOriginChain(chainAsset))) {
+        return false;
       }
 
-      if (isAllNonEthereum && !_isChainEvmCompatible(chainInfo)) {
-        return true;
-      }
-
-      return false;
+      return chainAsset.slug === tokenGroupSlug || chainAsset.multiChainAsset === tokenGroupSlug;
     });
-
-    const filteredAssetsList = ((isAllNonEthereum || isAllEthereum) ? filteredAssetsByChain : filteredAssets);
-
-    const filteredAssetsByTokenGroup = filteredAssetsList.filter((chainAsset) => chainAsset.slug === tokenGroupSlug || chainAsset.multiChainAsset === tokenGroupSlug);
-
-    return filteredAssetsByTokenGroup;
-  }, [accounts, assetRegistryMap, chainInfoMap, currentAccount, fromAndToTokenMap, tokenGroupSlug]);
+  }, [allowedChains, assetRegistryMap, fromAndToTokenMap, tokenGroupSlug]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const topBlockRef = useRef<HTMLDivElement>(null);
@@ -340,7 +318,7 @@ function Component (): React.ReactElement {
 
     const isAllLedger = currentAccountProxy.accountType === AccountProxyType.LEDGER || (filteredAccounts.length > 0 && filteredAccounts.every((ap) => ap.accountType === AccountProxyType.LEDGER));
 
-    if ((currentAccount && currentAccount.isHardware) || (isAllLedger)) {
+    if (isAllLedger) {
       notify({
         message: 'The account you are using is Ledger account, you cannot use this feature with it',
         type: 'error',
@@ -356,7 +334,7 @@ function Component (): React.ReactElement {
       defaultSlug: tokenGroupSlug || ''
     });
     navigate('/transaction/swap');
-  }, [accountProxies, currentAccount, currentAccountProxy, navigate, notify, setSwapStorage, t, tokenGroupSlug]);
+  }, [accountProxies, currentAccountProxy, navigate, notify, setSwapStorage, t, tokenGroupSlug]);
 
   useEffect(() => {
     if (currentTokenInfo) {
@@ -401,7 +379,7 @@ function Component (): React.ReactElement {
           className={'__static-block'}
           isShrink={isShrink}
           isSupportBuyTokens={!!buyInfos.length}
-          isSupportSwap={!!filterFromAssetInfo.length}
+          isSupportSwap={isEnableSwapButton}
           onClickBack={goHome}
           onOpenBuyTokens={onOpenBuyTokens}
           onOpenReceive={onOpenReceive}

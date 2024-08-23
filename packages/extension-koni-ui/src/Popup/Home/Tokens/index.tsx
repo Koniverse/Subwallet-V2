@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountProxyType } from '@subwallet/extension-base/types';
 import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
@@ -46,6 +47,27 @@ const Component = (): React.ReactElement => {
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
   const allowedChains = useGetChainSlugsByAccount();
   const buyTokenInfos = useSelector((state: RootState) => state.buyService.tokens);
+  const swapPairs = useSelector((state: RootState) => state.swap.swapPairs);
+
+  const fromAndToTokenMap = useMemo<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {};
+
+    swapPairs.forEach((pair) => {
+      if (!result[pair.from]) {
+        result[pair.from] = [pair.to];
+      } else {
+        result[pair.from].push(pair.to);
+      }
+    });
+
+    return result;
+  }, [swapPairs]);
+
+  const isEnableSwapButton = useMemo(() => {
+    return Object.keys(fromAndToTokenMap).some((tokenSlug) => {
+      return allowedChains.includes(_getOriginChainOfAsset(tokenSlug));
+    });
+  }, [allowedChains, fromAndToTokenMap]);
 
   const handleScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
     const topPosition = event.currentTarget.scrollTop;
@@ -238,6 +260,7 @@ const Component = (): React.ReactElement => {
           isPriceDecrease={isTotalBalanceDecrease}
           isShrink={isShrink}
           isSupportBuyTokens={isSupportBuyTokens}
+          isSupportSwap={isEnableSwapButton}
           onOpenBuyTokens={onOpenBuyTokens}
           onOpenReceive={onOpenReceive}
           onOpenSendFund={onOpenSendFund}
@@ -308,7 +331,7 @@ const WrapperComponent = ({ className = '' }: ThemeProps): React.ReactElement<Pr
     <PageWrapper
       className={`tokens ${className}`}
       hideLoading={true}
-      resolve={dataContext.awaitStores(['price', 'chainStore', 'assetRegistry', 'balance', 'mantaPay'])}
+      resolve={dataContext.awaitStores(['price', 'chainStore', 'assetRegistry', 'balance', 'mantaPay', 'swap'])}
     >
       <Component />
     </PageWrapper>
