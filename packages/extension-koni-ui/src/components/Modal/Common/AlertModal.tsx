@@ -122,6 +122,10 @@ const AlertModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
     '.ant-sw-modal-body': {
       paddingBottom: 0
     },
+    '.__info-highlight': {
+      color: token.colorWhite,
+      fontWeight: token.fontWeightStrong
+    },
 
     '.ant-sw-modal-footer': {
       display: 'flex',
