@@ -103,7 +103,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
         type: NotificationType.WARNING,
         content:
           (<>
-            <div className={'line-1'}>
+            <div className={CN(className, 'earning-info-wrapper')}>
               <span>{t(`Nomination pool members will soon be allowed to vote on ${originChain} OpenGov. Following this update, accounts that are`)}&nbsp;</span>
               <span className={'__info-highlight'}>{t('dual staking via direct nomination (solo staking) and nomination pool')}&nbsp;</span>
               <span>will not be able to use pool-staked funds for voting.</span>
@@ -387,6 +387,13 @@ const EarningPositions = styled(Component)<Props>(({ theme: { token } }: Props) 
   '.__section-list-container': {
     height: '100%',
     flex: 1
+  },
+
+  '&.earning-info-wrapper': {
+    '.__info-highlight': {
+      color: token.colorWhite,
+      fontWeight: token.fontWeightStrong
+    }
   },
 
   '.__footer-button': {
