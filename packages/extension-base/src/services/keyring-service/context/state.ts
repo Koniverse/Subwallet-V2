@@ -252,7 +252,8 @@ export class AccountState {
       try {
         const pair = keyring.getPair(address);
 
-        if (pair) {
+        // ignore testing accounts
+        if (pair && !pair.meta.isTesting) {
           const address = pair.address;
           const belongsTo = this.belongUnifiedAccount(address);
 

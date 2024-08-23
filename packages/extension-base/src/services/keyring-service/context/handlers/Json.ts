@@ -39,9 +39,6 @@ export class AccountJsonHandler extends AccountBaseHandler {
       isHex(json.encoded) ? hexToU8a(json.encoded) : base64Decode(json.encoded),
       encType
     );
-    const exists = this.state.checkAddressExists([pair.address]);
-
-    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || pair.address } }));
 
     // unlock then lock (locking cleans secretKey, so needs to be last)
     try {
@@ -92,6 +89,11 @@ export class AccountJsonHandler extends AccountBaseHandler {
 
     if (isPasswordValidated) {
       try {
+        const pair = keyring.createFromJson(file);
+        const exists = this.state.checkAddressExists([pair.address]);
+
+        assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || pair.address } }));
+
         keyring.restoreAccount(file, password, withMasterPassword);
 
         this.state.saveCurrentAccountProxyId(address, () => {
@@ -147,6 +149,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const pairs = jsons.map((pair) => keyring.createFromJson(pair));
         const accountProxyMap = combineAccountsWithKeyPair(pairs, modifyPairs, accountProxies);
         const rawProxyIds = _proxyIds && _proxyIds.length ? _proxyIds : Object.keys(accountProxyMap);
+        let _exists: { address: string; name: string; } | undefined;
 
         const filteredAccountProxies = Object.fromEntries(Object.entries(accountProxyMap)
           .filter(([key, value]) => {
@@ -157,12 +160,22 @@ export class AccountJsonHandler extends AccountBaseHandler {
             const addresses = value.accounts.map((account) => account.address);
             const exists = this.state.checkAddressExists(addresses);
 
+            _exists = exists;
+
             return !exists;
           })
         );
 
         const addresses = Object.values(filteredAccountProxies).flatMap((proxy) => proxy.accounts.map((account) => account.address));
         const proxyIds = Object.values(filteredAccountProxies).flatMap((proxy) => proxy.id);
+
+        if (!addresses.length) {
+          if (_exists) {
+            throw new Error(t('Account already exists account: {{name}}', { replace: { name: _exists.name || _exists.address || '' } }));
+          } else {
+            throw new Error(t('No accounts found to import'));
+          }
+        }
 
         const _accountProxies = this.state.value.accountProxy;
         const _modifyPairs = this.state.value.modifyPair;
