@@ -92,12 +92,15 @@ export class AccountState {
       this.beforeAccount = { ...subjectInfo };
     });
 
+    let fireOnFirst = true;
+
     combineLatest([pairs, modifyPairs, accountGroups, chainInfoMap]).subscribe(([pairs, modifyPairs, accountGroups, chainInfoMap]) => {
       addLazy('combineAccounts', () => {
         const result = combineAccountsWithSubjectInfo(pairs, modifyPairs, accountGroups, chainInfoMap);
 
+        fireOnFirst = false;
         this.accountSubject.next(result);
-      }, 300, 1800, true);
+      }, 300, 1800, fireOnFirst);
     });
   }
 
