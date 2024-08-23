@@ -106,7 +106,16 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
             accountTitle = t('Ledger - Substrate account');
             block = !account.isGeneric;
           } else {
-            const ledgerNetwork = PredefinedLedgerNetwork.find((network) => network.genesisHash === account.genesisHash);
+            // In the defined list, there are Ethereum, Polkadot Generic, and Polkadot Migration,
+            // these three Ledger apps have the same origin genesis hash.
+            // Therefore, the EVM account case should be separated to find the correct app.
+            const ledgerNetwork = PredefinedLedgerNetwork.find((network) => {
+              if (isEthereumAccount) {
+                return network.slug === 'ethereum';
+              } else {
+                return network.genesisHash === account.genesisHash;
+              }
+            });
             const networkName = ledgerNetwork?.accountName || 'Unknown';
             const slug = ledgerNetwork?.slug || '';
 
