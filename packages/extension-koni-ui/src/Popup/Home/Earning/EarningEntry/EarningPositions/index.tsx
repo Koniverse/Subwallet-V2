@@ -13,9 +13,9 @@ import { isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/uti
 import { Button, ButtonProps, Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
-import {ArrowsClockwise, FadersHorizontal, Plus, PlusCircle, Vault} from 'phosphor-react';
-import React, {SyntheticEvent, useCallback, useContext, useEffect, useMemo} from 'react';
-import {useNavigate} from 'react-router-dom';
+import { ArrowsClockwise, FadersHorizontal, Plus, PlusCircle, Vault } from 'phosphor-react';
+import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
@@ -73,13 +73,19 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
       });
   }, [assetInfoMap, currencyData, earningPositions, priceMap]);
 
-  const isStakingInBoth = useMemo(() => {
+  const stakingInBoth = useMemo(() => {
     const hasNativeStaking = (chain: string) => items.some((item) => item.chain === chain && item.type === YieldPoolType.NATIVE_STAKING);
     const hasNominationPool = (chain: string) => items.some((item) => item.chain === chain && item.type === YieldPoolType.NOMINATION_POOL);
 
     const chains = ['polkadot', 'kusama'];
 
-    return chains.some((chain) => hasNativeStaking(chain) && hasNominationPool(chain));
+    for (const chain of chains) {
+      if (hasNativeStaking(chain) && hasNominationPool(chain)) {
+        return { status: true, chain };
+      }
+    }
+
+    return { status: false, chain: null };
   }, [items]);
 
   const learnMore = useCallback(() => {
@@ -87,17 +93,22 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   }, []);
 
   useEffect(() => {
-    if (isStakingInBoth && announcement.includes('nonConfirmed')) {
+    if (stakingInBoth.status && announcement.includes('nonConfirmed')) {
+      const chainInfo = stakingInBoth?.chain && chainInfoMap[stakingInBoth?.chain];
+
+      const symbol = (!!chainInfo && chainInfo?.substrateInfo?.symbol) || '';
+      const originChain = (!!chainInfo && chainInfo?.name) || '';
+
       openAlert({
         type: NotificationType.WARNING,
         content:
           (<>
             <div className={'line-1'}>
-              <span>Nomination pool members will soon be allowed to vote on Polkadot OpenGov. Following this update, accounts that are &nbsp;</span>
-              <span className={'__info-highlight'}>dual staking via direct nomination (solo staking) and nomination pool &nbsp;</span>
+              <span>{t(`Nomination pool members will soon be allowed to vote on ${originChain} OpenGov. Following this update, accounts that are`)}&nbsp;</span>
+              <span className={'__info-highlight'}>{t('dual staking via direct nomination (solo staking) and nomination pool')}&nbsp;</span>
               <span>will not be able to use pool-staked funds for voting.</span>
             </div>
-            {t('To avoid future complications, unstake your DOT from ')}
+            {t(`To avoid future complications, unstake your ${symbol} from `)}
             &nbsp;<a
               href={'https://docs.subwallet.app/main/extension-user-guide/manage-staking/nominate-for-validator/unstake'}
               rel='noreferrer'
@@ -111,7 +122,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
               target={'_blank'}
             >nomination pool</a>.
           </>),
-        title: t('Unstake your DOT now!'),
+        title: t(`Unstake your ${symbol} now!`),
         okButton: {
           text: t('Read update'),
           onClick: () => {
@@ -126,7 +137,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
       });
       setAnnouncement('confirmed');
     }
-  }, [announcement, closeAlert, isStakingInBoth, learnMore, openAlert, setAnnouncement, t]);
+  }, [announcement, chainInfoMap, closeAlert, learnMore, openAlert, setAnnouncement, stakingInBoth?.chain, stakingInBoth.status, t]);
 
   const lastItem = useMemo(() => {
     return items[items.length - 1];
