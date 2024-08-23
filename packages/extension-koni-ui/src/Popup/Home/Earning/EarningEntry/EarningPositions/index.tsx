@@ -73,7 +73,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
       });
   }, [assetInfoMap, currencyData, earningPositions, priceMap]);
 
-  const stakingInBoth = useMemo(() => {
+  const chainStakingBoth = useMemo(() => {
     const hasNativeStaking = (chain: string) => items.some((item) => item.chain === chain && item.type === YieldPoolType.NATIVE_STAKING);
     const hasNominationPool = (chain: string) => items.some((item) => item.chain === chain && item.type === YieldPoolType.NOMINATION_POOL);
 
@@ -81,11 +81,11 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
 
     for (const chain of chains) {
       if (hasNativeStaking(chain) && hasNominationPool(chain)) {
-        return { status: true, chain };
+        return chain;
       }
     }
 
-    return { status: false, chain: null };
+    return null;
   }, [items]);
 
   const learnMore = useCallback(() => {
@@ -93,8 +93,8 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   }, []);
 
   useEffect(() => {
-    if (stakingInBoth.status && announcement.includes('nonConfirmed')) {
-      const chainInfo = stakingInBoth?.chain && chainInfoMap[stakingInBoth?.chain];
+    if (chainStakingBoth && announcement.includes('nonConfirmed')) {
+      const chainInfo = chainStakingBoth && chainInfoMap[chainStakingBoth];
 
       const symbol = (!!chainInfo && chainInfo?.substrateInfo?.symbol) || '';
       const originChain = (!!chainInfo && chainInfo?.name) || '';
@@ -103,7 +103,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
         type: NotificationType.WARNING,
         content:
           (<>
-            <div className={CN(className, 'earning-info-wrapper')}>
+            <div className={CN(className, 'earning-alert-content')}>
               <span>{t(`Nomination pool members will soon be allowed to vote on ${originChain} OpenGov. Following this update, accounts that are`)}&nbsp;</span>
               <span className={'__info-highlight'}>{t('dual staking via direct nomination (solo staking) and nomination pool')}&nbsp;</span>
               <span>will not be able to use pool-staked funds for voting.</span>
@@ -137,7 +137,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
       });
       setAnnouncement('confirmed');
     }
-  }, [announcement, chainInfoMap, closeAlert, learnMore, openAlert, setAnnouncement, stakingInBoth?.chain, stakingInBoth.status, t]);
+  }, [announcement, chainInfoMap, chainStakingBoth, className, closeAlert, learnMore, openAlert, setAnnouncement, t]);
 
   const lastItem = useMemo(() => {
     return items[items.length - 1];
@@ -389,7 +389,7 @@ const EarningPositions = styled(Component)<Props>(({ theme: { token } }: Props) 
     flex: 1
   },
 
-  '&.earning-info-wrapper': {
+  '&.earning-alert-content': {
     '.__info-highlight': {
       color: token.colorWhite,
       fontWeight: token.fontWeightStrong
