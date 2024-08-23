@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountProxyType, BuyTokenInfo } from '@subwallet/extension-base/types';
 import { ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import PageWrapper from '@subwallet/extension-koni-ui/components/Layout/PageWrapper';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
@@ -10,13 +10,13 @@ import { TokenBalanceDetailItem } from '@subwallet/extension-koni-ui/components/
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useCoreReceiveModalHelper, useDefaultNavigate, useGetBannerByScreen, useNavigateOnChangeAccount, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useCoreReceiveModalHelper, useDefaultNavigate, useGetBannerByScreen, useGetChainSlugsByAccount, useNavigateOnChangeAccount, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { DetailModal } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/DetailModal';
 import { DetailUpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/DetailUpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { BuyTokenInfo, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { getAccountType, getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';
 import { SwNumberProps } from '@subwallet/react-ui/es/number';
 import classNames from 'classnames';
@@ -73,6 +73,7 @@ function Component (): React.ReactElement {
   const [, setStorage] = useLocalStorage(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', tokenGroupSlug);
+  const allowedChains = useGetChainSlugsByAccount();
 
   const fromAndToTokenMap = useMemo<Record<string, string[]>>(() => {
     const result: Record<string, string[]> = {};
@@ -143,26 +144,16 @@ function Component (): React.ReactElement {
     const slugs = tokenGroupMap[slug] ? tokenGroupMap[slug] : [slug];
     const result: BuyTokenInfo[] = [];
 
-    for (const [slug, buyInfo] of Object.entries(tokens)) {
-      if (slugs.includes(slug)) {
-        const supportType = buyInfo.support;
-
-        if (isAccountAll(currentAccount?.address || '')) {
-          const support = accounts.some((account) => supportType === getAccountType(account.address));
-
-          if (support) {
-            result.push(buyInfo);
-          }
-        } else {
-          if (currentAccount?.address && (supportType === getAccountType(currentAccount?.address))) {
-            result.push(buyInfo);
-          }
-        }
+    Object.values(tokens).forEach((item) => {
+      if (!allowedChains.includes(item.network) || !slugs.includes(slug)) {
+        return;
       }
-    }
+
+      result.push(item);
+    });
 
     return result;
-  }, [accounts, currentAccount?.address, tokenGroupMap, tokenGroupSlug, tokens]);
+  }, [allowedChains, tokenGroupMap, tokenGroupSlug, tokens]);
 
   const tokenBalanceValue = useMemo<SwNumberProps['value']>(() => {
     if (tokenGroupSlug) {
