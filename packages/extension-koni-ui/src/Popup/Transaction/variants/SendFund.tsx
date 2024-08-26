@@ -58,16 +58,14 @@ function getTokenItems (
       return;
     }
 
-    if (!(chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
-      return;
+    if (!tokenGroupSlug || !(chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
+      items.push({
+        slug: chainAsset.slug,
+        name: _getAssetName(chainAsset),
+        symbol: _getAssetSymbol(chainAsset),
+        originChain
+      });
     }
-
-    items.push({
-      slug: chainAsset.slug,
-      name: _getAssetName(chainAsset),
-      symbol: _getAssetSymbol(chainAsset),
-      originChain
-    });
   });
 
   return items;

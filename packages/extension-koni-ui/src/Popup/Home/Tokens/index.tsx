@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountProxyType } from '@subwallet/extension-base/types';
 import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useCoreReceiveModalHelper, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
+import { useCoreReceiveModalHelper, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
@@ -44,6 +45,29 @@ const Component = (): React.ReactElement => {
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
   const [, setStorage] = useLocalStorage<TransferParams>(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
+  const allowedChains = useGetChainSlugsByAccount();
+  const buyTokenInfos = useSelector((state: RootState) => state.buyService.tokens);
+  const swapPairs = useSelector((state: RootState) => state.swap.swapPairs);
+
+  const fromAndToTokenMap = useMemo<Record<string, string[]>>(() => {
+    const result: Record<string, string[]> = {};
+
+    swapPairs.forEach((pair) => {
+      if (!result[pair.from]) {
+        result[pair.from] = [pair.to];
+      } else {
+        result[pair.from].push(pair.to);
+      }
+    });
+
+    return result;
+  }, [swapPairs]);
+
+  const isEnableSwapButton = useMemo(() => {
+    return Object.keys(fromAndToTokenMap).some((tokenSlug) => {
+      return allowedChains.includes(_getOriginChainOfAsset(tokenSlug));
+    });
+  }, [allowedChains, fromAndToTokenMap]);
 
   const handleScroll = useCallback((event: React.UIEvent<HTMLElement>) => {
     const topPosition = event.currentTarget.scrollTop;
@@ -118,6 +142,10 @@ const Component = (): React.ReactElement => {
   }, []);
 
   const isTotalBalanceDecrease = totalBalanceInfo.change.status === 'decrease';
+
+  const isSupportBuyTokens = useMemo(() => {
+    return Object.values(buyTokenInfos).some((item) => allowedChains.includes(item.network));
+  }, [allowedChains, buyTokenInfos]);
 
   const onClickItem = useCallback((item: TokenBalanceItemType) => {
     return () => {
@@ -231,6 +259,8 @@ const Component = (): React.ReactElement => {
         <UpperBlock
           isPriceDecrease={isTotalBalanceDecrease}
           isShrink={isShrink}
+          isSupportBuyTokens={isSupportBuyTokens}
+          isSupportSwap={isEnableSwapButton}
           onOpenBuyTokens={onOpenBuyTokens}
           onOpenReceive={onOpenReceive}
           onOpenSendFund={onOpenSendFund}
@@ -301,7 +331,7 @@ const WrapperComponent = ({ className = '' }: ThemeProps): React.ReactElement<Pr
     <PageWrapper
       className={`tokens ${className}`}
       hideLoading={true}
-      resolve={dataContext.awaitStores(['price', 'chainStore', 'assetRegistry', 'balance', 'mantaPay'])}
+      resolve={dataContext.awaitStores(['price', 'chainStore', 'assetRegistry', 'balance', 'mantaPay', 'swap'])}
     >
       <Component />
     </PageWrapper>
