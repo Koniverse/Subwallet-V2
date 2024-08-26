@@ -719,6 +719,16 @@ const History = styled(Component)<Props>(({ theme: { token } }: Props) => {
       '.__history-address-selector': {
         '.__selected-item-address': {
           display: 'none'
+        },
+
+        '.ant-field-container:before': {
+          display: 'none'
+        },
+
+        '.ant-field-wrapper': {
+          minHeight: 40,
+          paddingTop: 0,
+          paddingBottom: 0
         }
       }
     },
