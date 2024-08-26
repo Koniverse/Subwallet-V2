@@ -13,8 +13,9 @@ import { MODE_CAN_SIGN } from '@subwallet/extension-koni-ui/constants/signing';
 import { AccountAddressType, AccountSignMode, AccountType } from '@subwallet/extension-koni-ui/types';
 import { getNetworkKeyByGenesisHash } from '@subwallet/extension-koni-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { AccountInfoByNetwork } from '@subwallet/extension-koni-ui/utils/types';
+import { isAddress } from '@subwallet/keyring';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { decodeAddress, encodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
 
 import { isChainInfoAccordantAccountChainType } from '../chain';
@@ -48,7 +49,7 @@ export const findAccountByAddress = (accounts: AccountJson[], address?: string):
       return null;
     }
 
-    const originAddress = isAccountAll(address) ? address : isEthereumAddress(address) ? address : encodeAddress(decodeAddress(address));
+    const originAddress = isAccountAll(address) ? address : reformatAddress(address);
     const result = accounts.find((account) => account.address.toLowerCase() === originAddress.toLowerCase());
 
     return result || null;

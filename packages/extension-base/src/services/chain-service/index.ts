@@ -1825,7 +1825,7 @@ export class ChainService {
     this.evmChainHandler.recoverApi(slug).catch(console.error);
   }
 
-  public refreshTonApi (slug: string) { // alibaba
+  public refreshTonApi (slug: string) {
     this.tonChainHandler.recoverApi(slug).catch(console.error);
   }
 

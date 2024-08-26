@@ -122,6 +122,14 @@ export function _checkSmartContractSupportByChain (chainInfo: _ChainInfo, contra
   return (chainInfo.substrateInfo.supportSmartContract !== null && chainInfo.substrateInfo.supportSmartContract.includes(contractType));
 }
 
+export function _isJettonToken (tokenInfo: _ChainAsset) {
+  return tokenInfo.assetType === _AssetType.TEP74 && !!tokenInfo.metadata?.contractAddress;
+}
+
+export function _isTokenTransferredByTon (tokenInfo: _ChainAsset) {
+  return _isJettonToken(tokenInfo) || _isNativeToken(tokenInfo);
+}
+
 // Utils for balance functions
 export function _getTokenOnChainAssetId (tokenInfo: _ChainAsset): string {
   return tokenInfo.metadata?.assetId as string || '-1';
@@ -281,15 +289,20 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
     };
   }
 
-  if (chainInfo.substrateInfo !== null) { // substrate by default
+  if (chainInfo.substrateInfo) { // substrate by default
     return {
       symbol: chainInfo.substrateInfo.symbol,
       decimals: chainInfo.substrateInfo.decimals
     };
-  } else if (chainInfo.evmInfo !== null) {
+  } else if (chainInfo.evmInfo) {
     return {
       symbol: chainInfo.evmInfo.symbol,
       decimals: chainInfo.evmInfo.decimals
+    };
+  } else if (chainInfo.tonInfo) {
+    return {
+      symbol: chainInfo.tonInfo.symbol,
+      decimals: chainInfo.tonInfo.decimals
     };
   }
 
@@ -313,6 +326,10 @@ export function _isLocalToken (tokenInfo: _ChainAsset) {
 
 export function _isTokenEvmSmartContract (tokenInfo: _ChainAsset) {
   return [_AssetType.ERC721, _AssetType.ERC20].includes(tokenInfo.assetType);
+}
+
+export function _isTokenTonSmartContract (tokenInfo: _ChainAsset) {
+  return [_AssetType.TEP74].includes(tokenInfo.assetType); // add TEP-62 when supporting
 }
 
 export function _isTokenWasmSmartContract (tokenInfo: _ChainAsset) {
