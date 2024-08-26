@@ -13,14 +13,15 @@ export default function useConfirmModal (props: Partial<SwModalFuncProps>) {
   const confirmationModalId = props.id || CONFIRMATION_MODAL_ID;
   const { isWebUI } = useContext(ScreenContext);
 
-  const handleSimpleConfirmModal = useCallback(() => new Promise<void>((resolve, reject) => {
+  const handleSimpleConfirmModal = useCallback((_props?: Partial<SwModalFuncProps>) => new Promise<void>((resolve, reject) => {
     addConfirmModal({
       ...props,
+      ..._props,
       id: confirmationModalId,
       width: props.width || !isWebUI ? '100%' : undefined,
       className: CN('general-modal', {
         '-mobile': !isWebUI
-      }),
+      }, props.className, _props?.className),
       onCancel: () => {
         // eslint-disable-next-line prefer-promise-reject-errors
         reject();

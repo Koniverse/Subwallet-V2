@@ -24,7 +24,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-web-ui/reducer';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-web-ui/types';
-import { findAccountByAddress, formatBalance, noop, reformatAddress, transactionDefaultFilterAccount } from '@subwallet/extension-web-ui/utils';
+import { findAccountByAddress, formatBalance, ledgerMustCheckNetwork, noop, reformatAddress, transactionDefaultFilterAccount } from '@subwallet/extension-web-ui/utils';
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
@@ -248,7 +248,7 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
   const assetInfo = useFetchChainAssetInfo(asset);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStatusMap } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const { assetRegistry, assetSettingMap, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
@@ -389,10 +389,16 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
 
         return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
       }
+
+      const ledgerCheck = ledgerMustCheckNetwork(account);
+
+      if (ledgerCheck !== 'unnecessary' && !ledgerGenericAllowNetworks.includes(destChainInfo.slug)) {
+        return Promise.reject(t('Ledger {{ledgerApp}} address is not supported for this transfer', { replace: { ledgerApp: ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration' } }));
+      }
     }
 
     return Promise.resolve();
-  }, [accounts, chainInfoMap, form, t]);
+  }, [accounts, chainInfoMap, form, ledgerGenericAllowNetworks, t]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {

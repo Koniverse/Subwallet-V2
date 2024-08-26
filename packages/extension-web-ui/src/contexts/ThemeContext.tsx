@@ -261,6 +261,20 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
       }
     },
 
+    '.ledger-warning-modal': {
+      '.ant-sw-modal-confirm-btns': {
+        flexDirection: 'row',
+
+        button: {
+          flex: 1,
+
+          '.anticon': {
+            display: 'none'
+          }
+        }
+      }
+    },
+
     '.ant-sw-header-left-part + .ant-sw-header-center-part .ant-sw-sub-header-title': {
       display: 'block',
       textAlign: 'center'

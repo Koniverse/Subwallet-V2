@@ -59,6 +59,10 @@ export const EXPORT_ACCOUNTS_PASSWORD_MODAL = 'export-accounts-password-modal';
 
 /* Extension  */
 
+/* Ledger */
+export const WARNING_LEDGER_RECEIVE_MODAL = 'warning-ledger-receive-modal';
+/* Ledger */
+
 /* Earning */
 
 export const STAKING_PROCESS_MODAL = 'staking-process-modal';
