@@ -80,8 +80,6 @@ export interface RequestAccountCreateSuriV2 {
   isAllowed: boolean;
 }
 
-// Copyright 2019-2022 @subwallet/extension-base authors & contributors
-// SPDX-License-Identifier: Apache-2.0
 /**
  * @typedef {Record<KeypairType, string>} ResponseAccountCreateSuriV2
  * @description Represents the response for creating an account from a mnemonic phrase.

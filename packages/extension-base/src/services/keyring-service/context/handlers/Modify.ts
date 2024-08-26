@@ -102,7 +102,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
       const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
 
       accountProxy.name = name;
-      this.state.upsertAccountProxy(accountProxy);
+      this.state.upsertAccountProxyByKey(accountProxy);
 
       for (const address of addresses) {
         const pair = keyring.getPair(address);

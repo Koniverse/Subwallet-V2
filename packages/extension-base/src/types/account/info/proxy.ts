@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _AssetType } from '@subwallet/chain-list/types';
+import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 
 import { AccountActions, AccountChainType, AccountJson } from './keyring';
 
@@ -73,3 +74,8 @@ export interface ModifyPairData {
 }
 
 export type ModifyPairStoreData = Record<string, ModifyPairData>;
+
+export interface KeyringPairs$JsonV2 extends KeyringPairs$Json {
+  modifyPairs?: ModifyPairStoreData;
+  accountProxies?: AccountProxyStoreData;
+}

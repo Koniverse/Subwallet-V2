@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountExternalError, AccountExternalErrorCode, RequestAccountCreateExternalV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey } from '@subwallet/extension-base/background/KoniTypes';
-import { RequestCheckPublicAndSecretKey, RequestPrivateKeyValidateV2, ResponseCheckPublicAndSecretKey, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountChainType, RequestCheckPublicAndSecretKey, RequestPrivateKeyValidateV2, ResponseCheckPublicAndSecretKey, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress } from '@subwallet/keyring';
 import { decodePair } from '@subwallet/keyring/pair/decode';
 import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
@@ -74,20 +74,38 @@ export class AccountSecretHandler extends AccountBaseHandler {
   }
 
   /* Import ethereum account with the private key  */
-  private _checkValidatePrivateKey ({ privateKey }: RequestPrivateKeyValidateV2, autoAddPrefix = false): ResponsePrivateKeyValidateV2 {
+  private _checkValidatePrivateKey ({ chainType, privateKey }: RequestPrivateKeyValidateV2, autoAddPrefix = false): ResponsePrivateKeyValidateV2 {
     const { phrase } = keyExtractSuri(privateKey);
     const rs = { autoAddPrefix: autoAddPrefix, addressMap: {} } as ResponsePrivateKeyValidateV2;
-    const types: KeypairType[] = ['ethereum'];
+    const types: KeypairType[] = [];
+
+    if (chainType) {
+      switch (chainType) {
+        case AccountChainType.ETHEREUM:
+          types.push('ethereum');
+          break;
+        case AccountChainType.TON:
+          types.push('ton');
+          break;
+      }
+    } else {
+      if (isHex(phrase, 256)) {
+        types.push('ethereum');
+      } else if (isHex(phrase, 512)) {
+        types.push('ton');
+      }
+    }
 
     types.forEach((type) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       rs.addressMap[type] = '';
     });
 
-    if (isHex(phrase) && isHex(phrase, 256)) {
+    if (types.length) {
       types && types.forEach((type) => {
         rs.addressMap[type] = keyring.createFromUri(privateKey, {}, type).address;
       });
+      rs.keyTypes = types;
     } else {
       rs.autoAddPrefix = false;
       assert(false, t('Invalid private key. Please try again.'));
@@ -100,14 +118,10 @@ export class AccountSecretHandler extends AccountBaseHandler {
     return rs;
   }
 
-  public metamaskPrivateKeyValidateV2 ({ privateKey }: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
+  public privateKeyValidateV2 ({ chainType, privateKey }: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
     const isHex = privateKey.startsWith('0x');
 
-    if (isHex) {
-      return this._checkValidatePrivateKey({ privateKey });
-    } else {
-      return this._checkValidatePrivateKey({ privateKey: `0x${privateKey}` }, true);
-    }
+    return this._checkValidatePrivateKey({ chainType, privateKey }, !isHex);
   }
 
   public async accountsCreateWithSecret (request: RequestAccountCreateWithSecretKey): Promise<ResponseAccountCreateWithSecretKey> {

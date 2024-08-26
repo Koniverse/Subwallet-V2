@@ -239,7 +239,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const proxyId = createAccountProxyId(parentProxyId, suri);
     const pairs: KeyringPair[] = [];
 
-    this.state.upsertAccountProxy({ id: proxyId, name, parentId: parentProxyId, suri: suri });
+    this.state.upsertAccountProxyByKey({ id: proxyId, name, parentId: parentProxyId, suri: suri });
 
     for (const parentAddress of addresses) {
       const parentPair = keyring.getPair(parentAddress);

@@ -9,7 +9,6 @@ import type { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import type { JsonRpcResponse } from '@polkadot/rpc-provider/types';
 import type { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import type { HexString } from '@polkadot/util/types';
-import type { KeypairType } from '@polkadot/util-crypto/types';
 
 import { KoniRequestSignatures, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson } from '@subwallet/extension-base/types';
@@ -96,7 +95,6 @@ export interface RequestSignatures extends KoniRequestSignatures {
   'pri(derivation.validate)': [RequestDeriveValidate, ResponseDeriveValidate];
   'pri(json.batchRestore)': [RequestBatchRestore, void];
   'pri(json.validate.password)': [];
-  'pri(json.account.info)': [KeyringPair$Json, ResponseJsonGetAccountInfo];
   'pri(metadata.approve)': [RequestMetadataApprove, boolean];
   'pri(metadata.get)': [string | null, MetadataDef | null];
   'pri(metadata.reject)': [RequestMetadataReject, boolean];
@@ -389,13 +387,6 @@ export type WindowOpenParams = {
   allowedPath: AllowedPath;
   subPath?: string;
   params?: Record<string, string>;
-}
-
-export interface ResponseJsonGetAccountInfo {
-  address: string;
-  name: string;
-  genesisHash: string;
-  type: KeypairType;
 }
 
 export interface ResponseAuthorizeList {

@@ -1,35 +1,25 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
-import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
-import AvatarGroup from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
-import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
-import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useSelector } from '@subwallet/extension-koni-ui/hooks';
-import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
-import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
-import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnlockChecker';
-import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
-import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { batchRestoreV2, jsonGetAccountInfo, jsonRestoreV2 } from '@subwallet/extension-koni-ui/messaging';
+import { AccountProxy } from '@subwallet/extension-base/types';
+import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { batchRestoreV2, jsonRestoreV2, parseBatchSingleJson, parseInfoSingleJson } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
-import { findNetworkJsonByGenesisHash, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { isKeyringPairs$Json } from '@subwallet/extension-koni-ui/utils/account/typeGuards';
+import { isKeyringPairs$Json, isValidJsonFile } from '@subwallet/extension-koni-ui/utils';
 import { KeyringPair$Json } from '@subwallet/keyring/types';
-import { Form, Icon, Input, ModalContext, SettingItem, SwList, SwModal, Upload } from '@subwallet/react-ui';
+import { Form, Icon, Input, SwList, Upload } from '@subwallet/react-ui';
 import { UploadChangeParam, UploadFile } from '@subwallet/react-ui/es/upload/interface';
 import AccountCard from '@subwallet/react-ui/es/web3-block/account-card';
 import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import CN from 'classnames';
-import { DotsThree, FileArrowDown } from 'phosphor-react';
-import React, { ChangeEventHandler, useCallback, useContext, useEffect, useState } from 'react';
+import { FileArrowDown } from 'phosphor-react';
+import React, { ChangeEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { hexToU8a, isHex, u8aToHex, u8aToString } from '@polkadot/util';
-import { ethereumEncode, keccakAsU8a, secp256k1Expand } from '@polkadot/util-crypto';
+import { u8aToString } from '@polkadot/util';
 
 type Props = ThemeProps;
 
@@ -39,8 +29,6 @@ const FooterIcon = (
     weight='fill'
   />
 );
-
-const modalId = 'account-json-modal';
 
 const formName = 'restore-json-file-form';
 const passwordField = 'password';
@@ -73,131 +61,45 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const navigate = useNavigate();
   const onBack = useGoBackFromCreateAccount(IMPORT_ACCOUNT_MODAL);
   const { goHome } = useDefaultNavigate();
-  const { activeModal, inactiveModal } = useContext(ModalContext);
-  const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   const [form] = Form.useForm();
 
-  const [fileValidateState, setFileValidateState] = useState<ValidateState>({});
-  const [submitValidateState, setSubmitValidateState] = useState<ValidateState>({});
-  const [validating, setValidating] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [requirePassword, setRequirePassword] = useState(false);
-  const [password, setPassword] = useState('');
-  const [jsonFile, setJsonFile] = useState<KeyringPair$Json | KeyringPairs$Json | undefined>(undefined);
-  const [accountsInfo, setAccountsInfo] = useState<ResponseJsonGetAccountInfo[]>([]);
   const checkUnlock = useUnlockChecker();
 
-  const closeModal = useCallback(() => {
-    inactiveModal(modalId);
-  }, [inactiveModal]);
+  const [fileValidateState, setFileValidateState] = useState<ValidateState>({});
+  const [passwordValidateState, setPasswordValidateState] = useState<ValidateState>({});
+  const [fileValidating, setFileValidating] = useState(false);
+  const [passwordValidating, setPasswordValidating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [password, setPassword] = useState('');
+  const [jsonFile, setJsonFile] = useState<KeyringPair$Json | KeyringPairs$Json | undefined>(undefined);
 
-  const openModal = useCallback(() => {
-    activeModal(modalId);
-  }, [activeModal]);
+  const requirePassword = useMemo<boolean>(() => (!fileValidating && !!jsonFile && !fileValidateState?.status && passwordValidateState?.status !== 'success'), [fileValidateState?.status, jsonFile, passwordValidateState?.status, fileValidating]);
 
-  const onChange = useCallback((info: UploadChangeParam<UploadFile<unknown>>) => {
-    if (validating) {
+  const [accountProxies, setAccountProxies] = useState<AccountProxy[]>([]);
+
+  const onChangeFile = useCallback((info: UploadChangeParam<UploadFile<unknown>>) => {
+    if (fileValidating) {
       return;
     }
 
-    setValidating(true);
+    setFileValidating(true);
+    setFileValidateState({});
     const uploadFile = info.file;
 
     uploadFile.originFileObj?.arrayBuffer()
       .then((bytes) => {
-        let json: KeyringPair$Json | KeyringPairs$Json | undefined;
+        const json = JSON.parse(u8aToString(Uint8Array.from(Buffer.from(bytes)))) as KeyringPair$Json | KeyringPairs$Json;
 
-        try {
-          json = JSON.parse(u8aToString(Uint8Array.from(Buffer.from(bytes)))) as KeyringPair$Json | KeyringPairs$Json;
-
-          if (JSON.stringify(jsonFile) === JSON.stringify(json)) {
-            setValidating(false);
-
-            return;
-          } else {
-            setAccountsInfo([]);
-            setPassword('');
-            setJsonFile(json);
-          }
-        } catch (e) {
-          const error = e as Error;
-
-          setFileValidateState({
-            status: 'error',
-            message: error.message
-          });
-          setValidating(false);
-          setRequirePassword(false);
-
-          return;
+        if (!isValidJsonFile(json)) {
+          throw new Error(t('Invalid JSON file'));
         }
 
-        try {
-          setSubmitValidateState({});
-
-          if (isKeyringPairs$Json(json)) {
-            const accounts: ResponseJsonGetAccountInfo[] = json.accounts.map((account) => {
-              const genesisHash: string = account.meta.genesisHash as string;
-
-              let addressPrefix: number | undefined;
-
-              if (account.meta.genesisHash) {
-                addressPrefix = findNetworkJsonByGenesisHash(chainInfoMap, genesisHash)?.substrateInfo?.addressPrefix;
-              }
-
-              let address = account.address;
-
-              if (addressPrefix !== undefined) {
-                address = reformatAddress(account.address, addressPrefix);
-              }
-
-              if (isHex(account.address) && hexToU8a(account.address).length !== 20) {
-                address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
-              }
-
-              return {
-                address: address,
-                genesisHash: account.meta.genesisHash,
-                name: account.meta.name
-              } as ResponseJsonGetAccountInfo;
-            });
-
-            setRequirePassword(true);
-            setAccountsInfo(accounts);
-            setFileValidateState({});
-            setValidating(false);
-          } else {
-            jsonGetAccountInfo(json)
-              .then((accountInfo) => {
-                let address = accountInfo.address;
-
-                if (isHex(accountInfo.address) && hexToU8a(accountInfo.address).length !== 20) {
-                  address = u8aToHex(keccakAsU8a(secp256k1Expand(hexToU8a(accountInfo.address))));
-                }
-
-                accountInfo.address = address;
-                setRequirePassword(true);
-                setAccountsInfo([accountInfo]);
-                setFileValidateState({});
-                setValidating(false);
-              })
-              .catch((e: Error) => {
-                setRequirePassword(false);
-                setFileValidateState({
-                  status: 'error',
-                  message: e.message
-                });
-                setValidating(false);
-              });
-          }
-        } catch (e) {
-          setFileValidateState({
-            status: 'error',
-            message: t<string>('Invalid JSON file')
-          });
-          setValidating(false);
-          setRequirePassword(false);
+        if (JSON.stringify(jsonFile) !== JSON.stringify(json)) {
+          setAccountProxies([]);
+          setPassword('');
+          setJsonFile(json);
+          setPasswordValidateState({});
         }
       })
       .catch((e: Error) => {
@@ -205,69 +107,129 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           status: 'error',
           message: e.message
         });
-        setValidating(false);
+      })
+      .finally(() => {
+        setFileValidating(false);
       });
-  }, [validating, jsonFile, chainInfoMap, t]);
+  }, [fileValidating, jsonFile, t]);
+
+  const onValidatePassword = useCallback(() => {
+    if (!jsonFile || passwordValidating) {
+      return;
+    }
+
+    setPasswordValidating(true);
+
+    const onFail = (e: Error) => {
+      setPasswordValidateState({
+        status: 'error',
+        message: e.message
+      });
+      selectPassword();
+    };
+
+    if (isKeyringPairs$Json(jsonFile)) {
+      parseBatchSingleJson({
+        json: jsonFile,
+        password
+      })
+        .then(({ accountProxies }) => {
+          setAccountProxies(accountProxies);
+          setPasswordValidateState({ status: 'success' });
+        })
+        .catch(onFail)
+        .finally(() => {
+          setPasswordValidating(false);
+        });
+    } else {
+      parseInfoSingleJson({
+        json: jsonFile,
+        password
+      })
+        .then(({ accountProxy }) => {
+          setAccountProxies([accountProxy]);
+          setPasswordValidateState({ status: 'success' });
+        })
+        .catch(onFail)
+        .finally(() => {
+          setPasswordValidating(false);
+        });
+    }
+  }, [jsonFile, passwordValidating, password]);
+
+  const onImport = useCallback(() => {
+    if (!jsonFile) {
+      return;
+    }
+
+    checkUnlock()
+      .then(() => {
+        setSubmitting(true);
+
+        setTimeout(() => {
+          const isMultiple = isKeyringPairs$Json(jsonFile);
+
+          (isMultiple
+            ? batchRestoreV2({
+              file: jsonFile,
+              password,
+              isAllowed: true,
+              proxyIds: undefined
+            })
+            : jsonRestoreV2({
+              file: jsonFile,
+              password: password,
+              address: accountProxies[0].id,
+              isAllowed: true,
+              withMasterPassword: true
+            }))
+            .then(() => {
+              setTimeout(() => {
+                if (isMultiple) {
+                  navigate('/keyring/migrate-password');
+                } else {
+                  onComplete();
+                }
+              }, 1000);
+            })
+            .catch((e: Error) => {
+              setPasswordValidateState({
+                message: e.message,
+                status: 'error'
+              });
+              selectPassword();
+            })
+            .finally(() => {
+              setSubmitting(false);
+            });
+        }, 500);
+      }).catch(() => {
+      // User cancel unlock
+      });
+  }, [accountProxies, checkUnlock, jsonFile, navigate, onComplete, password]);
 
   const onSubmit = useCallback(() => {
     if (!jsonFile) {
       return;
     }
 
-    if (requirePassword && !password) {
-      return;
+    if (!requirePassword) {
+      onImport();
+    } else {
+      onValidatePassword();
     }
+  }, [jsonFile, onImport, onValidatePassword, requirePassword]);
 
-    checkUnlock().then(() => {
-      setLoading(true);
-
-      setTimeout(() => {
-        const isMultiple = isKeyringPairs$Json(jsonFile);
-
-        (isMultiple
-          ? batchRestoreV2(jsonFile, password, accountsInfo, true)
-          : jsonRestoreV2({
-            file: jsonFile,
-            password: password,
-            address: accountsInfo[0].address,
-            isAllowed: true,
-            withMasterPassword: true
-          }))
-          .then(() => {
-            setTimeout(() => {
-              if (isMultiple) {
-                navigate('/keyring/migrate-password');
-              } else {
-                onComplete();
-              }
-            }, 1000);
-          })
-          .catch((e: Error) => {
-            setSubmitValidateState({
-              message: e.message,
-              status: 'error'
-            });
-            selectPassword();
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }, 500);
-    }).catch(() => {
-      // User cancel unlock
-    });
-  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, navigate, onComplete]);
-
-  const renderItem = useCallback((account: ResponseJsonGetAccountInfo): React.ReactNode => {
+  const renderItem = useCallback((account: AccountProxy): React.ReactNode => {
     return (
       <AccountCard
         accountName={account.name}
-        address={account.address}
+        address={account.id}
         addressPreLength={9}
         addressSufLength={9}
         avatarIdentPrefix={42}
         className='account-item'
-        key={account.address}
+        key={account.id}
       />
     );
   }, []);
@@ -276,12 +238,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     const value = event.target.value;
 
     if (!value) {
-      setSubmitValidateState({
+      setPasswordValidateState({
         message: t('Password is required'),
         status: 'error'
       });
     } else {
-      setSubmitValidateState({});
+      setPasswordValidateState({});
     }
 
     setPassword(value);
@@ -298,11 +260,11 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={onBack}
         rightFooterButton={{
-          children: t('Import by JSON file'),
+          children: requirePassword ? t('Unlock file') : t('Import by JSON file'),
           icon: FooterIcon,
-          onClick: form.submit,
-          disabled: !!fileValidateState.status || !!submitValidateState.status || !password,
-          loading: validating || loading
+          onClick: onSubmit,
+          disabled: !!fileValidateState.status || (!requirePassword && passwordValidateState.status !== 'success') || !password,
+          loading: fileValidating || passwordValidating || submitting
         }}
         subHeaderIcons={[
           {
@@ -320,7 +282,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             className='form-container'
             form={form}
             name={formName}
-            onFinish={onSubmit}
           >
             <Form.Item
               validateStatus={fileValidateState.status}
@@ -328,47 +289,17 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               <Upload.SingleFileDragger
                 accept={'application/json'}
                 className='file-selector'
-                disabled={validating}
+                disabled={fileValidating}
                 hint={t('Drag and drop the JSON file you exported from Polkadot.{js}')}
-                onChange={onChange}
+                onChange={onChangeFile}
                 statusHelp={fileValidateState.message}
                 title={t('Import by JSON file')}
               />
             </Form.Item>
             {
-              !!accountsInfo.length && (
-                <Form.Item>
-                  {
-                    accountsInfo.length > 1
-                      ? (
-                        <SettingItem
-                          className='account-list-item'
-                          leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                          name={t('Import {{number}} accounts', { replace: { number: String(accountsInfo.length).padStart(2, '0') } })}
-                          onPressItem={openModal}
-                          rightItem={(
-                            <Icon
-                              phosphorIcon={DotsThree}
-                              size='sm'
-                            />
-                          )}
-                        />
-                      )
-                      : (
-                        <SettingItem
-                          className='account-list-item'
-                          leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                          name={accountsInfo[0].name}
-                        />
-                      )
-                  }
-                </Form.Item>
-              )
-            }
-            {
               requirePassword && (
                 <Form.Item
-                  validateStatus={submitValidateState.status}
+                  validateStatus={passwordValidateState.status}
                 >
                   <div className='input-label'>
                     {t('Please enter the password you have used when creating your Polkadot.{js} account')}
@@ -377,27 +308,35 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                     id={`${formName}_${passwordField}`}
                     onChange={onChangePassword}
                     placeholder={t('Password')}
-                    statusHelp={submitValidateState.message}
+                    statusHelp={passwordValidateState.message}
                     type='password'
                     value={password}
                   />
                 </Form.Item>
               )
             }
+            {
+              passwordValidateState.status === 'success' && (
+                <Form.Item
+                  validateStatus={passwordValidateState.status}
+                >
+                  <div className='input-label'>
+                    {t('List accounts in JSON file')}
+                  </div>
+                </Form.Item>
+              )
+            }
           </Form>
-          <SwModal
-            className={className}
-            id={modalId}
-            onCancel={closeModal}
-            title={t('Accounts')}
-          >
-            <SwList.Section
-              displayRow={true}
-              list={accountsInfo}
-              renderItem={renderItem}
-              rowGap='var(--row-gap)'
-            />
-          </SwModal>
+          {
+            passwordValidateState.status === 'success' && (
+              <SwList.Section
+                displayRow={true}
+                list={accountProxies}
+                renderItem={renderItem}
+                rowGap='var(--row-gap)'
+              />
+            )
+          }
         </div>
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
@@ -410,7 +349,11 @@ const ImportJson = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
     '.container': {
       padding: token.padding,
-      paddingBottom: 0
+      paddingBottom: 0,
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%'
     },
 
     '.description': {
@@ -462,7 +405,8 @@ const ImportJson = styled(Component)<Props>(({ theme: { token } }: Props) => {
       overflow: 'hidden',
       height: '100%',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      margin: `0 -${token.margin}px`
     },
 
     '.file-selector': {

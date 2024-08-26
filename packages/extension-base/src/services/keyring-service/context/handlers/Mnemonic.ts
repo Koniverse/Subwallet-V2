@@ -124,7 +124,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
     // Upsert account group first, to avoid combine latest have no account group data.
     if (proxyId) {
-      this.state.upsertAccountProxy({ id: proxyId, name });
+      this.state.upsertAccountProxyByKey({ id: proxyId, name });
     }
 
     // Upsert modify pair before add account to keyring

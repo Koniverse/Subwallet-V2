@@ -101,8 +101,10 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
   }
 
   // Private key
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountChainType.ETHEREUM) {
-    result.push(AccountActions.EXPORT_PRIVATE_KEY);
+  if (signMode === AccountSignMode.PASSWORD) {
+    if (networkType === AccountChainType.ETHEREUM || networkType === AccountChainType.TON) {
+      result.push(AccountActions.EXPORT_PRIVATE_KEY);
+    }
   }
 
   // QR
@@ -394,12 +396,34 @@ export const transformAddress = (address: string, meta?: KeyringPair$Meta): Addr
 
 export const transformAddresses = (addresses: SubjectInfo): AddressJson[] => Object.values(addresses).map(({ json: { address, meta } }) => transformAddress(address, meta));
 
-export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
+export const convertAccountProxyType = (accountSignMode: AccountSignMode): AccountProxyType => {
+  switch (accountSignMode) {
+    case AccountSignMode.GENERIC_LEDGER:
+    case AccountSignMode.LEGACY_LEDGER:
+      return AccountProxyType.LEDGER;
+    case AccountSignMode.QR:
+      return AccountProxyType.QR;
+    case AccountSignMode.READ_ONLY:
+      return AccountProxyType.READ_ONLY;
+    case AccountSignMode.INJECTED:
+      return AccountProxyType.INJECTED;
+    case AccountSignMode.PASSWORD:
+      return AccountProxyType.SOLO;
+    case AccountSignMode.ALL_ACCOUNT:
+      return AccountProxyType.ALL_ACCOUNT;
+    case AccountSignMode.UNKNOWN:
+      return AccountProxyType.UNKNOWN;
+  }
+
+  return AccountProxyType.UNKNOWN;
+};
+
+export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData) => {
   const temp: Record<string, Omit<AccountProxy, 'accountType'>> = {};
 
-  for (const [address, pair] of Object.entries(pairs)) {
+  for (const account of accounts) {
+    const address = account.address;
     const modifyPair = modifyPairs[address];
-    const account: AccountJson = singleAddressToAccount(pair, chainInfoMap);
 
     if (modifyPair && modifyPair.accountProxyId) {
       const accountGroup = accountProxies[modifyPair.accountProxyId];
@@ -464,31 +488,13 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
 
           chainTypes = [account.chainType];
           tokenTypes = account.tokenTypes;
+          accountType = convertAccountProxyType(account.signMode);
           accountActions = account.accountActions;
 
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
-              accountType = AccountProxyType.LEDGER;
               specialChain = account.specialChain;
-              break;
-            case AccountSignMode.QR:
-              accountType = AccountProxyType.QR;
-              break;
-            case AccountSignMode.READ_ONLY:
-              accountType = AccountProxyType.READ_ONLY;
-              break;
-            case AccountSignMode.INJECTED:
-              accountType = AccountProxyType.INJECTED;
-              break;
-            case AccountSignMode.PASSWORD:
-              accountType = AccountProxyType.SOLO;
-              break;
-            case AccountSignMode.ALL_ACCOUNT:
-              accountType = AccountProxyType.ALL_ACCOUNT;
-              break;
-            case AccountSignMode.UNKNOWN:
-              accountType = AccountProxyType.UNKNOWN;
               break;
           }
         }
@@ -530,6 +536,18 @@ export const combineAccounts = (pairs: SubjectInfo, modifyPairs: ModifyPairStore
   }
 
   return result;
+};
+
+export const combineAccountsWithSubjectInfo = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
+  const accounts = Object.values(pairs).map((data) => singleAddressToAccount(data, chainInfoMap));
+
+  return _combineAccounts(accounts, modifyPairs, accountProxies);
+};
+
+export const combineAccountsWithKeyPair = (pairs: KeyringPair[], modifyPairs?: ModifyPairStoreData, accountProxies?: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
+  const accounts = Object.values(pairs).map((data) => pairToAccount(data, chainInfoMap));
+
+  return _combineAccounts(accounts, modifyPairs || {}, accountProxies || {});
 };
 
 export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountProxy => {
