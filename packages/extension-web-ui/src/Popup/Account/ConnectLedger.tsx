@@ -27,7 +27,15 @@ interface ImportLedgerItem {
   name: string;
 }
 
-export const funcSortByName = (a: ChainItemType, b: ChainItemType) => {
+export const funcSortMigrationApp = (a: ChainItemType, b: ChainItemType) => {
+  if (a.disabled && !b.disabled) {
+    return 1;
+  }
+
+  if (!a.disabled && b.disabled) {
+    return -1;
+  }
+
   return ((a?.name || '').toLowerCase() > (b?.name || '').toLowerCase()) ? 1 : -1;
 };
 
@@ -66,7 +74,7 @@ const Component: React.FC<Props> = (props: Props) => {
       disabled: network.isHide,
       name: network.networkName.replace(' network', ''),
       slug: network.slug
-    })).sort(funcSortByName), [migrateSupportLedger]);
+    })).sort(funcSortMigrationApp), [migrateSupportLedger]);
 
   const [chain, setChain] = useState(supportedLedger[0].slug);
   const [chainMigrateMode, setChainMigrateMode] = useState<string | undefined>();

@@ -169,9 +169,9 @@ export const ChainSelector = styled(forwardRef(Component))<Props>(({ theme: { to
     },
 
     '.ant-network-item.disabled': {
-      opacity: token.opacityDisable,
       '.ant-network-item-content': {
         cursor: 'not-allowed',
+        opacity: token.opacityDisable,
 
         '&:hover': {
           backgroundColor: token.colorBgSecondary
