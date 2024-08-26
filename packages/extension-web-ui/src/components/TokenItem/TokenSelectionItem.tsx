@@ -179,11 +179,20 @@ export const TokenSelectionItem = styled(Component)<Props>(({ theme: { token } }
       fontWeight: token.fontWeightStrong,
       color: token.colorWhite,
 
+      '.__symbol': {
+        textOverflow: 'ellipsis',
+        overflow: 'hidden',
+        whiteSpace: 'nowrap'
+      },
+
       '.__token-name': {
         color: token.colorTextTertiary,
         display: 'flex',
         flexDirection: 'row',
         overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        flex: 1,
 
         '.name': {
           textOverflow: 'ellipsis',
