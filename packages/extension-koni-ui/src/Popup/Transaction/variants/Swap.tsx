@@ -10,7 +10,7 @@ import { SWTransactionResponse } from '@subwallet/extension-base/services/transa
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { CommonFeeComponent, CommonOptimalPath, CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
-import { formatNumberString, swapCustomFormatter } from '@subwallet/extension-base/utils';
+import { formatNumberString, isSameAddress, swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, HiddenInput, MetaInfo, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { SwapFromField, SwapToField } from '@subwallet/extension-koni-ui/components/Field/Swap';
 import { AddMoreBalanceModal, ChooseFeeTokenModal, SlippageModal, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapTermsOfServiceModal } from '@subwallet/extension-koni-ui/components/Modal/Swap';
@@ -296,20 +296,68 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return Promise.resolve();
   }, [accounts, chainInfoMap, t, toAssetInfo]);
 
+  const accountAddressItems = useMemo(() => {
+    const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
+
+    if (!chainInfo) {
+      return [];
+    }
+
+    const result: AccountAddressItemType[] = [];
+
+    accountProxies.forEach((ap) => {
+      if (!(isAccountAll(targetAccountProxy.id) || ap.id === targetAccountProxy.id)) {
+        return;
+      }
+
+      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
+        return;
+      }
+
+      ap.accounts.forEach((a) => {
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
+
+        if (address) {
+          result.push({
+            accountName: ap.name,
+            accountProxyId: ap.id,
+            accountProxyType: ap.accountType,
+            accountType: a.type,
+            address
+          });
+        }
+      });
+    });
+
+    return result;
+  }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
+
   const showRecipientField = useMemo(() => {
-    if (!fromValue || !destChainValue || !chainInfoMap[destChainValue]) {
+    if (!fromValue || !destChainValue || !chainInfoMap[destChainValue] || !chainValue || !chainInfoMap[chainValue]) {
       return false;
     }
 
     // todo: convert this find logic to util
-    const fromAccountJson = accounts.find((account) => account.address === fromValue);
+    const accountAddress = accountAddressItems.find((item) => item.address === fromValue);
+
+    if (!accountAddress) {
+      return false;
+    }
+
+    const fromAccountJson = accounts.find((item) => {
+      if (isSameAddress(item.proxyId || '', accountAddress.accountProxyId) && accountAddress.accountType === item.type) {
+        return fromValue === getReformatedAddressRelatedToChain(item, chainInfoMap[chainValue]);
+      }
+
+      return false;
+    });
 
     if (!fromAccountJson) {
       return false;
     }
 
     return !isChainInfoAccordantAccountChainType(chainInfoMap[destChainValue], fromAccountJson.chainType);
-  }, [accounts, chainInfoMap, destChainValue, fromValue]);
+  }, [accounts, accountAddressItems, chainInfoMap, destChainValue, chainValue, fromValue]);
 
   const onSelectFromToken = useCallback((tokenSlug: string) => {
     form.setFieldValue('fromTokenSlug', tokenSlug);
@@ -851,42 +899,6 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return Promise.resolve([]);
   }, []);
 
-  const accountAddressItems = useMemo(() => {
-    const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
-
-    if (!chainInfo) {
-      return [];
-    }
-
-    const result: AccountAddressItemType[] = [];
-
-    accountProxies.forEach((ap) => {
-      if (!(isAccountAll(targetAccountProxy.id) || ap.id === targetAccountProxy.id)) {
-        return;
-      }
-
-      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
-        return;
-      }
-
-      ap.accounts.forEach((a) => {
-        const address = getReformatedAddressRelatedToChain(a, chainInfo);
-
-        if (address) {
-          result.push({
-            accountName: ap.name,
-            accountProxyId: ap.id,
-            accountProxyType: ap.accountType,
-            accountType: a.type,
-            address
-          });
-        }
-      });
-    });
-
-    return result;
-  }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy.id]);
-
   useEffect(() => {
     const updateFromValue = () => {
       if (!accountAddressItems.length) {
@@ -1009,6 +1021,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
           }
         });
       }, 300);
+    } else {
+      setShowQuoteArea(false);
     }
 
     return () => {
@@ -1225,6 +1239,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                 </div>
 
                 <Form.Item
+                  hidden={accountAddressItems.length === 1}
                   name={'from'}
                 >
                   <AccountAddressSelector
