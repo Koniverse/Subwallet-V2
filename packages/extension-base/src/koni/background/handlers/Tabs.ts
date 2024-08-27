@@ -12,7 +12,8 @@ import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEve
 import RequestBytesSign from '@subwallet/extension-base/background/RequestBytesSign';
 import RequestExtrinsicSign from '@subwallet/extension-base/background/RequestExtrinsicSign';
 import { AccountAuthType, MessageTypes, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestTypes, ResponseRpcListProviders, ResponseSigning, ResponseTypes, SubscriptionMessageTypes } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY, CRON_GET_API_MAP_STATUS } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, CRON_GET_API_MAP_STATUS, PERMISSIONS_TO_REVOKE } from '@subwallet/extension-base/constants';
+import { generateValidationProcess, PayloadValidated, validationAuthMiddleware } from '@subwallet/extension-base/core/logic-validation';
 import { PHISHING_PAGE_REDIRECT } from '@subwallet/extension-base/defaults';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
@@ -22,10 +23,8 @@ import { AuthUrls } from '@subwallet/extension-base/services/request-service/typ
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, pairToAccount, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { EthereumKeypairTypes, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
-import keyring from '@subwallet/ui-keyring';
+import { EthereumKeypairTypes, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { t } from 'i18next';
 import { Subscription } from 'rxjs';
 import Web3 from 'web3';
 import { HttpProvider, RequestArguments, WebsocketProvider } from 'web3-core';
@@ -34,7 +33,8 @@ import { JsonRpcPayload } from 'web3-core-helpers';
 import { checkIfDenied } from '@polkadot/phishing';
 import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
 import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
-import { assert, isNumber } from '@polkadot/util';
+import { isArray, isNumber } from '@polkadot/util';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface AccountSub {
   subscription: Subscription;
@@ -133,34 +133,30 @@ export default class KoniTabs {
   }
 
   /// Clone from Polkadot.js
-  private getSigningPair (address: string): KeyringPair {
-    const pair = keyring.getPair(address);
-
-    assert(pair, t('Unable to find account'));
-
-    return pair;
-  }
-
   private async bytesSign (url: string, request: SignerPayloadRaw): Promise<ResponseSigning> {
     const address = request.address;
-    const pair = this.getSigningPair(address);
-    const authInfo = await this.getAuthInfo(url);
+    const payloadValidate: PayloadValidated = {
+      address,
+      networkKey: '',
+      errors: [],
+      payloadAfterValidated: request
+    };
 
-    if (!authInfo || !authInfo.isAllowed || !authInfo.isAllowedMap[pair.address]) {
-      throw new Error('Account {{address}} not in allowed list'.replace('{{address}}', address));
-    }
+    const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
     return this.#koniState.sign(url, new RequestBytesSign(request), pairToAccount(pair));
   }
 
   private async extrinsicSign (url: string, request: SignerPayloadJSON): Promise<ResponseSigning> {
     const address = request.address;
-    const pair = this.getSigningPair(address);
-    const authInfo = await this.getAuthInfo(url);
+    const payloadValidate: PayloadValidated = {
+      address,
+      networkKey: '',
+      errors: [],
+      payloadAfterValidated: request
+    };
 
-    if (!authInfo || !authInfo.isAllowed || !authInfo.isAllowedMap[pair.address]) {
-      throw new Error('Account {{address}} not in allowed list'.replace('{{address}}', address));
-    }
+    const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
     return this.#koniState.sign(url, new RequestExtrinsicSign(request), pairToAccount(pair));
   }
@@ -300,7 +296,6 @@ export default class KoniTabs {
     const cb = createSubscription<'pub(accounts.subscribeV2)'>(id, port);
     const authInfoSubject = this.#koniState.requestService.subscribeAuthorizeUrlSubject;
 
-    // Update unsubscribe from @polkadot/extension-base
     this.#accountSubs[id] = {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
@@ -315,6 +310,7 @@ export default class KoniTabs {
       url
     };
 
+    // Update unsubscribe from @polkadot/extension-base
     port.onDisconnect.addListener((): void => {
       this.accountsUnsubscribe(url, { id });
     });
@@ -460,6 +456,79 @@ export default class KoniTabs {
       caveats: [{ type: 'restrictReturnedAccounts', value: accounts }],
       date: new Date().getTime()
     }];
+  }
+
+  private async revokePermissions (url: string, id: string, { params }: RequestArguments) {
+    if (!params || !isArray(params) || params.length === 0) {
+      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, 'No list of permissions found to revoke in the parameters.');
+    }
+
+    // Example of a request in MetaMask wallet
+    // await window.ethereum.request({
+    //   "method": "wallet_revokePermissions",
+    //   "params": [
+    //     {
+    //       "eth_accounts": {}
+    //     }
+    //   ]
+    // });
+    // Doc: https://docs.metamask.io/wallet/reference/wallet_revokepermissions/
+
+    const permissions = new Set(Object.keys(params[0] as Record<string, any>).filter((permission) => PERMISSIONS_TO_REVOKE.includes(permission)));
+
+    const permissionPromise = async (permission: string): Promise<void> => {
+      if (permission === 'eth_accounts') {
+        return new Promise((resolve) => {
+          this.#koniState.getAuthorize((value) => {
+            const urlStripped = stripUrl(url);
+
+            if (value && value[urlStripped]) {
+              const { accountAuthType, isAllowedMap } = { ...value[urlStripped] };
+
+              if (!accountAuthType) {
+                resolve();
+              }
+
+              switch (accountAuthType) {
+                case 'substrate':
+                  resolve();
+                  break;
+
+                case 'evm':
+                  delete value[urlStripped];
+
+                  break;
+
+                case 'both': {
+                  value[urlStripped].isAllowedMap = Object.entries(isAllowedMap).reduce<Record<string, boolean>>((allowedMap, [address, value]) => {
+                    if (isEthereumAddress(address)) {
+                      allowedMap[address] = false;
+                    } else {
+                      allowedMap[address] = value;
+                    }
+
+                    return allowedMap;
+                  }, {});
+
+                  value[urlStripped].accountAuthType = 'substrate';
+                  break;
+                }
+              }
+
+              this.#koniState.setAuthorize(value, () => {
+                resolve();
+              });
+            } else {
+              resolve();
+            }
+          });
+        });
+      }
+    };
+
+    await Promise.all(Array.from(permissions).map(permissionPromise));
+
+    return null;
   }
 
   private async switchEvmChain (id: string, url: string, { params }: RequestArguments) {
@@ -865,9 +934,21 @@ export default class KoniTabs {
         params: params as any[],
         id
       }, (error, result) => {
-        const err = result?.error || error;
+        let err = result?.error || error;
 
         if (err) {
+          let message = err.message.toLowerCase();
+
+          if (message.includes('method not found') || message.includes('not supported') || message.includes('is not available')) {
+            message = 'This method is not supported by SubWallet. Try again or contact support at agent@subwallet.app';
+          }
+
+          if (message.includes('network is disconnected')) {
+            message = 'Re-enable the network or change RPC on the extension and try again';
+          }
+
+          err = { ...err, message };
+
           reject(err);
         } else {
           const rs = result?.result as unknown;
@@ -886,8 +967,7 @@ export default class KoniTabs {
   }
 
   private async evmSign (id: string, url: string, { method, params }: RequestArguments) {
-    const allowedAccounts = (await this.getEvmCurrentAccount(url));
-    const signResult = await this.#koniState.evmSign(id, url, method, params, allowedAccounts);
+    const signResult = await this.#koniState.evmSign(id, url, method, params);
 
     if (signResult) {
       return signResult;
@@ -899,20 +979,8 @@ export default class KoniTabs {
   // TODO: Update logic
   public async evmSendTransaction (id: string, url: string, { params }: RequestArguments) {
     const transactionParams = (params as EvmSendTransactionParams[])[0];
-    const canUseAccount = transactionParams.from && await this.canUseAccount(transactionParams.from, url);
-    const evmState = await this.getEvmState(url);
-    const networkKey = evmState.networkKey;
 
-    if (!canUseAccount) {
-      throw new Error(t('You have rescinded allowance for this account in wallet'));
-    }
-
-    if (!networkKey) {
-      throw new Error('Network unavailable. Please switch network or manually add network to wallet');
-    }
-
-    const allowedAccounts = await this.getEvmCurrentAccount(url);
-    const transactionHash = await this.#koniState.evmSendTransaction(id, url, networkKey, allowedAccounts, transactionParams);
+    const transactionHash = await this.#koniState.evmSendTransaction(id, url, transactionParams);
 
     if (!transactionHash) {
       throw new EvmProviderError(EvmProviderErrorType.USER_REJECTED_REQUEST);
@@ -952,6 +1020,8 @@ export default class KoniTabs {
           return await this.getEvmPermission(url, id);
         case 'wallet_getPermissions':
           return await this.getEvmPermission(url, id);
+        case 'wallet_revokePermissions':
+          return await this.revokePermissions(url, id, request);
         case 'wallet_addEthereumChain':
           return await this.addEvmChain(id, url, request);
         case 'wallet_switchEthereumChain':
@@ -995,11 +1065,13 @@ export default class KoniTabs {
   }
 
   public isEvmPublicRequest (type: string, request: RequestArguments) {
-    return type === 'evm(request)' &&
+    return (type === 'evm(request)' &&
       [
         'eth_chainId',
-        'net_version'
-      ].includes(request?.method);
+        'net_version',
+        'wallet_requestPermissions',
+        'wallet_getPermissions'
+      ].includes(request?.method)) || type === 'evm(events.subscribe)';
   }
 
   public async addPspToken (id: string, url: string, { genesisHash, tokenInfo: input }: RequestAddPspToken) {
@@ -1081,7 +1153,7 @@ export default class KoniTabs {
     // Wait for account ready and chain ready
     await Promise.all([this.#koniState.eventService.waitAccountReady, this.#koniState.eventService.waitChainReady]);
 
-    if (type !== 'pub(authorize.tabV2)' && !this.isEvmPublicRequest(type, request as RequestArguments)) {
+    if (!['pub(authorize.tabV2)', 'pub(accounts.subscribeV2)'].includes(type) && !this.isEvmPublicRequest(type, request as RequestArguments)) {
       await this.#koniState.ensureUrlAuthorizedV2(url)
         .catch((e: Error) => {
           if (type.startsWith('evm')) {

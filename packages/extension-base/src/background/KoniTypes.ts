@@ -1104,11 +1104,6 @@ export interface EvmSendTransactionParams {
   gas?: string | number;
 }
 
-export interface SwitchNetworkRequest {
-  networkKey: string;
-  address?: string;
-}
-
 export interface EvmSignRequest {
   account: AccountJson;
   hashPayload: string;
@@ -1121,10 +1116,16 @@ export interface TonSignRequest {
   canSign: boolean;
 }
 
+export interface ErrorValidation {
+  message: string;
+  name: string;
+}
+
 export interface EvmSignatureRequest extends EvmSignRequest {
   id: string;
   type: string;
   payload: unknown;
+  errors?: ErrorValidation[]
 }
 
 export interface TonSignatureRequest extends TonSignRequest {
@@ -1137,6 +1138,7 @@ export interface EvmSendTransactionRequest extends TransactionConfig, EvmSignReq
   estimateGas: string;
   parseData: EvmTransactionData;
   isToContract: boolean;
+  errors?: ErrorValidation[]
 }
 
 // TODO: add account info + dataToSign
@@ -1188,13 +1190,19 @@ export interface AddTokenRequestExternal {
   contractError: boolean;
 }
 
+export interface ErrorNetworkConnection {
+  networkKey: string,
+  address: string,
+  errors: ErrorValidation[]
+}
+
 export interface ConfirmationDefinitions {
   addNetworkRequest: [ConfirmationsQueueItem<_NetworkUpsertParams>, ConfirmationResult<null>],
   addTokenRequest: [ConfirmationsQueueItem<AddTokenRequestExternal>, ConfirmationResult<boolean>],
-  switchNetworkRequest: [ConfirmationsQueueItem<SwitchNetworkRequest>, ConfirmationResult<boolean>],
   evmSignatureRequest: [ConfirmationsQueueItem<EvmSignatureRequest>, ConfirmationResult<string>],
   evmSendTransactionRequest: [ConfirmationsQueueItem<EvmSendTransactionRequest>, ConfirmationResult<string>]
-  evmWatchTransactionRequest: [ConfirmationsQueueItem<EvmWatchTransactionRequest>, ConfirmationResult<string>]
+  evmWatchTransactionRequest: [ConfirmationsQueueItem<EvmWatchTransactionRequest>, ConfirmationResult<string>],
+  errorConnectNetwork: [ConfirmationsQueueItem<ErrorNetworkConnection>, ConfirmationResult<null>]
 }
 
 export interface ConfirmationDefinitionsTon {
@@ -2310,6 +2318,10 @@ export interface KoniRequestSignatures {
   'pri(swapService.getLatestQuote)': [SwapRequest, SwapQuoteResponse];
   'pri(swapService.validateSwapProcess)': [ValidateSwapProcessParams, TransactionError[]];
   /* Swap */
+
+  /* Ledger */
+
+  'pri(ledger.generic.allow)': [null, string[], string[]];
 }
 
 export interface ApplicationMetadataType {
