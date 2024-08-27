@@ -41,11 +41,12 @@ const Component: React.FC<Props> = (props: Props) => {
     modalId,
     okButton,
     title,
+    onCancel,
     type = NotificationType.INFO } = props;
 
   const { inactiveModal } = useContext(ModalContext);
 
-  const onCancel = useCallback(() => {
+  const onDefaultCancel = useCallback(() => {
     inactiveModal(modalId);
   }, [inactiveModal, modalId]);
 
@@ -90,7 +91,7 @@ const Component: React.FC<Props> = (props: Props) => {
           </>
         }
         id={modalId}
-        onCancel={onCancel}
+        onCancel={closable ? (onCancel || onDefaultCancel) : undefined}
         title={title}
       >
         <div className='__modal-content'>
