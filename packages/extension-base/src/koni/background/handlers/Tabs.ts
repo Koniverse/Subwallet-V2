@@ -23,7 +23,7 @@ import { AuthUrls } from '@subwallet/extension-base/services/request-service/typ
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, pairToAccount, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { EthereumKeypairTypes, SubstrateKeypairTypes } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { Subscription } from 'rxjs';
 import Web3 from 'web3';
@@ -144,7 +144,7 @@ export default class KoniTabs {
 
     const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    return this.#koniState.sign(url, new RequestBytesSign(request), pairToAccount(pair));
+    return this.#koniState.sign(url, new RequestBytesSign(request), pairToAccount(pair as KeyringPair));
   }
 
   private async extrinsicSign (url: string, request: SignerPayloadJSON): Promise<ResponseSigning> {
@@ -158,7 +158,7 @@ export default class KoniTabs {
 
     const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    return this.#koniState.sign(url, new RequestExtrinsicSign(request), pairToAccount(pair));
+    return this.#koniState.sign(url, new RequestExtrinsicSign(request), pairToAccount(pair as KeyringPair));
   }
 
   private metadataProvide (url: string, request: MetadataDef): Promise<boolean> {

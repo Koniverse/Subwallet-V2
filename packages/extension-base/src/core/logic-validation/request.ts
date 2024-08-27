@@ -5,11 +5,11 @@ import { TypedDataV1Field, typedSignatureHash } from '@metamask/eth-sig-util';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { BasicTxErrorType, ConfirmationType, ErrorValidation, EvmProviderErrorType, EvmSendTransactionParams, EvmSignatureRequest, EvmTransactionData } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
-import { BN_ZERO, createPromiseHandler, isSameAddress, stripUrl, wait } from '@subwallet/extension-base/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
+import { BN_ZERO, createPromiseHandler, isSameAddress, pairToAccount, stripUrl, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -466,7 +466,7 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
   }
 
   const pair_ = pair || keyring.getPair(fromAddress);
-  const account: AccountJson = { address: fromAddress, ...pair_?.meta };
+  const account: AccountJson = pairToAccount(pair_);
 
   try {
     transaction.nonce = await web3.eth.getTransactionCount(fromAddress);
@@ -530,7 +530,7 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
 
   const pair = pair_ || keyring.getPair(address);
 
-  const account: AccountJson = { address: pair.address, ...pair.meta };
+  const account: AccountJson = pairToAccount(pair);
 
   if (method) {
     if (['eth_sign', 'personal_sign', 'eth_signTypedData', 'eth_signTypedData_v1', 'eth_signTypedData_v3', 'eth_signTypedData_v4'].indexOf(method) < 0) {

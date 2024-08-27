@@ -3,7 +3,7 @@
 
 import { KeypairType } from '@subwallet/keyring/types';
 
-import { AccountNetworkType } from '../../info/keyring';
+import { AccountChainType } from '../../info/keyring';
 
 /**
  * @interface RequestPrivateKeyValidateV2
@@ -12,12 +12,12 @@ import { AccountNetworkType } from '../../info/keyring';
  * Use for ethereum and ton private key only.
  *
  * @property {string} privateKey - The private key to be validated.
- * @property {AccountNetworkType} [chainType] - Optional chain type associated with the private key.
+ * @property {AccountChainType} [chainType] - Optional chain type associated with the private key.
  * If not provided, the chain type will be determined based on the private key length (work only with 2 keypair types).
  */
 export interface RequestPrivateKeyValidateV2 {
   privateKey: string;
-  chainType?: AccountNetworkType;
+  chainType?: AccountChainType;
 }
 
 /**
