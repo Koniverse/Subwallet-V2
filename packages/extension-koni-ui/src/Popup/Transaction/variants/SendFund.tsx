@@ -339,13 +339,13 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
-      const validateField: string[] = [];
+      const validateField: Set<string> = new Set();
 
       if (part.asset) {
         const chain = assetRegistry[part.asset].originChain;
 
         if (values.value) {
-          validateField.push('value');
+          validateField.add('value');
         }
 
         form.setFieldsValue({
@@ -358,19 +358,21 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       }
 
       if (part.destChain) {
-        //
+        if (values.to) {
+          validateField.add('to');
+        }
       }
 
       if (part.from) {
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
 
         if (values.to) {
-          validateField.push('to');
+          validateField.add('to');
         }
       }
 
-      if (validateField.length) {
-        form.validateFields(validateField).catch(noop);
+      if (validateField.size) {
+        form.validateFields([...validateField]).catch(noop);
       }
 
       persistData(form.getFieldsValue());
