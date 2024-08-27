@@ -6,7 +6,9 @@
 import type { ApiInterfaceRx } from '@polkadot/api/types';
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
+import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
+import { Cell } from '@ton/core';
 import { Address, Contract, OpenedContract } from '@ton/ton';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import Web3 from 'web3';
@@ -135,7 +137,21 @@ export interface _TonApi extends _ChainBaseApi, _TonUtilsApi {
 export interface _TonUtilsApi {
   getBalance (address: Address): Promise<bigint>;
   open<T extends Contract>(src: T): OpenedContract<T>;
+  estimateExternalMessageFee (address: Address, body: Cell, ignoreSignature?: boolean, initCode?: Cell, initData?: Cell): Promise<EstimateExternalMessageFee>;
+  sendTonTransaction (boc: string): Promise<string>;
+  getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse>
+  getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]>
 }
+
+export interface EstimateExternalMessageFee {
+  source_fees: {
+    in_fwd_fee: number,
+    storage_fee: number,
+    gas_fee: number,
+    fwd_fee: number
+  }
+}
+
 export type _NetworkUpsertParams = {
   mode: 'update' | 'insert',
   chainEditInfo: {

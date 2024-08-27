@@ -5,8 +5,11 @@ import { EvmProviderError } from '@subwallet/extension-base/background/errors/Ev
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, checkTonAddressBounceable, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
+import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { cellToBase64Str, externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -14,7 +17,7 @@ import { HistoryService } from '@subwallet/extension-base/services/history-servi
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { TRANSACTION_TIMEOUT } from '@subwallet/extension-base/services/transaction-service/constants';
 import { parseLiquidStakingEvents, parseLiquidStakingFastUnstakeEvents, parseTransferEventLogs, parseXcmEventLogs } from '@subwallet/extension-base/services/transaction-service/event-parser';
-import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
@@ -24,6 +27,8 @@ import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/et
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
 import keyring from '@subwallet/ui-keyring';
+import { Cell } from '@ton/core';
+import { WalletContractV4 } from '@ton/ton';
 import { addHexPrefix } from 'ethereumjs-util';
 import { ethers, TransactionLike } from 'ethers';
 import EventEmitter from 'eventemitter3';
@@ -35,7 +40,7 @@ import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { Signer, SignerOptions, SignerResult } from '@polkadot/api/types';
 import { EventRecord } from '@polkadot/types/interfaces';
 import { SignerPayloadJSON } from '@polkadot/types/types/extrinsic';
-import { isHex } from '@polkadot/util';
+import { hexToU8a, isHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
@@ -111,9 +116,11 @@ export default class TransactionService {
     }
 
     const evmApi = this.state.chainService.getEvmApi(chainInfo.slug);
-    const isNeedEvmApi = transaction && !isSubstrateTransaction(transaction) && !evmApi;
+    const tonApi = this.state.chainService.getTonApi(chainInfo.slug);
+    const isNoEvmApi = transaction && !isSubstrateTransaction(transaction) && !isTonTransaction(transaction) && !evmApi; // todo: should split isEvmTx && isNoEvmApi. Because other chains type also has no Evm Api
+    const isNoTonApi = transaction && isTonTransaction(transaction) && !tonApi;
 
-    if (isNeedEvmApi) {
+    if (isNoEvmApi || isNoTonApi) {
       validationResponse.errors.push(new TransactionError(BasicTxErrorType.CHAIN_DISCONNECTED, undefined));
     }
 
@@ -128,6 +135,11 @@ export default class TransactionService {
 
     // Check available balance against transaction fee
     checkBalanceWithTransactionFee(validationResponse, transactionInput, nativeTokenInfo, nativeTokenAvailable);
+
+    // Warnings Ton address isBounceable
+    if (transaction && isTonTransaction(transaction) && tonApi) {
+      checkTonAddressBounceable(validationResponse);
+    }
 
     // Check additional validations
     additionalValidator && await additionalValidator(validationResponse);
@@ -236,7 +248,7 @@ export default class TransactionService {
 
   private async sendTransaction (transaction: SWTransaction): Promise<TransactionEmitter> {
     // Send Transaction
-    const emitter = await (transaction.chainType === 'substrate' ? this.signAndSendSubstrateTransaction(transaction) : this.signAndSendEvmTransaction(transaction));
+    const emitter = await (transaction.chainType === 'substrate' ? this.signAndSendSubstrateTransaction(transaction) : transaction.chainType === 'evm' ? this.signAndSendEvmTransaction(transaction) : this.signAndSendTonTransaction(transaction));
 
     const { eventsHandler } = transaction;
 
@@ -829,11 +841,7 @@ export default class TransactionService {
     return ethers.Transaction.from(txObject).unsignedSerialized as HexString;
   }
 
-  private async signAndSendEvmTransaction ({ address,
-    chain,
-    id,
-    transaction,
-    url }: SWTransaction): Promise<TransactionEmitter> {
+  private async signAndSendEvmTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
     const payload = (transaction as EvmSendTransactionRequest);
     const evmApi = this.state.chainService.getEvmApi(chain);
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
@@ -1138,6 +1146,94 @@ export default class TransactionService {
               }
             });
         }
+      }).catch((e: Error) => {
+        eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+        emitter.emit('error', eventData);
+      });
+    }).catch((e: Error) => {
+      this.removeTransaction(id);
+      eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, e.message));
+      emitter.emit('error', eventData);
+    });
+
+    return emitter;
+  }
+
+  private async signAndSendTonTransaction ({ address, chain, extrinsicType, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+    const keyPair = keyring.getPair(address);
+    const emitter = new EventEmitter<TransactionEventMap>();
+    const eventData: TransactionEventResponse = {
+      id,
+      errors: [],
+      warnings: [],
+      extrinsicHash: id
+    };
+
+    const payload = transaction as TonTransactionConfig;
+
+    const signer = (message: Cell): Promise<Buffer> => {
+      return new Promise<Buffer>((resolve) => {
+        this.state.requestService.addConfirmationTon(id, url || EXTENSION_REQUEST_URL, 'tonSendTransactionRequest', { ...payload, messagePayload: cellToBase64Str(message), messages: [] }, {})
+          .then(({ isApproved, payload }) => {
+            if (!isApproved) {
+              this.removeTransaction(id);
+              eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+              emitter.emit('error', eventData);
+            } else {
+              if (!payload) {
+                throw new Error('Bad signature');
+              }
+
+              resolve(Buffer.from(hexToU8a(payload)));
+            }
+          });
+      });
+    };
+
+    const tonTransactionConfig = transaction as TonTransactionConfig;
+    const seqno = tonTransactionConfig.seqno;
+    const messages = tonTransactionConfig.messages;
+
+    const walletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
+
+    walletContract.createTransfer({
+      signer,
+      seqno: seqno,
+      messages: messages
+    }).then((tx) => {
+      // Emit signed event
+      emitter.emit('signed', eventData);
+      const boc = externalMessage(walletContract, seqno, tx).toBoc().toString('base64');
+
+      this.handleTransactionTimeout(emitter, eventData);
+      emitter.emit('send', eventData); // This event is needed after sending transaction with queue
+
+      const tonApi = this.state.chainService.getTonApi(chain);
+
+      tonApi.sendTonTransaction(boc).then((externalMsgHash) => { // the externalMsgHash is the hash of first message, not the hash of transaction.
+        if (!externalMsgHash) {
+          return;
+        }
+
+        tonApi.getStatusByExtMsgHash(externalMsgHash, extrinsicType).then(([status, hex]) => {
+          if (status && hex) {
+            eventData.extrinsicHash = hex;
+            emitter.emit('extrinsicHash', eventData);
+            emitter.emit('success', eventData);
+          }
+
+          if (!status && hex) {
+            eventData.extrinsicHash = hex;
+            emitter.emit('extrinsicHash', eventData);
+            eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
+            emitter.emit('error', eventData);
+          }
+        }).catch((e: Error) => {
+          eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+          emitter.emit('error', eventData);
+        });
+
+        // todo: handle status of externalMsgHash
       }).catch((e: Error) => {
         eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
         emitter.emit('error', eventData);

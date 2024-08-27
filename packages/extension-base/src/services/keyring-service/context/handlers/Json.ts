@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestAccountBatchExportV2, RequestBatchRestoreV2, RequestJsonRestoreV2, ResponseAccountBatchExportV2 } from '@subwallet/extension-base/background/KoniTypes';
-import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { AccountProxy, AccountProxyStoreData, KeyringPairs$JsonV2, ModifyPairStoreData, RequestAccountBatchExportV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestJsonGetAccountInfo, RequestJsonRestoreV2, ResponseAccountBatchExportV2, ResponseBatchJsonGetAccountInfo, ResponseJsonGetAccountInfo } from '@subwallet/extension-base/types';
+import { combineAccountsWithKeyPair, convertAccountProxyType, transformAccount } from '@subwallet/extension-base/utils';
 import { createPair } from '@subwallet/keyring';
 import { KeypairType, KeyringPair$Json } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -40,10 +40,6 @@ export class AccountJsonHandler extends AccountBaseHandler {
       encType
     );
 
-    const exists = this.state.checkAddressExists([pair.address]);
-
-    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || pair.address } }));
-
     // unlock then lock (locking cleans secretKey, so needs to be last)
     try {
       pair.decodePkcs8(password);
@@ -57,19 +53,50 @@ export class AccountJsonHandler extends AccountBaseHandler {
     }
   }
 
+  public parseInfoSingleJson ({ json, password }: RequestJsonGetAccountInfo): ResponseJsonGetAccountInfo {
+    const isPasswordValidated = this.validatePassword(json, password);
+
+    if (isPasswordValidated) {
+      try {
+        const { address, meta, type } = keyring.createFromJson(json);
+        const account = transformAccount(address, type, meta);
+        const proxy: AccountProxy = {
+          id: address,
+          accountType: convertAccountProxyType(account.signMode),
+          name: account.name || account.address,
+          accounts: [account],
+          chainTypes: [account.chainType],
+          parentId: account.parentAddress,
+          suri: account.suri,
+          tokenTypes: account.tokenTypes,
+          accountActions: []
+        };
+
+        return {
+          accountProxy: proxy
+        };
+      } catch (e) {
+        console.error(e);
+        throw new Error((e as Error).message);
+      }
+    } else {
+      throw new Error(t('Wrong password'));
+    }
+  }
+
   public jsonRestoreV2 ({ address, file, isAllowed, password, withMasterPassword }: RequestJsonRestoreV2): void {
     const isPasswordValidated = this.validatePassword(file, password);
 
     if (isPasswordValidated) {
       try {
+        const pair = keyring.createFromJson(file);
+        const exists = this.state.checkAddressExists([pair.address]);
+
+        assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || pair.address } }));
+
+        keyring.restoreAccount(file, password, withMasterPassword);
+
         this.state.saveCurrentAccountProxyId(address, () => {
-          const newAccount = keyring.restoreAccount(file, password, withMasterPassword);
-
-          // genesisHash is not used in SubWallet => reset it to empty string, if it is not hardware wallet
-          if (!newAccount.meta?.isHardware && newAccount.meta?.genesisHash !== '') {
-            keyring.saveAccountMeta(newAccount, { ...newAccount.meta, genesisHash: '' });
-          }
-
           this.state.updateMetadataForPair();
           this.state._addAddressToAuthList(address, isAllowed);
         });
@@ -81,30 +108,109 @@ export class AccountJsonHandler extends AccountBaseHandler {
     }
   }
 
-  private validatedAccountsPassword (json: EncryptedJson, password: string): boolean {
+  private validatedAccountsPassword (json: EncryptedJson, password: string): KeyringPair$Json[] | null {
     try {
-      u8aToString(jsonDecrypt(json, password));
+      const decoded = u8aToString(jsonDecrypt(json, password));
 
-      return true;
+      return JSON.parse(decoded) as KeyringPair$Json[];
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
-  public batchRestoreV2 ({ accountsInfo, file, isAllowed, password }: RequestBatchRestoreV2): void {
-    const addressList: string[] = accountsInfo.map((acc) => acc.address);
-    const isPasswordValidated = this.validatedAccountsPassword(file, password);
-    const exists = this.state.checkAddressExists(addressList);
+  public parseInfoMultiJson ({ json, password }: RequestBatchJsonGetAccountInfo): ResponseBatchJsonGetAccountInfo {
+    const jsons = this.validatedAccountsPassword(json, password);
 
-    assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
-
-    if (isPasswordValidated) {
+    if (jsons) {
       try {
-        this.state.saveCurrentAccountProxyId(ALL_ACCOUNT_KEY, () => {
-          keyring.restoreAccounts(file, password);
+        const { accountProxies, modifyPairs } = json;
+        const pairs = jsons.map((pair) => keyring.createFromJson(pair));
+        const accountProxyMap = combineAccountsWithKeyPair(pairs, modifyPairs, accountProxies);
+        const result = Object.values(accountProxyMap);
 
+        return {
+          accountProxies: result
+        };
+      } catch (e) {
+        console.error(e);
+        throw new Error((e as Error).message);
+      }
+    } else {
+      throw new Error(t('Wrong password'));
+    }
+  }
+
+  public batchRestoreV2 ({ file, isAllowed, password, proxyIds: _proxyIds }: RequestBatchRestoreV2): void {
+    const jsons = this.validatedAccountsPassword(file, password);
+
+    if (jsons) {
+      try {
+        const { accountProxies, modifyPairs } = file;
+        const pairs = jsons.map((pair) => keyring.createFromJson(pair));
+        const accountProxyMap = combineAccountsWithKeyPair(pairs, modifyPairs, accountProxies);
+        const rawProxyIds = _proxyIds && _proxyIds.length ? _proxyIds : Object.keys(accountProxyMap);
+        let _exists: { address: string; name: string; } | undefined;
+
+        const filteredAccountProxies = Object.fromEntries(Object.entries(accountProxyMap)
+          .filter(([key, value]) => {
+            if (!rawProxyIds.includes(key)) {
+              return false;
+            }
+
+            const addresses = value.accounts.map((account) => account.address);
+            const exists = this.state.checkAddressExists(addresses);
+
+            _exists = exists;
+
+            return !exists;
+          })
+        );
+
+        const addresses = Object.values(filteredAccountProxies).flatMap((proxy) => proxy.accounts.map((account) => account.address));
+        const proxyIds = Object.values(filteredAccountProxies).flatMap((proxy) => proxy.id);
+
+        if (!addresses.length) {
+          if (_exists) {
+            throw new Error(t('Account already exists account: {{name}}', { replace: { name: _exists.name || _exists.address || '' } }));
+          } else {
+            throw new Error(t('No accounts found to import'));
+          }
+        }
+
+        const _accountProxies = this.state.value.accountProxy;
+        const _modifyPairs = this.state.value.modifyPair;
+        const currentProxyId = this.state.value.currentAccount.proxyId;
+
+        const nextAccountProxyId = !proxyIds.length
+          ? currentProxyId
+          : proxyIds.length === 1
+            ? proxyIds[0]
+            : ALL_ACCOUNT_KEY;
+
+        if (accountProxies) {
+          for (const proxyId of proxyIds) {
+            if (accountProxies[proxyId]) {
+              _accountProxies[proxyId] = accountProxies[proxyId];
+            }
+          }
+        }
+
+        if (modifyPairs) {
+          for (const [key, modifyPair] of Object.entries(modifyPairs)) {
+            if (proxyIds.includes(modifyPair.accountProxyId || '')) {
+              _modifyPairs[key] = modifyPair;
+            }
+          }
+        }
+
+        this.state.upsertAccountProxy(_accountProxies);
+        this.state.upsertModifyPairs(_modifyPairs);
+
+        keyring.restoreAccounts(file, password, addresses);
+
+        this.state.saveCurrentAccountProxyId(nextAccountProxyId, () => {
           this.state.updateMetadataForPair();
-          this.state._addAddressesToAuthList(addressList, isAllowed);
+          this.state._addAddressesToAuthList(addresses, isAllowed);
         });
       } catch (error) {
         throw new Error((error as Error).message);
@@ -114,32 +220,30 @@ export class AccountJsonHandler extends AccountBaseHandler {
     }
   }
 
-  public jsonGetAccountInfo (json: KeyringPair$Json): ResponseJsonGetAccountInfo {
-    try {
-      const { address, meta: { genesisHash, name }, type } = keyring.createFromJson(json);
-
-      return {
-        address,
-        genesisHash,
-        name,
-        type
-      } as ResponseJsonGetAccountInfo;
-    } catch (e) {
-      console.error(e);
-      throw new Error((e as Error).message);
-    }
-  }
-
   public async batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {
-    const { addresses, password } = request;
+    const { password, proxyIds } = request;
 
     try {
-      if (addresses && !addresses.length) {
+      if (proxyIds && !proxyIds.length) {
         throw new Error(t('No accounts found to export'));
       }
 
+      const _accountProxy = this.state.value.accountProxy;
+      const _modifyPair = this.state.value.modifyPair;
+      const _account = this.state.value.accounts;
+      const _proxyIds = proxyIds || Object.keys(_account);
+      const modifyPairs: ModifyPairStoreData = Object.fromEntries(Object.entries(_modifyPair).filter(([, modifyPair]) => _proxyIds.includes(modifyPair.accountProxyId || '')));
+      const accountProxies: AccountProxyStoreData = Object.fromEntries(Object.entries(_accountProxy).filter(([, proxy]) => _proxyIds.includes(proxy.id)));
+      const addresses = Object.values(_account).filter((account) => _proxyIds.includes(account.id)).flatMap((proxy) => proxy.accounts.map((account) => account.address));
+      const rs: KeyringPairs$JsonV2 = await keyring.backupAccounts(password, addresses);
+
+      if (Object.keys(modifyPairs).length && Object.keys(accountProxies).length) {
+        rs.accountProxies = accountProxies;
+        rs.modifyPairs = modifyPairs;
+      }
+
       return {
-        exportedJson: await keyring.backupAccounts(password, addresses)
+        exportedJson: rs
       };
     } catch (e) {
       const error = e as Error;

@@ -4,7 +4,7 @@
 import { _AssetType } from '@subwallet/chain-list/types';
 import { APIItemState } from '@subwallet/extension-base/background/KoniTypes';
 import { ASTAR_REFRESH_BALANCE_INTERVAL, SUB_TOKEN_REFRESH_BALANCE_INTERVAL } from '@subwallet/extension-base/constants';
-import { getJettonMasterContract, getJettonWalletContract, sleep } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { getJettonMasterContract, getJettonWalletContract } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { BalanceItem, SubscribeTonPalletBalance } from '@subwallet/extension-base/types';
@@ -28,8 +28,6 @@ export function subscribeJettonBalanceInterval ({ addresses, assetMap, callback,
         const balances = await Promise.all(addresses.map(async (address): Promise<bigint> => {
           try {
             const jettonWalletContract = await getJettonWalletContract(masterContract, tonApi, address);
-
-            await sleep(1500);
 
             return await jettonWalletContract.getBalance();
           } catch (e) {

@@ -8,13 +8,15 @@ import { TransactionWarning } from '@subwallet/extension-base/background/warning
 import { XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
 import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/system-pallet';
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
+import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
-import { isSubstrateTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { balanceFormatter, formatNumber } from '@subwallet/extension-base/utils';
+import { isTonAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
@@ -44,6 +46,10 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
 
   if (isEthereumAddress(from) && isEthereumAddress(to) && _isTokenEvmSmartContract(tokenInfo) && _getContractAddressOfToken(tokenInfo).length === 0) {
     errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('Not found ERC20 address for this token')));
+  }
+
+  if (isTonAddress(from) && isTonAddress(to) && _isTokenTonSmartContract(tokenInfo) && _getContractAddressOfToken(tokenInfo).length === 0) {
+    errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('Not found TEP74 address for this token')));
   }
 
   return [errors, keypair, transferValue];
@@ -149,6 +155,8 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
     try {
       if (isSubstrateTransaction(transaction)) {
         estimateFee.value = (await transaction.paymentInfo(validationResponse.address)).partialFee.toString();
+      } else if (isTonTransaction(transaction)) {
+        estimateFee.value = transaction.estimateFee; // todo: might need to update logic estimate fee inside for future actions excluding normal transfer Ton and Jetton
       } else {
         const gasLimit = await evmApi.api.eth.estimateGas(transaction);
 
@@ -226,5 +234,15 @@ export function checkBalanceWithTransactionFee (validationResponse: SWTransactio
     edAsWarning
       ? validationResponse.warnings.push(new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT))
       : validationResponse.errors.push(new TransactionError(BasicTxErrorType.NOT_ENOUGH_EXISTENTIAL_DEPOSIT));
+  }
+}
+
+export function checkTonAddressBounceable (validationResponse: SWTransactionResponse) {
+  const { data: { to } } = validationResponse;
+
+  const isBounceable = isBounceableAddress(to);
+
+  if (isBounceable) {
+    validationResponse.warnings.push(new TransactionWarning(BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS));
   }
 }
