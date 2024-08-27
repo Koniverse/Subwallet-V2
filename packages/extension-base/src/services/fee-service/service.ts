@@ -3,12 +3,14 @@
 
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { ArcanaGasStation } from '@subwallet/extension-base/services/fee-service/extra-service/arcana-gas-station';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { EvmFeeInfo } from '@subwallet/extension-base/types';
 import { BehaviorSubject } from 'rxjs';
 
 export default class FeeService {
   protected readonly state: KoniState;
+  private arcanaGasStation: ArcanaGasStation;
 
   private evmFeeSubject: BehaviorSubject<Record<string, EvmFeeInfo>> = new BehaviorSubject<Record<string, EvmFeeInfo>>({});
   private useInfura: boolean;
@@ -16,6 +18,11 @@ export default class FeeService {
   constructor (state: KoniState) {
     this.state = state;
     this.useInfura = true;
+    this.arcanaGasStation = new ArcanaGasStation();
+  }
+
+  public async initArcana () {
+    await this.arcanaGasStation.init();
   }
 
   public changeMode (useInfura: boolean) {

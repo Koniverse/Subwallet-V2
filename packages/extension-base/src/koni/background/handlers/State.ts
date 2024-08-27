@@ -341,6 +341,8 @@ export default class KoniState {
 
     await this.startSubscription();
 
+    await this.feeService.initArcana();
+
     this.chainService.checkLatestData();
   }
 
