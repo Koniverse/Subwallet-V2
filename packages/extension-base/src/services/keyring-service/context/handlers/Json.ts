@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountProxy, AccountProxyStoreData, KeyringPairs$JsonV2, ModifyPairStoreData, RequestAccountBatchExportV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestJsonGetAccountInfo, RequestJsonRestoreV2, ResponseAccountBatchExportV2, ResponseBatchJsonGetAccountInfo, ResponseJsonGetAccountInfo } from '@subwallet/extension-base/types';
+import { AccountProxyExtra, AccountProxyStoreData, KeyringPairs$JsonV2, ModifyPairStoreData, RequestAccountBatchExportV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestJsonGetAccountInfo, RequestJsonRestoreV2, ResponseAccountBatchExportV2, ResponseBatchJsonGetAccountInfo, ResponseJsonGetAccountInfo } from '@subwallet/extension-base/types';
 import { combineAccountsWithKeyPair, convertAccountProxyType, transformAccount } from '@subwallet/extension-base/utils';
+import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { createPair } from '@subwallet/keyring';
 import { KeypairType, KeyringPair$Json } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -59,8 +60,12 @@ export class AccountJsonHandler extends AccountBaseHandler {
     if (isPasswordValidated) {
       try {
         const { address, meta, type } = keyring.createFromJson(json);
+        const { name } = meta;
         const account = transformAccount(address, type, meta);
-        const proxy: AccountProxy = {
+        const accountExists = this.state.checkAddressExists([address]);
+        const nameExists = this.state.checkNameExists(name as string);
+
+        const proxy: AccountProxyExtra = {
           id: address,
           accountType: convertAccountProxyType(account.signMode),
           name: account.name || account.address,
@@ -69,7 +74,9 @@ export class AccountJsonHandler extends AccountBaseHandler {
           parentId: account.parentAddress,
           suri: account.suri,
           tokenTypes: account.tokenTypes,
-          accountActions: []
+          accountActions: [],
+          isExistAccount: !!accountExists,
+          isExistName: nameExists
         };
 
         return {
@@ -89,12 +96,23 @@ export class AccountJsonHandler extends AccountBaseHandler {
 
     if (isPasswordValidated) {
       try {
-        const pair = keyring.createFromJson(file);
-        const exists = this.state.checkAddressExists([pair.address]);
+        const _pair = keyring.createFromJson(file);
+        const exists = this.state.checkAddressExists([_pair.address]);
 
-        assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || pair.address } }));
+        assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || _pair.address } }));
 
         keyring.restoreAccount(file, password, withMasterPassword);
+
+        const pair = keyring.getPair(_pair.address);
+        const _name = pair.meta.name as string || '';
+
+        const nameExists = this.state.checkNameExists(_name);
+
+        if (nameExists) {
+          const newName = _name.concat(' ').concat(generateRandomString());
+
+          keyring.saveAccountMeta(pair, { ...pair.meta, name: newName });
+        }
 
         this.state.saveCurrentAccountProxyId(address, () => {
           this.state.updateMetadataForPair();
@@ -126,7 +144,22 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const { accountProxies, modifyPairs } = json;
         const pairs = jsons.map((pair) => keyring.createFromJson(pair));
         const accountProxyMap = combineAccountsWithKeyPair(pairs, modifyPairs, accountProxies);
-        const result = Object.values(accountProxyMap);
+
+        const result = Object.values(accountProxyMap).map((proxy): AccountProxyExtra => {
+          const rs: AccountProxyExtra = {
+            ...proxy,
+            isExistAccount: false,
+            isExistName: false
+          };
+
+          const addressExists = this.state.checkAddressExists(proxy.accounts.map((account) => account.address));
+          const nameExists = this.state.checkNameExists(proxy.name);
+
+          rs.isExistAccount = !!addressExists;
+          rs.isExistName = nameExists;
+
+          return rs;
+        });
 
         return {
           accountProxies: result
@@ -150,15 +183,21 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const accountProxyMap = combineAccountsWithKeyPair(pairs, modifyPairs, accountProxies);
         const rawProxyIds = _proxyIds && _proxyIds.length ? _proxyIds : Object.keys(accountProxyMap);
         let _exists: { address: string; name: string; } | undefined;
+        const proxiesChangeName: Record<string, string> = {};
 
         const filteredAccountProxies = Object.fromEntries(Object.entries(accountProxyMap)
-          .filter(([key, value]) => {
-            if (!rawProxyIds.includes(key)) {
+          .filter(([proxyId, accountProxy]) => {
+            if (!rawProxyIds.includes(proxyId)) {
               return false;
             }
 
-            const addresses = value.accounts.map((account) => account.address);
+            const addresses = accountProxy.accounts.map((account) => account.address);
             const exists = this.state.checkAddressExists(addresses);
+            const name = accountProxy.name;
+
+            if (this.state.checkNameExists(name)) {
+              proxiesChangeName[proxyId] = name.concat(' ').concat(generateRandomString());
+            }
 
             _exists = exists;
 
@@ -189,8 +228,14 @@ export class AccountJsonHandler extends AccountBaseHandler {
 
         if (accountProxies) {
           for (const proxyId of proxyIds) {
-            if (accountProxies[proxyId]) {
-              _accountProxies[proxyId] = accountProxies[proxyId];
+            const accountProxy = accountProxies[proxyId];
+
+            if (accountProxy) {
+              if (proxiesChangeName[proxyId]) {
+                accountProxy.name = proxiesChangeName[proxyId];
+              }
+
+              _accountProxies[proxyId] = accountProxy;
             }
           }
         }
@@ -207,6 +252,18 @@ export class AccountJsonHandler extends AccountBaseHandler {
         this.state.upsertModifyPairs(_modifyPairs);
 
         keyring.restoreAccounts(file, password, addresses);
+
+        for (const [proxyId, accountProxy] of Object.entries(accountProxyMap)) {
+          const name = proxiesChangeName[proxyId];
+
+          if (name) {
+            for (const account of accountProxy.accounts) {
+              const pair = keyring.getPair(account.address);
+
+              keyring.saveAccountMeta(pair, { ...pair.meta, name });
+            }
+          }
+        }
 
         this.state.saveCurrentAccountProxyId(nextAccountProxyId, () => {
           this.state.updateMetadataForPair();

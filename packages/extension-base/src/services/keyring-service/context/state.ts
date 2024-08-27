@@ -280,6 +280,13 @@ export class AccountState {
     return undefined;
   }
 
+  /* Check address exists */
+  public checkNameExists (name: string): boolean {
+    const accounts = this.accounts;
+
+    return Object.values(accounts).some((account) => account.name === name);
+  }
+
   /* Auth address */
 
   public _addAddressesToAuthList (addresses: string[], isAllowed: boolean): void {
@@ -329,8 +336,15 @@ export class AccountState {
 
   public belongUnifiedAccount (address: string): string | undefined {
     const modifyPairs = this.modifyPairs;
+    const accountProxies = this.accountProxies;
 
-    return modifyPairs[address]?.accountProxyId;
+    const proxyId = modifyPairs[address]?.accountProxyId;
+
+    if (proxyId) {
+      return accountProxies[proxyId]?.id;
+    } else {
+      return undefined;
+    }
   }
 
   /* Is account proxy id */
