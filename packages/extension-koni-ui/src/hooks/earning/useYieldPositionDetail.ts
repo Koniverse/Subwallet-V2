@@ -3,30 +3,52 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AbstractYieldPositionInfo, EarningStatus, LendingYieldPositionInfo, LiquidYieldPositionInfo, NativeYieldPositionInfo, NominationYieldPositionInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { isAccountAll, reformatAddress } from '@subwallet/extension-base/utils';
 import { useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
+
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface Result {
   compound: YieldPositionInfo | undefined;
   list: YieldPositionInfo[];
 }
 
+const reformatKeyByAddress = (address: string): string => isEthereumAddress(address) ? address.toLowerCase() : reformatAddress(address, 0);
+
 const useYieldPositionDetail = (slug: string, address?: string): Result => {
   const { poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { accountProxies, currentAccountProxy } = useSelector((state) => state.accountState);
   const chainsByAccountType = useGetChainSlugsByAccount();
 
   return useMemo(() => {
-    const _address = address || currentAccount?.address || '';
+    const _address = address || currentAccountProxy?.id || '';
     const isAll = isAccountAll(_address);
+
+    const proxy = accountProxies.find((proxy) => proxy.id === _address);
+
+    let addressRecord: Record<string, boolean>;
+
+    if (proxy) {
+      addressRecord = proxy.accounts.reduce<Record<string, boolean>>((record, acc) => {
+        const keyToAdd = reformatKeyByAddress(acc.address);
+
+        return { ...record, [keyToAdd]: true };
+      }, {});
+    } else {
+      const singleKey = reformatKeyByAddress(_address);
+
+      addressRecord = { [singleKey]: true };
+    }
 
     const checkAddress = (item: YieldPositionInfo) => {
       if (isAll) {
         return true;
       } else {
-        return isSameAddress(_address, item.address);
+        const keyToCheck = reformatKeyByAddress(item.address);
+
+        return addressRecord[keyToCheck];
       }
     };
 
@@ -130,7 +152,7 @@ const useYieldPositionDetail = (slug: string, address?: string): Result => {
         list: infoList
       };
     }
-  }, [chainsByAccountType, currentAccount?.address, poolInfoMap, slug, yieldPositions, address]);
+  }, [chainsByAccountType, currentAccountProxy?.id, accountProxies, poolInfoMap, slug, yieldPositions, address]);
 };
 
 export default useYieldPositionDetail;

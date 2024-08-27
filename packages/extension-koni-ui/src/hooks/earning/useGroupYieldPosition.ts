@@ -3,29 +3,42 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AbstractYieldPositionInfo, EarningStatus, LendingYieldPositionInfo, LiquidYieldPositionInfo, NativeYieldPositionInfo, NominationYieldPositionInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { isAccountAll, reformatAddress } from '@subwallet/extension-base/utils';
 import { useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
 
+import { isEthereumAddress } from '@polkadot/util-crypto';
+
 const useGroupYieldPosition = (): YieldPositionInfo[] => {
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const yieldPositions = useSelector((state) => state.earning.yieldPositions);
-  const currentAccount = useSelector((state) => state.accountState.currentAccount);
+  const currentAccountProxy = useSelector((state) => state.accountState.currentAccountProxy);
   const chainsByAccountType = useGetChainSlugsByAccount();
 
   return useMemo(() => {
     const raw: Record<string, YieldPositionInfo[]> = {};
     const result: YieldPositionInfo[] = [];
 
-    const address = currentAccount?.address || '';
-    const isAll = isAccountAll(address);
+    if (!currentAccountProxy?.id) {
+      return [];
+    }
+
+    const idProxy = currentAccountProxy.id;
+    const isAll = isAccountAll(idProxy);
+    const addressRecord = currentAccountProxy.accounts.reduce<Record<string, boolean>>((record, acc) => {
+      const keyToAdd = isEthereumAddress(acc.address) ? acc.address.toLowerCase() : reformatAddress(acc.address, 0);
+
+      return { ...record, [keyToAdd]: true };
+    }, {});
 
     const checkAddress = (item: YieldPositionInfo) => {
       if (isAll) {
         return true;
       } else {
-        return isSameAddress(address, item.address);
+        const keyToCheck = isEthereumAddress(item.address) ? item.address.toLowerCase() : reformatAddress(item.address, 0);
+
+        return addressRecord[keyToCheck];
       }
     };
 
@@ -109,7 +122,7 @@ const useGroupYieldPosition = (): YieldPositionInfo[] => {
     }
 
     return result;
-  }, [chainsByAccountType, currentAccount?.address, poolInfoMap, yieldPositions]);
+  }, [chainsByAccountType, currentAccountProxy?.id, currentAccountProxy?.accounts, poolInfoMap, yieldPositions]);
 };
 
 export default useGroupYieldPosition;
