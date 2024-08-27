@@ -248,6 +248,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
         from: '',
         recipient: undefined
       });
+
+      setIsFormInvalid(true);
     }
   }, [form, fromTokenSlugValue, toTokenSlugValue]);
 
@@ -333,31 +335,19 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
   const showRecipientField = useMemo(() => {
-    if (!fromValue || !destChainValue || !chainInfoMap[destChainValue] || !chainValue || !chainInfoMap[chainValue]) {
+    if (!fromValue || !destChainValue || !chainInfoMap[destChainValue]) {
       return false;
     }
 
     // todo: convert this find logic to util
-    const accountAddress = accountAddressItems.find((item) => item.address === fromValue);
-
-    if (!accountAddress) {
-      return false;
-    }
-
-    const fromAccountJson = accounts.find((item) => {
-      if (isSameAddress(item.proxyId || '', accountAddress.accountProxyId) && accountAddress.accountType === item.type) {
-        return fromValue === getReformatedAddressRelatedToChain(item, chainInfoMap[chainValue]);
-      }
-
-      return false;
-    });
+    const fromAccountJson = accounts.find((account) => isSameAddress(account.address, fromValue));
 
     if (!fromAccountJson) {
       return false;
     }
 
     return !isChainInfoAccordantAccountChainType(chainInfoMap[destChainValue], fromAccountJson.chainType);
-  }, [accounts, accountAddressItems, chainInfoMap, destChainValue, chainValue, fromValue]);
+  }, [accounts, chainInfoMap, destChainValue, fromValue]);
 
   const onSelectFromToken = useCallback((tokenSlug: string) => {
     form.setFieldValue('fromTokenSlug', tokenSlug);
@@ -1022,7 +1012,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
         });
       }, 300);
     } else {
-      setShowQuoteArea(false);
+      setIsFormInvalid(true);
     }
 
     return () => {
@@ -1100,6 +1090,16 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       activeModal(SWAP_TERMS_OF_SERVICE_MODAL);
     }
   }, [activeModal, confirmedTerm]);
+
+  useEffect(() => {
+    if (isFormInvalid) {
+      setQuoteAliveUntil(undefined);
+      setShowQuoteArea(false);
+      setQuoteOptions([]);
+      setCurrentQuote(undefined);
+      setCurrentQuoteRequest(undefined);
+    }
+  }, [isFormInvalid]);
 
   useEffect(() => {
     if (requestUserInteractToContinue) {
@@ -1239,7 +1239,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                 </div>
 
                 <Form.Item
-                  hidden={accountAddressItems.length === 1}
+                  hidden={accountAddressItems.length <= 1}
                   name={'from'}
                 >
                   <AccountAddressSelector
