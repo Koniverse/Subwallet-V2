@@ -3,52 +3,43 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AbstractYieldPositionInfo, EarningStatus, LendingYieldPositionInfo, LiquidYieldPositionInfo, NativeYieldPositionInfo, NominationYieldPositionInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { isAccountAll, reformatAddress } from '@subwallet/extension-base/utils';
+import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
 import { useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { isChainInfoAccordantAccountChainType } from '@subwallet/extension-koni-ui/utils';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface Result {
   compound: YieldPositionInfo | undefined;
   list: YieldPositionInfo[];
 }
 
-const reformatKeyByAddress = (address: string): string => isEthereumAddress(address) ? address.toLowerCase() : reformatAddress(address, 0);
-
 const useYieldPositionDetail = (slug: string, address?: string): Result => {
   const { poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
-  const { accountProxies, currentAccountProxy } = useSelector((state) => state.accountState);
+  const { currentAccountProxy } = useSelector((state) => state.accountState);
+  const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+  const chainInfo = useMemo(() => poolInfoMap[slug] && chainInfoMap[poolInfoMap[slug].chain], [poolInfoMap, slug, chainInfoMap]);
   const chainsByAccountType = useGetChainSlugsByAccount();
 
   return useMemo(() => {
-    const _address = address || currentAccountProxy?.id || '';
-    const isAll = isAccountAll(_address);
+    let _address = address || '';
+    let isAll = isAccountAll(_address);
 
-    const proxy = accountProxies.find((proxy) => proxy.id === _address);
+    if (!_address && currentAccountProxy && chainInfo) {
+      if (isAccountAll(currentAccountProxy.id)) {
+        isAll = true;
+      } else {
+        const account = currentAccountProxy.accounts.find(({ chainType }) => isChainInfoAccordantAccountChainType(chainInfo, chainType));
 
-    let addressRecord: Record<string, boolean>;
-
-    if (proxy) {
-      addressRecord = proxy.accounts.reduce<Record<string, boolean>>((record, acc) => {
-        const keyToAdd = reformatKeyByAddress(acc.address);
-
-        return { ...record, [keyToAdd]: true };
-      }, {});
-    } else {
-      const singleKey = reformatKeyByAddress(_address);
-
-      addressRecord = { [singleKey]: true };
+        _address = account?.address || '';
+      }
     }
 
     const checkAddress = (item: YieldPositionInfo) => {
       if (isAll) {
         return true;
       } else {
-        const keyToCheck = reformatKeyByAddress(item.address);
-
-        return addressRecord[keyToCheck];
+        return isSameAddress(_address, item.address);
       }
     };
 
@@ -152,7 +143,7 @@ const useYieldPositionDetail = (slug: string, address?: string): Result => {
         list: infoList
       };
     }
-  }, [chainsByAccountType, currentAccountProxy?.id, accountProxies, poolInfoMap, slug, yieldPositions, address]);
+  }, [address, currentAccountProxy, chainInfo, yieldPositions, chainsByAccountType, poolInfoMap, slug]);
 };
 
 export default useYieldPositionDetail;

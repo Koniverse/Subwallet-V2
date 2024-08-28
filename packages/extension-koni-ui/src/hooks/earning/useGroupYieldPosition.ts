@@ -3,12 +3,10 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AbstractYieldPositionInfo, EarningStatus, LendingYieldPositionInfo, LiquidYieldPositionInfo, NativeYieldPositionInfo, NominationYieldPositionInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { isAccountAll, reformatAddress } from '@subwallet/extension-base/utils';
+import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
 import { useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 const useGroupYieldPosition = (): YieldPositionInfo[] => {
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
@@ -24,21 +22,13 @@ const useGroupYieldPosition = (): YieldPositionInfo[] => {
       return [];
     }
 
-    const idProxy = currentAccountProxy.id;
-    const isAll = isAccountAll(idProxy);
-    const addressRecord = currentAccountProxy.accounts.reduce<Record<string, boolean>>((record, acc) => {
-      const keyToAdd = isEthereumAddress(acc.address) ? acc.address.toLowerCase() : reformatAddress(acc.address, 0);
-
-      return { ...record, [keyToAdd]: true };
-    }, {});
+    const isAll = isAccountAll(currentAccountProxy.id);
 
     const checkAddress = (item: YieldPositionInfo) => {
       if (isAll) {
         return true;
       } else {
-        const keyToCheck = isEthereumAddress(item.address) ? item.address.toLowerCase() : reformatAddress(item.address, 0);
-
-        return addressRecord[keyToCheck];
+        return !!currentAccountProxy.accounts.find(({ address }) => isSameAddress(address, item.address));
       }
     };
 

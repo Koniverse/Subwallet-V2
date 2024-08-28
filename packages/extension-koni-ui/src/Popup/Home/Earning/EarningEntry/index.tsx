@@ -18,15 +18,15 @@ function Component () {
   useSetCurrentPage('/home/earning');
   const locationState = useLocation().state as EarningEntryParam;
   const { currentAccountProxy } = useSelector((state) => state.accountState);
-  const currentAccountRef = useRef(currentAccountProxy?.id);
+  const currentAccountProxyRef = useRef(currentAccountProxy?.id);
   const [entryView, setEntryView] = useState<EarningEntryView>(locationState?.view || EarningEntryView.POSITIONS);
   const [loading, setLoading] = useState<boolean>(false);
 
   const earningPositions = useGroupYieldPosition();
 
   useEffect(() => {
-    if (currentAccountRef.current !== currentAccountProxy?.id) {
-      currentAccountRef.current = currentAccountProxy?.id;
+    if (currentAccountProxyRef.current !== currentAccountProxy?.id) {
+      currentAccountProxyRef.current = currentAccountProxy?.id;
 
       setEntryView(EarningEntryView.POSITIONS);
     }
