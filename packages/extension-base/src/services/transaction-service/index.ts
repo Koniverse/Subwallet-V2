@@ -127,8 +127,10 @@ export default class TransactionService {
     // Estimate fee for transaction
     validationResponse.estimateFee = await estimateFeeForTransaction(validationResponse, transaction, chainInfo, evmApi);
 
+    const chainInfoMap = this.state.chainService.getChainInfoMap();
+
     // Check account signing transaction
-    checkSigningAccountForTransaction(validationResponse);
+    checkSigningAccountForTransaction(validationResponse, chainInfoMap);
 
     const nativeTokenInfo = this.state.chainService.getNativeTokenInfo(chain);
     const nativeTokenAvailable = await this.state.balanceService.getTransferableBalance(address, chain, nativeTokenInfo.slug, extrinsicType);
