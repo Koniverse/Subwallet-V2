@@ -160,7 +160,7 @@ const Component: React.FC<Props> = (props: Props) => {
         )
       }
       {
-        (type === 'tonSendTransactionRequest' || 'tonWatchTransactionRequest') && (
+        (type === 'tonSendTransactionRequest' || type === 'tonWatchTransactionRequest') && (
           <TonSignArea
             extrinsicType={transaction.extrinsicType}
             id={item.id}
