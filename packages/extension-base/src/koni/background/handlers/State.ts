@@ -61,6 +61,7 @@ import { KeypairType } from '@polkadot/util-crypto/types';
 
 import { KoniCron } from '../cron';
 import { KoniSubscription } from '../subscription';
+import {setOrbyApiKey} from "@orbykit/core";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 const passworder = require('browser-passworder');
@@ -341,7 +342,7 @@ export default class KoniState {
 
     await this.startSubscription();
 
-    await this.feeService.initArcana();
+    // await this.feeService.initArcana();
 
     this.chainService.checkLatestData();
   }

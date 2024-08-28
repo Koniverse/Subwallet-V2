@@ -13,7 +13,7 @@ export class ArcanaGasStation {
 
   public async init () {
     await this.scw.init(
-      process.env.ARCANA_CLIENT_ID as string,
+      'xar_test_8bfe94f29a78a56a1835072478b4d80b026ff221',
       window.ethereum,
       undefined,
       0
