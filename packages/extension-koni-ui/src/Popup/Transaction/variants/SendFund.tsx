@@ -9,7 +9,7 @@ import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { detectTranslate, isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
@@ -251,65 +251,65 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       return Promise.reject(t('Invalid recipient address'));
     }
 
-    const { chain, destChain, from, to } = form.getFieldsValue();
-
-    if (!from || !chain || !destChain) {
-      return Promise.resolve();
-    }
-
-    if (!isEthereumAddress(_recipientAddress)) {
-      const destChainInfo = chainInfoMap[destChain];
-      const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
-      const _addressOnChain = reformatAddress(_recipientAddress, addressPrefix);
-
-      if (_addressOnChain !== _recipientAddress) {
-        return Promise.reject(t('Recipient should be a valid {{networkName}} address', { replace: { networkName: destChainInfo.name } }));
-      }
-    }
-
-    const isOnChain = chain === destChain;
-
-    const account = findAccountByAddress(accounts, _recipientAddress);
-
-    if (isOnChain) {
-      if (isSameAddress(from, _recipientAddress)) {
-        // todo: change message later
-        return Promise.reject(t('The recipient address can not be the same as the sender address'));
-      }
-
-      const isNotSameAddressType = (isEthereumAddress(from) && !!_recipientAddress && !isEthereumAddress(_recipientAddress)) ||
-        (!isEthereumAddress(from) && !!_recipientAddress && isEthereumAddress(_recipientAddress));
-
-      if (isNotSameAddressType) {
-        // todo: change message later
-        return Promise.reject(t('The recipient address must be same type as the current account address.'));
-      }
-    } else {
-      const isDestChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[destChain]);
-
-      if (isDestChainEvmCompatible !== isEthereumAddress(to)) {
-        // todo: change message later
-        if (isDestChainEvmCompatible) {
-          return Promise.reject(t('The recipient address must be EVM type'));
-        } else {
-          return Promise.reject(t('The recipient address must be Substrate type'));
-        }
-      }
-    }
-
-    if (account?.isHardware) {
-      const destChainInfo = chainInfoMap[destChain];
-      const availableGen: string[] = account.availableGenesisHashes || [];
-
-      if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-        const destChainName = destChainInfo?.name || 'Unknown';
-
-        return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
-      }
-    }
+    // const { chain, destChain, from, to } = form.getFieldsValue();
+    //
+    // if (!from || !chain || !destChain) {
+    //   return Promise.resolve();
+    // }
+    //
+    // if (!isEthereumAddress(_recipientAddress)) {
+    //   const destChainInfo = chainInfoMap[destChain];
+    //   const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
+    //   const _addressOnChain = reformatAddress(_recipientAddress, addressPrefix);
+    //
+    //   if (_addressOnChain !== _recipientAddress) {
+    //     return Promise.reject(t('Recipient should be a valid {{networkName}} address', { replace: { networkName: destChainInfo.name } }));
+    //   }
+    // }
+    //
+    // const isOnChain = chain === destChain;
+    //
+    // const account = findAccountByAddress(accounts, _recipientAddress);
+    //
+    // if (isOnChain) {
+    //   if (isSameAddress(from, _recipientAddress)) {
+    //     // todo: change message later
+    //     return Promise.reject(t('The recipient address can not be the same as the sender address'));
+    //   }
+    //
+    //   const isNotSameAddressType = (isEthereumAddress(from) && !!_recipientAddress && !isEthereumAddress(_recipientAddress)) ||
+    //     (!isEthereumAddress(from) && !!_recipientAddress && isEthereumAddress(_recipientAddress));
+    //
+    //   if (isNotSameAddressType) {
+    //     // todo: change message later
+    //     return Promise.reject(t('The recipient address must be same type as the current account address.'));
+    //   }
+    // } else {
+    //   const isDestChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[destChain]);
+    //
+    //   if (isDestChainEvmCompatible !== isEthereumAddress(to)) {
+    //     // todo: change message later
+    //     if (isDestChainEvmCompatible) {
+    //       return Promise.reject(t('The recipient address must be EVM type'));
+    //     } else {
+    //       return Promise.reject(t('The recipient address must be Substrate type'));
+    //     }
+    //   }
+    // }
+    //
+    // if (account?.isHardware) {
+    //   const destChainInfo = chainInfoMap[destChain];
+    //   const availableGen: string[] = account.availableGenesisHashes || [];
+    //
+    //   if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
+    //     const destChainName = destChainInfo?.name || 'Unknown';
+    //
+    //     return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
+    //   }
+    // }
 
     return Promise.resolve();
-  }, [accounts, chainInfoMap, form, t]);
+  }, [t]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
