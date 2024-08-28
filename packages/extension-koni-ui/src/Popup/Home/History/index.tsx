@@ -187,7 +187,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const dataContext = useContext(DataContext);
   const { t } = useTranslation();
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
-  const { accounts, currentAccountProxy } = useSelector((root) => root.accountState);
+  const { accounts, currentAccountProxy, isAllAccount } = useSelector((root) => root.accountState);
   const { chainInfoMap } = useSelector((root) => root.chainStore);
   const { language } = useSelector((root) => root.settings);
   const [loading, setLoading] = useState<boolean>(true);
@@ -512,12 +512,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         value={selectedChain}
       />
 
-      <AccountAddressSelector
-        className={'__history-address-selector'}
-        items={accountAddressItems}
-        onChange={onSelectAccount}
-        value={selectedAddress}
-      />
+      {
+        (isAllAccount || accountAddressItems.length > 1) && (
+          <AccountAddressSelector
+            className={'__history-address-selector'}
+            items={accountAddressItems}
+            onChange={onSelectAccount}
+            value={selectedAddress}
+          />
+        )
+      }
     </>
   );
 
