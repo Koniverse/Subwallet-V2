@@ -58,7 +58,7 @@ function getTokenItems (
       return;
     }
 
-    if (!tokenGroupSlug || !(chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
+    if (!tokenGroupSlug || (chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
       items.push({
         slug: chainAsset.slug,
         name: _getAssetName(chainAsset),
