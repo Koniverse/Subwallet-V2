@@ -5,7 +5,7 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
-import { AbstractAddressJson, AccountChainType, AccountProxy, AddressJson, AnalyzeAddress, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
+import { AbstractAddressJson, AccountChainType, AccountProxy, AddressJson, AnalyzeAddress, AnalyzedGroup, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
 
 import { isAddress } from '@polkadot/util-crypto';
 
@@ -72,6 +72,12 @@ const isNameValid = (str: string, name: string): ValidDataType => {
 };
 
 export const _analyzeAddress = async (data: string, accountProxies: AccountProxy[], contacts: AddressJson[], chainInfo: _ChainInfo, substrateApi?: _SubstrateApi): Promise<Omit<ResponseInputAccountSubscribe, 'id'>> => {
+  if (!data) {
+    return {
+      options: []
+    };
+  }
+
   const chain = chainInfo.slug;
   const _data = data.trim().toLowerCase();
   const options: AnalyzeAddress[] = [];
@@ -90,7 +96,7 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
       const rs: AnalyzeAddress = {
         address: account.address,
-        accountName: accountProxy.name,
+        analyzedGroup: AnalyzedGroup.WALLET,
         displayName: accountProxy.name,
         formatedAddress: _reformatAddressWithChain(account.address, chainInfo)
       };
@@ -127,7 +133,7 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
     const rs: AnalyzeAddress = {
       address: contact.address,
-      accountName: name,
+      analyzedGroup: contact.isRecent ? AnalyzedGroup.RECENT : AnalyzedGroup.CONTACT,
       displayName: name,
       formatedAddress: _reformatAddressWithChain(contact.address, chainInfo)
     };
@@ -160,13 +166,11 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
       const domain = await resolveAzeroAddressToDomain(_raw, chain, substrateApi.api);
 
       if (domain) {
-        if (current) {
-          current.domainName = domain;
-        } else {
+        if (!current) {
           const rs: AnalyzeAddress = {
             address: _raw,
+            analyzedGroup: AnalyzedGroup.DOMAIN,
             displayName: domain,
-            domainName: domain,
             formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
           };
 
@@ -178,13 +182,11 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
       const address = await resolveAzeroDomainToAddress(_raw, chain, substrateApi.api);
 
       if (address) {
-        if (current) {
-          current.domainName = _raw;
-        } else {
+        if (!current) {
           const rs: AnalyzeAddress = {
             address: address,
+            analyzedGroup: AnalyzedGroup.DOMAIN,
             displayName: _raw,
-            domainName: _raw,
             formatedAddress: _reformatAddressWithChain(address, chainInfo)
           };
 

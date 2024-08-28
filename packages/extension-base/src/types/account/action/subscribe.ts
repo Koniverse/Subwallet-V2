@@ -6,11 +6,17 @@ export interface RequestInputAccountSubscribe {
   chain: string;
 }
 
+export enum AnalyzedGroup {
+  WALLET = 'wallet',
+  CONTACT = 'contact',
+  DOMAIN = 'domain',
+  RECENT = 'recent'
+}
+
 export interface AnalyzeAddress {
   address: string;
   formatedAddress: string;
-  domainName?: string;
-  accountName?: string;
+  analyzedGroup: AnalyzedGroup;
   displayName?: string;
 }
 
