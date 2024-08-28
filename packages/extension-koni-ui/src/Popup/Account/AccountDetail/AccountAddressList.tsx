@@ -3,11 +3,13 @@
 
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountChainAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import { useGetAccountChainAddresses, useTranslation, useViewAccountAddressQr } from '@subwallet/extension-koni-ui/hooks';
+import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
+import { useGetAccountChainAddresses, useHandleTonAccountWarning, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
 import { Strategy } from 'phosphor-react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -19,19 +21,34 @@ const isNotHide = false;
 function Component ({ accountProxy, className }: Props) {
   const { t } = useTranslation();
   const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
-  const onViewAccountAddressQr = useViewAccountAddressQr();
+  const notify = useNotification();
+  const onHandleTonAccountWarning = useHandleTonAccountWarning();
+  const { addressQrModal } = useContext(WalletModalContext);
 
   const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
-      onViewAccountAddressQr(item);
+      onHandleTonAccountWarning(item.accountType, () => {
+        addressQrModal.open({
+          address: item.address,
+          chainSlug: item.slug,
+          onCancel: () => {
+            addressQrModal.close();
+          }
+        });
+      });
     };
-  }, [onViewAccountAddressQr]);
+  }, [addressQrModal, onHandleTonAccountWarning]);
 
   const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
-      onViewAccountAddressQr(item, true);
+      onHandleTonAccountWarning(item.accountType, () => {
+        copyToClipboard(item.address || '');
+        notify({
+          message: t('Copied to clipboard')
+        });
+      });
     };
-  }, [onViewAccountAddressQr]);
+  }, [notify, onHandleTonAccountWarning, t]);
 
   const renderItem = useCallback(
     (item: AccountChainAddress) => {
