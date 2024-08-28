@@ -12,7 +12,7 @@ import { compareNativeAsset, getEvmNativeInfo, getSubstrateNativeInfo, handleEvm
 
 jest.setTimeout(3 * 60 * 60 * 1000);
 
-const ignoreChains: string[] = ['interlay', 'kintsugi', 'kintsugi_test', 'avail_mainnet'];
+const ignoreChains: string[] = ['interlay', 'kintsugi', 'kintsugi_test', 'avail_mainnet', 'peaq'];
 // const onlyChains: string[] = ['subsocial_x', 'crabParachain', 'pangolin', 'acala_testnet'];
 
 describe('test chain', () => {
@@ -20,14 +20,15 @@ describe('test chain', () => {
     const chainInfos = Object.values(ChainInfoMap).filter((info) =>
       info.chainStatus === _ChainStatus.ACTIVE &&
       !ignoreChains.includes(info.slug)
+      //&&['chainflip_dot'].includes((info.slug))
+
       // && onlyChains.includes(info.slug)
     );
     const errorChain: Record<string, string[]> = {};
+    //const testNetError: Record<string, string[]> = {};
 
     for (const chainInfo of chainInfos) {
       const chain = chainInfo.slug;
-
-      console.log('start', chain);
 
       const providerIndex = chainProvider[chain] || chainProvider.default;
       const [key, provider] = Object.entries(chainInfo.providers)[providerIndex];
@@ -48,6 +49,7 @@ describe('test chain', () => {
         const ss58Prefix = api.consts.system.ss58Prefix.toPrimitive() as number;
         const paraChainId = api.query.parachainInfo ? (await api.query.parachainInfo.parachainId()).toPrimitive() as number : null;
 
+
         if (!ignoreChains.includes(chain)) {
           const nativeToken = await getSubstrateNativeInfo(api);
 
@@ -55,7 +57,7 @@ describe('test chain', () => {
             decimals: substrateInfo.decimals,
             existentialDeposit: substrateInfo.existentialDeposit,
             symbol: substrateInfo.symbol
-          }, errors);
+          }, errors , chainInfo);
         }
 
         if (ss58Prefix !== substrateInfo.addressPrefix) {
@@ -84,7 +86,7 @@ describe('test chain', () => {
           decimals: evmInfo.decimals,
           existentialDeposit: evmInfo.existentialDeposit,
           symbol: evmInfo.symbol
-        }, errors);
+        }, errors, chainInfo );
       };
 
       if (chainInfo.substrateInfo) {
@@ -123,7 +125,6 @@ describe('test chain', () => {
           chainId: chainInfo.evmInfo?.evmChainId || 0
         });
       }
-
       if (errors.length) {
         errorChain[chain] = errors;
       }

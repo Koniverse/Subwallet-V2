@@ -1,30 +1,33 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainAssetMap, ChainInfoMap } from '@subwallet/chain-list';
-import { _AssetType, _ChainAsset, _ChainStatus } from '@subwallet/chain-list/types';
-import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getContractAddressOfToken, _getTokenOnChainAssetId } from '@subwallet/extension-base/services/chain-service/utils';
+import {ChainAssetMap, ChainInfoMap} from '@subwallet/chain-list';
+import {_AssetType, _ChainAsset, _ChainStatus} from '@subwallet/chain-list/types';
+import {_EvmApi} from '@subwallet/extension-base/services/chain-service/types';
+import {_getContractAddressOfToken, _getTokenOnChainAssetId} from '@subwallet/extension-base/services/chain-service/utils';
 import BigN from 'bignumber.js';
 
-import { ApiPromise } from '@polkadot/api';
+import {ApiPromise} from '@polkadot/api';
 
-import { chainProvider, chainProviderBackup } from './constants';
-import { AssetSpec, compareAsset, getErc20AssetInfo, getEvmNativeInfo, getLocalAssetInfo, getPsp22AssetInfo, getSubstrateNativeInfo, handleEvmProvider, handleSubstrateProvider } from './utils';
+import {chainProvider, chainProviderBackup} from './constants';
+import {AssetSpec, compareAsset, getErc20AssetInfo, getEvmNativeInfo, getLocalAssetInfo, getPsp22AssetInfo, getSubstrateNativeInfo, handleEvmProvider, handleSubstrateProvider} from './utils';
 
 jest.setTimeout(3 * 60 * 60 * 1000);
 
-const ignoreChains: string[] = ['interlay', 'kintsugi', 'kintsugi_test', 'avail_mainnet'];
+const ignoreChains: string[] = ['interlay', 'kintsugi', 'kintsugi_test', 'avail_mainnet', 'peaq'];
 
 describe('test chain asset', () => {
   it('chain asset', async () => {
     const chainAssets = Object.values(ChainAssetMap).filter((info) =>
       ChainInfoMap[info.originChain].chainStatus === _ChainStatus.ACTIVE &&
       !ignoreChains.includes(info.originChain)
+      //&& ['hydradx_main'].includes(info.originChain)
     );
+
     const assetByChain: Record<string, _ChainAsset[]> = {};
     const errorChain: Record<string, string> = {};
     const errorAsset: Record<string, Record<string, string>> = {};
+    //const testnetErrors : Record<string, Record<string, string>> = {}
 
     for (const chainAsset of chainAssets) {
       const originChain = chainAsset.originChain;
@@ -39,8 +42,9 @@ describe('test chain asset', () => {
     for (const [chain, assets] of Object.entries(assetByChain)) {
       console.log('start', chain);
       const chainInfo = ChainInfoMap[chain];
-      const providerIndex = chainProvider[chain] || chainProvider.default;
-      const [key, provider] = Object.entries(chainInfo.providers)[providerIndex];
+      const providerIndex = chainProvider[chain] || chainProvider.default
+      const [key, provider] = Object.entries(chainInfo.providers)[providerIndex]; // Object.keys; Object.values; Object.entries
+      console.log('key', key, provider);
 
       const onTimeout = () => {
         errorChain[chain] = 'Timeout';
@@ -53,6 +57,7 @@ describe('test chain asset', () => {
 
       const onSuccessSubstrate = async (api: ApiPromise) => {
         const tmpErrorAsset: Record<string, string> = {};
+        //const tnErrorAsset: Record<string, string> = {};
 
         for (const asset of assets) {
           let assetInfo: AssetSpec | undefined;
@@ -126,6 +131,7 @@ describe('test chain asset', () => {
 
             if (errors.length) {
               tmpErrorAsset[asset.slug] = errors.join(' --- ');
+
             }
           } catch (e) {
             console.error(asset.slug, e);
@@ -145,7 +151,7 @@ describe('test chain asset', () => {
           key,
           onSuccess: onSuccessSubstrate,
           awaitDisconnect: false,
-          onError,
+          onError, // callback function, fallback
           onTimeout,
           genHash: ''
         });
@@ -175,6 +181,7 @@ describe('test chain asset', () => {
         });
       }
     }
+
 
     console.log('result errorAsset', errorAsset);
     console.log('result errorChain', errorChain);

@@ -372,34 +372,82 @@ export const getErc20AssetInfo = async (asset: _ChainAsset, api: _EvmApi): Promi
   };
 };
 
+// const SKIP_ASSETS = [
+//   'ethereum-ERC20-MKR-0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2',
+//   'moonbeam-ERC20-USDC.axl-0xCa01a1D0993565291051daFF390892518ACfAD3A',
+//   'moonbeam-ERC20-USDT.wh-0xc30E9cA94CF52f3Bf5692aaCF81353a27052c46f',
+//   'moonbeam-ERC20-USDC.wh-0x931715fee2d06333043d11f658c8ce934ac61d0c',
+//   'moonbeam-ERC20-WBTC.wh-0xe57ebd2d67b462e9926e04a8e33f01cd0d64346d',
+//   'moonbeam-ERC20-ETH.wh-0xab3f0245b83feb11d15aaffefd7ad465a59817ed',
+//   'polygon-ERC20-USDC.e-0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
+//   'astarEvm-ERC20-ARSW_LP-0x87988EbDE7E661F44eB3a586C5E0cEAB533a2d9C',
+//   'bifrost-LOCAL-aSEED',
+//   'calamari-LOCAL-aSEED',
+//   'hydradx_main-LOCAL-DED',
+//   'hydradx_main-LOCAL-PINK',
+//   'hydradx_main-LOCAL-BEEFY',
+//   'hydradx_main-LOCAL-STINK',
+//   'hydradx_main-LOCAL-WIFD',
+//   'hydradx_main-LOCAL-BORK',
+//   'hydradx_main-LOCAL-KOL',
+//   'acala_evm-NATIVE-ACA',
+//   'karura_evm-NATIVE-KAR',
+//   'commune-NATIVE-COMAI',
+//   'bitlayer-ERC20-ordi-0xde9f57a5b8844ebf607eceffaa2505bb961701a4',
+//   'bitlayer-ERC20-sats-0x8dae8b60f16a10edfac1714394688e006ff369fa',
+//   'bitlayer-ERC20-rats-0x0d922f10d86243ceff899f15571f51951e8b20f6'
+// ]
+// const skipSymbol = [
+//   'TON', 'USDC.axl', 'USDC.wh', 'USDC.wh', 'WBTC.wh', 'ETH.wh', 'USDC.e', 'ARSW_LP', 'aSEED', 'DED', 'PINK', 'BEEFY', 'STINK',
+//   'WIFD', 'BORK', 'KOL', 'COMAI', 'ordi', 'sats', 'rats'
+// ]
+
+
 export const compareAsset = (
   assetInfo: AssetSpec,
   asset: _ChainAsset,
   errors: string[]
 ) => {
-  const { decimals, minAmount, symbol } = assetInfo;
+  const isHasValue = asset.hasValue;
+   //if (!SKIP_ASSETS.includes(asset.slug)) {
 
-  const _minAmount = asset.minAmount || '0';
-  const _decimals = asset.decimals || 0;
+     const {decimals, minAmount, symbol} = assetInfo;
 
-  if (minAmount !== _minAmount) {
-    const convert = new BigN(minAmount).dividedBy(BN_TEN.pow(decimals)).toFixed();
-    const _convert = new BigN(_minAmount).dividedBy(BN_TEN.pow(_decimals)).toFixed();
+     const _minAmount = asset.minAmount || '0';
+     const _decimals = asset.decimals || 0;
 
-    errors.push(`Wrong min amount: current - ${asset.minAmount ?? 'null'} (${_convert}), onChain - ${minAmount} (${convert})`);
-  }
+     if (minAmount !== _minAmount) {
+       const convert = new BigN(minAmount).dividedBy(BN_TEN.pow(decimals)).toFixed();
+       const _convert = new BigN(_minAmount).dividedBy(BN_TEN.pow(_decimals)).toFixed();
+       if (!isHasValue) {
+         errors.push(`Wrong minAmount but it's in Testnet `)
+       } else {
+         errors.push(`Wrong min amount: current - ${asset.minAmount ?? 'null'} (${_convert}), onChain - ${minAmount} (${convert})`);
+       }
+     }
 
-  if (symbol !== asset.symbol) {
-    const zkSymbol = 'zk' + symbol;
+     if (symbol !== asset.symbol) {
+       if (!isHasValue) {
+         errors.push(`Wrong symbol but it's in Testnet`)
+       }else
+         //if((!skipAsset.includes(asset.slug)) && (!skipSymbol.includes(asset.symbol)))
+        {
+         const zkSymbol = 'zk' + symbol;
 
-    if (zkSymbol !== asset.symbol) {
-      errors.push(`Wrong symbol: current - ${asset.symbol}, onChain - ${symbol}`);
-    }
-  }
+         if (zkSymbol !== asset.symbol) {
+           errors.push(`Wrong symbol: current - ${asset.symbol}, onChain - ${symbol}`);
+         }
+       }
+     }
 
-  if (decimals !== _decimals) {
-    errors.push(`Wrong decimals: current - ${asset.decimals ?? 'null'}, onChain - ${decimals}`);
-  }
+     if (decimals !== _decimals) {
+       if (!isHasValue) {
+         errors.push(`Wrong decimals but it's in Testnet`)
+       } else {
+         errors.push(`Wrong decimals: current - ${asset.decimals ?? 'null'}, onChain - ${decimals}`);
+       }
+     }
+   //}
 };
 
 export const validateAsset = (
