@@ -122,6 +122,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
         label: (
           <AddressSelectorItem
             address={responseOption.formatedAddress}
+            avatarValue={responseOption.proxyId}
             name={responseOption.displayName}
           />
         ),
@@ -198,9 +199,10 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     activeModal(addressBookId);
   }, [activeModal, addressBookId]);
 
-  const onSelectAddressBook = useCallback((_value: string) => {
+  const onSelectAddressBook = useCallback((_value: string, item: AnalyzeAddress) => {
     fieldRef?.current?.focus();
     setInputValue(_value);
+    setSelectedOption(item);
     setTimeout(() => {
       fieldRef?.current?.blur();
     }, 300);
