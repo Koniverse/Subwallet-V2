@@ -94,6 +94,15 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     }
   }, []);
 
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape' || event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      fieldRef?.current?.blur();
+    }
+  }, [fieldRef]);
+
   const autoCompleteOptions = useMemo<AutoCompleteGroupItem[]>(() => {
     if (!responseOptions.length) {
       return [];
@@ -266,8 +275,8 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
           onBlur={_onBlur}
           onChange={onChangeInputValue}
           onFocus={onFocus}
+          onKeyDown={handleKeyDown}
           onSelect={onSelectAutoComplete}
-          // open={true}
           options={autoCompleteOptions}
           popupClassName={CN(className, '-dropdown-container')}
           ref={fieldRef}
