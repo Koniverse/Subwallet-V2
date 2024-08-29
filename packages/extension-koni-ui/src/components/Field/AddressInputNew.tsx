@@ -41,9 +41,6 @@ const defaultScannerModalId = 'input-account-address-scanner-modal';
 const defaultAddressBookModalId = 'input-account-address-book-modal';
 
 // todo:
-//  - Update fetch option logic for auto complete
-//  - Update Address book
-//  - When on blur, must show name + address
 //  - Rename to AddressInput, after this component is done
 
 function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.ReactElement<Props> {
@@ -56,7 +53,10 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
   const [responseOptions, setResponseOptions] = useState<AnalyzeAddress[]>([]);
   const [selectedOption, setSelectedOption] = useState<AnalyzeAddress | undefined>();
+  const [openDropdownManually, setOpenDropdownManually] = useState<boolean | undefined>();
   const [inputValue, setInputValue] = useState<string | undefined>(value);
+  const [initValue] = useState<string | undefined>(value);
+  const [isDirty, setIsDirty] = useState<boolean>(false);
 
   const scannerId = useMemo(() => id ? `${id}-scanner-modal` : defaultScannerModalId, [id]);
   const addressBookId = useMemo(() => id ? `${id}-address-book-modal` : defaultAddressBookModalId, [id]);
@@ -71,12 +71,16 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, [onChange]);
 
   const onChangeInputValue = useCallback((_value: string) => {
+    setIsDirty(true);
     setInputValue(_value);
     setSelectedOption(undefined);
+    setOpenDropdownManually(undefined);
   }, []);
 
   const _onBlur: React.FocusEventHandler<HTMLInputElement> = useCallback((event) => {
     parseAndChangeValue(inputValue || '');
+
+    setOpenDropdownManually(undefined);
 
     onBlur?.(event);
   }, [inputValue, onBlur, parseAndChangeValue]);
@@ -201,12 +205,12 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
   const onSelectAddressBook = useCallback((_value: string, item: AnalyzeAddress) => {
     fieldRef?.current?.focus();
-    setInputValue(_value);
+    onChangeInputValue(_value);
     setSelectedOption(item);
     setTimeout(() => {
       fieldRef?.current?.blur();
     }, 300);
-  }, [fieldRef]);
+  }, [onChangeInputValue, fieldRef]);
 
   // scanner
 
@@ -222,16 +226,17 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, []);
 
   const onSuccessScan = useCallback((result: ScannerResult) => {
-    fieldRef?.current?.focus();
     setScanError('');
     inactiveModal(scannerId);
-    setInputValue(result.text);
+    setSelectedOption(undefined);
+    onChangeInputValue(result.text);
 
     // timeout to make the output value is updated
     setTimeout(() => {
-      fieldRef?.current?.blur();
+      fieldRef?.current?.focus();
+      setOpenDropdownManually(true);
     }, 300);
-  }, [fieldRef, inactiveModal, scannerId]);
+  }, [onChangeInputValue, fieldRef, inactiveModal, scannerId]);
 
   const onCloseScan = useCallback(() => {
     fieldRef?.current?.focus();
@@ -248,8 +253,6 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     } else {
       const handler = (data: ResponseInputAccountSubscribe) => {
         id = data.id;
-
-        console.log('data', data);
 
         if (sync) {
           setResponseOptions(data.options);
@@ -271,6 +274,17 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     };
   }, [chainSlug, inputValue]);
 
+  // auto set selectedOption if initValue exist for the first time
+  useEffect(() => {
+    if (!isDirty && initValue && responseOptions.length) {
+      const _selectedOption = responseOptions.find((o) => o.formatedAddress === initValue);
+
+      if (_selectedOption) {
+        setSelectedOption(_selectedOption);
+      }
+    }
+  }, [initValue, isDirty, responseOptions]);
+
   return (
     <>
       <div className={CN(className, '-input-container')}>
@@ -281,6 +295,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
           onFocus={onFocus}
           onKeyDown={handleKeyDown}
           onSelect={onSelectAutoComplete}
+          open={openDropdownManually}
           options={autoCompleteOptions}
           popupClassName={CN(className, '-dropdown-container')}
           ref={fieldRef}
