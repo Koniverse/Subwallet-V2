@@ -5,21 +5,20 @@ import {ChainInfoMap} from '@subwallet/chain-list';
 import {_AssetType, _ChainAsset, _ChainInfo} from '@subwallet/chain-list/types';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {chainProvider} from './constants';
+import {string} from "joi";
 
 jest.setTimeout(3 * 60 * 60 * 1000);
 
 const ALL_CHAIN = [
-  'moonbeam', 'astar', 'calamari', 'parallel', 'hydradx_main', 'darwinia2', 'crabparachain','pangolin',
-  'sora_substrate', 'statemint', 'mooriver', 'shiden', 'moonbeam', 'statemine', 'manta_network', 'liberland', 'dentnet', 'hydradx_rococo',
-  'phala', 'crust', 'dbcchain', 'rococ_assethub',
-  'acala', 'bitcountry', 'bifrost', 'pioneer', 'interlay', 'kintsugi', 'centrifuge', 'amplitude', 'karura', 'mangatax_para', 'pendulum',
-  'bifrost_dot'
+  'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam', 'statemine',
+  'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main', 'hydradx_rococo', 'sora_substrate',
+  'acala', 'bifrost', 'karura', 'interlay', 'kintsugi', 'amplitude', 'mangatax_para', 'pendulum', 'pioneer'
 ]
 
 const ASSETID_CHAIN_AM = [
-  'astar','calamari'
-  // 'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam', 'statemine',
-  // 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub'
+  // 'astar','calamari'
+  'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam', 'statemine',
+  'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub'
 ]
 
 const ASSETID_CHAIN_ARA = [
@@ -88,6 +87,27 @@ interface OnChainInfoM {
   }
 }
 
+interface assetQuery {
+  deposit ?: number,
+  name : string,
+  symbol : string,
+  decimals : number,
+  isFrozen ?: boolean,
+  assetType ?: string,
+  existentialDeposit ?: number,
+  isSufficient ?: boolean,
+  precision : number,
+  originChain ?: string
+  metadata ?:{
+    assetId ?: string
+  }
+  minimalBalance : number
+  additional ?: {
+    feePerSecond ?: number,
+    coingeckoId ?: string
+  }
+}
+
 describe('test chain', () => {
   it('chain', async () => {
     const chainInfos = Object.values(ChainInfoMap).filter((info) => ALL_CHAIN.includes(info.slug));
@@ -100,18 +120,68 @@ describe('test chain', () => {
       const wsProvider = new WsProvider(provider);
       const api = await ApiPromise.create({provider: wsProvider, noInitWarn: true});
 
-      const assetEntries = await Promise.all([
-        api.query.assets.metadata.entries(),
-        api.query.assetRegistry.assets.entries(),
-        api.query.assets.assetInfosV2.entries(),
-        api.query.assetRegistry.assetMetadatas.entries(),
-        api.query.assetRegistry.metadata.entries(),
-        api.query.assetRegistry.metadata.entries()
-        ])
+      //const assetEntries = await api.query.assets.assetInfosV2.entries();
+      let assetEntries = {};
+      if (ASSETID_CHAIN_AM.includes(chain)){
+        assetEntries = await api.query.assets.metadata.entries();
+      } else if (ASSETID_CHAIN_ARA.includes(chain)){
+        assetEntries = await api.query.assetRegistry.assets.entries();
+      }
+
+      switch (chainInfo.slug) {
+        case 'ASSETID_CHAIN_AM.includes(chainInfo.slug)':
+          return  await api.query.assets.metadata.entries();
+          break;
+        case
+      }
+
+      // const [assetIdAM, assetIdARA, assetIdAAI, assetAM, assetM, assetAMAM] = await Promise.all([
+      //   api.query.assets.metadata.entries(),
+      //   api.query.assetRegistry.assets.entries(),
+      //   api.query.assets.assetInfosV2.entries(),
+      //   api.query.assetRegistry.assetMetadatas.entries(),
+      //   api.query.assetRegistry.metadata.entries(),
+      //   api.query.assetManager.assetMetadatas.entries()
+      //   ]);
+      // const group = [assetIdAM, assetIdARA, assetIdAAI, assetAM, assetM, assetAMAM] ;
+      //
+      // for (const assetEntries of group) {
+        const assets = assetEntries.map((all) => {
+          const assetId = JSON.stringify(all[0].toHuman());
+          //const onChainInfo = all[0].toHuman();
+          const assetToken = all[1].toHuman() as unknown as assetQuery;
+
+          if (assetToken.symbol !== 'null') {
+            const asset: _ChainAsset = {
+              originChain: chain,
+              slug: `${chain}-${_AssetType.LOCAL}-${assetToken.symbol}`,
+              name: assetToken.name,
+              symbol: assetToken.symbol,
+              decimals: assetToken.decimals || assetToken.precision,
+              minAmount: String(assetToken.existentialDeposit) || String(assetToken.minimalBalance) || null,
+              assetType: _AssetType.LOCAL,
+              metadata: {
+                assetId: assetId || undefined,
+                //onChainInfo : onChainInfo || null,
+              },
+              multiChainAsset: null,
+              hasValue: !assetToken.isFrozen || assetToken.isSufficient || true,
+              icon: 'null',
+              priceId: null
+            }
+            return asset;
+          }
+          else {return}
+        })
+      console.dir(assets, {'maxArrayLength' : null});
+
+      //}
     }
+    const chain = chainInfos.map(queryAll);
+    await Promise.all(chain);
 
 
-
+/*
 
     const chainInfos1 = Object.values(ChainInfoMap).filter((info) => ASSETID_CHAIN_AM.includes(info.slug));
     async function queryAll1(chainInfo : _ChainInfo){
@@ -233,7 +303,7 @@ describe('test chain', () => {
       const assetEntries = await api.query.assets.assetInfosV2.entries();
 
       const assets = assetEntries.map((all) => {
-        const tokenId = all[0].toHuman();
+        const tokenId = JSON.stringify(all[0].toHuman());
         const assetToken = all[1].toHuman() as unknown as AssetIdAAI;
         const asset: AssetIdAAI = {
           originChain: chain,
@@ -242,7 +312,7 @@ describe('test chain', () => {
           precision: assetToken.precision,
           assetType: _AssetType.UNKNOWN,
           metadata: {
-            assetId: String(tokenId),
+            assetId: JSON.parse(tokenId)[0].code,
           },
         }
         return asset;
@@ -265,7 +335,7 @@ describe('test chain', () => {
       const assetEntries = await api.query.assetRegistry.assetMetadatas.entries();
 
       const assets = assetEntries.map((all) => {
-        const onChainInfo = all[0].toHuman() as object;
+        const onChainInfo = JSON.stringify(all[0].toHuman());
         //console.log(Object.values(onChainInfo))
         const assetToken = all[1].toHuman() as unknown as OnChainInfoAM;
         const asset: _ChainAsset = {
@@ -277,7 +347,7 @@ describe('test chain', () => {
           minAmount: String(assetToken.minimalBalance),
           assetType: _AssetType.LOCAL,
           metadata: {
-            onChainInfo: Object.values(onChainInfo),
+            onChainInfo: JSON.stringify(JSON.parse(onChainInfo)[0]),
           },
           hasValue: true,
           priceId: null,
@@ -304,7 +374,7 @@ describe('test chain', () => {
       const assetEntries = await api.query.assetRegistry.metadata.entries();
 
       const assets = assetEntries.map((all) => {
-        const tokenId = all[0].toHuman();
+        const onChainInfo = JSON.parse(JSON.stringify(all[0].toHuman()))[0];
         const assetToken = all[1].toHuman() as unknown as OnChainInfoM;
         const asset: _ChainAsset = {
           originChain: chain,
@@ -315,7 +385,7 @@ describe('test chain', () => {
           minAmount: String(assetToken.existentialDeposit),
           assetType: _AssetType.LOCAL,
           metadata: {
-            assetId: String(tokenId),
+            onChainInfo: onChainInfo,
           },
           hasValue: true,
           priceId: assetToken.additional.coingeckoId,
@@ -339,10 +409,10 @@ describe('test chain', () => {
       const wsProvider = new WsProvider(provider);
       const api = await ApiPromise.create({provider: wsProvider, noInitWarn: true});
 
-      const assetEntries = await api.query.assetRegistry.metadata.entries();
+      const assetEntries = await api.query.assetManager.assetMetadatas.entries();
 
       const assets = assetEntries.map((all) => {
-        const tokenId = all[0].toHuman();
+        const onChainInfo = JSON.stringify(all[0].toHuman());
         const assetToken = all[1].toHuman() as unknown as OnChainInfoAM;
         const asset: _ChainAsset = {
           originChain: chain,
@@ -353,7 +423,7 @@ describe('test chain', () => {
           minAmount: String(assetToken.minimalBalance),
           assetType: _AssetType.LOCAL,
           metadata: {
-            assetId: String(tokenId),
+            onChainInfo: onChainInfo,
           },
           hasValue: true,
           priceId: null,
@@ -367,7 +437,7 @@ describe('test chain', () => {
     const chain6 = chainInfos6.map(queryAll6);
     await Promise.all(chain6);
 
-
+*/
 
 
   });
