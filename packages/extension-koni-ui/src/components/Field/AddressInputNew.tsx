@@ -129,7 +129,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
     const genAutoCompleteGroupItem = (label: string, options: AutoCompleteItem[]) => {
       return {
-        label,
+        label: (<>{label}</>),
         options
       };
     };
@@ -561,6 +561,16 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
         }
       },
 
+      '.rc-virtual-list': {
+        marginRight: -token.marginSM,
+        marginLeft: -token.marginSM
+      },
+
+      '.rc-virtual-list-holder-inner': {
+        paddingLeft: token.paddingSM,
+        paddingRight: token.paddingSM
+      },
+
       '.ant-select-item-group': {
         padding: 0,
         fontSize: 11,
@@ -568,7 +578,11 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
         color: token.colorTextLight2,
         textTransform: 'uppercase',
         minHeight: 0,
-        marginBottom: token.marginXXS
+        paddingBottom: token.paddingXXS
+      },
+
+      '.ant-select-item-option-active.ant-select-item-option-active': {
+        backgroundColor: 'transparent'
       },
 
       '.ant-select-item-option': {
@@ -577,11 +591,11 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
       },
 
       '.ant-select-item-option + .ant-select-item-option': {
-        marginTop: token.marginXXS
+        paddingTop: token.paddingXXS
       },
 
       '.ant-select-item-option + .ant-select-item-group': {
-        marginTop: token.marginXS
+        paddingTop: token.paddingXS
       }
     }
   });
