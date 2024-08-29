@@ -92,7 +92,9 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     if (_selectedOption) {
       setSelectedOption(_selectedOption);
     }
-  }, []);
+
+    fieldRef?.current?.blur();
+  }, [fieldRef]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape' || event.key === 'Enter') {
