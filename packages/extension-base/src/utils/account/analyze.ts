@@ -96,6 +96,7 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
       const rs: AnalyzeAddress = {
         address: account.address,
+        proxyId: accountProxy.id,
         analyzedGroup: AnalyzedGroup.WALLET,
         displayName: accountProxy.name,
         formatedAddress: _reformatAddressWithChain(account.address, chainInfo)
