@@ -717,6 +717,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
+              saveAddress={true}
               showAddressBook={true}
               showScanner={true}
             />

@@ -6,7 +6,7 @@ import type { BaseSelectRef } from 'rc-select';
 import { AnalyzeAddress, AnalyzedGroup, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
 import { AddressSelectorItem } from '@subwallet/extension-koni-ui/components';
 import { useForwardFieldRef, useOpenQrScanner, useTranslation } from '@subwallet/extension-koni-ui/hooks';
-import { cancelSubscription, subscribeAccountsInputAddress } from '@subwallet/extension-koni-ui/messaging';
+import { cancelSubscription, saveRecentAccount, subscribeAccountsInputAddress } from '@subwallet/extension-koni-ui/messaging';
 import { ScannerResult, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { AutoComplete, Button, Icon, Input, ModalContext, Switch, SwQrScanner } from '@subwallet/react-ui';
@@ -14,6 +14,8 @@ import CN from 'classnames';
 import { Book, MagicWand, Scan } from 'phosphor-react';
 import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+
+import { isAddress } from '@polkadot/util-crypto';
 
 import { AddressBookModal } from '../Modal';
 import { QrScannerErrorNotice } from '../Qr';
@@ -35,6 +37,7 @@ interface Props extends BasicInputWrapper, ThemeProps {
   showAddressBook?: boolean;
   showScanner?: boolean;
   labelStyle?: 'horizontal' | 'vertical';
+  saveAddress?: boolean;
 }
 
 const defaultScannerModalId = 'input-account-address-scanner-modal';
@@ -45,7 +48,7 @@ const defaultAddressBookModalId = 'input-account-address-book-modal';
 
 function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.ReactElement<Props> {
   const { chainSlug, className = '', disabled, id,
-    label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly,
+    label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly, saveAddress,
     showAddressBook, showScanner, status, statusHelp, value } = props;
   const { t } = useTranslation();
 
@@ -68,7 +71,11 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     const val = _value.trim();
 
     onChange && onChange({ target: { value: val } });
-  }, [onChange]);
+
+    if (isAddress(val) && saveAddress) {
+      saveRecentAccount(val, chainSlug).catch(console.error);
+    }
+  }, [chainSlug, onChange, saveAddress]);
 
   const onChangeInputValue = useCallback((_value: string) => {
     setIsDirty(true);
