@@ -48,7 +48,7 @@ function Component (props: Props): React.ReactElement<Props> {
         }
 
         <div className='__address'>
-          {name ? `(${toShort(address, 4, 5)})` : toShort(address, 4, 5)}
+          {name ? `(${toShort(address, 4, 5)})` : toShort(address, 9, 10)}
         </div>
       </div>
 
