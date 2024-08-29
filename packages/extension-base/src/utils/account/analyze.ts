@@ -162,36 +162,38 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
     const _raw = current?.address || _data;
 
-    if (isAddress(_raw)) {
-      const domain = await resolveAzeroAddressToDomain(_raw, chain, substrateApi.api);
+    if (chain === 'aleph' || chain === 'alephTest') {
+      if (isAddress(_raw)) {
+        const domain = await resolveAzeroAddressToDomain(_raw, chain, substrateApi.api);
 
-      if (domain) {
-        if (!current) {
-          const rs: AnalyzeAddress = {
-            address: _raw,
-            analyzedGroup: AnalyzedGroup.DOMAIN,
-            displayName: domain,
-            formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
-          };
+        if (domain) {
+          if (!current) {
+            const rs: AnalyzeAddress = {
+              address: _raw,
+              analyzedGroup: AnalyzedGroup.DOMAIN,
+              displayName: domain,
+              formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
+            };
 
-          options.push(rs);
-          current = rs;
+            options.push(rs);
+            current = rs;
+          }
         }
-      }
-    } else {
-      const address = await resolveAzeroDomainToAddress(_raw, chain, substrateApi.api);
+      } else {
+        const address = await resolveAzeroDomainToAddress(_raw, chain, substrateApi.api);
 
-      if (address) {
-        if (!current) {
-          const rs: AnalyzeAddress = {
-            address: address,
-            analyzedGroup: AnalyzedGroup.DOMAIN,
-            displayName: _raw,
-            formatedAddress: _reformatAddressWithChain(address, chainInfo)
-          };
+        if (address) {
+          if (!current) {
+            const rs: AnalyzeAddress = {
+              address: address,
+              analyzedGroup: AnalyzedGroup.DOMAIN,
+              displayName: _raw,
+              formatedAddress: _reformatAddressWithChain(address, chainInfo)
+            };
 
-          options.push(rs);
-          current = rs;
+            options.push(rs);
+            current = rs;
+          }
         }
       }
     }
