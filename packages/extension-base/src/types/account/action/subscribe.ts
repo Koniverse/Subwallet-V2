@@ -15,6 +15,7 @@ export enum AnalyzedGroup {
 
 export interface AnalyzeAddress {
   address: string;
+  proxyId?: string;
   formatedAddress: string;
   analyzedGroup: AnalyzedGroup;
   displayName?: string;
