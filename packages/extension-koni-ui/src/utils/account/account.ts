@@ -192,6 +192,10 @@ export function getReformatedAddressRelatedToChain (accountJson: AccountJson, ch
   }
 
   if (accountJson.chainType === AccountChainType.SUBSTRATE && chainInfo.substrateInfo) {
+    if (accountJson.genesisHash !== chainInfo.substrateInfo.genesisHash && accountJson.signMode === AccountSignMode.LEGACY_LEDGER) {
+      return undefined;
+    }
+
     return reformatAddress(accountJson.address, chainInfo.substrateInfo.addressPrefix);
   } else if (accountJson.chainType === AccountChainType.ETHEREUM && chainInfo.evmInfo) {
     return accountJson.address;
