@@ -114,7 +114,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
       const pair = keyring.createFromUri(suri, {}, type);
       const address = pair.address;
 
-      modifiedPairs[address] = { accountProxyId: proxyId || address, migrated: true, key: address };
+      modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
       addressDict[type] = address;
     });
 
