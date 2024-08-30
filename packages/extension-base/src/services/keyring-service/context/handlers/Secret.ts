@@ -121,7 +121,11 @@ export class AccountSecretHandler extends AccountBaseHandler {
   public privateKeyValidateV2 ({ chainType, privateKey }: RequestPrivateKeyValidateV2): ResponsePrivateKeyValidateV2 {
     const isHex = privateKey.startsWith('0x');
 
-    return this._checkValidatePrivateKey({ chainType, privateKey }, !isHex);
+    if (isHex) {
+      return this._checkValidatePrivateKey({ chainType, privateKey });
+    } else {
+      return this._checkValidatePrivateKey({ chainType, privateKey: `0x${privateKey}` }, true);
+    }
   }
 
   public async accountsCreateWithSecret (request: RequestAccountCreateWithSecretKey): Promise<ResponseAccountCreateWithSecretKey> {

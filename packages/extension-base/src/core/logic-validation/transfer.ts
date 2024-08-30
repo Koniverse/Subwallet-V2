@@ -5,7 +5,7 @@ import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { _Address, AmountData, BasicTxErrorType, BasicTxWarningCode, ExtrinsicType, FeeData, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
-import { XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
+import { LEDGER_SIGNING_COMPATIBLE_MAP, SIGNING_COMPATIBLE_MAP, XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
 import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/system-pallet';
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -15,7 +15,8 @@ import { _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContrac
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { balanceFormatter, formatNumber } from '@subwallet/extension-base/utils';
+import { AccountSignMode } from '@subwallet/extension-base/types';
+import { balanceFormatter, formatNumber, pairToAccount } from '@subwallet/extension-base/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -184,14 +185,25 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
   return estimateFee;
 }
 
-export function checkSigningAccountForTransaction (validationResponse: SWTransactionResponse) {
-  const pair = keyring.getPair(validationResponse.address);
+export function checkSigningAccountForTransaction (validationResponse: SWTransactionResponse, chainInfoMap: Record<string, _ChainInfo>) {
+  const { address, chain, chainType, extrinsicType } = validationResponse;
+  const pair = keyring.getPair(address);
 
   if (!pair) {
     validationResponse.errors.push(new TransactionError(BasicTxErrorType.INTERNAL_ERROR, t('Unable to find account')));
   } else {
-    if (pair.meta?.isReadOnly) {
-      validationResponse.errors.push(new TransactionError(BasicTxErrorType.INTERNAL_ERROR, t('This account is watch-only')));
+    const accountJson = pairToAccount(pair, chainInfoMap);
+
+    if (!accountJson.transactionActions.includes(extrinsicType)) { // check if the account can sign the transaction type
+      validationResponse.errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('This feature is not available with this account')));
+    } else if (accountJson.specialChain && accountJson.specialChain !== chain) { // check if the account can only be used on a specific chain (for ledger legacy)
+      validationResponse.errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('This feature is not available with this account')));
+    } else {
+      const compatibleMap = [AccountSignMode.LEGACY_LEDGER, AccountSignMode.GENERIC_LEDGER].includes(accountJson.signMode) ? LEDGER_SIGNING_COMPATIBLE_MAP : SIGNING_COMPATIBLE_MAP;
+
+      if (!compatibleMap[chainType].includes(accountJson.chainType)) { // check if the account chain type is compatible with the transaction chain type
+        validationResponse.errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('This feature is not available with this account')));
+      }
     }
   }
 }

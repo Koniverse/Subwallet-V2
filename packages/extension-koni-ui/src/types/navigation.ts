@@ -49,7 +49,7 @@ export type EarningPoolsParam = {
 };
 
 export type EarningPositionDetailParam = {
-  earningSlug: string,
+  earningSlug: string
 };
 
 // general

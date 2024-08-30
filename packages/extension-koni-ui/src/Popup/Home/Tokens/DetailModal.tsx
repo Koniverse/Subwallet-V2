@@ -55,7 +55,7 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
 
   const isActive = checkActive(id);
 
-  const { accountProxies, currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
+  const { accounts, currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
   const { balanceMap } = useSelector((state) => state.balance);
 
   const [form] = Form.useForm<FormState>();
@@ -103,7 +103,7 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
   }, [currentTokenInfo, t, tokenBalanceMap]);
 
   const accountItems = useMemo((): BalanceItem[] => {
-    if (!currentTokenInfo?.slug) {
+    if (!currentAccountProxy || !currentTokenInfo?.slug) {
       return [];
     }
 
@@ -111,9 +111,9 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
 
     const filterAccountId = (accountId: string) => {
       if (isAllAccount) {
-        return !isAccountAll(accountId) && accountProxies.some((ap) => ap.id === accountId);
+        return !isAccountAll(accountId) && accounts.some((a) => a.address === accountId);
       } else {
-        return accountId === currentAccountProxy?.id;
+        return currentAccountProxy.accounts.some((a) => a.address === accountId);
       }
     };
 
@@ -133,7 +133,7 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
 
       return bTotal.minus(aTotal).toNumber();
     });
-  }, [accountProxies, balanceMap, currentAccountProxy?.id, currentTokenInfo?.slug, isAllAccount]);
+  }, [accounts, balanceMap, currentAccountProxy, currentTokenInfo?.slug, isAllAccount]);
 
   const symbol = currentTokenInfo?.symbol || '';
 

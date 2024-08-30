@@ -5,7 +5,7 @@ import { AccountProxy } from '@subwallet/extension-base/types';
 import { AccountChainAddressItem, CloseIcon, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { ACCOUNT_CHAIN_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountChainAddresses, useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountChainAddresses, useHandleTonAccountWarning, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
@@ -27,30 +27,35 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
   const { t } = useTranslation();
   const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
   const notify = useNotification();
+  const onHandleTonAccountWarning = useHandleTonAccountWarning();
   const { addressQrModal } = useContext(WalletModalContext);
 
   const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
-      addressQrModal.open({
-        address: item.address,
-        chainSlug: item.slug,
-        onBack: addressQrModal.close,
-        onCancel: () => {
-          addressQrModal.close();
-          onCancel();
-        }
+      onHandleTonAccountWarning(item.accountType, () => {
+        addressQrModal.open({
+          address: item.address,
+          chainSlug: item.slug,
+          onBack: addressQrModal.close,
+          onCancel: () => {
+            addressQrModal.close();
+            onCancel();
+          }
+        });
       });
     };
-  }, [addressQrModal, onCancel]);
+  }, [addressQrModal, onCancel, onHandleTonAccountWarning]);
 
   const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
-      copyToClipboard(item.address || '');
-      notify({
-        message: t('Copied to clipboard')
+      onHandleTonAccountWarning(item.accountType, () => {
+        copyToClipboard(item.address || '');
+        notify({
+          message: t('Copied to clipboard')
+        });
       });
     };
-  }, [notify, t]);
+  }, [notify, onHandleTonAccountWarning, t]);
 
   const renderItem = useCallback(
     (item: AccountChainAddress) => {
@@ -59,6 +64,7 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
           className={'address-item'}
           item={item}
           key={item.slug}
+          onClick={onShowQr(item)}
           onClickCopyButton={onCopyAddress(item)}
           onClickQrButton={onShowQr(item)}
         />

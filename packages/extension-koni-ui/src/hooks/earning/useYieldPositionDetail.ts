@@ -3,7 +3,7 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AbstractYieldPositionInfo, EarningStatus, LendingYieldPositionInfo, LiquidYieldPositionInfo, NativeYieldPositionInfo, NominationYieldPositionInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { isSameAddress } from '@subwallet/extension-base/utils';
 import { useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
@@ -15,36 +15,37 @@ interface Result {
 
 const useYieldPositionDetail = (slug: string, address?: string): Result => {
   const { poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
   const chainsByAccountType = useGetChainSlugsByAccount();
 
   return useMemo(() => {
-    const _address = address || currentAccount?.address || '';
-    const isAll = isAccountAll(_address);
-
     const checkAddress = (item: YieldPositionInfo) => {
-      if (isAll) {
+      if (isAllAccount) {
+        if (address) {
+          return isSameAddress(address, item.address);
+        }
+
         return true;
       } else {
-        return isSameAddress(_address, item.address);
+        return currentAccountProxy?.accounts.some(({ address }) => isSameAddress(address, item.address));
       }
     };
 
     const infoList: YieldPositionInfo[] = [];
 
     for (const info of yieldPositions) {
-      if (chainsByAccountType.includes(info.chain) && poolInfoMap[info.slug]) {
+      if (info.slug === slug && chainsByAccountType.includes(info.chain) && poolInfoMap[info.slug]) {
         const isValid = checkAddress(info);
         const haveStake = new BigN(info.totalStake).gt(0);
 
-        if (isValid && haveStake && info.slug === slug) {
+        if (isValid && haveStake) {
           infoList.push(info);
         }
       }
     }
 
     if (infoList.length) {
-      if (isAll) {
+      if (isAllAccount) {
         const positionInfo = infoList[0];
         const base: AbstractYieldPositionInfo = {
           slug: slug,
@@ -130,7 +131,7 @@ const useYieldPositionDetail = (slug: string, address?: string): Result => {
         list: infoList
       };
     }
-  }, [chainsByAccountType, currentAccount?.address, poolInfoMap, slug, yieldPositions, address]);
+  }, [isAllAccount, address, currentAccountProxy?.accounts, yieldPositions, slug, chainsByAccountType, poolInfoMap]);
 };
 
 export default useYieldPositionDetail;
