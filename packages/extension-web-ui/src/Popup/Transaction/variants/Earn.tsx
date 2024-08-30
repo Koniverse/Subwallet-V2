@@ -288,7 +288,7 @@ const Component = ({ className }: ComponentProps) => {
         return false;
       }
 
-      if (a.originGenesisHash && _getSubstrateGenesisHash(chainInfo) !== a.originGenesisHash) {
+      if (a.genesisHash && _getSubstrateGenesisHash(chainInfo) !== a.genesisHash) {
         return false;
       }
 
