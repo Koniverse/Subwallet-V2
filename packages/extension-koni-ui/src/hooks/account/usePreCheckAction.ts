@@ -81,17 +81,17 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
               break;
           }
         }
+        if (mode === AccountSignMode.LEGACY_LEDGER || mode === AccountSignMode.GENERIC_LEDGER) {
+          if (!isLedgerCapable) {
+            notify({
+              message: t(ledgerIncompatible),
+              type: 'error',
+              duration: 8
+            });
 
-        if (!isLedgerCapable) {
-          notify({
-            message: t(ledgerIncompatible),
-            type: 'error',
-            duration: 8
-          });
-
-          return;
+            return;
+          }
         }
-
         if (!block) {
           onClick();
         } else {
