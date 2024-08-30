@@ -2,13 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountChainType, AccountJson } from '@subwallet/extension-base/types';
+import { AccountChainType } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { ALL_STAKING_ACTIONS, isLedgerCapable, isProductionMode, ledgerIncompatible } from '@subwallet/extension-koni-ui/constants';
+// TODO: Use AccountSignMode from the background for consistency.
 import { AccountSignMode } from '@subwallet/extension-koni-ui/types';
 import { useCallback } from 'react';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { useNotification, useTranslation } from '../common';
 import useGetAccountByAddress from './useGetAccountByAddress';
@@ -19,9 +18,7 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
 
   const account = useGetAccountByAddress(address);
 
-  const getAccountTypeTitle = useCallback((account: AccountJson): string => {
-    const signMode = account.signMode;
-
+  const getAccountTypeTitle = useCallback((signMode: AccountSignMode): string => {
     switch (signMode) {
       case AccountSignMode.LEGACY_LEDGER:
       case AccountSignMode.GENERIC_LEDGER:
@@ -51,54 +48,48 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
       } else {
         const mode = account.signMode;
         let block = false;
-        let accountTitle = getAccountTypeTitle(account);
+        let accountTitle = getAccountTypeTitle(mode);
         let defaultMessage = detectTranslate('The account you are using is {{accountTitle}}, you cannot use this feature with it');
-        const isEthereumAccount = isEthereumAddress(account.address);
-
-        switch (mode) {
-          case AccountSignMode.READ_ONLY:
-          case AccountSignMode.UNKNOWN:
-            block = true;
-            break;
-          case AccountSignMode.ALL_ACCOUNT:
-            if (blockAllAccount) {
-              block = true;
-            }
-
-            break;
-        }
 
         if (ALL_STAKING_ACTIONS.includes(action)) {
           defaultMessage = detectTranslate('You are using a {{accountTitle}}. Earning is not supported with this account type');
         }
 
-        if (mode === AccountSignMode.QR) {
-          if (isEthereumAccount && isProductionMode) {
-            accountTitle = t('EVM QR signer account');
-            block = true;
+        if (!account.transactionActions.includes(action) || (mode === AccountSignMode.QR && account.chainType === 'ethereum' && isProductionMode)) {
+          block = true;
+
+          switch (mode) {
+            case AccountSignMode.ALL_ACCOUNT:
+              if (!blockAllAccount) {
+                block = false;
+              }
+
+              break;
+
+            case AccountSignMode.QR:
+              accountTitle = t('EVM QR signer account');
+              break;
+
+            case AccountSignMode.LEGACY_LEDGER:
+            case AccountSignMode.GENERIC_LEDGER:
+              if (account.chainType === AccountChainType.ETHEREUM) {
+                accountTitle = t('Ledger - EVM account');
+              } else if (account.chainType === AccountChainType.SUBSTRATE) {
+                accountTitle = t('Ledger - Substrate account');
+              }
+
+              break;
           }
         }
 
-        if (mode === AccountSignMode.LEGACY_LEDGER || mode === AccountSignMode.GENERIC_LEDGER) {
-          if (!isLedgerCapable) {
-            notify({
-              message: t(ledgerIncompatible),
-              type: 'error',
-              duration: 8
-            });
+        if (!isLedgerCapable) {
+          notify({
+            message: t(ledgerIncompatible),
+            type: 'error',
+            duration: 8
+          });
 
-            return;
-          }
-
-          if (!account.transactionActions.includes(action)) {
-            block = true;
-
-            if (account.chainType === AccountChainType.ETHEREUM) {
-              accountTitle = t('Ledger - EVM account');
-            } else if (account.chainType === AccountChainType.SUBSTRATE) {
-              accountTitle = t('Ledger - Substrate account');
-            }
-          }
+          return;
         }
 
         if (!block) {

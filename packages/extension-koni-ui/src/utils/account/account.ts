@@ -64,29 +64,7 @@ export const getSignMode = (account: AccountJson | null | undefined): AccountSig
   if (!account) {
     return AccountSignMode.UNKNOWN;
   } else {
-    if (account.address === ALL_ACCOUNT_KEY) {
-      return AccountSignMode.ALL_ACCOUNT;
-    } else {
-      if (account.isInjected) {
-        return AccountSignMode.INJECTED;
-      }
-
-      if (account.isExternal) {
-        if (account.isHardware) {
-          if (account.isGeneric) {
-            return AccountSignMode.GENERIC_LEDGER;
-          } else {
-            return AccountSignMode.LEGACY_LEDGER;
-          }
-        } else if (account.isReadOnly) {
-          return AccountSignMode.READ_ONLY;
-        } else {
-          return AccountSignMode.QR;
-        }
-      } else {
-        return AccountSignMode.PASSWORD;
-      }
-    }
+    return account.signMode;
   }
 };
 
@@ -192,10 +170,6 @@ export function getReformatedAddressRelatedToChain (accountJson: AccountJson, ch
   }
 
   if (accountJson.chainType === AccountChainType.SUBSTRATE && chainInfo.substrateInfo) {
-    if (accountJson.genesisHash !== chainInfo.substrateInfo.genesisHash && accountJson.signMode === AccountSignMode.LEGACY_LEDGER) {
-      return undefined;
-    }
-
     return reformatAddress(accountJson.address, chainInfo.substrateInfo.addressPrefix);
   } else if (accountJson.chainType === AccountChainType.ETHEREUM && chainInfo.evmInfo) {
     return accountJson.address;
