@@ -142,7 +142,6 @@ export const ChainSelector = styled(forwardRef(Component))<Props>(({ theme: { to
     },
 
     '&.chain-selector-input': {
-      paddingTop: token.paddingXXS,
       '.__selected-item, .__loading-text': {
         whiteSpace: 'nowrap',
         overflow: 'hidden',

@@ -4,20 +4,17 @@
 import type { KeypairType } from '@subwallet/keyring/types';
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
-import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getAssetOriginChain, _getMultiChainAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetChainSlugsByAccount, useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainSlugsByAccount, useHandleTonAccountWarning } from '@subwallet/extension-koni-ui/hooks';
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ReceiveModalProps } from '@subwallet/extension-koni-ui/types';
 import { getReformatedAddressRelatedToChain } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';
-import { CheckCircle, XCircle } from 'phosphor-react';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
 type HookType = {
   onOpenReceive: VoidFunction;
@@ -30,9 +27,6 @@ const accountSelectorModalId = RECEIVE_MODAL_ACCOUNT_SELECTOR;
 export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): HookType {
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { chainAssets } = useChainAssets();
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const setSelectedMnemonicType = useSetSelectedMnemonicType(true);
 
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const isAllAccount = useSelector((state: RootState) => state.accountState.isAllAccount);
@@ -40,8 +34,9 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
   const assetRegistryMap = useSelector((state: RootState) => state.assetRegistry.assetRegistry);
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const [selectedChain, setSelectedChain] = useState<string | undefined>();
-  const { addressQrModal, alertModal } = useContext(WalletModalContext);
+  const { addressQrModal } = useContext(WalletModalContext);
   const chainSupported = useGetChainSlugsByAccount();
+  const onHandleTonAccountWarning = useHandleTonAccountWarning();
 
   // chain related to tokenGroupSlug, if it is token slug
   const specificChain = useMemo(() => {
@@ -53,7 +48,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
   }, [assetRegistryMap, tokenGroupSlug]);
 
   const openAddressQrModal = useCallback((address: string, accountType: KeypairType, chainSlug: string, closeCallback?: VoidCallback, showQrBack = true) => {
-    const _openAddressQrModal = () => {
+    const processFunction = () => {
       addressQrModal.open({
         address,
         chainSlug,
@@ -65,51 +60,8 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
       });
     };
 
-    if (accountType === 'ton') {
-      alertModal.open({
-        closable: false,
-        title: t('Seed phrase incompatibility'),
-        type: NotificationType.WARNING,
-        content: (
-          <>
-            <div>
-              {t('Importing this seed phrase will generate a unified account that can be used on multiple ecosystems including Polkadot, Ethereum, Bitcoin, and TON.')}
-            </div>
-            <br />
-            <div>
-              {t('However, SubWallet is not compatible with TON-native wallets. This means that with the same seed phrase, SubWallet and TON-native wallets will generate two different TON addresses.')}
-            </div>
-          </>
-        ),
-        cancelButton: {
-          text: t('Cancel'),
-          icon: XCircle,
-          iconWeight: 'fill',
-          onClick: () => {
-            alertModal.close();
-            closeCallback?.();
-          },
-          schema: 'secondary'
-        },
-        okButton: {
-          text: t('Apply'),
-          icon: CheckCircle,
-          iconWeight: 'fill',
-          onClick: () => {
-            setSelectedMnemonicType('ton');
-            navigate('/accounts/new-seed-phrase');
-
-            alertModal.close();
-          },
-          schema: 'primary'
-        }
-      });
-
-      return;
-    }
-
-    _openAddressQrModal();
-  }, [addressQrModal, alertModal, navigate, setSelectedMnemonicType, t]);
+    onHandleTonAccountWarning(accountType, processFunction);
+  }, [addressQrModal, onHandleTonAccountWarning]);
 
   const onOpenReceive = useCallback(() => {
     if (!currentAccountProxy) {
@@ -177,9 +129,17 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
       return;
     }
 
-    setSelectedChain(item.originChain);
+    const chainSlug = _getAssetOriginChain(item);
+    const chainInfo = chainInfoMap[chainSlug];
+
+    if (!chainInfo) {
+      console.warn(`Missing chainInfo with slug ${chainSlug}`);
+
+      return;
+    }
 
     if (isAllAccount) {
+      setSelectedChain(chainSlug);
       setTimeout(() => {
         activeModal(accountSelectorModalId);
       }, 100);
@@ -189,23 +149,18 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
     // current account is not All, just do show QR logic
 
-    const chainSlug = _getAssetOriginChain(item);
-    const chainInfo = chainInfoMap[chainSlug];
-
-    if (!chainInfo) {
-      return;
-    }
-
     for (const accountJson of currentAccountProxy.accounts) {
       const reformatedAddress = getReformatedAddressRelatedToChain(accountJson, chainInfo);
 
       if (reformatedAddress) {
-        openAddressQrModal(reformatedAddress, accountJson.type, chainSlug);
+        openAddressQrModal(reformatedAddress, accountJson.type, chainSlug, () => {
+          inactiveModal(tokenSelectorModalId);
+        });
 
         break;
       }
     }
-  }, [activeModal, chainInfoMap, currentAccountProxy, isAllAccount, openAddressQrModal]);
+  }, [activeModal, chainInfoMap, currentAccountProxy, inactiveModal, isAllAccount, openAddressQrModal]);
 
   /* token Selector --- */
 
