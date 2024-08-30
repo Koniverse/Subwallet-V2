@@ -104,7 +104,9 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       setSelectedOption(_selectedOption);
     }
 
-    fieldRef?.current?.blur();
+    setTimeout(() => {
+      fieldRef?.current?.blur();
+    }, 300);
   }, [fieldRef]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
