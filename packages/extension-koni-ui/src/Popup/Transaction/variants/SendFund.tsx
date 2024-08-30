@@ -18,7 +18,6 @@ import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, formatBalance, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { isAddress } from '@subwallet/keyring';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -246,67 +245,6 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       return Promise.reject(t('Recipient address is required'));
     }
 
-    if (!isAddress(_recipientAddress)) {
-      return Promise.reject(t('Invalid recipient address'));
-    }
-
-    // const { chain, destChain, from, to } = form.getFieldsValue();
-    //
-    // if (!from || !chain || !destChain) {
-    //   return Promise.resolve();
-    // }
-    //
-    // if (!isEthereumAddress(_recipientAddress)) {
-    //   const destChainInfo = chainInfoMap[destChain];
-    //   const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
-    //   const _addressOnChain = reformatAddress(_recipientAddress, addressPrefix);
-    //
-    //   if (_addressOnChain !== _recipientAddress) {
-    //     return Promise.reject(t('Recipient should be a valid {{networkName}} address', { replace: { networkName: destChainInfo.name } }));
-    //   }
-    // }
-    //
-    // const isOnChain = chain === destChain;
-    //
-    // const account = findAccountByAddress(accounts, _recipientAddress);
-    //
-    // if (isOnChain) {
-    //   if (isSameAddress(from, _recipientAddress)) {
-    //     // todo: change message later
-    //     return Promise.reject(t('The recipient address can not be the same as the sender address'));
-    //   }
-    //
-    //   const isNotSameAddressType = (isEthereumAddress(from) && !!_recipientAddress && !isEthereumAddress(_recipientAddress)) ||
-    //     (!isEthereumAddress(from) && !!_recipientAddress && isEthereumAddress(_recipientAddress));
-    //
-    //   if (isNotSameAddressType) {
-    //     // todo: change message later
-    //     return Promise.reject(t('The recipient address must be same type as the current account address.'));
-    //   }
-    // } else {
-    //   const isDestChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[destChain]);
-    //
-    //   if (isDestChainEvmCompatible !== isEthereumAddress(to)) {
-    //     // todo: change message later
-    //     if (isDestChainEvmCompatible) {
-    //       return Promise.reject(t('The recipient address must be EVM type'));
-    //     } else {
-    //       return Promise.reject(t('The recipient address must be Substrate type'));
-    //     }
-    //   }
-    // }
-    //
-    // if (account?.isHardware) {
-    //   const destChainInfo = chainInfoMap[destChain];
-    //   const availableGen: string[] = account.availableGenesisHashes || [];
-    //
-    //   if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-    //     const destChainName = destChainInfo?.name || 'Unknown';
-    //
-    //     return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
-    //   }
-    // }
-
     return Promise.resolve();
   }, [t]);
 
@@ -331,10 +269,6 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
     return Promise.resolve();
   }, [decimals, maxTransfer, t]);
-
-  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
-    return Promise.resolve([]);
-  }, []);
 
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
@@ -765,10 +699,10 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           >
             <AddressInputNew
               chainSlug={destChainValue}
-              inputResolver={addressInputResolver}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
+              saveAddress={true}
               showAddressBook={true}
               showScanner={true}
             />

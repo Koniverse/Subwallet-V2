@@ -9,27 +9,13 @@ import { AbstractAddressJson, AccountChainType, AccountProxy, AddressJson, Analy
 
 import { isAddress } from '@polkadot/util-crypto';
 
-import { reformatAddress } from './common';
+import { _reformatAddressWithChain, reformatAddress } from './common';
 
 interface AddressDataJson extends AbstractAddressJson {
   chainType: AccountChainType;
 }
 
 type ValidDataType = 'invalid' | 'valid' | 'extracted';
-
-const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => {
-  const chainType = _chainInfoToChainType(chainInfo);
-
-  if (chainType === AccountChainType.SUBSTRATE) {
-    return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
-  } else if (chainType === AccountChainType.TON) {
-    const isTestnet = chainInfo.isTestnet;
-
-    return reformatAddress(address, isTestnet ? 0 : 1);
-  } else {
-    return address;
-  }
-};
 
 // TODO: Re-confirm to compare without
 const isStrValidWithAddress = (str: string, account: AddressDataJson, chainInfo: _ChainInfo): ValidDataType => {

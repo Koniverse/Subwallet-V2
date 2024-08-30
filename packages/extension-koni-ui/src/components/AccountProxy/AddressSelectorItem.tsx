@@ -1,71 +1,76 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Theme } from '@subwallet/extension-koni-ui/themes';
-import { AccountAddressItemType, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
-import React, { Context, useContext } from 'react';
-import styled, { ThemeContext } from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
 
 import AccountProxyAvatar from './AccountProxyAvatar';
 
 type Props = ThemeProps & {
-  item: AccountAddressItemType;
+  name?: string;
+  avatarValue?: string;
+  address: string;
   onClick?: VoidFunction;
   isSelected?: boolean;
   showUnselectIcon?: boolean;
 }
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { className,
-    isSelected,
-    item, onClick, showUnselectIcon } = props;
-  const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
+  const { address,
+    avatarValue,
+    className, isSelected, name, onClick, showUnselectIcon } = props;
 
   return (
-    <>
-      <div
-        className={CN(className)}
-        onClick={onClick}
-      >
-        <div className='__item-left-part'>
-          <AccountProxyAvatar
-            className={'__account-avatar'}
-            size={24}
-            value={item.accountProxyId}
-          />
-        </div>
+    <div
+      className={CN(className)}
+      onClick={onClick}
+    >
+      <div className='__item-left-part'>
+        <AccountProxyAvatar
+          className={'__avatar'}
+          size={24}
+          value={avatarValue}
+        />
+      </div>
 
-        <div className='__item-center-part'>
-          <div className='__account-name'>
-            {item.accountName}
-          </div>
-          <div className='__address'>
-            ({toShort(item.address, 4, 5)})
-          </div>
-        </div>
-
-        <div className='__item-right-part'>
-          {(isSelected || showUnselectIcon) && (
-            <div className='__checked-icon-wrapper'>
-              <Icon
-                iconColor={isSelected ? token.colorSuccess : token.colorTextLight4}
-                phosphorIcon={CheckCircle}
-                size='sm'
-                weight='fill'
-              />
+      <div className='__item-center-part'>
+        {
+          !!name && (
+            <div className='__name'>
+              {name}
             </div>
-          )}
+          )
+        }
+
+        <div className='__address'>
+          {name ? `(${toShort(address, 4, 5)})` : toShort(address, 9, 10)}
         </div>
       </div>
-    </>
+
+      <div className='__item-right-part'>
+        {(isSelected || showUnselectIcon) && (
+          <div className={CN('__checked-icon-wrapper', {
+            '-selected': isSelected
+          })}
+          >
+            <Icon
+              phosphorIcon={CheckCircle}
+              size='sm'
+              weight='fill'
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const AddressSelectorItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     background: token.colorBgSecondary,
     paddingLeft: token.paddingSM,
@@ -81,7 +86,7 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
     overflowX: 'hidden',
     minHeight: 52,
 
-    '.__account-avatar': {
+    '.__avatar': {
       marginRight: token.marginSM
     },
 
@@ -103,10 +108,15 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
       display: 'flex',
       justifyContent: 'center',
       minWidth: 40,
-      marginRight: -token.marginXS
+      marginRight: -token.marginXS,
+      color: token.colorTextLight4,
+
+      '&.-selected': {
+        color: token.colorSuccess
+      }
     },
 
-    '.__account-name': {
+    '.__name': {
       color: token.colorTextLight1,
       overflow: 'hidden',
       textOverflow: 'ellipsis'
@@ -122,4 +132,4 @@ const AccountAddressItem = styled(Component)<Props>(({ theme: { token } }: Props
   };
 });
 
-export default AccountAddressItem;
+export default AddressSelectorItem;

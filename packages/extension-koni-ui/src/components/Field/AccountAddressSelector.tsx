@@ -64,7 +64,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
         </div>
 
         <div className={'__selected-item-address common-text'}>
-          &nbsp;({toShort(selectedItem.address, 4, 4)})
+          &nbsp;({toShort(selectedItem.address, 4, 5)})
         </div>
       </div>
     );
