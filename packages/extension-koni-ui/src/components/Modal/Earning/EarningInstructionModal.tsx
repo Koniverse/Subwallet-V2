@@ -13,7 +13,7 @@ import { EARNING_DATA_RAW, EARNING_INSTRUCTION_MODAL } from '@subwallet/extensio
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { earlyValidateJoin } from '@subwallet/extension-koni-ui/messaging';
 import { AlertDialogProps, PhosphorIcon, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getBannerButtonIcon } from '@subwallet/extension-koni-ui/utils';
+import { getBannerButtonIcon, isChainInfoAccordantAccountChainType } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Button, Icon, ModalContext, SwModal } from '@subwallet/react-ui';
 import { getAlphaColor } from '@subwallet/react-ui/lib/theme/themes/default/colorAlgorithm';
 import CN from 'classnames';
@@ -51,11 +51,21 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const { poolInfoMap } = useSelector((state) => state.earning);
   const { assetRegistry } = useSelector((state) => state.assetRegistry);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
   const [loading, setLoading] = useState(false);
   const [isScrollEnd, setIsScrollEnd] = useState(false);
   const [isDisableEarnButton, setDisableEarnButton] = useState(true);
   const poolInfo = useMemo(() => poolInfoMap[slug], [poolInfoMap, slug]);
+  const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+  const currentAccount = useMemo(() => currentAccountProxy?.accounts.find(({ chainType }) => {
+    if (chainInfoMap[poolInfo.chain]) {
+      const chainInfo = chainInfoMap[poolInfo.chain];
+
+      return !!isChainInfoAccordantAccountChainType(chainInfo, chainType);
+    }
+
+    return false;
+  }), [chainInfoMap, currentAccountProxy?.accounts, poolInfo.chain]);
   const title = useMemo(() => {
     if (!poolInfo) {
       return '';
@@ -423,7 +433,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
     earlyValidateJoin({
       slug: slug,
-      address: currentAccount?.address || ''
+      address: isAllAccount ? currentAccount?.address || '' : 'ALL'
     })
       .then((rs) => {
         if (isValid()) {
@@ -451,7 +461,7 @@ const Component: React.FC<Props> = (props: Props) => {
           setLoading(false);
         }
       });
-  }, [closeAlert, currentAccount?.address, onStakeMore, openAlert, setVisible, slug, t]);
+  }, [closeAlert, currentAccount?.address, isAllAccount, onStakeMore, openAlert, setVisible, slug, t]);
 
   const onScrollContent = useCallback(() => {
     scrollRef?.current?.scroll({ top: scrollRef?.current?.scrollHeight, left: 0 });
