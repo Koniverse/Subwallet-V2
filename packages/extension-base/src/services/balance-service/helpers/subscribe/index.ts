@@ -82,6 +82,39 @@ const filterAddress = (addresses: string[], chainInfo: _ChainInfo): [string[], s
   }
 };
 
+const handleUnsupportedOrPendingAddresses = (
+  addresses: string[],
+  chainSlug: string,
+  chainAssetMap: Record<string, _ChainAsset>,
+  state: APIItemState,
+  callback: (rs: BalanceItem[]) => void
+) => {
+  const tokens = filterAssetsByChainAndType(chainAssetMap, chainSlug, [
+    _AssetType.NATIVE,
+    _AssetType.ERC20,
+    _AssetType.PSP22,
+    _AssetType.LOCAL,
+    _AssetType.GRC20,
+    _AssetType.VFT,
+  ]);
+
+  const now = new Date().getTime();
+
+  Object.values(tokens).forEach((token) => {
+    const items: BalanceItem[] = addresses.map((address): BalanceItem => ({
+      address,
+      tokenSlug: token.slug,
+      free: '0',
+      locked: '0',
+      state,
+      timestamp: now
+    }));
+
+    callback(items);
+  });
+}
+
+
 // main subscription, use for multiple chains, multiple addresses and multiple tokens
 export function subscribeBalance (
   addresses: string[],
@@ -104,22 +137,13 @@ export function subscribeBalance (
     const [useAddresses, notSupportAddresses] = filterAddress(addresses, chainInfo);
 
     if (notSupportAddresses.length) {
-      const tokens = filterAssetsByChainAndType(chainAssetMap, chainSlug, [_AssetType.NATIVE, _AssetType.ERC20, _AssetType.PSP22, _AssetType.LOCAL, _AssetType.GRC20, _AssetType.VFT]);
-
-      const now = new Date().getTime();
-
-      Object.values(tokens).forEach((token) => {
-        const items: BalanceItem[] = notSupportAddresses.map((address): BalanceItem => ({
-          address,
-          tokenSlug: token.slug,
-          free: '0',
-          locked: '0',
-          state: APIItemState.NOT_SUPPORT,
-          timestamp: now
-        }));
-
-        callback(items);
-      });
+      handleUnsupportedOrPendingAddresses(
+        notSupportAddresses,
+        chainSlug,
+        chainAssetMap,
+        APIItemState.NOT_SUPPORT,
+        callback
+      );
     }
 
     const evmApi = evmApiMap[chainSlug];
@@ -132,6 +156,16 @@ export function subscribeBalance (
         chainInfo,
         evmApi
       });
+    }
+
+    if (!substrateApiMap[chainSlug].isApiReady) {
+      handleUnsupportedOrPendingAddresses(
+        useAddresses,
+        chainSlug,
+        chainAssetMap,
+        APIItemState.PENDING,
+        callback
+      );
     }
 
     const substrateApi = await substrateApiMap[chainSlug].isReady;
