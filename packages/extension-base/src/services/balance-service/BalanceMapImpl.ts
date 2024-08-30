@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { APIItemState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { BalanceInfo, BalanceItem, BalanceMap } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
@@ -91,11 +90,7 @@ export class BalanceMapImpl {
       });
 
     Object.entries(allAccountBalance).forEach(([tokenSlug, balanceItems]) => {
-      const balanceItem = groupBalance(balanceItems, ALL_ACCOUNT_KEY, tokenSlug);
-
-      if (balanceItem.state !== APIItemState.NOT_SUPPORT) {
-        allAccountBalanceInfo[tokenSlug] = balanceItem;
-      }
+      allAccountBalanceInfo[tokenSlug] = groupBalance(balanceItems, ALL_ACCOUNT_KEY, tokenSlug);
     });
 
     this._map[ALL_ACCOUNT_KEY] = allAccountBalanceInfo;
