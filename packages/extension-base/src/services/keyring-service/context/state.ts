@@ -329,8 +329,15 @@ export class AccountState {
 
   public belongUnifiedAccount (address: string): string | undefined {
     const modifyPairs = this.modifyPairs;
+    const accountProxies = this.accountProxies;
 
-    return modifyPairs[address]?.accountProxyId;
+    const proxyId = modifyPairs[address]?.accountProxyId;
+
+    if (proxyId) {
+      return accountProxies[proxyId]?.id;
+    } else {
+      return undefined;
+    }
   }
 
   /* Is account proxy id */
