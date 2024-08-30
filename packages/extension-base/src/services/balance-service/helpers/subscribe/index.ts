@@ -95,7 +95,7 @@ const handleUnsupportedOrPendingAddresses = (
     _AssetType.PSP22,
     _AssetType.LOCAL,
     _AssetType.GRC20,
-    _AssetType.VFT,
+    _AssetType.VFT
   ]);
 
   const now = new Date().getTime();
@@ -112,8 +112,7 @@ const handleUnsupportedOrPendingAddresses = (
 
     callback(items);
   });
-}
-
+};
 
 // main subscription, use for multiple chains, multiple addresses and multiple tokens
 export function subscribeBalance (
