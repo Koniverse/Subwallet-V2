@@ -53,7 +53,7 @@ const Component = () => {
 
   const { fromAccountProxy, slug } = defaultData;
 
-  const accountProxies = useSelector((state) => state.accountState.accountProxies);
+  const { accountProxies, isAllAccount } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const poolTargetsMap = useSelector((state) => state.earning.poolTargetsMap);
@@ -932,6 +932,7 @@ const Component = () => {
                   name={'from'}
                 >
                   <AccountAddressSelector
+                    disabled={!isAllAccount}
                     items={accountAddressItems}
                   />
                 </Form.Item>
