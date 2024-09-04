@@ -161,11 +161,11 @@ function Component ({ className }: Props): JSX.Element {
 
           if (isKeyringPairs$Json(json)) {
             const accounts: ResponseJsonGetAccountInfo[] = json.accounts.map((account) => {
-              const genesisHash: string = account.meta.originGenesisHash as string;
+              const genesisHash: string = account.meta.genesisHash as string;
 
               let addressPrefix: number | undefined;
 
-              if (account.meta.originGenesisHash) {
+              if (account.meta.genesisHash) {
                 addressPrefix = findNetworkJsonByGenesisHash(chainInfoMap, genesisHash)?.substrateInfo?.addressPrefix;
               }
 
