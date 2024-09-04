@@ -4,6 +4,7 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
+import { ActionType, validateRecipientAddress } from '@subwallet/extension-base/services/balance-service/transfer/utils';
 import { _getAssetDecimals, _getAssetOriginChain, _getAssetSymbol, _getChainNativeTokenSlug, _getMultiChainAsset, _getOriginChainOfAsset, _isChainEvmCompatible, _parseAssetRefKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
@@ -26,7 +27,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountAddressItemType, FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenSelectorItemType } from '@subwallet/extension-koni-ui/types/field';
-import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, BackgroundIcon, Button, Form, Icon, Logo, ModalContext, Number, Tooltip } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -38,7 +39,7 @@ import { useIdleTimer } from 'react-idle-timer';
 import styled, { useTheme } from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
-import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 type WrapperProps = ThemeProps;
 
@@ -255,48 +256,12 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   // todo: this logic is only true with substrate, evm address. Make sure it work with ton, bitcoin, and more
   const recipientAddressValidator = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
-    if (!_recipientAddress) {
-      return Promise.reject(t('Recipient address is required'));
-    }
-
-    if (!isAddress(_recipientAddress)) {
-      return Promise.reject(t('Invalid recipient address'));
-    }
-
-    if (!isEthereumAddress(_recipientAddress)) {
-      const destChainInfo = chainInfoMap[toAssetInfo.originChain];
-      const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
-      const _addressOnChain = reformatAddress(_recipientAddress, addressPrefix);
-
-      if (_addressOnChain !== _recipientAddress) {
-        return Promise.reject(t('Recipient should be a valid {{networkName}} address', { replace: { networkName: destChainInfo.name } }));
-      }
-    }
-
-    if (toAssetInfo?.originChain && chainInfoMap[toAssetInfo?.originChain]) {
-      const isAddressEvm = isEthereumAddress(_recipientAddress);
-      const isEvmCompatible = _isChainEvmCompatible(chainInfoMap[toAssetInfo?.originChain]);
-
-      if (isAddressEvm !== isEvmCompatible) {
-        return Promise.reject(t('Invalid swap recipient account'));
-      }
-    }
-
+    const { chain, from, toTokenSlug } = form.getFieldsValue();
+    const destChain = assetRegistryMap[toTokenSlug].originChain;
     const account = findAccountByAddress(accounts, _recipientAddress);
 
-    if (account?.isHardware && toAssetInfo?.originChain) {
-      const destChainInfo = chainInfoMap[toAssetInfo.originChain];
-      const availableGen: string[] = account.availableGenesisHashes || [];
-
-      if (!isEthereumAddress(account.address) && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-        const destChainName = destChainInfo?.name || 'Unknown';
-
-        return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
-      }
-    }
-
-    return Promise.resolve();
-  }, [accounts, chainInfoMap, t, toAssetInfo]);
+    return validateRecipientAddress(chain, destChain, from, _recipientAddress, account, ActionType.SWAP);
+  }, [accounts, assetRegistryMap, form]);
 
   const accountAddressItems = useMemo(() => {
     const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;

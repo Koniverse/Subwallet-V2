@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType, NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
+import { ActionType, validateRecipientAddress } from '@subwallet/extension-base/services/balance-service/transfer/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AddressInput, ChainSelector, HiddenInput, PageWrapper } from '@subwallet/extension-koni-ui/components';
@@ -9,7 +10,7 @@ import { DEFAULT_MODEL_VIEWER_PROPS, SHOW_3D_MODELS_CHAIN } from '@subwallet/ext
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useFocusFormItem, useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { evmNftSubmitTransaction, substrateNftSubmitTransaction } from '@subwallet/extension-koni-ui/messaging';
-import { FormCallbacks, FormFieldData, FormInstance, FormRule, SendNftParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { FormCallbacks, FormFieldData, FormRule, SendNftParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, noop, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon, Image, Typography } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -19,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { nftParamsHandler } from '../helper';
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
@@ -92,54 +93,12 @@ const Component: React.FC = () => {
   const [isDisable, setIsDisable] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const recipientValidator = useCallback(({ getFieldValue }: FormInstance<SendNftParams>) => {
-    return ({
-      validator: (rule: FormRule, _recipientAddress: string): Promise<void> => {
-        if (!_recipientAddress) {
-          return Promise.reject(t('The recipient address is required'));
-        }
+  const recipientValidator = useCallback((rule: FormRule, _recipientAddress: string): Promise<void> => {
+    const { chain, from } = form.getFieldsValue();
+    const account = findAccountByAddress(accounts, _recipientAddress);
 
-        if (!isAddress(_recipientAddress)) {
-          return Promise.reject(t('Invalid recipient address'));
-        }
-
-        if (!isEthereumAddress(_recipientAddress)) {
-          const chainInfo = chainInfoMap[chain];
-          const addressPrefix = chainInfo?.substrateInfo?.addressPrefix ?? 42;
-          const _addressOnChain = reformatAddress(_recipientAddress, addressPrefix);
-
-          if (_addressOnChain !== _recipientAddress) {
-            return Promise.reject(t('Recipient should be a valid {{networkName}} address', { replace: { networkName: chainInfo.name } }));
-          }
-        }
-
-        if (isSameAddress(_recipientAddress, from)) {
-          return Promise.reject(t('The recipient address can not be the same as the sender address'));
-        }
-
-        if (isEthereumAddress(_recipientAddress) !== isEthereumAddress(from)) {
-          const message = isEthereumAddress(from) ? t('Receive address must be of EVM account.') : t('Receive address must be of Substrate account.');
-
-          return Promise.reject(message);
-        }
-
-        const account = findAccountByAddress(accounts, _recipientAddress);
-
-        if (account && account.isHardware) {
-          const chainInfo = chainInfoMap[chain];
-          const availableGen: string[] = account.availableGenesisHashes || [];
-
-          if (!account.isGeneric && !availableGen.includes(chainInfo?.substrateInfo?.genesisHash || '')) {
-            const chainName = chainInfo?.name || 'Unknown';
-
-            return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: chainName } }));
-          }
-        }
-
-        return Promise.resolve();
-      }
-    });
-  }, [from, accounts, t, chainInfoMap, chain]);
+    return validateRecipientAddress(chain, chain, from, _recipientAddress, account, ActionType.SEND_NFT);
+  }, [accounts, form]);
 
   const onFieldsChange: FormCallbacks<SendNftParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const { error } = simpleCheckForm(allFields);
@@ -247,7 +206,9 @@ const Component: React.FC = () => {
           <Form.Item
             name={'to'}
             rules={[
-              recipientValidator
+              {
+                validator: recipientValidator
+              }
             ]}
             statusHelpAsTooltip={true}
           >
