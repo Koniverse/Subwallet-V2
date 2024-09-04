@@ -280,6 +280,13 @@ export class AccountState {
     return undefined;
   }
 
+  /* Check address exists */
+  public checkNameExists (name: string): boolean {
+    const accounts = this.accounts;
+
+    return Object.values(accounts).some((account) => account.name === name);
+  }
+
   /* Auth address */
 
   public _addAddressesToAuthList (addresses: string[], isAllowed: boolean): void {
