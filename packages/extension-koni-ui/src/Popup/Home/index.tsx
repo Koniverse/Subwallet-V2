@@ -125,6 +125,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           <Layout.Home
             onClickSearchIcon={onOpenGlobalSearchToken}
             showFilterIcon
+            showNotificationIcon
             showSearchIcon
           >
             <Outlet />

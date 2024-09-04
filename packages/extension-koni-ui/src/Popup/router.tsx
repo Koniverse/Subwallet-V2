@@ -88,6 +88,8 @@ const TokenDetail = new LazyLoader('TokenDetail', () => import('@subwallet/exten
 
 const SecurityList = new LazyLoader('SecurityList', () => import('@subwallet/extension-koni-ui/Popup/Settings/Security'));
 const ManageWebsiteAccess = new LazyLoader('ManageWebsiteAccess', () => import('@subwallet/extension-koni-ui/Popup/Settings/Security/ManageWebsiteAccess'));
+const Notifications = new LazyLoader('Notification', () => import('@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification'));
+const NotificationSetting = new LazyLoader('NotificationSetting', () => import('@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationSetting'));
 const ManageWebsiteAccessDetail = new LazyLoader('ManageWebsiteAccessDetail', () => import('@subwallet/extension-koni-ui/Popup/Settings/Security/ManageWebsiteAccess/Detail'));
 
 const NewSeedPhrase = new LazyLoader('NewSeedPhrase', () => import('@subwallet/extension-koni-ui/Popup/Account/NewSeedPhrase'));
@@ -234,6 +236,8 @@ export const router = createHashRouter([
           ManageAddressBook.generateRouterObject('address-book'),
           SecurityList.generateRouterObject('security'),
           ManageWebsiteAccess.generateRouterObject('dapp-access'),
+          Notifications.generateRouterObject('notification'),
+          NotificationSetting.generateRouterObject('notification-config'),
           ManageWebsiteAccessDetail.generateRouterObject('dapp-access-edit'),
           {
             path: 'chains',

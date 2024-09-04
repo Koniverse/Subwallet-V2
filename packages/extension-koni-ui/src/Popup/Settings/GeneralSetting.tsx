@@ -13,7 +13,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { PhosphorIcon, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { noop } from '@subwallet/extension-koni-ui/utils';
 import { getCurrencySymbol } from '@subwallet/extension-koni-ui/utils/currency';
-import { BackgroundIcon, Icon, Image, SelectModal, SettingItem, SwIconProps } from '@subwallet/react-ui';
+import { BackgroundIcon, Icon, Image, SelectModal, SettingItem, SwIconProps, Switch } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowSquareUpRight, BellSimpleRinging, CaretRight, CheckCircle, CornersOut, CurrencyCircleDollar, GlobeHemisphereEast, Layout as LayoutIcon, MoonStars, Sun } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
@@ -382,6 +382,29 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             size='small'
             title={t('Notifications')}
           />
+
+          <SettingItem
+            className={CN('security-item', 'notification-item')}
+            leftItemIcon={(
+              <BackgroundIcon
+                backgroundColor={token['magenta-7']}
+                phosphorIcon={BellSimpleRinging}
+                size='sm'
+                type='phosphor'
+                weight='fill'
+              />
+            )}
+            name={t('Enable notifications')}
+            rightItem={(
+              <Switch
+                checked={true}
+                loading={false}
+                onClick={() => {
+                  console.log('Switch clicked');
+                }}
+              />
+            )}
+          />
         </div>
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
@@ -396,6 +419,9 @@ export const GeneralSetting = styled(Component)<Props>(({ theme: { token } }: Pr
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: -token.marginXS
+    },
+    '.notification-item': {
+      marginTop: token.marginXS
     },
     '.__trigger-item': {
       height: 52,
