@@ -7,7 +7,7 @@ import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/exten
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountProxy, AccountProxyType, AccountSignMode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
@@ -29,7 +29,6 @@ import styled from 'styled-components';
 import { useIsFirstRender } from 'usehooks-ts';
 
 import { BN, BN_ZERO } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
 
@@ -330,33 +329,19 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       return true;
     }
 
-    const isLedger = !!account.isHardware;
-    const isEthereum = isEthereumAddress(account.address);
     const chainAsset = assetRegistry[asset];
 
     if (chain === destChain) {
-      if (isLedger) {
-        if (isEthereum) {
-          if (!_isTokenTransferredByEvm(chainAsset)) {
-            setLoading(false);
-            notification({
-              message: t('Ledger does not support transfer for this token'),
-              type: 'warning'
-            });
+      if (account.signMode === AccountSignMode.GENERIC_LEDGER && account.chainType === 'ethereum') {
+        if (!_isTokenTransferredByEvm(chainAsset)) {
+          setLoading(false);
+          notification({
+            message: t('Ledger does not support transfer for this token'),
+            type: 'warning'
+          });
 
-            return true;
-          }
+          return true;
         }
-      }
-    } else {
-      if (isLedger) {
-        setLoading(false);
-        notification({
-          message: t('This feature is not available for Ledger account'),
-          type: 'warning'
-        });
-
-        return true;
       }
     }
 

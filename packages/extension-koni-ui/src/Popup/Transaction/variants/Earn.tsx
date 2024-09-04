@@ -252,8 +252,7 @@ const Component = () => {
         return;
       }
 
-      // todo: support ledger later
-      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
+      if ([AccountProxyType.READ_ONLY].includes(ap.accountType)) {
         return;
       }
 
