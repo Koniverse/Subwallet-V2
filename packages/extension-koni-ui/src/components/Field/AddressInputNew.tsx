@@ -257,7 +257,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     let sync = true;
     let id: string | undefined;
 
-    if (!inputValue || !chainSlug) {
+    if (!inputValue || inputValue.length < 2 || !chainSlug) {
       setResponseOptions([]);
     } else {
       const handler = (data: ResponseInputAccountSubscribe) => {
@@ -592,6 +592,10 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
       '.rc-virtual-list': {
         marginRight: -token.marginSM,
         marginLeft: -token.marginSM
+      },
+
+      '.rc-virtual-list-holder': {
+        maxHeight: '200px !important'
       },
 
       '.rc-virtual-list-holder-inner': {
