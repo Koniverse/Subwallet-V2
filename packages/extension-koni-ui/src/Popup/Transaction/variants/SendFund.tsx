@@ -100,6 +100,7 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
 const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
 const validateFields: Array<keyof TransferParams> = ['value', 'to'];
 const alertModalId = 'confirmation-alert-modal';
+const defaultAddressInputRenderKey = 'address-input-render-key';
 
 const Component = ({ className = '', targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
   useSetCurrentPage('/transaction/send-fund');
@@ -142,6 +143,10 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
+
+  // use this to reinit AddressInput component
+  const [addressInputRenderKey, setAddressInputRenderKey] = useState<string>(defaultAddressInputRenderKey);
+
   const [, update] = useState({});
   const [isFetchingMaxValue, setIsFetchingMaxValue] = useState(false);
   const [isBalanceReady, setIsBalanceReady] = useState(true);
@@ -283,9 +288,11 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
         form.setFieldsValue({
           chain: chain,
-          destChain: chain
+          destChain: chain,
+          to: ''
         });
 
+        setAddressInputRenderKey(`${defaultAddressInputRenderKey}-${Date.now()}`);
         setIsTransferAll(false);
         setForceUpdateMaxValue(undefined);
       }
@@ -699,6 +706,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           >
             <AddressInputNew
               chainSlug={destChainValue}
+              key={addressInputRenderKey}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
