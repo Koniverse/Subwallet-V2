@@ -3,19 +3,23 @@
 
 import type { BaseSelectRef } from 'rc-select';
 
+import { _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AnalyzeAddress, AnalyzedGroup, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
+import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AddressSelectorItem } from '@subwallet/extension-koni-ui/components';
+import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useForwardFieldRef, useOpenQrScanner, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import useGetChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import { cancelSubscription, saveRecentAccount, subscribeAccountsInputAddress } from '@subwallet/extension-koni-ui/messaging';
 import { ScannerResult, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { isAddress } from '@subwallet/keyring';
 import { AutoComplete, Button, Icon, Input, ModalContext, Switch, SwQrScanner } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Book, MagicWand, Scan } from 'phosphor-react';
 import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
-
-import { isAddress } from '@polkadot/util-crypto';
+import { useLocalStorage } from 'usehooks-ts';
 
 import { AddressBookModal } from '../Modal';
 import { QrScannerErrorNotice } from '../Qr';
@@ -60,6 +64,9 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   const [inputValue, setInputValue] = useState<string | undefined>(value);
   const [initValue] = useState<string | undefined>(value);
   const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [autoFormatValue, setAutoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
+
+  const chainInfo = useGetChainInfo(chainSlug || '');
 
   const scannerId = useMemo(() => id ? `${id}-scanner-modal` : defaultScannerModalId, [id]);
   const addressBookId = useMemo(() => id ? `${id}-address-book-modal` : defaultAddressBookModalId, [id]);
@@ -84,13 +91,25 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     setOpenDropdownManually(undefined);
   }, []);
 
+  const isShowAdvancedAddressDetection = useMemo(() => {
+    return !!chainInfo && _isPureSubstrateChain(chainInfo);
+  }, [chainInfo]);
+
   const _onBlur: React.FocusEventHandler<HTMLInputElement> = useCallback((event) => {
-    parseAndChangeValue(inputValue || '');
+    let _inputValue = inputValue || '';
+
+    if (isShowAdvancedAddressDetection && autoFormatValue && isAddress(_inputValue) && chainInfo && !selectedOption) {
+      _inputValue = _reformatAddressWithChain(_inputValue, chainInfo);
+      parseAndChangeValue(_inputValue);
+      setInputValue(_inputValue);
+    } else {
+      parseAndChangeValue(_inputValue);
+    }
 
     setOpenDropdownManually(undefined);
 
     onBlur?.(event);
-  }, [inputValue, onBlur, parseAndChangeValue]);
+  }, [autoFormatValue, chainInfo, inputValue, isShowAdvancedAddressDetection, onBlur, parseAndChangeValue, selectedOption]);
 
   // autoComplete
 
@@ -181,29 +200,40 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     return result;
   }, [responseOptions, t]);
 
+  const onSwitchAdvancedAddressDetection = useCallback((checked: boolean) => {
+    setAutoFormatValue(checked);
+  }, [setAutoFormatValue]);
+
   const dropdownRender = useCallback((menu: React.ReactElement): React.ReactElement => {
     return (
       <>
-        <div className={'__advanced-address-detection'}>
-          <Icon
-            className={'__advanced-address-detection-icon'}
-            customSize={'16px'}
-            phosphorIcon={MagicWand}
-            weight={'fill'}
-          />
+        {
+          isShowAdvancedAddressDetection && (
+            <div className={'__advanced-address-detection'}>
+              <Icon
+                className={'__advanced-address-detection-icon'}
+                customSize={'16px'}
+                phosphorIcon={MagicWand}
+                weight={'fill'}
+              />
 
-          <div className={'__advanced-address-detection-label'}>
-            {t('Advanced address detection')}
-          </div>
+              <div className={'__advanced-address-detection-label'}>
+                {t('Advanced address detection')}
+              </div>
 
-          <Switch
-            className={'__advanced-address-detection-switch'}
-          />
-        </div>
+              <Switch
+                checked={autoFormatValue}
+                className={'__advanced-address-detection-switch'}
+                onClick={onSwitchAdvancedAddressDetection}
+              />
+            </div>
+          )
+        }
+
         {menu}
       </>
     );
-  }, [t]);
+  }, [autoFormatValue, isShowAdvancedAddressDetection, onSwitchAdvancedAddressDetection, t]);
 
   // address book
 
