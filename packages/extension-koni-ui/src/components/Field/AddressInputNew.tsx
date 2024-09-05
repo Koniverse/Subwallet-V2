@@ -329,6 +329,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       <div className={CN(className, '-input-container')}>
         <AutoComplete
           dropdownRender={dropdownRender}
+          listHeight={200}
           onBlur={_onBlur}
           onChange={onChangeInputValue}
           onFocus={onFocus}
@@ -624,8 +625,8 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
         marginLeft: -token.marginSM
       },
 
-      '.rc-virtual-list-holder': {
-        maxHeight: '200px !important'
+      '.rc-virtual-list-scrollbar': {
+        opacity: 0
       },
 
       '.rc-virtual-list-holder-inner': {
