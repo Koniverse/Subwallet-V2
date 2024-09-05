@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
+import { NotificationTransactionType } from '@subwallet/extension-base/background/KoniTypes';
 import { PageWrapper, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -36,9 +36,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   // }, [onChangeOption]);
 
   const notificationOptions = [
-    { label: t('Hide send notifications'), value: NotificationType.SEND },
-    { label: t('Hide receive notifications'), value: NotificationType.RECEIVE },
-    { label: t('Hide withdraw notifications'), value: NotificationType.WITHDRAW }
+    { label: t('Hide send notifications'), value: NotificationTransactionType.SEND },
+    { label: t('Hide receive notifications'), value: NotificationTransactionType.RECEIVE },
+    { label: t('Hide withdraw notifications'), value: NotificationTransactionType.WITHDRAW }
   ];
 
   const viewOptions = useMemo((): ViewOption[] => {
