@@ -27,66 +27,103 @@ function ledgerMustCheckNetwork (account: AccountJson | null): LedgerMustCheckTy
   }
 }
 
-export function validateRecipientAddress (srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): Promise<void> {
-  const destChainInfo = ChainInfoMap[destChain];
+enum ValidationCondition {
+  IS_NOT_NULL = 'IS_NOT_NULL',
+  IS_ADDRESS = 'IS_ADDRESS',
+  IS_VALID_ADDRESS = 'IS_VALID_ADDRESS',
+  IS_VALID_SUBSTRATE_ADDRESS_FORMAT = 'IS_VALID_SUBSTRATE_ADDRESS_FORMAT',
+  IS_NOT_DUPLICATE_ADDRESS = 'IS_NOT_DUPLICATE_ADDRESS',
+  IS_SUPPORT_LEDGER_ACCOUNT = 'IS_SUPPORT_LEDGER_ACCOUNT'
+}
+
+function getConditions (srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): ValidationCondition[] {
+  const conditions: ValidationCondition[] = [];
   const isSendAction = [ActionType.SEND_FUND, ActionType.SEND_NFT].includes(actionType);
 
-  if (!toAddress) {
-    return Promise.reject(detectTranslate('Recipient address is required'));
+  conditions.push(ValidationCondition.IS_NOT_NULL);
+  conditions.push(ValidationCondition.IS_ADDRESS);
+  conditions.push(ValidationCondition.IS_VALID_ADDRESS);
+
+  if (!isEthereumAddress(toAddress) && !isTonAddress(toAddress)) {
+    // todo: need isSubstrateAddress util function to check exactly
+    // todo: add check advanced detection button
+    conditions.push(ValidationCondition.IS_VALID_SUBSTRATE_ADDRESS_FORMAT);
   }
 
-  if (!isAddress(toAddress)) {
-    return Promise.reject(detectTranslate('Invalid recipient address'));
+  if (srcChain === destChain && isSendAction && !ChainInfoMap[destChain].tonInfo) {
+    conditions.push(ValidationCondition.IS_NOT_DUPLICATE_ADDRESS);
   }
 
-  if (!isAddressAndChainCompatible(toAddress, destChainInfo)) {
-    if (_isChainEvmCompatible(destChainInfo)) {
-      return Promise.reject(detectTranslate('The recipient address must be EVM type'));
-    }
-
-    if (_isChainSubstrateCompatible(destChainInfo)) {
-      return Promise.reject(detectTranslate('The recipient address must be Substrate type'));
-    }
-
-    if (_isChainTonCompatible(destChainInfo)) {
-      return Promise.reject(detectTranslate('The recipient address must be Ton type'));
-    }
-
-    return Promise.reject(detectTranslate('Unknown chain type'));
-  }
-
-  // Validate substrate address format // todo: bổ sung advanced detection button
-  if (!isEthereumAddress(toAddress) && !isTonAddress(toAddress)) { // todo: need isSubstrateAddress util function to check exactly
-    const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
-    const toAddressFormatted = reformatAddress(toAddress, addressPrefix);
-
-    if (toAddressFormatted !== toAddress) {
-      return Promise.reject(detectTranslate(`Recipient should be a valid ${destChainInfo.name} address`));
-    }
-  }
-
-  // Validate send same chain
-  if (isSendAction && srcChain === destChain) {
-    if (!isTonAddress(toAddress) && isSameAddress(fromAddress, toAddress)) {
-      return Promise.reject(detectTranslate('The recipient address can not be the same as the sender address'));
-    }
-  }
-
-  // Validate ledger account
   if (account?.isHardware) {
-    // const availableGen: string[] = account.availableGenesisHashes || [];
-    // const destChainName = destChainInfo?.name || 'Unknown';
-    //
-    // if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-    //   return Promise.reject(detectTranslate(`Wrong network. Your Ledger account is not supported by ${destChainName}. Please choose another receiving account and try again.`));
-    // }
+    conditions.push(ValidationCondition.IS_SUPPORT_LEDGER_ACCOUNT);
+  }
 
-    const ledgerCheck = ledgerMustCheckNetwork(account);
+  return conditions;
+}
 
-    if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
-      return Promise.reject(detectTranslate(`Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`));
+function getValidation (conditions: ValidationCondition[], srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): Promise<void> {
+  const destChainInfo = ChainInfoMap[destChain];
+
+  for (const condition of conditions) {
+    if (condition === ValidationCondition.IS_NOT_NULL) {
+      if (!toAddress) {
+        return Promise.reject(detectTranslate('Recipient address is required'));
+      }
+    }
+
+    if (condition === ValidationCondition.IS_ADDRESS) {
+      if (!isAddress(toAddress)) {
+        return Promise.reject(detectTranslate('Invalid recipient address'));
+      }
+    }
+
+    if (condition === ValidationCondition.IS_VALID_ADDRESS) {
+      if (!isAddressAndChainCompatible(toAddress, destChainInfo)) {
+        if (_isChainEvmCompatible(destChainInfo)) {
+          return Promise.reject(detectTranslate('The recipient address must be EVM type'));
+        }
+
+        if (_isChainSubstrateCompatible(destChainInfo)) {
+          return Promise.reject(detectTranslate('The recipient address must be Substrate type'));
+        }
+
+        if (_isChainTonCompatible(destChainInfo)) {
+          return Promise.reject(detectTranslate('The recipient address must be Ton type'));
+        }
+
+        return Promise.reject(detectTranslate('Unknown chain type'));
+      }
+    }
+
+    if (condition === ValidationCondition.IS_VALID_SUBSTRATE_ADDRESS_FORMAT) {
+      const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
+      const toAddressFormatted = reformatAddress(toAddress, addressPrefix);
+
+      if (toAddressFormatted !== toAddress) {
+        return Promise.reject(detectTranslate(`Recipient should be a valid ${destChainInfo.name} address`));
+      }
+    }
+
+    if (condition === ValidationCondition.IS_NOT_DUPLICATE_ADDRESS) {
+      if (isSameAddress(fromAddress, toAddress)) {
+        return Promise.reject(detectTranslate('The recipient address can not be the same as the sender address'));
+      }
+    }
+
+    if (condition === ValidationCondition.IS_SUPPORT_LEDGER_ACCOUNT) {
+      const ledgerCheck = ledgerMustCheckNetwork(account);
+
+      if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
+        return Promise.reject(detectTranslate(`Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`));
+      }
     }
   }
 
   return Promise.resolve();
+}
+
+export function validateRecipientAddress (srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): Promise<void> {
+  const conditions = getConditions(srcChain, destChain, fromAddress, toAddress, account, actionType);
+
+  return getValidation(conditions, srcChain, destChain, fromAddress, toAddress, account, actionType);
 }
