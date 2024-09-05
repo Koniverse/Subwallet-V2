@@ -3,6 +3,7 @@
 
 /* eslint-disable no-use-before-define */
 
+import { AccountContract } from '@particle-network/aa';
 import type { InjectedAccount, InjectedMetadataKnown, MetadataDef, ProviderList, ProviderMeta } from '@subwallet/extension-inject/types';
 import type { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
 import type { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
@@ -97,6 +98,19 @@ export interface AccountJson extends AbstractAddressJson {
   source?: string;
   /** Derivate path */
   suri?: string;
+
+  /** Account abstraction */
+
+  /** Is smart account */
+  isSmartAccount?: boolean;
+  /** Smart account owner */
+  smartAccountOwner?: string;
+  /** AA sdk */
+  aaSdk?: 'particle' | 'klaster';
+  /** AA provider */
+  aaProvider?: AccountContract;
+
+  /** Account abstraction */
 }
 
 export interface AddressJson extends AbstractAddressJson {

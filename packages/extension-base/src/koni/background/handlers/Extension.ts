@@ -3988,8 +3988,8 @@ export default class KoniExtension {
   }
 
   /// Inject account
-  private addInjects (request: RequestAddInjectedAccounts): boolean {
-    this.#koniState.keyringService.addInjectAccounts(request.accounts);
+  private async addInjects (request: RequestAddInjectedAccounts): Promise<boolean> {
+    await this.#koniState.keyringService.addInjectAccounts(request.accounts);
 
     return true;
   }

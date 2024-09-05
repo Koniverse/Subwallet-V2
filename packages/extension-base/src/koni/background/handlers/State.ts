@@ -1479,7 +1479,8 @@ export default class KoniState {
       estimateFee: {
         value: transactionValidated.estimateGas,
         symbol: token.symbol,
-        decimals: token.decimals || 18
+        decimals: token.decimals || 18,
+        feeTokenSlug: token.slug
       },
       id
     });
