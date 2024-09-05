@@ -15,6 +15,18 @@ export enum ActionType {
   SWAP = 'SWAP'
 }
 
+const LEDGER_GENERIC_ALLOW_NETWORKS = ['polkadot', 'statemint', 'bridgeHubPolkadot', 'collectives', 'centrifuge', 'manta_network', 'ajunaPolkadot', 'astar', 'bifrost_dot', 'hydradx_main', 'kusama', 'encointer', 'statemine', 'bridgeHubKusama', 'peopleKusama', 'altair', 'bajun', 'bifrost', 'calamari', 'shiden', 'tinkernet', 'rococo', 'rococo_assethub', 'hydradx_rococo', 'bifrost_testnet', 'westend', 'shibuya'];
+
+type LedgerMustCheckType = 'polkadot' | 'migration' | 'unnecessary'
+
+function ledgerMustCheckNetwork (account: AccountJson | null): LedgerMustCheckType {
+  if (account && account.isHardware && account.isGeneric && !isEthereumAddress(account.address)) {
+    return account.originGenesisHash ? 'migration' : 'polkadot';
+  } else {
+    return 'unnecessary';
+  }
+}
+
 export function validateRecipientAddress (srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): Promise<void> {
   const destChainInfo = ChainInfoMap[destChain];
   const isSendAction = [ActionType.SEND_FUND, ActionType.SEND_NFT].includes(actionType);
@@ -62,12 +74,17 @@ export function validateRecipientAddress (srcChain: string, destChain: string, f
 
   // Validate ledger account
   if (account?.isHardware) {
-    const availableGen: string[] = account.availableGenesisHashes || [];
+    // const availableGen: string[] = account.availableGenesisHashes || [];
+    // const destChainName = destChainInfo?.name || 'Unknown';
+    //
+    // if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
+    //   return Promise.reject(detectTranslate(`Wrong network. Your Ledger account is not supported by ${destChainName}. Please choose another receiving account and try again.`));
+    // }
 
-    if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-      const destChainName = destChainInfo?.name || 'Unknown chain';
+    const ledgerCheck = ledgerMustCheckNetwork(account);
 
-      return Promise.reject(detectTranslate(`Wrong network.  Your Ledger account is not supported by ${destChainName}. Please choose another receiving account and try again.`));
+    if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
+      return Promise.reject(detectTranslate(`Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`));
     }
   }
 
