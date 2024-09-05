@@ -174,6 +174,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     );
   }, []);
 
+  const handleSwitchClick = useCallback(() => {
+    alert('Read all account button is clicked');
+  }, []);
+
   return (
     <PageWrapper className={`manage-website-access ${className}`}>
       <SwSubHeader
@@ -213,9 +217,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             />
           )}
           // TODO: This is for development. It will be removed when done.
-          onClick={() => {
-            alert('Mark read all clicked!');
-          }}
+          onClick={handleSwitchClick}
           size='xs'
           type='ghost'
         >

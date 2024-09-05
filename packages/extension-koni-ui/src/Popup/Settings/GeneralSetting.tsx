@@ -280,6 +280,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     saveTheme(value as ThemeNames).finally(noop);
   }, []);
 
+  const handleSwitchClick = useCallback(() => {
+    alert('Switch to Settings');
+  }, []);
+
   return (
     <PageWrapper
       className={`general-setting ${className}`}
@@ -399,9 +403,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <Switch
                 checked={true}
                 loading={false}
-                onClick={() => {
-                  console.log('Switch clicked');
-                }}
+                onClick={handleSwitchClick}
               />
             )}
           />
