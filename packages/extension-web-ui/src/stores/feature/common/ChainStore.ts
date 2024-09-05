@@ -10,7 +10,8 @@ const initialState: ChainStore = {
   chainInfoMap: {},
   chainStateMap: {},
   chainStatusMap: {},
-  reduxStatus: ReduxStatus.INIT
+  reduxStatus: ReduxStatus.INIT,
+  ledgerGenericAllowNetworks: []
 };
 
 const chainStoreSlice = createSlice({
@@ -41,6 +42,15 @@ const chainStoreSlice = createSlice({
       return {
         ...state,
         chainStatusMap: payload,
+        reduxStatus: ReduxStatus.READY
+      };
+    },
+    updateLedgerGenericAllowNetworks (state, action: PayloadAction<string[]>) {
+      const { payload } = action;
+
+      return {
+        ...state,
+        ledgerGenericAllowNetworks: payload,
         reduxStatus: ReduxStatus.READY
       };
     }
