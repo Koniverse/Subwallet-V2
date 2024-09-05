@@ -76,10 +76,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             onComplete();
           })
           .catch((error: Error): void => {
-            setValidateState({
-              status: 'error',
-              message: error.message
-            });
+            form.setFields([{ name: 'name', errors: [error.message] }]);
           })
           .finally(() => {
             setLoading(false);
@@ -89,7 +86,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       .catch(() => {
         // User cancel unlock
       });
-  }, [checkUnlock, onComplete]);
+  }, [checkUnlock, form, onComplete]);
 
   useEffect(() => {
     let amount = true;
@@ -217,6 +214,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 transform: (value: string) => value.trim(),
                 required: true
               }]}
+              statusHelpAsTooltip={true}
             >
               <Input
                 className='__account-name-input'

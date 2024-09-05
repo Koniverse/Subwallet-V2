@@ -175,11 +175,13 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     }
 
     editAccount(accountProxyId, name.trim())
-      .catch(console.error)
+      .catch((error: Error) => {
+        form.setFields([{ name: FormFieldName.NAME, errors: [error.message] }]);
+      })
       .finally(() => {
         setSaving(false);
       });
-  }, [accountProxy]);
+  }, [accountProxy.id, accountProxy.name, form]);
 
   const footerNode = (() => {
     if (![AccountProxyType.UNIFIED, AccountProxyType.SOLO].includes(accountProxy.accountType)) {
@@ -353,7 +355,7 @@ const Wrapper = ({ className }: Props) => {
   const { goHome } = useDefaultNavigate();
   const { accountProxyId } = useParams();
   const accountProxy = useGetAccountProxyById(accountProxyId);
-  const locationState = useLocation().state as AccountDetailParam | undefined;
+  const locationState = useLocation().state;
 
   useEffect(() => {
     if (!accountProxy) {

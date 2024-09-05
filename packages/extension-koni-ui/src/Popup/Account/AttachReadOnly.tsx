@@ -123,13 +123,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       })
         .then((errors) => {
           if (errors.length) {
-            form.setFields([{ name: fieldName, errors: errors.map((e) => e.message) }]);
+            form.setFields([{ name: 'name', errors: errors.map((e) => e.message) }]);
           } else {
             onComplete();
           }
         })
         .catch((error: Error) => {
-          form.setFields([{ name: fieldName, errors: [error.message] }]);
+          form.setFields([{ name: 'name', errors: [error.message] }]);
         })
         .finally(() => {
           setLoading(false);
@@ -204,6 +204,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               className={CN('__account-name-field')}
               hidden={isHideAccountNameInput}
               name={'name'}
+              statusHelpAsTooltip={true}
               rules={[{
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
