@@ -154,11 +154,6 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       flexDirection: 'column'
     },
 
-    '.__tool-area': {
-      display: 'flex',
-      justifyContent: 'space-between'
-    },
-
     '.filter-tabs-container': {
       marginLeft: token.margin
     },
@@ -171,10 +166,6 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
 
     '.ant-sw-list-section .ant-sw-list': {
       paddingBottom: 0
-    },
-
-    '.__item + .__item': {
-      marginTop: token.marginXS
     },
 
     '.option-title': {
