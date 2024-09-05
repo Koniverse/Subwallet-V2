@@ -6219,7 +6219,7 @@ __metadata:
     i18next: ^21.9.2
     is-buffer: ^2.0.5
     json-rpc-engine: ^6.1.0
-    klaster-sdk: ^0.5.10
+    klaster-sdk: ^0.5.11
     manta-extension-sdk: ^1.1.0
     moment: ^2.29.4
     protobufjs: ^7.2.4
@@ -19143,15 +19143,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"klaster-sdk@npm:^0.5.10":
-  version: 0.5.10
-  resolution: "klaster-sdk@npm:0.5.10"
+"klaster-sdk@npm:^0.5.11":
+  version: 0.5.11
+  resolution: "klaster-sdk@npm:0.5.11"
   dependencies:
     "@wagmi/core": 2.12.2
     axios: 1.7.5
     lodash: ^4.17.21
     viem: 2.18.4
-  checksum: cb708cb0f3e39d089abc411172a3f8c3a07a211301b611f0ecf50992f72b087e7bddd38982323247fd73c3934453f01de43f04da22d97a6afbc76dfedb3b3196
+  checksum: d3f7c40794d27f99b948737fb3c4db436102bb51556934836517f4824ce6efaa8c0d5d5cc9c9de7d8890470edfe8cc7cf2d89c7f4858a2c72ef891842d70d11e
   languageName: node
   linkType: hard
 
