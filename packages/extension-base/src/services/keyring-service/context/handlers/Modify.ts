@@ -90,6 +90,12 @@ export class AccountModifyHandler extends AccountBaseHandler {
     const accountProxies = this.state.accountProxies;
     const modifyPairs = this.state.modifyPairs;
 
+    const nameExists = this.state.checkNameExists(name, proxyId);
+
+    if (nameExists) {
+      throw Error(t('Account name already exists'));
+    }
+
     if (!accountProxies[proxyId]) {
       const pair = keyring.getPair(proxyId);
 
