@@ -31,3 +31,12 @@ export enum ActionType {
   SEND_NFT = 'SEND_NFT',
   SWAP = 'SWAP'
 }
+
+export interface ValidateRecipientParams {
+  srcChain: string,
+  destChain: string,
+  fromAddress: string,
+  toAddress: string,
+  account: AccountJson | null,
+  actionType: ActionType
+}

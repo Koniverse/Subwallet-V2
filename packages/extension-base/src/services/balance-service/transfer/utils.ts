@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ChainInfoMap } from '@subwallet/chain-list';
-import { ActionType, LEDGER_GENERIC_ALLOW_NETWORKS, ledgerMustCheckNetwork, ValidationCondition } from '@subwallet/extension-base/services/balance-service/transfer/types';
+import { ActionType, LEDGER_GENERIC_ALLOW_NETWORKS, ledgerMustCheckNetwork, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/services/balance-service/transfer/types';
 import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountJson } from '@subwallet/extension-base/types';
 import { detectTranslate, isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
 import { isAddress, isTonAddress } from '@subwallet/keyring';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
-function getConditions (srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): ValidationCondition[] {
+function getConditions (validateRecipientParams: ValidateRecipientParams): ValidationCondition[] {
+  const { account, actionType, destChain, srcChain, toAddress } = validateRecipientParams;
   const conditions: ValidationCondition[] = [];
   const isSendAction = [ActionType.SEND_FUND, ActionType.SEND_NFT].includes(actionType);
 
@@ -35,7 +35,8 @@ function getConditions (srcChain: string, destChain: string, fromAddress: string
   return conditions;
 }
 
-function getValidation (conditions: ValidationCondition[], srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): Promise<void> {
+function getValidation (conditions: ValidationCondition[], validateRecipientParams: ValidateRecipientParams): Promise<void> {
+  const { account, destChain, fromAddress, toAddress } = validateRecipientParams;
   const destChainInfo = ChainInfoMap[destChain];
 
   for (const condition of conditions) {
@@ -110,8 +111,8 @@ function getValidation (conditions: ValidationCondition[], srcChain: string, des
   return Promise.resolve();
 }
 
-export function validateRecipientAddress (srcChain: string, destChain: string, fromAddress: string, toAddress: string, account: AccountJson | null, actionType: ActionType): Promise<void> {
-  const conditions = getConditions(srcChain, destChain, fromAddress, toAddress, account, actionType);
+export function validateRecipientAddress (validateRecipientParams: ValidateRecipientParams): Promise<void> {
+  const conditions = getConditions(validateRecipientParams);
 
-  return getValidation(conditions, srcChain, destChain, fromAddress, toAddress, account, actionType);
+  return getValidation(conditions, validateRecipientParams);
 }

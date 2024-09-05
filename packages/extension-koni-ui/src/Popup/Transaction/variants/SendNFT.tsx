@@ -98,7 +98,12 @@ const Component: React.FC = () => {
     const { chain, from } = form.getFieldsValue();
     const account = findAccountByAddress(accounts, _recipientAddress);
 
-    return validateRecipientAddress(chain, chain, from, _recipientAddress, account, ActionType.SEND_NFT);
+    return validateRecipientAddress({ srcChain: chain,
+      destChain: chain,
+      fromAddress: from,
+      toAddress: _recipientAddress,
+      account,
+      actionType: ActionType.SEND_NFT });
   }, [accounts, form]);
 
   const onFieldsChange: FormCallbacks<SendNftParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {

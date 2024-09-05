@@ -261,7 +261,12 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     const destChain = assetRegistryMap[toTokenSlug].originChain;
     const account = findAccountByAddress(accounts, _recipientAddress);
 
-    return validateRecipientAddress(chain, destChain, from, _recipientAddress, account, ActionType.SWAP);
+    return validateRecipientAddress({ srcChain: chain,
+      destChain,
+      fromAddress: from,
+      toAddress: _recipientAddress,
+      account,
+      actionType: ActionType.SWAP });
   }, [accounts, assetRegistryMap, form]);
 
   const accountAddressItems = useMemo(() => {
