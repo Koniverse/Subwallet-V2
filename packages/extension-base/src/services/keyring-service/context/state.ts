@@ -281,10 +281,14 @@ export class AccountState {
   }
 
   /* Check address exists */
-  public checkNameExists (name: string): boolean {
+  public checkNameExists (name: string, proxyId?: string): boolean {
     const accounts = this.accounts;
 
-    return Object.values(accounts).some((account) => account.name === name);
+    const filteredAccounts = proxyId
+      ? Object.values(accounts).filter((account) => account.id !== proxyId)
+      : Object.values(accounts);
+
+    return filteredAccounts.some((account) => account.name === name);
   }
 
   /* Auth address */
