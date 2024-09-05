@@ -5,7 +5,8 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
-import { ActionType, validateRecipientAddress } from '@subwallet/extension-base/services/balance-service/transfer/utils';
+import { ActionType } from '@subwallet/extension-base/services/balance-service/transfer/types';
+import { validateRecipientAddress } from '@subwallet/extension-base/services/balance-service/transfer/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
