@@ -10,7 +10,7 @@
     "url": "https://github.com/Koniverse/Subwallet-V2.git"
   },
   "sideEffects": false,
-  "version": "1.2.27",
+  "version": "1.2.28",
   "workspaces": [
     "packages/*"
   ],
@@ -35,7 +35,7 @@
     "build:zip": "yarn build:zip:dst && yarn build:zip:dst-ff && yarn build:zip:src",
     "build:zip:dst": "rm -rf ./master-build.zip && cd packages/extension-koni/build && zip -r -FS ../../../master-build.zip .",
     "build:zip:dst-ff": "rm -rf ./master-build-firefox.zip && cd packages/extension-koni/build-firefox && zip -r -FS ../../../master-build-firefox.zip .",
-    "build:zip:src": "rm -rf ./master-src.zip && zip -r -x '*build/*' -x '*node_modules*' -FS ./master-src.zip packages .editorconfig .eslintignore .eslintrc.js babel.config.cjs CHANGELOG.md CONTRIBUTING.md i18next-scanner.config.js jest.config.cjs LICENSE package.json README.md tsconfig.json yarn.lock",
+    "build:zip:src": "rm -rf ./master-src.zip && zip -r -x '*build/*' -x '*build-firefox/*' -x '*node_modules*' -FS ./master-src.zip packages .editorconfig .eslintignore .eslintrc.js babel.config.cjs CHANGELOG.md CONTRIBUTING.md i18next-scanner.config.js jest.config.cjs LICENSE package.json README.md tsconfig.json yarn.lock",
     "clean": "polkadot-dev-clean-build && rm -rf packages/extension-koni/build-firefox",
     "dev": "yarn watch-dev",
     "dev:firefox": "cd packages/extension-koni && yarn polkadot-exec-webpack --config webpack.config-firefox.cjs --mode development --watch -d inline-source-map",
