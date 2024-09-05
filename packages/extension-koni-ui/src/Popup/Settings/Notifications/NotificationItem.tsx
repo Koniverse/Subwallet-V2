@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationInfo } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
-import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { formatConditionalDuration } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { DotsThree } from 'phosphor-react';
-import React, { SyntheticEvent } from 'react';
-import styled, { useTheme } from 'styled-components';
+import React, { SyntheticEvent, useCallback } from 'react';
+import styled from 'styled-components';
 
 type Props = ThemeProps & NotificationInfo & {
   onClick?: (value: string) => void;
@@ -16,15 +17,15 @@ type Props = ThemeProps & NotificationInfo & {
 }
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { backgroundColor, className, description, disabled, id, leftIcon, notificationType, onClick, onClickMoreBtn, time, title } = props;
-  const { token } = useTheme() as Theme;
-
-  console.log('time', time);
+  const { backgroundColor, className, description, disabled, id, leftIcon, onClick, onClickMoreBtn, time, title } = props;
+  const _onSelect = useCallback(() => {
+    onClick && onClick(id);
+  }, [id, onClick]);
 
   return (
     <div
       className={CN(className, { disabled: disabled })}
-      onClick={disabled ? undefined : onClick}
+      onClick={disabled ? undefined : _onSelect}
     >
       <div className={'left-part'}>
         <BackgroundIcon
@@ -33,7 +34,7 @@ const Component: React.FC<Props> = (props: Props) => {
           size='sm'
           weight='fill'
         />
-        <div className={'time-info'}>{time}</div>
+        <div className={'time-info'}>{formatConditionalDuration(time)}</div>
       </div>
       <div className={'right-part'}>
         <div className={'right-part-content'}>
@@ -58,7 +59,7 @@ const Component: React.FC<Props> = (props: Props) => {
 const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
     paddingTop: token.paddingSM,
     paddingBottom: token.paddingSM,
@@ -67,7 +68,7 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
     backgroundColor: token.colorBgSecondary,
     borderRadius: token.borderRadiusLG,
     '.left-part': {
-      maxWidth: 40,
+      minWidth: 40,
       display: 'flex',
       flexDirection: 'column',
       gap: 4,
@@ -99,6 +100,14 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
         maxHeight: 40
 
       }
+    },
+    '.time-info': {
+      fontSize: token.fontSizeXS,
+      fontWeight: token.fontWeightStrong,
+      lineHeight: token.lineHeightXS,
+      color: token.colorTextDescription,
+      'white-space': 'nowrap',
+      textAlign: 'center'
     }
   };
 });

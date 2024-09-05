@@ -8,10 +8,10 @@ import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Mod
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
-import { EarningEntryView, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
-import { BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets, PlusCircle, Vault } from 'phosphor-react';
+import { BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -29,11 +29,12 @@ export interface NotificationInfo {
   id: string;
   title: string;
   description: string;
-  time: string;
-  notificationType: string; // extrinsic type
+  time: number;
+  notificationType: ExtrinsicType; // extrinsic type
   backgroundColor: string;
   leftIcon?: SwIconProps['phosphorIcon'];
   disabled?: boolean;
+  isRead?: boolean;
 }
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
@@ -52,7 +53,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       id: '1',
       title: '[Hieudao123] Claim 1200 DOT',
       description: 'You have 1200 DOT to claim. Please click here for claim',
-      time: '1725426988201',
+      time: 1725426988201,
       notificationType: ExtrinsicType.TRANSFER_TOKEN,
       backgroundColor: token['yellow-7'],
       leftIcon: Gift
@@ -61,7 +62,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       id: '2',
       title: '[Hieudao123] Withdraw 200 DOT',
       description: 'You have 1200 DOT to claim. Please click here for claim',
-      time: '1725426988707',
+      time: 1725426988707,
       notificationType: ExtrinsicType.STAKING_WITHDRAW,
       backgroundColor: token['blue-8'],
       leftIcon: DownloadSimple
@@ -97,10 +98,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, []);
 
   const onClickItem = useCallback((item: NotificationInfo) => {
+    console.log('item', item);
+
     return () => {
-      navigate('/settings/dapp-access-edit');
+      alert('clicked item');
     };
-  }, [navigate]);
+  }, []);
 
   const onClickMore = useCallback((item: NotificationInfo) => {
     return (e: SyntheticEvent) => {
@@ -112,8 +115,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const renderItem = useCallback(
     (item: NotificationInfo) => {
-      console.log('item', item);
-
       return (
         <NotificationItem
           backgroundColor={item.backgroundColor}
