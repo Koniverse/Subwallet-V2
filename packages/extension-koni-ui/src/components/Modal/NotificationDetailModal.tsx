@@ -83,7 +83,7 @@ function Component (props: Props): React.ReactElement<Props> {
       onCancel={_onCancel}
       title={t('Actions')}
     >
-      <div className={'button-container'}>
+      <div className={'__button-container'}>
         <div className={'__mark-action-details'}>
           <div
             className={'__left-part'}
@@ -130,7 +130,7 @@ const NotificationDetailModal = styled(Component)<Props>(({ theme: { token } }: 
       borderRadius: 8,
       backgroundColor: token.colorBgSecondary
     },
-    '.button-container': {
+    '.__button-container': {
       display: 'flex',
       flexDirection: 'column',
       gap: 8

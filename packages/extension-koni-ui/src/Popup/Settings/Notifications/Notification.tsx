@@ -98,8 +98,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, []);
 
   const onClickItem = useCallback((item: NotificationInfo) => {
-    console.log('item', item);
-
     return () => {
       alert('clicked item');
     };
@@ -118,7 +116,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       return (
         <NotificationItem
           backgroundColor={item.backgroundColor}
-          className={'__item'}
+          className={'item'}
           description={item.description}
           id={item.id}
           leftIcon={item.leftIcon}
@@ -202,7 +200,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         title={t('Notifications')}
       />
 
-      <div className={'__tool-area'}>
+      <div className={'tool-area'}>
         <FilterTabs
           className={'filter-tabs-container'}
           items={filterTabItems}
@@ -258,7 +256,7 @@ const Notification = styled(Component)<Props>(({ theme: { token } }: Props) => {
     display: 'flex',
     flexDirection: 'column',
 
-    '.__tool-area': {
+    '.tool-area': {
       display: 'flex',
       justifyContent: 'space-between'
     },
@@ -276,7 +274,7 @@ const Notification = styled(Component)<Props>(({ theme: { token } }: Props) => {
       paddingBottom: 0
     },
 
-    '.__item + .__item': {
+    '.item + .item': {
       marginTop: token.marginXS
     }
   });

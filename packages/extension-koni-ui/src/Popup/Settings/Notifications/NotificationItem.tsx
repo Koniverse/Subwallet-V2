@@ -27,21 +27,21 @@ const Component: React.FC<Props> = (props: Props) => {
       className={CN(className, { disabled: disabled })}
       onClick={disabled ? undefined : _onSelect}
     >
-      <div className={'left-part'}>
+      <div className={'__left-part'}>
         <BackgroundIcon
           backgroundColor={backgroundColor}
           phosphorIcon={leftIcon}
           size='sm'
           weight='fill'
         />
-        <div className={'time-info'}>{formatConditionalDuration(time)}</div>
+        <div className={'__time-info'}>{formatConditionalDuration(time)}</div>
       </div>
-      <div className={'right-part'}>
-        <div className={'right-part-content'}>
-          <div className={'title'}>{title}</div>
-          <div className={'description'}>{description}</div>
+      <div className={'__right-part'}>
+        <div className={'__right-part-content'}>
+          <div className={'__title'}>{title}</div>
+          <div className={'__description'}>{description}</div>
         </div>
-        <div className={'right-part-action'}>
+        <div className={'__right-part-action'}>
           <Button
             icon={
               <Icon phosphorIcon={DotsThree} />
@@ -67,7 +67,7 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
     paddingLeft: token.paddingSM,
     backgroundColor: token.colorBgSecondary,
     borderRadius: token.borderRadiusLG,
-    '.left-part': {
+    '.__left-part': {
       minWidth: 40,
       display: 'flex',
       flexDirection: 'column',
@@ -75,14 +75,14 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
       overflow: 'hidden',
       alignItems: 'center'
     },
-    '.right-part': {
+    '.__right-part': {
       display: 'flex',
       gap: 8,
       overflow: 'hidden'
     },
-    '.right-part-content': {
+    '.__right-part-content': {
       overflow: 'hidden',
-      '.title': {
+      '.__title': {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         'white-space': 'nowrap',
@@ -92,7 +92,7 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
         textTransform: 'uppercase',
         color: token.colorWhite
       },
-      '.description': {
+      '.__description': {
         fontSize: token.fontSizeSM,
         fontWeight: token.bodyFontWeight,
         lineHeight: token.lineHeightSM,
@@ -101,7 +101,7 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
 
       }
     },
-    '.time-info': {
+    '.__time-info': {
       fontSize: token.fontSizeXS,
       fontWeight: token.fontWeightStrong,
       lineHeight: token.lineHeightXS,

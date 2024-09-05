@@ -99,13 +99,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               />
             )}
           />
-          {enableNotification && <div className={'__content-wrapper'}>
-            <div className={'__options-container'}>
-              <div className={'__option-title'}>{t('Notification setup:')}</div>
+          {enableNotification && <div className={'content-wrapper'}>
+            <div className={'options-container'}>
+              <div className={'option-title'}>{t('Notification setup:')}</div>
               {
                 notificationOptions.map((option) => (
                   <div
-                    className={'__option-item'}
+                    className={'option-item'}
                     key={option.value}
                   >
                     <Checkbox
@@ -113,16 +113,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                       // onChange={_onChangeOption}
                       value={option.value}
                     >
-                      <span className={'__option-label'}>{option.label}</span>
+                      <span className={'option-label'}>{option.label}</span>
                     </Checkbox>
                   </div>
                 ))
               }
             </div>
-            <div className={'__time-container'}>
-              <div className={'__time-title'}>{t('Time setup:')}</div>
+            <div className={'time-container'}>
+              <div className={'time-title'}>{t('Time setup:')}</div>
               <RadioGroup
-                className={'__radio-wrapper'}
+                className={'radio-wrapper'}
                 optionType='default'
                 options={viewOptions}
               />
@@ -177,7 +177,7 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       marginTop: token.marginXS
     },
 
-    '.__option-title': {
+    '.option-title': {
       marginBottom: token.marginSM,
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
@@ -185,10 +185,10 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       color: token.colorWhite
     },
 
-    '.__option-item + .__option-item': {
+    '.option-item + .option-item': {
       marginTop: token.marginMD
     },
-    '.__option-item': {
+    '.option-item': {
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
       fontWeight: token.bodyFontWeight,
@@ -202,7 +202,7 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       display: 'flex',
       alignItems: 'center'
     },
-    '.__time-title': {
+    '.time-title': {
       marginBottom: token.margin,
       marginTop: token.margin,
       fontSize: token.fontSize,
@@ -210,7 +210,7 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       fontWeight: token.fontWeightStrong,
       color: token.colorWhite
     },
-    '.__radio-wrapper': {
+    '.radio-wrapper': {
       display: 'flex',
       justifyContent: 'space-between',
       fontSize: token.fontSize,
