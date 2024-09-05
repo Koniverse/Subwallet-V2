@@ -1,14 +1,14 @@
-    2796	AnhMTV                        	Update earning with middleware service
-    2532	Nam Phạm                      	[Issue 3450] fix: get era stakers overview
-    2180	S2kael                        	[Issue-3450] Update stable version for chain-list
+    2813	AnhMTV                        	Release version 1.2.28
+    2533	Nam Phạm                      	[Issue 3467] fix: refactor staking pallet handling logic
+    2184	S2kael                        	[Issue-3518] Update stable version for chain-list
      848	lw-cdm                        	[Issue-3407] WebApp - Support Avail Ledger app
-     561	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
+     563	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
      465	Jaco                          	0.42.5 (#969)
-     262	bluezdot                      	[Issue-3450] fix: bug rounding number
-     209	Thiendekaco                   	[Issue 2501] [update]  Extension - Update message error has been standardized #2
+     277	bluezdot                      	[Issue-3467] add todo
+     228	Thiendekaco                   	[Issue 3363] Extension - Update standard content #2
      185	quangdo                       	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
-     145	dominhquang                   	[Issue-3414] Fix bug re-open popup
+     146	dominhquang                   	[Issue-3468] Improve condition for Marketing campaign
      118	lw-cdm                        	
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
       83	Hieu Dao                      	Update README.md
@@ -17,8 +17,9 @@
       67	bluedot                       	[Issue-2965] fix: Handle earning status for request redeem
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      32	Frenkie Nguyen                	[Issue 3413] WebApp - Do not show earning position for Bifrost liquid staking
+      49	Frenkie Nguyen                	[Issue-3477] fix condition show popup
       24	S2kael                        	
+      17	Thanh                         	[Issue-3518] Update chainlist
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
@@ -28,7 +29,6 @@
        4	Amaury Martiny                	PostMessageProvider with on('connected' | 'disconnected') (#279)
        4	namph                         	update UI for nft
        4	Quangdm-cdm                   	
-       4	Thanh                         	[Issue-3450] Add Story Partner Testnet
        3	Antoine Estienne              	Add eth test for extension signature (#909)
        3	quangdm                       	Update style for Auth Transaction Screen, Export Screen, Derive Screen
        2	Axel Chalon                   	Add typings to messages (#130)

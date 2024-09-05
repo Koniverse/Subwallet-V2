@@ -1,6 +1,47 @@
 # CHANGELOG
 
-## 1.2.24
+## 1.2.28
+Build date: Sep 04, 2024.
+
+Features & Update:
+- Format error when connecting to dApp (#3445)
+- Update connector version (#3363)
+- Update substrate dApp connect interface to allow dApp connect with EVM account (#3401)
+- Improve Amount input field (#1905)
+- Improve fetching era stakers (#3467)
+- Add warning in case user earn for both nomination pool and direct (#3477)
+- Add Notice of need to unstake for users who are simultaneously staking for both Direct and Nomination Pool (#3484)
+- Improve condition for Marketing campaign (#3468)
+- Update chain-list (#3518)
+  - Add support for Polygon zkEVM
+  - Add support for Immutable zkEVM
+  - Add support for Story Public Testnet
+  - Add support for Soneium Testnet
+  - Update logo for some chains, tokens
+
+Bugs fixed:
+- Fix UI bug on the Transfer screen (#3452)
+- Fix bug XCM (#3519)
+
+
+## 1.2.27
+Build date: Aug 22, 2024.
+
+Features & Update:
+- Update balance calculation for DeepBrainChain (#3481)
+- Update chain-list (#3478)
+  - Add support for 5ireChain mainnet
+  - Update decimals for Litmus, Litentry
+  - Update ED for some token: USDT, USDC (PAH), LIT (Litmus), LIT (Litentry), WUD (Hydration)
+
+
+## 1.2.26
+Build date: Aug 19, 2024.
+
+Bugs fixed:
+- Update earning feature with cache from middleware service
+
+## 1.2.25
 Build date: Aug 17, 2024.
 
 Features & Update:
