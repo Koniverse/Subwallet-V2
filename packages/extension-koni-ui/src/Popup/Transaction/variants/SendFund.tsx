@@ -7,7 +7,7 @@ import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/exten
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountProxy, AccountProxyType, AccountSignMode } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
@@ -100,6 +100,9 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
 const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
 const validateFields: Array<keyof TransferParams> = ['value', 'to'];
 const alertModalId = 'confirmation-alert-modal';
+const substrateAccountSlug = 'polkadot-NATIVE-DOT';
+const evmAccountSlug = 'ethereum-NATIVE-ETH';
+const tonAccountSlug = 'ton-NATIVE-TON';
 const defaultAddressInputRenderKey = 'address-input-render-key';
 
 const Component = ({ className = '', targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
@@ -127,7 +130,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   const assetInfo = useFetchChainAssetInfo(assetValue);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStatusMap } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStateMap, chainStatusMap } = useSelector((root) => root.chainStore);
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
@@ -529,19 +532,36 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   // todo: recheck with ledger account
   useEffect(() => {
     const updateInfoWithTokenSlug = (tokenSlug: string) => {
-      const tokenInfo = assetRegistry[tokenSlug];
+      const existedToken = tokenItems.find(({ slug }) => slug === tokenSlug);
+      const isAllowedToken = !!existedToken && chainStateMap[existedToken.originChain].active;
 
-      form.setFieldsValue({
-        asset: tokenSlug,
-        chain: tokenInfo.originChain,
-        destChain: tokenInfo.originChain
-      });
+      if (isAllowedToken) {
+        const tokenInfo = assetRegistry[tokenSlug];
+
+        form.setFieldsValue({
+          asset: tokenSlug,
+          chain: tokenInfo.originChain,
+          destChain: tokenInfo.originChain
+        });
+      }
     };
 
     if (tokenItems.length && !assetValue) {
-      updateInfoWithTokenSlug(tokenItems[0].slug);
+      if (targetAccountProxy && !isAccountAll(targetAccountProxy.id)) {
+        if (targetAccountProxy.accountType === AccountProxyType.UNIFIED) {
+          updateInfoWithTokenSlug(substrateAccountSlug);
+        } else {
+          if (targetAccountProxy.chainTypes.includes(AccountChainType.SUBSTRATE)) {
+            updateInfoWithTokenSlug(substrateAccountSlug);
+          } else if (targetAccountProxy.chainTypes.includes(AccountChainType.ETHEREUM)) {
+            updateInfoWithTokenSlug(evmAccountSlug);
+          } else if (targetAccountProxy.chainTypes.includes(AccountChainType.TON)) {
+            updateInfoWithTokenSlug(tonAccountSlug);
+          }
+        }
+      }
     }
-  }, [assetRegistry, assetValue, form, tokenItems]);
+  }, [assetRegistry, assetValue, chainInfoMap, chainStateMap, form, targetAccountProxy, tokenItems]);
 
   useEffect(() => {
     const updateFromValue = () => {
