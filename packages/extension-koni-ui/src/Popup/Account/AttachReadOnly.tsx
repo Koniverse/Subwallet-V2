@@ -11,7 +11,7 @@ import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/accou
 import useFocusById from '@subwallet/extension-koni-ui/hooks/form/useFocusById';
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import {createAccountExternalV2, validateAccountName} from '@subwallet/extension-koni-ui/messaging';
+import { createAccountExternalV2, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils/form/form';
@@ -112,7 +112,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
     if (value) {
       try {
-        const { isValid } = await validateAccountName({ name: value});
+        const { isValid } = await validateAccountName({ name: value });
+
         if (!isValid) {
           return Promise.reject(t('Account already exists'));
         }
@@ -120,6 +121,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         return Promise.reject(t('Account name invalid'));
       }
     }
+
     return Promise.resolve();
   }, [t]);
 
@@ -218,17 +220,17 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               className={CN('__account-name-field')}
               hidden={isHideAccountNameInput}
               name={'name'}
-              statusHelpAsTooltip={true}
               rules={[{
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
                 required: true
               },
-                {
-                  validator: accountNameRules
-                }
+              {
+                validator: accountNameRules
+              }
 
               ]}
+              statusHelpAsTooltip={true}
             >
               <Input
                 className='__account-name-input'

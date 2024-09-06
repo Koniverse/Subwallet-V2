@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-
 /**
  * @description Represents the request payload for validating an account name.
  *

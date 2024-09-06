@@ -4,18 +4,14 @@
 import { CloseIcon, HiddenInput, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
-import {
-  createAccountSuriV2,
-  validateAccountName,
-  validateMetamaskPrivateKeyV2
-} from '@subwallet/extension-koni-ui/messaging';
+import { createAccountSuriV2, validateAccountName, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
 import { simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
-import {Callbacks, FieldData, RuleObject} from 'rc-field-form/lib/interface';
+import { Callbacks, FieldData, RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
@@ -96,6 +92,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     if (value) {
       try {
         const { isValid } = await validateAccountName({ name: value });
+
         if (!isValid) {
           return Promise.reject(t('Account already exists'));
         }
@@ -103,6 +100,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         return Promise.reject(t('Account name invalid'));
       }
     }
+
     return Promise.resolve();
   }, [t]);
 

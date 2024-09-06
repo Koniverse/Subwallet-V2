@@ -9,13 +9,14 @@ import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/Wallet
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import {editAccount, forgetAccount, validateAccountName} from '@subwallet/extension-koni-ui/messaging';
+import { editAccount, forgetAccount, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-react';
+import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router-dom';
@@ -23,7 +24,6 @@ import styled from 'styled-components';
 
 import { AccountAddressList } from './AccountAddressList';
 import { DerivedAccountList } from './DerivedAccountList';
-import {RuleObject} from "rc-field-form/lib/interface";
 
 enum FilterTabType {
   ACCOUNT_ADDRESS = 'account-address',
@@ -147,9 +147,11 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
 
   const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
     const accountProxyId = accountProxy.id;
+
     if (value) {
       try {
         const { isValid } = await validateAccountName({ name: value, proxyId: accountProxyId });
+
         if (!isValid) {
           return Promise.reject(t('Account already exists'));
         }
@@ -157,8 +159,9 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
         return Promise.reject(t('Account name invalid'));
       }
     }
+
     return Promise.resolve();
-  }, [t]);
+  }, [accountProxy.id, t]);
 
   const onUpdate: FormCallbacks<DetailFormState>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const changeMap = convertFieldToObject<DetailFormState>(changedFields);
@@ -167,7 +170,8 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       clearTimeout(saveTimeOutRef.current);
       setSaving(true);
 
-      const isValidForm = form.getFieldsError().every(field => !field.errors.length);
+      const isValidForm = form.getFieldsError().every((field) => !field.errors.length);
+
       if (isValidForm) {
         saveTimeOutRef.current = setTimeout(() => {
           form.submit();
