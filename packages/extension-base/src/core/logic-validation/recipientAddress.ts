@@ -3,6 +3,7 @@
 
 import { ActionType, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/core/types';
 import { _isAddress, _isNotDuplicateAddress, _isNotNull, _isSupportLedgerAccount, _isValidAddressForEcosystem, _isValidSubstrateAddressFormat } from '@subwallet/extension-base/core/utils';
+import { detectTranslate } from '@subwallet/extension-base/utils';
 import { isTonAddress } from '@subwallet/keyring';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
@@ -32,8 +33,8 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
   return conditions;
 }
 
-function getValidationFunctions (conditions: ValidationCondition[]): Array<(validateRecipientParams: ValidateRecipientParams) => Promise<void>> {
-  const validationFunctions: Array<(validateRecipientParams: ValidateRecipientParams) => Promise<void>> = [];
+function getValidationFunctions (conditions: ValidationCondition[]): Array<(validateRecipientParams: ValidateRecipientParams) => string> {
+  const validationFunctions: Array<(validateRecipientParams: ValidateRecipientParams) => string> = [];
 
   for (const condition of conditions) {
     switch (condition) {
@@ -78,20 +79,25 @@ function getValidationFunctions (conditions: ValidationCondition[]): Array<(vali
   return validationFunctions;
 }
 
-function runValidationFunctions (validateRecipientParams: ValidateRecipientParams, validationFunctions: Array<(validateRecipientParams: ValidateRecipientParams) => Promise<void>>): Promise<void>[] {
-  const validationResults: Promise<void>[] = [];
+function runValidationFunctions (validateRecipientParams: ValidateRecipientParams, validationFunctions: Array<(validateRecipientParams: ValidateRecipientParams) => string>): Promise<void> {
+  const validationResults: string[] = [];
 
   for (const validationFunction of validationFunctions) {
     validationResults.push(validationFunction(validateRecipientParams));
   }
 
-  return validationResults;
+  for (const result of validationResults) {
+    if (result) {
+      return Promise.reject(detectTranslate(result));
+    }
+  }
+
+  return Promise.resolve();
 }
 
 export function validateRecipientAddress (validateRecipientParams: ValidateRecipientParams): Promise<void> {
   const conditions = getConditions(validateRecipientParams);
   const validationFunctions = getValidationFunctions(conditions);
-  const validationResults = runValidationFunctions(validateRecipientParams, validationFunctions);
 
-  return validationResults[0];
+  return runValidationFunctions(validateRecipientParams, validationFunctions);
 }
