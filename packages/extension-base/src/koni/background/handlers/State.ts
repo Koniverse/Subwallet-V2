@@ -24,6 +24,7 @@ import FeeService from '@subwallet/extension-base/services/fee-service/service';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
+import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import MigrationService from '@subwallet/extension-base/services/migration-service';
 import MintCampaignService from '@subwallet/extension-base/services/mint-campaign-service';
 import MktCampaignService from '@subwallet/extension-base/services/mkt-campaign-service';
@@ -143,6 +144,7 @@ export default class KoniState {
   readonly earningService: EarningService;
   readonly feeService: FeeService;
   readonly swapService: SwapService;
+  readonly klasterService: KlasterService;
 
   // Handle the general status of the extension
   private generalStatus: ServiceStatus = ServiceStatus.INITIALIZING;
@@ -175,6 +177,8 @@ export default class KoniState {
     this.earningService = new EarningService(this);
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
+
+    this.klasterService = new KlasterService();
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -331,6 +335,10 @@ export default class KoniState {
     await this.balanceService.init();
     await this.earningService.init();
     await this.swapService.init();
+    await this.klasterService.init();
+
+    await this.klasterService.getNativeBalance();
+    // await this.klasterService.getBridge();
 
     this.onReady();
     this.onAccountAdd();

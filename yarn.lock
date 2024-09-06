@@ -3781,7 +3781,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/hashes@npm:1.5.0, @noble/hashes@npm:^1.4.0":
+"@noble/hashes@npm:1.5.0, @noble/hashes@npm:^1.4.0, @noble/hashes@npm:~1.5.0":
   version: 1.5.0
   resolution: "@noble/hashes@npm:1.5.0"
   checksum: 9cc031d5c888c455bfeef76af649b87f75380a4511405baea633c1e4912fd84aff7b61e99716f0231d244c9cfeda1fafd7d718963e6a0c674ed705e9b1b4f76b
@@ -5716,7 +5716,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scure/base@npm:~1.1.6":
+"@scure/base@npm:~1.1.6, @scure/base@npm:~1.1.8":
   version: 1.1.8
   resolution: "@scure/base@npm:1.1.8"
   checksum: 1fc8a355ba68663c0eb430cf6a2c5ff5af790c347c1ba1953f344e8681ab37e37e2545e495f7f971b0245727d710fea8c1e57d232d0c6c543cbed4965c7596a1
@@ -5762,6 +5762,16 @@ __metadata:
     "@noble/hashes": ~1.4.0
     "@scure/base": ~1.1.6
   checksum: dbb0b27df753eb6c6380010b25cc9a9ea31f9cb08864fc51e69e5880ff7e2b8f85b72caea1f1f28af165e83b72c48dd38617e43fc632779d025b50ba32ea759e
+  languageName: node
+  linkType: hard
+
+"@scure/bip39@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@scure/bip39@npm:1.4.0"
+  dependencies:
+    "@noble/hashes": ~1.5.0
+    "@scure/base": ~1.1.8
+  checksum: 211f2c01361993bfe54c0e4949f290224381457c7f76d7cd51d6a983f3f4b6b9f85adfd0e623977d777ed80417a5fe729eb19dd34e657147810a0e58a8e7b9e0
   languageName: node
   linkType: hard
 
@@ -6138,14 +6148,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.85-beta.0":
-  version: 0.2.85-beta.0
-  resolution: "@subwallet/chain-list@npm:0.2.85-beta.0"
+"@subwallet/chain-list@npm:0.2.85-beta.1":
+  version: 0.2.85-beta.1
+  resolution: "@subwallet/chain-list@npm:0.2.85-beta.1"
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 64bcbe5f4657b974b85a1f9c21abeeb00f8b58dee698183cf3865bf87a03bfd322d82d88a3cad632a7b3807978cfaa837ef8dc67b70664d0a21dbb09cd51be01
+  checksum: 4161870aa5e2a4991e259f458669c93eb75efb982037a102d699a53865e00463e719f41928438352ca931a612cb072e87a501d7d056bd96938137dbc07494fb5
   languageName: node
   linkType: hard
 
@@ -6188,7 +6198,7 @@ __metadata:
     "@reduxjs/toolkit": ^1.9.1
     "@sora-substrate/type-definitions": ^1.17.7
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.85-beta.0
+    "@subwallet/chain-list": 0.2.85-beta.1
     "@subwallet/extension-base": ^1.2.26-0
     "@subwallet/extension-chains": ^1.2.26-0
     "@subwallet/extension-dapp": ^1.2.26-0
@@ -6226,6 +6236,7 @@ __metadata:
     rxjs: ^7.8.1
     sails-js: ^0.1.6
     uuid: ^9.0.0
+    viem: ^2.21.2
     web3: ^1.10.0
     web3-core: ^1.10.0
     web3-core-helpers: ^1.10.0
@@ -6321,7 +6332,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.85-beta.0
+    "@subwallet/chain-list": 0.2.85-beta.1
     "@subwallet/extension-base": ^1.2.26-0
     "@subwallet/extension-chains": ^1.2.26-0
     "@subwallet/extension-dapp": ^1.2.26-0
@@ -6459,7 +6470,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.85-beta.0
+    "@subwallet/chain-list": 0.2.85-beta.1
     "@subwallet/extension-base": ^1.2.26-0
     "@subwallet/extension-chains": ^1.2.26-0
     "@subwallet/extension-dapp": ^1.2.26-0
@@ -27438,6 +27449,28 @@ __metadata:
     typescript:
       optional: true
   checksum: abf9bbbfcc8f2ce6d3187b349922f9624465c5570fc02d341f651e32f6716b85aa3e6a649c4ee139499208dbb07ec8c54b83c66ba4f7f7afc92923826847c9ef
+  languageName: node
+  linkType: hard
+
+"viem@npm:^2.21.2":
+  version: 2.21.2
+  resolution: "viem@npm:2.21.2"
+  dependencies:
+    "@adraffy/ens-normalize": 1.10.0
+    "@noble/curves": 1.4.0
+    "@noble/hashes": 1.4.0
+    "@scure/bip32": 1.4.0
+    "@scure/bip39": 1.4.0
+    abitype: 1.0.5
+    isows: 1.0.4
+    webauthn-p256: 0.0.5
+    ws: 8.17.1
+  peerDependencies:
+    typescript: ">=5.0.4"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 13ef4ee4f02ade7d2dfc7f9c8ca3756b85d4e0e0dfb3b5c896ba514d4773af414ce124a5e140de774e6127b2a1f1a702be61bc044ab668cb6b140c1c59c25236
   languageName: node
   linkType: hard
 

@@ -1,8 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { stringShorten } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
 import { CurrentAccountInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
@@ -13,6 +11,10 @@ import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { InjectAccount } from '@subwallet/ui-keyring/types';
 import { BehaviorSubject } from 'rxjs';
+
+import { stringShorten } from '@polkadot/util';
+import { isEthereumAddress } from '@polkadot/util-crypto';
+import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 export class KeyringService {
   private readonly currentAccountStore = new CurrentAccountStore();
@@ -118,29 +120,30 @@ export class KeyringService {
 
   public async addInjectAccounts (_accounts: InjectedAccountWithMeta[]) {
     const accounts: InjectAccount[] = await Promise.all(_accounts.map(async (acc): Promise<InjectAccount> => {
-        const isEthereum = isEthereumAddress(acc.address);
+      const isEthereum = isEthereumAddress(acc.address);
 
-        if (isEthereum) {
-          const smartAddress = await ParticleAAHandler.getSmartAccount(acc.address);
+      if (isEthereum) {
+        // const smartAddress = await ParticleAAHandler.getSmartAccount(acc.address);
+        const smartAddress = await KlasterService.getSmartAccount(acc.address);
 
-          return {
-            ...acc,
-            address: smartAddress,
-            meta: {
-              ...acc.meta,
-              isSmartAccount: true,
-              smartAccountOwner: acc.address,
-              aaSdk: 'particle',
-              aaProvider: {
-                name: 'BICONOMY',
-                version: '2.0.0'
-              }
+        return {
+          ...acc,
+          address: smartAddress,
+          meta: {
+            ...acc.meta,
+            isSmartAccount: true,
+            smartAccountOwner: acc.address,
+            aaSdk: 'particle',
+            aaProvider: {
+              name: 'BICONOMY',
+              version: '2.0.0'
             }
-          };
-        }
+          }
+        };
+      }
 
-        return acc;
-      })
+      return acc;
+    })
     );
 
     keyring.addInjects(accounts.map((account) => {
@@ -191,7 +194,6 @@ export class KeyringService {
 
       return address;
     }));
-
 
     const addresses = convertedAddresses.map((address) => {
       try {

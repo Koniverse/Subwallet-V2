@@ -82,9 +82,6 @@ const createConfig = (entry, alias = {}, useSplitChunk = false) => {
         {
           exclude: /(node_modules\/(?!(@equilab|@subwallet|@polkadot\/rpc-core)).*)/,
           test: /\.(js|mjs|ts|tsx)$/,
-          resolve: {
-            fullySpecified: false
-          },
           use: [
             {
               loader: require.resolve('babel-loader'),
