@@ -145,7 +145,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     });
   }, [notify, t]);
 
-  const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
+  const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
     const accountProxyId = accountProxy.id;
 
     if (value) {
@@ -331,7 +331,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
                 required: true
               },
               {
-                validator: accountNameRules
+                validator: accountNameValidator
               }
             ]}
             statusHelpAsTooltip={true}

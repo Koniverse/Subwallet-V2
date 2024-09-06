@@ -109,7 +109,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     return Promise.resolve();
   }, [accounts, t]);
 
-  const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
+  const accountNameValidator = useCallback(async (rule: RuleObject, value: string) => {
     if (value) {
       try {
         const { isValid } = await validateAccountName({ name: value });
@@ -226,7 +226,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 required: true
               },
               {
-                validator: accountNameRules
+                validator: accountNameValidator
               }
 
               ]}

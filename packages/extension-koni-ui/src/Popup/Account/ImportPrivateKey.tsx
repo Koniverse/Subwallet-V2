@@ -88,7 +88,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       });
   }, [checkUnlock, form, onComplete]);
 
-  const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
+  const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
     if (value) {
       try {
         const { isValid } = await validateAccountName({ name: value });
@@ -230,7 +230,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 transform: (value: string) => value.trim(),
                 required: true
               }, {
-                validator: accountNameRules
+                validator: accountNameValidator
               }]}
               statusHelpAsTooltip={true}
             >
