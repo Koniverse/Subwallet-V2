@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AccountJson } from '@subwallet/extension-base/types';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
@@ -34,7 +35,7 @@ export enum ActionType {
 
 export interface ValidateRecipientParams {
   srcChain: string,
-  destChain: string,
+  destChainInfo: _ChainInfo,
   fromAddress: string,
   toAddress: string,
   account: AccountJson | null,

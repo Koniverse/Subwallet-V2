@@ -261,16 +261,17 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
   const recipientAddressValidator = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, from, toTokenSlug } = form.getFieldsValue();
     const destChain = assetRegistryMap[toTokenSlug].originChain;
+    const destChainInfo = chainInfoMap[destChain];
     const account = findAccountByAddress(accounts, _recipientAddress);
 
     return validateRecipientAddress({ srcChain: chain,
-      destChain,
+      destChainInfo,
       fromAddress: from,
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SWAP,
       autoFormatValue });
-  }, [accounts, assetRegistryMap, autoFormatValue, form]);
+  }, [accounts, assetRegistryMap, autoFormatValue, chainInfoMap, form]);
 
   const accountAddressItems = useMemo(() => {
     const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;

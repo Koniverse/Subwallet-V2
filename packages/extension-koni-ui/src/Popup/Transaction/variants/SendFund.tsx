@@ -254,16 +254,17 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
+    const destChainInfo = chainInfoMap[destChain];
     const account = findAccountByAddress(accounts, _recipientAddress);
 
     return validateRecipientAddress({ srcChain: chain,
-      destChain,
+      destChainInfo,
       fromAddress: from,
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SEND_FUND,
       autoFormatValue });
-  }, [accounts, autoFormatValue, form]);
+  }, [accounts, autoFormatValue, chainInfoMap, form]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {

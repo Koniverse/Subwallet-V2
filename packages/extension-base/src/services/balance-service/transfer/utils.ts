@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainInfoMap } from '@subwallet/chain-list';
 import { ActionType, LEDGER_GENERIC_ALLOW_NETWORKS, ledgerMustCheckNetwork, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/services/balance-service/transfer/types';
 import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { detectTranslate, isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
@@ -10,7 +9,7 @@ import { isAddress, isTonAddress } from '@subwallet/keyring';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 function getConditions (validateRecipientParams: ValidateRecipientParams): ValidationCondition[] {
-  const { account, actionType, autoFormatValue, destChain, srcChain, toAddress } = validateRecipientParams;
+  const { account, actionType, autoFormatValue, destChainInfo, srcChain, toAddress } = validateRecipientParams;
   const conditions: ValidationCondition[] = [];
   const isSendAction = [ActionType.SEND_FUND, ActionType.SEND_NFT].includes(actionType);
 
@@ -23,7 +22,7 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
     conditions.push(ValidationCondition.IS_VALID_SUBSTRATE_ADDRESS_FORMAT);
   }
 
-  if (srcChain === destChain && isSendAction && !ChainInfoMap[destChain].tonInfo) {
+  if (srcChain === destChainInfo.slug && isSendAction && !destChainInfo.tonInfo) {
     conditions.push(ValidationCondition.IS_NOT_DUPLICATE_ADDRESS);
   }
 
@@ -35,8 +34,7 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
 }
 
 function getValidation (conditions: ValidationCondition[], validateRecipientParams: ValidateRecipientParams): Promise<void> {
-  const { account, destChain, fromAddress, toAddress } = validateRecipientParams;
-  const destChainInfo = ChainInfoMap[destChain];
+  const { account, destChainInfo, fromAddress, toAddress } = validateRecipientParams;
 
   for (const condition of conditions) {
     switch (condition) {
