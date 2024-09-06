@@ -1,8 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { hexStripPrefix, u8aToHex } from '@polkadot/util';
-import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
@@ -12,6 +10,9 @@ import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyrin
 import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
+
+import { hexStripPrefix, u8aToHex } from '@polkadot/util';
+import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 
 export const createAccountProxyId = (_suri: string, derivationPath?: string) => {
   let data: string = _suri;

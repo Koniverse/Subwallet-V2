@@ -327,12 +327,12 @@ const Component: React.FC<Props> = (props: Props) => {
                   />
                 </div>
                 <ChainSelector
+                  className={'select-ledger-app'}
                   items={networks}
                   label={t('Select Ledger app')}
                   onChange={onChainChange}
                   placeholder={t('Select Ledger app')}
                   value={chain}
-                  className={'select-ledger-app'}
                 />
                 {
                   !!chainMigrateMode && <ChainSelector
