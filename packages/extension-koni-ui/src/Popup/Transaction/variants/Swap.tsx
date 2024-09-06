@@ -10,7 +10,7 @@ import { SWTransactionResponse } from '@subwallet/extension-base/services/transa
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { CommonFeeComponent, CommonOptimalPath, CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
-import { formatNumberString, swapCustomFormatter } from '@subwallet/extension-base/utils';
+import { formatNumberString, isSameAddress, swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, HiddenInput, MetaInfo, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { SwapFromField, SwapToField } from '@subwallet/extension-koni-ui/components/Field/Swap';
 import { AddMoreBalanceModal, ChooseFeeTokenModal, SlippageModal, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapTermsOfServiceModal } from '@subwallet/extension-koni-ui/components/Modal/Swap';
@@ -87,7 +87,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   const { activeModal, inactiveAll, inactiveModal } = useContext(ModalContext);
 
-  const { accountProxies, accounts } = useSelector((state) => state.accountState);
+  const { accountProxies, accounts, isAllAccount } = useSelector((state) => state.accountState);
   const assetRegistryMap = useSelector((state) => state.assetRegistry.assetRegistry);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
   const { currencyData, priceMap } = useSelector((state) => state.price);
@@ -248,6 +248,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
         from: '',
         recipient: undefined
       });
+
+      setIsFormInvalid(true);
     }
   }, [form, fromTokenSlugValue, toTokenSlugValue]);
 
@@ -296,13 +298,49 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return Promise.resolve();
   }, [accounts, chainInfoMap, t, toAssetInfo]);
 
+  const accountAddressItems = useMemo(() => {
+    const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
+
+    if (!chainInfo) {
+      return [];
+    }
+
+    const result: AccountAddressItemType[] = [];
+
+    accountProxies.forEach((ap) => {
+      if (!(isAccountAll(targetAccountProxy.id) || ap.id === targetAccountProxy.id)) {
+        return;
+      }
+
+      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
+        return;
+      }
+
+      ap.accounts.forEach((a) => {
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
+
+        if (address) {
+          result.push({
+            accountName: ap.name,
+            accountProxyId: ap.id,
+            accountProxyType: ap.accountType,
+            accountType: a.type,
+            address
+          });
+        }
+      });
+    });
+
+    return result;
+  }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
+
   const showRecipientField = useMemo(() => {
     if (!fromValue || !destChainValue || !chainInfoMap[destChainValue]) {
       return false;
     }
 
     // todo: convert this find logic to util
-    const fromAccountJson = accounts.find((account) => account.address === fromValue);
+    const fromAccountJson = accounts.find((account) => isSameAddress(account.address, fromValue));
 
     if (!fromAccountJson) {
       return false;
@@ -847,46 +885,6 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return result;
   }, [chainInfoMap, currentPair, fromAssetInfo, isSwapXCM]);
 
-  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
-    return Promise.resolve([]);
-  }, []);
-
-  const accountAddressItems = useMemo(() => {
-    const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
-
-    if (!chainInfo) {
-      return [];
-    }
-
-    const result: AccountAddressItemType[] = [];
-
-    accountProxies.forEach((ap) => {
-      if (!(isAccountAll(targetAccountProxy.id) || ap.id === targetAccountProxy.id)) {
-        return;
-      }
-
-      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
-        return;
-      }
-
-      ap.accounts.forEach((a) => {
-        const address = getReformatedAddressRelatedToChain(a, chainInfo);
-
-        if (address) {
-          result.push({
-            accountName: ap.name,
-            accountProxyId: ap.id,
-            accountProxyType: ap.accountType,
-            accountType: a.type,
-            address
-          });
-        }
-      });
-    });
-
-    return result;
-  }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy.id]);
-
   useEffect(() => {
     const updateFromValue = () => {
       if (!accountAddressItems.length) {
@@ -1009,6 +1007,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
           }
         });
       }, 300);
+    } else {
+      setIsFormInvalid(true);
     }
 
     return () => {
@@ -1086,6 +1086,16 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       activeModal(SWAP_TERMS_OF_SERVICE_MODAL);
     }
   }, [activeModal, confirmedTerm]);
+
+  useEffect(() => {
+    if (isFormInvalid) {
+      setQuoteAliveUntil(undefined);
+      setShowQuoteArea(false);
+      setQuoteOptions([]);
+      setCurrentQuote(undefined);
+      setCurrentQuoteRequest(undefined);
+    }
+  }, [isFormInvalid]);
 
   useEffect(() => {
     if (requestUserInteractToContinue) {
@@ -1225,6 +1235,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                 </div>
 
                 <Form.Item
+                  hidden={!isAllAccount && accountAddressItems.length <= 1}
                   name={'from'}
                 >
                   <AccountAddressSelector
@@ -1254,7 +1265,6 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                   >
                     <AddressInputNew
                       chainSlug={destChainValue}
-                      inputResolver={addressInputResolver}
                       label={`${t('To')}:`}
                       labelStyle={'horizontal'}
                       placeholder={t('Input your recipient account')}

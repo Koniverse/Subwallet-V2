@@ -40,5 +40,6 @@ export const ORDINAL_METHODS = ['drc-20', 'pol-20'];
 
 export const PERMISSIONS_TO_REVOKE = ['eth_accounts'];
 
+export * from './signing';
 export * from './staking';
 export * from './storage';

@@ -5,31 +5,17 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
-import { AbstractAddressJson, AccountChainType, AccountProxy, AddressJson, AnalyzeAddress, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
+import { AbstractAddressJson, AccountChainType, AccountProxy, AddressJson, AnalyzeAddress, AnalyzedGroup, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
 
 import { isAddress } from '@polkadot/util-crypto';
 
-import { reformatAddress } from './common';
+import { _reformatAddressWithChain, reformatAddress } from './common';
 
 interface AddressDataJson extends AbstractAddressJson {
   chainType: AccountChainType;
 }
 
 type ValidDataType = 'invalid' | 'valid' | 'extracted';
-
-const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => {
-  const chainType = _chainInfoToChainType(chainInfo);
-
-  if (chainType === AccountChainType.SUBSTRATE) {
-    return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
-  } else if (chainType === AccountChainType.TON) {
-    const isTestnet = chainInfo.isTestnet;
-
-    return reformatAddress(address, isTestnet ? 0 : 1);
-  } else {
-    return address;
-  }
-};
 
 // TODO: Re-confirm to compare without
 const isStrValidWithAddress = (str: string, account: AddressDataJson, chainInfo: _ChainInfo): ValidDataType => {
@@ -72,6 +58,12 @@ const isNameValid = (str: string, name: string): ValidDataType => {
 };
 
 export const _analyzeAddress = async (data: string, accountProxies: AccountProxy[], contacts: AddressJson[], chainInfo: _ChainInfo, substrateApi?: _SubstrateApi): Promise<Omit<ResponseInputAccountSubscribe, 'id'>> => {
+  if (!data) {
+    return {
+      options: []
+    };
+  }
+
   const chain = chainInfo.slug;
   const _data = data.trim().toLowerCase();
   const options: AnalyzeAddress[] = [];
@@ -90,7 +82,8 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
       const rs: AnalyzeAddress = {
         address: account.address,
-        accountName: accountProxy.name,
+        proxyId: accountProxy.id,
+        analyzedGroup: AnalyzedGroup.WALLET,
         displayName: accountProxy.name,
         formatedAddress: _reformatAddressWithChain(account.address, chainInfo)
       };
@@ -127,7 +120,7 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
     const rs: AnalyzeAddress = {
       address: contact.address,
-      accountName: name,
+      analyzedGroup: contact.isRecent ? AnalyzedGroup.RECENT : AnalyzedGroup.CONTACT,
       displayName: name,
       formatedAddress: _reformatAddressWithChain(contact.address, chainInfo)
     };
@@ -156,40 +149,38 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
 
     const _raw = current?.address || _data;
 
-    if (isAddress(_raw)) {
-      const domain = await resolveAzeroAddressToDomain(_raw, chain, substrateApi.api);
+    if (chain === 'aleph' || chain === 'alephTest') {
+      if (isAddress(_raw)) {
+        const domain = await resolveAzeroAddressToDomain(_raw, chain, substrateApi.api);
 
-      if (domain) {
-        if (current) {
-          current.domainName = domain;
-        } else {
-          const rs: AnalyzeAddress = {
-            address: _raw,
-            displayName: domain,
-            domainName: domain,
-            formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
-          };
+        if (domain) {
+          if (!current) {
+            const rs: AnalyzeAddress = {
+              address: _raw,
+              analyzedGroup: AnalyzedGroup.DOMAIN,
+              displayName: domain,
+              formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
+            };
 
-          options.push(rs);
-          current = rs;
+            options.push(rs);
+            current = rs;
+          }
         }
-      }
-    } else {
-      const address = await resolveAzeroDomainToAddress(_raw, chain, substrateApi.api);
+      } else {
+        const address = await resolveAzeroDomainToAddress(_raw, chain, substrateApi.api);
 
-      if (address) {
-        if (current) {
-          current.domainName = _raw;
-        } else {
-          const rs: AnalyzeAddress = {
-            address: address,
-            displayName: _raw,
-            domainName: _raw,
-            formatedAddress: _reformatAddressWithChain(address, chainInfo)
-          };
+        if (address) {
+          if (!current) {
+            const rs: AnalyzeAddress = {
+              address: address,
+              analyzedGroup: AnalyzedGroup.DOMAIN,
+              displayName: _raw,
+              formatedAddress: _reformatAddressWithChain(address, chainInfo)
+            };
 
-          options.push(rs);
-          current = rs;
+            options.push(rs);
+            current = rs;
+          }
         }
       }
     }

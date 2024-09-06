@@ -7,9 +7,9 @@ import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/exten
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { detectTranslate, isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
@@ -17,8 +17,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getChainsByAccountType, getReformatedAddressRelatedToChain, ledgerMustCheckNetwork, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { isAddress } from '@subwallet/keyring';
+import { findAccountByAddress, formatBalance, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -30,7 +29,6 @@ import styled from 'styled-components';
 import { useIsFirstRender } from 'usehooks-ts';
 
 import { BN, BN_ZERO } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
 
@@ -58,7 +56,7 @@ function getTokenItems (
       return;
     }
 
-    if (!tokenGroupSlug || !(chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
+    if (!tokenGroupSlug || (chainAsset.slug === tokenGroupSlug || _getMultiChainAsset(chainAsset) === tokenGroupSlug)) {
       items.push({
         slug: chainAsset.slug,
         name: _getAssetName(chainAsset),
@@ -102,6 +100,10 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
 const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
 const validateFields: Array<keyof TransferParams> = ['value', 'to'];
 const alertModalId = 'confirmation-alert-modal';
+const substrateAccountSlug = 'polkadot-NATIVE-DOT';
+const evmAccountSlug = 'ethereum-NATIVE-ETH';
+const tonAccountSlug = 'ton-NATIVE-TON';
+const defaultAddressInputRenderKey = 'address-input-render-key';
 
 const Component = ({ className = '', targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
   useSetCurrentPage('/transaction/send-fund');
@@ -128,10 +130,11 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   const assetInfo = useFetchChainAssetInfo(assetValue);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStateMap, chainStatusMap } = useSelector((root) => root.chainStore);
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
 
@@ -143,6 +146,10 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
+
+  // use this to reinit AddressInput component
+  const [addressInputRenderKey, setAddressInputRenderKey] = useState<string>(defaultAddressInputRenderKey);
+
   const [, update] = useState({});
   const [isFetchingMaxValue, setIsFetchingMaxValue] = useState(false);
   const [isBalanceReady, setIsBalanceReady] = useState(true);
@@ -246,74 +253,8 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       return Promise.reject(t('Recipient address is required'));
     }
 
-    if (!isAddress(_recipientAddress)) {
-      return Promise.reject(t('Invalid recipient address'));
-    }
-
-    const { chain, destChain, from, to } = form.getFieldsValue();
-
-    if (!from || !chain || !destChain) {
-      return Promise.resolve();
-    }
-
-    if (!isEthereumAddress(_recipientAddress)) {
-      const destChainInfo = chainInfoMap[destChain];
-      const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
-      const _addressOnChain = reformatAddress(_recipientAddress, addressPrefix);
-
-      if (_addressOnChain !== _recipientAddress) {
-        return Promise.reject(t('Recipient should be a valid {{networkName}} address', { replace: { networkName: destChainInfo.name } }));
-      }
-    }
-
-    const isOnChain = chain === destChain;
-
-    const account = findAccountByAddress(accounts, _recipientAddress);
-
-    if (isOnChain) {
-      if (isSameAddress(from, _recipientAddress)) {
-        // todo: change message later
-        return Promise.reject(t('The recipient address can not be the same as the sender address'));
-      }
-
-      const isNotSameAddressType = (isEthereumAddress(from) && !!_recipientAddress && !isEthereumAddress(_recipientAddress)) ||
-        (!isEthereumAddress(from) && !!_recipientAddress && isEthereumAddress(_recipientAddress));
-
-      if (isNotSameAddressType) {
-        // todo: change message later
-        return Promise.reject(t('The recipient address must be same type as the current account address.'));
-      }
-    } else {
-      const isDestChainEvmCompatible = _isChainEvmCompatible(chainInfoMap[destChain]);
-
-      if (isDestChainEvmCompatible !== isEthereumAddress(to)) {
-        // todo: change message later
-        if (isDestChainEvmCompatible) {
-          return Promise.reject(t('The recipient address must be EVM type'));
-        } else {
-          return Promise.reject(t('The recipient address must be Substrate type'));
-        }
-      }
-    }
-
-    if (account?.isHardware) {
-      const destChainInfo = chainInfoMap[destChain];
-      const availableGen: string[] = account.availableGenesisHashes || [];
-      const destChainName = destChainInfo?.name || 'Unknown';
-
-      if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-        return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
-      }
-
-      const ledgerCheck = ledgerMustCheckNetwork(account);
-
-      if (ledgerCheck !== 'unnecessary' && !ledgerGenericAllowNetworks.includes(destChainInfo.slug)) {
-        return Promise.reject(t('Ledger {{ledgerApp}} address is not supported for this transfer', { replace: { ledgerApp: ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration' } }));
-      }
-    }
-
     return Promise.resolve();
-  }, [accounts, chainInfoMap, form, t, ledgerGenericAllowNetworks]);
+  }, [t]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
@@ -337,44 +278,44 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
     return Promise.resolve();
   }, [decimals, maxTransfer, t]);
 
-  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
-    return Promise.resolve([]);
-  }, []);
-
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
-      const validateField: string[] = [];
+      const validateField: Set<string> = new Set();
 
       if (part.asset) {
         const chain = assetRegistry[part.asset].originChain;
 
         if (values.value) {
-          validateField.push('value');
+          validateField.add('value');
         }
 
         form.setFieldsValue({
           chain: chain,
-          destChain: chain
+          destChain: chain,
+          to: ''
         });
 
+        setAddressInputRenderKey(`${defaultAddressInputRenderKey}-${Date.now()}`);
         setIsTransferAll(false);
         setForceUpdateMaxValue(undefined);
       }
 
       if (part.destChain) {
-        //
+        if (values.to) {
+          validateField.add('to');
+        }
       }
 
       if (part.from) {
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
 
         if (values.to) {
-          validateField.push('to');
+          validateField.add('to');
         }
       }
 
-      if (validateField.length) {
-        form.validateFields(validateField).catch(noop);
+      if (validateField.size) {
+        form.validateFields([...validateField]).catch(noop);
       }
 
       persistData(form.getFieldsValue());
@@ -398,33 +339,19 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       return true;
     }
 
-    const isLedger = !!account.isHardware;
-    const isEthereum = isEthereumAddress(account.address);
     const chainAsset = assetRegistry[asset];
 
     if (chain === destChain) {
-      if (isLedger) {
-        if (isEthereum) {
-          if (!_isTokenTransferredByEvm(chainAsset)) {
-            setLoading(false);
-            notification({
-              message: t('Ledger does not support transfer for this token'),
-              type: 'warning'
-            });
+      if (account.signMode === AccountSignMode.GENERIC_LEDGER && account.chainType === 'ethereum') {
+        if (!_isTokenTransferredByEvm(chainAsset)) {
+          setLoading(false);
+          notification({
+            message: t('Ledger does not support transfer for this token'),
+            type: 'warning'
+          });
 
-            return true;
-          }
+          return true;
         }
-      }
-    } else {
-      if (isLedger) {
-        setLoading(false);
-        notification({
-          message: t('This feature is not available for Ledger account'),
-          type: 'warning'
-        });
-
-        return true;
       }
     }
 
@@ -605,19 +532,36 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   // todo: recheck with ledger account
   useEffect(() => {
     const updateInfoWithTokenSlug = (tokenSlug: string) => {
-      const tokenInfo = assetRegistry[tokenSlug];
+      const existedToken = tokenItems.find(({ slug }) => slug === tokenSlug);
+      const isAllowedToken = !!existedToken && chainStateMap[existedToken.originChain].active;
 
-      form.setFieldsValue({
-        asset: tokenSlug,
-        chain: tokenInfo.originChain,
-        destChain: tokenInfo.originChain
-      });
+      if (isAllowedToken) {
+        const tokenInfo = assetRegistry[tokenSlug];
+
+        form.setFieldsValue({
+          asset: tokenSlug,
+          chain: tokenInfo.originChain,
+          destChain: tokenInfo.originChain
+        });
+      }
     };
 
     if (tokenItems.length && !assetValue) {
-      updateInfoWithTokenSlug(tokenItems[0].slug);
+      if (targetAccountProxy && !isAccountAll(targetAccountProxy.id)) {
+        if (targetAccountProxy.accountType === AccountProxyType.UNIFIED) {
+          updateInfoWithTokenSlug(substrateAccountSlug);
+        } else {
+          if (targetAccountProxy.chainTypes.includes(AccountChainType.SUBSTRATE)) {
+            updateInfoWithTokenSlug(substrateAccountSlug);
+          } else if (targetAccountProxy.chainTypes.includes(AccountChainType.ETHEREUM)) {
+            updateInfoWithTokenSlug(evmAccountSlug);
+          } else if (targetAccountProxy.chainTypes.includes(AccountChainType.TON)) {
+            updateInfoWithTokenSlug(tonAccountSlug);
+          }
+        }
+      }
     }
-  }, [assetRegistry, assetValue, form, tokenItems]);
+  }, [assetRegistry, assetValue, chainInfoMap, chainStateMap, form, targetAccountProxy, tokenItems]);
 
   useEffect(() => {
     const updateFromValue = () => {
@@ -782,10 +726,11 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           >
             <AddressInputNew
               chainSlug={destChainValue}
-              inputResolver={addressInputResolver}
+              key={addressInputRenderKey}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
+              saveAddress={true}
               showAddressBook={true}
               showScanner={true}
             />
@@ -817,7 +762,6 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
               onSetMax={onSetMaxTransferable}
               showMaxButton={!hideMaxButton}
               tooltip={t('Amount')}
-              disabled={decimals === 0}
             />
           </Form.Item>
         </Form>

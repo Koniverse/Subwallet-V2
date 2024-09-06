@@ -3,6 +3,7 @@
 
 import type { ThemeProps } from '../types';
 
+import { GLOBAL_ALERT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import applyPreloadStyle from '@subwallet/extension-koni-ui/preloadStyle';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -74,6 +75,14 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         }
       }
     },
+
+    // make sure alert modal is above autocomplete dropdown
+    [`.modal-id-${GLOBAL_ALERT_MODAL}`]: {
+      '.ant-sw-modal-wrap': {
+        zIndex: 11000
+      }
+    },
+
     '.__currency-value-detail-tooltip': {
       paddingBottom: 0,
 

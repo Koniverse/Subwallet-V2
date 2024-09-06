@@ -3806,10 +3806,78 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/eth-sig-util@npm:^7.0.0, @metamask/eth-sig-util@npm:^7.0.3":
+  version: 7.0.3
+  resolution: "@metamask/eth-sig-util@npm:7.0.3"
+  dependencies:
+    "@ethereumjs/util": ^8.1.0
+    "@metamask/abi-utils": ^2.0.4
+    "@metamask/utils": ^9.0.0
+    "@scure/base": ~1.1.3
+    ethereum-cryptography: ^2.1.2
+    tweetnacl: ^1.0.3
+  checksum: fd4d0710857525815b241ddecce64988dd12303a9638577429baf180c62cf9cef9403aed01bc046b4860b332d455604c84e4b2a9b5997db16f444125b4b39398
+  languageName: node
+  linkType: hard
+
+"@metamask/eth-simple-keyring@npm:^6.0.1":
+  version: 6.0.1
+  resolution: "@metamask/eth-simple-keyring@npm:6.0.1"
+  dependencies:
+    "@ethereumjs/util": ^8.1.0
+    "@metamask/eth-sig-util": ^7.0.0
+    "@metamask/utils": ^8.1.0
+    ethereum-cryptography: ^2.1.2
+    randombytes: ^2.1.0
+  checksum: f0e302fbd583e5e189c1526a26afcd5c165e4ebbfe69924fa982e72a8b2867d698503bcc8b4473469727b90c96326b2c400d8dc491ff01f3b97c3d851a7a7b67
+  languageName: node
+  linkType: hard
+
 "@metamask/safe-event-emitter@npm:^2.0.0":
   version: 2.0.0
   resolution: "@metamask/safe-event-emitter@npm:2.0.0"
   checksum: 8b717ac5d53df0027c05509f03d0534700b5898dd1c3a53fb2dc4c0499ca5971b14aae67f522d09eb9f509e77f50afa95fdb3eda1afbff8b071c18a3d2905e93
+  languageName: node
+  linkType: hard
+
+"@metamask/superstruct@npm:^3.0.0, @metamask/superstruct@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "@metamask/superstruct@npm:3.1.0"
+  checksum: 00e4d0c0aae8b25ccc1885c1db0bb4ed1590010570140c255e4deee3bf8a10c859c8fce5e475b4ae09c8a56316207af87585b91f7f5a5c028d668ccd111f19e3
+  languageName: node
+  linkType: hard
+
+"@metamask/utils@npm:^8.1.0":
+  version: 8.5.0
+  resolution: "@metamask/utils@npm:8.5.0"
+  dependencies:
+    "@ethereumjs/tx": ^4.2.0
+    "@metamask/superstruct": ^3.0.0
+    "@noble/hashes": ^1.3.1
+    "@scure/base": ^1.1.3
+    "@types/debug": ^4.1.7
+    debug: ^4.3.4
+    pony-cause: ^2.1.10
+    semver: ^7.5.4
+    uuid: ^9.0.1
+  checksum: e8eac1c796c3f6b623be3c2736e8682248620f666b180f5c12ce56ee09587d4e28b6811862139a05c7a1bec91415f10ccf0516f3cdf342f88b0189d2a057c24b
+  languageName: node
+  linkType: hard
+
+"@metamask/utils@npm:^9.0.0":
+  version: 9.1.0
+  resolution: "@metamask/utils@npm:9.1.0"
+  dependencies:
+    "@ethereumjs/tx": ^4.2.0
+    "@metamask/superstruct": ^3.1.0
+    "@noble/hashes": ^1.3.1
+    "@scure/base": ^1.1.3
+    "@types/debug": ^4.1.7
+    debug: ^4.3.4
+    pony-cause: ^2.1.10
+    semver: ^7.5.4
+    uuid: ^9.0.1
+  checksum: 01f2c71a8f06158d5335bfe96bfd2f3aa39ec6b2323c5d0ff1d3136071a3e8ff7c1804d640ba1d4e07f96f3e68a95ff7729ddfcd34b373e5fefd86d6ef12d034
   languageName: node
   linkType: hard
 
@@ -6727,7 +6795,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.6
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=3f25e9&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=15b3ec&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6736,7 +6804,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.2.1
     "@ton/core": ^0.56.3
     "@ton/crypto": ^3.2.0
-    "@ton/ton": ^13.11.2
+    "@ton/ton": ^15.0.0
     bcryptjs: ^2.4.3
     bignumber.js: ^9.1.2
     bip322-js: ^2.0.0
@@ -6747,7 +6815,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 41b5aa039a351654246d2dd3d68c8e7148e7f186edbe618339182fb31c05284730ba03de255fadf9082369cc834d3ff077b71c3465127f447d179bdb3fc705e1
+  checksum: 90b829f74849435c0bc0fe2fbed6156beff8c042211be428786135c330e1b9249757fc6afebd088cc01981f0deb68faea3408833a32aa2bde6d104b7829cf0a0
   languageName: node
   linkType: hard
 
@@ -6831,7 +6899,7 @@ __metadata:
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.6
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=46d6ed&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=d7397c&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
@@ -6841,7 +6909,7 @@ __metadata:
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: 901a39f3d885b95fcf83b2f1bf854237365e51cb5c032546824fd8a1d807c75895177f091034b05df4d4ecb1f0797d385a98c64972550198e2cb8d53a6c1ad9a
+  checksum: 52599f78d03183121263b81352056b750d32e784a1935bf7088880d93bd29db2d66f261cd9325f96d6a0a138b2572267fda35256a9afa7cd8564649e4a215eb7
   languageName: node
   linkType: hard
 
@@ -7105,22 +7173,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ton/ton@npm:^13.11.2":
-  version: 13.11.2
-  resolution: "@ton/ton@npm:13.11.2"
-  dependencies:
-    axios: ^1.6.7
-    dataloader: ^2.0.0
-    symbol.inspect: 1.0.1
-    teslabot: ^1.3.0
-    zod: ^3.21.4
-  peerDependencies:
-    "@ton/core": ">=0.56.0"
-    "@ton/crypto": ">=3.2.0"
-  checksum: d017339a5a4d358eb80207f0afb3e1cc05a4edb157229b974f0bf5d397ad8b1ef7edb2c89c119bab3d6a3829fb6336b5b665665060e2a9c139b1998476c3431e
-  languageName: node
-  linkType: hard
-
 "@ton/ton@npm:^14.0.0":
   version: 14.0.0
   resolution: "@ton/ton@npm:14.0.0"
@@ -7134,6 +7186,22 @@ __metadata:
     "@ton/core": ">=0.56.0"
     "@ton/crypto": ">=3.2.0"
   checksum: b0be725460cf12a5c4ef9e71a1a04b93759d1fb917d410ba2249c1bec6bdbc826b8b77a1ae5d4cdb2f7a02ec5d73136c3556f81ab62260649f7203ed77708aea
+  languageName: node
+  linkType: hard
+
+"@ton/ton@npm:^15.0.0":
+  version: 15.0.0
+  resolution: "@ton/ton@npm:15.0.0"
+  dependencies:
+    axios: ^1.6.7
+    dataloader: ^2.0.0
+    symbol.inspect: 1.0.1
+    teslabot: ^1.3.0
+    zod: ^3.21.4
+  peerDependencies:
+    "@ton/core": ">=0.56.0"
+    "@ton/crypto": ">=3.2.0"
+  checksum: 713488f1fc016df47a5527b1dc2b694df5461374e3a95de19901ecf79ac22c030c7653ac32a5b645689751806583ab182bd2407a1efdca4aaa8d23b2afe5cee8
   languageName: node
   linkType: hard
 
@@ -20636,6 +20704,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"micro-ftch@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "micro-ftch@npm:0.3.1"
+  checksum: 0e496547253a36e98a83fb00c628c53c3fb540fa5aaeaf718438873785afd193244988c09d219bb1802984ff227d04938d9571ef90fe82b48bd282262586aaff
+  languageName: node
+  linkType: hard
+
 "micromark-core-commonmark@npm:^2.0.0":
   version: 2.0.0
   resolution: "micromark-core-commonmark@npm:2.0.0"
@@ -22821,6 +22896,13 @@ __metadata:
     "@polkadot/types": ^6.0.5
     typescript: ^4.4.3
   checksum: 407dd2cc5af82bc3f24bc2afe06c924c2b8853985b79253c208c735ce0455ca239e2ec5e1b9f1cfde148cbc9a9c93e2c78ea54813bb3962747f0e3c97b8e6614
+  languageName: node
+  linkType: hard
+
+"pony-cause@npm:^2.1.10":
+  version: 2.1.11
+  resolution: "pony-cause@npm:2.1.11"
+  checksum: 4aaa9ddab8f8225b5cbb32f7329a71b73679074579fa91f9e9d6853d398f3c2872de979519e1525c0c91d53afc82c32fddb76e379d19157e69ef1f7064523dfa
   languageName: node
   linkType: hard
 

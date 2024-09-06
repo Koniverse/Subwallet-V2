@@ -187,7 +187,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const dataContext = useContext(DataContext);
   const { t } = useTranslation();
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
-  const { accounts, currentAccount } = useSelector((root) => root.accountState);
+  const { accounts, currentAccountProxy, isAllAccount } = useSelector((root) => root.accountState);
   const { chainInfoMap } = useSelector((root) => root.chainStore);
   const { language } = useSelector((root) => root.settings);
   const [loading, setLoading] = useState<boolean>(true);
@@ -387,7 +387,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [historyItems, setHistoryItems] = useState<TransactionHistoryDisplayItem[]>(getHistoryItems(DEFAULT_ITEMS_COUNT));
 
-  const [curAdr] = useState(currentAccount?.address);
+  const [currentAccountProxyid] = useState(currentAccountProxy?.id);
 
   // Handle detail modal
   const { chain, extrinsicHashOrId } = useParams();
@@ -448,11 +448,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [isActive, historyMap, inactiveModal]);
 
   useEffect(() => {
-    if (currentAccount?.address !== curAdr) {
+    if (currentAccountProxy?.id !== currentAccountProxyid) {
       inactiveModal(modalId);
       setSelectedItem(null);
     }
-  }, [curAdr, currentAccount?.address, inactiveModal]);
+  }, [currentAccountProxyid, currentAccountProxy?.id, inactiveModal]);
 
   const { accountAddressItems, chainItems, selectedAddress, selectedChain, setSelectedAddress,
     setSelectedChain } = useHistorySelection();
@@ -512,12 +512,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         value={selectedChain}
       />
 
-      <AccountAddressSelector
-        className={'__history-address-selector'}
-        items={accountAddressItems}
-        onChange={onSelectAccount}
-        value={selectedAddress}
-      />
+      {
+        (isAllAccount || accountAddressItems.length > 1) && (
+          <AccountAddressSelector
+            className={'__history-address-selector'}
+            items={accountAddressItems}
+            onChange={onSelectAccount}
+            value={selectedAddress}
+          />
+        )
+      }
     </>
   );
 
@@ -719,6 +723,16 @@ const History = styled(Component)<Props>(({ theme: { token } }: Props) => {
       '.__history-address-selector': {
         '.__selected-item-address': {
           display: 'none'
+        },
+
+        '.ant-field-container:before': {
+          display: 'none'
+        },
+
+        '.ant-field-wrapper': {
+          minHeight: 40,
+          paddingTop: 0,
+          paddingBottom: 0
         }
       }
     },

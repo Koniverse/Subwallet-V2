@@ -43,7 +43,9 @@ import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectN
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
-import { AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
+import {
+  AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType
+} from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -131,6 +133,16 @@ export default class KoniExtension {
 
   private accountsEdit (request: RequestAccountProxyEdit): boolean {
     return this.#koniState.keyringService.context.accountsEdit(request);
+  }
+
+  private tonGetAllTonWalletContractVersion (request: RequestGetAllTonWalletContractVersion): ResponseGetAllTonWalletContractVersion {
+    return this.#koniState.keyringService.context.tonGetAllTonWalletContractVersion(request);
+  }
+
+  private tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): boolean {
+    this.#koniState.keyringService.context.tonAccountChangeWalletContractVersion(request);
+
+    return true;
   }
 
   private accountsExport ({ address, password }: RequestAccountExport): ResponseAccountExport {
@@ -427,7 +439,7 @@ export default class KoniExtension {
 
         metadata.recentChainSlugs = recentChainSlugs;
 
-        const result = keyring.addresses.add(new AccountsStore(), address, { address: address, meta: metadata });
+        const result = keyring.addresses.add(new AccountsStore(), address, address, { address: address, meta: metadata });
 
         return { ...result.json, publicKey: decodeAddress(address) };
       }
@@ -3903,6 +3915,11 @@ export default class KoniExtension {
       // Edit account
       case 'pri(accounts.edit)':
         return this.accountsEdit(request as RequestAccountProxyEdit);
+      // Ton change wallet contract version
+      case 'pri(accounts.ton.version.map)':
+        return this.tonGetAllTonWalletContractVersion(request as RequestGetAllTonWalletContractVersion);
+      case 'pri(accounts.ton.version.change)':
+        return this.tonAccountChangeWalletContractVersion(request as RequestChangeTonWalletContractVersion);
 
       // Save contact address
       case 'pri(addressBook.saveRecent)':

@@ -53,7 +53,7 @@ const Component = () => {
 
   const { fromAccountProxy, slug } = defaultData;
 
-  const accountProxies = useSelector((state) => state.accountState.accountProxies);
+  const { accountProxies, isAllAccount } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const poolTargetsMap = useSelector((state) => state.earning.poolTargetsMap);
@@ -274,8 +274,7 @@ const Component = () => {
         return;
       }
 
-      // todo: support ledger later
-      if ([AccountProxyType.READ_ONLY, AccountProxyType.LEDGER].includes(ap.accountType)) {
+      if ([AccountProxyType.READ_ONLY].includes(ap.accountType)) {
         return;
       }
 
@@ -299,7 +298,7 @@ const Component = () => {
 
   const onFieldsChange: FormCallbacks<EarnParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     // TODO: field change
-    const { empty, error } = simpleCheckForm(allFields, ['--asset']);
+    const { empty, error } = simpleCheckForm(allFields, ['--asset', '--fromAccountProxy']);
 
     const values = convertFieldToObject<EarnParams>(allFields);
 
@@ -988,6 +987,7 @@ const Component = () => {
                   name={'from'}
                 >
                   <AccountAddressSelector
+                    disabled={!isAllAccount}
                     items={accountAddressItems}
                   />
                 </Form.Item>
