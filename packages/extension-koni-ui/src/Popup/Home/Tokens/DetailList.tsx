@@ -123,7 +123,7 @@ function Component (): React.ReactElement {
     const result: BuyTokenInfo[] = [];
 
     Object.values(tokens).forEach((item) => {
-      if (!allowedChains.includes(item.network) || !slugs.includes(slug)) {
+      if (!allowedChains.includes(item.network) || !slugs.includes(item.slug)) {
         return;
       }
 
