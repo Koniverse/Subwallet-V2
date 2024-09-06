@@ -6,6 +6,7 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 import { CurrentAccountInfo } from '@subwallet/extension-base/background/types';
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountChainAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
+import ExportAllSelector from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/ExportAllSelector';
 import SelectAccountFooter from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/Footer';
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import { ACCOUNT_CHAIN_ADDRESSES_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
@@ -72,7 +73,7 @@ function reorderAccounts (items: AccountProxy[]): AccountProxy[] {
 }
 
 const renderEmpty = () => <GeneralEmptyList />;
-
+const multiExportAccountModalId = 'multi-export-account-selector';
 const modalId = SELECT_ACCOUNT_MODAL;
 const accountChainAddressesModalId = ACCOUNT_CHAIN_ADDRESSES_MODAL;
 
@@ -312,6 +313,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     setStateSelectAccount(true);
   }, [inactiveModal, setStateSelectAccount]);
 
+  const exportAllAccounts = useCallback(() => {
+    activeModal(multiExportAccountModalId);
+  }, [activeModal]);
+
   const rightIconProps = useMemo((): ButtonProps | undefined => {
     if (!enableExtraction) {
       return;
@@ -343,11 +348,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           </div>
         </Tooltip>
       ),
+      onClick: exportAllAccounts,
       size: 'xs',
       type: 'ghost',
       tooltipPlacement: 'topLeft'
     });
-  }, [t, token.colorHighlight]);
+  }, [exportAllAccounts, t, token.colorHighlight]);
 
   const closeAccountChainAddressesModal = useCallback(() => {
     inactiveModal(accountChainAddressesModalId);
@@ -396,6 +402,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           />
         )
       }
+
+      <ExportAllSelector
+        items={accountProxies}
+      />
     </>
   );
 };
