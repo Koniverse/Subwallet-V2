@@ -74,7 +74,6 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   // @ts-ignore
   const [deriving, setDeriving] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [isValidForm, setIsValidForm] = useState(true);
 
   const filterTabItems = useMemo<FilterTabItemType[]>(() => {
     const result = [
@@ -146,28 +145,25 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     });
   }, [notify, t]);
 
-  const accountNameRules = useCallback(async (rule: RuleObject, value: string) => {
+  const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
     const accountProxyId = accountProxy.id;
     if (value) {
       try {
         const { isValid } = await validateAccountName({ name: value, proxyId: accountProxyId });
         if (!isValid) {
-          setIsValidForm(false);
           return Promise.reject(t('Account already exists'));
         }
       } catch (e) {
-        setIsValidForm(false)
         return Promise.reject(t('Account name invalid'));
       }
     }
-    setIsValidForm(true);
     return Promise.resolve();
   }, [t]);
 
   const onUpdate: FormCallbacks<DetailFormState>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const changeMap = convertFieldToObject<DetailFormState>(changedFields);
 
-    if (changeMap[FormFieldName.NAME] && isValidForm) {
+    if (changeMap[FormFieldName.NAME]) {
       clearTimeout(saveTimeOutRef.current);
       setSaving(true);
 

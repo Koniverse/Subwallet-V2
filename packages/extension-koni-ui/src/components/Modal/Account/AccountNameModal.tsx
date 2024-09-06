@@ -38,7 +38,7 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
 
   const accountNameValue = Form.useWatch('name', form);
 
-  const accountNameRules = useCallback(async (rule: RuleObject, value: string) => {
+  const accountNameRules = useCallback(async (validate: RuleObject, value: string) => {
     if (value) {
       try {
         const { isValid } = await validateAccountName({ name: value });
