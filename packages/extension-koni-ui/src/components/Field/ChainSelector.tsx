@@ -53,10 +53,10 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
         className='chain-logo'
         network={value}
         shape='circle'
-        size={token.sizeMD}
+        size={token.controlHeightSM}
       />
     );
-  }, [value, token.sizeMD]);
+  }, [token.controlHeightSM, value]);
 
   const renderItem = useCallback((item: ChainItemType, selected: boolean) => {
     if (item.disabled && !!messageTooltip) {
@@ -146,10 +146,6 @@ export const ChainSelector = styled(forwardRef(Component))<Props>(({ theme: { to
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis'
-      },
-
-      '.ant-select-modal-input-label': {
-        lineHeight: token.lineHeightSuper2
       },
 
       '.__selected-item': {

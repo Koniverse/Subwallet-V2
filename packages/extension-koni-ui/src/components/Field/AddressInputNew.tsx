@@ -3,11 +3,13 @@
 
 import type { BaseSelectRef } from 'rc-select';
 
+import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AnalyzeAddress, AnalyzedGroup, ResponseInputAccountSubscribe } from '@subwallet/extension-base/types';
 import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AddressSelectorItem } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
+import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useForwardFieldRef, useOpenQrScanner, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import useGetChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import { cancelSubscription, saveRecentAccount, subscribeAccountsInputAddress } from '@subwallet/extension-koni-ui/messaging';
@@ -16,7 +18,7 @@ import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { isAddress } from '@subwallet/keyring';
 import { AutoComplete, Button, Icon, Input, ModalContext, Switch, SwQrScanner } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { Book, MagicWand, Scan } from 'phosphor-react';
+import { Book, CheckCircle, MagicWand, Scan, XCircle } from 'phosphor-react';
 import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
@@ -42,6 +44,7 @@ interface Props extends BasicInputWrapper, ThemeProps {
   showScanner?: boolean;
   labelStyle?: 'horizontal' | 'vertical';
   saveAddress?: boolean;
+  dropdownListHeight?: number;
 }
 
 const defaultScannerModalId = 'input-account-address-scanner-modal';
@@ -51,12 +54,13 @@ const defaultAddressBookModalId = 'input-account-address-book-modal';
 //  - Rename to AddressInput, after this component is done
 
 function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.ReactElement<Props> {
-  const { chainSlug, className = '', disabled, id,
-    label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly, saveAddress,
-    showAddressBook, showScanner, status, statusHelp, value } = props;
+  const { chainSlug, className = '', disabled, dropdownListHeight = 200,
+    id, label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly,
+    saveAddress, showAddressBook, showScanner, status, statusHelp, value } = props;
   const { t } = useTranslation();
 
   const { activeModal, inactiveModal } = useContext(ModalContext);
+  const { alertModal } = useContext(WalletModalContext);
 
   const [responseOptions, setResponseOptions] = useState<AnalyzeAddress[]>([]);
   const [selectedOption, setSelectedOption] = useState<AnalyzeAddress | undefined>();
@@ -96,12 +100,21 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, [chainInfo]);
 
   const _onBlur: React.FocusEventHandler<HTMLInputElement> = useCallback((event) => {
-    let _inputValue = inputValue || '';
+    const _inputValue = inputValue || '';
 
     if (isShowAdvancedAddressDetection && autoFormatValue && isAddress(_inputValue) && chainInfo && !selectedOption) {
-      _inputValue = _reformatAddressWithChain(_inputValue, chainInfo);
-      parseAndChangeValue(_inputValue);
-      setInputValue(_inputValue);
+      const reformatedInputValue = _reformatAddressWithChain(_inputValue, chainInfo);
+
+      parseAndChangeValue(reformatedInputValue);
+
+      setSelectedOption({
+        address: _inputValue,
+        formatedAddress: reformatedInputValue,
+        analyzedGroup: AnalyzedGroup.RECENT,
+        displayName: toShort(_inputValue, 3, 4)
+      });
+
+      setInputValue(reformatedInputValue);
     } else {
       parseAndChangeValue(_inputValue);
     }
@@ -201,8 +214,39 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, [responseOptions, t]);
 
   const onSwitchAdvancedAddressDetection = useCallback((checked: boolean) => {
-    setAutoFormatValue(checked);
-  }, [setAutoFormatValue]);
+    if (checked) {
+      alertModal.open({
+        closable: false,
+        title: t('Advanced address conversion'),
+        type: NotificationType.WARNING,
+        content: t('This feature auto-converts your recipient address into the correct format for your chosen destination network. Wrong destination network will result in loss of funds. Only enable if you’re an advanced user'),
+        cancelButton: {
+          text: t('Cancel'),
+          icon: XCircle,
+          iconWeight: 'fill',
+          onClick: () => {
+            // setOpenDropdownManually(undefined);
+            alertModal.close();
+          },
+          schema: 'secondary'
+        },
+        okButton: {
+          text: t('Enable'),
+          icon: CheckCircle,
+          iconWeight: 'fill',
+          onClick: () => {
+            // setOpenDropdownManually(undefined);
+            setAutoFormatValue(checked);
+
+            alertModal.close();
+          },
+          schema: 'primary'
+        }
+      });
+    } else {
+      setAutoFormatValue(checked);
+    }
+  }, [alertModal, setAutoFormatValue, t]);
 
   const dropdownRender = useCallback((menu: React.ReactElement): React.ReactElement => {
     return (
@@ -329,7 +373,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       <div className={CN(className, '-input-container')}>
         <AutoComplete
           dropdownRender={dropdownRender}
-          listHeight={200}
+          listHeight={dropdownListHeight}
           onBlur={_onBlur}
           onChange={onChangeInputValue}
           onFocus={onFocus}

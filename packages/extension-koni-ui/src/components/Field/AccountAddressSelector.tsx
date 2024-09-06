@@ -20,8 +20,8 @@ interface Props extends ThemeProps, BasicInputWrapper {
 
 const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElement<Props> => {
   const { className = '', disabled, id = 'account-selector', items
-    , label, labelStyle, placeholder, readOnly
-    , statusHelp, tooltip, value } = props;
+    , label, labelStyle, placeholder
+    , readOnly, statusHelp, tooltip, value } = props;
 
   const { t } = useTranslation();
   const { onSelect } = useSelectModalInputHelper(props, ref);

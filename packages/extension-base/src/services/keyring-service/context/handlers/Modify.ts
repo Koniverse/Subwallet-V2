@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { assert } from '@polkadot/util';
 import { RequestChangeMasterPassword, RequestMigratePassword, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountChainType, RequestAccountProxyEdit, RequestAccountProxyForget, RequestChangeTonWalletContractVersion, RequestGetAllTonWalletContractVersion, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { KeyringPair$Meta, TonKeypairTypes, TonWalletContractVersion } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
+
+import { assert } from '@polkadot/util';
 
 import { AccountBaseHandler } from './Base';
 
@@ -159,21 +160,21 @@ export class AccountModifyHandler extends AccountBaseHandler {
     const contractVersion: TonWalletContractVersion = pair.meta.tonContractVersion as TonWalletContractVersion;
 
     const getContractAddress = (version: TonWalletContractVersion): string => {
-      return pair.ton.contractWithVersion(version).address.toString({ bounceable: false })
-    }
+      return pair.ton.contractWithVersion(version).address.toString({ bounceable: false });
+    };
 
     const addressMap: Record<TonWalletContractVersion, string> = {
-      'v3r1': getContractAddress('v3r1'),
-      'v3r2': getContractAddress('v3r2'),
-      'v4': getContractAddress('v4'),
-      'v5r1': getContractAddress('v5r1')
-    }
+      v3r1: getContractAddress('v3r1'),
+      v3r2: getContractAddress('v3r2'),
+      v4: getContractAddress('v4'),
+      v5r1: getContractAddress('v5r1')
+    };
 
     return {
       address: pair.address,
       currentVersion: contractVersion,
       addressMap: addressMap
-    }
+    };
   }
 
   public tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): void {
@@ -181,7 +182,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     const accounts = this.state.accounts;
 
-    let modifyAddress: string = '';
+    let modifyAddress = '';
 
     const findAddressByProxyId = () => {
       const accountProxy = accounts[proxyId];
