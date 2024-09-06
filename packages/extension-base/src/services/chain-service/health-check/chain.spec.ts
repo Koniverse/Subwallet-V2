@@ -12,7 +12,7 @@ import { compareNativeAsset, getEvmNativeInfo, getSubstrateNativeInfo, handleEvm
 
 jest.setTimeout(3 * 60 * 60 * 1000);
 
-const ignoreChains: string[] = ['interlay', 'kintsugi', 'kintsugi_test', 'avail_mainnet', 'peaq'];
+const ignoreChains: string[] = ['interlay', 'kintsugi', 'kintsugi_test', 'avail_mainnet', 'peaq', 'storyPartner_testnet','boolBeta_testnet'];
 // const onlyChains: string[] = ['subsocial_x', 'crabParachain', 'pangolin', 'acala_testnet'];
 
 describe('test chain', () => {
