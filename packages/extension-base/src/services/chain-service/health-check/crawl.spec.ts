@@ -10,8 +10,8 @@ jest.setTimeout(3 * 60 * 60 * 1000);
 
 const ALL_CHAIN = [
   // 'hydradx_main','astar','hydradx_rococo'
-  // 'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam',
-  // 'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main', 'hydradx_rococo',
+  'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam',
+  'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main', 'hydradx_rococo',
   'acala', 'bifrost', 'karura', 'interlay', 'kintsugi', 'amplitude', 'mangatax_para', 'pendulum', 'pioneer'
 ]
 
@@ -95,8 +95,8 @@ describe('test chain', () => {
         //   onChainInfo = JSON.stringify(all[0].toHuman());
         // }
 
-        let assetId : string = '';
-        let onChainInfo : object = {};
+        let assetId : string | null = '';
+        let onChainInfo : object | null = {};
 
         if (hasAssetId){
           assetId = all[0].toHuman()[0];
