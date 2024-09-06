@@ -3,7 +3,7 @@
 
 import { KeyringPair$Json } from '@subwallet/keyring/types';
 
-import { AccountProxy, KeyringPairs$JsonV2 } from '../../info';
+import { AccountProxyExtra, KeyringPairs$JsonV2 } from '../../info';
 
 export interface RequestJsonGetAccountInfo {
   json: KeyringPair$Json;
@@ -11,7 +11,7 @@ export interface RequestJsonGetAccountInfo {
 }
 
 export interface ResponseJsonGetAccountInfo {
-  accountProxy: AccountProxy;
+  accountProxy: AccountProxyExtra;
 }
 
 // Restore account with json file (single account)
@@ -29,7 +29,7 @@ export interface RequestBatchJsonGetAccountInfo {
 }
 
 export interface ResponseBatchJsonGetAccountInfo {
-  accountProxies: AccountProxy[];
+  accountProxies: AccountProxyExtra[];
 }
 
 // Restore account with json file (multi account)

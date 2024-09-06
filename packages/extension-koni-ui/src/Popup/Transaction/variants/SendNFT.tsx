@@ -6,7 +6,7 @@ import { ActionType } from '@subwallet/extension-base/services/balance-service/t
 import { validateRecipientAddress } from '@subwallet/extension-base/services/balance-service/transfer/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
-import { AddressInput, ChainSelector, HiddenInput, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AddressInputNew, ChainSelector, HiddenInput, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { DEFAULT_MODEL_VIEWER_PROPS, SHOW_3D_MODELS_CHAIN } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useFocusFormItem, useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
@@ -40,7 +40,7 @@ const DEFAULT_ITEM: NftItem = {
   id: 'unknown'
 };
 
-const hiddenFields: Array<keyof SendNftParams> = ['from', 'chain', 'asset', 'itemId', 'collectionId'];
+const hiddenFields: Array<keyof SendNftParams> = ['from', 'chain', 'asset', 'itemId', 'collectionId', 'fromAccountProxy'];
 const validateFields: Array<keyof SendNftParams> = ['to'];
 
 const Component: React.FC = () => {
@@ -87,7 +87,6 @@ const Component: React.FC = () => {
 
   const chainInfo = useMemo(() => chainInfoMap[chain], [chainInfoMap, chain]);
   const addressPrefix = useGetChainPrefixBySlug(chain);
-  const chainGenesisHash = chainInfoMap[chain]?.substrateInfo?.genesisHash || '';
 
   const { onError, onSuccess } = useHandleSubmitTransaction();
 
@@ -218,13 +217,9 @@ const Component: React.FC = () => {
             ]}
             statusHelpAsTooltip={true}
           >
-            <AddressInput
-              addressPrefix={addressPrefix}
-              allowDomain={true}
-              chain={chain}
-              fitNetwork={true}
+            <AddressInputNew
+              chainSlug={chain}
               label={t('Send to')}
-              networkGenesisHash={chainGenesisHash}
               placeholder={t('Account address')}
               saveAddress={true}
               showAddressBook={true}

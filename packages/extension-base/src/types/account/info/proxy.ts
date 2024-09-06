@@ -67,6 +67,11 @@ export interface AccountProxy extends AccountProxyData {
 
 export type AccountProxyMap = Record<string, AccountProxy>
 
+export interface AccountProxyExtra extends AccountProxy {
+  isExistAccount: boolean;
+  isExistName: boolean;
+}
+
 export interface ModifyPairData {
   key: string;
   migrated: boolean;

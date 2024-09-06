@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountAddressItem, CloseIcon } from '@subwallet/extension-koni-ui/components';
+import { AddressSelectorItem, CloseIcon } from '@subwallet/extension-koni-ui/components';
 import GeneralEmptyList from '@subwallet/extension-koni-ui/components/EmptyList/GeneralEmptyList';
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
@@ -65,11 +65,13 @@ function Component ({ className = '', items, modalId, onBack, onCancel, onSelect
     }
 
     return (
-      <AccountAddressItem
+      <AddressSelectorItem
+        address={(item as AccountAddressItemType).address}
+        avatarValue={(item as AccountAddressItemType).accountProxyId}
         className={'account-selector-item'}
         isSelected={selectedValue === (item as AccountAddressItemType).address}
-        item={(item as AccountAddressItemType)}
         key={(item as AccountAddressItemType).address}
+        name={(item as AccountAddressItemType).accountName}
         onClick={onSelect(item as AccountAddressItemType)}
       />
     );

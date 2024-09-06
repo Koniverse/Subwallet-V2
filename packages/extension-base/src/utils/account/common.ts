@@ -1,7 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountChainType } from '@subwallet/extension-base/types';
+import { getAccountChainType } from '@subwallet/extension-base/utils';
 import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
@@ -44,6 +48,26 @@ export function reformatAddress (address: string, networkPrefix = 42, isEthereum
     return address;
   }
 }
+
+export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => {
+  const chainType = _chainInfoToChainType(chainInfo);
+
+  if (chainType === AccountChainType.SUBSTRATE) {
+    return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
+  } else if (chainType === AccountChainType.TON) {
+    const isTestnet = chainInfo.isTestnet;
+
+    return reformatAddress(address, isTestnet ? 0 : 1);
+  } else {
+    return address;
+  }
+};
+
+export const getAccountChainTypeForAddress = (address: string): AccountChainType => {
+  const type = getKeypairTypeByAddress(address);
+
+  return getAccountChainType(type);
+};
 
 export function categoryAddresses (addresses: string[]): {
   substrate: string[],

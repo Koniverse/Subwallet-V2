@@ -13,6 +13,7 @@ interface Result {
   list: YieldPositionInfo[];
 }
 
+// Note: address is not All
 const useYieldPositionDetail = (slug: string, address?: string): Result => {
   const { poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
   const { currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
@@ -27,7 +28,11 @@ const useYieldPositionDetail = (slug: string, address?: string): Result => {
 
         return true;
       } else {
-        return currentAccountProxy?.accounts.some(({ address }) => isSameAddress(address, item.address));
+        return currentAccountProxy?.accounts.some(({ address: _address }) => {
+          const compareAddress = address ? isSameAddress(address, _address) : true;
+
+          return compareAddress && isSameAddress(_address, item.address);
+        });
       }
     };
 
@@ -45,7 +50,7 @@ const useYieldPositionDetail = (slug: string, address?: string): Result => {
     }
 
     if (infoList.length) {
-      if (isAllAccount) {
+      if (isAllAccount && !address) {
         const positionInfo = infoList[0];
         const base: AbstractYieldPositionInfo = {
           slug: slug,

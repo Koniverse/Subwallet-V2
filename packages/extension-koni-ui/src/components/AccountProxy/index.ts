@@ -8,5 +8,5 @@ export { default as AccountProxyItem } from './AccountProxyItem';
 export { default as AccountProxyAvatar } from './AccountProxyAvatar';
 export { default as AccountProxyAvatarGroup } from './AccountProxyAvatarGroup';
 export { default as AccountChainAddressItem } from './AccountChainAddressItem';
-export { default as AccountAddressItem } from './AccountAddressItem';
+export { default as AddressSelectorItem } from './AddressSelectorItem';
 export { default as AccountProxyTypeTag } from './AccountProxyTypeTag';

@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { hexStripPrefix, u8aToHex } from '@polkadot/util';
+import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
@@ -10,9 +12,6 @@ import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyrin
 import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-
-import { hexStripPrefix, u8aToHex } from '@polkadot/util';
-import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 
 export const createAccountProxyId = (_suri: string, derivationPath?: string) => {
   let data: string = _suri;
@@ -121,6 +120,11 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
         result.push(AccountActions.DERIVE);
       }
     }
+  }
+
+  // Ton change wallet contract version
+  if (networkType === AccountChainType.TON && signMode !== AccountSignMode.READ_ONLY) {
+    result.push(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
   }
 
   return result;
@@ -482,6 +486,11 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
           // Derive
           if (value.accounts.every((account) => account.accountActions.includes(AccountActions.DERIVE))) {
             accountActions.push(AccountActions.DERIVE);
+          }
+
+          // Ton change wallet contract version
+          if (value.accounts.some((account) => account.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION))) {
+            accountActions.push(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
           }
         } else if (value.accounts.length === 1) {
           const account = value.accounts[0];

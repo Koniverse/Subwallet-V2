@@ -89,7 +89,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   const { activeModal, inactiveAll, inactiveModal } = useContext(ModalContext);
 
-  const { accountProxies, accounts } = useSelector((state) => state.accountState);
+  const { accountProxies, accounts, isAllAccount } = useSelector((state) => state.accountState);
   const assetRegistryMap = useSelector((state) => state.assetRegistry.assetRegistry);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
   const { currencyData, priceMap } = useSelector((state) => state.price);
@@ -1210,7 +1210,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                 </div>
 
                 <Form.Item
-                  hidden={accountAddressItems.length <= 1}
+                  hidden={!isAllAccount && accountAddressItems.length <= 1}
                   name={'from'}
                 >
                   <AccountAddressSelector
