@@ -327,6 +327,7 @@ const Component: React.FC<Props> = (props: Props) => {
                   />
                 </div>
                 <ChainSelector
+                  className={'select-ledger-app'}
                   items={networks}
                   label={t('Select Ledger app')}
                   onChange={onChainChange}
@@ -412,6 +413,12 @@ const ConnectLedger = styled(Component)<Props>(({ theme: { token } }: Props) => 
 
     '.ant-sw-screen-layout-body': {
       overflow: 'hidden'
+    },
+    '.select-ledger-app, .ledger-chain-migrate-select': {
+      '.ant-image-img': {
+        width: `${token.sizeMD}px !important`,
+        height: `${token.sizeMD}px !important`
+      }
     },
 
     '.container': {

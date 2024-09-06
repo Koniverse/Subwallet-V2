@@ -23,7 +23,6 @@ export interface ResponseGetAllTonWalletContractVersion {
   addressMap: Record<TonWalletContractVersion, string>;
 }
 
-
 /**
  * @interface RequestChangeTonWalletContractVersion
  * @description Represents the request payload for changing the contract version of a TON wallet.
