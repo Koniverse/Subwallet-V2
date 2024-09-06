@@ -11,6 +11,8 @@ import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
+import {RuleObject} from "rc-field-form/lib/interface";
+import {validateAccountName} from "@subwallet/extension-koni-ui/messaging";
 
 type Props = ThemeProps & {
   isLoading?: boolean;
@@ -36,15 +38,21 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
 
   const accountNameValue = Form.useWatch('name', form);
 
-  const accountNameRules = useMemo(() => {
-    return [
-      {
-        message: t('Account name is required'),
-        transform: (value: string) => value.trim(),
-        required: true
+  const accountNameRules = useCallback(async (rule: RuleObject, value: string) => {
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value });
+        if (!isValid) {
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        return Promise.reject(t('Account name invalid'));
       }
-    ];
+    }
+
+    return Promise.resolve();
   }, [t]);
+
 
   const _onSubmit: FormCallbacks<FormProps>['onFinish'] = useCallback(({ name }: FormProps) => {
     onSubmit?.(name);
@@ -90,7 +98,16 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
           <Form.Item
             className={CN('__account-name-field')}
             name={'name'}
-            rules={accountNameRules}
+            rules={[
+              {
+              message: t('Account name is required'),
+              transform: (value: string) => value.trim(),
+              required: true
+            },
+              {
+                validator: accountNameRules
+            }
+            ]}
           >
             <Input
               className='__account-name-input'

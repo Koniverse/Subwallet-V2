@@ -11,7 +11,7 @@ import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/accou
 import useFocusById from '@subwallet/extension-koni-ui/hooks/form/useFocusById';
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { createAccountExternalV2 } from '@subwallet/extension-koni-ui/messaging';
+import {createAccountExternalV2, validateAccountName} from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils/form/form';
@@ -108,6 +108,20 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     return Promise.resolve();
   }, [accounts, t]);
+
+  const accountNameRules = useCallback(async (rule: RuleObject, value: string) => {
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value});
+        if (!isValid) {
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        return Promise.reject(t('Account name invalid'));
+      }
+    }
+    return Promise.resolve();
+  }, [t]);
 
   const onSubmit = useCallback(() => {
     setLoading(true);
@@ -209,7 +223,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
                 required: true
-              }
+              },
+                {
+                  validator: accountNameRules
+                }
 
               ]}
             >

@@ -4,14 +4,18 @@
 import { CloseIcon, HiddenInput, Layout, PageWrapper, PrivateKeyInput } from '@subwallet/extension-koni-ui/components';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useFocusFormItem, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
-import { createAccountSuriV2, validateMetamaskPrivateKeyV2 } from '@subwallet/extension-koni-ui/messaging';
+import {
+  createAccountSuriV2,
+  validateAccountName,
+  validateMetamaskPrivateKeyV2
+} from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
 import { simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Eye, EyeSlash, FileArrowDown } from 'phosphor-react';
-import { Callbacks, FieldData } from 'rc-field-form/lib/interface';
+import {Callbacks, FieldData, RuleObject} from 'rc-field-form/lib/interface';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
@@ -87,6 +91,20 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         // User cancel unlock
       });
   }, [checkUnlock, form, onComplete]);
+
+  const accountNameRules = useCallback(async (rule: RuleObject, value: string) => {
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value });
+        if (!isValid) {
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        return Promise.reject(t('Account name invalid'));
+      }
+    }
+    return Promise.resolve();
+  }, [t]);
 
   useEffect(() => {
     let amount = true;
@@ -213,6 +231,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
                 required: true
+              }, {
+                validator: accountNameRules
               }]}
               statusHelpAsTooltip={true}
             >

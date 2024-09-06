@@ -9,7 +9,7 @@ import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/Wallet
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { editAccount, forgetAccount } from '@subwallet/extension-koni-ui/messaging';
+import {editAccount, forgetAccount, validateAccountName} from '@subwallet/extension-koni-ui/messaging';
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
@@ -23,6 +23,7 @@ import styled from 'styled-components';
 
 import { AccountAddressList } from './AccountAddressList';
 import { DerivedAccountList } from './DerivedAccountList';
+import {RuleObject} from "rc-field-form/lib/interface";
 
 enum FilterTabType {
   ACCOUNT_ADDRESS = 'account-address',
@@ -73,6 +74,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   // @ts-ignore
   const [deriving, setDeriving] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isValidForm, setIsValidForm] = useState(true);
 
   const filterTabItems = useMemo<FilterTabItemType[]>(() => {
     const result = [
@@ -144,15 +146,39 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     });
   }, [notify, t]);
 
+  const accountNameRules = useCallback(async (rule: RuleObject, value: string) => {
+    const accountProxyId = accountProxy.id;
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value, proxyId: accountProxyId });
+        if (!isValid) {
+          setIsValidForm(false);
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        setIsValidForm(false)
+        return Promise.reject(t('Account name invalid'));
+      }
+    }
+    setIsValidForm(true);
+    return Promise.resolve();
+  }, [t]);
+
   const onUpdate: FormCallbacks<DetailFormState>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const changeMap = convertFieldToObject<DetailFormState>(changedFields);
 
-    if (changeMap[FormFieldName.NAME]) {
+    if (changeMap[FormFieldName.NAME] && isValidForm) {
       clearTimeout(saveTimeOutRef.current);
       setSaving(true);
-      saveTimeOutRef.current = setTimeout(() => {
-        form.submit();
-      }, 1000);
+
+      const isValidForm = form.getFieldsError().every(field => !field.errors.length);
+      if (isValidForm) {
+        saveTimeOutRef.current = setTimeout(() => {
+          form.submit();
+        }, 1000);
+      } else {
+        setSaving(false);
+      }
     }
   }, [form]);
 
@@ -303,6 +329,9 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
                 required: true
+              },
+              {
+                validator: accountNameRules
               }
             ]}
             statusHelpAsTooltip={true}
@@ -355,7 +384,7 @@ const Wrapper = ({ className }: Props) => {
   const { goHome } = useDefaultNavigate();
   const { accountProxyId } = useParams();
   const accountProxy = useGetAccountProxyById(accountProxyId);
-  const locationState = useLocation().state;
+  const locationState = useLocation().state as AccountDetailParam | undefined;
 
   useEffect(() => {
     if (!accountProxy) {
