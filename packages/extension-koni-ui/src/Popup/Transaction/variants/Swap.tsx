@@ -860,10 +860,6 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return result;
   }, [chainInfoMap, currentPair, fromAssetInfo, isSwapXCM]);
 
-  const addressInputResolver = useCallback((input: string, chainSlug: string) => {
-    return Promise.resolve([]);
-  }, []);
-
   useEffect(() => {
     const updateFromValue = () => {
       if (!accountAddressItems.length) {
@@ -1244,7 +1240,6 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                   >
                     <AddressInputNew
                       chainSlug={destChainValue}
-                      inputResolver={addressInputResolver}
                       label={`${t('To')}:`}
                       labelStyle={'horizontal'}
                       placeholder={t('Input your recipient account')}

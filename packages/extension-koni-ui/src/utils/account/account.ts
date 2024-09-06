@@ -179,3 +179,13 @@ export function getReformatedAddressRelatedToChain (accountJson: AccountJson, ch
 
   return undefined;
 }
+
+type LedgerMustCheckType = 'polkadot' | 'migration' | 'unnecessary'
+
+export const ledgerMustCheckNetwork = (account: AccountJson | null): LedgerMustCheckType => {
+  if (account && account.isHardware && account.isGeneric && !isEthereumAddress(account.address)) {
+    return account.originGenesisHash ? 'migration' : 'polkadot';
+  } else {
+    return 'unnecessary';
+  }
+};
