@@ -25,4 +25,4 @@ class MockParticleProvider extends SafeEventEmitter implements IEthereumProvider
 
 export const createMockParticleProvider = (chainId: number, address: string): IEthereumProvider => {
   return new MockParticleProvider(chainId, address);
-}
+};

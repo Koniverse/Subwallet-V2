@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { UserOpBundle } from '@particle-network/aa';
 import { BaseRequestSign, ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
 import EventEmitter from 'eventemitter3';
 import { TransactionConfig } from 'web3-core';
@@ -27,6 +28,10 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
   eventsHandler?: (eventEmitter: TransactionEmitter) => void;
 }
 
+export interface SWAATransaction extends Pick<SWTransaction, 'chain' | 'chainType' | 'address' | 'data' | 'status' | 'extrinsicHash' | 'extrinsicType' | 'createdAt' | 'updatedAt' | 'estimateFee' | 'id'> {
+  transaction: UserOpBundle;
+}
+
 export type SWTransactionResult = Omit<SWTransaction, 'transaction' | 'additionalValidator' | 'eventsHandler'>
 
 type SwInputBase = Pick<SWTransaction, 'address' | 'url' | 'data' | 'extrinsicType' | 'chain' | 'chainType' | 'ignoreWarnings' | 'transferNativeAmount'>
@@ -41,6 +46,10 @@ export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransact
   isTransferAll?: boolean;
   resolveOnDone?: boolean;
   skipFeeValidation?: boolean;
+}
+
+export interface SWTransactionAAInput extends Omit<SWTransactionInput, 'estimateFee' | 'transaction'> {
+  transaction?: SWAATransaction['transaction'] | null;
 }
 
 export type SWTransactionResponse = SwInputBase & Pick<SWTransaction, 'warnings' | 'errors'> & Partial<Pick<SWTransaction, 'id' | 'extrinsicHash' | 'status' | 'estimateFee'>>;

@@ -1,22 +1,24 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { UserOpBundle } from '@particle-network/aa';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, EvmSignatureRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
+import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getChainNativeTokenSlug, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { TRANSACTION_TIMEOUT } from '@subwallet/extension-base/services/transaction-service/constants';
 import { parseLiquidStakingEvents, parseLiquidStakingFastUnstakeEvents, parseTransferEventLogs, parseXcmEventLogs } from '@subwallet/extension-base/services/transaction-service/event-parser';
 import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
-import { SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
+import { SWAATransaction, SWTransaction, SWTransactionAAInput, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { Web3Transaction } from '@subwallet/extension-base/signers/types';
@@ -234,6 +236,79 @@ export default class TransactionService {
     'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
 
     return validatedTransaction;
+  }
+
+  public async handleAATransaction (transaction: SWTransactionAAInput): Promise<SWTransactionResponse> {
+    const validatedTransaction: SWAATransaction = {
+      transaction: transaction.transaction as UserOpBundle,
+      chain: transaction.chain,
+      chainType: transaction.chainType,
+      address: transaction.address,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      data: transaction.data,
+      status: ExtrinsicStatus.QUEUED,
+      extrinsicHash: '',
+      createdAt: new Date().getTime(),
+      updatedAt: new Date().getTime(),
+      extrinsicType: transaction.extrinsicType,
+      id: transaction.id || getTransactionId(transaction.chainType, transaction.chain, false, false)
+    };
+
+    const emitter = this.sendAATransaction(validatedTransaction);
+
+    await new Promise<void>((resolve, reject) => {
+      // TODO
+      emitter.on('success', (data: TransactionEventResponse) => {
+        validatedTransaction.id = data.id;
+        // validatedTransaction.extrinsicHash = data.extrinsicHash;
+        resolve();
+      });
+
+      emitter.on('error', (data: TransactionEventResponse) => {
+        if (data.errors.length > 0) {
+          // validatedTransaction.errors.push(...data.errors);
+          resolve();
+        }
+      });
+    });
+
+    // @ts-ignore
+    'transaction' in validatedTransaction && delete validatedTransaction.transaction;
+
+    return validatedTransaction;
+  }
+
+  private sendAATransaction (transaction: SWAATransaction): TransactionEmitter {
+    // Send Transaction
+    const emitter = this.signAndSendEvmAATransaction(transaction);
+
+    emitter.on('signed', (data: TransactionEventResponse) => {
+      this.onSigned(data);
+    });
+
+    emitter.on('send', (data: TransactionEventResponse) => {
+      this.onSend(data);
+    });
+
+    emitter.on('extrinsicHash', (data: TransactionEventResponse) => {
+      // this.onHasTransactionHash(data);
+    });
+    //
+    emitter.on('success', (data: TransactionEventResponse) => {
+      // this.handlePostProcessing(data.id);
+      this.onSuccess(data);
+    });
+
+    emitter.on('error', (data: TransactionEventResponse) => {
+      // this.handlePostProcessing(data.id); // might enable this later
+      this.onFailed({ ...data, errors: [...data.errors, new TransactionError(BasicTxErrorType.INTERNAL_ERROR)] });
+    });
+
+    emitter.on('timeout', (data: TransactionEventResponse) => {
+      this.onTimeOut({ ...data, errors: [...data.errors, new TransactionError(BasicTxErrorType.TIMEOUT)] });
+    });
+
+    return emitter;
   }
 
   private async sendTransaction (transaction: SWTransaction): Promise<TransactionEmitter> {
@@ -1159,6 +1234,69 @@ export default class TransactionService {
       eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, e.message));
       emitter.emit('error', eventData);
     });
+
+    return emitter;
+  }
+
+  private signAndSendEvmAATransaction ({ address,
+    chain,
+    id,
+    transaction }: SWAATransaction): TransactionEmitter {
+    const { userOp, userOpHash } = transaction;
+    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
+    const chainId = _getEvmChainId(chainInfo) || 1;
+    const accountPair = keyring.getPair(address);
+    const account: AccountJson = { address, ...accountPair.meta };
+    const ownerAddress = account.smartAccountOwner || account.address;
+
+    const emitter = new EventEmitter<TransactionEventMap>();
+
+    const _payload: EvmSignatureRequest = {
+      account,
+      payload: userOpHash,
+      hashPayload: userOpHash,
+      type: 'personal_sign',
+      canSign: true,
+      id
+    };
+
+    const eventData: TransactionEventResponse = {
+      id,
+      errors: [],
+      warnings: [],
+      extrinsicHash: id
+    };
+
+    this.state.requestService.addConfirmation(id, 'EXTENSION_REQUEST_URL', 'evmSignatureRequest', _payload, {})
+      .then(async ({ isApproved, payload: signature }) => {
+        if (isApproved) {
+          if (!signature) {
+            throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, 'Bad signature');
+          }
+
+          // Emit signed event
+          emitter.emit('signed', eventData);
+
+          // Add start info
+          emitter.emit('send', eventData); // This event is needed after sending transaction with queue
+
+          userOp.signature = signature;
+
+          eventData.extrinsicHash = await ParticleAAHandler.sendSignedUserOperation(ownerAddress, chainId, userOp);
+          emitter.emit('extrinsicHash', eventData);
+        } else {
+          this.removeTransaction(id);
+          eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+          emitter.emit('error', eventData);
+        }
+      })
+      .catch((e: Error) => {
+        this.removeTransaction(id);
+        // TODO: Change type
+        eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, e.message));
+
+        emitter.emit('error', eventData);
+      });
 
     return emitter;
   }

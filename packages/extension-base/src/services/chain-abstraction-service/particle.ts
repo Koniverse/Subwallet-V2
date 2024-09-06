@@ -1,10 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SmartAccountConfig } from '@particle-network/aa/dist/types/types';
-
-import { SmartAccount } from '@particle-network/aa';
+import { SmartAccount, SmartAccountConfig, Transaction, UserOp, UserOpBundle } from '@particle-network/aa';
+import { anyNumberToBN } from '@subwallet/extension-base/utils';
 import { createMockParticleProvider } from '@subwallet/extension-base/utils/mock/provider/particle';
+import { TransactionConfig } from 'web3-core';
 
 const config: SmartAccountConfig = {
   projectId: '80d48082-7a98-41e0-8eb5-571e2e00cc7f',
@@ -19,7 +19,7 @@ const config: SmartAccountConfig = {
         },
         {
           version: '2.0.0',
-          chainIds: [1]
+          chainIds: [1, 11155111]
         }
       ],
       CYBERCONNECT: [
@@ -51,5 +51,32 @@ export class ParticleAAHandler {
     smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
 
     return smartAccount.getAddress();
+  };
+
+  static createUserOperation = async (ownerAddress: string, chainId: number, _tx: TransactionConfig): Promise<UserOpBundle> => {
+    const provider = createMockParticleProvider(chainId, ownerAddress);
+
+    const smartAccount = new SmartAccount(provider, config);
+
+    smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
+
+    const tx: Transaction = {
+      data: _tx.data,
+      value: anyNumberToBN(_tx.value).toString(),
+      to: _tx.to || '',
+      gasLimit: _tx.gas
+    };
+
+    return await smartAccount.buildUserOperation({ tx });
+  };
+
+  static sendSignedUserOperation = async (ownerAddress: string, chainId: number, userOp: UserOp): Promise<string> => {
+    const provider = createMockParticleProvider(chainId, ownerAddress);
+
+    const smartAccount = new SmartAccount(provider, config);
+
+    smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
+
+    return await smartAccount.sendSignedUserOperation(userOp);
   };
 }

@@ -172,7 +172,9 @@ const Component: React.FC<Props> = (props: Props) => {
       let promise: Promise<`0x${string}`>;
 
       if (isMessage) {
-        promise = evmWallet.request<`0x${string}`>({ method: payload.payload.type, params: [account.address, payload.payload.payload] });
+        const address = account.smartAccountOwner || account.address;
+
+        promise = evmWallet.request<`0x${string}`>({ method: payload.payload.type, params: [address, payload.payload.payload] });
       } else {
         promise = new Promise<`0x${string}`>((resolve, reject) => {
           const { account, canSign, estimateGas, hashPayload, isToContract, parseData, ...transactionConfig } = payload.payload;

@@ -29,6 +29,7 @@ import { RequestOptimalTransferProcess } from '@subwallet/extension-base/service
 import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObject, getPSP34TransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
+import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getSubstrateGenesisHash, _isAssetSmartContractNft, _isChainEvmCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
@@ -45,7 +46,7 @@ import { AccountsStore } from '@subwallet/extension-base/stores';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isEthereumSmartAccountOwner, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
@@ -1771,6 +1772,28 @@ export default class KoniExtension {
             transaction,
             transferAmount.value
           ] = await getEVMTransactionObject(chainInfo, from, to, txVal, !!transferAll, evmApi);
+        }
+
+        const owner = isEthereumSmartAccountOwner(from);
+
+        if (owner) {
+          const userOperation = await ParticleAAHandler.createUserOperation(owner, _getEvmChainId(chainInfo) || 1, transaction);
+          const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
+
+          return this.#koniState.transactionService.handleAATransaction({
+            errors,
+            warnings,
+            address: from,
+            chain: networkKey,
+            chainType,
+            transferNativeAmount,
+            transaction: userOperation,
+            data: inputData,
+            extrinsicType,
+            ignoreWarnings: transferAll,
+            isTransferAll: isTransferNativeToken ? transferAll : false,
+            edAsWarning: isTransferNativeToken
+          });
         }
       } else if (_isMantaZkAsset(transferTokenInfo)) {
         transaction = undefined;
@@ -3994,8 +4017,8 @@ export default class KoniExtension {
     return true;
   }
 
-  private removeInjects (request: RequestRemoveInjectedAccounts): boolean {
-    this.#koniState.keyringService.removeInjectAccounts(request.addresses);
+  private async removeInjects (request: RequestRemoveInjectedAccounts): Promise<boolean> {
+    await this.#koniState.keyringService.removeInjectAccounts(request.addresses);
 
     return true;
   }

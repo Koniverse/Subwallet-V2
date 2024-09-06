@@ -14,6 +14,7 @@ import { BalanceService } from '@subwallet/extension-base/services/balance-servi
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import BuyService from '@subwallet/extension-base/services/buy-service';
 import CampaignService from '@subwallet/extension-base/services/campaign-service';
+import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _PREDEFINED_SINGLE_MODES } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest } from '@subwallet/extension-base/services/chain-service/types';
@@ -24,7 +25,6 @@ import FeeService from '@subwallet/extension-base/services/fee-service/service';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
-import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import MigrationService from '@subwallet/extension-base/services/migration-service';
 import MintCampaignService from '@subwallet/extension-base/services/mint-campaign-service';
 import MktCampaignService from '@subwallet/extension-base/services/mkt-campaign-service';

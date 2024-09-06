@@ -3,6 +3,7 @@
 
 import { AddressJson } from '@subwallet/extension-base/background/types';
 import { reformatAddress } from '@subwallet/extension-base/utils/index';
+import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
 import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
@@ -25,4 +26,14 @@ export function quickFormatAddressToCompare (address?: string) {
 
 export const convertSubjectInfoToAddresses = (subjectInfo: SubjectInfo): AddressJson[] => {
   return Object.values(subjectInfo).map((info): AddressJson => ({ address: info.json.address, type: info.type, ...info.json.meta }));
+};
+
+export const isEthereumSmartAccountOwner = (address: string): string => {
+  try {
+    const pair = keyring.getPair(address);
+
+    return pair.meta.smartAccountOwner as string || '';
+  } catch (error) {
+    return '';
+  }
 };

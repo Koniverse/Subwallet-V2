@@ -3,6 +3,7 @@
 
 import { CurrentAccountInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { CurrentAccountStore } from '@subwallet/extension-base/stores';
@@ -14,7 +15,6 @@ import { BehaviorSubject } from 'rxjs';
 
 import { stringShorten } from '@polkadot/util';
 import { isEthereumAddress } from '@polkadot/util-crypto';
-import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 export class KeyringService {
   private readonly currentAccountStore = new CurrentAccountStore();
