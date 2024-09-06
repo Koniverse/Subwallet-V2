@@ -11,8 +11,8 @@ import { ADDRESS_INPUT_AUTO_FORMAT_VALUE, DEFAULT_MODEL_VIEWER_PROPS, SHOW_3D_MO
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useFocusFormItem, useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { evmNftSubmitTransaction, substrateNftSubmitTransaction } from '@subwallet/extension-koni-ui/messaging';
-import { FormCallbacks, FormFieldData, FormRule, SendNftParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, noop, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { FormCallbacks, FormRule, SendNftParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { findAccountByAddress, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon, Image, Typography } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowCircleRight } from 'phosphor-react';
@@ -91,8 +91,6 @@ const Component: React.FC = () => {
   const addressPrefix = useGetChainPrefixBySlug(chain);
 
   const { onError, onSuccess } = useHandleSubmitTransaction();
-
-  const [isDisable, setIsDisable] = useState(true);
   const [loading, setLoading] = useState(false);
 
   const recipientValidator = useCallback((rule: FormRule, _recipientAddress: string): Promise<void> => {
@@ -109,11 +107,17 @@ const Component: React.FC = () => {
       autoFormatValue });
   }, [accounts, autoFormatValue, chainInfoMap, form]);
 
-  const onFieldsChange: FormCallbacks<SendNftParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
-    const { error } = simpleCheckForm(allFields);
+  const onValuesChange: FormCallbacks<SendNftParams>['onValuesChange'] = useCallback((part: Partial<SendNftParams>, values: SendNftParams) => {
+    if (part.to) {
+      form.setFields([
+        {
+          name: 'to',
+          errors: []
+        }
+      ]);
+    }
 
     persistData(form.getFieldsValue());
-    setIsDisable(error);
   }, [form, persistData]);
 
   // Submit transaction
@@ -208,8 +212,8 @@ const Component: React.FC = () => {
           className={'form-container form-space-sm'}
           form={form}
           initialValues={formDefault}
-          onFieldsChange={onFieldsChange}
           onFinish={onSubmit}
+          onValuesChange={onValuesChange}
         >
           <HiddenInput fields={hiddenFields} />
           <Form.Item
@@ -220,6 +224,7 @@ const Component: React.FC = () => {
               }
             ]}
             statusHelpAsTooltip={true}
+            validateTrigger={false}
           >
             <AddressInputNew
               chainSlug={chain}
@@ -252,7 +257,7 @@ const Component: React.FC = () => {
         className={'send-nft-transaction-footer'}
       >
         <Button
-          disabled={isDisable || !isBalanceReady}
+          disabled={!isBalanceReady}
           icon={(
             <Icon
               phosphorIcon={ArrowCircleRight}

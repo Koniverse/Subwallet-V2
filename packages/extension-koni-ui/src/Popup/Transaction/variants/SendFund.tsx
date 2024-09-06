@@ -101,7 +101,7 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
 }
 
 const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
-const validateFields: Array<keyof TransferParams> = ['value', 'to'];
+const validateFields: Array<keyof TransferParams> = ['value'];
 const alertModalId = 'confirmation-alert-modal';
 const substrateAccountSlug = 'polkadot-NATIVE-DOT';
 const evmAccountSlug = 'ethereum-NATIVE-ETH';
@@ -322,6 +322,15 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
         if (values.to) {
           validateField.add('to');
         }
+      }
+
+      if (part.to) {
+        form.setFields([
+          {
+            name: 'to',
+            errors: []
+          }
+        ]);
       }
 
       if (validateField.size) {
@@ -733,6 +742,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
               }
             ]}
             statusHelpAsTooltip={true}
+            validateTrigger={false}
           >
             <AddressInputNew
               chainSlug={destChainValue}
