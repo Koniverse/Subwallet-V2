@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType, NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
-import { ActionType } from '@subwallet/extension-base/services/balance-service/transfer/types';
-import { validateRecipientAddress } from '@subwallet/extension-base/services/balance-service/transfer/utils';
+import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
+import { ActionType } from '@subwallet/extension-base/core/types';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AddressInputNew, ChainSelector, HiddenInput, PageWrapper } from '@subwallet/extension-koni-ui/components';

@@ -1,7 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { ActionType, LEDGER_GENERIC_ALLOW_NETWORKS, ledgerMustCheckNetwork, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/services/balance-service/transfer/types';
+import { LEDGER_GENERIC_ALLOW_NETWORKS } from '@subwallet/extension-base/core/consts';
+import { ActionType, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/core/types';
+import { ledgerMustCheckNetwork } from '@subwallet/extension-base/core/utils';
 import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { detectTranslate, isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
 import { isAddress, isTonAddress } from '@subwallet/keyring';
