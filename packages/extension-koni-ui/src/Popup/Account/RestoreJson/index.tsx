@@ -69,7 +69,7 @@ const enum StepState {
 
 const FooterContent = {
   [StepState.UPLOAD_JSON_FILE]: 'Unlock file',
-  [StepState.SELECT_ACCOUNT_IMPORT]: 'Import {{count}} account(s)'
+  [StepState.SELECT_ACCOUNT_IMPORT]: 'Import {{count}} account{{s}}'
 };
 
 const TilePage = {
@@ -411,7 +411,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={onBack_}
         rightFooterButton={{
-          children: t<string>(FooterContent[stepState], { replace: { count: accountProxiesSelected.length > 1 ? accountProxiesSelected.length : '' } }),
+          children: t<string>(FooterContent[stepState], {
+            replace: { count: accountProxiesSelected.length > 0 ? accountProxiesSelected.length : '',
+              s: accountProxiesSelected.length > 1 ? 's' : '' }
+          }),
           icon: FooterIcon,
           onClick: onSubmit,
           disabled: disableSubmit,
