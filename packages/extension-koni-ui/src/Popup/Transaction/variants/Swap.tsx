@@ -17,7 +17,7 @@ import { AccountAddressSelector, AddressInputNew, AlertBox, HiddenInput, MetaInf
 import { SwapFromField, SwapToField } from '@subwallet/extension-koni-ui/components/Field/Swap';
 import { AddMoreBalanceModal, ChooseFeeTokenModal, SlippageModal, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapTermsOfServiceModal } from '@subwallet/extension-koni-ui/components/Modal/Swap';
 import { QuoteResetTime, SwapRoute } from '@subwallet/extension-koni-ui/components/Swap';
-import { BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { ADDRESS_INPUT_AUTO_FORMAT_VALUE, BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useChainConnection, useDefaultNavigate, useNotification, usePreCheckAction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
@@ -121,6 +121,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
   const [isScrollEnd, setIsScrollEnd] = useState<boolean>(false);
   const continueRefreshQuoteRef = useRef<boolean>(false);
   const { token } = useTheme() as Theme;
+
+  const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const { defaultSlug } = defaultData;
   const onIdle = useCallback(() => {
@@ -266,8 +268,9 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       fromAddress: from,
       toAddress: _recipientAddress,
       account,
-      actionType: ActionType.SWAP });
-  }, [accounts, assetRegistryMap, form]);
+      actionType: ActionType.SWAP,
+      autoFormatValue });
+  }, [accounts, assetRegistryMap, autoFormatValue, form]);
 
   const accountAddressItems = useMemo(() => {
     const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;

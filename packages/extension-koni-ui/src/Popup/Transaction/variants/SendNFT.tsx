@@ -7,7 +7,7 @@ import { validateRecipientAddress } from '@subwallet/extension-base/services/bal
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AddressInputNew, ChainSelector, HiddenInput, PageWrapper } from '@subwallet/extension-koni-ui/components';
-import { DEFAULT_MODEL_VIEWER_PROPS, SHOW_3D_MODELS_CHAIN } from '@subwallet/extension-koni-ui/constants';
+import { ADDRESS_INPUT_AUTO_FORMAT_VALUE, DEFAULT_MODEL_VIEWER_PROPS, SHOW_3D_MODELS_CHAIN } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useFocusFormItem, useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { evmNftSubmitTransaction, substrateNftSubmitTransaction } from '@subwallet/extension-koni-ui/messaging';
@@ -20,6 +20,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useLocalStorage } from 'usehooks-ts';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -66,6 +67,7 @@ const Component: React.FC = () => {
   const { nftCollections, nftItems } = useSelector((state) => state.nft);
   const { accounts } = useSelector((state) => state.accountState);
   const [isBalanceReady, setIsBalanceReady] = useState(true);
+  const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const nftItem = useMemo((): NftItem =>
     nftItems.find(
@@ -102,8 +104,9 @@ const Component: React.FC = () => {
       fromAddress: from,
       toAddress: _recipientAddress,
       account,
-      actionType: ActionType.SEND_NFT });
-  }, [accounts, form]);
+      actionType: ActionType.SEND_NFT,
+      autoFormatValue });
+  }, [accounts, autoFormatValue, form]);
 
   const onFieldsChange: FormCallbacks<SendNftParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const { error } = simpleCheckForm(allFields);

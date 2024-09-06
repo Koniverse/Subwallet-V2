@@ -38,5 +38,6 @@ export interface ValidateRecipientParams {
   fromAddress: string,
   toAddress: string,
   account: AccountJson | null,
-  actionType: ActionType
+  actionType: ActionType,
+  autoFormatValue?: boolean
 }

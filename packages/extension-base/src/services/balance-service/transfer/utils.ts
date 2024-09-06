@@ -10,7 +10,7 @@ import { isAddress, isTonAddress } from '@subwallet/keyring';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 function getConditions (validateRecipientParams: ValidateRecipientParams): ValidationCondition[] {
-  const { account, actionType, destChain, srcChain, toAddress } = validateRecipientParams;
+  const { account, actionType, autoFormatValue, destChain, srcChain, toAddress } = validateRecipientParams;
   const conditions: ValidationCondition[] = [];
   const isSendAction = [ActionType.SEND_FUND, ActionType.SEND_NFT].includes(actionType);
 
@@ -18,9 +18,8 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
   conditions.push(ValidationCondition.IS_ADDRESS);
   conditions.push(ValidationCondition.IS_VALID_ADDRESS);
 
-  if (!isEthereumAddress(toAddress) && !isTonAddress(toAddress)) {
+  if (!isEthereumAddress(toAddress) && !isTonAddress(toAddress) && !autoFormatValue) {
     // todo: need isSubstrateAddress util function to check exactly
-    // todo: add check advanced detection button
     conditions.push(ValidationCondition.IS_VALID_SUBSTRATE_ADDRESS_FORMAT);
   }
 

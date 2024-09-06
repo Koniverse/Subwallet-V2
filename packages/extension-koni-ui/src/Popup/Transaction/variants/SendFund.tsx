@@ -13,6 +13,7 @@ import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode } fro
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
+import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
@@ -28,7 +29,7 @@ import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useIsFirstRender } from 'usehooks-ts';
+import { useIsFirstRender, useLocalStorage } from 'usehooks-ts';
 
 import { BN, BN_ZERO } from '@polkadot/util';
 
@@ -136,6 +137,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
@@ -259,8 +261,9 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       fromAddress: from,
       toAddress: _recipientAddress,
       account,
-      actionType: ActionType.SEND_FUND });
-  }, [accounts, form]);
+      actionType: ActionType.SEND_FUND,
+      autoFormatValue });
+  }, [accounts, autoFormatValue, form]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
