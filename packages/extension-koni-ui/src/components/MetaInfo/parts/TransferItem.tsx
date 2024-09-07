@@ -15,7 +15,7 @@ import AccountItem from './AccountItem';
 import { InfoItemBase } from './types';
 import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import useFetchChainInfo from '../../../hooks/screen/common/useFetchChainInfo';
+import { useFetchChainInfo } from '@subwallet/extension-koni-ui/hooks';
 
 export interface TransferInfoItem extends Omit<InfoItemBase, 'label'> {
   senderAddress: string;

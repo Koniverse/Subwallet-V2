@@ -4,7 +4,7 @@
 import { AvatarGroup } from '@subwallet/extension-koni-ui/components/Account';
 import { BaseAccountInfo } from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
 import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
-import { useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
+import { useFetchChainInfo, useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
 import { isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
@@ -13,7 +13,6 @@ import styled from 'styled-components';
 
 import { InfoItemBase } from './types';
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import useFetchChainInfo from '../../../hooks/screen/common/useFetchChainInfo';
 import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 
 export interface AccountInfoItem extends InfoItemBase {
@@ -30,9 +29,11 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
   const { t } = useTranslation();
   const account = useGetAccountByAddress(accountAddress);
 
-  const originChainInfo = originChain && useFetchChainInfo(originChain?.slug);
-  const formattedAddress = originChainInfo ? _reformatAddressWithChain(accountAddress, originChainInfo) : accountAddress;
-  const shortAddress = toShort(formattedAddress);
+  const shortAddress = useMemo(() => {
+    const originChainInfo = originChain && useFetchChainInfo(originChain?.slug);
+    const formattedAddress = originChainInfo ? _reformatAddressWithChain(accountAddress, originChainInfo) : accountAddress;
+    return toShort(formattedAddress);
+  },[])
   const name = useMemo(() => {
     return accountName || account?.name;
   }, [account?.name, accountName]);
