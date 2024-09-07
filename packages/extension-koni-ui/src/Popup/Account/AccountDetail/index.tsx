@@ -19,7 +19,7 @@ import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-r
 import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { AccountAddressList } from './AccountAddressList';
@@ -58,7 +58,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   const { goHome } = useDefaultNavigate();
   const showDerivedAccounts = !!accountProxy.children?.length;
   const { alertModal } = useContext(WalletModalContext);
-
+  const navigate = useNavigate();
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
     requestViewDerivedAccounts && showDerivedAccounts
       ? FilterTabType.DERIVED_ACCOUNT
@@ -135,8 +135,10 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, []);
 
   const onExport = useCallback(() => {
-    //
-  }, []);
+    if (accountProxy?.id) {
+      navigate(`/accounts/export/${accountProxy.id}`);
+    }
+  }, [accountProxy?.id, navigate]);
 
   // @ts-ignore
   const onCopyAddress = useCallback(() => {
@@ -264,7 +266,6 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       <Button
         block={true}
         className={CN('account-button')}
-        disabled={true}
         icon={(
           <Icon
             phosphorIcon={Export}

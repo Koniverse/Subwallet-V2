@@ -484,6 +484,11 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             accountActions.push(AccountActions.EXPORT_MNEMONIC);
           }
 
+          // Json
+          if (value.accounts.every((account) => account.accountActions.includes(AccountActions.EXPORT_JSON))) {
+            accountActions.push(AccountActions.EXPORT_JSON);
+          }
+
           // Derive
           if (value.accounts.every((account) => account.accountActions.includes(AccountActions.DERIVE))) {
             accountActions.push(AccountActions.DERIVE);

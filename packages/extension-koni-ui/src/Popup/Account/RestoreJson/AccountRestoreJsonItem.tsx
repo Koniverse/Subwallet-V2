@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxyExtra, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
+import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon } from '@subwallet/extension-koni-ui/types';
-import { Icon } from '@subwallet/react-ui';
+import { Icon, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { CheckCircle, Eye, GitCommit, Needle, QrCode, Question, Strategy, Swatches } from 'phosphor-react';
+import { CheckCircle, Eye, GitCommit, Needle, QrCode, Question, Strategy, Swatches, Warning } from 'phosphor-react';
 import { IconWeight } from 'phosphor-react/src/lib';
 import React, { Context, useCallback, useContext, useMemo } from 'react';
 import styled, { ThemeContext } from 'styled-components';
@@ -22,7 +23,7 @@ type AccountProxyTypeIcon = {
 export interface _AccountCardItem {
   className?: string;
   isSelected?: boolean;
-  accountProxy: AccountProxy;
+  accountProxy: AccountProxyExtra;
   preventPrefix?: boolean;
   type?: KeypairType;
   showUnSelectedIcon?: boolean;
@@ -38,9 +39,10 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
     showUnSelectedIcon } = props;
 
   const { accountType, chainTypes, id: accountProxyId, name: accountName } = useMemo(() => accountProxy, [accountProxy]);
-
+  const { t } = useTranslation();
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
+  const disabledItem = useMemo(() => disabled || accountProxy.isExistAccount, [accountProxy.isExistAccount, disabled]);
   const chainTypeLogoMap = useMemo(() => {
     return {
       [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
@@ -113,8 +115,8 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
   return (
     <>
       <div
-        className={CN(props.className, { '-selected': isSelected })}
-        onClick={disabled ? undefined : _onSelect}
+        className={CN(props.className, '__infinite-loader', { '-selected': isSelected, '-disabled': disabledItem })}
+        onClick={disabledItem ? undefined : _onSelect}
       >
         <div className='__item-left-part'>
           <div className='__item-avatar-wrapper'>
@@ -160,7 +162,23 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
         </div>
 
         <div className={'__item-right-part'}>
-          {(showUnSelectedIcon || isSelected) && (
+          { accountProxy.isExistName && !accountProxy.isExistAccount && <div className={'__warning-name-already'}>
+            <Tooltip
+              placement='bottomLeft'
+              title={t('Account name is already')}
+            >
+              <div>
+                <Icon
+                  iconColor={token.colorWarning}
+                  phosphorIcon={Warning}
+                  size='sm'
+                  type='phosphor'
+                  weight={'fill'}
+                />
+              </div>
+            </Tooltip>
+          </div> }
+          {(showUnSelectedIcon || isSelected) && !accountProxy.isExistAccount && (
             <Icon
               className={'__select-icon'}
               iconColor={isSelected ? token.colorSuccess : token.colorTextLight4}
@@ -175,7 +193,7 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
   );
 }
 
-const ExportAllSelectItem = styled(Component)<_AccountCardItem>(({ theme }) => {
+const AccountRestoreJsonItem = styled(Component)<_AccountCardItem>(({ theme }) => {
   const { token } = theme as Theme;
 
   return {
@@ -193,6 +211,12 @@ const ExportAllSelectItem = styled(Component)<_AccountCardItem>(({ theme }) => {
     '&.-selected': {
       backgroundColor: token.colorBgInput
     },
+
+    '&.-disabled': {
+      opacity: 0.4,
+      cursor: 'not-allowed'
+    },
+
     '.__item-left-part': {
       paddingRight: token.paddingXS
     },
@@ -262,15 +286,17 @@ const ExportAllSelectItem = styled(Component)<_AccountCardItem>(({ theme }) => {
       alignItems: 'center',
       justifyContent: 'center'
     },
-    '.__select-icon.__select-icon': {
+    '.__select-icon.__select-icon, .__warning-name-already': {
       minWidth: 40,
       display: 'flex',
-      justifyContent: 'center'
+      justifyContent: 'center',
+      alignItems: 'center'
     },
+
     '&:hover': {
       background: token.colorBgInput
     }
   };
 });
 
-export default ExportAllSelectItem;
+export default AccountRestoreJsonItem;
