@@ -10,7 +10,7 @@ import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/sy
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
-import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
+import { _EvmApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
@@ -263,12 +263,21 @@ export function checkBalanceWithTransactionFee (validationResponse: SWTransactio
   }
 }
 
-export function checkTonAddressBounceable (validationResponse: SWTransactionResponse) {
+export async function checkTonAddressBounceableAndAccountNotActive (tonApi: _TonApi, validationResponse: SWTransactionResponse) {
   const { data: { to } } = validationResponse;
+  const isActive = await isAccountActive(tonApi, to);
 
-  const isBounceable = isBounceableAddress(to);
-
-  if (isBounceable) {
+  if (isTonAddressBounceable(to) && !isActive) {
     validationResponse.warnings.push(new TransactionWarning(BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS));
   }
+}
+
+function isTonAddressBounceable (address: string) {
+  return isBounceableAddress(address);
+}
+
+async function isAccountActive (tonApi: _TonApi, address: string) {
+  const state = await tonApi.getAccountState(address);
+
+  return state === 'active';
 }
