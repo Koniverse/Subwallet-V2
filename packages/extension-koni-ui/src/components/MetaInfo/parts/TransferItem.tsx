@@ -1,21 +1,22 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
+import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
 import ChainItem from '@subwallet/extension-koni-ui/components/MetaInfo/parts/ChainItem';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainInfo } from '@subwallet/extension-koni-ui/types/chain';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import AccountItem from './AccountItem';
 import { InfoItemBase } from './types';
-import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
-import { _ChainInfo } from '@subwallet/chain-list/types';
-import { useFetchChainInfo } from '@subwallet/extension-koni-ui/hooks';
 
 export interface TransferInfoItem extends Omit<InfoItemBase, 'label'> {
   senderAddress: string;
@@ -41,22 +42,30 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     valueColorSchema = 'default' } = props;
 
   const { t } = useTranslation();
+  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
 
-  const originChainInfo = originChain && useFetchChainInfo(originChain?.slug);
-  const destinationChainInfo = destinationChain && useFetchChainInfo(destinationChain?.slug);
-  const nameClassModifier  = useMemo(() => {
-    if(!!senderName && recipientName == undefined) {
-      return '__recipient'
-    } else if (recipientName && senderName == undefined) {
-      return '__sender'
+  const originChainInfo = useMemo(() => {
+    return originChain?.slug ? chainInfoMap[originChain.slug] : undefined;
+  }, [chainInfoMap, originChain?.slug]);
+
+  const destinationChainInfo = useMemo(() => {
+    return destinationChain?.slug ? chainInfoMap[destinationChain.slug] : undefined;
+  }, [chainInfoMap, destinationChain?.slug]);
+
+  const nameClassModifier = useMemo(() => {
+    if (!!senderName && recipientName === undefined) {
+      return '__recipient';
+    } else if (recipientName && senderName === undefined) {
+      return '__sender';
     }
-    return null;
-  },[])
 
+    return '';
+  }, [recipientName, senderName]);
 
   const genAccountBlock = (address: string, name?: string, chainInfo?: _ChainInfo) => {
     const formattedAddress = chainInfo ? _reformatAddressWithChain(address, chainInfo) : address;
     const shortAddress = toShort(formattedAddress);
+
     return (
       <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
         <Avatar
@@ -147,13 +156,9 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
 
 const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: TransferInfoItem) => {
   return {
-    '.__recipient': {
-      minHeight: 44
-    },
-    '.__sender': {
+    '.__sender, .__recipient': {
       minHeight: 44
     }
-
   };
 });
 

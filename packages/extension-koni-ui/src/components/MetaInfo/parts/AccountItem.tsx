@@ -1,19 +1,21 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
+import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AvatarGroup } from '@subwallet/extension-koni-ui/components/Account';
 import { BaseAccountInfo } from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
 import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
-import { useFetchChainInfo, useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { InfoItemBase } from './types';
-import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 
 export interface AccountInfoItem extends InfoItemBase {
   address: string;
@@ -24,19 +26,23 @@ export interface AccountInfoItem extends InfoItemBase {
 }
 
 const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
-  const { accounts,originChain, address: accountAddress, className, label, name: accountName, networkPrefix: addressPrefix, valueColorSchema = 'default' } = props;
+  const { accounts, address: accountAddress, className, label, name: accountName, networkPrefix: addressPrefix, originChain, valueColorSchema = 'default' } = props;
+  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
 
   const { t } = useTranslation();
   const account = useGetAccountByAddress(accountAddress);
 
   const shortAddress = useMemo(() => {
-    const originChainInfo = originChain && useFetchChainInfo(originChain?.slug);
+    const originChainInfo = originChain?.slug ? chainInfoMap[originChain.slug] : undefined;
     const formattedAddress = originChainInfo ? _reformatAddressWithChain(accountAddress, originChainInfo) : accountAddress;
+
     return toShort(formattedAddress);
-  },[])
+  }, [accountAddress, chainInfoMap, originChain?.slug]);
+
   const name = useMemo(() => {
     return accountName || account?.name;
   }, [account?.name, accountName]);
+
   const isAll = useMemo(() => isAccountAll(accountAddress), [accountAddress]);
 
   return (

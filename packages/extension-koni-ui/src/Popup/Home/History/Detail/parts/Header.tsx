@@ -70,10 +70,6 @@ const Component: React.FC<Props> = (props: Props) => {
           )
           : (
             <MetaInfo.Transfer
-              recipientAddress={data.to}
-              recipientName={data.toName}
-              senderAddress={data.from}
-              senderName={data.fromName}
               destinationChain={{
                 slug: data.chain,
                 name: _getChainName(chainInfoMap[data.chain])
@@ -82,6 +78,10 @@ const Component: React.FC<Props> = (props: Props) => {
                 slug: data.chain,
                 name: _getChainName(chainInfoMap[data.chain])
               }}
+              recipientAddress={data.to}
+              recipientName={data.toName}
+              senderAddress={data.from}
+              senderName={data.fromName}
             />
           )
       }

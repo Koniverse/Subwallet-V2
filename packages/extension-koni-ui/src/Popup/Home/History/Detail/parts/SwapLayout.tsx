@@ -53,7 +53,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const assetFrom = assetRegistryMap[swapInfo.quote.pair.from];
   const assetTo = assetRegistryMap[swapInfo.quote.pair.to];
-  const recipientAddress = data.to || swapInfo.recipient || data.from as string;
+  const recipientAddress = data.to || swapInfo.recipient || data.from;
   const account = findAccountByAddress(accounts, recipientAddress);
 
   return (
