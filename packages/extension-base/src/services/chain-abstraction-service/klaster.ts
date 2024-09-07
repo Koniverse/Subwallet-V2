@@ -1,8 +1,28 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildMultichainReadonlyClient, buildRpcInfo, buildTokenMapping, deployment, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, rawTx } from 'klaster-sdk';
+import {
+  batchTx,
+  BiconomyV2AccountInitData,
+  BridgePlugin,
+  BridgePluginParams,
+  buildItx,
+  buildMultichainReadonlyClient,
+  buildRpcInfo,
+  buildTokenMapping,
+  deployment,
+  encodeApproveTx,
+  initKlaster,
+  klasterNodeHost,
+  KlasterSDK,
+  loadBicoV2Account,
+  MultichainClient,
+  MultichainTokenMapping, QuoteResponse,
+  rawTx
+} from 'klaster-sdk';
 import { encodeFunctionData, Hex, parseAbi } from 'viem';
+import {_ChainAsset, _ChainInfo} from "@subwallet/chain-list/types";
+import {_getContractAddressOfToken, _getEvmChainId} from "@subwallet/extension-base/services/chain-service/utils";
 
 export interface AcrossSuggestedFeeResp {
   totalRelayFee: {
@@ -68,7 +88,7 @@ function encodeAcrossCallData (data: BridgePluginParams, fees: AcrossSuggestedFe
 }
 
 export class KlasterService {
-  private sdk: KlasterSDK<BiconomyV2AccountInitData>;
+  public sdk: KlasterSDK<BiconomyV2AccountInitData>;
   private mcClient: MultichainClient;
   private mcUSDC: MultichainTokenMapping;
   private bridgePlugin: BridgePlugin;
@@ -96,16 +116,22 @@ export class KlasterService {
     ]);
 
     this.bridgePlugin = async (data: BridgePluginParams) => {
-      const feeResponse = await fetch('https://app.across.to/api/suggested-fees?' + new URLSearchParams({
+      const url = 'https://testnet.across.to/api/suggested-fees?' + new URLSearchParams({
         originChainId: data.sourceChainId.toString(),
         destinationChainId: data.destinationChainId.toString(),
         inputToken: data.sourceToken,
         outputToken: data.destinationToken,
         amount: data.amount.toString()
-      }).toString(), {
+      }).toString();
+
+      console.log('url', url);
+
+      const feeResponse = await fetch(url, {
         method: 'GET'
       })
         .then((res) => res.json()) as AcrossSuggestedFeeResp;
+
+      console.log(feeResponse);
 
       const outputAmount = data.amount - BigInt(feeResponse.totalRelayFee.total);
       const acrossApproveTx = encodeApproveTx({
@@ -136,34 +162,25 @@ export class KlasterService {
     });
   }
 
-  async getNativeBalance () {
-    console.log(this.sdk.account.uniqueAddresses);
-    const balance = await this.mcClient.getUnifiedNativeBalance({
-      account: this.sdk.account
-    });
-
-    console.log(balance);
-  }
-
-  async getBridge () {
+  async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string): Promise<QuoteResponse> {
     const res = await this.bridgePlugin({
       account: this.sdk.account,
-      amount: 101000000000000000000n,
-      sourceChainId: 1,
-      destinationChainId: 10,
-      destinationToken: '0x4200000000000000000000000000000000000006',
-      sourceToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+      amount: BigInt(value),
+      sourceChainId: _getEvmChainId(srcChain) as number,
+      destinationChainId: _getEvmChainId(destChain) as number,
+      sourceToken: _getContractAddressOfToken(srcToken) as `0x${string}`,
+      destinationToken: _getContractAddressOfToken(destToken) as `0x${string}`
     });
 
-    console.log(res);
-  }
-
-  async getUSDCBalance () {
-    const balance = await this.mcClient.getUnifiedErc20Balance({
-      tokenMapping: this.mcUSDC,
-      account: this.sdk.account
+    const iTx = buildItx({
+      steps: [res.txBatch],
+      feeTx: this.sdk.encodePaymentFee(_getEvmChainId(srcChain) as number, 'USDC')
     });
 
-    console.log(balance);
+    const quote = await this.sdk.getQuote(iTx);
+
+    console.log(quote);
+
+     return quote;
   }
 }

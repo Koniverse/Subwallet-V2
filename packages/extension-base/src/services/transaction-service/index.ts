@@ -43,6 +43,8 @@ import { isHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
+import {QuoteResponse} from "klaster-sdk";
+import { log } from 'console';
 
 export default class TransactionService {
   private readonly state: KoniState;
@@ -241,6 +243,7 @@ export default class TransactionService {
   public async handleAATransaction (transaction: SWTransactionAAInput): Promise<SWTransactionResponse> {
     const validatedTransaction: SWAATransaction = {
       transaction: transaction.transaction as UserOpBundle,
+      provider: transaction?.transaction?.userOpHash ? 'particle': 'klaster',
       chain: transaction.chain,
       chainType: transaction.chainType,
       address: transaction.address,
@@ -1241,8 +1244,7 @@ export default class TransactionService {
   private signAndSendEvmAATransaction ({ address,
     chain,
     id,
-    transaction }: SWAATransaction): TransactionEmitter {
-    const { userOp, userOpHash } = transaction;
+    transaction, provider }: SWAATransaction): TransactionEmitter {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
     const chainId = _getEvmChainId(chainInfo) || 1;
     const accountPair = keyring.getPair(address);
@@ -1251,14 +1253,32 @@ export default class TransactionService {
 
     const emitter = new EventEmitter<TransactionEventMap>();
 
-    const _payload: EvmSignatureRequest = {
-      account,
-      payload: userOpHash,
-      hashPayload: userOpHash,
-      type: 'personal_sign',
-      canSign: true,
-      id
-    };
+    let _payload: EvmSignatureRequest;
+
+    if (provider === 'particle') {
+      const { userOp, userOpHash } = transaction as UserOpBundle;
+
+      _payload = {
+        account,
+        payload: userOpHash,
+        hashPayload: userOpHash,
+        type: 'personal_sign',
+        canSign: true,
+        id
+      };
+    } else {
+      const { itxHash } = transaction as QuoteResponse;
+
+      console.log('ok', itxHash);
+      _payload = {
+        account,
+        payload: itxHash,
+        hashPayload: itxHash,
+        type: 'personal_sign',
+        canSign: true,
+        id
+      }
+    }
 
     const eventData: TransactionEventResponse = {
       id,
@@ -1274,15 +1294,20 @@ export default class TransactionService {
             throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, 'Bad signature');
           }
 
+          console.log('signature', signature);
+
           // Emit signed event
           emitter.emit('signed', eventData);
 
           // Add start info
           emitter.emit('send', eventData); // This event is needed after sending transaction with queue
 
-          userOp.signature = signature;
+          // userOp.signature = signature;
+          const result = await this.state.klasterService.sdk.execute(transaction as QuoteResponse, signature);
 
-          eventData.extrinsicHash = await ParticleAAHandler.sendSignedUserOperation(ownerAddress, chainId, userOp);
+          console.log('submitted', result);
+
+          eventData.extrinsicHash = result.itxHash;
           emitter.emit('extrinsicHash', eventData);
         } else {
           this.removeTransaction(id);

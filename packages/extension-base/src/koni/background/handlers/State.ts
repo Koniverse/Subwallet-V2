@@ -337,8 +337,8 @@ export default class KoniState {
     await this.swapService.init();
     await this.klasterService.init();
 
-    await this.klasterService.getNativeBalance();
-    // await this.klasterService.getBridge();
+    // await this.klasterService.getNativeBalance();
+    // await this.klasterService.getBridgeTx();
 
     this.onReady();
     this.onAccountAdd();
