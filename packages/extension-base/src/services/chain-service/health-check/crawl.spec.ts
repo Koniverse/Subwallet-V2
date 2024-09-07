@@ -16,7 +16,6 @@ const ALL_CHAIN = [
 ]
 
 type AssetQuery = {
-  deposit : string | null,
   name : string,
   symbol : string,
   decimals : number,
@@ -85,6 +84,9 @@ describe('test chain', () => {
       const {pallet, method, hasAssetId} = chainMap[chain];
       const assetEntries = await api.query[pallet][method].entries();
 
+      // const eDeposit =  api.consts.balances.existentialDeposit;
+      // console.log(String(eDeposit))
+
       const assets = assetEntries.map((all) => {
         // let assetId : string = '';
         // let onChainInfo : string = '';
@@ -113,7 +115,7 @@ describe('test chain', () => {
             name: assetToken.name,
             symbol: assetToken.symbol,
             decimals:  assetToken?.decimals || assetToken?.precision,
-            minAmount: assetToken?.deposit || assetToken?.existentialDeposit || assetToken?.minimalBalance,
+            minAmount:  assetToken?.existentialDeposit || assetToken?.minimalBalance,
             assetType: _AssetType.LOCAL,
             metadata: {
               assetId: assetId || undefined,
