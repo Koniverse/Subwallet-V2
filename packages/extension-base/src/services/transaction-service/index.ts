@@ -5,7 +5,7 @@ import { UserOpBundle } from '@particle-network/aa';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, EvmSignatureRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson, SmartAccountData } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
@@ -23,15 +23,17 @@ import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { Web3Transaction } from '@subwallet/extension-base/signers/types';
 import { LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
-import { _isRuntimeUpdated, anyNumberToBN, reformatAddress } from '@subwallet/extension-base/utils';
+import { _isRuntimeUpdated, anyNumberToBN, getEthereumSmartAccountOwner, reformatAddress } from '@subwallet/extension-base/utils';
 import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
+import { isParticleOP } from '@subwallet/extension-base/utils/request';
 import keyring from '@subwallet/ui-keyring';
 import { addHexPrefix } from 'ethereumjs-util';
 import { ethers, TransactionLike } from 'ethers';
 import EventEmitter from 'eventemitter3';
 import { t } from 'i18next';
+import { QuoteResponse } from 'klaster-sdk';
 import { BehaviorSubject, interval as rxjsInterval, Subscription } from 'rxjs';
 import { TransactionConfig, TransactionReceipt } from 'web3-core';
 
@@ -43,8 +45,6 @@ import { isHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
-import {QuoteResponse} from "klaster-sdk";
-import { log } from 'console';
 
 export default class TransactionService {
   private readonly state: KoniState;
@@ -242,8 +242,8 @@ export default class TransactionService {
 
   public async handleAATransaction (transaction: SWTransactionAAInput): Promise<SWTransactionResponse> {
     const validatedTransaction: SWAATransaction = {
-      transaction: transaction.transaction as UserOpBundle,
-      provider: transaction?.transaction?.userOpHash ? 'particle': 'klaster',
+      transaction: transaction.transaction,
+      provider: isParticleOP(transaction.transaction) ? 'particle' : 'klaster',
       chain: transaction.chain,
       chainType: transaction.chainType,
       address: transaction.address,
@@ -254,14 +254,16 @@ export default class TransactionService {
       createdAt: new Date().getTime(),
       updatedAt: new Date().getTime(),
       extrinsicType: transaction.extrinsicType,
-      id: transaction.id || getTransactionId(transaction.chainType, transaction.chain, false, false)
+      id: transaction.id || getTransactionId(transaction.chainType, transaction.chain, false, false),
+      errors: transaction.errors || [],
+      warnings: transaction.warnings || []
     };
 
     const emitter = this.sendAATransaction(validatedTransaction);
 
     await new Promise<void>((resolve, reject) => {
       // TODO
-      emitter.on('success', (data: TransactionEventResponse) => {
+      emitter.on('send', (data: TransactionEventResponse) => {
         validatedTransaction.id = data.id;
         // validatedTransaction.extrinsicHash = data.extrinsicHash;
         resolve();
@@ -269,7 +271,7 @@ export default class TransactionService {
 
       emitter.on('error', (data: TransactionEventResponse) => {
         if (data.errors.length > 0) {
-          // validatedTransaction.errors.push(...data.errors);
+          validatedTransaction.errors.push(...data.errors);
           resolve();
         }
       });
@@ -290,7 +292,7 @@ export default class TransactionService {
     });
 
     emitter.on('send', (data: TransactionEventResponse) => {
-      this.onSend(data);
+      // this.onSend(data);
     });
 
     emitter.on('extrinsicHash', (data: TransactionEventResponse) => {
@@ -1244,19 +1246,19 @@ export default class TransactionService {
   private signAndSendEvmAATransaction ({ address,
     chain,
     id,
-    transaction, provider }: SWAATransaction): TransactionEmitter {
+    provider, transaction }: SWAATransaction): TransactionEmitter {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
     const chainId = _getEvmChainId(chainInfo) || 1;
     const accountPair = keyring.getPair(address);
     const account: AccountJson = { address, ...accountPair.meta };
-    const ownerAddress = account.smartAccountOwner || account.address;
+    const owner = getEthereumSmartAccountOwner(address) as SmartAccountData;
 
     const emitter = new EventEmitter<TransactionEventMap>();
 
     let _payload: EvmSignatureRequest;
 
     if (provider === 'particle') {
-      const { userOp, userOpHash } = transaction as UserOpBundle;
+      const { userOpHash } = transaction as UserOpBundle;
 
       _payload = {
         account,
@@ -1277,7 +1279,7 @@ export default class TransactionService {
         type: 'personal_sign',
         canSign: true,
         id
-      }
+      };
     }
 
     const eventData: TransactionEventResponse = {
@@ -1287,7 +1289,7 @@ export default class TransactionService {
       extrinsicHash: id
     };
 
-    this.state.requestService.addConfirmation(id, 'EXTENSION_REQUEST_URL', 'evmSignatureRequest', _payload, {})
+    this.state.requestService.addConfirmation(id, EXTENSION_REQUEST_URL, 'evmSignatureRequest', _payload)
       .then(async ({ isApproved, payload: signature }) => {
         if (isApproved) {
           if (!signature) {
@@ -1302,12 +1304,24 @@ export default class TransactionService {
           // Add start info
           emitter.emit('send', eventData); // This event is needed after sending transaction with queue
 
-          // userOp.signature = signature;
-          const result = await this.state.klasterService.sdk.execute(transaction as QuoteResponse, signature);
+          if (provider === 'particle') {
+            const userOp = (transaction as UserOpBundle).userOp;
 
-          console.log('submitted', result);
+            userOp.signature = signature;
 
-          eventData.extrinsicHash = result.itxHash;
+            const result = await ParticleAAHandler.sendSignedUserOperation(chainId, owner, userOp);
+
+            console.log('submitted', result);
+
+            eventData.extrinsicHash = result;
+          } else {
+            const result = await this.state.klasterService.sdk.execute(transaction as QuoteResponse, signature);
+
+            console.log('submitted', result);
+
+            eventData.extrinsicHash = result.itxHash;
+          }
+
           emitter.emit('extrinsicHash', eventData);
         } else {
           this.removeTransaction(id);

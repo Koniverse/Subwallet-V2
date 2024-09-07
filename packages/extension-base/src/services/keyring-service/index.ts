@@ -3,8 +3,7 @@
 
 import { CurrentAccountInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
-import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
+import { ParticleAAHandler, ParticleContract } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { CurrentAccountStore } from '@subwallet/extension-base/stores';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
@@ -123,8 +122,8 @@ export class KeyringService {
       const isEthereum = isEthereumAddress(acc.address);
 
       if (isEthereum) {
-        // const smartAddress = await ParticleAAHandler.getSmartAccount(acc.address);
-        const smartAddress = await KlasterService.getSmartAccount(acc.address);
+        const smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
+        // const smartAddress = await KlasterService.getSmartAccount(acc.address);
 
         return {
           ...acc,
@@ -134,10 +133,7 @@ export class KeyringService {
             isSmartAccount: true,
             smartAccountOwner: acc.address,
             aaSdk: 'particle',
-            aaProvider: {
-              name: 'BICONOMY',
-              version: '2.0.0'
-            }
+            aaProvider: ParticleContract
           }
         };
       }
@@ -189,7 +185,7 @@ export class KeyringService {
       const isEthereum = isEthereumAddress(address);
 
       if (isEthereum) {
-        return await ParticleAAHandler.getSmartAccount(address);
+        return await ParticleAAHandler.getSmartAccount({ owner: address });
       }
 
       return address;

@@ -113,6 +113,11 @@ export interface AccountJson extends AbstractAddressJson {
   /** Account abstraction */
 }
 
+export interface SmartAccountData {
+  owner: string;
+  provider?: AccountContract;
+}
+
 export interface AddressJson extends AbstractAddressJson {
   isRecent?: boolean;
   recentChainSlugs?: string[];

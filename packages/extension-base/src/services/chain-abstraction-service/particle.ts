@@ -1,10 +1,16 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { SmartAccount, SmartAccountConfig, Transaction, UserOp, UserOpBundle } from '@particle-network/aa';
+import { AccountContract, SmartAccount, SmartAccountConfig, Transaction, UserOp, UserOpBundle } from '@particle-network/aa';
+import { SmartAccountData } from '@subwallet/extension-base/background/types';
 import { anyNumberToBN } from '@subwallet/extension-base/utils';
 import { createMockParticleProvider } from '@subwallet/extension-base/utils/mock/provider/particle';
 import { TransactionConfig } from 'web3-core';
+
+export const ParticleContract: AccountContract = {
+  name: 'BICONOMY',
+  version: '2.0.0'
+};
 
 const config: SmartAccountConfig = {
   projectId: '80d48082-7a98-41e0-8eb5-571e2e00cc7f',
@@ -43,22 +49,22 @@ const config: SmartAccountConfig = {
 };
 
 export class ParticleAAHandler {
-  static getSmartAccount = async (ownerAddress: string): Promise<string> => {
-    const provider = createMockParticleProvider(1, ownerAddress);
+  static getSmartAccount = async (account: SmartAccountData): Promise<string> => {
+    const provider = createMockParticleProvider(1, account.owner);
 
     const smartAccount = new SmartAccount(provider, config);
 
-    smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
+    smartAccount.setSmartAccountContract(account.provider || ParticleContract);
 
     return smartAccount.getAddress();
   };
 
-  static createUserOperation = async (ownerAddress: string, chainId: number, _tx: TransactionConfig): Promise<UserOpBundle> => {
-    const provider = createMockParticleProvider(chainId, ownerAddress);
+  static createUserOperation = async (chainId: number, account: SmartAccountData, _tx: TransactionConfig): Promise<UserOpBundle> => {
+    const provider = createMockParticleProvider(chainId, account.owner);
 
     const smartAccount = new SmartAccount(provider, config);
 
-    smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
+    smartAccount.setSmartAccountContract(account.provider || ParticleContract);
 
     const tx: Transaction = {
       data: _tx.data,
@@ -67,15 +73,17 @@ export class ParticleAAHandler {
       gasLimit: _tx.gas
     };
 
+    console.debug('quote', await smartAccount.getFeeQuotes(tx));
+
     return await smartAccount.buildUserOperation({ tx });
   };
 
-  static sendSignedUserOperation = async (ownerAddress: string, chainId: number, userOp: UserOp): Promise<string> => {
-    const provider = createMockParticleProvider(chainId, ownerAddress);
+  static sendSignedUserOperation = async (chainId: number, account: SmartAccountData, userOp: UserOp): Promise<string> => {
+    const provider = createMockParticleProvider(chainId, account.owner);
 
     const smartAccount = new SmartAccount(provider, config);
 
-    smartAccount.setSmartAccountContract({ name: 'BICONOMY', version: '2.0.0' });
+    smartAccount.setSmartAccountContract(account.provider || ParticleContract);
 
     return await smartAccount.sendSignedUserOperation(userOp);
   };

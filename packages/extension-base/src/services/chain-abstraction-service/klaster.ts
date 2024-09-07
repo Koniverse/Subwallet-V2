@@ -1,28 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  batchTx,
-  BiconomyV2AccountInitData,
-  BridgePlugin,
-  BridgePluginParams,
-  buildItx,
-  buildMultichainReadonlyClient,
-  buildRpcInfo,
-  buildTokenMapping,
-  deployment,
-  encodeApproveTx,
-  initKlaster,
-  klasterNodeHost,
-  KlasterSDK,
-  loadBicoV2Account,
-  MultichainClient,
-  MultichainTokenMapping, QuoteResponse,
-  rawTx
-} from 'klaster-sdk';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
+import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
+import { Abi } from 'abitype/src/abi';
+import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, buildMultichainReadonlyClient, buildRpcInfo, buildTokenMapping, deployment, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, rawTx } from 'klaster-sdk';
 import { encodeFunctionData, Hex, parseAbi } from 'viem';
-import {_ChainAsset, _ChainInfo} from "@subwallet/chain-list/types";
-import {_getContractAddressOfToken, _getEvmChainId} from "@subwallet/extension-base/services/chain-service/utils";
 
 export interface AcrossSuggestedFeeResp {
   totalRelayFee: {
@@ -54,7 +37,7 @@ function encodeAcrossCallData (data: BridgePluginParams, fees: AcrossSuggestedFe
   // @ts-ignore
   const abi = parseAbi([
     'function depositV3(address depositor, address recipient, address inputToken, address outputToken, uint256 inputAmount, uint256 outputAmount, uint256 destinationChainId, address exclusiveRelayer, uint32 quoteTimestamp, uint32 fillDeadline, uint32 exclusivityDeadline, bytes calldata message) external'
-  ]);
+  ]) as Abi;
   const outputAmount = data.amount - BigInt(fees.totalRelayFee.total);
   const fillDeadline = Math.round(Date.now() / 1000) + 300;
 
@@ -67,7 +50,6 @@ function encodeAcrossCallData (data: BridgePluginParams, fees: AcrossSuggestedFe
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     abi: abi,
     functionName: 'depositV3',
     args: [
@@ -181,6 +163,6 @@ export class KlasterService {
 
     console.log(quote);
 
-     return quote;
+    return quote;
   }
 }

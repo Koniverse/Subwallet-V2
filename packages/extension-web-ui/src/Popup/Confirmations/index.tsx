@@ -119,7 +119,7 @@ const Component = function ({ className }: Props) {
       }
     }
 
-    if (confirmation.item.isInternal && confirmation.type !== 'connectWCRequest') {
+    if (confirmation.item.isInternal && !['connectWCRequest', 'evmSignatureRequest'].includes(confirmation.type)) {
       return (
         <TransactionConfirmation
           closeAlert={closeAlert}

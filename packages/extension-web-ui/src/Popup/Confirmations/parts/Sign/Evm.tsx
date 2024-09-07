@@ -215,7 +215,7 @@ const Component: React.FC<Props> = (props: Props) => {
           setLoading(false);
         });
     }
-  }, [account.address, chainId, evmWallet, isMessage, notify, onApproveSignature, onCancel, payload.payload]);
+  }, [account.address, account.smartAccountOwner, chainId, evmWallet, isMessage, notify, onApproveSignature, onCancel, payload.payload]);
 
   const onConfirm = useCallback(() => {
     removeTransactionPersist(extrinsicType);

@@ -1,7 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AddressJson } from '@subwallet/extension-base/background/types';
+import { AccountContract } from '@particle-network/aa';
+import { AddressJson, SmartAccountData } from '@subwallet/extension-base/background/types';
 import { reformatAddress } from '@subwallet/extension-base/utils/index';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -28,12 +29,21 @@ export const convertSubjectInfoToAddresses = (subjectInfo: SubjectInfo): Address
   return Object.values(subjectInfo).map((info): AddressJson => ({ address: info.json.address, type: info.type, ...info.json.meta }));
 };
 
-export const isEthereumSmartAccountOwner = (address: string): string => {
+export const getEthereumSmartAccountOwner = (address: string): SmartAccountData | undefined => {
   try {
     const pair = keyring.getPair(address);
 
-    return pair.meta.smartAccountOwner as string || '';
+    const owner = pair.meta.smartAccountOwner;
+
+    if (owner) {
+      return {
+        owner: owner as string,
+        provider: pair.meta.aaProvider as AccountContract
+      };
+    } else {
+      return undefined;
+    }
   } catch (error) {
-    return '';
+    return undefined;
   }
 };
