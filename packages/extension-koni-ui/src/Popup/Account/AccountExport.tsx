@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountActions, AccountChainType } from '@subwallet/extension-base/types';
+import { AccountActions, AccountChainType, AccountProxyType } from '@subwallet/extension-base/types';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import AlertBox from '@subwallet/extension-koni-ui/components/Alert';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
@@ -11,11 +11,11 @@ import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useCopy from '@subwallet/extension-koni-ui/hooks/common/useCopy';
 import useFocusFormItem from '@subwallet/extension-koni-ui/hooks/form/useFocusFormItem';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { exportAccount, exportAccountMnemonic, exportAccountPrivateKey } from '@subwallet/extension-koni-ui/messaging';
+import { exportAccountBatch, exportAccountMnemonic, exportAccountPrivateKey } from '@subwallet/extension-koni-ui/messaging';
 import { PhosphorIcon, RemindBackUpSeedPhraseParamState, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
-import { KeyringPair$Json } from '@subwallet/keyring/types';
 import { BackgroundIcon, Button, Field, Form, Icon, Input, PageIcon, SettingItem, SwQRCode } from '@subwallet/react-ui';
+import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import CN from 'classnames';
 import { saveAs } from 'file-saver';
 import { CheckCircle, CopySimple, DownloadSimple, FileJs, Leaf, QrCode, Wallet } from 'phosphor-react';
@@ -51,7 +51,7 @@ interface ExportFormState {
   [FormFieldName.TYPES]: ExportType[];
 }
 
-const onExportJson = (jsonData: KeyringPair$Json, address: string): (() => void) => {
+const onExportJson = (jsonData: KeyringPairs$Json, address: string): (() => void) => {
   return () => {
     if (jsonData) {
       const blob = new Blob([JSON.stringify(jsonData)], { type: 'application/json; charset=utf-8' });
@@ -81,7 +81,6 @@ const Component: React.FC<Props> = (props: Props) => {
   const isBackToHome = useLocation().state as RemindBackUpSeedPhraseParamState;
 
   const accountProxy = useGetAccountProxyById(accountProxyId);
-  const account = useMemo(() => accountProxy?.accounts[0], [accountProxy?.accounts]);
 
   const [form] = Form.useForm<ExportFormState>();
 
@@ -95,7 +94,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const [privateKey, setPrivateKey] = useState<string>('');
   const [publicKey, setPublicKey] = useState<string>('');
-  const [jsonData, setJsonData] = useState<null | KeyringPair$Json>(null);
+  const [jsonData, setJsonData] = useState<null | KeyringPairs$Json>(null);
   const [seedPhrase, setSeedPhrase] = useState<string>('');
 
   const titleMap = useMemo((): Record<ExportType, string> => ({
@@ -192,13 +191,15 @@ const Component: React.FC<Props> = (props: Props) => {
         }
 
         if (exportTypes.includes(ExportType.JSON_FILE) && accountProxy.accountActions.includes(AccountActions.EXPORT_JSON)) {
-          exportAccount(address, password).then((res) => {
+          exportAccountBatch({ proxyIds: [accountProxy.id], password }).then((res) => {
             setJsonData(res.exportedJson);
             result.jsonFile = true;
             checkDone();
 
             if (exportSingle) {
-              onExportJson(res.exportedJson, address)();
+              const nameFile = accountProxy.accountType === AccountProxyType.UNIFIED ? accountProxy.id : address;
+
+              onExportJson(res.exportedJson, nameFile)();
             }
           }).catch((e: Error) => {
             reject(new Error(e.message));
@@ -291,10 +292,10 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [goBack]);
 
   useEffect(() => {
-    if (!accountProxy || !account) {
+    if (!accountProxy || accountProxy.accounts.length === 0) {
       goBack(DEFAULT_ROUTER_PATH, { from: 'ignoreBanner' });
     }
-  }, [account, accountProxy, goBack, navigate]);
+  }, [accountProxy, goBack, navigate]);
 
   useEffect(() => {
     if (accountProxy?.id) {
@@ -304,7 +305,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   useFocusFormItem(form, FormFieldName.PASSWORD);
 
-  if (!accountProxy || !account) {
+  if (!accountProxy || accountProxy.accounts.length === 0) {
     return null;
   }
 
@@ -468,7 +469,11 @@ const Component: React.FC<Props> = (props: Props) => {
                       <div className='qr-area'>
                         <SwQRCode
                           errorLevel='Q'
-                          logoPadding={account.chainType === AccountChainType.ETHEREUM ? 4 : 3}
+                          logoPadding={
+                            accountProxy.chainTypes.includes(AccountChainType.ETHEREUM) &&
+                          accountProxy.accountType === AccountProxyType.SOLO
+                              ? 4
+                              : 3}
                           size={264}
                           value={qrData}
                         />
@@ -513,8 +518,12 @@ const Component: React.FC<Props> = (props: Props) => {
                                 weight='fill'
                               />
                             )}
-                            name={`${account.address}.json`}
-                            onPressItem={onExportJson(jsonData, account.address)}
+                            name={`${accountProxy.id}.json`}
+                            onPressItem={onExportJson(
+                              jsonData,
+                              accountProxy.accountType === AccountProxyType.UNIFIED
+                                ? accountProxy.id
+                                : accountProxy.accounts[0].address)}
                             rightItem={(
                               <Icon
                                 className='setting-item-right-icon'

@@ -67,16 +67,6 @@ const enum StepState {
   SELECT_ACCOUNT_IMPORT = 'select_account_import'
 }
 
-const FooterContent = {
-  [StepState.UPLOAD_JSON_FILE]: 'Unlock file',
-  [StepState.SELECT_ACCOUNT_IMPORT]: 'Import {{count}} account{{s}}'
-};
-
-const TilePage = {
-  [StepState.UPLOAD_JSON_FILE]: 'Import from JSON file',
-  [StepState.SELECT_ACCOUNT_IMPORT]: 'Import {{multi}} account'
-};
-
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
 
@@ -392,6 +382,32 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     setPassword(value);
   }, [t]);
 
+  const footerContent = useMemo(() => {
+    if (stepState === StepState.UPLOAD_JSON_FILE) {
+      return t('Unlock file');
+    } else {
+      if (accountProxiesSelected.length === 0) {
+        return t('Import account');
+      } else if (accountProxiesSelected.length === 1) {
+        return t('Import 1 account');
+      } else {
+        return t(`Import ${accountProxiesSelected.length} accounts`);
+      }
+    }
+  }, [accountProxiesSelected.length, stepState, t]);
+
+  const titlePage = useMemo(() => {
+    if (stepState === StepState.UPLOAD_JSON_FILE) {
+      return t('Import from JSON file');
+    } else {
+      if (accountProxies.length <= 1) {
+        return t('Import account');
+      } else {
+        return t('Import multi account');
+      }
+    }
+  }, [accountProxies.length, stepState, t]);
+
   useEffect(() => {
     if (requirePassword) {
       focusPassword();
@@ -411,10 +427,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       <Layout.WithSubHeaderOnly
         onBack={onBack_}
         rightFooterButton={{
-          children: t<string>(FooterContent[stepState], {
-            replace: { count: accountProxiesSelected.length > 0 ? accountProxiesSelected.length : '',
-              s: accountProxiesSelected.length > 1 ? 's' : '' }
-          }),
+          children: footerContent,
           icon: FooterIcon,
           onClick: onSubmit,
           disabled: disableSubmit,
@@ -426,7 +439,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             onClick: goHome
           }
         ]}
-        title={t<string>(TilePage[stepState], { replace: { multi: accountProxies.length > 1 ? 'multi' : '' } })}
+        title={titlePage}
       >
         <div className={CN('container')}>
           { stepState === StepState.UPLOAD_JSON_FILE &&
