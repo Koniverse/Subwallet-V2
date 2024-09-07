@@ -91,7 +91,7 @@ const Component: React.FC<Props> = (props: Props) => {
           </>
         }
         id={modalId}
-        onCancel={closable ? (onCancel || onDefaultCancel) : undefined}
+        onCancel={closable === false ? undefined : (onCancel || onDefaultCancel)}
         title={title}
       >
         <div className='__modal-content'>

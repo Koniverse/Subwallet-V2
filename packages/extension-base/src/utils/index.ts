@@ -1,12 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { CrowdloanParaState, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { getRandomIpfsGateway, SUBWALLET_IPFS } from '@subwallet/extension-base/koni/api/nft/config';
+import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { reformatAddress } from '@subwallet/extension-base/utils/account';
-import { decodeAddress, encodeAddress } from '@subwallet/keyring';
+import { decodeAddress, encodeAddress, isTonAddress } from '@subwallet/keyring';
 import { t } from 'i18next';
 
 import { assert, BN, hexToU8a, isHex } from '@polkadot/util';
@@ -288,6 +290,22 @@ export function isSameAddress (address1: string, address2: string) {
   }
 
   return reformatAddress(address1, 0) === reformatAddress(address2, 0); // TODO: maybe there's a better way
+}
+
+export function isSameAddressType (address1: string, address2: string) {
+  const isSameEvmAddress = isEthereumAddress(address1) && isEthereumAddress(address2);
+  const isSameTonAddress = isTonAddress(address1) && isTonAddress(address2);
+  const isSameSubstrateAddress = !isEthereumAddress(address1) && !isTonAddress(address1) && !isEthereumAddress(address2) && !isTonAddress(address2); // todo: need isSubstrateAddress util function to check exactly
+
+  return isSameEvmAddress || isSameTonAddress || isSameSubstrateAddress;
+}
+
+export function isAddressAndChainCompatible (address: string, chain: _ChainInfo) {
+  const isEvmCompatible = isEthereumAddress(address) && _isChainEvmCompatible(chain);
+  const isTonCompatible = isTonAddress(address) && _isChainTonCompatible(chain);
+  const isSubstrateCompatible = !isEthereumAddress(address) && !isTonAddress(address) && _isChainSubstrateCompatible(chain); // todo: need isSubstrateAddress util function to check exactly
+
+  return isEvmCompatible || isSubstrateCompatible || isTonCompatible;
 }
 
 export function getDomainFromUrl (url: string): string {

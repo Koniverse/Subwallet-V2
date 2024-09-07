@@ -38,6 +38,12 @@ export class AccountSecretHandler extends AccountBaseHandler {
 
       }
 
+      const nameExists = this.state.checkNameExists(name);
+
+      if (nameExists) {
+        throw Error(t('Account name already exists'));
+      }
+
       const meta: KeyringPair$Meta = {
         name,
         isExternal: true,
@@ -165,6 +171,10 @@ export class AccountSecretHandler extends AccountBaseHandler {
       const exists = this.state.checkAddressExists([_address]);
 
       assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+
+      const nameExists = this.state.checkNameExists(name);
+
+      assert(!nameExists, t('Account name already exists'));
 
       const modifyPairs = this.state.modifyPairs;
 

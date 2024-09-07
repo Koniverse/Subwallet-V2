@@ -14,11 +14,12 @@ import AccountProxyAvatarGroup from './AccountProxyAvatarGroup';
 
 type Props = ThemeProps & {
   isSelected?: boolean;
-  onClick?: VoidFunction
+  onClick?: VoidFunction;
+  showUnSelectedIcon?: boolean;
 };
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { className, isSelected, onClick } = props;
+  const { className, isSelected, onClick, showUnSelectedIcon } = props;
   const { t } = useTranslation();
 
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
@@ -35,10 +36,10 @@ function Component (props: Props): React.ReactElement<Props> {
         {t('All accounts')}
       </div>
       <div className='__item-right-part'>
-        {isSelected && (
+        {(showUnSelectedIcon || isSelected) && (
           <div className='__checked-icon-wrapper'>
             <Icon
-              iconColor={token.colorSuccess}
+              iconColor={isSelected ? token.colorSuccess : token.colorTextLight4}
               phosphorIcon={CheckCircle}
               size='sm'
               weight='fill'

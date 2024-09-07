@@ -7,8 +7,8 @@ import { TonApi } from '@subwallet/extension-base/services/chain-service/handler
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage, storeMessageRelaxed } from '@ton/core';
 import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV4 } from '@ton/ton';
+import TonWeb from 'tonweb';
 import nacl from 'tweetnacl';
-import TonWeb from "tonweb";
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
   const masterAddress = Address.parse(contractAddress);
@@ -131,5 +131,6 @@ export function getWalletQueryId () {
 
 export function isBounceableAddress (address: string) {
   const addr = new TonWeb.Address(address);
+
   return !addr.isUserFriendly || addr.isBounceable;
 }

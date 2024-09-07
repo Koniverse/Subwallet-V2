@@ -138,6 +138,9 @@ export default class TonRequestHandler {
       this.#requestService.updateIconV2(this.#requestService.numAllRequests === 0);
       resolver.resolve(result);
     }
+
+    // TODO: Review later
+    return true;
   }
 
   private async decorateResult<T extends ConfirmationTypeTon> (t: T, request: ConfirmationDefinitionsTon[T][0], result: ConfirmationDefinitionsTon[T][1]) {

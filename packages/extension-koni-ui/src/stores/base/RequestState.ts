@@ -21,10 +21,10 @@ const initialState: RequestState = {
   // Type of confirmation requets
   addNetworkRequest: {},
   addTokenRequest: {},
-  switchNetworkRequest: {},
   evmSignatureRequest: {},
   evmSendTransactionRequest: {},
   evmWatchTransactionRequest: {},
+  errorConnectNetwork: {},
 
   tonSignatureRequest: {},
   tonSendTransactionRequest: {},
@@ -43,10 +43,10 @@ export const CONFIRMATIONS_FIELDS: Array<keyof RequestState> = [
   'signingRequest',
   'addNetworkRequest',
   'addTokenRequest',
-  'switchNetworkRequest',
   'evmSignatureRequest',
   'evmSendTransactionRequest',
   'evmWatchTransactionRequest',
+  'errorConnectNetwork',
   'tonSignatureRequest',
   'tonSendTransactionRequest',
   'tonWatchTransactionRequest',
