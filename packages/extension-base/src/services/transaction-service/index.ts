@@ -290,7 +290,8 @@ export default class TransactionService {
     });
 
     emitter.on('send', (data: TransactionEventResponse) => {
-      this.onSend(data);
+      console.log('onSend', data);
+      // this.onSend(data);
     });
 
     emitter.on('extrinsicHash', (data: TransactionEventResponse) => {
@@ -1284,7 +1285,8 @@ export default class TransactionService {
       id,
       errors: [],
       warnings: [],
-      extrinsicHash: id
+      extrinsicHash: id,
+      eventLogs: []
     };
 
     this.state.requestService.addConfirmation(id, 'EXTENSION_REQUEST_URL', 'evmSignatureRequest', _payload, {})
