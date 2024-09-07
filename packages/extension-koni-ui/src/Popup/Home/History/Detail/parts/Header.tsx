@@ -74,6 +74,14 @@ const Component: React.FC<Props> = (props: Props) => {
               recipientName={data.toName}
               senderAddress={data.from}
               senderName={data.fromName}
+              destinationChain={{
+                slug: data.chain,
+                name: _getChainName(chainInfoMap[data.chain])
+              }}
+              originChain={{
+                slug: data.chain,
+                name: _getChainName(chainInfoMap[data.chain])
+              }}
             />
           )
       }
