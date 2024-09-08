@@ -23,7 +23,6 @@ import {
     rawTx
 } from 'klaster-sdk';
 import { encodeAcrossCallData, getAcrossSuggestedFee } from './helper/tx-encoder';
-import { log } from "console";
 
 export interface AcrossSuggestedFeeResp {
   totalRelayFee: {
@@ -82,12 +81,10 @@ export class KlasterService {
     this.bridgePlugin = async (data: BridgePluginParams) => {
       const feeResponse = await getAcrossSuggestedFee(data);
 
-      console.log(feeResponse);
-
       const outputAmount = data.amount - BigInt(feeResponse.totalRelayFee.total);
       const acrossApproveTx = encodeApproveTx({
         tokenAddress: data.sourceToken,
-        amount: outputAmount,
+        amount: outputAmount * 10n,
         recipient: feeResponse.spokePoolAddress
       });
 
