@@ -109,7 +109,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const nameExists = this.state.checkNameExists(_name);
 
         if (nameExists) {
-          const newName = _name.concat(' ').concat(generateRandomString());
+          const newName = _name.concat(' - ').concat(generateRandomString());
 
           keyring.saveAccountMeta(pair, { ...pair.meta, name: newName });
         }
@@ -196,7 +196,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
             const name = accountProxy.name;
 
             if (this.state.checkNameExists(name)) {
-              proxiesChangeName[proxyId] = name.concat(' ').concat(generateRandomString());
+              proxiesChangeName[proxyId] = name.concat(' - ').concat(generateRandomString());
             }
 
             _exists = exists;
