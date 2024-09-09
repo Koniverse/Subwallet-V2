@@ -28,7 +28,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountAddressItemType, FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenSelectorItemType } from '@subwallet/extension-koni-ui/types/field';
-import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, findAccountByAddress, getChainsByAllAccountType, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, BackgroundIcon, Button, Form, Icon, Logo, ModalContext, Number, Tooltip } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -177,12 +177,13 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   const fromTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     const rawTokenSlugs = Object.keys(fromAndToTokenMap);
+    const _chainInfoMap = isAllAccount ? getChainsByAllAccountType(accountProxies, targetAccountProxy.chainTypes, chainInfoMap).chainInfo : chainInfoMap;
     const targetTokenSlugs: string[] = [];
 
     (() => {
       // defaultSlug is just TokenSlug
       if (defaultSlug && rawTokenSlugs.includes(defaultSlug)) {
-        if (isTokenCompatibleWithAccountChainTypes(defaultSlug, targetAccountProxy.chainTypes, chainInfoMap)) {
+        if (isTokenCompatibleWithAccountChainTypes(defaultSlug, targetAccountProxy.chainTypes, _chainInfoMap)) {
           targetTokenSlugs.push(defaultSlug);
         }
 
@@ -198,14 +199,14 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
         if (defaultSlug) {
           // defaultSlug is MultiChainAssetSlug
-          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
+          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, _chainInfoMap)) {
             targetTokenSlugs.push(rts);
           }
 
           return;
         }
 
-        if (isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
+        if (isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, _chainInfoMap)) {
           targetTokenSlugs.push(rts);
         }
       });
@@ -216,7 +217,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     }
 
     return [];
-  }, [assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, targetAccountProxy.chainTypes]);
+  }, [accountProxies, assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, isAllAccount, targetAccountProxy.chainTypes]);
 
   const toTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     return getTokenSelectorItem(fromAndToTokenMap[fromTokenSlugValue] || [], assetRegistryMap);

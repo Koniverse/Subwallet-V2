@@ -3,7 +3,7 @@
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
 import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountChainType } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 
 export const findChainInfoByGenesisHash = (chainMap: Record<string, _ChainInfo>, genesisHash?: string): _ChainInfo | null => {
   if (!genesisHash) {
@@ -73,4 +73,63 @@ export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>
 
     return result;
   }
+};
+
+// Note : Use this function when need filter all has only special chains
+interface ChainSpecialFilteredRecord {
+  slugs: string[];
+  chainInfo: Record<string, _ChainInfo>
+}
+
+export const getChainsByAllAccountType = (accountProxies: AccountProxy[], chainTypes: AccountChainType[], _chainInfoMap: Record<string, _ChainInfo>, specialChain?: string): ChainSpecialFilteredRecord => {
+  const specialChainRecord: Record<AccountChainType, string[]> = {} as Record<AccountChainType, string[]>;
+  const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
+
+  for (const proxy of accountProxies) {
+    if (proxy.specialChain) {
+      specialChainRecord[proxy.chainTypes[0]] = [...specialChainRecord[proxy.chainTypes[0]] || [], proxy.specialChain];
+    } else {
+      proxy.chainTypes.forEach((chainType) => {
+        specialChainRecord[chainType] = ['*'];
+      });
+
+      if (proxy.accountType === AccountProxyType.UNIFIED) {
+        break;
+      }
+    }
+  }
+
+  const result: ChainSpecialFilteredRecord = {
+    slugs: [],
+    chainInfo: {}
+  };
+
+  if (!specialChain) {
+    Object.values(chainInfoMap).forEach((chainInfo) => {
+      const isAllowed = chainTypes.some((chainType) => {
+        const specialChains = specialChainRecord[chainType];
+
+        return (specialChains.includes('*') || specialChains.includes(chainInfo.slug)) && isChainInfoAccordantAccountChainType(chainInfo, chainType);
+      });
+
+      if (isAllowed) {
+        result.slugs.push(chainInfo.slug);
+        result.chainInfo[chainInfo.slug] = chainInfo;
+      }
+    });
+  } else {
+    result.slugs = Object.keys(chainInfoMap).filter((chain) => {
+      if (specialChain === chain) {
+        const chainInfo = chainInfoMap[chain];
+
+        result.chainInfo[chainInfo.slug] = chainInfo;
+
+        return true;
+      }
+
+      return false;
+    });
+  }
+
+  return result;
 };
