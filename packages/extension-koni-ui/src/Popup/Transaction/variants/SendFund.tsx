@@ -3,19 +3,19 @@
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
+import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
 import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
-import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
-import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
+import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -41,6 +41,11 @@ type ComponentProps = {
   className?: string;
   targetAccountProxy: AccountProxy;
 };
+
+interface TransferOptions {
+  isTransferAll: boolean;
+  isTransferBounceable: boolean;
+}
 
 function getTokenItems (
   accountProxy: AccountProxy,
@@ -159,15 +164,20 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   const [isBalanceReady, setIsBalanceReady] = useState(true);
   const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
+  const [warnings, setWarnings] = useState<TransactionWarning[]>([]);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
-  const handleTransferAll = useCallback((value: boolean) => {
-    setForceUpdateMaxValue({});
-    setIsTransferAll(value);
+  const handleWarning = useCallback((warnings: TransactionWarning[]) => {
+    if (warnings.some((w) => w.warningType === BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT)) {
+      setForceUpdateMaxValue({});
+      setIsTransferAll(true);
+    }
+
+    setWarnings(warnings);
   }, []);
 
-  const { onError, onSuccess } = useHandleSubmitMultiTransaction(dispatchProcessState, handleTransferAll);
+  const { onError, onSuccess } = useHandleSubmitMultiTransaction(dispatchProcessState, handleWarning);
 
   const destChainItems = useMemo<ChainItemType[]>(() => {
     return getTokenAvailableDestinations(assetValue, xcmRefMap, chainInfoMap);
@@ -377,7 +387,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
     return false;
   }, [accounts, assetRegistry, notification, t]);
 
-  const handleBasicSubmit = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
+  const handleBasicSubmit = useCallback((values: TransferParams, options: TransferOptions): Promise<SWTransactionResponse> => {
     const { asset, chain, destChain, from: _from, to, value } = values;
 
     let sendPromise: Promise<SWTransactionResponse>;
@@ -394,7 +404,8 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
         to: to,
         tokenSlug: asset,
         value: value,
-        transferAll: isTransferAll
+        transferAll: options.isTransferAll,
+        transferBounceable: options.isTransferBounceable
       });
     } else {
       // Make cross chain transfer
@@ -405,12 +416,13 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
         tokenSlug: asset,
         to,
         value,
-        transferAll: isTransferAll
+        transferAll: options.isTransferAll,
+        transferBounceable: options.isTransferBounceable
       });
     }
 
     return sendPromise;
-  }, [chainInfoMap, isTransferAll]);
+  }, [chainInfoMap]);
 
   // todo: must refactor later, temporary solution to support SnowBridge
   const handleSnowBridgeSpendingApproval = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
@@ -426,7 +438,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   }, [assetRegistry]);
 
   // Submit transaction
-  const doSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
+  const doSubmit = useCallback((values: TransferParams, options: TransferOptions) => {
     if (isShowWarningOnSubmit(values)) {
       return;
     }
@@ -456,7 +468,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           return await submitData(step + 1);
         } else {
           const stepType = processState.steps[step].type;
-          const submitPromise: Promise<SWTransactionResponse> | undefined = stepType === CommonStepType.TOKEN_APPROVAL ? handleSnowBridgeSpendingApproval(values) : handleBasicSubmit(values);
+          const submitPromise: Promise<SWTransactionResponse> | undefined = stepType === CommonStepType.TOKEN_APPROVAL ? handleSnowBridgeSpendingApproval(values) : handleBasicSubmit(values, options);
 
           const rs = await submitPromise;
           const success = onSuccess(isLastStep, needRollback)(rs);
@@ -493,46 +505,76 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   }, [maxTransfer]);
 
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
-    if (values.chain !== values.destChain) {
-      const originChainInfo = chainInfoMap[values.chain];
-      const destChainInfo = chainInfoMap[values.destChain];
+    const options: TransferOptions = {
+      isTransferAll: false,
+      isTransferBounceable: false
+    };
 
-      if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
-        openAlert({
-          type: NotificationType.WARNING,
-          content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo)),
-          title: t('Pay attention!'),
-          okButton: {
-            text: t('Continue'),
-            onClick: () => {
-              closeAlert();
-              doSubmit(values);
+    const _doSubmit = () => {
+      if (values.chain !== values.destChain) {
+        const originChainInfo = chainInfoMap[values.chain];
+        const destChainInfo = chainInfoMap[values.destChain];
+
+        if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
+          openAlert({
+            type: NotificationType.WARNING,
+            content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo)),
+            title: t('Pay attention!'),
+            okButton: {
+              text: t('Continue'),
+              onClick: () => {
+                closeAlert();
+                doSubmit(values, options);
+              }
+            },
+            cancelButton: {
+              text: t('Cancel'),
+              onClick: closeAlert
             }
-          },
-          cancelButton: {
-            text: t('Cancel'),
-            onClick: closeAlert
-          }
-        });
+          });
 
-        return;
+          return;
+        }
       }
-    }
 
-    if (_isNativeToken(assetInfo)) {
-      const minAmount = _getTokenMinAmount(assetInfo);
-      const bnMinAmount = new BN(minAmount);
+      if (_isNativeToken(assetInfo)) {
+        const minAmount = _getTokenMinAmount(assetInfo);
+        const bnMinAmount = new BN(minAmount);
 
-      if (bnMinAmount.gt(BN_ZERO) && isTransferAll && values.chain === values.destChain) {
+        if (bnMinAmount.gt(BN_ZERO) && isTransferAll && values.chain === values.destChain) {
+          openAlert({
+            type: NotificationType.WARNING,
+            content: t('Transferring all will remove all assets on this network. Are you sure?'),
+            title: t('Pay attention!'),
+            okButton: {
+              text: t('Transfer'),
+              onClick: () => {
+                closeAlert();
+                options.isTransferAll = true;
+                _doSubmit();
+              }
+            },
+            cancelButton: {
+              text: t('Cancel'),
+              onClick: closeAlert
+            }
+          });
+
+          return;
+        }
+      }
+
+      if (warnings.some((w) => w.warningType === BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS) && !options.isTransferBounceable) {
         openAlert({
           type: NotificationType.WARNING,
-          content: t('Transferring all will remove all assets on this network. Are you sure?'),
+          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
           title: t('Pay attention!'),
           okButton: {
             text: t('Transfer'),
             onClick: () => {
               closeAlert();
-              doSubmit(values);
+              options.isTransferBounceable = true;
+              _doSubmit();
             }
           },
           cancelButton: {
@@ -543,10 +585,12 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
         return;
       }
-    }
 
-    doSubmit(values);
-  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
+      doSubmit(values, options);
+    };
+
+    _doSubmit();
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t, warnings]);
 
   // todo: recheck with ledger account
   useEffect(() => {
