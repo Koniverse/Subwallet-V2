@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Layout } from '@subwallet/extension-koni-ui/components';
+import {Layout, RemindUpgradeUnifiedAccount} from '@subwallet/extension-koni-ui/components';
 import { GlobalSearchTokenModal } from '@subwallet/extension-koni-ui/components/Modal/GlobalSearchTokenModal';
 import RemindUpgradeFirefoxVersion from '@subwallet/extension-koni-ui/components/Modal/RemindUpgradeFirefoxVersion';
 import { GeneralTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/GeneralTermModal';
@@ -130,6 +130,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             <Outlet />
             <GeneralTermModal onOk={onAfterConfirmTermModal} />
             <RemindUpgradeFirefoxVersion />
+            <RemindUpgradeUnifiedAccount />
           </Layout.Home>
         </div>
       </HomeContext.Provider>
