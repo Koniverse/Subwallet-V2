@@ -31,41 +31,50 @@ type AssetQuery = {
   }
 }
 
+type AssetsAsset = {
+  supply: number,
+  deposit: number,
+  minBalance: number,
+  isSufficient: boolean,
+  accounts: number
+}
+
 interface PalletMethod {
   pallet : 'assets'|'assetRegistry'|'assetManager',
   method : 'metadata'|'assetMetadatas'|'assets',
+  useMethodAsset: boolean,
   hasAssetId : boolean
 }
 
 const chainMap : Record<string , PalletMethod> = {
-  astar : {pallet: 'assets', method:'metadata', hasAssetId : true},
-  calamari: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  parallel: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  darwinia2: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  crabParachain: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  pangolin: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  statemint: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  moonriver: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  shiden: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  moonbeam: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  statemine: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  liberland: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  dentnet: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  phala: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  crust: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  dbcchain: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  rococo_assethub: {pallet: 'assets', method:'metadata', hasAssetId : true},
-  hydradx_main: {pallet: 'assetRegistry', method:'assets', hasAssetId : true},
-  hydradx_rococo: {pallet: 'assetRegistry', method:'assets', hasAssetId : true},
-  acala: {pallet: 'assetRegistry', method:'assetMetadatas', hasAssetId : false},
-  bifrost: {pallet: 'assetRegistry', method:'assetMetadatas', hasAssetId : false},
-  karura: {pallet: 'assetRegistry', method:'assetMetadatas', hasAssetId : false},
-  interlay: {pallet: 'assetRegistry', method:'metadata', hasAssetId : false},
-  kintsugi: {pallet: 'assetRegistry', method:'metadata', hasAssetId : false},
-  amplitude: {pallet: 'assetRegistry', method:'metadata', hasAssetId : false},
-  mangatax_para: {pallet: 'assetRegistry', method:'metadata', hasAssetId : false},
-  pendulum: {pallet: 'assetRegistry', method:'metadata', hasAssetId : false},
-  pioneer: {pallet: 'assetManager', method:'assetMetadatas', hasAssetId : false},
+  astar : {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  calamari: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  parallel: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  darwinia2: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  crabParachain: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  pangolin: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  statemint: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  moonriver: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  shiden: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  moonbeam: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  statemine: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  liberland: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  dentnet: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  phala: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  crust: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  dbcchain: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  rococo_assethub: {pallet: 'assets', method:'metadata',useMethodAsset: true, hasAssetId : true},
+  hydradx_main: {pallet: 'assetRegistry', method:'assets',useMethodAsset: false, hasAssetId : true},
+  hydradx_rococo: {pallet: 'assetRegistry', method:'assets',useMethodAsset: false, hasAssetId : true},
+  acala: {pallet: 'assetRegistry', method:'assetMetadatas',useMethodAsset: false, hasAssetId : false},
+  bifrost: {pallet: 'assetRegistry', method:'assetMetadatas',useMethodAsset: false, hasAssetId : false},
+  karura: {pallet: 'assetRegistry', method:'assetMetadatas',useMethodAsset: false, hasAssetId : false},
+  interlay: {pallet: 'assetRegistry', method:'metadata',useMethodAsset: false, hasAssetId : false},
+  kintsugi: {pallet: 'assetRegistry', method:'metadata',useMethodAsset: false, hasAssetId : false},
+  amplitude: {pallet: 'assetRegistry', method:'metadata',useMethodAsset: false, hasAssetId : false},
+  mangatax_para: {pallet: 'assetRegistry', method:'metadata',useMethodAsset: false, hasAssetId : false},
+  pendulum: {pallet: 'assetRegistry', method:'metadata',useMethodAsset: false, hasAssetId : false},
+  pioneer: {pallet: 'assetManager', method:'assetMetadatas',useMethodAsset: false, hasAssetId : false},
 }
 
 describe('test chain', () => {
@@ -81,30 +90,42 @@ describe('test chain', () => {
       const wsProvider = new WsProvider(provider);
       const api = await ApiPromise.create({provider: wsProvider, noInitWarn: true});
 
-      const {pallet, method, hasAssetId} = chainMap[chain];
+      const {pallet, method, useMethodAsset, hasAssetId} = chainMap[chain];
       const assetEntries = await api.query[pallet][method].entries();
 
-      // const eDeposit =  api.consts.balances.existentialDeposit;
-      // console.log(String(eDeposit))
+      if(useMethodAsset) {
+        const assetEntry = await api.query[pallet]['asset'].entries();
+        const assetAsset = assetEntry.map((all) =>{
+          const token = all[1].toHuman() as unknown as AssetsAsset;
+          console.log(token.minBalance);
+        })
+        console.log(assetAsset)
+      }else {return}
+
+      // function remove(id : string){
+      //   let numstr = id.replace(/,/g, "")
+      //   return Number(numstr)
+      // }
 
       const assets = assetEntries.map((all) => {
-        // let assetId : string = '';
-        // let onChainInfo : string = '';
-        //
-        // if(hasAssetId){
-        //   assetId = JSON.stringify(all[0].toHuman());
-        // }else{
-        //   onChainInfo = JSON.stringify(all[0].toHuman());
-        // }
+        let assetId : string = '';
+        let onChainInfo : string = '';
+        // let minAmount : number = 0;
 
-        let assetId : string | null = '';
-        let onChainInfo : object | null = {};
-
-        if (hasAssetId){
-          assetId = all[0].toHuman()[0];
-        }else {
-          onChainInfo = all[0].toHuman()[0];
+        if(hasAssetId){
+          assetId = JSON.stringify(all[0].toHuman());
+        }else{
+          onChainInfo = JSON.stringify(all[0].toHuman());
         }
+
+        // let assetId : string | null = '';
+        // let onChainInfo : object | null = {};
+        //
+        // if (hasAssetId){
+        //   assetId = all[0].toHuman()[0];
+        // }else {
+        //   onChainInfo = all[0].toHuman()[0];
+        // }
         // console.log(all[0].toHuman()[0])
 
         const assetToken = all[1].toHuman() as unknown as AssetQuery;
@@ -115,7 +136,7 @@ describe('test chain', () => {
             name: assetToken.name,
             symbol: assetToken.symbol,
             decimals:  assetToken?.decimals || assetToken?.precision,
-            minAmount:  assetToken?.existentialDeposit || assetToken?.minimalBalance,
+            minAmount:  assetToken?.existentialDeposit || assetToken?.minimalBalance ,
             assetType: _AssetType.LOCAL,
             metadata: {
               assetId: assetId || undefined,
