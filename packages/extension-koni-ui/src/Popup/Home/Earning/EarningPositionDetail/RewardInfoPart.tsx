@@ -5,6 +5,7 @@ import { _ChainAsset } from '@subwallet/chain-list/types';
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { EarningRewardHistoryItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { isSameAddress } from '@subwallet/extension-base/utils';
 import { CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { ASTAR_PORTAL_URL, BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation, useYieldRewardTotal } from '@subwallet/extension-koni-ui/hooks';
@@ -36,7 +37,7 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
   const navigate = useNavigate();
 
   const { slug, type } = compound;
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   const [, setClaimRewardStorage] = useLocalStorage(CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS);
@@ -95,14 +96,15 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
   }, [type, isDAppStaking, total, setClaimRewardStorage, slug, transactionChainValue, transactionFromValue, navigate, openAlert, t, closeAlert]);
 
   const onClickViewExplore = useCallback(() => {
-    if (currentAccount) {
+    if (currentAccountProxy && currentAccountProxy.accounts.length > 0) {
       const subscanSlug = chainInfoMap[compound.chain]?.extraInfo?.subscanSlug;
+      const address = currentAccountProxy.accounts.find((account) => isSameAddress(account.address, compound.address))?.address;
 
-      if (subscanSlug) {
-        openInNewTab(`https://${subscanSlug}.subscan.io/account/${currentAccount.address}?tab=reward`)();
+      if (subscanSlug && address) {
+        openInNewTab(`https://${subscanSlug}.subscan.io/account/${address}?tab=reward`)();
       }
     }
-  }, [chainInfoMap, compound.chain, currentAccount]);
+  }, [chainInfoMap, compound.address, compound.chain, currentAccountProxy]);
 
   return (
     <div

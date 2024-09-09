@@ -1,14 +1,18 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
+import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AvatarGroup } from '@subwallet/extension-koni-ui/components/Account';
 import { BaseAccountInfo } from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
 import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
-import { useGetAccountByAddress, useSelector } from '@subwallet/extension-koni-ui/hooks';
-import { findNetworkJsonByGenesisHash, isAccountAll, reformatAddress, toShort } from '@subwallet/extension-koni-ui/utils';
+import { useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
+import { isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { InfoItemBase } from './types';
@@ -18,40 +22,28 @@ export interface AccountInfoItem extends InfoItemBase {
   name?: string;
   networkPrefix?: number;
   accounts?: BaseAccountInfo[];
+  originChain?: _ChainInfo;
 }
 
 const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
-  const { accounts, address: accountAddress, className, label, name: accountName, networkPrefix: addressPrefix, valueColorSchema = 'default' } = props;
+  const { accounts, address: accountAddress, className, label, name: accountName, networkPrefix: addressPrefix, originChain, valueColorSchema = 'default' } = props;
+  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
 
   const { t } = useTranslation();
-
-  const { chainInfoMap } = useSelector((state) => state.chainStore);
-
   const account = useGetAccountByAddress(accountAddress);
+
+  const shortAddress = useMemo(() => {
+    const originChainInfo = originChain?.slug ? chainInfoMap[originChain.slug] : undefined;
+    const formattedAddress = originChainInfo ? _reformatAddressWithChain(accountAddress, originChainInfo) : accountAddress;
+
+    return toShort(formattedAddress);
+  }, [accountAddress, chainInfoMap, originChain?.slug]);
 
   const name = useMemo(() => {
     return accountName || account?.name;
   }, [account?.name, accountName]);
 
-  const address = useMemo(() => {
-    let addPrefix = 42;
-
-    if (addressPrefix !== undefined) {
-      addPrefix = addressPrefix;
-    }
-
-    if (account?.genesisHash) {
-      const network = findNetworkJsonByGenesisHash(chainInfoMap, account.genesisHash);
-
-      if (network) {
-        addPrefix = network.substrateInfo?.addressPrefix ?? addPrefix;
-      }
-    }
-
-    return reformatAddress(accountAddress, addPrefix);
-  }, [account, accountAddress, addressPrefix, chainInfoMap]);
-
-  const isAll = useMemo(() => isAccountAll(address), [address]);
+  const isAll = useMemo(() => isAccountAll(accountAddress), [accountAddress]);
 
   return (
     <div className={CN(className, '__row -type-account')}>
@@ -81,10 +73,11 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
                     className={'__account-avatar'}
                     identPrefix={addressPrefix}
                     size={24}
-                    value={address}
+                    value={accountAddress}
                   />
                   <div className={'__account-name ml-xs'}>
-                    {name || toShort(address)}
+                    <div className={'__account-item-name'}>{name}</div>
+                    <div className={'__account-item-address'}>{shortAddress}</div>
                   </div>
                 </>
               )
