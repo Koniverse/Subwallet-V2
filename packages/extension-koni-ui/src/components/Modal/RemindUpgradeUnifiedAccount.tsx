@@ -1,26 +1,21 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-  EXTENSION_VERSION,
-  REMIND_UPGRADE_UNIFIED_ACCOUNT,
-  UPGRADE_UNIFIED_ACCOUNT
-} from '@subwallet/extension-koni-ui/constants';
+import { EXTENSION_VERSION, REMIND_UPGRADE_UNIFIED_ACCOUNT, UPGRADE_UNIFIED_ACCOUNT, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import {Theme} from '@subwallet/extension-koni-ui/themes';
-import {ThemeProps} from '@subwallet/extension-koni-ui/types';
-import {Button, ModalContext, PageIcon, SwModal} from '@subwallet/react-ui';
+import { Theme } from '@subwallet/extension-koni-ui/themes';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { Button, ModalContext, PageIcon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
-import {ShieldWarning} from 'phosphor-react';
-import React, {useCallback, useContext, useEffect, useMemo} from 'react';
-import styled, {useTheme} from 'styled-components';
-import {useLocalStorage} from "usehooks-ts";
+import { ShieldWarning } from 'phosphor-react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
+import styled, { useTheme } from 'styled-components';
+import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
 
 const RemindUpdateUnifiedAccountModalId = REMIND_UPGRADE_UNIFIED_ACCOUNT;
-const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-guide/account-management/switch-between-accounts-and-change-account-name#change-your-account-name'
-const versionToCheck = '1.2.27';
+const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-guide/account-management/switch-between-accounts-and-change-account-name#change-your-account-name';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
@@ -34,8 +29,9 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   }, [inactiveModal, setIsUpdatedUnifiedAccount]);
 
   const isNeedRemindUnifiedAccount = useMemo(() => {
-    const currentParts = versionToCheck.split('.').map(Number);
+    const currentParts = VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT.split('.').map(Number);
     const nextParts = EXTENSION_VERSION.split('.').map(Number);
+
     for (let i = 0; i < currentParts.length; i++) {
       if (nextParts[i] > currentParts[i]) {
         return true;
@@ -43,16 +39,15 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     }
 
     return false;
-  },[])
+  }, []);
 
   useEffect(() => {
     if (isNeedRemindUnifiedAccount && !isUpdatedUnifiedAccount) {
-      activeModal(RemindUpdateUnifiedAccountModalId)
+      activeModal(RemindUpdateUnifiedAccountModalId);
     } else {
       inactiveModal(RemindUpdateUnifiedAccountModalId);
     }
-
-  }, [inactiveModal, isUpdatedUnifiedAccount]);
+  }, [activeModal, inactiveModal, isNeedRemindUnifiedAccount, isUpdatedUnifiedAccount]);
 
   const footerModal = useMemo(() => {
     return (
@@ -91,7 +86,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
             <a
               href={CHANGE_ACCOUNT_NAME_URL}
               rel='noreferrer'
-              style={{textDecoration: 'underline'}}
+              style={{ textDecoration: 'underline' }}
               target={'_blank'}
             > this guide</a>
           </div>
@@ -101,7 +96,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   );
 }
 
-const RemindUpgradeUnifiedAccount = styled(Component)<Props>(({theme: {token}}: Props) => {
+const RemindUpgradeUnifiedAccount = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.__modal-content': {
       display: 'flex',
