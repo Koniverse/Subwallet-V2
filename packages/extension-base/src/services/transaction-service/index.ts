@@ -292,6 +292,7 @@ export default class TransactionService {
     });
 
     emitter.on('send', (data: TransactionEventResponse) => {
+      console.log('onSend', data);
       // this.onSend(data);
     });
 
@@ -1286,7 +1287,8 @@ export default class TransactionService {
       id,
       errors: [],
       warnings: [],
-      extrinsicHash: id
+      extrinsicHash: id,
+      eventLogs: []
     };
 
     this.state.requestService.addConfirmation(id, EXTENSION_REQUEST_URL, 'evmSignatureRequest', _payload)

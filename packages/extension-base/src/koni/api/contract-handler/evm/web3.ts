@@ -49,3 +49,12 @@ export async function getERC20SpendingApprovalTx (spender: _Address, owner: _Add
     maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
   } as TransactionConfig;
 }
+
+export function encodeSpendingApproval (spender: _Address, owner: _Address, contractAddress: _Address, evmApi: _EvmApi, amount = '115792089237316195423570985008687907853269984665640564039457584007913129639935'): string {
+  const tokenContract = getERC20Contract(contractAddress, evmApi);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+  const approveCall = tokenContract.methods.approve(spender, amount); // TODO: need test
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+  return approveCall.encodeABI() as string;
+}

@@ -3,9 +3,9 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
-import { Abi } from 'abitype/src/abi';
 import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, buildMultichainReadonlyClient, buildRpcInfo, buildTokenMapping, deployment, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, rawTx } from 'klaster-sdk';
-import { encodeFunctionData, Hex, parseAbi } from 'viem';
+
+import { encodeAcrossCallData, getAcrossSuggestedFee } from './helper/tx-encoder';
 
 export interface AcrossSuggestedFeeResp {
   totalRelayFee: {
@@ -31,42 +31,6 @@ export interface AcrossSuggestedFeeResp {
   exclusiveRelayer: string,
   exclusivityDeadline: string,
   expectedFillTimeSec: string
-}
-
-function encodeAcrossCallData (data: BridgePluginParams, fees: AcrossSuggestedFeeResp): Hex {
-  // @ts-ignore
-  const abi = parseAbi([
-    'function depositV3(address depositor, address recipient, address inputToken, address outputToken, uint256 inputAmount, uint256 outputAmount, uint256 destinationChainId, address exclusiveRelayer, uint32 quoteTimestamp, uint32 fillDeadline, uint32 exclusivityDeadline, bytes calldata message) external'
-  ]) as Abi;
-  const outputAmount = data.amount - BigInt(fees.totalRelayFee.total);
-  const fillDeadline = Math.round(Date.now() / 1000) + 300;
-
-  const [srcAddress, destAddress] = data.account.getAddresses([data.sourceChainId, data.destinationChainId]);
-
-  if (!srcAddress || !destAddress) {
-    throw Error(`Can't fetch address from multichain account for ${data.sourceChainId} or ${data.destinationChainId}`);
-  }
-
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  return encodeFunctionData({
-    abi: abi,
-    functionName: 'depositV3',
-    args: [
-      srcAddress,
-      destAddress,
-      data.sourceToken,
-      data.destinationToken,
-      data.amount,
-      outputAmount,
-      BigInt(data.destinationChainId),
-      fees.exclusiveRelayer,
-      parseInt(fees.timestamp),
-      fillDeadline,
-      parseInt(fees.exclusivityDeadline),
-      '0x'
-    ]
-  });
 }
 
 export class KlasterService {
@@ -98,27 +62,12 @@ export class KlasterService {
     ]);
 
     this.bridgePlugin = async (data: BridgePluginParams) => {
-      const url = 'https://testnet.across.to/api/suggested-fees?' + new URLSearchParams({
-        originChainId: data.sourceChainId.toString(),
-        destinationChainId: data.destinationChainId.toString(),
-        inputToken: data.sourceToken,
-        outputToken: data.destinationToken,
-        amount: data.amount.toString()
-      }).toString();
-
-      console.log('url', url);
-
-      const feeResponse = await fetch(url, {
-        method: 'GET'
-      })
-        .then((res) => res.json()) as AcrossSuggestedFeeResp;
-
-      console.log(feeResponse);
+      const feeResponse = await getAcrossSuggestedFee(data);
 
       const outputAmount = data.amount - BigInt(feeResponse.totalRelayFee.total);
       const acrossApproveTx = encodeApproveTx({
         tokenAddress: data.sourceToken,
-        amount: outputAmount,
+        amount: outputAmount * 10n,
         recipient: feeResponse.spokePoolAddress
       });
 
