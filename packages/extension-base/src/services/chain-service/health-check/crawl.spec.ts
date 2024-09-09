@@ -93,14 +93,18 @@ describe('test chain', () => {
       const {pallet, method, useMethodAsset, hasAssetId} = chainMap[chain];
       const assetEntries = await api.query[pallet][method].entries();
 
-      if(useMethodAsset) {
-        const assetEntry = await api.query[pallet]['asset'].entries();
-        const assetAsset = assetEntry.map((all) =>{
-          const token = all[1].toHuman() as unknown as AssetsAsset;
-          console.log(token.minBalance);
-        })
-        console.log(assetAsset)
-      }else {return}
+      // if(useMethodAsset) {
+      //   const assetEntry = await api.query[pallet]['asset'].entries();
+      //   const assetAsset = assetEntry.map((all) =>{
+      //     const token = all[1].toHuman() as unknown as AssetsAsset;
+      //     console.log(token.minBalance);
+      //   })
+      //   console.log(assetAsset)
+      // }else {return}
+      async function getED(api : ApiPromise, assetId : number){
+        const assetEntry = await api.query['assets']['asset'](assetId);
+        return
+      }
 
       // function remove(id : string){
       //   let numstr = id.replace(/,/g, "")
