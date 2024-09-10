@@ -117,10 +117,11 @@ export const subscribeSubstrateBalance = async (addresses: string[], chainInfo: 
 // handler according to different logic
 // eslint-disable-next-line @typescript-eslint/require-await
 const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo, extrinsicType, substrateApi }: SubscribeSubstratePalletBalance) => {
+  const HOTFIX_CHAINS_NOT_COMPLETE_MIGRATION = ['kusama'];
   const systemAccountKey = 'query_system_account';
   const poolMembersKey = 'query_nominationPools_poolMembers';
 
-  const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation;
+  const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation && !HOTFIX_CHAINS_NOT_COMPLETE_MIGRATION.includes(chainInfo.slug);
 
   const params: _SubstrateAdapterSubscriptionArgs[] = [
     {
