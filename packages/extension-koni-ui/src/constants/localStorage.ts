@@ -31,10 +31,12 @@ export const CONFIRM_SWAP_TERM = 'swap.term-and-service';
 export const CONFIRM_TERM_SEED_PHRASE = 'seed-phrase.term-and-condition';
 export const CLAIM_DAPP_STAKING_REWARDS = 'general.claim-dapp-staking-rewards';
 export const EARNING_MIGRATION_ANNOUNCEMENT = 'announcement.earning-migration';
+export const EARNING_WARNING_ANNOUNCEMENT = 'announcement.earning-position';
 export const TIME_OUT_RECORD = 'general.time-out-record';
 export const APP_INSTRUCTION_DATA = 'static.instruction-data';
 export const SHOW_APP_POPUP = 'static.show-app-popup';
 export const LATEST_SESSION = 'general.latest-session';
 export const UPGRADE_FIREFOX_VERSION = 'general.updated-version-firefox';
+export const UPGRADE_UNIFIED_ACCOUNT = 'general.updated-unified-account';
 
 export const ADDRESS_INPUT_AUTO_FORMAT_VALUE = 'component.address-input.auto-format-value'; // value: boolean

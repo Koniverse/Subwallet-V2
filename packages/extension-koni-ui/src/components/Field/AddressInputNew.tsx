@@ -31,6 +31,7 @@ type AutoCompleteItem = {
   value: string;
   origin: AnalyzeAddress;
   label: React.ReactNode;
+  key: string;
 }
 
 type AutoCompleteGroupItem = {
@@ -66,8 +67,6 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   const [selectedOption, setSelectedOption] = useState<AnalyzeAddress | undefined>();
   const [openDropdownManually, setOpenDropdownManually] = useState<boolean | undefined>();
   const [inputValue, setInputValue] = useState<string | undefined>(value);
-  const [initValue] = useState<string | undefined>(value);
-  const [isDirty, setIsDirty] = useState<boolean>(false);
   const [autoFormatValue, setAutoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const chainInfo = useGetChainInfo(chainSlug || '');
@@ -89,7 +88,6 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, [chainSlug, onChange, saveAddress]);
 
   const onChangeInputValue = useCallback((_value: string) => {
-    setIsDirty(true);
     setInputValue(_value);
     setSelectedOption(undefined);
     setOpenDropdownManually(undefined);
@@ -171,7 +169,8 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
             name={responseOption.displayName}
           />
         ),
-        origin: responseOption
+        origin: responseOption,
+        key: `${responseOption.formatedAddress}-${responseOption.displayName || responseOption.proxyId || ''}-${responseOption.analyzedGroup}`
       };
     };
 
@@ -356,17 +355,6 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       }
     };
   }, [chainSlug, inputValue]);
-
-  // auto set selectedOption if initValue exist for the first time
-  useEffect(() => {
-    if (!isDirty && initValue && responseOptions.length) {
-      const _selectedOption = responseOptions.find((o) => o.formatedAddress === initValue);
-
-      if (_selectedOption) {
-        setSelectedOption(_selectedOption);
-      }
-    }
-  }, [initValue, isDirty, responseOptions]);
 
   return (
     <>

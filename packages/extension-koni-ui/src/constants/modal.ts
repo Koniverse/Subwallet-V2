@@ -30,6 +30,7 @@ export const ADD_CONNECTION_MODAL = 'add-connection-modal';
 export const DISCONNECT_EXTENSION_MODAL = 'disconnect-extension-modal';
 export const REMIND_BACKUP_SEED_PHRASE_MODAL = 'remind-backup-seed-phrase-modal';
 export const REMIND_UPGRADE_FIREFOX_VERSION = 'remind-update-firefox-version';
+export const REMIND_UPGRADE_UNIFIED_ACCOUNT = 'remind-update-unified-account';
 export const EXPORT_ACCOUNTS_PASSWORD_MODAL = 'export-accounts-password-modal';
 export const ADD_NETWORK_WALLET_CONNECT_MODAL = 'add-network-wallet-connect-modal';
 export const ADDRESS_QR_MODAL = 'address-qr-modal';
@@ -67,3 +68,7 @@ export const SWAP_IDLE_WARNING_MODAL = 'swap-idle-warning-modal';
 export const CLAIM_DAPP_STAKING_REWARDS_MODAL = 'claim-dapp-staking-rewards-modal';
 export const EARNING_MIGRATION_MODAL = 'earning-migration-modal';
 /* Announcement */
+
+/* Ledger */
+export const WARNING_LEDGER_RECEIVE_MODAL = 'warning-ledger-receive-modal';
+/* Ledger */

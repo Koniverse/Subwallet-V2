@@ -210,7 +210,7 @@ export function calculateChainStakedReturnV2 (chainInfo: _ChainInfo, totalIssuan
     inflationToStakers = new BigNumber(100).multipliedBy(multiplier).minus(100);
   }
 
-  const averageRewardRate = (['avail_mainnet'].includes(chainInfo.slug) ? inflation : inflationToStakers).dividedBy(supplyStaked);
+  const averageRewardRate = (['avail_mainnet', 'dentnet'].includes(chainInfo.slug) ? inflation : inflationToStakers).dividedBy(supplyStaked);
 
   return averageRewardRate.toNumber();
 }
@@ -231,7 +231,7 @@ export function calculateTernoaValidatorReturn (rewardPerValidator: number, vali
 export function calculateValidatorStakedReturn (chainStakedReturn: number, totalValidatorStake: BN, avgStake: BN, commission: number) {
   const bnAdjusted = avgStake.mul(BN_HUNDRED).div(totalValidatorStake);
   const adjusted = bnAdjusted.toNumber() * chainStakedReturn;
-
+  // todo: should calculated in bignumber instead number?
   const stakedReturn = (adjusted > Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : adjusted) / 100;
 
   return stakedReturn * (100 - commission) / 100; // Deduct commission
@@ -568,7 +568,7 @@ export function getAvgValidatorEraReward (supportedDays: number, eraRewardHistor
 }
 
 export function getSupportedDaysByHistoryDepth (erasPerDay: number, maxSupportedEras: number, liveDay?: number) {
-  const maxSupportDay = maxSupportedEras / erasPerDay;
+  const maxSupportDay = Math.floor(maxSupportedEras / erasPerDay);
 
   if (liveDay && liveDay <= 30) {
     return Math.min(liveDay - 1, maxSupportDay);

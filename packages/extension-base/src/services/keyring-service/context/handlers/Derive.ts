@@ -278,6 +278,12 @@ export class AccountDeriveHandler extends AccountBaseHandler {
       }
     }
 
+    const nameExists = this.state.checkNameExists(request.name);
+
+    if (nameExists) {
+      throw Error(t('Account name already exists'));
+    }
+
     if (!isUnified) {
       return this.deriveSoloAccount(request);
     } else {

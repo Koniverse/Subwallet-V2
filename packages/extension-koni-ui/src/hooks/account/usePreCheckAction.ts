@@ -81,6 +81,7 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
               break;
           }
         }
+
         if (mode === AccountSignMode.LEGACY_LEDGER || mode === AccountSignMode.GENERIC_LEDGER) {
           if (!isLedgerCapable) {
             notify({
@@ -92,6 +93,7 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
             return;
           }
         }
+
         if (!block) {
           onClick();
         } else {

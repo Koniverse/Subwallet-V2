@@ -13,9 +13,7 @@ import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/ext
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import {
-  AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus
-} from '@subwallet/extension-base/types';
+import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapErrorType, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -1106,11 +1104,6 @@ export interface EvmSendTransactionParams {
   gas?: string | number;
 }
 
-export interface SwitchNetworkRequest {
-  networkKey: string;
-  address?: string;
-}
-
 export interface EvmSignRequest {
   account: AccountJson;
   hashPayload: string;
@@ -1123,10 +1116,16 @@ export interface TonSignRequest {
   canSign: boolean;
 }
 
+export interface ErrorValidation {
+  message: string;
+  name: string;
+}
+
 export interface EvmSignatureRequest extends EvmSignRequest {
   id: string;
   type: string;
   payload: unknown;
+  errors?: ErrorValidation[]
 }
 
 export interface TonSignatureRequest extends TonSignRequest {
@@ -1139,6 +1138,7 @@ export interface EvmSendTransactionRequest extends TransactionConfig, EvmSignReq
   estimateGas: string;
   parseData: EvmTransactionData;
   isToContract: boolean;
+  errors?: ErrorValidation[]
 }
 
 // TODO: add account info + dataToSign
@@ -1190,13 +1190,19 @@ export interface AddTokenRequestExternal {
   contractError: boolean;
 }
 
+export interface ErrorNetworkConnection {
+  networkKey: string,
+  address: string,
+  errors: ErrorValidation[]
+}
+
 export interface ConfirmationDefinitions {
   addNetworkRequest: [ConfirmationsQueueItem<_NetworkUpsertParams>, ConfirmationResult<null>],
   addTokenRequest: [ConfirmationsQueueItem<AddTokenRequestExternal>, ConfirmationResult<boolean>],
-  switchNetworkRequest: [ConfirmationsQueueItem<SwitchNetworkRequest>, ConfirmationResult<boolean>],
   evmSignatureRequest: [ConfirmationsQueueItem<EvmSignatureRequest>, ConfirmationResult<string>],
   evmSendTransactionRequest: [ConfirmationsQueueItem<EvmSendTransactionRequest>, ConfirmationResult<string>]
-  evmWatchTransactionRequest: [ConfirmationsQueueItem<EvmWatchTransactionRequest>, ConfirmationResult<string>]
+  evmWatchTransactionRequest: [ConfirmationsQueueItem<EvmWatchTransactionRequest>, ConfirmationResult<string>],
+  errorConnectNetwork: [ConfirmationsQueueItem<ErrorNetworkConnection>, ConfirmationResult<null>]
 }
 
 export interface ConfirmationDefinitionsTon {
@@ -2039,6 +2045,7 @@ export interface KoniRequestSignatures {
 
   // Validate
   'pri(accounts.validate.seed)': [RequestMnemonicValidateV2, ResponseMnemonicValidateV2];
+  'pri(accounts.validate.name)': [RequestAccountNameValidate, ResponseAccountNameValidate];
   'pri(accounts.validate.privateKey)': [RequestPrivateKeyValidateV2, ResponsePrivateKeyValidateV2];
   'pri(accounts.validate.substrate.publicAndPrivateKey)': [RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey];
 
@@ -2314,6 +2321,10 @@ export interface KoniRequestSignatures {
   'pri(swapService.getLatestQuote)': [SwapRequest, SwapQuoteResponse];
   'pri(swapService.validateSwapProcess)': [ValidateSwapProcessParams, TransactionError[]];
   /* Swap */
+
+  /* Ledger */
+
+  'pri(ledger.generic.allow)': [null, string[], string[]];
 }
 
 export interface ApplicationMetadataType {

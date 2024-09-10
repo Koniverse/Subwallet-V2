@@ -3,7 +3,9 @@
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
+import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
 import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
+import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
@@ -11,6 +13,7 @@ import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode } fro
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
+import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
@@ -26,7 +29,7 @@ import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useIsFirstRender } from 'usehooks-ts';
+import { useIsFirstRender, useLocalStorage } from 'usehooks-ts';
 
 import { BN, BN_ZERO } from '@polkadot/util';
 
@@ -98,7 +101,7 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
 }
 
 const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
-const validateFields: Array<keyof TransferParams> = ['value', 'to'];
+const validateFields: Array<keyof TransferParams> = ['value'];
 const alertModalId = 'confirmation-alert-modal';
 const substrateAccountSlug = 'polkadot-NATIVE-DOT';
 const evmAccountSlug = 'ethereum-NATIVE-ETH';
@@ -134,6 +137,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
@@ -248,13 +252,19 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
     return result;
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
-  const validateRecipientAddress = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
-    if (!_recipientAddress) {
-      return Promise.reject(t('Recipient address is required'));
-    }
+  const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
+    const { chain, destChain, from } = form.getFieldsValue();
+    const destChainInfo = chainInfoMap[destChain];
+    const account = findAccountByAddress(accounts, _recipientAddress);
 
-    return Promise.resolve();
-  }, [t]);
+    return validateRecipientAddress({ srcChain: chain,
+      destChainInfo,
+      fromAddress: from,
+      toAddress: _recipientAddress,
+      account,
+      actionType: ActionType.SEND_FUND,
+      autoFormatValue });
+  }, [accounts, autoFormatValue, chainInfoMap, form]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
@@ -312,6 +322,15 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
         if (values.to) {
           validateField.add('to');
         }
+      }
+
+      if (part.to) {
+        form.setFields([
+          {
+            name: 'to',
+            errors: []
+          }
+        ]);
       }
 
       if (validateField.size) {
@@ -719,10 +738,11 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
             name={'to'}
             rules={[
               {
-                validator: validateRecipientAddress
+                validator: validateRecipient
               }
             ]}
             statusHelpAsTooltip={true}
+            validateTrigger={false}
           >
             <AddressInputNew
               chainSlug={destChainValue}

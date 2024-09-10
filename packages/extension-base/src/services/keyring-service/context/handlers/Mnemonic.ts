@@ -104,6 +104,12 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
       throw Error(t('Please choose at least one account type'));
     }
 
+    const nameExists = this.state.checkNameExists(name);
+
+    if (nameExists) {
+      throw Error(t('Account name already exists'));
+    }
+
     const multiChain = types.length > 1;
     const proxyId = multiChain ? createAccountProxyId(_suri) : '';
 

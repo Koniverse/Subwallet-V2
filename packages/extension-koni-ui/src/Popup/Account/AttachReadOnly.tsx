@@ -11,7 +11,7 @@ import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/accou
 import useFocusById from '@subwallet/extension-koni-ui/hooks/form/useFocusById';
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { createAccountExternalV2 } from '@subwallet/extension-koni-ui/messaging';
+import { createAccountExternalV2, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils/form/form';
@@ -109,6 +109,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     return Promise.resolve();
   }, [accounts, t]);
 
+  const accountNameValidator = useCallback(async (rule: RuleObject, value: string) => {
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value });
+
+        if (!isValid) {
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        return Promise.reject(t('Account name invalid'));
+      }
+    }
+
+    return Promise.resolve();
+  }, [t]);
+
   const onSubmit = useCallback(() => {
     setLoading(true);
     const accountName = form.getFieldValue('name') as string;
@@ -123,13 +139,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       })
         .then((errors) => {
           if (errors.length) {
-            form.setFields([{ name: fieldName, errors: errors.map((e) => e.message) }]);
+            form.setFields([{ name: 'name', errors: errors.map((e) => e.message) }]);
           } else {
             onComplete();
           }
         })
         .catch((error: Error) => {
-          form.setFields([{ name: fieldName, errors: [error.message] }]);
+          form.setFields([{ name: 'name', errors: [error.message] }]);
         })
         .finally(() => {
           setLoading(false);
@@ -208,9 +224,13 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
                 required: true
+              },
+              {
+                validator: accountNameValidator
               }
 
               ]}
+              statusHelpAsTooltip={true}
             >
               <Input
                 className='__account-name-input'

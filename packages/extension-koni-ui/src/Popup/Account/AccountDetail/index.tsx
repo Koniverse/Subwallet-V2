@@ -9,16 +9,17 @@ import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/Wallet
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { editAccount, forgetAccount } from '@subwallet/extension-koni-ui/messaging';
+import { editAccount, forgetAccount, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
 import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-react';
+import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { AccountAddressList } from './AccountAddressList';
@@ -57,7 +58,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   const { goHome } = useDefaultNavigate();
   const showDerivedAccounts = !!accountProxy.children?.length;
   const { alertModal } = useContext(WalletModalContext);
-
+  const navigate = useNavigate();
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
     requestViewDerivedAccounts && showDerivedAccounts
       ? FilterTabType.DERIVED_ACCOUNT
@@ -134,8 +135,10 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, []);
 
   const onExport = useCallback(() => {
-    //
-  }, []);
+    if (accountProxy?.id) {
+      navigate(`/accounts/export/${accountProxy.id}`);
+    }
+  }, [accountProxy?.id, navigate]);
 
   // @ts-ignore
   const onCopyAddress = useCallback(() => {
@@ -144,15 +147,40 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     });
   }, [notify, t]);
 
+  const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
+    const accountProxyId = accountProxy.id;
+
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value, proxyId: accountProxyId });
+
+        if (!isValid) {
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        return Promise.reject(t('Account name invalid'));
+      }
+    }
+
+    return Promise.resolve();
+  }, [accountProxy.id, t]);
+
   const onUpdate: FormCallbacks<DetailFormState>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     const changeMap = convertFieldToObject<DetailFormState>(changedFields);
 
     if (changeMap[FormFieldName.NAME]) {
       clearTimeout(saveTimeOutRef.current);
       setSaving(true);
-      saveTimeOutRef.current = setTimeout(() => {
-        form.submit();
-      }, 1000);
+
+      const isValidForm = form.getFieldsError().every((field) => !field.errors.length);
+
+      if (isValidForm) {
+        saveTimeOutRef.current = setTimeout(() => {
+          form.submit();
+        }, 1000);
+      } else {
+        setSaving(false);
+      }
     }
   }, [form]);
 
@@ -175,11 +203,13 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     }
 
     editAccount(accountProxyId, name.trim())
-      .catch(console.error)
+      .catch((error: Error) => {
+        form.setFields([{ name: FormFieldName.NAME, errors: [error.message] }]);
+      })
       .finally(() => {
         setSaving(false);
       });
-  }, [accountProxy]);
+  }, [accountProxy.id, accountProxy.name, form]);
 
   const footerNode = (() => {
     if (![AccountProxyType.UNIFIED, AccountProxyType.SOLO].includes(accountProxy.accountType)) {
@@ -236,7 +266,6 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       <Button
         block={true}
         className={CN('account-button')}
-        disabled={true}
         icon={(
           <Icon
             phosphorIcon={Export}
@@ -301,6 +330,9 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
                 message: t('Account name is required'),
                 transform: (value: string) => value.trim(),
                 required: true
+              },
+              {
+                validator: accountNameValidator
               }
             ]}
             statusHelpAsTooltip={true}

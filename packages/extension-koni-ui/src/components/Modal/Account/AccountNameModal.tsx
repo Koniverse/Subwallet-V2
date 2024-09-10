@@ -5,10 +5,12 @@ import { AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountProxyTypeTag } from '@subwallet/extension-koni-ui/components';
 import { ACCOUNT_NAME_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
+import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -36,14 +38,20 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
 
   const accountNameValue = Form.useWatch('name', form);
 
-  const accountNameRules = useMemo(() => {
-    return [
-      {
-        message: t('Account name is required'),
-        transform: (value: string) => value.trim(),
-        required: true
+  const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
+    if (value) {
+      try {
+        const { isValid } = await validateAccountName({ name: value });
+
+        if (!isValid) {
+          return Promise.reject(t('Account already exists'));
+        }
+      } catch (e) {
+        return Promise.reject(t('Account name invalid'));
       }
-    ];
+    }
+
+    return Promise.resolve();
   }, [t]);
 
   const _onSubmit: FormCallbacks<FormProps>['onFinish'] = useCallback(({ name }: FormProps) => {
@@ -90,7 +98,16 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
           <Form.Item
             className={CN('__account-name-field')}
             name={'name'}
-            rules={accountNameRules}
+            rules={[
+              {
+                message: t('Account name is required'),
+                transform: (value: string) => value.trim(),
+                required: true
+              },
+              {
+                validator: accountNameValidator
+              }
+            ]}
           >
             <Input
               className='__account-name-input'
