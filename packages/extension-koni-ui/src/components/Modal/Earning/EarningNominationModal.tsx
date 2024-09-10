@@ -6,6 +6,7 @@ import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning
 import { YieldPositionInfo } from '@subwallet/extension-base/types';
 import { Avatar, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { EARNING_NOMINATION_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useGetChainPrefixBySlug } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
@@ -22,6 +23,7 @@ type Props = ThemeProps & {
 
 function Component ({ className, inputAsset, item, onCancel }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
+  const networkPrefix = useGetChainPrefixBySlug(item?.chain);
 
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(item?.chain || ''), [item?.chain]);
 
@@ -51,6 +53,7 @@ function Component ({ className, inputAsset, item, onCancel }: Props): React.Rea
                   label={(
                     <>
                       <Avatar
+                        identPrefix={networkPrefix}
                         size={24}
                         value={nomination.validatorAddress}
                       />

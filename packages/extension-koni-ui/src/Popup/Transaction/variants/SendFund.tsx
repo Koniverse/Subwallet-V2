@@ -492,16 +492,6 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           }
         }
       }
-    } else {
-      if (isLedger) {
-        setLoading(false);
-        notification({
-          message: t('This feature is not available for Ledger account'),
-          type: 'warning'
-        });
-
-        return true;
-      }
     }
 
     return false;
@@ -893,12 +883,12 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           >
             <AmountInput
               decimals={decimals}
+              disabled={decimals === 0}
               forceUpdateMaxValue={forceUpdateMaxValue}
               maxValue={maxTransfer}
               onSetMax={onSetMaxTransferable}
               showMaxButton={!hideMaxButton}
               tooltip={t('Amount')}
-              disabled={decimals === 0}
             />
           </Form.Item>
         </Form>

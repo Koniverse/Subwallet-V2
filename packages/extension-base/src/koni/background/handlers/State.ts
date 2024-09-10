@@ -42,7 +42,7 @@ import WalletConnectService from '@subwallet/extension-base/services/wallet-conn
 import { SWStorage } from '@subwallet/extension-base/storage';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
 import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
-import { isAccountAll, stripUrl, targetIsWeb } from '@subwallet/extension-base/utils';
+import { isAccountAll, isManifestV3, stripUrl, targetIsWeb } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { decodePair } from '@subwallet/keyring/pair/decode';
@@ -717,43 +717,6 @@ export default class KoniState {
     } else {
       throw new EvmProviderError(EvmProviderErrorType.INTERNAL_ERROR, t('Not found {{shortenUrl}} in auth list', { replace: { shortenUrl } }));
     }
-  }
-
-  public async switchNetworkAccount (id: string, url: string, networkKey: string, changeAddress?: string): Promise<boolean> {
-    const chainInfo = this.chainService.getChainInfoByKey(networkKey);
-    const chainState = this.chainService.getChainStateByKey(networkKey);
-    const { address, currentGenesisHash } = this.keyringService.currentAccount;
-
-    return this.requestService.addConfirmation(id, url, 'switchNetworkRequest', {
-      networkKey,
-      address: changeAddress
-    }, { address: changeAddress })
-      .then(({ isApproved }) => {
-        if (isApproved) {
-          const useAddress = changeAddress || address;
-
-          if (chainInfo && !_isChainEnabled(chainState)) {
-            this.enableChain(networkKey).catch(console.error);
-          }
-
-          if (useAddress !== ALL_ACCOUNT_KEY) {
-            const pair = keyring.getPair(useAddress);
-
-            assert(pair, t('Unable to find account'));
-
-            keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash: _getSubstrateGenesisHash(chainInfo) });
-          }
-
-          if (address !== changeAddress || _getSubstrateGenesisHash(chainInfo) !== currentGenesisHash || isApproved) {
-            this.setCurrentAccount({
-              address: useAddress,
-              currentGenesisHash: _getSubstrateGenesisHash(chainInfo)
-            });
-          }
-        }
-
-        return isApproved;
-      });
   }
 
   public async addNetworkConfirm (id: string, url: string, networkData: _NetworkUpsertParams) {
@@ -1521,12 +1484,16 @@ export default class KoniState {
     const migrationStatus = await SWStorage.instance.getItem('mv3_migration');
 
     if (!migrationStatus || migrationStatus !== 'done') {
-      // Open migration tab
-      const url = `${chrome.runtime.getURL('index.html')}#/mv3-migration`;
+      if (isManifestV3) {
+        // Open migration tab
+        const url = `${chrome.runtime.getURL('index.html')}#/mv3-migration`;
 
-      await openPopup(url);
+        await openPopup(url);
 
-      // migrateMV3LocalStorage will be called when user open migration tab with data from localStorage on frontend
+        // migrateMV3LocalStorage will be called when user open migration tab with data from localStorage on frontend
+      } else {
+        this.migrateMV3LocalStorage(JSON.stringify(self.localStorage)).catch(console.error);
+      }
     }
   }
 
