@@ -3,7 +3,8 @@
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
 import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy } from '@subwallet/extension-base/types';
+import { isAccountAll } from '@subwallet/extension-base/utils';
 
 export const findChainInfoByGenesisHash = (chainMap: Record<string, _ChainInfo>, genesisHash?: string): _ChainInfo | null => {
   if (!genesisHash) {
@@ -75,27 +76,27 @@ export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>
   }
 };
 
-// Note : Use this function when need filter all has only special chains
 interface ChainSpecialFilteredRecord {
   slugs: string[];
   chainInfo: Record<string, _ChainInfo>
 }
 
+// Note : The function filters the token list by account, where the allAccount case may only include a Ledger account
 export const getChainsByAllAccountType = (accountProxies: AccountProxy[], chainTypes: AccountChainType[], _chainInfoMap: Record<string, _ChainInfo>, specialChain?: string): ChainSpecialFilteredRecord => {
   const specialChainRecord: Record<AccountChainType, string[]> = {} as Record<AccountChainType, string[]>;
   const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
+  /*
+    Special chain List
+    *: All network
+  */
 
   for (const proxy of accountProxies) {
     if (proxy.specialChain) {
       specialChainRecord[proxy.chainTypes[0]] = [...specialChainRecord[proxy.chainTypes[0]] || [], proxy.specialChain];
-    } else {
+    } else if (!isAccountAll(proxy.id)) {
       proxy.chainTypes.forEach((chainType) => {
         specialChainRecord[chainType] = ['*'];
       });
-
-      if (proxy.accountType === AccountProxyType.UNIFIED) {
-        break;
-      }
     }
   }
 
