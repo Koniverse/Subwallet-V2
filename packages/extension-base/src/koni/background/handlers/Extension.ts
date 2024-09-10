@@ -70,6 +70,7 @@ import { Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/t
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex, u8aToString } from '@polkadot/util';
 import { base64Decode, decodeAddress, isAddress, isEthereumAddress, jsonDecrypt, keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
 import { EncryptedJson, KeypairType, Prefix } from '@polkadot/util-crypto/types';
+import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
 
@@ -1886,7 +1887,11 @@ export default class KoniExtension {
 
     if (owner && destinationTokenInfo) {
       // const userOperation = await ParticleAAHandler.createUserOperation(owner, _getEvmChainId(chainInfoMap[originNetworkKey]) || 1, transaction);
-      const iTx = await this.#koniState.klasterService.getBridgeTx(originTokenInfo, destinationTokenInfo, chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey], value);
+      const klasterService = new KlasterService();
+
+      await klasterService.init();
+
+      const iTx = await klasterService.getBridgeTx(originTokenInfo, destinationTokenInfo, chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey], value);
 
       return this.#koniState.transactionService.handleAATransaction({
         address: from,

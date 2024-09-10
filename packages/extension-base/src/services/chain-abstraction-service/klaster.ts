@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
-import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, buildMultichainReadonlyClient, buildRpcInfo, buildTokenMapping, deployment, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, rawTx } from 'klaster-sdk';
+import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, rawTx } from 'klaster-sdk';
 
 import { encodeAcrossCallData, getAcrossSuggestedFee } from './helper/tx-encoder';
 
@@ -38,6 +38,7 @@ export class KlasterService {
   private mcClient: MultichainClient;
   private mcUSDC: MultichainTokenMapping;
   private bridgePlugin: BridgePlugin;
+  private isInit = false;
 
   static async getSmartAccount (ownerAddress: string): Promise<string> {
     const klasterSdk = await initKlaster({
@@ -51,16 +52,6 @@ export class KlasterService {
   }
 
   constructor () {
-    this.mcClient = buildMultichainReadonlyClient([
-      buildRpcInfo(11155111, 'https://rpc.sepolia.org'),
-      buildRpcInfo(84532, 'https://sepolia.base.org')
-    ]);
-
-    this.mcUSDC = buildTokenMapping([
-      deployment(1, '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'),
-      deployment(8453, '0x036CbD53842c5426634e7929541eC2318f3dCF7e')
-    ]);
-
     this.bridgePlugin = async (data: BridgePluginParams) => {
       const feeResponse = await getAcrossSuggestedFee(data);
 
@@ -85,12 +76,16 @@ export class KlasterService {
   }
 
   async init () {
-    this.sdk = await initKlaster({
-      accountInitData: loadBicoV2Account({
-        owner: '0xA34AFc7Cc7B06AA528d5170452585999990f8C27'
-      }),
-      nodeUrl: klasterNodeHost.default
-    });
+    if (!this.isInit) {
+      this.sdk = await initKlaster({
+        accountInitData: loadBicoV2Account({
+          owner: '0xA34AFc7Cc7B06AA528d5170452585999990f8C27'
+        }),
+        nodeUrl: klasterNodeHost.default
+      });
+
+      this.isInit = true;
+    }
   }
 
   async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string): Promise<QuoteResponse> {

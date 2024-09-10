@@ -45,6 +45,7 @@ import { isHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
+import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 export default class TransactionService {
   private readonly state: KoniState;
@@ -1317,7 +1318,10 @@ export default class TransactionService {
 
             eventData.extrinsicHash = result;
           } else {
-            const result = await this.state.klasterService.sdk.execute(transaction as QuoteResponse, signature);
+            const klasterService = new KlasterService();
+
+            await klasterService.init();
+            const result = await klasterService.sdk.execute(transaction as QuoteResponse, signature);
 
             console.log('submitted', result);
 

@@ -14,7 +14,6 @@ import { BalanceService } from '@subwallet/extension-base/services/balance-servi
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import BuyService from '@subwallet/extension-base/services/buy-service';
 import CampaignService from '@subwallet/extension-base/services/campaign-service';
-import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _PREDEFINED_SINGLE_MODES } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest } from '@subwallet/extension-base/services/chain-service/types';
@@ -144,7 +143,6 @@ export default class KoniState {
   readonly earningService: EarningService;
   readonly feeService: FeeService;
   readonly swapService: SwapService;
-  readonly klasterService: KlasterService;
 
   // Handle the general status of the extension
   private generalStatus: ServiceStatus = ServiceStatus.INITIALIZING;
@@ -177,8 +175,6 @@ export default class KoniState {
     this.earningService = new EarningService(this);
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
-
-    this.klasterService = new KlasterService();
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -335,10 +331,6 @@ export default class KoniState {
     await this.balanceService.init();
     await this.earningService.init();
     await this.swapService.init();
-    await this.klasterService.init();
-
-    // await this.klasterService.getNativeBalance();
-    // await this.klasterService.getBridgeTx();
 
     this.onReady();
     this.onAccountAdd();

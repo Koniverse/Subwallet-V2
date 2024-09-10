@@ -14,6 +14,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import { stringShorten } from '@polkadot/util';
 import { isEthereumAddress } from '@polkadot/util-crypto';
+import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 export class KeyringService {
   private readonly currentAccountStore = new CurrentAccountStore();
@@ -122,8 +123,8 @@ export class KeyringService {
       const isEthereum = isEthereumAddress(acc.address);
 
       if (isEthereum) {
-        const smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
-        // const smartAddress = await KlasterService.getSmartAccount(acc.address);
+        // const smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
+        const smartAddress = await KlasterService.getSmartAccount(acc.address);
 
         return {
           ...acc,

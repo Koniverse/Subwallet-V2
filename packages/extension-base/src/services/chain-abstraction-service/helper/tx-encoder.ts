@@ -17,10 +17,16 @@ export async function getAcrossSuggestedFee (data: BridgePluginParams): Promise<
 
   console.log('url', url);
 
-  return await fetch(url, {
-    method: 'GET'
-  })
-    .then((res) => res.json()) as AcrossSuggestedFeeResp;
+  try {
+    const result = fetch(url, {
+      method: 'GET'
+    });
+
+    return await result.then((res) => res.json()) as AcrossSuggestedFeeResp;
+  } catch (e) {
+    console.log('e', e);
+    throw Error('Sent amount is too low relative to fees');
+  }
 }
 
 export function encodeAcrossCallData (data: BridgePluginParams, fees: AcrossSuggestedFeeResp): Hex {
