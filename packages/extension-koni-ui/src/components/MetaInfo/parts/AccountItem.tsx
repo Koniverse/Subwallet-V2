@@ -69,18 +69,36 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
               )
               : (
                 <>
-                  <Avatar
-                    className={'__account-avatar'}
-                    identPrefix={addressPrefix}
-                    size={24}
-                    value={accountAddress}
-                  />
-                  <div className={'__account-name ml-xs'}>
-                    <div className={'__account-item-name'}>{name}</div>
-                    <div className={'__account-item-address'}>{shortAddress}</div>
-                  </div>
-                </>
-              )
+                  {name
+                    ? (
+                      <>
+                        <div className={'__account-item-wrapper ml-xs'}>
+                          <div className={'__account-item-name-wrapper'}>
+                            <Avatar
+                              className={'__account-avatar'}
+                              identPrefix={addressPrefix}
+                              size={24}
+                              value={accountAddress}
+                            />
+                            <div className={'__account-item-name'}>{name}</div>
+                          </div>
+                          <div className={'__account-item-address'}>{shortAddress}</div>
+                        </div>
+                      </>
+                    )
+                    : (<>
+                      <Avatar
+                        className={'__account-avatar'}
+                        identPrefix={addressPrefix}
+                        size={24}
+                        value={accountAddress}
+                      />
+                      <div className={'__account-name ml-xs'}>
+                        <div className={'__account-item-address'}>{shortAddress}</div>
+                      </div>
+                    </>)
+                  }
+                </>)
           }
         </div>
       </div>
@@ -89,7 +107,20 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
 };
 
 const AccountItem = styled(Component)<AccountInfoItem>(({ theme: { token } }: AccountInfoItem) => {
-  return {};
+  return {
+    '.__account-item-wrapper': {
+      '.__account-item-name-wrapper': {
+        display: 'flex',
+        gap: 8
+      },
+      '.__account-item-address': {
+        paddingLeft: 32
+      }
+    },
+    '.__col.__value-col.__value-col': {
+      flex: '0 1 auto'
+    }
+  };
 });
 
 export default AccountItem;
