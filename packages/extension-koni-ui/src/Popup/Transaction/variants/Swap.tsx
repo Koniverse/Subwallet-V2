@@ -210,7 +210,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
         }
 
         if (isAllAccount) {
-          const allowChainSlug = getChainsByAccountAll(accountProxies, targetAccountProxy, chainInfoMap);
+          const allowChainSlug = getChainsByAccountAll(targetAccountProxy, accountProxies, chainInfoMap);
 
           targetTokenSlugs = targetTokenSlugs.filter((tokenSlug) => {
             const chainSlug = _getOriginChainOfAsset(tokenSlug);

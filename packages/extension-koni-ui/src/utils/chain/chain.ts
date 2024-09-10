@@ -76,8 +76,8 @@ export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>
   }
 };
 
-// Note : The function filters the token list by account, where the accountAll case may include only Ledger accounts.
-export const getChainsByAccountAll = (accountProxies: AccountProxy[], accountAllProxy: AccountProxy, _chainInfoMap: Record<string, _ChainInfo>): string[] => {
+// Note : The function filters the chain slug list by account All, where all accounts case may include only Ledger accounts.
+export const getChainsByAccountAll = (accountAllProxy: AccountProxy, accountProxies: AccountProxy[], _chainInfoMap: Record<string, _ChainInfo>): string[] => {
   const specialChainRecord: Record<AccountChainType, string[]> = {} as Record<AccountChainType, string[]>;
   const { chainTypes, specialChain } = accountAllProxy;
   const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));

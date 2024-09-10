@@ -8,6 +8,7 @@ import { findAccountByAddress, getChainsByAccountAll, getChainsByAccountType, is
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+// TODO: Recheck the usages of the address in this hook.
 export const useGetChainSlugsByAccount = (address?: string): string[] => {
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const { accountProxies, accounts, currentAccountProxy } = useSelector((state: RootState) => state.accountState);
@@ -70,7 +71,7 @@ export const useGetChainSlugsByAccount = (address?: string): string[] => {
     if (_address && isAccountAll(_address)) {
       const allAccount = accountProxies.find((proxy) => proxy.id === ALL_ACCOUNT_KEY);
 
-      return allAccount ? getChainsByAccountAll(accountProxies, allAccount, chainInfoMap) : [];
+      return allAccount ? getChainsByAccountAll(allAccount, accountProxies, chainInfoMap) : [];
     }
 
     return getChainsByAccountType(chainInfoMap, chainTypes, specialChain);

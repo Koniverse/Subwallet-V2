@@ -54,7 +54,7 @@ function getTokenItems (
   if (!isAccountAll(accountProxy.id)) {
     allowedChains = getChainsByAccountType(chainInfoMap, accountProxy.chainTypes, accountProxy.specialChain);
   } else {
-    allowedChains = getChainsByAccountAll(accountProxies, accountProxy, chainInfoMap);
+    allowedChains = getChainsByAccountAll(accountProxy, accountProxies, chainInfoMap);
   }
 
   const items: TokenItemType[] = [];
