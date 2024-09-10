@@ -117,11 +117,10 @@ export const subscribeSubstrateBalance = async (addresses: string[], chainInfo: 
 // handler according to different logic
 // eslint-disable-next-line @typescript-eslint/require-await
 const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo, extrinsicType, substrateApi }: SubscribeSubstratePalletBalance) => {
-  const HOTFIX_CHAINS_NOT_COMPLETE_MIGRATION = ['kusama'];
   const systemAccountKey = 'query_system_account';
   const poolMembersKey = 'query_nominationPools_poolMembers';
 
-  const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation && !HOTFIX_CHAINS_NOT_COMPLETE_MIGRATION.includes(chainInfo.slug);
+  const isNominationPoolMigrated = await checkNominationPoolCompleteMigrated(substrateApi);
 
   const params: _SubstrateAdapterSubscriptionArgs[] = [
     {
@@ -178,6 +177,21 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
   return () => {
     subscription.unsubscribe();
   };
+};
+
+const checkNominationPoolCompleteMigrated = async (substrateApi: _SubstrateApi) => {
+  const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation;
+
+  const [nominationPoolCounterRaw, nominationPoolInfoRaw] = await Promise.all([
+    substrateApi.api.query.staking.counterForVirtualStakers && substrateApi.api.query.staking.counterForVirtualStakers(),
+    substrateApi.api.query.staking.virtualStakers && substrateApi.api.query.staking.virtualStakers.entries()
+  ]);
+
+  const nominationPoolCounter = nominationPoolCounterRaw?.toPrimitive() as number ?? 0;
+  const nominationPoolInfoLength = nominationPoolInfoRaw?.length ?? 0;
+  const isNominationPoolCompleteMigrated = nominationPoolCounter !== 0 && nominationPoolInfoLength !== 0;
+
+  return isNominationPoolMigrated && isNominationPoolCompleteMigrated;
 };
 
 const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, chainInfo, extrinsicType, substrateApi }: SubscribeSubstratePalletBalance) => {
