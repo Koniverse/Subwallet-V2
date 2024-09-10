@@ -321,17 +321,17 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       }
 
       if (part.destChain) {
-        if (values.to) {
-          validateField.add('to');
-        }
+        // if (values.to) {
+        //   validateField.add('to');
+        // }
       }
 
       if (part.from) {
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
 
-        if (values.to) {
-          validateField.add('to');
-        }
+        // if (values.to) {
+        //   validateField.add('to');
+        // }
       }
 
       if (part.to) {
@@ -346,6 +346,8 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       if (validateField.size) {
         form.validateFields([...validateField]).catch(noop);
       }
+
+      setWarnings([]);
 
       persistData(form.getFieldsValue());
     },
@@ -506,9 +508,11 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
     const options: TransferOptions = {
-      isTransferAll: false,
+      isTransferAll: isTransferAll,
       isTransferBounceable: false
     };
+
+    let checkTransferAll = false;
 
     const _doSubmit = () => {
       if (values.chain !== values.destChain) {
@@ -541,7 +545,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
         const minAmount = _getTokenMinAmount(assetInfo);
         const bnMinAmount = new BN(minAmount);
 
-        if (bnMinAmount.gt(BN_ZERO) && isTransferAll && values.chain === values.destChain) {
+        if (bnMinAmount.gt(BN_ZERO) && isTransferAll && values.chain === values.destChain && !checkTransferAll) {
           openAlert({
             type: NotificationType.WARNING,
             content: t('Transferring all will remove all assets on this network. Are you sure?'),
@@ -550,7 +554,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
               text: t('Transfer'),
               onClick: () => {
                 closeAlert();
-                options.isTransferAll = true;
+                checkTransferAll = true;
                 _doSubmit();
               }
             },
