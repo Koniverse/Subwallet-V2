@@ -1828,25 +1828,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@chainflip/rpc@npm:^1.5.5":
-  version: 1.6.0
-  resolution: "@chainflip/rpc@npm:1.6.0"
+"@chainflip/rpc@npm:^1.5.6":
+  version: 1.6.3
+  resolution: "@chainflip/rpc@npm:1.6.3"
   dependencies:
     "@chainflip/utils": ^0.3.0
     zod: ^3.22.8
-  checksum: f669576bc74beec3f17e2259edc693ae8f72e8b17d30f17f8d42b25654d00823263e40053869e6a3153ad6780036528546a1013afaf97b4b196acca45f48f426
+  checksum: 0dbfa59ef75b1e491c23dac851ef5c026b09c67fafad6a3029dc987bef5f4677c4c028d5c53200d3e2d18b4d6d401a898a48a93a621d9b3f5fb5272a8146ee54
   languageName: node
   linkType: hard
 
-"@chainflip/sdk@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "@chainflip/sdk@npm:1.5.0"
+"@chainflip/sdk@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "@chainflip/sdk@npm:1.5.2"
   dependencies:
-    "@chainflip/rpc": ^1.5.5
+    "@chainflip/rpc": ^1.5.6
     "@chainflip/utils": ^0.4.0
     axios: ^1.6.8
     ethers: ^6.13.2
-  checksum: f3f6320aa28c92dafd1cd7eef03c767d21a133a0848a4b94f9326197f8d8e3f291a270bd035fb193928721b01ebf7ce40434540c583101726337c9e93c521ff8
+  checksum: fd68aa496555925146b7ffbfe04959b452d6ab0429547362d3d6f88e5a90c0748e80b41cfbc5f314fba0b2e542ef525688bc5c9f6a4a13a27c4866c2975f7c05
   languageName: node
   linkType: hard
 
@@ -6092,7 +6092,7 @@ __metadata:
     "@acala-network/api": ^5.0.2
     "@apollo/client": ^3.7.14
     "@azns/resolver-core": ^1.4.0
-    "@chainflip/sdk": ^1.5.0
+    "@chainflip/sdk": ^1.5.2
     "@equilab/api": ~1.14.25
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
