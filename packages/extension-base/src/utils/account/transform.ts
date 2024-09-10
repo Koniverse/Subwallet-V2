@@ -285,6 +285,11 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
       result.push(...EARN_QDOT_ACTIONS);
     }
 
+    // Transfer XCM
+    if (['polkadot', 'kusama', 'statemint', 'statemine'].includes(specialNetwork)) {
+      result.push(ExtrinsicType.TRANSFER_XCM);
+    }
+
     return result;
   }
 

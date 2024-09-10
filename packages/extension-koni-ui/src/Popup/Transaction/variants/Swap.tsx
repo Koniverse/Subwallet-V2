@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
@@ -27,7 +27,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountAddressItemType, FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenSelectorItemType } from '@subwallet/extension-koni-ui/types/field';
-import { convertFieldToObject, findAccountByAddress, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, findAccountByAddress, getChainsByAccountAll, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, BackgroundIcon, Button, Form, Icon, Logo, ModalContext, Number, Tooltip } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -176,7 +176,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   const fromTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     const rawTokenSlugs = Object.keys(fromAndToTokenMap);
-    const targetTokenSlugs: string[] = [];
+    let targetTokenSlugs: string[] = [];
 
     (() => {
       // defaultSlug is just TokenSlug
@@ -207,6 +207,16 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
         if (isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
           targetTokenSlugs.push(rts);
         }
+
+        if (isAllAccount) {
+          const allowChainSlug = getChainsByAccountAll(targetAccountProxy, accountProxies, chainInfoMap);
+
+          targetTokenSlugs = targetTokenSlugs.filter((tokenSlug) => {
+            const chainSlug = _getOriginChainOfAsset(tokenSlug);
+
+            return allowChainSlug.includes(chainSlug);
+          });
+        }
       });
     })();
 
@@ -215,7 +225,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     }
 
     return [];
-  }, [assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, targetAccountProxy.chainTypes]);
+  }, [accountProxies, assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, isAllAccount, targetAccountProxy]);
 
   const toTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     return getTokenSelectorItem(fromAndToTokenMap[fromTokenSlugValue] || [], assetRegistryMap);
