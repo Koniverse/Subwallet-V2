@@ -8,6 +8,7 @@ export { default as ResetWalletModal } from './ResetWalletModal';
 export { default as RemindBackupSeedPhraseModal } from './RemindBackupSeedPhraseModal';
 export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVersion';
 export { default as RemindUpgradeUnifiedAccount } from './RemindUpgradeUnifiedAccount';
+export { default as ChangeVersionWalletContractModal } from './ChangeVersionWalletContractModal';
 export { default as AddNetworkWCModal } from './AddNetworkWCModal';
 export { SortingModal } from './SortingModal';
 export { default as ReceiveModal } from './ReceiveModalNew';

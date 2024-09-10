@@ -39,7 +39,7 @@ const Component: React.FC<Props> = ({ address, className, id: modalId, onBack }:
       rightIconProps={{
         icon: <InfoIcon />
       }}
-      title={t<string>('Your address')}
+      title={t<string>('Your address 3')}
     >
       <div className='__qr-code-wrapper'>
         <SwQRCode

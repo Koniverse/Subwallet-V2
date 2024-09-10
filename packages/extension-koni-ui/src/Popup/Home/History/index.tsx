@@ -20,6 +20,7 @@ import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { HistoryDetailModal } from './Detail';
+import {RootState} from "@subwallet/extension-koni-ui/stores";
 
 type Props = ThemeProps
 

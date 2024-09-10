@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
-import { CloseIcon } from '@subwallet/extension-koni-ui/components';
-import { ADDRESS_QR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { AccountChainType } from '@subwallet/extension-base/types';
+import { ChangeVersionWalletContractModal } from '@subwallet/extension-koni-ui/components';
+import { ADDRESS_QR_MODAL, CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
+import { useGetAccountInfoByAddress } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
-import { Button, Icon, Logo, SwModal, SwQRCode } from '@subwallet/react-ui';
+import { Button, Icon, Logo, ModalContext, SwModal, SwQRCode } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowSquareOut, CaretLeft, CopySimple } from 'phosphor-react';
-import React, { useCallback, useMemo } from 'react';
+import { ArrowSquareOut, CaretLeft, CopySimple, Gear } from 'phosphor-react';
+import React, { useCallback, useContext, useMemo } from 'react';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import styled from 'styled-components';
 
@@ -28,11 +30,14 @@ type Props = ThemeProps & AddressQrModalProps & {
 };
 
 const modalId = ADDRESS_QR_MODAL;
+const changeVersionWalletContractModalId = CHANGE_VERSION_WALLET_CONTRACT;
 
 const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onCancel }: Props) => {
   const { t } = useTranslation();
+  const { activeModal } = useContext(ModalContext);
   const notify = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
+  const accountInfo = useGetAccountInfoByAddress(address);
 
   const scanExplorerAddressUrl = useMemo(() => {
     return getExplorerLink(chainInfo, address, 'account');
@@ -49,91 +54,116 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
     }
   }, [scanExplorerAddressUrl]);
 
+  const isTonAccount = useMemo(() => {
+    return accountInfo?.chainType === AccountChainType.TON ?? false;
+  }, [accountInfo?.chainType]);
+
+  const onChangeVersionTonAccount = useCallback(() => {
+    activeModal(changeVersionWalletContractModalId);
+  }, [activeModal]);
+
   const onClickCopyButton = useCallback(() => notify({ message: t('Copied to clipboard') }), [notify, t]);
 
   return (
-    <SwModal
-      className={CN(className)}
-      closeIcon={
-        onBack
-          ? (
-            <Icon
-              phosphorIcon={CaretLeft}
-              size='md'
-            />
-          )
-          : undefined
-      }
-      destroyOnClose={true}
-      id={modalId}
-      onCancel={onBack || onCancel}
-      rightIconProps={onBack
-        ? {
-          icon: <CloseIcon />,
-          onClick: onCancel
-        }
-        : undefined}
-      title={t<string>('Your address')}
-    >
-      <>
-        <div className='__qr-code-wrapper'>
-          <SwQRCode
-            className='__qr-code'
-            color='#000'
-            errorLevel='H'
-            icon={''}
-            size={264}
-            value={address}
-          />
-        </div>
-
-        <div className={'__address-box-wrapper'}>
-          <div className='__address-box'>
-            <Logo
-              className='__network-logo'
-              network={chainSlug}
-              shape='circle'
-              size={28}
-            />
-
-            <div className='__address'>
-              {toShort(address || '', 7, 7)}
-            </div>
-
-            <CopyToClipboard text={address}>
-              <Button
-                className='__copy-button'
-                icon={
-                  <Icon
-                    phosphorIcon={CopySimple}
-                    size='sm'
-                  />
-                }
-                onClick={onClickCopyButton}
-                size='xs'
-                tooltip={t('Copy address')}
-                type='ghost'
+    <>
+      <SwModal
+        className={CN(className)}
+        closeIcon={
+          onBack
+            ? (
+              <Icon
+                phosphorIcon={CaretLeft}
+                size='md'
               />
-            </CopyToClipboard>
-          </div>
-        </div>
-
-        <Button
-          block
-          className={'__view-on-explorer'}
-          disabled={!scanExplorerAddressUrl}
-          icon={
-            <Icon
-              customSize={'28px'}
-              phosphorIcon={ArrowSquareOut}
-              size='sm'
-              weight={'fill'}
-            />
+            )
+            : undefined
+        }
+        destroyOnClose={true}
+        id={modalId}
+        onCancel={onBack || onCancel}
+        rightIconProps={isTonAccount
+          ? {
+            icon: (
+              <Icon
+                className={'__change-version-icon'}
+                phosphorIcon={Gear}
+              />
+            ),
+            onClick: onChangeVersionTonAccount,
+            tooltip: t('Click to change wallet address'),
+            tooltipPlacement: 'topRight'
           }
-          onClick={handleClickViewOnExplorer}
-        >{t('View on explorer')}</Button>
-      </>
-    </SwModal>
+          : undefined}
+        title={t<string>('Your address')}
+      >
+        <>
+          <div className='__qr-code-wrapper'>
+            <SwQRCode
+              className='__qr-code'
+              color='#000'
+              errorLevel='H'
+              icon={''}
+              size={264}
+              value={address}
+            />
+          </div>
+
+          <div className={'__address-box-wrapper'}>
+            <div className='__address-box'>
+              <Logo
+                className='__network-logo'
+                network={chainSlug}
+                shape='circle'
+                size={28}
+              />
+
+              <div className='__address'>
+                {toShort(address || '', 7, 7)}
+              </div>
+
+              <CopyToClipboard text={address}>
+                <Button
+                  className='__copy-button'
+                  icon={
+                    <Icon
+                      phosphorIcon={CopySimple}
+                      size='sm'
+                    />
+                  }
+                  onClick={onClickCopyButton}
+                  size='xs'
+                  tooltip={t('Copy address')}
+                  type='ghost'
+                />
+              </CopyToClipboard>
+            </div>
+          </div>
+
+          <Button
+            block
+            className={'__view-on-explorer'}
+            disabled={!scanExplorerAddressUrl}
+            icon={
+              <Icon
+                customSize={'28px'}
+                phosphorIcon={ArrowSquareOut}
+                size='sm'
+                weight={'fill'}
+              />
+            }
+            onClick={handleClickViewOnExplorer}
+          >{t('View on explorer')}</Button>
+        </>
+      </SwModal>
+      {accountInfo &&
+        <ChangeVersionWalletContractModal
+          accountInfo={accountInfo}
+          chainInfo={chainInfo}
+          id={changeVersionWalletContractModalId}
+          onCancel={onCancel}
+        />
+      }
+    </>
   );
 };
 
