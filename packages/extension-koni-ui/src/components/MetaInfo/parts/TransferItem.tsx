@@ -92,7 +92,6 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
           value={address}
         />
         <div className={'__account-name ml-xs'}>
-          <div className={'__account-item-name'}>{name}</div>
           <div className={'__account-item-address'}>{shortAddress}</div>
         </div>
       </div>
