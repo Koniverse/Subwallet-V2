@@ -107,17 +107,21 @@ export function _isSupportLedgerAccount (validateRecipientParams: ValidateRecipi
   const { account, destChainInfo } = validateRecipientParams;
 
   if (account?.isHardware) {
-    const availableGen: string[] = account.availableGenesisHashes || [];
-    const destChainName = destChainInfo?.name || 'Unknown';
+    if (!account.isGeneric) {
+      // For ledger legacy
+      const availableGen: string[] = account.availableGenesisHashes || [];
+      const destChainName = destChainInfo?.name || 'Unknown';
 
-    if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-      return 'Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.'.replace('{{network}}', destChainName);
-    }
+      if (!availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
+        return 'Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.'.replace('{{network}}', destChainName);
+      }
+    } else {
+      // For ledger generic
+      const ledgerCheck = ledgerMustCheckNetwork(account);
 
-    const ledgerCheck = ledgerMustCheckNetwork(account);
-
-    if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
-      return `Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`;
+      if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
+        return `Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`;
+      }
     }
   }
 
