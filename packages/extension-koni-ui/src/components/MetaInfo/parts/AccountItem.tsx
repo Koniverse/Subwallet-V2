@@ -117,6 +117,9 @@ const AccountItem = styled(Component)<AccountInfoItem>(({ theme: { token } }: Ac
       '.__account-item-address': {
         paddingLeft: 32
       }
+    },
+    '.__col.__value-col.__value-col': {
+      flex: '0 1 auto'
     }
   };
 });

@@ -69,7 +69,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     if (name) {
       return (
         <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
-          <div className={'__account-item-wrapper ml-xs'}>
+          <div className={'__account-item-wrapper'}>
             <div className={'__account-item-name-wrapper'}>
               <Avatar
                 className={'__account-avatar'}

@@ -53,10 +53,10 @@ const Component: React.FC<Props> = (props: Props) => {
 
   return (
     <>
-      <MetaInfo.Chain
+      {data.to && <MetaInfo.Chain
         chain={data.chain}
         label={t('Network')}
-      />
+      />}
 
       {
         isStaking
