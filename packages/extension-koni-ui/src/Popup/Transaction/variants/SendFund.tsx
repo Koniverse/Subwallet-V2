@@ -20,7 +20,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -49,11 +49,18 @@ interface TransferOptions {
 
 function getTokenItems (
   accountProxy: AccountProxy,
+  accountProxies: AccountProxy[],
   chainInfoMap: Record<string, _ChainInfo>,
   assetRegistry: Record<string, _ChainAsset>,
   tokenGroupSlug?: string // is ether a token slug or a multiChainAsset slug
 ): TokenItemType[] {
-  const allowedChains = getChainsByAccountType(chainInfoMap, accountProxy.chainTypes, accountProxy.specialChain);
+  let allowedChains: string[];
+
+  if (!isAccountAll(accountProxy.id)) {
+    allowedChains = getChainsByAccountType(chainInfoMap, accountProxy.chainTypes, accountProxy.specialChain);
+  } else {
+    allowedChains = getChainsByAccountAll(accountProxy, accountProxies, chainInfoMap);
+  }
 
   const items: TokenItemType[] = [];
 
@@ -212,11 +219,12 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
   const tokenItems = useMemo<TokenItemType[]>(() => {
     return getTokenItems(
       targetAccountProxy,
+      accountProxies,
       chainInfoMap,
       assetRegistry,
       sendFundSlug
     );
-  }, [assetRegistry, chainInfoMap, sendFundSlug, targetAccountProxy]);
+  }, [accountProxies, assetRegistry, chainInfoMap, sendFundSlug, targetAccountProxy]);
 
   const accountAddressItems = useMemo(() => {
     const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
