@@ -76,14 +76,10 @@ export const getChainsByAccountType = (_chainInfoMap: Record<string, _ChainInfo>
   }
 };
 
-interface ChainSpecialFilteredRecord {
-  slugs: string[];
-  chainInfo: Record<string, _ChainInfo>
-}
-
-// Note : The function filters the token list by account, where the allAccount case may only include a Ledger account
-export const getChainsByAllAccountType = (accountProxies: AccountProxy[], chainTypes: AccountChainType[], _chainInfoMap: Record<string, _ChainInfo>, specialChain?: string): ChainSpecialFilteredRecord => {
+// Note : The function filters the token list by account, where the accountAll case may include only Ledger accounts.
+export const getChainsByAccountAll = (accountProxies: AccountProxy[], accountAllProxy: AccountProxy, _chainInfoMap: Record<string, _ChainInfo>): string[] => {
   const specialChainRecord: Record<AccountChainType, string[]> = {} as Record<AccountChainType, string[]>;
+  const { chainTypes, specialChain } = accountAllProxy;
   const chainInfoMap = Object.fromEntries(Object.entries(_chainInfoMap).filter(([, chainInfo]) => chainInfo.chainStatus === _ChainStatus.ACTIVE));
   /*
     Special chain List
@@ -100,10 +96,7 @@ export const getChainsByAllAccountType = (accountProxies: AccountProxy[], chainT
     }
   }
 
-  const result: ChainSpecialFilteredRecord = {
-    slugs: [],
-    chainInfo: {}
-  };
+  const result: string[] = [];
 
   if (!specialChain) {
     Object.values(chainInfoMap).forEach((chainInfo) => {
@@ -114,22 +107,11 @@ export const getChainsByAllAccountType = (accountProxies: AccountProxy[], chainT
       });
 
       if (isAllowed) {
-        result.slugs.push(chainInfo.slug);
-        result.chainInfo[chainInfo.slug] = chainInfo;
+        result.push(chainInfo.slug);
       }
     });
   } else {
-    result.slugs = Object.keys(chainInfoMap).filter((chain) => {
-      if (specialChain === chain) {
-        const chainInfo = chainInfoMap[chain];
-
-        result.chainInfo[chainInfo.slug] = chainInfo;
-
-        return true;
-      }
-
-      return false;
-    });
+    return Object.keys(chainInfoMap).filter((chain) => specialChain === chain);
   }
 
   return result;

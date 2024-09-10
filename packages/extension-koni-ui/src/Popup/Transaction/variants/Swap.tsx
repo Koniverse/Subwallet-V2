@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
@@ -28,7 +28,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountAddressItemType, FormCallbacks, FormFieldData, SwapParams, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenSelectorItemType } from '@subwallet/extension-koni-ui/types/field';
-import { convertFieldToObject, findAccountByAddress, getChainsByAllAccountType, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
+import { convertFieldToObject, findAccountByAddress, getChainsByAccountAll, getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType, isTokenCompatibleWithAccountChainTypes } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, BackgroundIcon, Button, Form, Icon, Logo, ModalContext, Number, Tooltip } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -177,13 +177,12 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   const fromTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     const rawTokenSlugs = Object.keys(fromAndToTokenMap);
-    const _chainInfoMap = isAllAccount ? getChainsByAllAccountType(accountProxies, targetAccountProxy.chainTypes, chainInfoMap).chainInfo : chainInfoMap;
-    const targetTokenSlugs: string[] = [];
+    let targetTokenSlugs: string[] = [];
 
     (() => {
       // defaultSlug is just TokenSlug
       if (defaultSlug && rawTokenSlugs.includes(defaultSlug)) {
-        if (isTokenCompatibleWithAccountChainTypes(defaultSlug, targetAccountProxy.chainTypes, _chainInfoMap)) {
+        if (isTokenCompatibleWithAccountChainTypes(defaultSlug, targetAccountProxy.chainTypes, chainInfoMap)) {
           targetTokenSlugs.push(defaultSlug);
         }
 
@@ -199,15 +198,25 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
         if (defaultSlug) {
           // defaultSlug is MultiChainAssetSlug
-          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, _chainInfoMap)) {
+          if (_getMultiChainAsset(assetInfo) === defaultSlug && isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
             targetTokenSlugs.push(rts);
           }
 
           return;
         }
 
-        if (isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, _chainInfoMap)) {
+        if (isTokenCompatibleWithAccountChainTypes(rts, targetAccountProxy.chainTypes, chainInfoMap)) {
           targetTokenSlugs.push(rts);
+        }
+
+        if (isAllAccount) {
+          const allowChainSlug = getChainsByAccountAll(accountProxies, targetAccountProxy, chainInfoMap);
+
+          targetTokenSlugs = targetTokenSlugs.filter((tokenSlug) => {
+            const chainSlug = _getOriginChainOfAsset(tokenSlug);
+
+            return allowChainSlug.includes(chainSlug);
+          });
         }
       });
     })();
@@ -217,7 +226,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     }
 
     return [];
-  }, [accountProxies, assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, isAllAccount, targetAccountProxy.chainTypes]);
+  }, [accountProxies, assetRegistryMap, chainInfoMap, defaultSlug, fromAndToTokenMap, isAllAccount, targetAccountProxy]);
 
   const toTokenItems = useMemo<TokenSelectorItemType[]>(() => {
     return getTokenSelectorItem(fromAndToTokenMap[fromTokenSlugValue] || [], assetRegistryMap);
