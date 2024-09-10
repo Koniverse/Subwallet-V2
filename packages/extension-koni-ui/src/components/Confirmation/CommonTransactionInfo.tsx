@@ -4,7 +4,7 @@
 import { MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { useGetAccountByAddress, useGetChainPrefixBySlug } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { reformatAddress, toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const account = useGetAccountByAddress(address);
   const networkPrefix = useGetChainPrefixBySlug(network);
+  const addressNetwork = reformatAddress(address, networkPrefix);
 
   return (
     <MetaInfo
@@ -38,7 +39,7 @@ const Component: React.FC<Props> = (props: Props) => {
         className={'address-field'}
         label={t('Address')}
       >
-        {toShort(address)}
+        {toShort(addressNetwork)}
       </MetaInfo.Default>
       <MetaInfo.Chain
         chain={network}
