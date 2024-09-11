@@ -4103,13 +4103,13 @@ export default class KoniExtension {
         return this.signingApprovePasswordV2(request as RequestSigningApprovePasswordV2);
 
       /// Derive account
-      case 'pri(derivation.validateV2)':
+      case 'pri(accounts.derive.validateV2)':
         return this.validateDerivePath(request as RequestDeriveValidateV2);
-      case 'pri(derivation.getList)':
+      case 'pri(accounts.derive.getList)':
         return this.getListDeriveAccounts(request as RequestGetDeriveAccounts);
-      case 'pri(derivation.create.multiple)':
+      case 'pri(accounts.derive.create.multiple)':
         return this.derivationCreateMultiple(request as RequestDeriveCreateMultiple);
-      case 'pri(derivation.createV3)':
+      case 'pri(accounts.derive.createV3)':
         return this.derivationCreateV3(request as RequestDeriveCreateV3);
 
       // Transaction

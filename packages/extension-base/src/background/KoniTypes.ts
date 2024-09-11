@@ -13,7 +13,7 @@ import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/ext
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
+import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapErrorType, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -2082,6 +2082,22 @@ export interface KoniRequestSignatures {
   'pri(accounts.ton.version.change)': [RequestChangeTonWalletContractVersion, boolean];
   'pri(accounts.ton.version.map)': [RequestGetAllTonWalletContractVersion, ResponseGetAllTonWalletContractVersion];
 
+  // Derive
+  'pri(accounts.derive.validateV2)': [RequestDeriveValidateV2, ResponseDeriveValidateV2];
+  'pri(accounts.derive.suggestion)': [RequestGetDeriveSuggestion, ResponseGetDeriveSuggestion];
+  'pri(accounts.derive.getList)': [RequestGetDeriveAccounts, ResponseGetDeriveAccounts];
+  'pri(accounts.derive.create.multiple)': [RequestDeriveCreateMultiple, boolean];
+  'pri(accounts.derive.createV3)': [RequestDeriveCreateV3, boolean];
+
+  // Keyring state
+  'pri(keyring.subscribe)': [null, KeyringState, KeyringState];
+  'pri(keyring.change)': [RequestChangeMasterPassword, ResponseChangeMasterPassword];
+  'pri(keyring.migrate)': [RequestMigratePassword, ResponseMigratePassword];
+  'pri(keyring.unlock)': [RequestUnlockKeyring, ResponseUnlockKeyring];
+  'pri(keyring.lock)': [null, void];
+  'pri(keyring.export.mnemonic)': [RequestKeyringExportMnemonic, ResponseKeyringExportMnemonic];
+  'pri(keyring.reset)': [RequestResetWallet, ResponseResetWallet];
+
   // Address book
   'pri(addressBook.saveRecent)': [RequestSaveRecentAccount, KeyringAddress];
   'pri(addressBook.subscribe)': [null, AddressBookInfo, AddressBookInfo];
@@ -2216,23 +2232,8 @@ export interface KoniRequestSignatures {
   // Authorize
   'pri(authorize.subscribe)': [null, AuthUrls, AuthUrls];
 
-  // Keyring state
-  'pri(keyring.subscribe)': [null, KeyringState, KeyringState];
-  'pri(keyring.change)': [RequestChangeMasterPassword, ResponseChangeMasterPassword];
-  'pri(keyring.migrate)': [RequestMigratePassword, ResponseMigratePassword];
-  'pri(keyring.unlock)': [RequestUnlockKeyring, ResponseUnlockKeyring];
-  'pri(keyring.lock)': [null, void];
-  'pri(keyring.export.mnemonic)': [RequestKeyringExportMnemonic, ResponseKeyringExportMnemonic];
-  'pri(keyring.reset)': [RequestResetWallet, ResponseResetWallet];
-
   // Signing
   'pri(signing.approve.passwordV2)': [RequestSigningApprovePasswordV2, boolean];
-
-  // Derive
-  'pri(derivation.validateV2)': [RequestDeriveValidateV2, ResponseDeriveValidateV2];
-  'pri(derivation.getList)': [RequestGetDeriveAccounts, ResponseGetDeriveAccounts];
-  'pri(derivation.create.multiple)': [RequestDeriveCreateMultiple, boolean];
-  'pri(derivation.createV3)': [RequestDeriveCreateV3, boolean];
 
   // Transaction
   // Get Transaction

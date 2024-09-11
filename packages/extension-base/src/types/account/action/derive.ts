@@ -45,3 +45,12 @@ export interface RequestGetDeriveAccounts {
 export interface ResponseGetDeriveAccounts {
   result: DeriveAccountInfo[];
 }
+
+export interface RequestGetDeriveSuggestion {
+  proxyId: string;
+}
+
+export interface ResponseGetDeriveSuggestion {
+  proxyId: string;
+  suri: string;
+}
