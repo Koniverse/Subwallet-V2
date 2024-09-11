@@ -469,14 +469,16 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     const apiProps = await this.substrateApi.isReady;
     const allCollators: ValidatorInfo[] = [];
 
-    const [_allCollators, _collatorCommission] = await Promise.all([
+    const [_allCollators, _collatorCommission, _selectedCandidates] = await Promise.all([
       apiProps.api.query.parachainStaking.candidateInfo.entries(),
-      apiProps.api.query.parachainStaking.collatorCommission()
+      apiProps.api.query.parachainStaking.collatorCommission(),
+      apiProps.api.query.parachainStaking.selectedCandidates()
     ]);
 
     const maxDelegationPerCollator = apiProps.api.consts.parachainStaking.maxTopDelegationsPerCandidate.toString();
     const rawCollatorCommission = _collatorCommission.toHuman() as string;
     const collatorCommission = parseFloat(rawCollatorCommission.split('%')[0]);
+    const selectedCollators = _selectedCandidates.toPrimitive() as string[];
 
     for (const collator of _allCollators) {
       const _collatorAddress = collator[0].toHuman() as string[];
@@ -489,20 +491,22 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       const bnMinBond = new BN(collatorInfo.lowestTopDelegationAmount);
       const maxNominatorRewarded = parseInt(maxDelegationPerCollator);
 
-      allCollators.push({
-        commission: 0,
-        expectedReturn: 0,
-        address: collatorAddress,
-        totalStake: bnTotalStake.toString(),
-        ownStake: bnOwnStake.toString(),
-        otherStake: bnOtherStake.toString(),
-        nominatorCount: collatorInfo.delegationCount,
-        blocked: false,
-        isVerified: false,
-        minBond: bnMinBond.toString(),
-        chain: this.chain,
-        isCrowded: collatorInfo.delegationCount ? collatorInfo.delegationCount >= maxNominatorRewarded : false
-      });
+      if (selectedCollators.includes(collatorAddress)) {
+        allCollators.push({
+          commission: 0,
+          expectedReturn: 0,
+          address: collatorAddress,
+          totalStake: bnTotalStake.toString(),
+          ownStake: bnOwnStake.toString(),
+          otherStake: bnOtherStake.toString(),
+          nominatorCount: collatorInfo.delegationCount,
+          blocked: false,
+          isVerified: false,
+          minBond: bnMinBond.toString(),
+          chain: this.chain,
+          isCrowded: collatorInfo.delegationCount ? collatorInfo.delegationCount >= maxNominatorRewarded : false
+        });
+      }
     }
 
     const extraInfoMap: Record<string, CollatorExtraInfo> = {};
