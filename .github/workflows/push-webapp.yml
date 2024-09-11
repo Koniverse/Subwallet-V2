@@ -9,6 +9,7 @@ on:
       - webapp
       - webapp-dev
       - webapp-demo
+      - webapp-ca
 
 jobs:
   master:
@@ -44,7 +45,7 @@ jobs:
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        projectName: ${{ vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
+        projectName: ${{ github.ref_name == 'webapp-ca' && 'chain-abstraction' || vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
         gitHubToken: ${{ secrets.GH_AUTOMATION_TOKEN }}
         branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
         directory: './packages/webapp/build'
