@@ -109,16 +109,26 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
 const AccountItem = styled(Component)<AccountInfoItem>(({ theme: { token } }: AccountInfoItem) => {
   return {
     '.__account-item-wrapper': {
+      overflow: 'hidden',
       '.__account-item-name-wrapper': {
         display: 'flex',
+        overflow: 'hidden',
         gap: 8
+      },
+      '.__account-item-name': {
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        overflow: 'hidden'
       },
       '.__account-item-address': {
         paddingLeft: 32
       }
     },
     '.__col.__value-col.__value-col': {
-      flex: '0 1 auto'
+      flex: '1.2'
+    },
+    '.__col.__label-col.__label-col': {
+      justifyContent: 'flex-start'
     }
   };
 });
