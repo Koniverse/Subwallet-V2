@@ -34,7 +34,7 @@ const SeedPhraseTermLocalDefault: SeedPhraseTermStorage = { state: 'nonConfirmed
 const Component = ({ className }: Props) => {
   const { inactiveModal } = useContext(ModalContext);
   const { t } = useTranslation();
-  const [{ useDefaultContent }, setIsConfirmTermSeedPhrase] = useLocalStorage<SeedPhraseTermStorage>(CONFIRM_TERM_SEED_PHRASE, SeedPhraseTermLocalDefault);
+  const [{ useDefaultContent }, setConfirmTermSeedPhrase] = useLocalStorage<SeedPhraseTermStorage>(CONFIRM_TERM_SEED_PHRASE, SeedPhraseTermLocalDefault);
   const [isCheckDontShow, setIsCheckDontShow] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,8 +94,8 @@ const Component = ({ className }: Props) => {
 
   const onConfirm = useCallback(() => {
     inactiveModal(modalId);
-    setIsConfirmTermSeedPhrase({ state: isCheckDontShow ? 'confirmed' : 'nonConfirmed', useDefaultContent: false });
-  }, [inactiveModal, isCheckDontShow, setIsConfirmTermSeedPhrase]);
+    setConfirmTermSeedPhrase({ state: isCheckDontShow ? 'confirmed' : 'nonConfirmed', useDefaultContent: false });
+  }, [inactiveModal, isCheckDontShow, setConfirmTermSeedPhrase]);
 
   const subTitle = useMemo(() => {
     return useDefaultContent ? t('Tap on all checkboxes to confirm you understand the importance of your seed phrase') : t('This seed phrase creates a unified account that can be used for Polkadot, Ethereum, Bitcoin and TON ecosystem. Keep in mind that for TON specifically, this seed phrase is not compatible with TON-native wallets.');
