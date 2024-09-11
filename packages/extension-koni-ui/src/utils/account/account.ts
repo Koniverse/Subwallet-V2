@@ -85,7 +85,7 @@ export const searchAccountFunction = (item: AbstractAddressJson, searchText: str
 };
 
 export const searchAccountProxyFunction = (item: AccountProxy, searchText: string): boolean => {
-  return item.id.toLowerCase().includes(searchText.toLowerCase()) || (item.name || '').toLowerCase().includes(searchText.toLowerCase());
+  return (item.name || '').toLowerCase().includes(searchText.toLowerCase());
 };
 
 export const formatAccountAddress = (account: AccountJson, networkInfo: _ChainInfo | null): string => {
