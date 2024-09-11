@@ -102,8 +102,8 @@ export class AccountContext {
     return this.modifyHandler.tonGetAllTonWalletContractVersion(request);
   }
 
-  public tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): void {
-    this.modifyHandler.tonAccountChangeWalletContractVersion(request);
+  public tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): string {
+    return this.modifyHandler.tonAccountChangeWalletContractVersion(request);
   }
 
   /* Modify accounts */

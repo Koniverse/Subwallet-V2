@@ -183,7 +183,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     };
   }
 
-  public tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): void {
+  public tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): string {
     const { address, proxyId, version } = request;
 
     const accounts = this.state.accounts;
@@ -255,5 +255,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     }
 
     this.state.upsertModifyPairs(modifiedPairs);
+
+    return newAddress;
   }
 }

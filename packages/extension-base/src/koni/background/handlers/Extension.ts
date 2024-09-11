@@ -137,10 +137,8 @@ export default class KoniExtension {
     return this.#koniState.keyringService.context.tonGetAllTonWalletContractVersion(request);
   }
 
-  private tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): boolean {
-    this.#koniState.keyringService.context.tonAccountChangeWalletContractVersion(request);
-
-    return true;
+  private tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): string {
+    return this.#koniState.keyringService.context.tonAccountChangeWalletContractVersion(request);
   }
 
   private accountsExport ({ address, password }: RequestAccountExport): ResponseAccountExport {
