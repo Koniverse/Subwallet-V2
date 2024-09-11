@@ -60,8 +60,8 @@ export function _getXcmMultiLocation (originChainInfo: _ChainInfo, destChainInfo
   };
 }
 
-export function _isXcmTransferUnstable (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
-  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo);
+export function _isXcmTransferUnstable (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
+  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) || _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
 }
 
 function getAssetHubBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
@@ -86,9 +86,15 @@ function getSnowBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
   }
 }
 
-export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): string {
+function getMythosFromHydrationToMythosWarning (): string {
+  return 'Cross-chain transfer of this token requires a high transaction fee. Do you want to continue?';
+}
+
+export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): string {
   if (_isSnowBridgeXcm(originChainInfo, destChainInfo)) {
     return getSnowBridgeUnstableWarning(originChainInfo);
+  } else if (_isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug)) {
+    return getMythosFromHydrationToMythosWarning();
   } else {
     return getAssetHubBridgeUnstableWarning(originChainInfo);
   }
@@ -100,6 +106,10 @@ export function _isXcmWithinSameConsensus (originChainInfo: _ChainInfo, destChai
 
 export function _isSnowBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
   return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) && (_isPureEvmChain(originChainInfo) || _isPureEvmChain(destChainInfo));
+}
+
+export function _isMythosFromHydrationToMythos (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
+  return originChainInfo.slug === 'hydradx_main' && destChainInfo.slug === 'mythos' && assetSlug === 'hydradx_main-LOCAL-MYTH';
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
