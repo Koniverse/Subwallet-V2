@@ -108,8 +108,10 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
   }
 
   // QR
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountChainType.SUBSTRATE) {
-    result.push(AccountActions.EXPORT_QR);
+  if (signMode === AccountSignMode.PASSWORD) {
+    if (networkType === AccountChainType.ETHEREUM || networkType === AccountChainType.SUBSTRATE) {
+      result.push(AccountActions.EXPORT_QR);
+    }
   }
 
   // Derive
