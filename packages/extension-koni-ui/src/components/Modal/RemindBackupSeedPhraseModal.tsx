@@ -45,8 +45,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
     if (currentAccountProxy) {
       if ([AccountProxyType.SOLO, AccountProxyType.UNIFIED].includes(currentAccountProxy.accountType)) {
-        // TODO: navigate to export account page
-        navigate(`/accounts/detail/${currentAccountProxy.id}`, { state });
+        navigate(`/accounts/export/${currentAccountProxy.id}`, { state });
         setSessionLatest({ ...sessionLatest, timeCalculate: Date.now(), remind: false, isFinished: true });
       } else {
         activeModal(AccountSelectorModalId);

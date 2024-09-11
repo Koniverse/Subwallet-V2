@@ -271,10 +271,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const openExitedAccountNameWarningModal = useCallback(() => {
     alertModal.open({
       closable: false,
-      content: t('This account name already exists. Some characters will be added at the beginning of the name to distinguish it from existing account names.'),
-      title: t('Account name already exists'),
+      content: t('This feature auto-converts your recipient address into the correct format for your chosen destination network. Wrong destination network will result in loss of funds. Only enable if you’re an advanced user'),
+      title: t('Advanced address conversion'),
       okButton: {
-        text: t('I understand'),
+        text: t('Enable'),
         icon: CheckCircle,
         iconWeight: 'fill',
         onClick: () => {
