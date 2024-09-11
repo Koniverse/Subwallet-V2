@@ -78,9 +78,9 @@ function getAssetHubBridgeUnstableWarning (originChainInfo: _ChainInfo): string 
 function getSnowBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
   switch (originChainInfo.slug) {
     case COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB:
-      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of 70$ and takes up to 1 hour to complete. Continue at your own risk';
+      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of $70 and takes up to 1 hour to complete. Continue at your own risk';
     case COMMON_CHAIN_SLUGS.ETHEREUM:
-      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of 5$ and takes up to 1 hour to complete. Continue at your own risk';
+      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of $5 and takes up to 1 hour to complete. Continue at your own risk';
     default:
       return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a high fee and takes up to 1 hour to complete. Continue at your own risk';
   }
