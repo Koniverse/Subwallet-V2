@@ -549,6 +549,28 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
         }
       }
 
+      if (warnings.some((w) => w.warningType === BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS) && !options.isTransferBounceable) {
+        openAlert({
+          type: NotificationType.WARNING,
+          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
+          title: t('Pay attention!'),
+          okButton: {
+            text: t('Transfer'),
+            onClick: () => {
+              closeAlert();
+              options.isTransferBounceable = true;
+              _doSubmit();
+            }
+          },
+          cancelButton: {
+            text: t('Cancel'),
+            onClick: closeAlert
+          }
+        });
+
+        return;
+      }
+
       if (_isNativeToken(assetInfo)) {
         const minAmount = _getTokenMinAmount(assetInfo);
         const bnMinAmount = new BN(minAmount);
@@ -574,28 +596,6 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
           return;
         }
-      }
-
-      if (warnings.some((w) => w.warningType === BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS) && !options.isTransferBounceable) {
-        openAlert({
-          type: NotificationType.WARNING,
-          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-          title: t('Pay attention!'),
-          okButton: {
-            text: t('Transfer'),
-            onClick: () => {
-              closeAlert();
-              options.isTransferBounceable = true;
-              _doSubmit();
-            }
-          },
-          cancelButton: {
-            text: t('Cancel'),
-            onClick: closeAlert
-          }
-        });
-
-        return;
       }
 
       doSubmit(values, options);
