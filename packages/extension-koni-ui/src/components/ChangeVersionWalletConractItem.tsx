@@ -2,49 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { WalletContractItem } from '@subwallet/extension-koni-ui/components/Modal/ChangeVersionWalletContractModal';
-import { useSelector } from '@subwallet/extension-koni-ui/hooks';
-import { tonAccountChangeWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { TonWalletContractVersion } from '@subwallet/keyring/types';
 import { Icon, Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React, { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import styled, { useTheme } from 'styled-components';
 
-type Props = ThemeProps & WalletContractItem
+type Props = ThemeProps & WalletContractItem & {
+  onClick?: (walletType: TonWalletContractVersion, value: string) => void;
+}
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { chainSlug, className, isSelected, value, walletType } = props;
+  const { chainSlug, className, isSelected, onClick, value, walletType } = props;
   const { token } = useTheme() as Theme;
-  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
-
-  const { t } = useTranslation();
 
   const _onSelect = useCallback(() => {
-    (async () => {
-      try {
-        const success = await tonAccountChangeWalletContractVersion({
-          proxyId: currentAccountProxy?.id || '',
-          address: value,
-          version: walletType
-        });
-
-        if (success) {
-          // Handle successful version change
-          console.log(`Version changed to ${walletType}`);
-        } else {
-          // Handle failure
-          console.error('Failed to change version');
-        }
-      } catch (error) {
-        // Handle error
-        console.error('Error changing version:', error);
-      }
-    })();
-  }, [currentAccountProxy?.id, value, walletType]);
+    onClick && onClick(walletType, value);
+  },
+  [onClick, value, walletType]
+  );
 
   return (
     <>
