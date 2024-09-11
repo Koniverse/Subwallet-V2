@@ -183,8 +183,8 @@ const checkNominationPoolCompleteMigrated = async (substrateApi: _SubstrateApi) 
   const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation;
 
   const [nominationPoolCounterRaw, nominationPoolInfoRaw] = await Promise.all([
-    substrateApi.api.query.staking.counterForVirtualStakers && substrateApi.api.query.staking.counterForVirtualStakers(),
-    substrateApi.api.query.staking.virtualStakers && substrateApi.api.query.staking.virtualStakers.entries()
+    substrateApi.api.query.staking?.counterForVirtualStakers && substrateApi.api.query.staking.counterForVirtualStakers(),
+    substrateApi.api.query.staking?.virtualStakers && substrateApi.api.query.staking.virtualStakers.entries()
   ]);
 
   const nominationPoolCounter = nominationPoolCounterRaw?.toPrimitive() as number ?? 0;
