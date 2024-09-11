@@ -173,8 +173,16 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
 
 const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: TransferInfoItem) => {
   return {
+    display: 'flex',
+    gap: 4,
     '.__sender, .__recipient': {
       minHeight: 46
+    },
+    '.__sender.__sender.__value': {
+      alignItems: 'flex-start'
+    },
+    '.__recipient.__recipient.__value': {
+      alignItems: 'flex-start'
     },
     '.__account-item-wrapper': {
       overflow: 'hidden',
@@ -182,7 +190,14 @@ const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: 
       whiteSpace: 'nowrap',
       '.__account-item-name-wrapper': {
         display: 'flex',
-        gap: 8
+        gap: 8,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      },
+      '.__account-item-name': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
       },
       '.__account-item-address': {
         paddingLeft: 32
