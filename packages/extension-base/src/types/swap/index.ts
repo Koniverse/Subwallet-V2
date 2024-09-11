@@ -7,6 +7,8 @@ import { AmountData, ChainType, ExtrinsicType } from '@subwallet/extension-base/
 import { TransactionData } from '@subwallet/extension-base/types';
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo } from '@subwallet/extension-base/types/service-base';
 import BigN from 'bignumber.js';
+import {UserOpBundle} from "@particle-network/aa";
+import {QuoteResponse} from "klaster-sdk";
 
 // core
 export type SwapRate = number;
@@ -176,7 +178,7 @@ export interface SwapSubmitParams {
 export interface SwapSubmitStepData {
   txChain: string;
   txData: any;
-  extrinsic: TransactionData;
+  extrinsic: TransactionData | UserOpBundle | QuoteResponse;
   transferNativeAmount: string;
   extrinsicType: ExtrinsicType;
   chainType: ChainType

@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
-import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, rawTx } from 'klaster-sdk';
+import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, RawTransaction, rawTx, TransactionBatch } from 'klaster-sdk';
 
 import { encodeAcrossCallData, getAcrossSuggestedFee } from './helper/tx-encoder';
 
@@ -88,7 +88,7 @@ export class KlasterService {
     }
   }
 
-  async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string): Promise<QuoteResponse> {
+  async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string, otherTx?: TransactionBatch): Promise<QuoteResponse> {
     const res = await this.bridgePlugin({
       account: this.sdk.account,
       amount: BigInt(value),
@@ -98,8 +98,12 @@ export class KlasterService {
       destinationToken: _getContractAddressOfToken(destToken) as `0x${string}`
     });
 
+    const steps = [res.txBatch];
+
+    otherTx && steps.push(otherTx);
+
     const iTx = buildItx({
-      steps: [res.txBatch],
+      steps,
       feeTx: this.sdk.encodePaymentFee(_getEvmChainId(srcChain) as number, 'USDC')
     });
 

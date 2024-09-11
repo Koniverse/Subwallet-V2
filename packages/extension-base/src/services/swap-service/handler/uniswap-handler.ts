@@ -3,19 +3,17 @@
 
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
+import { BasicTxErrorType, ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
+import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getAssetDecimals, _getAssetName, _getAssetSymbol, _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getChainNativeTokenSlug, _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
-import { SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
+import { calculateSwapRate, handleUniswapQuote, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
 import { OptimalSwapPathParams, SwapEarlyValidation, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import {ChainId, QUOTER_ADDRESSES, Token, V3_CORE_FACTORY_ADDRESSES} from '@uniswap/sdk-core';
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json';
-import {computePoolAddress, FeeAmount, Pool, Route} from '@uniswap/v3-sdk';
-import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/QuoterV2.sol/QuoterV2.json';
-import {ethers, JsonRpcProvider} from "ethers";
+import { CHAIN_TO_ADDRESSES_MAP, ChainId } from '@uniswap/sdk-core';
+import { batchTx, encodeApproveTx, rawTx } from 'klaster-sdk';
 
 export class UniswapHandler implements SwapBaseInterface {
   providerSlug: SwapProviderId;
@@ -71,88 +69,14 @@ export class UniswapHandler implements SwapBaseInterface {
 
     const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(from);
     const toToken = this.swapBaseHandler.chainService.getAssetBySlug(to);
-    const chainId = ChainId.SEPOLIA;
+    const fromChain = this.swapBaseHandler.chainService.getChainInfoByKey(fromToken.originChain);
 
-    const fromContract = _getContractAddressOfToken(fromToken);
-    const toContract = _getContractAddressOfToken(toToken);
-
-    const currentPoolAddress = computePoolAddress({
-      fee: FeeAmount.HIGH,
-      tokenA: new Token(
-        chainId,
-        fromContract,
-        _getAssetDecimals(fromToken),
-        _getAssetSymbol(fromToken),
-        _getAssetName(fromToken)
-      ),
-      tokenB: new Token(
-        chainId,
-        toContract,
-        _getAssetDecimals(toToken),
-        _getAssetSymbol(toToken),
-        _getAssetName(toToken)
-      ),
-      factoryAddress: V3_CORE_FACTORY_ADDRESSES[chainId as number]
-    });
-
-    const web3Api = this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-    const poolContract = new web3Api.api.eth.Contract(IUniswapV3PoolABI.abi, currentPoolAddress);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
-    const quoterContract = new web3Api.api.eth.Contract(Quoter.abi, QUOTER_ADDRESSES[chainId as number]);
-    console.log('quoter', QUOTER_ADDRESSES[chainId as number]);
-
-    const [token0, token1, fee, liquidity, slot0] = await Promise.all([
-      poolContract.methods.token0().call(),
-      poolContract.methods.token1().call(),
-      poolContract.methods.fee().call(),
-      poolContract.methods.liquidity().call(),
-      poolContract.methods.slot0().call()
-    ]);
-
-    const provider = new ethers.JsonRpcProvider(web3Api.apiUrl);
-    const quoterContract1 = new ethers.Contract(
-      QUOTER_ADDRESSES[chainId as number],
-      Quoter.abi,
-      provider
-    );
-
-    try {
-      const quotedAmountOut = await quoterContract1.quoteExactInputSingle.staticCall([
-        fromContract,
-        toContract,
-        fee,
-        request.fromAmount,
-        toContract
-      ]);
-      console.log(quotedAmountOut);
-    } catch (e) {
-      console.log(e);
-    }
-
-    const pool = new Pool(
-      fromContract,
-      toContract,
-      fee,
-      slot0[0].toString(),
-      liquidity.toString(),
-      slot0[1]
-    );
-
-    const swapRoute = new Route(
-      [pool],
-      fromContract,
-      toContract
-    );
-
-    const amountOut = await getOutputQuote()
-
+    const [availQuote] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService);
     const result: SwapQuote = {
       pair: request.pair,
       fromAmount: request.fromAmount,
-      toAmount: '999999999999999',
-      rate: 1,
+      toAmount: availQuote.toString(),
+      rate: calculateSwapRate(request.fromAmount, availQuote.toString(), fromToken, toToken),
       provider: this.providerInfo,
       aliveUntil: +Date.now() + SWAP_QUOTE_TIMEOUT_MAP.default,
       feeInfo: {
@@ -160,23 +84,70 @@ export class UniswapHandler implements SwapBaseInterface {
           {
             feeType: SwapFeeType.NETWORK_FEE,
             amount: '1000000',
-            tokenSlug: 'base_sepolia-ERC20-USDC-0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+            tokenSlug: fromToken.slug
           }
         ],
-        defaultFeeToken: 'base_sepolia-NATIVE-ETH',
-        feeOptions: ['base_sepolia-NATIVE-ETH', 'base_sepolia-ERC20-USDC-0x036CbD53842c5426634e7929541eC2318f3dCF7e'],
-        selectedFeeToken: 'base_sepolia-ERC20-USDC-0x036CbD53842c5426634e7929541eC2318f3dCF7e'
+        defaultFeeToken: _getChainNativeTokenSlug(fromChain),
+        feeOptions: [_getChainNativeTokenSlug(fromChain), fromToken.slug],
+        selectedFeeToken: fromToken.slug
       },
       route: {
-        path: ['base_sepolia-ERC20-USDC-0x036CbD53842c5426634e7929541eC2318f3dCF7e', 'sepolia_ethereum-NATIVE-ETH']
+        path: [fromToken.slug, toToken.slug]
       }
     } as SwapQuote;
 
     return Promise.resolve(result);
   }
 
-  handleSubmitStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
-    return Promise.resolve(undefined);
+  async handleSubmitStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
+    const request: SwapRequest = {
+      address: params.address,
+      fromAmount: params.quote.fromAmount,
+      pair: params.quote.pair,
+      slippage: 0
+    };
+    const fromTokenSlug = params.quote.pair.from;
+    const toTokenSlug = params.quote.pair.to;
+    const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(fromTokenSlug);
+    const toToken = this.swapBaseHandler.chainService.getAssetBySlug(toTokenSlug);
+    const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug('sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14');
+
+    const bridgeOriginChain = this.swapBaseHandler.chainService.getChainInfoByKey(bridgeOriginToken.originChain);
+    const bridgeDestChain = this.swapBaseHandler.chainService.getChainInfoByKey(toToken.originChain);
+    const chainId = ChainId.SEPOLIA;
+
+    const toAddress = CHAIN_TO_ADDRESSES_MAP[chainId].swapRouter02Address;
+
+    const [, calldata] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain), this.swapBaseHandler.chainService);
+
+    const approveSwapTx = encodeApproveTx({
+      tokenAddress: _getContractAddressOfToken(fromToken) as `0x${string}`,
+      amount: 10000000000000000000000n,
+      recipient: toAddress as `0x${string}`
+    });
+
+    const swapTx = rawTx({
+      to: toAddress as `0x${string}`,
+      data: calldata as `0x${string}`,
+      gasLimit: BigInt(250_000)
+    });
+    const txBatch = batchTx(chainId as number, [approveSwapTx, swapTx]);
+
+    const klasterService = new KlasterService();
+
+    await klasterService.init();
+    const iTx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
+
+    console.log('iTX', iTx);
+
+    return Promise.resolve({
+      txChain: fromToken.originChain,
+      extrinsic: iTx,
+      txData: undefined,
+      transferNativeAmount: '0',
+      extrinsicType: ExtrinsicType.SWAP,
+      chainType: ChainType.EVM
+    });
   }
 
   handleSwapProcess (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
@@ -198,6 +169,6 @@ export class UniswapHandler implements SwapBaseInterface {
   }
 
   validateSwapRequest (request: SwapRequest): Promise<SwapEarlyValidation> {
-    return Promise.resolve(undefined);
+    return Promise.resolve({});
   }
 }
