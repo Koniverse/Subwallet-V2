@@ -1,8 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { DerivePathInfo } from '@subwallet/extension-base/types';
 import { KeypairType } from '@subwallet/keyring/types';
-import { DerivePathInfo, validateDerivationPath, validateEvmDerivationPath, validateOtherSubstrateDerivationPath, validateSr25519DerivationPath, validateTonDerivationPath, validateUnifiedDerivationPath } from './derive';
+
+import { validateDerivationPath, validateEvmDerivationPath, validateOtherSubstrateDerivationPath, validateSr25519DerivationPath, validateTonDerivationPath, validateUnifiedDerivationPath } from './validate';
 
 interface DeriveTestCase {
   input: string;
@@ -321,7 +323,7 @@ const autoTestCases: AutoDeriveTestCase[] = [
     input: "m/44'/0'/0'/0/0",
     type: 'bittest-44',
     output: undefined
-  },
+  }
 ];
 
 describe('validate derive path', () => {
@@ -356,7 +358,7 @@ describe('validate derive path', () => {
   });
 
   describe('auto', () => {
-    test.each(autoTestCases)('validateDerivationPath $input $type', ({ input, type, output }) => {
+    test.each(autoTestCases)('validateDerivationPath $input $type', ({ input, output, type }) => {
       expect(validateDerivationPath(input, type)).toEqual(output);
     });
   });
