@@ -1320,7 +1320,9 @@ export default class TransactionService {
           } else {
             const klasterService = new KlasterService();
 
-            await klasterService.init();
+            const owner = getEthereumSmartAccountOwner(address);
+
+            await klasterService.init(owner?.owner as string);
             const result = await klasterService.sdk.execute(transaction as QuoteResponse, signature);
 
             console.log('submitted', result);

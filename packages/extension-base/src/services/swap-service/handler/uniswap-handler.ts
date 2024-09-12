@@ -12,6 +12,7 @@ import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/se
 import { calculateSwapRate, handleUniswapQuote, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
 import { OptimalSwapPathParams, SwapEarlyValidation, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { getEthereumSmartAccountOwner } from '@subwallet/extension-base/utils';
 import { CHAIN_TO_ADDRESSES_MAP, ChainId } from '@uniswap/sdk-core';
 import { batchTx, encodeApproveTx, rawTx } from 'klaster-sdk';
 
@@ -134,8 +135,9 @@ export class UniswapHandler implements SwapBaseInterface {
     const txBatch = batchTx(chainId as number, [approveSwapTx, swapTx]);
 
     const klasterService = new KlasterService();
+    const owner = getEthereumSmartAccountOwner(request.address);
 
-    await klasterService.init();
+    await klasterService.init(owner?.owner as string);
     const iTx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
 
     console.log('iTX', iTx);

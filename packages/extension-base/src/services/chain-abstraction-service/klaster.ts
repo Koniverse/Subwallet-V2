@@ -3,47 +3,19 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
-import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, MultichainClient, MultichainTokenMapping, QuoteResponse, RawTransaction, rawTx, TransactionBatch } from 'klaster-sdk';
+import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, QuoteResponse, rawTx, TransactionBatch } from 'klaster-sdk';
 
-import { encodeAcrossCallData, getAcrossSuggestedFee } from './helper/tx-encoder';
-
-export interface AcrossSuggestedFeeResp {
-  totalRelayFee: {
-    pct: string,
-    total: string
-  },
-  relayerCapitalFee: {
-    pct: string,
-    total: string
-  },
-  relayerGasFee: {
-    pct: string,
-    total: string
-  },
-  lpFee: {
-    pct: string,
-    total: string
-  },
-  timestamp: string,
-  isAmountTooLow: boolean,
-  quoteBlock: string,
-  spokePoolAddress: string,
-  exclusiveRelayer: string,
-  exclusivityDeadline: string,
-  expectedFillTimeSec: string
-}
+import { getAcrossBridgeData } from './helper/tx-encoder';
 
 export class KlasterService {
   public sdk: KlasterSDK<BiconomyV2AccountInitData>;
-  private mcClient: MultichainClient;
-  private mcUSDC: MultichainTokenMapping;
-  private bridgePlugin: BridgePlugin;
+  private readonly bridgePlugin: BridgePlugin;
   private isInit = false;
 
   static async getSmartAccount (ownerAddress: string): Promise<string> {
     const klasterSdk = await initKlaster({
       accountInitData: loadBicoV2Account({
-        owner: ownerAddress
+        owner: ownerAddress as `0x${string}`
       }),
       nodeUrl: klasterNodeHost.default
     });
@@ -53,18 +25,28 @@ export class KlasterService {
 
   constructor () {
     this.bridgePlugin = async (data: BridgePluginParams) => {
-      const feeResponse = await getAcrossSuggestedFee(data);
+      const [srcAddress, destAddress] = data.account.getAddresses([data.sourceChainId, data.destinationChainId]);
+
+      const [feeResponse, bridgeTxConfig] = await getAcrossBridgeData({
+        amount: data.amount,
+        destAccount: destAddress as string,
+        destinationChainId: data.destinationChainId,
+        destinationTokenContract: data.destinationToken,
+        sourceChainId: data.sourceChainId,
+        sourceTokenContract: data.sourceToken,
+        srcAccount: srcAddress as string
+      });
 
       const outputAmount = data.amount - BigInt(feeResponse.totalRelayFee.total);
       const acrossApproveTx = encodeApproveTx({
         tokenAddress: data.sourceToken,
-        amount: outputAmount * 10n,
-        recipient: feeResponse.spokePoolAddress
+        amount: 10000000000000000000000n,
+        recipient: feeResponse.spokePoolAddress as `0x${string}`
       });
 
       const acrossCallTx = rawTx({
         to: feeResponse.spokePoolAddress as `0x${string}`,
-        data: encodeAcrossCallData(data, feeResponse),
+        data: bridgeTxConfig.data as `0x${string}`,
         gasLimit: BigInt(250_000)
       });
 
@@ -75,11 +57,11 @@ export class KlasterService {
     };
   }
 
-  async init () {
+  async init (ownerAddress: string) {
     if (!this.isInit) {
       this.sdk = await initKlaster({
         accountInitData: loadBicoV2Account({
-          owner: '0xA34AFc7Cc7B06AA528d5170452585999990f8C27'
+          owner: ownerAddress as `0x${string}`
         }),
         nodeUrl: klasterNodeHost.default
       });
