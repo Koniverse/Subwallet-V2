@@ -5,8 +5,8 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AccountJson, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import ChangeVersionWalletConractItem from '@subwallet/extension-koni-ui/components/ChangeVersionWalletConractItem';
-import { CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
-import { useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { ADDRESS_QR_MODAL, CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
+import { useGoBackFromCreateAccount, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -38,7 +38,7 @@ interface TonContractVersion {
 
 const changeVersionWalletContractModalId = CHANGE_VERSION_WALLET_CONTRACT;
 
-const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCancel }: Props) => {
+const Component: React.FC<Props> = ({ accountInfo, chainInfo, className }: Props) => {
   const { t } = useTranslation();
   const notification = useNotification();
   const { checkActive, inactiveModal } = useContext(ModalContext);
@@ -46,6 +46,7 @@ const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCance
   const initialKey = accountInfo.tonContractVersion as TonWalletContractVersion;
   const initialValue = accountInfo.address || '';
   const isActive = checkActive(changeVersionWalletContractModalId);
+  const onBack = useGoBackFromCreateAccount(ADDRESS_QR_MODAL);
   const [currentSelected, setCurrentSelected] = useState<TonContractVersion>({ tonContractVersion: initialKey, address: initialValue });
 
   useEffect(() => {
@@ -145,7 +146,7 @@ const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCance
         </Button>
       }
       id={changeVersionWalletContractModalId}
-      onCancel={onCancel}
+      onCancel={onBack}
       title={t<string>('Wallet version contract')}
     >
       <div>
