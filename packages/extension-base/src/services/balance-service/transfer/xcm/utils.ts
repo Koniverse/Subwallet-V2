@@ -14,6 +14,9 @@ export function isUseTeleportProtocol (originChainInfo: _ChainInfo, destChainInf
     (['polkadot'].includes(destChainInfo.slug) && ['statemint'].includes(originChainInfo.slug)) ||
     (['kusama'].includes(destChainInfo.slug) && ['statemine'].includes(originChainInfo.slug)) ||
     (['rococo'].includes(destChainInfo.slug) && ['rococo_assethub'].includes(originChainInfo.slug));
+  const isXcmMythos =
+    (originChainInfo.slug === 'mythos' && destChainInfo.slug === 'statemint' && tokenSlug === 'mythos-NATIVE-MYTH') ||
+    (originChainInfo.slug === 'statemint' && destChainInfo.slug === 'mythos' && tokenSlug === 'statemint-LOCAL-MYTH');
 
-  return relayChainToSystemChain || systemChainToRelayChain;
+  return relayChainToSystemChain || systemChainToRelayChain || isXcmMythos;
 }

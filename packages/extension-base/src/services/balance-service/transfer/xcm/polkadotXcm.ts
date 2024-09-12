@@ -21,14 +21,6 @@ export function getExtrinsicByPolkadotXcmPallet (tokenInfo: _ChainAsset, originC
     method = 'limitedTeleportAssets';
   }
 
-  // Hot-fix: MYTH: statemint -> mythos
-  const isMythFromStatemintToMythos = originChainInfo.slug === 'statemint' && destinationChainInfo.slug === 'mythos' && tokenInfo.slug === 'statemint-LOCAL-MYTH';
-
-  if (isMythFromStatemintToMythos) {
-    version = 2;
-    method = 'limitedTeleportAssets';
-  }
-
   const weightParam = _getXcmDestWeight(originChainInfo);
   const destination = _getXcmMultiLocation(originChainInfo, destinationChainInfo, version);
   const beneficiary = _getXcmBeneficiary(destinationChainInfo, recipientAddress, version);
