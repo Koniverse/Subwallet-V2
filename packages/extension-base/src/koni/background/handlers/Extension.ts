@@ -1353,6 +1353,8 @@ export default class KoniExtension {
           substrateApi
         });
       }
+
+      console.log('[i] transaction - transferAmount.value', transaction, transferAmount.value);
     } catch (e) {
       const error = e as Error;
 

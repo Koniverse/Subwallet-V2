@@ -204,6 +204,9 @@ export default class TransactionService {
     const stopByErrors = validatedTransaction.errors.length > 0;
     const stopByWarnings = validatedTransaction.warnings.length > 0 && validatedTransaction.warnings.some((warning) => !ignoreWarnings.includes(warning.warningType));
 
+    console.log('[i] transaction', transaction);
+    console.log('[i] validatedTransaction', validatedTransaction);
+
     if (stopByErrors || stopByWarnings) {
       // @ts-ignore
       'transaction' in validatedTransaction && delete validatedTransaction.transaction;
@@ -250,8 +253,18 @@ export default class TransactionService {
   }
 
   private async sendTransaction (transaction: SWTransaction): Promise<TransactionEmitter> {
+    console.log('[i] start send ton');
+
+    let emitter: TransactionEmitter;
     // Send Transaction
-    const emitter = await (transaction.chainType === 'substrate' ? this.signAndSendSubstrateTransaction(transaction) : transaction.chainType === 'evm' ? this.signAndSendEvmTransaction(transaction) : this.signAndSendTonTransaction(transaction));
+
+    if (transaction.chainType === ChainType.SUBSTRATE) {
+      emitter = await this.signAndSendSubstrateTransaction(transaction)
+    } else if (transaction.chainType === ChainType.SUBSTRATE) {
+      emitter = await this.signAndSendEvmTransaction(transaction)
+    } else {
+      emitter = this.signAndSendTonTransaction(transaction)
+    }
 
     const { eventsHandler } = transaction;
 
