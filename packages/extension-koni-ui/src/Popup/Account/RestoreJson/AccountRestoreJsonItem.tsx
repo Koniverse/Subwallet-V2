@@ -20,13 +20,19 @@ type AccountProxyTypeIcon = {
   value: PhosphorIcon,
   weight?: IconWeight
 }
+interface AccountProxyExtra_ extends AccountProxyExtra {
+  // Note: "isNameDuplicated" occurs when the account decoded from the fileJson has a duplicate name with other accounts in the same file.
+  isNameDuplicated?: boolean;
+}
+
 export interface _AccountCardItem {
   className?: string;
   isSelected?: boolean;
-  accountProxy: AccountProxyExtra;
+  accountProxy: AccountProxyExtra_;
   preventPrefix?: boolean;
   type?: KeypairType;
   showUnSelectedIcon?: boolean;
+  isNameDuplicated?: boolean;
   disabled?: boolean;
   onClick?: (value: string) => void;
 }
@@ -162,10 +168,10 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
         </div>
 
         <div className={'__item-right-part'}>
-          { accountProxy.isExistName && !accountProxy.isExistAccount && <div className={'__warning-name-already'}>
+          { (accountProxy.isExistName || accountProxy.isNameDuplicated) && !accountProxy.isExistAccount && <div className={'__warning-name-already'}>
             <Tooltip
               placement='bottomLeft'
-              title={t('Account name is already')}
+              title={accountProxy.isExistName ? t('Account name already in use') : t('Duplicate account name')}
             >
               <div>
                 <Icon
