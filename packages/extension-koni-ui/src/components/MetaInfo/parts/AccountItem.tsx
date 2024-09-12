@@ -121,7 +121,9 @@ const AccountItem = styled(Component)<AccountInfoItem>(({ theme: { token } }: Ac
         overflow: 'hidden'
       },
       '.__account-item-address': {
-        paddingLeft: 32
+        paddingLeft: 32,
+        fontSize: token.fontSizeSM,
+        lineHeight: token.lineHeightSM
       }
     },
     '.__col.__value-col.__value-col': {
