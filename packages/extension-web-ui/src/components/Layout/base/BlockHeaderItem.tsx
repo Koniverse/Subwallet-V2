@@ -80,7 +80,8 @@ export const BlockHeaderItem = styled(Component)<Props>(({ theme: { token } }: P
       fontWeight: token.fontWeightStrong,
       marginLeft: token.marginXXS,
       color: token.colorTextSecondary,
-      'white-space': 'nowrap'
+      'white-space': 'nowrap',
+      transition: 'color 0.3s'
     },
 
     '.ant-image': {
