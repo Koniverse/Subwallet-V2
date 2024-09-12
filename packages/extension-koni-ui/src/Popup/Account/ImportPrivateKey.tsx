@@ -177,6 +177,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     setShow((value) => !value);
   }, []);
 
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === 'Enter') {
+      form.submit();
+    }
+  }, [form]);
+
   return (
     <PageWrapper className={CN(className)}>
       <Layout.WithSubHeaderOnly
@@ -207,6 +213,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             name={formName}
             onFieldsChange={onFieldsChange}
             onFinish={onSubmit}
+            onKeyDown={handleKeyDown}
             onValuesChange={onValuesChange}
           >
             <HiddenInput fields={hiddenFields} />

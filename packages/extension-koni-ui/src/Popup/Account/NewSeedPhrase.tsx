@@ -8,7 +8,7 @@ import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEF
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, createSeedV2, windowOpen } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { SeedPhraseTermStorage, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isFirefox, isNoAccount } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -29,13 +29,14 @@ const FooterIcon = (
 );
 
 const accountNameModalId = ACCOUNT_NAME_MODAL;
+const GeneralTermLocalDefault: SeedPhraseTermStorage = { state: 'nonConfirmed', useDefaultContent: false };
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
   const { t } = useTranslation();
   const notify = useNotification();
   const navigate = useNavigate();
-  const [_isConfirmedTermSeedPhrase] = useLocalStorage(CONFIRM_TERM_SEED_PHRASE, 'nonConfirmed');
+  const [confirmedTermSeedPhrase, setConfirmedTermSeedPhrase] = useLocalStorage<SeedPhraseTermStorage>(CONFIRM_TERM_SEED_PHRASE, GeneralTermLocalDefault);
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const checkUnlock = useUnlockChecker();
@@ -102,10 +103,23 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [inactiveModal, notify, onComplete, seedPhrase, selectedMnemonicType]);
 
   useEffect(() => {
-    if (_isConfirmedTermSeedPhrase === 'nonConfirmed') {
+    // Note: This useEffect checks if the data in localStorage has already been migrated from the old "string" structure to the new structure in "SeedPhraseTermStorage".
+    const item = localStorage.getItem(CONFIRM_TERM_SEED_PHRASE);
+
+    if (item) {
+      const confirmedTermSeedPhrase_ = JSON.parse(item) as string | SeedPhraseTermStorage;
+
+      if (typeof confirmedTermSeedPhrase_ === 'string') {
+        setConfirmedTermSeedPhrase({ ...GeneralTermLocalDefault, state: confirmedTermSeedPhrase_ });
+      }
+    }
+  }, [setConfirmedTermSeedPhrase]);
+
+  useEffect(() => {
+    if (confirmedTermSeedPhrase.state === 'nonConfirmed') {
       activeModal(TERM_AND_CONDITION_SEED_PHRASE_MODAL);
     }
-  }, [_isConfirmedTermSeedPhrase, activeModal, inactiveModal]);
+  }, [confirmedTermSeedPhrase.state, activeModal, inactiveModal, setConfirmedTermSeedPhrase]);
 
   useEffect(() => {
     createSeedV2(undefined, undefined, selectedMnemonicType)

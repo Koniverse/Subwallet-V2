@@ -58,6 +58,12 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
     onSubmit?.(name);
   }, [onSubmit]);
 
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === 'Enter') {
+      form.submit();
+    }
+  }, [form]);
+
   useEffect(() => {
     if (!isActive) {
       form.resetFields(['name']);
@@ -82,6 +88,7 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
         initialValues={defaultValues}
         name='__form-container'
         onFinish={_onSubmit}
+        onKeyDown={handleKeyDown}
       >
         <div className='__account-name-field-wrapper'>
           <div className='__account-type-tag-wrapper'>
