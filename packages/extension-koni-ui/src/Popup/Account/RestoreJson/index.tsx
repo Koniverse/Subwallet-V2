@@ -3,8 +3,8 @@
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountProxyExtra } from '@subwallet/extension-base/types';
-import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
-import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { AlertBox, CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { IMPORT_ACCOUNT_MODAL, USER_GUIDE_URL } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useGoBackFromCreateAccount, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { batchRestoreV2, jsonRestoreV2, parseBatchSingleJson, parseInfoSingleJson } from '@subwallet/extension-koni-ui/messaging';
@@ -15,7 +15,7 @@ import { Form, Icon, Input, SwList, Upload } from '@subwallet/react-ui';
 import { UploadChangeParam, UploadFile } from '@subwallet/react-ui/es/upload/interface';
 import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import CN from 'classnames';
-import { CheckCircle, FileArrowDown, XCircle } from 'phosphor-react';
+import { CheckCircle, FileArrowDown } from 'phosphor-react';
 import React, { ChangeEventHandler, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -30,7 +30,11 @@ type ListItemGroupLabel = {
   groupLabel: string;
 }
 
-type ListItem = AccountProxyExtra | ListItemGroupLabel;
+interface AccountProxyExtra_ extends AccountProxyExtra {
+  isDuplicateName?: boolean;
+}
+
+type ListItem = AccountProxyExtra_ | ListItemGroupLabel;
 
 const FooterIcon = (
   <Icon
@@ -66,6 +70,26 @@ const enum StepState {
   UPLOAD_JSON_FILE = 'upload_json_file',
   SELECT_ACCOUNT_IMPORT = 'select_account_import'
 }
+const CHANGE_ACCOUNT_NAME = `${USER_GUIDE_URL}/account-management/switch-between-accounts-and-change-account-name#change-your-account-name`;
+
+const getDuplicateAccountNames = (accounts: AccountProxyExtra_[]): string[] => {
+  const accountNameMap = new Map<string, number>();
+  const duplicates: string[] = [];
+
+  accounts.forEach((account) => {
+    const count = accountNameMap.get(account.name) || 0;
+
+    accountNameMap.set(account.name, count + 1);
+  });
+
+  accountNameMap.forEach((count, accountName) => {
+    if (count > 1) {
+      duplicates.push(accountName);
+    }
+  });
+
+  return duplicates;
+};
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
@@ -87,11 +111,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [password, setPassword] = useState('');
   const [stepState, setStepState] = useState<StepState>(StepState.UPLOAD_JSON_FILE);
+  const [showNoValidAccountAlert, setShowNoValidAccountAlert] = useState(false);
   const [jsonFile, setJsonFile] = useState<KeyringPair$Json | KeyringPairs$Json | undefined>(undefined);
   const { alertModal } = useContext(WalletModalContext);
   const requirePassword = useMemo<boolean>(() => (!fileValidating && !!jsonFile && !fileValidateState?.status && passwordValidateState?.status !== 'success'), [fileValidateState?.status, jsonFile, passwordValidateState?.status, fileValidating]);
 
-  const [accountProxies, setAccountProxies] = useState<AccountProxyExtra[]>([]);
+  const [accountProxies, setAccountProxies] = useState<AccountProxyExtra_[]>([]);
   const [accountProxiesSelected, setAccountProxiesSelected] = useState<string[]>([]);
 
   const disableSubmit = useMemo<boolean>(() => {
@@ -117,19 +142,28 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const listItem = useMemo<ListItem[]>(() => {
     const result: ListItem[] = [];
     const exitedAccount: ListItem[] = [];
+    const listAccountNameDuplicate = getDuplicateAccountNames(accountProxies);
 
     accountProxies.forEach((ap) => {
       if (ap.isExistAccount) {
         exitedAccount.push(ap);
       } else {
+        if (listAccountNameDuplicate.includes(ap.name)) {
+          ap.isDuplicateName = true;
+        }
+
         result.push(ap);
       }
     });
 
+    if (accountProxies.length > 0) {
+      setShowNoValidAccountAlert(exitedAccount.length === accountProxies.length);
+    }
+
     if (exitedAccount.length) {
       exitedAccount.unshift({
         id: 'existed_accounts',
-        groupLabel: t('Account already exists')
+        groupLabel: t('EXISTED ACCOUNT')
       });
 
       result.push(...exitedAccount);
@@ -270,11 +304,21 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const openExitedAccountNameWarningModal = useCallback(() => {
     alertModal.open({
-      closable: false,
-      content: t('This feature auto-converts your recipient address into the correct format for your chosen destination network. Wrong destination network will result in loss of funds. Only enable if you’re an advanced user'),
-      title: t('Advanced address conversion'),
+      closable: true,
+      content:
+        <div>
+          {t(' You have accounts with the same name. We have added numbers to these account names to differentiate them. You can change account names later using ')}
+          <a
+            className={'__modal-user-guide'}
+            href={CHANGE_ACCOUNT_NAME}
+            target='__blank'
+          >
+            {t('this guide')}
+          </a>
+        </div>,
+      title: t('Duplicate account name'),
       okButton: {
-        text: t('Enable'),
+        text: t('I understand'),
         icon: CheckCircle,
         iconWeight: 'fill',
         onClick: () => {
@@ -283,23 +327,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         },
         schema: 'primary'
       },
-
-      cancelButton: {
-        text: t('Cancel'),
-        icon: XCircle,
-        iconWeight: 'fill',
-        onClick: () => {
-          alertModal.close();
-        },
-        schema: 'secondary'
-      },
-
       type: NotificationType.WARNING
     });
   }, [alertModal, onImportFinal, t]);
 
   const onImport = useCallback(() => {
-    if (!jsonFile) {
+    if (!jsonFile || accountProxiesSelected.length === 0) {
       return;
     }
 
@@ -328,17 +361,33 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
   }, [jsonFile, onImport, onValidatePassword, requirePassword]);
 
-  const onSelect = useCallback((account: AccountProxyExtra) => {
+  const onSelect = useCallback((account: AccountProxyExtra_) => {
     return () => {
       setAccountProxiesSelected((prev) => {
         if (prev.includes(account.id)) {
           return prev.filter((id) => id !== account.id);
         }
 
+        if (account.isDuplicateName) {
+          const anotherAccountNameDuplicates: string[] = [];
+
+          for (const ap of accountProxies) {
+            if (ap.name === account.name && ap.id !== account.id) {
+              anotherAccountNameDuplicates.push(ap.id);
+            }
+          }
+
+          if (anotherAccountNameDuplicates.length > 0) {
+            const accountProxiesSelectedFiltered = prev.filter((id) => !anotherAccountNameDuplicates.includes(id));
+
+            return [...accountProxiesSelectedFiltered, account.id];
+          }
+        }
+
         return [...prev, account.id];
       });
     };
-  }, []);
+  }, [accountProxies]);
 
   const renderItem = useCallback((item: ListItem): React.ReactNode => {
     const selected = accountProxiesSelected.includes(item.id);
@@ -355,15 +404,18 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
 
     return (
-      <AccountRestoreJsonItem
-        accountProxy={item as AccountProxyExtra}
-        className='account-selection'
-        disabled={submitting}
-        isSelected={selected}
-        key={item.id}
-        onClick={onSelect(item as AccountProxyExtra)}
-        showUnSelectedIcon ={true}
-      />
+      <>
+        <AccountRestoreJsonItem
+          accountProxy={item as AccountProxyExtra_}
+          className='account-selection'
+          disabled={submitting}
+          isSelected={selected}
+          key={item.id}
+          onClick={onSelect(item as AccountProxyExtra_)}
+          showUnSelectedIcon ={true}
+        />
+      </>
+
     );
   }, [accountProxiesSelected, onSelect, submitting]);
 
@@ -400,13 +452,15 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     if (stepState === StepState.UPLOAD_JSON_FILE) {
       return t('Import from JSON file');
     } else {
-      if (accountProxies.length <= 1) {
-        return t('Import account');
-      } else {
-        return t('Import multi account');
-      }
+      return t('Import account');
     }
-  }, [accountProxies.length, stepState, t]);
+  }, [stepState, t]);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === 'Enter') {
+      form.submit();
+    }
+  }, [form]);
 
   useEffect(() => {
     if (requirePassword) {
@@ -429,7 +483,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         rightFooterButton={{
           children: footerContent,
           icon: FooterIcon,
-          onClick: onSubmit,
+          onClick: form.submit,
           disabled: disableSubmit,
           loading: fileValidating || passwordValidating || submitting
         }}
@@ -442,16 +496,30 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         title={titlePage}
       >
         <div className={CN('container')}>
-          { stepState === StepState.UPLOAD_JSON_FILE &&
-            <>
-              <div className='description'>
-                {t('Drag and drop the JSON file you exported from Polkadot.{js}')}
-              </div>
-              <Form
-                className='form-container'
-                form={form}
-                name={formName}
-              >
+          <div className='description'>
+            {stepState === StepState.SELECT_ACCOUNT_IMPORT && passwordValidateState.status === 'success'
+              ? t('Select the account(s) you\'d like to import')
+              : t('Drag and drop the JSON file you exported from Polkadot.{js}')}
+          </div>
+
+          {
+            stepState === StepState.SELECT_ACCOUNT_IMPORT && showNoValidAccountAlert && <AlertBox
+              className={'waning-alert-box'}
+              description={t('All accounts found in this file already exist in SubWallet')}
+              title={t('Unable to import')}
+              type='warning'
+            />
+          }
+
+          <Form
+            className='form-container'
+            form={form}
+            name={formName}
+            onFinish={onSubmit}
+            onKeyDown={handleKeyDown}
+          >
+            { stepState === StepState.UPLOAD_JSON_FILE &&
+
                 <Form.Item
                   validateStatus={fileValidateState.status}
                 >
@@ -465,48 +533,43 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                     title={t('Import by JSON file')}
                   />
                 </Form.Item>
-                {
-                  requirePassword && (
-                    <Form.Item
-                      validateStatus={passwordValidateState.status}
-                    >
-                      <div className='input-label'>
-                        {t('Please enter the password you have used when creating your Polkadot.{js} account')}
-                      </div>
-                      <Input.Password
-                        id={`${formName}_${passwordField}`}
-                        onChange={onChangePassword}
-                        placeholder={t('Password')}
-                        statusHelp={passwordValidateState.message}
-                        type='password'
-                        value={password}
-                      />
-                    </Form.Item>
-                  )
-                }
-              </Form>
-            </>
+            }
 
-          }
+            {
+              stepState === StepState.UPLOAD_JSON_FILE && requirePassword && (
+                <Form.Item
+                  validateStatus={passwordValidateState.status}
+                >
+                  <div className='input-label'>
+                    {t('Please enter the password you have used when creating your Polkadot.{js} account')}
+                  </div>
+                  <Input.Password
+                    id={`${formName}_${passwordField}`}
+                    onChange={onChangePassword}
+                    placeholder={t('Password')}
+                    statusHelp={passwordValidateState.message}
+                    type='password'
+                    value={password}
+                  />
+                </Form.Item>
+              )
+            }
+            {
+              stepState === StepState.SELECT_ACCOUNT_IMPORT && passwordValidateState.status === 'success' && (
+                <Form.Item>
+                  <SwList.Section
+                    className='list-container'
+                    displayRow={true}
+                    hasMoreItems={true}
+                    list={listItem}
+                    renderItem={renderItem}
+                    rowGap='var(--list-gap)'
+                  />
+                </Form.Item>
+              )
+            }
 
-          {
-            stepState === StepState.SELECT_ACCOUNT_IMPORT && passwordValidateState.status === 'success' && (
-              <>
-                <div className='sub-title'>
-                  {t('Please select the account (s) you’d like to import')}
-                </div>
-                <SwList.Section
-                  className='list-container'
-                  displayRow={true}
-                  hasMoreItems={true}
-                  list={listItem}
-                  renderItem={renderItem}
-                  rowGap='var(--list-gap)'
-                />
-              </>
-
-            )
-          }
+          </Form>
         </div>
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
@@ -595,6 +658,10 @@ const ImportJson = styled(Component)<Props>(({ theme: { token } }: Props) => {
       marginTop: token.margin,
       fontWeight: token.headingFontWeight,
       color: token.colorTextLight3
+    },
+
+    '.waning-alert-box': {
+      marginTop: token.margin
     },
 
     '.file-selector': {
