@@ -5,7 +5,7 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AccountJson, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import ChangeVersionWalletConractItem from '@subwallet/extension-koni-ui/components/ChangeVersionWalletConractItem';
-import { CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
+import { ADDRESS_QR_MODAL, CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
 import { useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
@@ -48,12 +48,13 @@ const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCance
   const isActive = checkActive(changeVersionWalletContractModalId);
 
   const [currentSelected, setCurrentSelected] = useState<TonContractVersion>({ tonContractVersion: initialKey, address: initialValue });
+  const [addressChangedVersion, setAddressChangedVersion] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let sync = true;
 
     if (isActive) {
-      tonGetAllWalletContractVersion({ address: accountInfo?.address }).then((result) => {
+      tonGetAllWalletContractVersion({ address: (addressChangedVersion || accountInfo?.address) }).then((result) => {
         if (sync) {
           setTonWalletVersionData(result);
         }
@@ -68,7 +69,7 @@ const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCance
     return () => {
       sync = false;
     };
-  }, [accountInfo?.address, isActive, notification]);
+  }, [accountInfo?.address, addressChangedVersion, isActive, notification]);
 
   const renderEmpty = useCallback(() => {
     return <GeneralEmptyList />;
@@ -94,10 +95,12 @@ const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCance
   }, []);
 
   const onConfirmButton = useCallback(() => {
-    if (!!accountInfo?.address && !!currentSelected.tonContractVersion) {
-      tonAccountChangeWalletContractVersion({ proxyId: '', address: accountInfo?.address, version: currentSelected.tonContractVersion })
-        .then(() => {
+    if ((!!accountInfo?.address || addressChangedVersion) && !!currentSelected.tonContractVersion) {
+      tonAccountChangeWalletContractVersion({ proxyId: '', address: (addressChangedVersion || accountInfo?.address), version: currentSelected.tonContractVersion })
+        .then((address) => {
+          setAddressChangedVersion(address);
           inactiveModal(changeVersionWalletContractModalId);
+          inactiveModal(ADDRESS_QR_MODAL);
         })
         .catch((e: Error) => {
           notification({
@@ -106,7 +109,7 @@ const Component: React.FC<Props> = ({ accountInfo, chainInfo, className, onCance
           });
         });
     }
-  }, [accountInfo, currentSelected, inactiveModal, notification]);
+  }, [accountInfo?.address, addressChangedVersion, currentSelected.tonContractVersion, inactiveModal, notification]);
 
   const renderItem = useCallback((item: WalletContractItem) => {
     return (
