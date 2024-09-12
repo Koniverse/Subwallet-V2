@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_REFRESH_CHAIN_STAKING_METADATA, CRON_REFRESH_EARNING_REWARD_HISTORY_INTERVAL, CRON_REFRESH_STAKING_REWARD_FAST_INTERVAL } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { PersistDataServiceInterface, ServiceStatus, StoppableServiceInterface } from '@subwallet/extension-base/services/base/types';
@@ -12,7 +12,7 @@ import BaseLiquidStakingPoolHandler from '@subwallet/extension-base/services/ear
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
-import { EarningRewardHistoryItem, EarningRewardItem, EarningRewardJson, HandleYieldStepData, HandleYieldStepParams, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldWithdrawal, ResponseEarlyValidateYield, TransactionData, ValidateYieldProcessParams, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { BasicTxErrorType, EarningRewardHistoryItem, EarningRewardItem, EarningRewardJson, HandleYieldStepData, HandleYieldStepParams, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldWithdrawal, ResponseEarlyValidateYield, TransactionData, ValidateYieldProcessParams, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { addLazy, categoryAddresses, createPromiseHandler, PromiseHandler, removeLazy } from '@subwallet/extension-base/utils';
 import { fetchStaticCache } from '@subwallet/extension-base/utils/fetchStaticCache';
 import { BehaviorSubject } from 'rxjs';

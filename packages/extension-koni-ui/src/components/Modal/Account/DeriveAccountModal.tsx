@@ -13,7 +13,7 @@ import useSwitchModal from '@subwallet/extension-koni-ui/hooks/modal/useSwitchMo
 import { deriveAccountV3 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { searchAccountFunction } from '@subwallet/extension-koni-ui/utils/account/account';
+import { searchAccountProxyFunction } from '@subwallet/extension-koni-ui/utils/account/account';
 import { ActivityIndicator, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
@@ -147,7 +147,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           renderItem={renderItem}
           renderWhenEmpty={renderEmpty}
           rowGap='var(--row-gap)'
-          searchFunction={searchAccountFunction}
+          searchFunction={searchAccountProxyFunction}
           searchPlaceholder={t<string>('Account name')}
         />
       </SwModal>

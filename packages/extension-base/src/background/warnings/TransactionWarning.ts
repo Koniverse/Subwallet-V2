@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { BasicTxWarningCode, TransactionWarningType } from '@subwallet/extension-base/background/KoniTypes';
 import { SWWarning } from '@subwallet/extension-base/background/warnings/SWWarning';
+import { BasicTxWarningCode, TransactionWarningType } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { t } from 'i18next';
 

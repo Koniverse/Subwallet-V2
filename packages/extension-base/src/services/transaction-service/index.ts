@@ -3,9 +3,9 @@
 
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, checkTonAddressBounceable, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, checkTonAddressBounceableAndAccountNotActive, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { cellToBase64Str, externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -21,7 +21,7 @@ import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction, isTon
 import { SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
-import { AccountJson, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
+import { AccountJson, BasicTxErrorType, BasicTxWarningCode, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
 import { _isRuntimeUpdated, anyNumberToBN, pairToAccount, reformatAddress } from '@subwallet/extension-base/utils';
 import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
@@ -138,9 +138,9 @@ export default class TransactionService {
     // Check available balance against transaction fee
     checkBalanceWithTransactionFee(validationResponse, transactionInput, nativeTokenInfo, nativeTokenAvailable);
 
-    // Warnings Ton address isBounceable
+    // Warnings Ton address if bounceable and not active
     if (transaction && isTonTransaction(transaction) && tonApi) {
-      checkTonAddressBounceable(validationResponse);
+      await checkTonAddressBounceableAndAccountNotActive(tonApi, validationResponse);
     }
 
     // Check additional validations
@@ -200,8 +200,9 @@ export default class TransactionService {
 
   public async handleTransaction (transaction: SWTransactionInput): Promise<SWTransactionResponse> {
     const validatedTransaction = await this.validateTransaction(transaction);
+    const ignoreWarnings: BasicTxWarningCode[] = validatedTransaction.ignoreWarnings || [];
     const stopByErrors = validatedTransaction.errors.length > 0;
-    const stopByWarnings = validatedTransaction.warnings.length > 0 && !validatedTransaction.ignoreWarnings;
+    const stopByWarnings = validatedTransaction.warnings.length > 0 && validatedTransaction.warnings.some((warning) => !ignoreWarnings.includes(warning.warningType));
 
     if (stopByErrors || stopByWarnings) {
       // @ts-ignore
@@ -1165,7 +1166,7 @@ export default class TransactionService {
     return emitter;
   }
 
-  private async signAndSendTonTransaction ({ address, chain, extrinsicType, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private signAndSendTonTransaction ({ address, chain, extrinsicType, id, transaction, url }: SWTransaction): TransactionEmitter {
     const keyPair = keyring.getPair(address);
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
@@ -1192,6 +1193,12 @@ export default class TransactionService {
 
               resolve(Buffer.from(hexToU8a(payload)));
             }
+          })
+          .catch((e: Error) => {
+            this.removeTransaction(id);
+            eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, t(e.message)));
+
+            emitter.emit('error', eventData);
           });
       });
     };
