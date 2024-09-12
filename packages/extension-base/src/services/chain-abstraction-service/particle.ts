@@ -59,23 +59,29 @@ export class ParticleAAHandler {
     return smartAccount.getAddress();
   };
 
-  static createUserOperation = async (chainId: number, account: SmartAccountData, _tx: TransactionConfig): Promise<UserOpBundle> => {
+  static createUserOperation = async (chainId: number, account: SmartAccountData, _txList: TransactionConfig[]): Promise<UserOpBundle> => {
     const provider = createMockParticleProvider(chainId, account.owner);
 
     const smartAccount = new SmartAccount(provider, config);
 
     smartAccount.setSmartAccountContract(account.provider || ParticleContract);
 
-    const tx: Transaction = {
-      data: _tx.data,
-      value: anyNumberToBN(_tx.value).toString(),
-      to: _tx.to || '',
-      gasLimit: _tx.gas
-    };
+    const txList: Transaction[] = [];
 
-    console.debug('quote', await smartAccount.getFeeQuotes(tx));
+    for (const _tx of _txList) {
+      const tx: Transaction = {
+        data: _tx.data,
+        value: anyNumberToBN(_tx.value).toString(),
+        to: _tx.to || '',
+        gasLimit: _tx.gas
+      };
 
-    return await smartAccount.buildUserOperation({ tx });
+      txList.push(tx);
+    }
+
+    console.debug('quote', await smartAccount.getFeeQuotes(txList));
+
+    return await smartAccount.buildUserOperation({ tx: txList });
   };
 
   static sendSignedUserOperation = async (chainId: number, account: SmartAccountData, userOp: UserOp): Promise<string> => {
