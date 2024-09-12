@@ -57,6 +57,8 @@ export const usePredefinedModal = () => {
 export interface WalletModalContextType {
   addressQrModal: {
     open: (props: AddressQrModalProps) => void,
+    checkActive: () => boolean,
+    update: React.Dispatch<React.SetStateAction<AddressQrModalProps | undefined>>;
     close: VoidFunction
   },
   alertModal: {
@@ -69,6 +71,11 @@ export const WalletModalContext = React.createContext<WalletModalContextType>({
   addressQrModal: {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     open: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    checkActive: () => false,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    update: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     close: () => {}
   },
@@ -83,7 +90,7 @@ export const WalletModalContext = React.createContext<WalletModalContextType>({
 const alertModalId = GLOBAL_ALERT_MODAL;
 
 export const WalletModalContextProvider = ({ children }: Props) => {
-  const { activeModal, hasActiveModal, inactiveAll, inactiveModal, inactiveModals } = useContext(ModalContext);
+  const { activeModal, checkActive, hasActiveModal, inactiveAll, inactiveModal, inactiveModals } = useContext(ModalContext);
   const [searchParams, setSearchParams] = useSearchParams();
   const { hasConfirmations } = useSelector((state: RootState) => state.requestState);
   const { hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
@@ -110,6 +117,10 @@ export const WalletModalContextProvider = ({ children }: Props) => {
     activeModal(ADDRESS_QR_MODAL);
   }, [activeModal]);
 
+  const checkAddressQrModalActive = useCallback(() => {
+    return checkActive(ADDRESS_QR_MODAL);
+  }, [checkActive]);
+
   const closeAddressQrModal = useCallback(() => {
     inactiveModal(ADDRESS_QR_MODAL);
     setAddressQrModalProps(undefined);
@@ -124,13 +135,15 @@ export const WalletModalContextProvider = ({ children }: Props) => {
   const contextValue: WalletModalContextType = useMemo(() => ({
     addressQrModal: {
       open: openAddressQrModal,
+      checkActive: checkAddressQrModalActive,
+      update: setAddressQrModalProps,
       close: closeAddressQrModal
     },
     alertModal: {
       open: openAlert,
       close: closeAlert
     }
-  }), [closeAddressQrModal, closeAlert, openAddressQrModal, openAlert]);
+  }), [checkAddressQrModalActive, closeAddressQrModal, closeAlert, openAddressQrModal, openAlert]);
 
   useEffect(() => {
     if (hasMasterPassword && isLocked) {

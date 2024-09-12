@@ -4,32 +4,25 @@
 import { WalletContractItem } from '@subwallet/extension-koni-ui/components/Modal/ChangeVersionWalletContractModal';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
-import { TonWalletContractVersion } from '@subwallet/keyring/types';
 import { Icon, Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
-import React, { useCallback } from 'react';
+import React from 'react';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps & WalletContractItem & {
-  onClick?: (walletType: TonWalletContractVersion, value: string) => void;
+  onClick?: VoidFunction;
 }
 
 const Component: React.FC<Props> = (props: Props) => {
   const { chainSlug, className, isSelected, onClick, value, walletType } = props;
   const { token } = useTheme() as Theme;
 
-  const _onSelect = useCallback(() => {
-    onClick && onClick(walletType, value);
-  },
-  [onClick, value, walletType]
-  );
-
   return (
     <>
       <div
         className={CN(className, '__item-list-wallet')}
-        onClick={_onSelect}
+        onClick={onClick}
       >
         <div className='__item-left-part'>
           <Logo
