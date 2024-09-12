@@ -399,7 +399,7 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       const _collatorAddress = collator[0].toHuman() as string[];
       const collatorAddress = _collatorAddress[0];
 
-      if (allCollatorsPool.includes(collatorAddress)) {
+      if (selectedCollators.includes(collatorAddress)) {
         const collatorInfo = collator[1].toPrimitive() as unknown as ParachainStakingCandidateMetadata;
 
         const bnTotalStake = new BN(collatorInfo.totalCounted);
@@ -425,7 +425,7 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     }
 
     await Promise.all(allCollators.map(async (collator) => {
-      if (allCollatorsPool.includes(collator.address)) {
+      if (selectedCollators.includes(collator.address)) {
         // noted: number of blocks = total points / points per block
         const _collatorPoints = await apiProps.api.query.parachainStaking.awardedPts(parseInt(round.current) - 1, collator.address);
         const collatorPoints = _collatorPoints.toPrimitive() as number;
