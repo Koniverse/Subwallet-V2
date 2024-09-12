@@ -31,7 +31,7 @@ type ListItemGroupLabel = {
 }
 
 interface AccountProxyExtra_ extends AccountProxyExtra {
-  isDuplicateName?: boolean;
+  isNameDuplicated?: boolean;
 }
 
 type ListItem = AccountProxyExtra_ | ListItemGroupLabel;
@@ -149,7 +149,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         exitedAccount.push(ap);
       } else {
         if (listAccountNameDuplicate.includes(ap.name)) {
-          ap.isDuplicateName = true;
+          ap.isNameDuplicated = true;
         }
 
         result.push(ap);
@@ -163,7 +163,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     if (exitedAccount.length) {
       exitedAccount.unshift({
         id: 'existed_accounts',
-        groupLabel: t('EXISTED ACCOUNT')
+        groupLabel: t('Existed account')
       });
 
       result.push(...exitedAccount);
@@ -368,7 +368,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           return prev.filter((id) => id !== account.id);
         }
 
-        if (account.isDuplicateName) {
+        if (account.isNameDuplicated) {
           const anotherAccountNameDuplicates: string[] = [];
 
           for (const ap of accountProxies) {
@@ -554,22 +554,19 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 </Form.Item>
               )
             }
-            {
-              stepState === StepState.SELECT_ACCOUNT_IMPORT && passwordValidateState.status === 'success' && (
-                <Form.Item>
-                  <SwList.Section
-                    className='list-container'
-                    displayRow={true}
-                    hasMoreItems={true}
-                    list={listItem}
-                    renderItem={renderItem}
-                    rowGap='var(--list-gap)'
-                  />
-                </Form.Item>
-              )
-            }
-
           </Form>
+          {
+            stepState === StepState.SELECT_ACCOUNT_IMPORT && passwordValidateState.status === 'success' && (
+              <SwList.Section
+                className='list-container'
+                displayRow={true}
+                hasMoreItems={true}
+                list={listItem}
+                renderItem={renderItem}
+                rowGap='var(--list-gap)'
+              />
+            )
+          }
         </div>
       </Layout.WithSubHeaderOnly>
     </PageWrapper>

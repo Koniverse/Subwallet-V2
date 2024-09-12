@@ -6,11 +6,11 @@ import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon } from '@subwallet/extension-koni-ui/types';
-import { Checkbox, Icon, Tooltip } from '@subwallet/react-ui';
+import { Icon, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, Eye, GitCommit, Needle, QrCode, Question, Strategy, Swatches, Warning } from 'phosphor-react';
 import { IconWeight } from 'phosphor-react/src/lib';
-import React, { Context, useCallback, useContext, useMemo, useRef } from 'react';
+import React, { Context, useCallback, useContext, useMemo } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
 import { KeypairType } from '@polkadot/util-crypto/types';
@@ -21,7 +21,8 @@ type AccountProxyTypeIcon = {
   weight?: IconWeight
 }
 interface AccountProxyExtra_ extends AccountProxyExtra {
-  isDuplicateName?: boolean;
+  // Note: "isNameDuplicated" occurs when the account decoded from the fileJson has a duplicate name with other accounts in the same file.
+  isNameDuplicated?: boolean;
 }
 
 export interface _AccountCardItem {
@@ -31,7 +32,7 @@ export interface _AccountCardItem {
   preventPrefix?: boolean;
   type?: KeypairType;
   showUnSelectedIcon?: boolean;
-  isDuplicateName?: boolean;
+  isNameDuplicated?: boolean;
   disabled?: boolean;
   onClick?: (value: string) => void;
 }
@@ -45,7 +46,6 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
 
   const { accountType, chainTypes, id: accountProxyId, name: accountName } = useMemo(() => accountProxy, [accountProxy]);
   const { t } = useTranslation();
-  const checkboxRef = useRef<HTMLInputElement>(null);
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
   const disabledItem = useMemo(() => disabled || accountProxy.isExistAccount, [accountProxy.isExistAccount, disabled]);
@@ -59,10 +59,6 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
   }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
   const _onSelect = useCallback(() => {
     onClick && onClick(accountProxyId || '');
-
-    if (checkboxRef.current) {
-      checkboxRef.current.focus();
-    }
   },
   [accountProxyId, onClick]
   );
@@ -172,7 +168,7 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
         </div>
 
         <div className={'__item-right-part'}>
-          { (accountProxy.isExistName || accountProxy.isDuplicateName) && !accountProxy.isExistAccount && <div className={'__warning-name-already'}>
+          { (accountProxy.isExistName || accountProxy.isNameDuplicated) && !accountProxy.isExistAccount && <div className={'__warning-name-already'}>
             <Tooltip
               placement='bottomLeft'
               title={accountProxy.isExistName ? t('Account name already in use') : t('Duplicate account name')}
@@ -189,21 +185,13 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
             </Tooltip>
           </div> }
           {(showUnSelectedIcon || isSelected) && !accountProxy.isExistAccount && (
-            <>
-              <Icon
-                className={'__select-icon'}
-                iconColor={isSelected ? token.colorSuccess : token.colorTextLight4}
-                phosphorIcon={CheckCircle}
-                size={'sm'}
-                weight={'fill'}
-              />
-              <Checkbox
-                checked={isSelected}
-                className={'__check-box-hidden'}
-                ref={checkboxRef}
-              />
-            </>
-
+            <Icon
+              className={'__select-icon'}
+              iconColor={isSelected ? token.colorSuccess : token.colorTextLight4}
+              phosphorIcon={CheckCircle}
+              size={'sm'}
+              weight={'fill'}
+            />
           )}
         </div>
       </div>
@@ -313,12 +301,6 @@ const AccountRestoreJsonItem = styled(Component)<_AccountCardItem>(({ theme }) =
 
     '&:hover': {
       background: token.colorBgInput
-    },
-
-    '.__check-box-hidden': {
-      width: 0,
-      height: 0,
-      opacity: 0
     }
   };
 });
