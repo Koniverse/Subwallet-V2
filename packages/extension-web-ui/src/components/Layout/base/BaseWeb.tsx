@@ -6,7 +6,9 @@ import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContex
 import { HeaderType, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useDefaultNavigate, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
+import { Icon, SwIconProps } from '@subwallet/react-ui';
 import CN from 'classnames';
+import { ArrowsLeftRight, Clock, Gear, Globe, Parachute, Rocket, Vault, Wallet } from 'phosphor-react';
 import React, { useContext, useMemo } from 'react';
 import styled from 'styled-components';
 
@@ -17,6 +19,12 @@ export interface LayoutBaseWebProps {
   className?: string;
 }
 
+export type HeaderItemType = {
+  label: string;
+  value: string;
+  icon: SwIconProps;
+};
+type Props = LayoutBaseWebProps & ThemeProps;
 const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } }: ThemeProps) => {
   return {
     display: 'flex',
@@ -143,7 +151,7 @@ const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } 
   };
 });
 
-const BaseWeb = ({ children }: LayoutBaseWebProps) => {
+const Component = ({ children, className }: Props) => {
   const { t } = useTranslation();
   const { isWebUI } = useContext(ScreenContext);
   const { background, headerType, isPortfolio,
@@ -160,6 +168,106 @@ const BaseWeb = ({ children }: LayoutBaseWebProps) => {
     return title;
   }, [isPortfolio, t, title]);
 
+  const LEFT_BLOCK_DATA_LIST = useMemo<HeaderItemType[]>(() => {
+    return [
+      {
+        label: t('Portfolio'),
+        value: 'portfolio',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Wallet,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('Earning'),
+        value: 'earning',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Vault,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('Swap'),
+        value: 'swap',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: ArrowsLeftRight,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('dApps'),
+        value: 'dapps',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Globe,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('crowdloans'),
+        value: 'crowdloans',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Rocket,
+          weight: 'fill'
+        }
+      }
+    ];
+  }, [t]);
+
+  const RIGHT_BLOCK_DATA_LIST = useMemo<HeaderItemType[]>(() => {
+    return [
+      {
+        label: t('Portfolio'),
+        value: 'portfolio',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Wallet,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('Earning'),
+        value: 'earning',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Vault,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('Swap'),
+        value: 'swap',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: ArrowsLeftRight,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('dApps'),
+        value: 'dapps',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Globe,
+          weight: 'fill'
+        }
+      },
+      {
+        label: t('crowdloans'),
+        value: 'crowdloans',
+        icon: {
+          type: 'phosphor',
+          phosphorIcon: Rocket,
+          weight: 'fill'
+        }
+      }
+    ];
+  }, [t]);
+
   if (!isWebUI) {
     return <>{children}</>;
   }
@@ -167,42 +275,90 @@ const BaseWeb = ({ children }: LayoutBaseWebProps) => {
   const isHeaderTypeCommon = [HeaderType.COMMON, HeaderType.COMMON_BACK, HeaderType.COMMON_BACK_TO_HOME].includes(headerType);
 
   return (
-    <StyledLayout className={CN('web-layout-container', `header-type-${headerType}`, webBaseClassName)}>
-      <div
-        className={CN('web-layout-background', `__background-${background}`)}
-      />
-      {showSidebar && <div className='web-layout-sidebar'>
-        <SideMenu
-          isCollapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
-        />
-      </div>}
+    <>
+      <div className={CN(className, '__header-wrapper')}>
+        <div className={'__left-block'}>
+          {LEFT_BLOCK_DATA_LIST.map((item) => (
+            <div className={'header-left-item'} key={item.value}>
+              <Icon
+                className={'__icon'}
+                size={'md'}
+                weight={'fill'}
+                {...item.icon}
+              />
+              <div className={'__label'}>{item.label}</div>
+            </div>
+          ))}
+        </div>
 
-      <div className={CN('web-layout-body', { 'setting-pages': isSettingPage })}>
-        {
-          isHeaderTypeCommon && (
-            <Headers.Controller
-              { ...(headerType === HeaderType.COMMON_BACK ? { onBack: onBack || goBack, showBackButton: true } : {}) }
-              { ...(headerType === HeaderType.COMMON_BACK_TO_HOME ? { onBack: onBack || goHome, showBackButton: true } : {}) }
-              className={'web-layout-header'}
-              title={headerTitle}
-            />
-          )
-        }
-        {headerType === HeaderType.SIMPLE && (
-          <Headers.Simple
-            className={'web-layout-header-simple'}
-            onBack={onBack}
-            showBackButton={showBackButtonOnHeader}
-            title={headerTitle}
-          />
-        )}
-        <div className={CN('web-layout-content', { '__with-padding': showSidebar })}>
-          {children}
+        <div className={'__right-block'}>
+          {RIGHT_BLOCK_DATA_LIST.map((item) => (
+            <div key={item.value}>
+              {item.label}
+            </div>
+          ))}
         </div>
       </div>
-    </StyledLayout>
+      <StyledLayout className={CN('web-layout-container', `header-type-${headerType}`, webBaseClassName)}>
+        <div
+          className={CN('web-layout-background', `__background-${background}`)}
+        />
+        {showSidebar && <div className='web-layout-sidebar'>
+          <SideMenu
+            isCollapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+          />
+        </div>}
+
+        <div className={CN('web-layout-body', { 'setting-pages': isSettingPage })}>
+          {
+            isHeaderTypeCommon && (
+              <Headers.Controller
+                { ...(headerType === HeaderType.COMMON_BACK ? { onBack: onBack || goBack, showBackButton: true } : {}) }
+                { ...(headerType === HeaderType.COMMON_BACK_TO_HOME ? { onBack: onBack || goHome, showBackButton: true } : {}) }
+                className={'web-layout-header'}
+                title={headerTitle}
+              />
+            )
+          }
+          {headerType === HeaderType.SIMPLE && (
+            <Headers.Simple
+              className={'web-layout-header-simple'}
+              onBack={onBack}
+              showBackButton={showBackButtonOnHeader}
+              title={headerTitle}
+            />
+          )}
+          <div className={CN('web-layout-content', { '__with-padding': showSidebar })}>
+            {children}
+          </div>
+        </div>
+      </StyledLayout>
+    </>
   );
 };
+
+const BaseWeb = styled(Component)<Props>(({ theme: { token } }: Props) => {
+  return ({
+    '&.__header-wrapper': {
+      minHeight: 64,
+      backgroundColor: token.colorBgInput,
+      display: 'flex',
+      justifyContent: 'space-between',
+      paddingLeft: 32,
+      paddingRight: 32
+    },
+    '.__left-block, .__right-block': {
+      display: 'flex',
+      gap: 40,
+      alignItems: 'center'
+    },
+    '.header-left-item': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2
+    }
+  });
+});
 
 export default BaseWeb;
