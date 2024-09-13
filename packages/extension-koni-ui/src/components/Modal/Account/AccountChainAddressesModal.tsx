@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { AccountProxy } from '@subwallet/extension-base/types';
 import { AccountChainAddressItem, CloseIcon, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { ACCOUNT_CHAIN_ADDRESSES_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
@@ -12,7 +13,7 @@ import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Icon, SwList, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretLeft } from 'phosphor-react';
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -83,6 +84,27 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
     },
     []
   );
+
+  useEffect(() => {
+    if (addressQrModal.checkActive()) {
+      addressQrModal.update((prev) => {
+        if (!prev || !TON_CHAINS.includes(prev.chainSlug)) {
+          return prev;
+        }
+
+        const targetAddress = items.find((i) => i.slug === prev.chainSlug)?.address;
+
+        if (!targetAddress) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          address: targetAddress
+        };
+      });
+    }
+  }, [addressQrModal, items]);
 
   return (
     <SwModal
