@@ -520,7 +520,7 @@ export const BLOCK_DEFAULT_LEDGER_NETWORKS: string[] = ['*'];
 /* TRANSFER */
 export const BLOCK_TRANSFER_NATIVE_LEDGER_NETWORKS: string[] = [];
 export const BLOCK_TRANSFER_TOKEN_LEDGER_NETWORKS: string[] = [];
-export const BLOCK_TRANSFER_XCM_LEDGER_NETWORKS: string[] = ['*'];
+export const BLOCK_TRANSFER_XCM_LEDGER_NETWORKS: string[] = ['acala', 'aleph', 'alephTest', 'astar', 'avail_mainnet', 'karura', 'edgeware', 'xx_network', 'polymesh', 'polkadex', 'evm'];
 export const BLOCK_TRANSFER_NFT_LEDGER_NETWORKS: string[] = ['astar', 'avail_mainnet'];
 /* TRANSFER */
 

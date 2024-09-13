@@ -11,10 +11,11 @@ import { isAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps & Omit<SwAvatarProps, 'value'> & {
   value?: string | null,
+  identPrefix?: number
 };
 
 // todo: change this in react-ui then remove this component
-function Component ({ className = '', size = 40, value = null, ...restProps }: Props): React.ReactElement<Props> {
+function Component ({ className = '', identPrefix, size = 40, value = null, ...restProps }: Props): React.ReactElement<Props> {
   const { logoMap } = useTheme() as Theme;
 
   return (
@@ -35,6 +36,7 @@ function Component ({ className = '', size = 40, value = null, ...restProps }: P
 
       <SwAvatar
         {...restProps}
+        identPrefix={identPrefix}
         size={size}
         value={value}
       />
