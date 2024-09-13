@@ -3,8 +3,10 @@
 
 import { EXTENSION_VERSION, REMIND_UPGRADE_UNIFIED_ACCOUNT, UPGRADE_UNIFIED_ACCOUNT, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
+import { getValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { noop } from '@subwallet/extension-koni-ui/utils';
 import { Button, ModalContext, PageIcon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ShieldWarning } from 'phosphor-react';
@@ -15,6 +17,7 @@ import { useLocalStorage } from 'usehooks-ts';
 type Props = ThemeProps;
 
 const RemindUpdateUnifiedAccountModalId = REMIND_UPGRADE_UNIFIED_ACCOUNT;
+const PreviousVersion = 'previous_version';
 const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-guide/account-management/switch-between-accounts-and-change-account-name#change-your-account-name';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
@@ -28,26 +31,35 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     setIsUpdatedUnifiedAccount(true);
   }, [inactiveModal, setIsUpdatedUnifiedAccount]);
 
-  const isNeedRemindUnifiedAccount = useMemo(() => {
+  const onCheckNeedRemindUnifiedAccount = useCallback(async () => {
     const currentParts = VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT.split('.').map(Number);
     const nextParts = EXTENSION_VERSION.split('.').map(Number);
+    const isUpdateVersion = await getValueLocalStorageWS(PreviousVersion);
 
-    for (let i = 0; i < currentParts.length; i++) {
-      if (nextParts[i] > currentParts[i]) {
-        return true;
+    if (isUpdateVersion) {
+      for (let i = 0; i < currentParts.length; i++) {
+        if (nextParts[i] > currentParts[i]) {
+          return true;
+        }
       }
     }
 
     return false;
   }, []);
 
-  useEffect(() => {
+  const onRemindUpdateUnifiedAccount = useCallback(async () => {
+    const isNeedRemindUnifiedAccount = await onCheckNeedRemindUnifiedAccount();
+
     if (isNeedRemindUnifiedAccount && !isUpdatedUnifiedAccount) {
       activeModal(RemindUpdateUnifiedAccountModalId);
     } else {
       inactiveModal(RemindUpdateUnifiedAccountModalId);
     }
-  }, [activeModal, inactiveModal, isNeedRemindUnifiedAccount, isUpdatedUnifiedAccount]);
+  }, [activeModal, inactiveModal, isUpdatedUnifiedAccount, onCheckNeedRemindUnifiedAccount]);
+
+  useEffect(() => {
+    onRemindUpdateUnifiedAccount().catch(noop);
+  }, [onRemindUpdateUnifiedAccount]);
 
   const footerModal = useMemo(() => {
     return (

@@ -94,7 +94,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         const { isValid } = await validateAccountName({ name: value });
 
         if (!isValid) {
-          return Promise.reject(t('Account already exists'));
+          return Promise.reject(t('Account name already in use'));
         }
       } catch (e) {
         return Promise.reject(t('Account name invalid'));

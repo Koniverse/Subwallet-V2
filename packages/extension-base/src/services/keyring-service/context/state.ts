@@ -6,11 +6,12 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
-import { AccountMetadataData, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
+import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { BehaviorSubject, combineLatest } from 'rxjs';
+import { BehaviorSubject, combineLatest, takeWhile } from 'rxjs';
 
 interface ExistsAccount {
   address: string;
@@ -91,6 +92,35 @@ export class AccountState {
 
       this.beforeAccount = { ...subjectInfo };
     });
+
+    this.accountSubject.pipe(
+      takeWhile((value) => Object.values(value).length === 0, true))
+      .subscribe((accountProxyMap) => {
+        const transformedAccounts = Object.values(accountProxyMap);
+
+        const accountNameDuplicates = this.getDuplicateAccountNames(transformedAccounts);
+
+        if (accountNameDuplicates.length > 0) {
+          for (const accountProxy of transformedAccounts) {
+            if (accountNameDuplicates.includes(accountProxy.name)) {
+              const name = accountProxy.name.concat(' - ').concat(generateRandomString());
+
+              accountProxy.name = name;
+              this.upsertAccountProxyByKey({ ...accountProxy });
+
+              accountProxy.accounts.forEach(({ address }) => {
+                const pair = keyring.getPair(address);
+
+                console.log(pair);
+
+                if (pair) {
+                  keyring.saveAccountMeta(pair, { ...pair.meta, name });
+                }
+              });
+            }
+          }
+        }
+      });
 
     let fireOnFirst = true;
 
@@ -290,6 +320,26 @@ export class AccountState {
 
     return filteredAccounts.some((account) => account.name === name);
   }
+
+  /* Get duplicate account name */
+  public getDuplicateAccountNames = (accounts: AccountProxy[]): string[] => {
+    const duplicates: string[] = [];
+    const accountNameMap = accounts.reduce((map, account) => {
+      const counterAccountNameDuplicate = map.get(account.name) || 0;
+
+      map.set(account.name, counterAccountNameDuplicate + 1);
+
+      return map;
+    }, new Map<string, number>());
+
+    accountNameMap.forEach((count, accountName) => {
+      if (count > 1) {
+        duplicates.push(accountName);
+      }
+    });
+
+    return duplicates;
+  };
 
   /* Auth address */
 

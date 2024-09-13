@@ -4238,6 +4238,8 @@ export default class KoniExtension {
         return this.#koniState.migrateMV3LocalStorage(request as string);
       case 'pri(database.setLocalStorage)':
         return this.#koniState.setStorageFromWS(request as StorageDataInterface);
+      case 'pri(database.getLocalStorage)':
+        return this.#koniState.getStorageFromWS(request as string);
         /* Database */
 
         /* Swap service */

@@ -72,14 +72,16 @@ const enum StepState {
 }
 const CHANGE_ACCOUNT_NAME = `${USER_GUIDE_URL}/account-management/switch-between-accounts-and-change-account-name#change-your-account-name`;
 
-const getDuplicateAccountNames = (accounts: AccountProxyExtra_[]): string[] => {
+const getDuplicateAccountNames = (accounts: AccountProxyExtra_[], accountsSelected?: string[]): string[] => {
   const accountNameMap = new Map<string, number>();
   const duplicates: string[] = [];
 
   accounts.forEach((account) => {
-    const count = accountNameMap.get(account.name) || 0;
+    if (!accountsSelected || accountsSelected.includes(account.id)) {
+      const count = accountNameMap.get(account.name) || 0;
 
-    accountNameMap.set(account.name, count + 1);
+      accountNameMap.set(account.name, count + 1);
+    }
   });
 
   accountNameMap.forEach((count, accountName) => {
@@ -336,10 +338,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       return;
     }
 
+    const accountSelectedDuplicatedNames = getDuplicateAccountNames(accountProxies, accountProxiesSelected);
+
     const isHasAccountInvalidName = accountProxiesSelected.some((ap) => {
       const accountProxy = accountProxies.find((a) => a.id === ap);
 
-      return accountProxy?.isExistName;
+      return accountProxy?.isExistName || accountSelectedDuplicatedNames.includes(accountProxy?.name || '');
     });
 
     if (isHasAccountInvalidName) {
@@ -368,26 +372,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           return prev.filter((id) => id !== account.id);
         }
 
-        if (account.isNameDuplicated) {
-          const anotherAccountNameDuplicates: string[] = [];
-
-          for (const ap of accountProxies) {
-            if (ap.name === account.name && ap.id !== account.id) {
-              anotherAccountNameDuplicates.push(ap.id);
-            }
-          }
-
-          if (anotherAccountNameDuplicates.length > 0) {
-            const accountProxiesSelectedFiltered = prev.filter((id) => !anotherAccountNameDuplicates.includes(id));
-
-            return [...accountProxiesSelectedFiltered, account.id];
-          }
-        }
-
         return [...prev, account.id];
       });
     };
-  }, [accountProxies]);
+  }, []);
 
   const renderItem = useCallback((item: ListItem): React.ReactNode => {
     const selected = accountProxiesSelected.includes(item.id);
