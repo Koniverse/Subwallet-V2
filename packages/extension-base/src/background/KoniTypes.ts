@@ -13,10 +13,7 @@ import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/ext
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BuyServiceInfo, BuyTokenInfo, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
-import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
-import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
-import { SwapErrorType, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BaseRequestSign, BuyServiceInfo, BuyTokenInfo, CommonOptimalPath, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, InternalRequestSign, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestAccountProxyEdit, RequestAccountProxyForget, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckCrossChainTransfer, RequestCheckPublicAndSecretKey, RequestCheckTransfer, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateSwapProcessParams, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
 import { KeyringPair$Meta } from '@subwallet/keyring/types';
 import { KeyringOptions } from '@subwallet/ui-keyring/options/types';
@@ -699,47 +696,6 @@ export interface SWWarning {
   data?: unknown;
 }
 
-export enum BasicTxErrorType {
-  NOT_ENOUGH_BALANCE = 'NOT_ENOUGH_BALANCE',
-  CHAIN_DISCONNECTED = 'CHAIN_DISCONNECTED',
-  INVALID_PARAMS = 'INVALID_PARAMS',
-  DUPLICATE_TRANSACTION = 'DUPLICATE_TRANSACTION',
-  UNABLE_TO_SIGN = 'UNABLE_TO_SIGN',
-  USER_REJECT_REQUEST = 'USER_REJECT_REQUEST',
-  UNABLE_TO_SEND = 'UNABLE_TO_SEND',
-  SEND_TRANSACTION_FAILED = 'SEND_TRANSACTION_FAILED',
-  INTERNAL_ERROR = 'INTERNAL_ERROR',
-  UNSUPPORTED = 'UNSUPPORTED',
-  TIMEOUT = 'TIMEOUT',
-  NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'NOT_ENOUGH_EXISTENTIAL_DEPOSIT',
-}
-
-export enum StakingTxErrorType {
-  NOT_ENOUGH_MIN_STAKE = 'NOT_ENOUGH_MIN_STAKE',
-  EXCEED_MAX_NOMINATIONS = 'EXCEED_MAX_NOMINATIONS',
-  EXIST_UNSTAKING_REQUEST = 'EXIST_UNSTAKING_REQUEST',
-  INVALID_ACTIVE_STAKE = 'INVALID_ACTIVE_STAKE',
-  EXCEED_MAX_UNSTAKING = 'EXCEED_MAX_UNSTAKING',
-  INACTIVE_NOMINATION_POOL = 'INACTIVE_NOMINATION_POOL',
-  CAN_NOT_GET_METADATA = 'CAN_NOT_GET_METADATA',
-  NOT_ENOUGH_MIN_UNSTAKE = 'NOT_ENOUGH_MIN_UNSTAKE'
-}
-
-export enum TransferTxErrorType {
-  NOT_ENOUGH_VALUE = 'NOT_ENOUGH_VALUE',
-  NOT_ENOUGH_FEE = 'NOT_ENOUGH_FEE',
-  INVALID_TOKEN = 'INVALID_TOKEN',
-  TRANSFER_ERROR = 'TRANSFER_ERROR',
-  RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT',
-}
-
-export type TransactionErrorType = BasicTxErrorType | TransferTxErrorType | StakingTxErrorType | YieldValidationStatus | SwapErrorType
-
-export enum BasicTxWarningCode {
-  NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'notEnoughExistentialDeposit',
-  IS_BOUNCEABLE_ADDRESS = 'isBounceableAddress'
-}
-
 export interface TransactionResponse {
   extrinsicHash?: string;
   txError?: boolean;
@@ -761,8 +717,6 @@ export enum BalanceErrorType {
   TIMEOUT = 'TIMEOUT',
   GET_BALANCE_ERROR = 'GET_BALANCE_ERROR',
 }
-
-export type TransactionWarningType = BasicTxWarningCode
 
 export enum ProviderErrorType {
   CHAIN_DISCONNECTED = 'CHAIN_DISCONNECTED',
@@ -946,14 +900,6 @@ export enum NETWORK_STATUS {
   DISCONNECTED = 'disconnected',
   PENDING = 'pending'
 }
-
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type BaseRequestSign = {
-  ignoreWarnings?: boolean;
-};
-
-// Internal request: request from extension, not dApp.
-export type InternalRequestSign<T extends BaseRequestSign> = Omit<T, 'password'>;
 
 export type TxResultType = {
   change: string;
@@ -1401,35 +1347,11 @@ export interface RequestChangeFeeToken {
 
 /// Transfer
 
-export interface RequestCheckTransfer extends BaseRequestSign {
-  networkKey: string,
-  from: string,
-  to: string,
-  value?: string,
-  transferAll?: boolean
-  tokenSlug: string
-}
-
 export interface ValidateTransactionResponse {
   errors: TransactionError[],
   warnings: TransactionWarning[],
   transferNativeAmount?: string
 }
-
-export type RequestTransfer = InternalRequestSign<RequestCheckTransfer>;
-
-export interface RequestCheckCrossChainTransfer extends BaseRequestSign {
-  originNetworkKey: string,
-  destinationNetworkKey: string,
-  from: string,
-  to: string,
-  transferAll?: boolean,
-  value: string,
-  tokenSlug: string,
-  showExtraWarning?: boolean
-}
-
-export type RequestCrossChainTransfer = InternalRequestSign<RequestCheckCrossChainTransfer>;
 
 /// Stake
 

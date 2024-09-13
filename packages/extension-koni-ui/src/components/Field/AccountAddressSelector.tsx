@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { BasicInputWrapper } from '@subwallet/extension-koni-ui/components/Field/Base';
 import { useSelectModalInputHelper, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountAddressItemType, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -80,6 +81,16 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
     );
   }, []);
 
+  const fieldPrefix = useMemo(() => {
+    return (
+      <AccountProxyAvatar
+        className={'__avatar'}
+        size={20}
+        value={value}
+      />
+    );
+  }, [value]);
+
   return (
     <>
       <div
@@ -96,6 +107,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
           content={fieldContent}
           label={label}
           placeholder={placeholder || t('Select account')}
+          prefix={fieldPrefix}
           statusHelp={statusHelp}
           suffix={fieldSuffix}
           tooltip={tooltip}
@@ -120,6 +132,10 @@ const AccountAddressSelector = styled(forwardRef(Component))<Props>(({ theme: { 
       color: token.colorTextLight1,
       whiteSpace: 'nowrap',
       overflow: 'hidden'
+    },
+
+    '.ant-field-container .ant-field-content.ant-field-content.ant-field-content': {
+      color: token.colorTextHeading
     },
 
     '.__selected-item-name': {

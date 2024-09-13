@@ -6,7 +6,7 @@ import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getChainSubstrateAddressPrefix, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AbstractAddressJson, AccountChainType, AccountJson } from '@subwallet/extension-base/types';
+import { AbstractAddressJson, AccountChainType, AccountJson, AccountProxy } from '@subwallet/extension-base/types';
 import { isAccountAll, reformatAddress, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { MODE_CAN_SIGN } from '@subwallet/extension-koni-ui/constants/signing';
@@ -82,6 +82,10 @@ export const isNoAccount = (accounts: AccountJson[] | null): boolean => {
 
 export const searchAccountFunction = (item: AbstractAddressJson, searchText: string): boolean => {
   return item.address.toLowerCase().includes(searchText.toLowerCase()) || (item.name || '').toLowerCase().includes(searchText.toLowerCase());
+};
+
+export const searchAccountProxyFunction = (item: AccountProxy, searchText: string): boolean => {
+  return (item.name || '').toLowerCase().includes(searchText.toLowerCase());
 };
 
 export const formatAccountAddress = (account: AccountJson, networkInfo: _ChainInfo | null): string => {

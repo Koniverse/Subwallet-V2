@@ -11,7 +11,7 @@ import { EXPORT_ACCOUNTS_PASSWORD_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet
 import { useFilterModal, useGoBackSelectAccount } from '@subwallet/extension-koni-ui/hooks';
 import { useSelectAccount } from '@subwallet/extension-koni-ui/hooks/modal/useSelectAccount';
 import { AccountSignMode, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll, searchAccountFunction } from '@subwallet/extension-koni-ui/utils';
+import { isAccountAll, searchAccountProxyFunction } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, InputRef, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import { CaretLeft, Export, FadersHorizontal } from 'phosphor-react';
@@ -227,7 +227,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
           ref={sectionRef}
           renderItem={renderItem}
           renderWhenEmpty={renderEmpty}
-          searchFunction={searchAccountFunction}
+          searchFunction={searchAccountProxyFunction}
           searchMinCharactersCount={2}
           searchPlaceholder={t<string>('Account name')}
           showActionBtn

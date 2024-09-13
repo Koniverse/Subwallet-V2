@@ -6,7 +6,7 @@
 import type { ApiInterfaceRx } from '@polkadot/api/types';
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
-import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
+import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { Cell } from '@ton/core';
 import { Address, Contract, OpenedContract } from '@ton/ton';
@@ -139,8 +139,9 @@ export interface _TonUtilsApi {
   open<T extends Contract>(src: T): OpenedContract<T>;
   estimateExternalMessageFee (address: Address, body: Cell, ignoreSignature?: boolean, initCode?: Cell, initData?: Cell): Promise<EstimateExternalMessageFee>;
   sendTonTransaction (boc: string): Promise<string>;
-  getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse>
-  getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]>
+  getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse>;
+  getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]>;
+  getAccountState (address: string): Promise<AccountState>;
 }
 
 export interface EstimateExternalMessageFee {

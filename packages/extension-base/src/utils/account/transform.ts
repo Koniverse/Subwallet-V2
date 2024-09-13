@@ -108,8 +108,10 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
   }
 
   // QR
-  if (signMode === AccountSignMode.PASSWORD && networkType === AccountChainType.SUBSTRATE) {
-    result.push(AccountActions.EXPORT_QR);
+  if (signMode === AccountSignMode.PASSWORD) {
+    if (networkType === AccountChainType.ETHEREUM || networkType === AccountChainType.SUBSTRATE) {
+      result.push(AccountActions.EXPORT_QR);
+    }
   }
 
   // Derive
@@ -283,6 +285,11 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
 
     if (specialNetwork === 'interlay') {
       result.push(...EARN_QDOT_ACTIONS);
+    }
+
+    // Transfer XCM
+    if (['polkadot', 'kusama', 'statemint', 'statemine'].includes(specialNetwork)) {
+      result.push(ExtrinsicType.TRANSFER_XCM);
     }
 
     return result;
@@ -484,10 +491,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             accountActions.push(AccountActions.EXPORT_MNEMONIC);
           }
 
-          // Json
-          if (value.accounts.every((account) => account.accountActions.includes(AccountActions.EXPORT_JSON))) {
-            accountActions.push(AccountActions.EXPORT_JSON);
-          }
+          // // Json
+          // if (value.accounts.every((account) => account.accountActions.includes(AccountActions.EXPORT_JSON))) {
+          //   accountActions.push(AccountActions.EXPORT_JSON);
+          // }
 
           // Derive
           if (value.accounts.every((account) => account.accountActions.includes(AccountActions.DERIVE))) {

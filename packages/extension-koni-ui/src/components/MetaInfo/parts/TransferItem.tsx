@@ -66,6 +66,24 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     const formattedAddress = chainInfo ? _reformatAddressWithChain(address, chainInfo) : address;
     const shortAddress = toShort(formattedAddress);
 
+    if (name) {
+      return (
+        <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
+          <div className={'__account-item-wrapper'}>
+            <div className={'__account-item-name-wrapper'}>
+              <Avatar
+                className={'__account-avatar'}
+                size={24}
+                value={shortAddress}
+              />
+              <div className={'__account-item-name'}>{name}</div>
+            </div>
+            <div className={'__account-item-address'}>{shortAddress}</div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
         <Avatar
@@ -74,7 +92,6 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
           value={address}
         />
         <div className={'__account-name ml-xs'}>
-          <div className={'__account-item-name'}>{name}</div>
           <div className={'__account-item-address'}>{shortAddress}</div>
         </div>
       </div>
@@ -156,8 +173,35 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
 
 const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: TransferInfoItem) => {
   return {
+    display: 'flex',
+    gap: 4,
     '.__sender, .__recipient': {
-      minHeight: 44
+      minHeight: 46
+    },
+    '.__sender.__sender.__value': {
+      alignItems: 'flex-start'
+    },
+    '.__recipient.__recipient.__value': {
+      alignItems: 'flex-start'
+    },
+    '.__account-item-wrapper': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      '.__account-item-name-wrapper': {
+        display: 'flex',
+        gap: 8,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      },
+      '.__account-item-name': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      },
+      '.__account-item-address': {
+        paddingLeft: 32
+      }
     }
   };
 });

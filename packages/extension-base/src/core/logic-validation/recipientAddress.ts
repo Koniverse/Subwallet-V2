@@ -3,10 +3,9 @@
 
 import { ActionType, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/core/types';
 import { _isAddress, _isNotDuplicateAddress, _isNotNull, _isSupportLedgerAccount, _isValidAddressForEcosystem, _isValidSubstrateAddressFormat } from '@subwallet/extension-base/core/utils';
+import { AccountSignMode } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { isTonAddress } from '@subwallet/keyring';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
+import { isSubstrateAddress } from '@subwallet/keyring';
 
 function getConditions (validateRecipientParams: ValidateRecipientParams): ValidationCondition[] {
   const { account, actionType, autoFormatValue, destChainInfo, srcChain, toAddress } = validateRecipientParams;
@@ -17,7 +16,7 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
   conditions.push(ValidationCondition.IS_ADDRESS);
   conditions.push(ValidationCondition.IS_VALID_ADDRESS_FOR_ECOSYSTEM);
 
-  if (!isEthereumAddress(toAddress) && !isTonAddress(toAddress) && !autoFormatValue) {
+  if (isSubstrateAddress(toAddress) && !autoFormatValue) {
     // todo: need isSubstrateAddress util function to check exactly
     conditions.push(ValidationCondition.IS_VALID_SUBSTRATE_ADDRESS_FORMAT);
   }
@@ -28,6 +27,10 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
 
   if (account?.isHardware) {
     conditions.push(ValidationCondition.IS_SUPPORT_LEDGER_ACCOUNT);
+
+    if (account.signMode === AccountSignMode.LEGACY_LEDGER) {
+      conditions.push(ValidationCondition.IS_VALID_SUBSTRATE_ADDRESS_FORMAT);
+    }
   }
 
   return conditions;
@@ -40,9 +43,9 @@ function getValidationFunctions (conditions: ValidationCondition[]): Array<(vali
     switch (condition) {
       case ValidationCondition.IS_NOT_NULL: {
         validationFunctions.push(_isNotNull);
-      }
 
         break;
+      }
 
       case ValidationCondition.IS_ADDRESS: {
         validationFunctions.push(_isAddress);

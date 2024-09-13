@@ -9,6 +9,8 @@ export interface TxByMsgResponse {
   transactions: TxDetailInfo[]
 }
 
+export type AccountState = 'uninitialized' | 'active' | 'frozen' | 'unknown';
+
 interface TxDetailInfo {
   hash: string
   description: {
