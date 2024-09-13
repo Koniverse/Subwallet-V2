@@ -361,7 +361,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       <div className={CN(className, '-input-container')}>
         <AutoComplete
           dropdownRender={dropdownRender}
-          listHeight={dropdownListHeight}
+          listHeight={isShowAdvancedAddressDetection ? dropdownListHeight : (dropdownListHeight + 36)}
           onBlur={_onBlur}
           onChange={onChangeInputValue}
           onFocus={onFocus}
