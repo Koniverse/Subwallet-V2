@@ -48,6 +48,15 @@ export const DefaultLogosMap: Record<string, string> = {
   currency_cny: '/images/projects/CurrencyCNY.png',
   currency_hkd: '/images/projects/CurrencyHKD.png',
   currency_vnd: '/images/projects/CurrencyVND.png',
+  near: '/images/projects/near.png',
+  particle: '/images/projects/particle.png',
+  polygon: '/images/projects/polygon.png',
+  orby: '/images/projects/orby.png',
+  arcana: '/images/projects/arcana.png',
+  klaster: '/images/projects/klaster.png',
+  across: '/images/projects/across.png',
+  wormhole: '/images/projects/wormhole.png',
+  layerZero: '/images/projects/layerZero.png',
   [SUBSTRATE_GENERIC_KEY]: '/images/projects/polkadot.png',
   [SUBSTRATE_MIGRATION_KEY]: '/images/projects/polkadot-migration.png'
 };

@@ -1,13 +1,16 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
+import { BlockHeaderItem } from '@subwallet/extension-web-ui/components/Layout/base/BlockHeaderItem';
 import Headers from '@subwallet/extension-web-ui/components/Layout/parts/Header';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { HeaderType, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useDefaultNavigate, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
+import { Image, SwIconProps } from '@subwallet/react-ui';
 import CN from 'classnames';
-import React, { useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import SideMenu from '../parts/SideMenu';
@@ -17,6 +20,12 @@ export interface LayoutBaseWebProps {
   className?: string;
 }
 
+export type HeaderItemType = {
+  label: string;
+  value: string;
+  icon: SwIconProps;
+};
+type Props = LayoutBaseWebProps & ThemeProps;
 const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } }: ThemeProps) => {
   return {
     display: 'flex',
@@ -143,7 +152,7 @@ const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } 
   };
 });
 
-const BaseWeb = ({ children }: LayoutBaseWebProps) => {
+const Component = ({ children, className }: Props) => {
   const { t } = useTranslation();
   const { isWebUI } = useContext(ScreenContext);
   const { background, headerType, isPortfolio,
@@ -151,6 +160,7 @@ const BaseWeb = ({ children }: LayoutBaseWebProps) => {
     showBackButtonOnHeader, showSidebar,
     sidebarCollapsed, title, webBaseClassName } = useContext(WebUIContext);
   const { goBack, goHome } = useDefaultNavigate();
+  const [selectedHeaderItem, setSelectedHeaderItem] = useState({ left: '', right: '' });
 
   const headerTitle = useMemo(() => {
     if (isPortfolio) {
@@ -160,6 +170,174 @@ const BaseWeb = ({ children }: LayoutBaseWebProps) => {
     return title;
   }, [isPortfolio, t, title]);
 
+  const LEFT_BLOCK_DATA_LIST = useMemo<HeaderItemType[]>(() => {
+    return [
+      {
+        label: t('Across'),
+        value: 'across',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.across}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Wormhole'),
+        value: 'wormhole',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.wormhole}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('LayerZero'),
+        value: 'layerZero',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.layerZero}
+                width={16}
+              />
+            </>
+          )
+        }
+      }
+    ];
+  }, [t]);
+
+  const RIGHT_BLOCK_DATA_LIST = useMemo<HeaderItemType[]>(() => {
+    return [
+      {
+        label: t('Near'),
+        value: 'near',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.near}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Particle'),
+        value: 'particle',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.particle}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Polygon'),
+        value: 'polygon',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.polygon}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Klaster'),
+        value: 'klaster',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.klaster}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Arcana'),
+        value: 'arcana',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.arcana}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Orby'),
+        value: 'orby',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.orby}
+                width={16}
+              />
+            </>
+          )
+        }
+      }
+    ];
+  }, [t]);
+
+  const updateLeft = useCallback((value: string) => {
+    setSelectedHeaderItem((prevState) => ({
+      ...prevState,
+      left: value
+    }));
+  }, []);
+
+  const updateRight = useCallback((value: string) => {
+    setSelectedHeaderItem((prevState) => ({
+      ...prevState,
+      right: value
+    }));
+  }, []);
+
   if (!isWebUI) {
     return <>{children}</>;
   }
@@ -167,42 +345,96 @@ const BaseWeb = ({ children }: LayoutBaseWebProps) => {
   const isHeaderTypeCommon = [HeaderType.COMMON, HeaderType.COMMON_BACK, HeaderType.COMMON_BACK_TO_HOME].includes(headerType);
 
   return (
-    <StyledLayout className={CN('web-layout-container', `header-type-${headerType}`, webBaseClassName)}>
-      <div
-        className={CN('web-layout-background', `__background-${background}`)}
-      />
-      {showSidebar && <div className='web-layout-sidebar'>
-        <SideMenu
-          isCollapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
-        />
-      </div>}
-
-      <div className={CN('web-layout-body', { 'setting-pages': isSettingPage })}>
-        {
-          isHeaderTypeCommon && (
-            <Headers.Controller
-              { ...(headerType === HeaderType.COMMON_BACK ? { onBack: onBack || goBack, showBackButton: true } : {}) }
-              { ...(headerType === HeaderType.COMMON_BACK_TO_HOME ? { onBack: onBack || goHome, showBackButton: true } : {}) }
-              className={'web-layout-header'}
-              title={headerTitle}
+    <>
+      <div className={CN(className, '__header-wrapper')}>
+        <div className={'__left-block'}>
+          {LEFT_BLOCK_DATA_LIST.map((item) => (
+            <BlockHeaderItem
+              className={'side-menu-item'}
+              icon={item.icon}
+              isActivated={selectedHeaderItem.left === item.value}
+              key={item.value}
+              label={item.label}
+              onClick={updateLeft}
+              value={item.value}
             />
-          )
-        }
-        {headerType === HeaderType.SIMPLE && (
-          <Headers.Simple
-            className={'web-layout-header-simple'}
-            onBack={onBack}
-            showBackButton={showBackButtonOnHeader}
-            title={headerTitle}
-          />
-        )}
-        <div className={CN('web-layout-content', { '__with-padding': showSidebar })}>
-          {children}
+          ))}
+        </div>
+
+        <div className={'__right-block'}>
+          {RIGHT_BLOCK_DATA_LIST.map((item) => (
+            <BlockHeaderItem
+              className={'side-menu-item'}
+              icon={item.icon}
+              isActivated={selectedHeaderItem.right === item.value}
+              key={item.value}
+              label={item.label}
+              onClick={updateRight}
+              value={item.value}
+            />
+          ))}
         </div>
       </div>
-    </StyledLayout>
+      <StyledLayout className={CN('web-layout-container', `header-type-${headerType}`, webBaseClassName)}>
+        <div
+          className={CN('web-layout-background', `__background-${background}`)}
+        />
+        {showSidebar && <div className='web-layout-sidebar'>
+          <SideMenu
+            isCollapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+          />
+        </div>}
+
+        <div className={CN('web-layout-body', { 'setting-pages': isSettingPage })}>
+          {
+            isHeaderTypeCommon && (
+              <Headers.Controller
+                { ...(headerType === HeaderType.COMMON_BACK ? { onBack: onBack || goBack, showBackButton: true } : {}) }
+                { ...(headerType === HeaderType.COMMON_BACK_TO_HOME ? { onBack: onBack || goHome, showBackButton: true } : {}) }
+                className={'web-layout-header'}
+                title={headerTitle}
+              />
+            )
+          }
+          {headerType === HeaderType.SIMPLE && (
+            <Headers.Simple
+              className={'web-layout-header-simple'}
+              onBack={onBack}
+              showBackButton={showBackButtonOnHeader}
+              title={headerTitle}
+            />
+          )}
+          <div className={CN('web-layout-content', { '__with-padding': showSidebar })}>
+            {children}
+          </div>
+        </div>
+      </StyledLayout>
+    </>
   );
 };
+
+const BaseWeb = styled(Component)<Props>(({ theme: { token } }: Props) => {
+  return ({
+    '&.__header-wrapper': {
+      minHeight: 64,
+      backgroundColor: token.colorBgInput,
+      display: 'flex',
+      justifyContent: 'space-between',
+      paddingLeft: 16,
+      paddingRight: 16
+    },
+    '.__left-block, .__right-block': {
+      display: 'flex',
+      gap: 40,
+      alignItems: 'center'
+    },
+    '.header-left-item': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2
+    }
+  });
+});
 
 export default BaseWeb;
