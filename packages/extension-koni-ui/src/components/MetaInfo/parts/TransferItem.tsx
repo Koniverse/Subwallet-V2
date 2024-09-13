@@ -176,13 +176,18 @@ const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: 
     display: 'flex',
     gap: 4,
     '.__sender, .__recipient': {
-      minHeight: 46
+      minHeight: 44
     },
     '.__sender.__sender.__value': {
       alignItems: 'flex-start'
     },
     '.__recipient.__recipient.__value': {
       alignItems: 'flex-start'
+    },
+    '.__chain-name': {
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     },
     '.__account-item-wrapper': {
       overflow: 'hidden',
@@ -200,7 +205,9 @@ const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: 
         textOverflow: 'ellipsis'
       },
       '.__account-item-address': {
-        paddingLeft: 32
+        paddingLeft: 32,
+        fontSize: token.fontSizeSM,
+        lineHeight: token.lineHeightSM
       }
     }
   };

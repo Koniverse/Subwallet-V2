@@ -2001,7 +2001,7 @@ export interface KoniRequestSignatures {
   // Edit account
   'pri(accounts.edit)': [RequestAccountProxyEdit, boolean];
   'pri(accounts.forget)': [RequestAccountProxyForget, boolean];
-  'pri(accounts.ton.version.change)': [RequestChangeTonWalletContractVersion, boolean];
+  'pri(accounts.ton.version.change)': [RequestChangeTonWalletContractVersion, string];
   'pri(accounts.ton.version.map)': [RequestGetAllTonWalletContractVersion, ResponseGetAllTonWalletContractVersion];
 
   // Address book

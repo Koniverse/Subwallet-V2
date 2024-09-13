@@ -13,7 +13,7 @@ export async function forgetAccount (proxyId: string, lockAfter = false): Promis
   return sendMessage('pri(accounts.forget)', { proxyId, lockAfter });
 }
 
-export async function tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): Promise<boolean> {
+export async function tonAccountChangeWalletContractVersion (request: RequestChangeTonWalletContractVersion): Promise<string> {
   return sendMessage('pri(accounts.ton.version.change)', request);
 }
 

@@ -9,6 +9,7 @@ export { default as RemindBackupSeedPhraseModal } from './RemindBackupSeedPhrase
 export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVersion';
 export { default as RemindUpgradeUnifiedAccount } from './RemindUpgradeUnifiedAccount';
 export { default as AddNetworkWCModal } from './AddNetworkWCModal';
+export { default as TonWalletContractSelectorModal } from './TonWalletContractSelectorModal';
 export { SortingModal } from './SortingModal';
 export { default as ReceiveModal } from './ReceiveModalNew';
 
