@@ -45,7 +45,7 @@ interface Props extends BasicInputWrapper, ThemeProps {
   showScanner?: boolean;
   labelStyle?: 'horizontal' | 'vertical';
   saveAddress?: boolean;
-  dropdownListHeight?: number;
+  dropdownHeight?: number;
 }
 
 const defaultScannerModalId = 'input-account-address-scanner-modal';
@@ -55,7 +55,7 @@ const defaultAddressBookModalId = 'input-account-address-book-modal';
 //  - Rename to AddressInput, after this component is done
 
 function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.ReactElement<Props> {
-  const { chainSlug, className = '', disabled, dropdownListHeight = 200,
+  const { chainSlug, className = '', disabled, dropdownHeight = 240,
     id, label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly,
     saveAddress, showAddressBook, showScanner, status, statusHelp, value } = props;
   const { t } = useTranslation();
@@ -326,6 +326,10 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     fieldRef?.current?.blur();
   }, [fieldRef]);
 
+  const dropdownListHeight = useMemo(() => {
+    return isShowAdvancedAddressDetection ? dropdownHeight - 60 : (dropdownHeight - 24);
+  }, [dropdownHeight, isShowAdvancedAddressDetection]);
+
   useEffect(() => {
     let sync = true;
     let id: string | undefined;
@@ -361,7 +365,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       <div className={CN(className, '-input-container')}>
         <AutoComplete
           dropdownRender={dropdownRender}
-          listHeight={isShowAdvancedAddressDetection ? dropdownListHeight : (dropdownListHeight + 36)}
+          listHeight={dropdownListHeight}
           onBlur={_onBlur}
           onChange={onChangeInputValue}
           onFocus={onFocus}
