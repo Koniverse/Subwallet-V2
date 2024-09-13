@@ -59,6 +59,7 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, value
   const messagePayload = cellToBase64Str(messageRelaxedToCell(messages));
 
   const estimateExternalFee = await estimateTonTxFee(tonApi, [messages], walletContract);
+  console.log('estimateExternalFee', estimateExternalFee.toString());
 
   const transactionObject = {
     from,
