@@ -3,7 +3,7 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { TON_API_ENDPOINT, TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
+import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { getJettonTxStatus, retry } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
@@ -223,5 +223,27 @@ export class TonApi implements _TonApi {
 
       throw new Error('Transaction not found');
     }, { retries: 10, delay: 5000 });
+  }
+
+  async getAccountState (address: string): Promise<AccountState> {
+    const url = `${this.httpEndPoint}/v2/getAddressState?address=${address}`;
+    const resp = await fetch(
+      url, {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-API-KEY': TON_CENTER_API_KEY
+        }
+      }
+    );
+
+    const accountStateInfo = await resp.json() as { ok: boolean, result: string };
+
+    if (accountStateInfo.ok) {
+      return accountStateInfo.result as AccountState;
+    }
+
+    return 'unknown';
   }
 }

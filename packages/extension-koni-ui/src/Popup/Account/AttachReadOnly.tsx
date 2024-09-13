@@ -155,6 +155,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
   }, [form, reformatAddress, onComplete]);
 
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === 'Enter') {
+      form.submit();
+    }
+  }, [form]);
+
   useFocusById(modalId);
 
   return (
@@ -195,6 +201,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             name={formName}
             onFieldsChange={onFieldsChange}
             onFinish={onSubmit}
+            onKeyDown={handleKeyDown}
           >
             <Form.Item
               name={fieldName}

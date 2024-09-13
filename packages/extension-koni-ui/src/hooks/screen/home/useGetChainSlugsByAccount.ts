@@ -4,10 +4,11 @@
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { findAccountByAddress, getChainsByAccountType, isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, getChainsByAccountAll, getChainsByAccountType, isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+// TODO: Recheck the usages of the address in this hook.
 export const useGetChainSlugsByAccount = (address?: string): string[] => {
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
   const { accountProxies, accounts, currentAccountProxy } = useSelector((state: RootState) => state.accountState);
@@ -65,6 +66,14 @@ export const useGetChainSlugsByAccount = (address?: string): string[] => {
   }, [accountProxies, accounts, address, currentAccountProxy?.id]);
 
   return useMemo<string[]>(() => {
+    const _address = address || currentAccountProxy?.id;
+
+    if (_address && isAccountAll(_address)) {
+      const allAccount = accountProxies.find((proxy) => proxy.id === ALL_ACCOUNT_KEY);
+
+      return allAccount ? getChainsByAccountAll(allAccount, accountProxies, chainInfoMap) : [];
+    }
+
     return getChainsByAccountType(chainInfoMap, chainTypes, specialChain);
-  }, [chainTypes, chainInfoMap, specialChain]);
+  }, [address, currentAccountProxy?.id, accountProxies, chainTypes, chainInfoMap, specialChain]);
 };

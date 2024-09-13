@@ -75,6 +75,12 @@ const Component: React.FC<Props> = (props: Props) => {
         senderAddress={data.from}
         senderName={data.fromName}
       />
+      {(assetTo.originChain === assetFrom.originChain) && (
+        <MetaInfo.Chain
+          chain={data.chain}
+          label={t('Network')}
+        />
+      )}
       <MetaInfo.DisplayType
         label={t('Transaction type')}
         typeName={t(TxTypeNameMap[data.type])}
