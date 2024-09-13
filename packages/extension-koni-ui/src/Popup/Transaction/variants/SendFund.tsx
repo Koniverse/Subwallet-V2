@@ -40,6 +40,7 @@ type WrapperProps = ThemeProps;
 type ComponentProps = {
   className?: string;
   targetAccountProxy: AccountProxy;
+  isAllAccount?: boolean
 };
 
 interface TransferOptions {
@@ -120,7 +121,7 @@ const evmAccountSlug = 'ethereum-NATIVE-ETH';
 const tonAccountSlug = 'ton-NATIVE-TON';
 const defaultAddressInputRenderKey = 'address-input-render-key';
 
-const Component = ({ className = '', targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
+const Component = ({ className = '', isAllAccount, targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
   useSetCurrentPage('/transaction/send-fund');
   const { t } = useTranslation();
   const notification = useNotification();
@@ -269,6 +270,9 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
     return result;
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
+
+  console.log('accountAddressItems', accountAddressItems);
+  console.log('accountProxies', accountProxies);
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
@@ -780,6 +784,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           </div>
 
           <Form.Item
+            className={CN({ hidden: (!isAllAccount && accountAddressItems.length < 2) })}
             name={'from'}
             statusHelpAsTooltip={true}
           >
@@ -888,7 +893,7 @@ const Wrapper: React.FC<WrapperProps> = (props: WrapperProps) => {
   const { className } = props;
   const { defaultData } = useTransactionContext<TransferParams>();
   const { goHome } = useDefaultNavigate();
-  const accountProxies = useSelector((state) => state.accountState.accountProxies);
+  const { accountProxies, isAllAccount } = useSelector((state) => state.accountState);
 
   const targetAccountProxy = useMemo(() => {
     return accountProxies.find((ap) => {
@@ -915,6 +920,7 @@ const Wrapper: React.FC<WrapperProps> = (props: WrapperProps) => {
   return (
     <Component
       className={className}
+      isAllAccount={isAllAccount}
       targetAccountProxy={targetAccountProxy}
     />
   );
