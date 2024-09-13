@@ -5,11 +5,8 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
-import {
-  CloseIcon,
-  TonWalletContectSelectorModal
-} from '@subwallet/extension-koni-ui/components';
-import {ADDRESS_QR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL} from '@subwallet/extension-koni-ui/constants/modal';
+import { CloseIcon, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
+import { ADDRESS_QR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
@@ -34,14 +31,14 @@ type Props = ThemeProps & AddressQrModalProps & {
 };
 
 const modalId = ADDRESS_QR_MODAL;
-const changeVersionWalletContractModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
+const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 
 const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onCancel }: Props) => {
   const { t } = useTranslation();
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
   const notify = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
-  const isTonWalletContactSelectorModalActive = checkActive(changeVersionWalletContractModalId);
+  const isTonWalletContactSelectorModalActive = checkActive(tonWalletContractSelectorModalId);
 
   const scanExplorerAddressUrl = useMemo(() => {
     return getExplorerLink(chainInfo, address, 'account');
@@ -63,11 +60,11 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
   }, [chainSlug]);
 
   const onChangeTonWalletContact = useCallback(() => {
-    activeModal(changeVersionWalletContractModalId);
+    activeModal(tonWalletContractSelectorModalId);
   }, [activeModal]);
 
   const onCloseTonWalletContactModal = useCallback(() => {
-    inactiveModal(changeVersionWalletContractModalId);
+    inactiveModal(tonWalletContractSelectorModalId);
   }, [inactiveModal]);
 
   const onClickCopyButton = useCallback(() => notify({ message: t('Copied to clipboard') }), [notify, t]);
@@ -114,7 +111,11 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
         title={(
           <>
             {t<string>('Your address')}
-            {onBack && isRelatedToTon && <Button {...tonWalletContactSelectorButtonProps} className={'__change-version-button'} size={'xs'}/>}
+            {onBack && isRelatedToTon && <Button
+              {...tonWalletContactSelectorButtonProps}
+              className={'__change-version-button'}
+              size={'xs'}
+            />}
           </>
         )}
       >
@@ -178,10 +179,10 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
         </>
       </SwModal>
       {isRelatedToTon && isTonWalletContactSelectorModalActive &&
-        <TonWalletContectSelectorModal
+        <TonWalletContractSelectorModal
           address={address}
           chainSlug={chainSlug}
-          id={changeVersionWalletContractModalId}
+          id={tonWalletContractSelectorModalId}
           onCancel={onCloseTonWalletContactModal}
         />
       }

@@ -8,8 +8,8 @@ export { default as ResetWalletModal } from './ResetWalletModal';
 export { default as RemindBackupSeedPhraseModal } from './RemindBackupSeedPhraseModal';
 export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVersion';
 export { default as RemindUpgradeUnifiedAccount } from './RemindUpgradeUnifiedAccount';
-export { default as TonWalletContectSelectorModal } from './TonWalletContectSelectorModal';
 export { default as AddNetworkWCModal } from './AddNetworkWCModal';
+export { default as TonWalletContractSelectorModal } from './TonWalletContractSelectorModal';
 export { SortingModal } from './SortingModal';
 export { default as ReceiveModal } from './ReceiveModalNew';
 
