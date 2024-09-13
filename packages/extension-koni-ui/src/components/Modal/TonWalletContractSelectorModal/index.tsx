@@ -3,9 +3,6 @@
 
 import { ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import TonWalletContractItem, {
-  TonWalletContractItemType
-} from '@subwallet/extension-koni-ui/components/Modal/TonWalletContectSelectorModal/TonWalletContractItem';
 import { TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useGetAccountByAddress, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
@@ -18,6 +15,8 @@ import { CaretLeft, CheckCircle, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
+import TonWalletContractItem, { TonWalletContractItemType } from './TonWalletContractItem';
+
 type Props = ThemeProps & {
   onCancel?: VoidFunction;
   id: string;
@@ -25,8 +24,7 @@ type Props = ThemeProps & {
   address: string;
 };
 
-
-const changeVersionWalletContractModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
+const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 
 const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }: Props) => {
   const { t } = useTranslation();
@@ -145,7 +143,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           {t('Confirm')}
         </Button>
       }
-      id={changeVersionWalletContractModalId}
+      id={tonWalletContractSelectorModalId}
       onCancel={onCancel}
       title={t<string>('Wallet version contract')}
     >
@@ -166,7 +164,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
   );
 };
 
-const TonWalletContectSelectorModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const Index = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.wallet-version-list': {
       display: 'flex',
@@ -189,4 +187,4 @@ const TonWalletContectSelectorModal = styled(Component)<Props>(({ theme: { token
   };
 });
 
-export default TonWalletContectSelectorModal;
+export default Index;

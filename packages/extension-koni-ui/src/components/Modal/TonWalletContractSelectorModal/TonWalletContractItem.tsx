@@ -3,12 +3,12 @@
 
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { TonWalletContractVersion } from '@subwallet/keyring/types';
 import { Icon, Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React from 'react';
 import styled, { useTheme } from 'styled-components';
-import {TonWalletContractVersion} from "@subwallet/keyring/types";
 
 export type TonWalletContractItemType = {
   version: TonWalletContractVersion,
@@ -22,7 +22,7 @@ type Props = ThemeProps & TonWalletContractItemType & {
 }
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { chainSlug, className, isSelected, onClick, address, version } = props;
+  const { address, chainSlug, className, isSelected, onClick, version } = props;
   const { token } = useTheme() as Theme;
 
   return (
