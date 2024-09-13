@@ -5,8 +5,11 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
-import { ChangeVersionWalletContractModal, CloseIcon } from '@subwallet/extension-koni-ui/components';
-import { ADDRESS_QR_MODAL, CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
+import {
+  CloseIcon,
+  TonWalletContectSelectorModal
+} from '@subwallet/extension-koni-ui/components';
+import {ADDRESS_QR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL} from '@subwallet/extension-koni-ui/constants/modal';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useFetchChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
@@ -31,7 +34,7 @@ type Props = ThemeProps & AddressQrModalProps & {
 };
 
 const modalId = ADDRESS_QR_MODAL;
-const changeVersionWalletContractModalId = CHANGE_VERSION_WALLET_CONTRACT;
+const changeVersionWalletContractModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 
 const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onCancel }: Props) => {
   const { t } = useTranslation();
@@ -111,7 +114,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
         title={(
           <>
             {t<string>('Your address')}
-            {isRelatedToTon && <Button {...tonWalletContactSelectorButtonProps} />}
+            {onBack && isRelatedToTon && <Button {...tonWalletContactSelectorButtonProps} className={'__change-version-button'} size={'xs'}/>}
           </>
         )}
       >
@@ -175,7 +178,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
         </>
       </SwModal>
       {isRelatedToTon && isTonWalletContactSelectorModalActive &&
-        <ChangeVersionWalletContractModal
+        <TonWalletContectSelectorModal
           address={address}
           chainSlug={chainSlug}
           id={changeVersionWalletContractModalId}
@@ -191,6 +194,21 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
     '.__qr-code-wrapper': {
       paddingTop: token.padding,
       paddingBottom: token.padding
+    },
+    '.ant-sw-sub-header-title': {
+      fontSize: token.fontSizeXL,
+      lineHeight: token.lineHeightHeading4,
+      fontWeight: token.fontWeightStrong
+    },
+    '.ant-sw-header-center-part': {
+      position: 'relative',
+      height: 40
+    },
+
+    '.__change-version-button': {
+      position: 'absolute',
+      right: -5,
+      top: 0
     },
 
     '.ant-sw-qr-code': {

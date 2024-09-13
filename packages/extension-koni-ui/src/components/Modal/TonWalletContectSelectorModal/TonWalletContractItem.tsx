@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { WalletContractItem } from '@subwallet/extension-koni-ui/components/Modal/ChangeVersionWalletContractModal';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Logo } from '@subwallet/react-ui';
@@ -9,13 +8,21 @@ import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React from 'react';
 import styled, { useTheme } from 'styled-components';
+import {TonWalletContractVersion} from "@subwallet/keyring/types";
 
-type Props = ThemeProps & WalletContractItem & {
+export type TonWalletContractItemType = {
+  version: TonWalletContractVersion,
+  address: string,
+  isSelected: boolean,
+  chainSlug: string
+}
+
+type Props = ThemeProps & TonWalletContractItemType & {
   onClick?: VoidFunction;
 }
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { chainSlug, className, isSelected, onClick, value, walletType } = props;
+  const { chainSlug, className, isSelected, onClick, address, version } = props;
   const { token } = useTheme() as Theme;
 
   return (
@@ -34,10 +41,10 @@ const Component: React.FC<Props> = (props: Props) => {
 
         <div className='__item-center-part'>
           <div className='__item-chain-name'>
-            {walletType}
+            {version}
           </div>
           <div className='__item-address'>
-            {toShort(value, 4, 5)}
+            {toShort(address, 4, 5)}
           </div>
         </div>
 
@@ -55,7 +62,7 @@ const Component: React.FC<Props> = (props: Props) => {
   );
 };
 
-const ChangeVersionWalletConractItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const TonWalletContractItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     background: token.colorBgSecondary,
     paddingLeft: token.paddingSM,
@@ -126,4 +133,4 @@ const ChangeVersionWalletConractItem = styled(Component)<Props>(({ theme: { toke
   };
 });
 
-export default ChangeVersionWalletConractItem;
+export default TonWalletContractItem;

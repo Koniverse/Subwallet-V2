@@ -3,8 +3,10 @@
 
 import { ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
-import ChangeVersionWalletConractItem from '@subwallet/extension-koni-ui/components/ChangeVersionWalletConractItem';
-import { CHANGE_VERSION_WALLET_CONTRACT } from '@subwallet/extension-koni-ui/constants/modal';
+import TonWalletContractItem, {
+  TonWalletContractItemType
+} from '@subwallet/extension-koni-ui/components/Modal/TonWalletContectSelectorModal/TonWalletContractItem';
+import { TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useGetAccountByAddress, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
@@ -23,19 +25,13 @@ type Props = ThemeProps & {
   address: string;
 };
 
-export type WalletContractItem = {
-  walletType: TonWalletContractVersion,
-  value: string,
-  isSelected: boolean,
-  chainSlug: string
-}
 
-const changeVersionWalletContractModalId = CHANGE_VERSION_WALLET_CONTRACT;
+const changeVersionWalletContractModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 
 const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }: Props) => {
   const { t } = useTranslation();
   const notification = useNotification();
-  const [tonWalletVersionData, setTonWalletVersionData] = useState<ResponseGetAllTonWalletContractVersion | null>(null);
+  const [tonWalletContractVersionData, setTonWalletContractVersionData] = useState<ResponseGetAllTonWalletContractVersion | null>(null);
   const accountInfo = useGetAccountByAddress(address);
   const [selectedContractVersion, setSelectedContractVersion] = useState<TonWalletContractVersion | undefined>(
     accountInfo ? accountInfo.tonContractVersion as TonWalletContractVersion : undefined
@@ -48,7 +44,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
     if (accountInfo?.address) {
       tonGetAllWalletContractVersion({ address: accountInfo.address }).then((result) => {
         if (sync) {
-          setTonWalletVersionData(result);
+          setTonWalletContractVersionData(result);
         }
       }).catch((e: Error) => {
         sync && notification({
@@ -67,37 +63,37 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
     return <GeneralEmptyList />;
   }, []);
 
-  const resultList = useMemo((): WalletContractItem[] => {
-    if (!tonWalletVersionData?.addressMap) {
+  const resultList = useMemo((): TonWalletContractItemType[] => {
+    if (!tonWalletContractVersionData?.addressMap) {
       return [];
     }
 
-    const addressMap = tonWalletVersionData.addressMap;
+    const addressMap = tonWalletContractVersionData.addressMap;
 
-    return Object.entries(addressMap).map(([walletType, value]) => {
-      const validWalletType = walletType as TonWalletContractVersion;
+    return Object.entries(addressMap).map(([version, address]) => {
+      const validVersion = version as TonWalletContractVersion;
 
       return {
-        walletType: validWalletType,
-        value,
-        isSelected: validWalletType === selectedContractVersion,
+        version: validVersion,
+        address,
+        isSelected: validVersion === selectedContractVersion,
         chainSlug
       };
     });
-  }, [tonWalletVersionData?.addressMap, selectedContractVersion, chainSlug]);
+  }, [tonWalletContractVersionData?.addressMap, selectedContractVersion, chainSlug]);
 
-  const onClickItem = useCallback((walletType: TonWalletContractVersion) => {
+  const onClickItem = useCallback((version: TonWalletContractVersion) => {
     return () => {
-      setSelectedContractVersion(walletType);
+      setSelectedContractVersion(version);
     };
   }, []);
 
-  const renderItem = useCallback((item: WalletContractItem) => {
+  const renderItem = useCallback((item: TonWalletContractItemType) => {
     return (
-      <ChangeVersionWalletConractItem
+      <TonWalletContractItem
         className={'item'}
-        key={item.walletType}
-        onClick={onClickItem(item.walletType)}
+        key={item.version}
+        onClick={onClickItem(item.version)}
         {...item}
       />
     );
@@ -170,7 +166,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
   );
 };
 
-const ChangeVersionWalletContractModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const TonWalletContectSelectorModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.wallet-version-list': {
       display: 'flex',
@@ -193,4 +189,4 @@ const ChangeVersionWalletContractModal = styled(Component)<Props>(({ theme: { to
   };
 });
 
-export default ChangeVersionWalletContractModal;
+export default TonWalletContectSelectorModal;
