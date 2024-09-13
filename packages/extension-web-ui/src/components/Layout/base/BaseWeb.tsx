@@ -160,7 +160,7 @@ const Component = ({ children, className }: Props) => {
     showBackButtonOnHeader, showSidebar,
     sidebarCollapsed, title, webBaseClassName } = useContext(WebUIContext);
   const { goBack, goHome } = useDefaultNavigate();
-  const [selectedHeaderItem, setSelectedHeaderItem] = useState({ left: '', right: '' });
+  const [selectedHeaderItem, setSelectedHeaderItem] = useState({ left: 'across', right: 'klaster' });
 
   const headerTitle = useMemo(() => {
     if (isPortfolio) {
