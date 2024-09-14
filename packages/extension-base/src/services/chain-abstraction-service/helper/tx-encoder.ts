@@ -90,7 +90,7 @@ export function encodeAcrossCallData (data: BridgeParams, fees: AcrossSuggestedF
       data.sourceTokenContract,
       data.destinationTokenContract,
       data.amount,
-      outputAmount,
+      outputAmount > 0 ? outputAmount : 0n,
       BigInt(data.destinationChainId),
       fees.exclusiveRelayer,
       parseInt(fees.timestamp),

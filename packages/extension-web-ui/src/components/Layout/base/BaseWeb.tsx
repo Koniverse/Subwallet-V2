@@ -1,16 +1,18 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { BridgeProvider, CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
 import DefaultLogosMap from '@subwallet/extension-web-ui/assets/logo';
 import { BlockHeaderItem } from '@subwallet/extension-web-ui/components/Layout/base/BlockHeaderItem';
 import Headers from '@subwallet/extension-web-ui/components/Layout/parts/Header';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { HeaderType, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import { useDefaultNavigate, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import { getCASetting, setCASetting } from '@subwallet/extension-web-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { Image, SwIconProps } from '@subwallet/react-ui';
 import CN from 'classnames';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
 import SideMenu from '../parts/SideMenu';
@@ -160,7 +162,18 @@ const Component = ({ children, className }: Props) => {
     showBackButtonOnHeader, showSidebar,
     sidebarCollapsed, title, webBaseClassName } = useContext(WebUIContext);
   const { goBack, goHome } = useDefaultNavigate();
-  const [selectedHeaderItem, setSelectedHeaderItem] = useState({ left: 'across', right: 'klaster' });
+  const [selectedHeaderItem, setSelectedHeaderItem] = useState<{left: BridgeProvider, right: CAProvider}>();
+
+  useEffect(() => {
+    getCASetting()
+      .then((result) => {
+        setSelectedHeaderItem({
+          left: result.bridgeProvider,
+          right: result.caProvider
+        });
+      })
+      .catch(console.error);
+  }, []);
 
   const headerTitle = useMemo(() => {
     if (isPortfolio) {
@@ -174,7 +187,7 @@ const Component = ({ children, className }: Props) => {
     return [
       {
         label: t('Across'),
-        value: 'across',
+        value: 'ACROSS',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -190,7 +203,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('Wormhole'),
-        value: 'wormhole',
+        value: 'WORMHOLE',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -206,7 +219,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('LayerZero'),
-        value: 'layerZero',
+        value: 'LAYER_ZERO',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -227,7 +240,7 @@ const Component = ({ children, className }: Props) => {
     return [
       {
         label: t('Near'),
-        value: 'near',
+        value: 'NEAR',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -243,7 +256,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('Particle'),
-        value: 'particle',
+        value: 'PARTICLE',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -259,7 +272,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('Polygon'),
-        value: 'polygon',
+        value: 'POLYGON',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -275,7 +288,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('Klaster'),
-        value: 'klaster',
+        value: 'KLASTER',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -291,7 +304,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('Arcana'),
-        value: 'arcana',
+        value: 'ARCANA',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -307,7 +320,7 @@ const Component = ({ children, className }: Props) => {
       },
       {
         label: t('Orby'),
-        value: 'orby',
+        value: 'ORBY',
         icon: {
           type: 'customIcon',
           customIcon: (
@@ -325,18 +338,46 @@ const Component = ({ children, className }: Props) => {
   }, [t]);
 
   const updateLeft = useCallback((value: string) => {
-    setSelectedHeaderItem((prevState) => ({
-      ...prevState,
-      left: value
-    }));
+    setSelectedHeaderItem((prevState) => {
+      if (prevState) {
+        return {
+          ...prevState,
+          left: value as BridgeProvider
+        };
+      } else {
+        return {
+          left: BridgeProvider.ACROSS,
+          right: CAProvider.KLASTER
+        };
+      }
+    });
   }, []);
 
   const updateRight = useCallback((value: string) => {
-    setSelectedHeaderItem((prevState) => ({
-      ...prevState,
-      right: value
-    }));
+    setSelectedHeaderItem((prevState) => {
+      if (prevState) {
+        return {
+          ...prevState,
+          right: value as CAProvider
+        };
+      } else {
+        return {
+          left: BridgeProvider.ACROSS,
+          right: CAProvider.KLASTER
+        };
+      }
+    });
   }, []);
+
+  useEffect(() => {
+    if (selectedHeaderItem) {
+      setCASetting({
+        caProvider: selectedHeaderItem.right,
+        bridgeProvider: selectedHeaderItem.left
+      })
+        .catch(console.error);
+    }
+  }, [selectedHeaderItem]);
 
   if (!isWebUI) {
     return <>{children}</>;
@@ -352,7 +393,7 @@ const Component = ({ children, className }: Props) => {
             <BlockHeaderItem
               className={'side-menu-item'}
               icon={item.icon}
-              isActivated={selectedHeaderItem.left === item.value}
+              isActivated={selectedHeaderItem?.left === item.value}
               key={item.value}
               label={item.label}
               onClick={updateLeft}
@@ -366,7 +407,7 @@ const Component = ({ children, className }: Props) => {
             <BlockHeaderItem
               className={'side-menu-item'}
               icon={item.icon}
-              isActivated={selectedHeaderItem.right === item.value}
+              isActivated={selectedHeaderItem?.right === item.value}
               key={item.value}
               label={item.label}
               onClick={updateRight}

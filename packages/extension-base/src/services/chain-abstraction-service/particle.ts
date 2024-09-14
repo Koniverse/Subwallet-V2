@@ -79,7 +79,7 @@ export class ParticleAAHandler {
       txList.push(tx);
     }
 
-    console.debug('quote', await smartAccount.getFeeQuotes(txList));
+    // console.debug('quote', await smartAccount.getFeeQuotes(txList));
 
     return await smartAccount.buildUserOperation({ tx: txList });
   };

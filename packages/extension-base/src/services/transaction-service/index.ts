@@ -9,6 +9,8 @@ import { AccountJson, SmartAccountData } from '@subwallet/extension-base/backgro
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
+import { CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
+import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -27,7 +29,6 @@ import { _isRuntimeUpdated, anyNumberToBN, getEthereumSmartAccountOwner, reforma
 import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
-import { isParticleOP } from '@subwallet/extension-base/utils/request';
 import keyring from '@subwallet/ui-keyring';
 import { addHexPrefix } from 'ethereumjs-util';
 import { ethers, TransactionLike } from 'ethers';
@@ -45,7 +46,6 @@ import { isHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
-import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 export default class TransactionService {
   private readonly state: KoniState;
@@ -244,7 +244,7 @@ export default class TransactionService {
   public async handleAATransaction (transaction: SWTransactionAAInput): Promise<SWTransactionResponse> {
     const validatedTransaction: SWAATransaction = {
       transaction: transaction.transaction,
-      provider: isParticleOP(transaction.transaction) ? 'particle' : 'klaster',
+      provider: transaction.provider,
       chain: transaction.chain,
       chainType: transaction.chainType,
       address: transaction.address,
@@ -1250,7 +1250,7 @@ export default class TransactionService {
     id,
     provider, transaction }: SWAATransaction): TransactionEmitter {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
-    const chainId = _getEvmChainId(chainInfo) || 1;
+    const chainId = _getEvmChainId(chainInfo) as number;
     const accountPair = keyring.getPair(address);
     const account: AccountJson = { address, ...accountPair.meta };
     const owner = getEthereumSmartAccountOwner(address) as SmartAccountData;
@@ -1259,7 +1259,7 @@ export default class TransactionService {
 
     let _payload: EvmSignatureRequest;
 
-    if (provider === 'particle') {
+    if (provider === CAProvider.PARTICLE) {
       const { userOpHash } = transaction as UserOpBundle;
 
       _payload = {
@@ -1307,7 +1307,7 @@ export default class TransactionService {
           // Add start info
           emitter.emit('send', eventData); // This event is needed after sending transaction with queue
 
-          if (provider === 'particle') {
+          if (provider === CAProvider.PARTICLE) {
             const userOp = (transaction as UserOpBundle).userOp;
 
             userOp.signature = signature;

@@ -3,7 +3,7 @@
 
 import type { WindowOpenParams } from '@subwallet/extension-base/background/types';
 
-import { CronReloadRequest, Notification, RequestGetTransaction, RequestParseEvmContractInput, ResponseParseEvmContractInput, ResponseSubscribeHistory, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { CaSetting, CronReloadRequest, Notification, RequestGetTransaction, RequestParseEvmContractInput, ResponseParseEvmContractInput, ResponseSubscribeHistory, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { sendMessage } from '@subwallet/extension-web-ui/messaging/base';
@@ -45,6 +45,14 @@ export async function cancelSubscription (request: string): Promise<boolean> {
 
 export async function subscribeTransactionHistory (chain: string, address: string, callback: (items: TransactionHistoryItem[]) => void): Promise<ResponseSubscribeHistory> {
   return sendMessage('pri(transaction.history.subscribe)', { address, chain }, callback);
+}
+
+export async function setCASetting (data: CaSetting) {
+  return sendMessage('pri(ca.setConfig)', data);
+}
+
+export async function getCASetting (): Promise<CaSetting> {
+  return sendMessage('pri(ca.getConfig)');
 }
 
 export * from './accounts';

@@ -6,6 +6,7 @@ import { TransactionError } from '@subwallet/extension-base/background/errors/Tr
 import { AuthUrls, Resolver } from '@subwallet/extension-base/background/handlers/State';
 import { AccountAuthType, AccountJson, AddressJson, AuthorizeRequest, ConfirmationRequestBase, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeCancel, RequestAuthorizeReject, RequestAuthorizeSubscribe, RequestAuthorizeTab, RequestCurrentAccountAddress, ResponseAuthorizeList, ResponseJsonGetAccountInfo, SeedLengths } from '@subwallet/extension-base/background/types';
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
+import { BridgeProvider, CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
@@ -445,7 +446,7 @@ export interface UiSettings {
   unlockType: WalletUnlockType;
   enableChainPatrol: boolean;
   // On-ramp service account reference
-  walletReference: string;
+  walletReference: string
 }
 
 export type RequestSettingsType = UiSettings;
@@ -1880,6 +1881,11 @@ export interface PassPhishing {
   pass: boolean;
 }
 
+export interface CaSetting {
+  caProvider: CAProvider,
+  bridgeProvider: BridgeProvider
+}
+
 export interface RequestPassPhishingPage {
   url: string;
 }
@@ -2449,6 +2455,8 @@ export interface KoniRequestSignatures {
   /* Ledger */
 
   'pri(ledger.generic.allow)': [null, string[], string[]];
+  'pri(ca.setConfig)': [CaSetting, null];
+  'pri(ca.getConfig)': [null, CaSetting];
 }
 
 export interface ApplicationMetadataType {

@@ -1,9 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { LanguageType, PassPhishing, RequestSettingsType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
+import { CaSetting, LanguageType, PassPhishing, RequestSettingsType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { LANGUAGE } from '@subwallet/extension-base/constants';
+import { BridgeProvider, CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
 import { SWStorage } from '@subwallet/extension-base/storage';
+import CASettingStore from '@subwallet/extension-base/stores/CASettingStore';
 import PassPhishingStore from '@subwallet/extension-base/stores/PassPhishingStore';
 import SettingsStore from '@subwallet/extension-base/stores/Settings';
 import { Subject } from 'rxjs';
@@ -14,6 +16,7 @@ import { DEFAULT_SETTING } from './constants';
 export default class SettingService {
   private readonly settingsStore = new SettingsStore();
   private readonly passPhishingStore = new PassPhishingStore();
+  private readonly caSettingStore = new CASettingStore();
 
   constructor () {
     this.initSetting().catch(console.error);
@@ -21,6 +24,15 @@ export default class SettingService {
 
   private async initSetting () {
     let old = (await SWStorage.instance.getItem(LANGUAGE) || 'en') as LanguageType;
+
+    const currentCASetting = await this.getCASettings();
+
+    if (!currentCASetting || Object.keys(currentCASetting).length === 0) {
+      this.setCASettings({
+        bridgeProvider: BridgeProvider.ACROSS,
+        caProvider: CAProvider.KLASTER
+      });
+    }
 
     const updateLanguage = ({ language }: UiSettings) => {
       if (language !== old) {
@@ -50,6 +62,14 @@ export default class SettingService {
 
   public setSettings (data: RequestSettingsType, callback?: () => void): void {
     this.settingsStore.set('Settings', data, callback);
+  }
+
+  public setCASettings (data: CaSetting) {
+    this.caSettingStore.set('CASetting', data);
+  }
+
+  public async getCASettings () {
+    return await this.caSettingStore.asyncGet('CASetting');
   }
 
   public passPhishingSubject (): Subject<Record<string, PassPhishing>> {

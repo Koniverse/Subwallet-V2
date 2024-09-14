@@ -9,6 +9,7 @@ import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';
+import {CAProvider} from "@subwallet/extension-base/services/chain-abstraction-service/helper/util";
 
 export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>> {
   id: string;
@@ -31,7 +32,7 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
 
 export interface SWAATransaction extends Pick<SWTransaction, 'chain' | 'chainType' | 'address' | 'data' | 'status' | 'extrinsicHash' | 'extrinsicType' | 'createdAt' | 'updatedAt' | 'estimateFee' | 'id' | 'errors' | 'warnings'> {
   transaction: UserOpBundle | QuoteResponse;
-  provider: 'klaster' | 'particle';
+  provider: CAProvider
 }
 
 export type SWTransactionResult = Omit<SWTransaction, 'transaction' | 'additionalValidator' | 'eventsHandler'>
@@ -52,6 +53,7 @@ export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransact
 
 export interface SWTransactionAAInput extends Omit<SWTransactionInput, 'estimateFee' | 'transaction'> {
   transaction: SWAATransaction['transaction'];
+  provider: CAProvider;
 }
 
 export type SWTransactionResponse = SwInputBase & Pick<SWTransaction, 'warnings' | 'errors'> & Partial<Pick<SWTransaction, 'id' | 'extrinsicHash' | 'status' | 'estimateFee'>>;
