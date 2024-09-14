@@ -9,7 +9,7 @@ import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/ha
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { Cell } from '@ton/core';
-import { Address, Contract, OpenedContract, TonClient } from '@ton/ton';
+import { Address, Contract, OpenedContract, TonClient, WalletContractV4 } from '@ton/ton';
 import { BehaviorSubject } from 'rxjs';
 
 export class TonApi implements _TonApi {
@@ -143,14 +143,17 @@ export class TonApi implements _TonApi {
     return this.api.open(src);
   }
 
-  estimateExternalMessageFee (address: Address, body: Cell, ignoreSignature?: boolean, initCode?: Cell, initData?: Cell) {
-    return this.api.estimateExternalMessageFee( // recheck
-      address,
+  estimateExternalMessageFee (walletContract: WalletContractV4, body: Cell, isInit: boolean, ignoreSignature?: boolean) {
+    const initCode = isInit ? walletContract.init.code : null;
+    const initData = isInit ? walletContract.init.data : null;
+
+    return this.api.estimateExternalMessageFee(
+      walletContract.address,
       {
         body: body,
         ignoreSignature: ignoreSignature || true,
-        initCode: initCode || null,
-        initData: initData || null
+        initCode: initCode,
+        initData: initData
       }
     );
   }

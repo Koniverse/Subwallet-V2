@@ -94,6 +94,7 @@ export async function getJettonTxStatus (tonApi: TonApi, jettonTransferMsgHash: 
 export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxed[], walletContract: WalletContractV4, _seqno?: number) {
   const contract = tonApi.open(walletContract);
   const seqno = _seqno ?? await contract.getSeqno();
+  const isInit = seqno !== 0;
 
   const simulatedTxCell = contract.createTransfer({
     secretKey: Buffer.from(new Array(64)),
@@ -101,7 +102,7 @@ export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxe
     messages
   });
 
-  const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract.address, simulatedTxCell);
+  const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract, simulatedTxCell, isInit);
 
   return BigInt(
     estimateFeeInfo.source_fees.gas_fee +
