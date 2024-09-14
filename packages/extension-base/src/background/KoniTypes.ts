@@ -73,7 +73,7 @@ export interface AuthRequestV2 extends Resolver<ResultResolver> {
   idStr: string;
   request: RequestAuthorizeTab;
   url: string;
-  accountAuthType: AccountAuthType;
+  accountAuthTypes: AccountAuthType[];
 }
 
 /// Manage Auth

@@ -334,7 +334,9 @@ export default class KoniTabs {
   }
 
   private authorizeV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
-    if (request.accountAuthType === 'evm') {
+    const isConnectOnlyEvmAccountType = request.accountAuthTypes?.length === 1 && request.accountAuthTypes?.includes('evm');
+
+    if (isConnectOnlyEvmAccountType) {
       return new Promise((resolve, reject) => {
         this.#koniState.authorizeUrlV2(url, request).then(resolve).catch((e: Error) => {
           reject(new EvmProviderError(EvmProviderErrorType.USER_REJECTED_REQUEST));
@@ -483,23 +485,16 @@ export default class KoniTabs {
             const urlStripped = stripUrl(url);
 
             if (value && value[urlStripped]) {
-              const { accountAuthType, isAllowedMap } = { ...value[urlStripped] };
+              const { accountAuthTypes, isAllowedMap } = { ...value[urlStripped] };
 
-              if (!accountAuthType) {
+              if (!accountAuthTypes) {
                 resolve();
               }
 
-              switch (accountAuthType) {
-                case 'substrate':
-                  resolve();
-                  break;
-
-                case 'evm':
+              if (accountAuthTypes?.includes('evm')) {
+                if (accountAuthTypes.length === 1) {
                   delete value[urlStripped];
-
-                  break;
-
-                case 'both': {
+                } else {
                   value[urlStripped].isAllowedMap = Object.entries(isAllowedMap).reduce<Record<string, boolean>>((allowedMap, [address, value]) => {
                     if (isEthereumAddress(address)) {
                       allowedMap[address] = false;
@@ -510,9 +505,10 @@ export default class KoniTabs {
                     return allowedMap;
                   }, {});
 
-                  value[urlStripped].accountAuthType = 'substrate';
-                  break;
+                  value[urlStripped].accountAuthTypes = accountAuthTypes?.filter((type) => type !== 'evm');
                 }
+              } else {
+                resolve();
               }
 
               this.#koniState.setAuthorize(value, () => {
@@ -1015,7 +1011,7 @@ export default class KoniTabs {
         case 'eth_signTypedData_v4':
           return await this.evmSign(id, url, request);
         case 'wallet_requestPermissions':
-          await this.authorizeV2(url, { origin: '', accountAuthType: 'evm', reConfirm: true });
+          await this.authorizeV2(url, { origin: '', accountAuthTypes: ['evm'], reConfirm: true });
 
           return await this.getEvmPermission(url, id);
         case 'wallet_getPermissions':

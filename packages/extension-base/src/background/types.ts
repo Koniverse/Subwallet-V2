@@ -143,11 +143,11 @@ export interface TransportRequestMessage<TMessageType extends MessageTypes> {
   request: RequestTypes[TMessageType];
 }
 
-export type AccountAuthType = 'substrate' | 'evm' | 'both';
+export type AccountAuthType = 'substrate' | 'evm' | 'ton';
 
 export interface RequestAuthorizeTab {
   origin: string;
-  accountAuthType?: AccountAuthType;
+  accountAuthTypes?: AccountAuthType[];
   allowedAccounts?: string[]
   reConfirm?: boolean
 }
