@@ -284,25 +284,36 @@ export default class TransactionService {
     return validatedTransaction;
   }
 
+  public addAATransaction (inputTransaction: SWTransactionAAInput): TransactionEmitter {
+    const transactions = this.transactions;
+    // Fill transaction default info
+    const transaction = this.fillTransactionDefaultInfo(inputTransaction as SWTransactionInput);
+
+    // Add Transaction
+    transactions[transaction.id] = transaction;
+    this.transactionSubject.next({ ...transactions });
+
+    return this.signAndSendEvmAATransaction(transaction as unknown as SWAATransaction);
+  }
+
   private sendAATransaction (transaction: SWAATransaction): TransactionEmitter {
     // Send Transaction
-    const emitter = this.signAndSendEvmAATransaction(transaction);
+    const emitter = this.addAATransaction(transaction);
 
     emitter.on('signed', (data: TransactionEventResponse) => {
       this.onSigned(data);
     });
 
     emitter.on('send', (data: TransactionEventResponse) => {
-      console.log('onSend', data);
-      // this.onSend(data);
+      this.onSend(data);
     });
 
     emitter.on('extrinsicHash', (data: TransactionEventResponse) => {
-      // this.onHasTransactionHash(data);
+      this.onHasTransactionHash(data);
     });
     //
     emitter.on('success', (data: TransactionEventResponse) => {
-      // this.handlePostProcessing(data.id);
+      this.handlePostProcessing(data.id);
       this.onSuccess(data);
     });
 
@@ -1248,7 +1259,8 @@ export default class TransactionService {
   private signAndSendEvmAATransaction ({ address,
     chain,
     id,
-    provider, transaction }: SWAATransaction): TransactionEmitter {
+    provider,
+    transaction }: SWAATransaction): TransactionEmitter {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
     const chainId = _getEvmChainId(chainInfo) as number;
     const accountPair = keyring.getPair(address);
@@ -1299,8 +1311,6 @@ export default class TransactionService {
             throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, 'Bad signature');
           }
 
-          console.log('signature', signature);
-
           // Emit signed event
           emitter.emit('signed', eventData);
 
@@ -1312,11 +1322,7 @@ export default class TransactionService {
 
             userOp.signature = signature;
 
-            const result = await ParticleAAHandler.sendSignedUserOperation(chainId, owner, userOp);
-
-            console.log('submitted', result);
-
-            eventData.extrinsicHash = result;
+            eventData.extrinsicHash = await ParticleAAHandler.sendSignedUserOperation(chainId, owner, userOp);
           } else {
             const klasterService = new KlasterService();
 
@@ -1325,12 +1331,11 @@ export default class TransactionService {
             await klasterService.init(owner?.owner as string);
             const result = await klasterService.sdk.execute(transaction as QuoteResponse, signature);
 
-            console.log('submitted', result);
-
             eventData.extrinsicHash = result.itxHash;
           }
 
           emitter.emit('extrinsicHash', eventData);
+          emitter.emit('success', eventData);
         } else {
           this.removeTransaction(id);
           eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
