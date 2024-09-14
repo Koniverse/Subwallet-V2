@@ -1249,7 +1249,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                   >
                     <AddressInputNew
                       chainSlug={destChainValue}
-                      dropdownListHeight={isAllAccount ? 143 : 204}
+                      dropdownHeight={isAllAccount ? 164 : 220}
                       label={`${t('To')}:`}
                       labelStyle={'horizontal'}
                       placeholder={t('Input your recipient account')}
