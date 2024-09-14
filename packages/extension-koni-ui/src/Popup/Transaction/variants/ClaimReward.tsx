@@ -98,6 +98,7 @@ const Component = () => {
   const poolInfo = useMemo(() => poolInfoMap[slug], [poolInfoMap, slug]);
   const poolType = poolInfo.type;
   const poolChain = poolInfo.chain;
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const { list: allPositions } = useYieldPositionDetail(slug);
   const { decimals, symbol } = useGetNativeTokenBasicInfo(chainValue);
@@ -199,6 +200,7 @@ const Component = () => {
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
+              addressPrefix={networkPrefix}
             />
           </Form.Item>
           <FreeBalance

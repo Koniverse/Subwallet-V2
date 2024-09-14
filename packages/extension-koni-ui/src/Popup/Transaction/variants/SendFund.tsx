@@ -5,7 +5,7 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
-import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
+import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
@@ -527,12 +527,14 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
+        const assetSlug = values.asset;
+        const isMythosFromHydrationToMythos = _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
 
-        if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
+        if (_isXcmTransferUnstable(originChainInfo, destChainInfo, assetSlug)) {
           openAlert({
             type: NotificationType.WARNING,
-            content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo)),
-            title: t('Pay attention!'),
+            content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo, assetSlug)),
+            title: isMythosFromHydrationToMythos ? t('High fee alert!') : t('Pay attention!'),
             okButton: {
               text: t('Continue'),
               onClick: () => {
@@ -835,6 +837,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           >
             <AmountInput
               decimals={decimals}
+              disabled={decimals === 0}
               forceUpdateMaxValue={forceUpdateMaxValue}
               maxValue={maxTransfer}
               onSetMax={onSetMaxTransferable}
