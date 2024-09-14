@@ -4,7 +4,7 @@
 import { UserOpBundle } from '@particle-network/aa';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { AmountData, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, EvmSignatureRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { AmountData, BaseRequestSign, BasicTxErrorType, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, EvmSignatureRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson, SmartAccountData } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
@@ -264,7 +264,7 @@ export default class TransactionService {
 
     await new Promise<void>((resolve, reject) => {
       // TODO
-      emitter.on('send', (data: TransactionEventResponse) => {
+      emitter.on('signed', (data: TransactionEventResponse) => {
         validatedTransaction.id = data.id;
         // validatedTransaction.extrinsicHash = data.extrinsicHash;
         resolve();
@@ -417,7 +417,8 @@ export default class TransactionService {
       blockNumber: 0, // Will be added in next step
       blockHash: '', // Will be added in next step
       nonce: nonce ?? 0,
-      startBlock: startBlock || 0
+      startBlock: startBlock || 0,
+      caProvider: transaction.provider
     };
 
     const nativeAsset = _getChainNativeTokenBasicInfo(chainInfo);
@@ -1317,25 +1318,32 @@ export default class TransactionService {
           // Add start info
           emitter.emit('send', eventData); // This event is needed after sending transaction with queue
 
-          if (provider === CAProvider.PARTICLE) {
-            const userOp = (transaction as UserOpBundle).userOp;
+          try {
+            if (provider === CAProvider.PARTICLE) {
+              const userOp = (transaction as UserOpBundle).userOp;
 
-            userOp.signature = signature;
+              userOp.signature = signature;
 
-            eventData.extrinsicHash = await ParticleAAHandler.sendSignedUserOperation(chainId, owner, userOp);
-          } else {
-            const klasterService = new KlasterService();
+              eventData.extrinsicHash = await ParticleAAHandler.sendSignedUserOperation(chainId, owner, userOp);
+            } else {
+              const klasterService = new KlasterService();
 
-            const owner = getEthereumSmartAccountOwner(address);
+              const owner = getEthereumSmartAccountOwner(address);
 
-            await klasterService.init(owner?.owner as string);
-            const result = await klasterService.sdk.execute(transaction as QuoteResponse, signature);
+              await klasterService.init(owner?.owner as string);
+              const result = await klasterService.sdk.execute(transaction as QuoteResponse, signature);
 
-            eventData.extrinsicHash = result.itxHash;
+              eventData.extrinsicHash = result.itxHash;
+            }
+
+            emitter.emit('extrinsicHash', eventData);
+            emitter.emit('success', eventData);
+          } catch (_e) {
+            const e = _e as Error;
+
+            eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SEND, e.message));
+            emitter.emit('error', eventData);
           }
-
-          emitter.emit('extrinsicHash', eventData);
-          emitter.emit('success', eventData);
         } else {
           this.removeTransaction(id);
           eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));

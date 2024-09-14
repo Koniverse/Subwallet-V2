@@ -1924,7 +1924,7 @@ export default class KoniExtension {
         transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
         transaction: res,
         data: inputData,
-        extrinsicType: ExtrinsicType.EVM_EXECUTE,
+        extrinsicType: ExtrinsicType.TRANSFER_XCM,
         ignoreWarnings: true,
         isTransferAll: false,
         provider: provider.caProvider

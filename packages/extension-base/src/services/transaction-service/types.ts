@@ -3,13 +3,13 @@
 
 import { UserOpBundle } from '@particle-network/aa';
 import { BaseRequestSign, ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
 import EventEmitter from 'eventemitter3';
 import { QuoteResponse } from 'klaster-sdk';
 import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';
-import {CAProvider} from "@subwallet/extension-base/services/chain-abstraction-service/helper/util";
 
 export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>> {
   id: string;
@@ -28,11 +28,12 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
   transaction: SubmittableExtrinsic | TransactionConfig;
   additionalValidator?: (inputTransaction: SWTransactionResponse) => Promise<void>;
   eventsHandler?: (eventEmitter: TransactionEmitter) => void;
+  provider?: CAProvider;
 }
 
-export interface SWAATransaction extends Pick<SWTransaction, 'chain' | 'chainType' | 'address' | 'data' | 'status' | 'extrinsicHash' | 'extrinsicType' | 'createdAt' | 'updatedAt' | 'estimateFee' | 'id' | 'errors' | 'warnings'> {
+export interface SWAATransaction extends Pick<SWTransaction, 'chain' | 'chainType' | 'address' | 'data' | 'status' | 'extrinsicHash' | 'extrinsicType' | 'createdAt' | 'updatedAt' | 'estimateFee' | 'id' | 'errors' | 'warnings' | 'provider'> {
   transaction: UserOpBundle | QuoteResponse;
-  provider: CAProvider
+  provider: CAProvider;
 }
 
 export type SWTransactionResult = Omit<SWTransaction, 'transaction' | 'additionalValidator' | 'eventsHandler'>

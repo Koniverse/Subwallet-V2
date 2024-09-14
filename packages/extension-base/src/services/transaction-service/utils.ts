@@ -81,3 +81,7 @@ export function getChainflipExplorerLink (data: ChainflipSwapTxData, chainInfo: 
 
   return `${chainflipDomain}/channels/${data.depositChannelId}`;
 }
+
+export function getKlasterExplorerLink (iTxHash: string) {
+  return `https://explorer.klaster.io/details/${iTxHash}`;
+}

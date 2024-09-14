@@ -709,6 +709,7 @@ export interface TransactionHistoryItem<ET extends ExtrinsicType = ExtrinsicType
   additionalInfo?: any,
   startBlock?: number,
   nonce?: number,
+  caProvider?: CAProvider
 }
 
 export interface SWError extends Error {
