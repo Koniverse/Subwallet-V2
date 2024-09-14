@@ -239,22 +239,6 @@ const Component = ({ children, className }: Props) => {
   const RIGHT_BLOCK_DATA_LIST = useMemo<HeaderItemType[]>(() => {
     return [
       {
-        label: t('Near'),
-        value: 'NEAR',
-        icon: {
-          type: 'customIcon',
-          customIcon: (
-            <>
-              <Image
-                height={16}
-                src={DefaultLogosMap.near}
-                width={16}
-              />
-            </>
-          )
-        }
-      },
-      {
         label: t('Particle'),
         value: 'PARTICLE',
         icon: {
@@ -271,22 +255,6 @@ const Component = ({ children, className }: Props) => {
         }
       },
       {
-        label: t('Polygon'),
-        value: 'POLYGON',
-        icon: {
-          type: 'customIcon',
-          customIcon: (
-            <>
-              <Image
-                height={16}
-                src={DefaultLogosMap.polygon}
-                width={16}
-              />
-            </>
-          )
-        }
-      },
-      {
         label: t('Klaster'),
         value: 'KLASTER',
         icon: {
@@ -296,6 +264,38 @@ const Component = ({ children, className }: Props) => {
               <Image
                 height={16}
                 src={DefaultLogosMap.klaster}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Near'),
+        value: 'NEAR',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.near}
+                width={16}
+              />
+            </>
+          )
+        }
+      },
+      {
+        label: t('Polygon'),
+        value: 'POLYGON',
+        icon: {
+          type: 'customIcon',
+          customIcon: (
+            <>
+              <Image
+                height={16}
+                src={DefaultLogosMap.polygon}
                 width={16}
               />
             </>
