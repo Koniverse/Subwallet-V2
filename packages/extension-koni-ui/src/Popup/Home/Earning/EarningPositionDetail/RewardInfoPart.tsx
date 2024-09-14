@@ -9,7 +9,7 @@ import { CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/compone
 import { ASTAR_PORTAL_URL, BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation, useYieldRewardTotal } from '@subwallet/extension-koni-ui/hooks';
 import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { customFormatDate, openInNewTab } from '@subwallet/extension-koni-ui/utils';
+import { customFormatDate, openInNewTab, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, Button, Icon, Number } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -97,9 +97,11 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
   const onClickViewExplore = useCallback(() => {
     if (currentAccount) {
       const subscanSlug = chainInfoMap[compound.chain]?.extraInfo?.subscanSlug;
+      const networkPrefix = chainInfoMap[compound.chain].substrateInfo?.addressPrefix;
+      const formatAddress = reformatAddress(currentAccount.address, networkPrefix);
 
       if (subscanSlug) {
-        openInNewTab(`https://${subscanSlug}.subscan.io/account/${currentAccount.address}?tab=reward`)();
+        openInNewTab(`https://${subscanSlug}.subscan.io/account/${formatAddress}?tab=reward`)();
       }
     }
   }, [chainInfoMap, compound.chain, currentAccount]);

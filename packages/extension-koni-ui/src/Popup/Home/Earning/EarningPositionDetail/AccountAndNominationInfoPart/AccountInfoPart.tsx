@@ -8,7 +8,7 @@ import { Avatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui
 import { InfoItemBase } from '@subwallet/extension-koni-ui/components/MetaInfo/parts';
 import { EarningNominationModal } from '@subwallet/extension-koni-ui/components/Modal/Earning';
 import { EARNING_NOMINATION_MODAL, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
-import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainPrefixBySlug, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { EarningTagType, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { createEarningTypeTags, findAccountByAddress, isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
@@ -62,7 +62,7 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
 
   const { assetRegistry } = useSelector((state) => state.assetRegistry);
   const { accounts } = useSelector((state) => state.accountState);
-
+  const networkPrefix = useGetChainPrefixBySlug(poolInfo.chain);
   const sliderSettings: Settings = useMemo(() => {
     return {
       dots: false,
@@ -113,6 +113,7 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
       return (
         <>
           <Avatar
+            identPrefix={networkPrefix}
             size={24}
             value={item.address}
           />
@@ -122,7 +123,7 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
         </>
       );
     },
-    [accounts]
+    [accounts, networkPrefix]
   );
 
   const onCloseNominationModal = useCallback(() => {
@@ -157,6 +158,7 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
               <MetaInfo.Account
                 address={item.address}
                 label={t('Account')}
+                networkPrefix={networkPrefix}
               />
             )
             : (
@@ -248,7 +250,7 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
         </MetaInfo>
       );
     });
-  }, [createOpenNomination, deriveAsset?.decimals, deriveAsset?.symbol, earningTagType.color, earningTagType.label, haveNomination, inputAsset?.decimals, inputAsset?.symbol, isAllAccount, isSpecial, list, renderAccount, t]);
+  }, [createOpenNomination, deriveAsset?.decimals, deriveAsset?.symbol, earningTagType.color, earningTagType.label, haveNomination, inputAsset?.decimals, inputAsset?.symbol, isAllAccount, isSpecial, list, networkPrefix, renderAccount, t]);
 
   return (
     <>
