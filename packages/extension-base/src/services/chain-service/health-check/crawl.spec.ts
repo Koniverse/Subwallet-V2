@@ -10,7 +10,7 @@ jest.setTimeout(3 * 60 * 60 * 1000);
 
 const ALL_CHAIN = [
   // 'hydradx_main','astar','hydradx_rococo',
-  // 'statemint'
+  // 'statemint', 'acala', 'amplitude', 'kintsugi'
   'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam',
   'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main', 'hydradx_rococo',
   'acala', 'bifrost', 'karura', 'interlay', 'kintsugi', 'amplitude', 'mangatax_para', 'pendulum', 'pioneer'
@@ -40,12 +40,10 @@ type AssetsAsset = {
   accounts: number
 }
 
-
-
 interface PalletMethod {
   pallet : 'assets'|'assetRegistry'|'assetManager',
   method : 'metadata'|'assetMetadatas'|'assets',
-  useMethodAsset: boolean,
+  useMethodAsset : boolean,
   hasAssetId : boolean
 }
 
@@ -80,9 +78,19 @@ const chainMap : Record<string , PalletMethod> = {
   pioneer: {pallet: 'assetManager', method:'assetMetadatas',useMethodAsset: false, hasAssetId : false},
 }
 
-describe('test chain', () => {
-  it('chain', async () => {
+async function getED(api : ApiPromise, assetId : BigInt){
+  const assetEntry = await api.query['assets']['asset'](assetId);
+  const metadata = assetEntry.toPrimitive() as unknown as AssetsAsset;
+  return metadata.minBalance;
+}
 
+function removeComma(vari : string){
+  let numstr = vari.replace(/,/g, "")
+  return BigInt(numstr)
+}
+
+describe('test chain', () => {
+  it('crawl', async () => {
     const chainInfos = Object.values(ChainInfoMap).filter((info) => ALL_CHAIN.includes(info.slug));
     async function queryAll(chainInfo : _ChainInfo){
       const chain = chainInfo.slug;
@@ -96,122 +104,55 @@ describe('test chain', () => {
       const {pallet, method, useMethodAsset, hasAssetId} = chainMap[chain];
       const assetEntries = await api.query[pallet][method].entries();
 
-      // if(useMethodAsset){
-      //   const assetEntry = await api.query['assets']['asset'].entries();
-      //   const asset = assetEntry.map((all) => {
-      //     const assetID = all[0].toHuman() as number;
-      //     const token = all[1].toHuman() as unknown as AssetsAsset;
-      //     const minAmount = token.minBalance;
-      //     return {
-      //       assetID : assetID,
-      //       ED : String(minAmount)
-      //     };
-      //   })
-      //   // console.log(asset);
-      //   for(const a of asset){
-      //     const assetToken = await api.query[pallet][method](a.assetID);
-      //     const metadata = assetToken.toHuman() as unknown as AssetQuery;
-      //       const asset: _ChainAsset = {
-      //         originChain: chain,
-      //         slug: `${chain}-${_AssetType.LOCAL}-${metadata.symbol}`,
-      //         name: metadata.name,
-      //         symbol: metadata.symbol,
-      //         decimals: metadata.decimals,
-      //         minAmount: a.ED,
-      //         assetType: _AssetType.LOCAL,
-      //         metadata: {
-      //           assetId: String(a.assetID),
-      //         },
-      //         multiChainAsset: null,
-      //         hasValue: !metadata?.isFrozen,
-      //         icon: 'null',
-      //         priceId: 'null'
-      //       }
-      //       return asset;
-      //     }
-      //   console.dir(asset,{'maxArrayLength': null})
-      //   }
+      const assets = assetEntries.map(async (all) => {
+        let metadata: string;
+        const assetToken = all[1].toPrimitive() as unknown as AssetQuery;
 
+        const asset: _ChainAsset = {
+          originChain: chain,
+          slug: `${chain}-${_AssetType.LOCAL}-${assetToken.symbol}`,
+          name: assetToken.name,
+          symbol: assetToken.symbol,
+          decimals: assetToken?.decimals || assetToken?.precision,
+          minAmount: assetToken?.existentialDeposit || assetToken?.minimalBalance,
+          metadata: {},
+          assetType: _AssetType.LOCAL,
+          multiChainAsset: null,
+          hasValue: !assetToken?.isFrozen ?? true,
+          icon: '',
+          priceId: null
+        };
 
-      async function getED(api : ApiPromise, assetId : number){
-        const assetEntry = await api.query['assets']['asset'](assetId);
-        const metadata = assetEntry.toHuman() as unknown as AssetsAsset;
-        return metadata.minBalance;
-      }
-      // console.log(await getED(api,30));
-      // else {
-        const assets = assetEntries.map(async (all) => {
-          let assetId: string = '';
-          let onChainInfo: string = '';
-          let minAmount: string = '';
+        if (hasAssetId) {
+          const assetId = all[0].toHuman() as string[];
+          const numstr = removeComma(assetId[0]);
+          metadata = String(numstr);
 
-          if (hasAssetId) {
-            assetId = JSON.stringify(all[0].toHuman());
-          } else {
-            onChainInfo = JSON.stringify(all[0].toHuman());
-          }
           if(useMethodAsset){
-            minAmount = String(await getED(api,JSON.parse(assetId)[0]));
+            const existDepo = await getED(api,numstr);
+            asset.minAmount = String(existDepo);
           }
 
-          // let assetId : string | null = '';
-          // let onChainInfo : object | null = {};
-          //
-          // if (hasAssetId){
-          //   assetId = all[0].toHuman()[0];
-          // }else {
-          //   onChainInfo = all[0].toHuman()[0];
-          // }
-          // console.log(all[0].toHuman()[0])
+          asset.metadata = {
+            assetId: metadata
+          };
 
-          const assetToken = all[1].toHuman() as unknown as AssetQuery;
-          if (!['hydradx_main', 'hydradx_rococo'].includes(chain)) {
-            const asset: _ChainAsset = {
-              originChain: chain,
-              slug: `${chain}-${_AssetType.LOCAL}-${assetToken.symbol}`,
-              name: assetToken.name,
-              symbol: assetToken.symbol,
-              decimals: assetToken?.decimals || assetToken?.precision,
-              minAmount: assetToken?.existentialDeposit || assetToken?.minimalBalance || minAmount,
-              assetType: _AssetType.LOCAL,
-              metadata: {
-                assetId: assetId || undefined,
-                onChainInfo: onChainInfo || undefined,
-              },
-              multiChainAsset: null,
-              hasValue: !assetToken?.isFrozen ?? true,
-              icon: 'null',
-              priceId: assetToken.additional?.coingeckoId || 'null'
-            }
-            return asset;
-          } else {
-            const asset = {
-              'originChain': chain,
-              'name': assetToken.name,
-              'symbol': assetToken.symbol,
-              'decimals': assetToken.decimals,
-              'minAmount': assetToken.existentialDeposit,
-              'assetType': assetToken.assetType,
-              'metadata': {
-                'assetId': all[0].toHuman(),
-              },
-              'multiChainAsset': null,
-              'hasValue': assetToken?.isSufficient ?? true,
-              'icon': 'null',
-              'priceId': 'null'
-            }
-            return JSON.stringify(asset);
-          }
-        })
-        // assets.forEach((all) => {all.then(function(result) {
-        //   console.log(result) // "Some User token"
-        // })});
-        console.dir(assets, {'maxArrayLength': null});
-      }
-    // }
+          return asset;
+        } else {
+          const onChainInfo = all[0].toHuman() as string[];
+          metadata = onChainInfo[0];
+          asset.metadata = {
+            onChainInfo: metadata
+          };
+
+          return asset;
+        }
+      });
+      console.dir(await Promise.all(assets), {'maxArrayLength': null});
+    }
+
     const chain = chainInfos.map(queryAll);
     await Promise.all(chain);
-
 
   });
 });
