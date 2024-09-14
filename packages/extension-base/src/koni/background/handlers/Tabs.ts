@@ -6,7 +6,6 @@ import type { InjectedAccount } from '@subwallet/extension-inject/types';
 import { _AssetType } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
 import { createSubscription, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
 import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import RequestBytesSign from '@subwallet/extension-base/background/RequestBytesSign';
@@ -19,11 +18,11 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
-import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { AuthUrlInfo, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, pairToAccount, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { EthereumKeypairTypes, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeyringPair, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { Subscription } from 'rxjs';
 import Web3 from 'web3';
@@ -41,8 +40,7 @@ interface AccountSub {
   url: string;
 }
 
-// TODO: Update logic
-function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthType?: AccountAuthType): InjectedAccount[] {
+function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthTypes?: AccountAuthType[]): InjectedAccount[] {
   const accountSelected = authInfo
     ? (
       authInfo.isAllowed
@@ -56,10 +54,20 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
 
   let authTypeFilter = ({ type }: SingleAddress) => true;
 
-  if (accountAuthType === 'substrate') {
-    authTypeFilter = ({ type }: SingleAddress) => (!!type && SubstrateKeypairTypes.includes(type));
-  } else if (accountAuthType === 'evm') {
-    authTypeFilter = ({ type }: SingleAddress) => (!!type && EthereumKeypairTypes.includes(type));
+  if (accountAuthTypes) {
+    authTypeFilter = ({ type }: SingleAddress) => {
+      if (!type) {
+        return false;
+      }
+
+      const validTypes = {
+        evm: EthereumKeypairTypes,
+        substrate: SubstrateKeypairTypes,
+        ton: TonKeypairTypes
+      };
+
+      return accountAuthTypes.some((authType) => validTypes[authType]?.includes(type));
+    };
   }
 
   return Object
@@ -283,16 +291,14 @@ export default class KoniTabs {
     return authList[shortenUrl];
   }
 
-  // TODO: Update logic
-  private async accountsListV2 (url: string, { accountAuthType,
-    anyType }: RequestAccountList): Promise<InjectedAccount[]> {
+  private async accountsListV2 (url: string, { accountAuthType = 'substrate', anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthType || accountAuthType);
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthTypes || [accountAuthType]);
   }
 
   // TODO: Update logic
-  private accountsSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
+  private accountsSubscribeV2 (url: string, { accountAuthType = 'substrate' }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
     const cb = createSubscription<'pub(accounts.subscribeV2)'>(id, port);
     const authInfoSubject = this.#koniState.requestService.subscribeAuthorizeUrlSubject;
 
@@ -300,10 +306,10 @@ export default class KoniTabs {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
-            const accountAuthType_ = authInfo?.accountAuthType || accountAuthType;
+            const accountAuthTypes = authInfo?.accountAuthTypes || [accountAuthType];
             const accounts = this.#koniState.keyringService.context.pairs;
 
-            return cb(transformAccountsV2(accounts, false, authInfo, accountAuthType_));
+            return cb(transformAccountsV2(accounts, false, authInfo, accountAuthTypes));
           })
           .catch(console.error);
       }),
@@ -352,7 +358,7 @@ export default class KoniTabs {
     return await new Promise((resolve) => {
       this.getAuthInfo(url).then((authInfo) => {
         const allAccounts = this.#koniState.keyringService.context.pairs;
-        const accountList = transformAccountsV2(allAccounts, false, authInfo, 'evm').map((a) => a.address);
+        const accountList = transformAccountsV2(allAccounts, false, authInfo, ['evm']).map((a) => a.address);
         let accounts: string[] = [];
 
         const proxyId = this.#koniState.keyringService.context.currentAccount.proxyId;

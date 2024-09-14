@@ -298,7 +298,7 @@ export class AccountState {
       if (value && Object.keys(value).length) {
         Object.keys(value).forEach((url) => {
           addresses.forEach((address) => {
-            if (isAddressValidWithAuthType(address, value[url].accountAuthType)) {
+            if (isAddressValidWithAuthType(address, value[url].accountAuthTypes)) {
               value[url].isAllowedMap[address] = isAllowed;
             }
           });
