@@ -4573,8 +4573,12 @@ export default class KoniExtension {
         .generateBeforeHandleResponseErrors(swapValidations);
     }
 
+    const caSetting = await this.#koniState.settingService.getCASettings();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { chainType, extrinsic, extrinsicType, transferNativeAmount, txChain, txData } = await this.#koniState.swapService.handleSwapProcess(inputData);
+    const { chainType, extrinsic, extrinsicType, transferNativeAmount, txChain, txData } = await this.#koniState.swapService.handleSwapProcess({
+      ...inputData,
+      caProvider: caSetting.caProvider
+    });
     // const chosenFeeToken = process.steps.findIndex((step) => step.type === SwapStepType.SET_FEE_TOKEN) > -1;
     // const allowSkipValidation = [ExtrinsicType.SET_FEE_TOKEN, ExtrinsicType.SWAP].includes(extrinsicType);
 

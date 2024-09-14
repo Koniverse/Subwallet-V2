@@ -1,20 +1,27 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { UserOpBundle } from '@particle-network/aa';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { BasicTxErrorType, ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { SmartAccountData } from '@subwallet/extension-base/background/types';
+import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
+import { getAcrossBridgeData } from '@subwallet/extension-base/services/chain-abstraction-service/helper/tx-encoder';
+import { CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
 import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
+import { ParticleAAHandler } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getChainNativeTokenSlug, _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getChainNativeTokenSlug, _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { calculateSwapRate, handleUniswapQuote, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
 import { OptimalSwapPathParams, SwapEarlyValidation, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { getEthereumSmartAccountOwner } from '@subwallet/extension-base/utils';
 import { CHAIN_TO_ADDRESSES_MAP, ChainId } from '@uniswap/sdk-core';
-import { batchTx, encodeApproveTx, rawTx } from 'klaster-sdk';
+import { batchTx, encodeApproveTx, QuoteResponse, rawTx } from 'klaster-sdk';
+import { TransactionConfig } from 'web3-core';
 
 export class UniswapHandler implements SwapBaseInterface {
   providerSlug: SwapProviderId;
@@ -119,32 +126,56 @@ export class UniswapHandler implements SwapBaseInterface {
 
     const toAddress = CHAIN_TO_ADDRESSES_MAP[chainId].swapRouter02Address;
 
-    const [, calldata] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain), this.swapBaseHandler.chainService);
+    const evmApi = this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain);
+    const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService);
 
-    const approveSwapTx = encodeApproveTx({
-      tokenAddress: _getContractAddressOfToken(fromToken) as `0x${string}`,
-      amount: 10000000000000000000000n,
-      recipient: toAddress as `0x${string}`
-    });
-
-    const swapTx = rawTx({
-      to: toAddress as `0x${string}`,
-      data: calldata as `0x${string}`,
-      gasLimit: BigInt(250_000)
-    });
-    const txBatch = batchTx(chainId as number, [approveSwapTx, swapTx]);
-
-    const klasterService = new KlasterService();
     const owner = getEthereumSmartAccountOwner(request.address);
+    let tx: UserOpBundle | QuoteResponse;
 
-    await klasterService.init(owner?.owner as string);
-    const iTx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
+    if (params.caProvider === CAProvider.KLASTER) {
+      const approveSwapTx = encodeApproveTx({
+        tokenAddress: _getContractAddressOfToken(fromToken) as `0x${string}`,
+        amount: 10000000000000000000000n,
+        recipient: toAddress as `0x${string}`
+      });
 
-    console.log('iTX', iTx);
+      const swapTx = rawTx({
+        to: toAddress as `0x${string}`,
+        data: calldata as `0x${string}`,
+        gasLimit: BigInt(250_000)
+      });
+      const txBatch = batchTx(chainId as number, [approveSwapTx, swapTx]);
+
+      const klasterService = new KlasterService();
+
+      await klasterService.init(owner?.owner as string);
+
+      tx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
+    } else {
+      const spendingApprovalTxConfig = await getERC20SpendingApprovalTx(toAddress as string, params.address, _getContractAddressOfToken(fromToken), evmApi);
+
+      const swapTxConfig: TransactionConfig = {
+        ...spendingApprovalTxConfig,
+        data: calldata as `0x${string}`,
+        to: toAddress as `0x${string}`
+      };
+
+      const [, bridgeTxConfig] = await getAcrossBridgeData({
+        amount: BigInt(params.quote.fromAmount),
+        destAccount: request.address,
+        destinationChainId: _getEvmChainId(bridgeDestChain) as number,
+        destinationTokenContract: _getContractAddressOfToken(toToken),
+        sourceChainId: _getEvmChainId(bridgeOriginChain) as number,
+        sourceTokenContract: _getContractAddressOfToken(bridgeOriginToken),
+        srcAccount: owner?.owner as string
+      });
+
+      tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [spendingApprovalTxConfig, swapTxConfig, bridgeTxConfig]);
+    }
 
     return Promise.resolve({
       txChain: fromToken.originChain,
-      extrinsic: iTx,
+      extrinsic: tx,
       txData: undefined,
       transferNativeAmount: '0',
       extrinsicType: ExtrinsicType.SWAP,

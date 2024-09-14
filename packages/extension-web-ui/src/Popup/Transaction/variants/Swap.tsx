@@ -1169,8 +1169,6 @@ const Component = () => {
     return false;
   }, [altChain, checkChainConnected]);
 
-  console.log(currentQuote?.provider.id.toLowerCase());
-
   return (
     <>
       <>

@@ -9,6 +9,7 @@ import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo } from '@subwallet
 import BigN from 'bignumber.js';
 import {UserOpBundle} from "@particle-network/aa";
 import {QuoteResponse} from "klaster-sdk";
+import {CAProvider} from "@subwallet/extension-base/services/chain-abstraction-service/helper/util";
 
 // core
 export type SwapRate = number;
@@ -173,6 +174,7 @@ export interface SwapSubmitParams {
   address: string;
   slippage: number; // Example: 0.01 for 1%
   recipient?: string;
+  caProvider?: CAProvider;
 }
 
 export interface SwapSubmitStepData {
