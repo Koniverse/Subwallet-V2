@@ -97,7 +97,7 @@ export class AccountState {
       takeWhile((value) => Object.values(value).length === 0, true))
       .subscribe((accountProxyMap) => {
         const transformedAccounts = Object.values(accountProxyMap);
-
+        const storedAccountProxyBefore = this._accountProxy.value;
         const accountNameDuplicates = this.getDuplicateAccountNames(transformedAccounts);
 
         if (accountNameDuplicates.length > 0) {
@@ -106,17 +106,24 @@ export class AccountState {
               const name = accountProxy.name.concat(' - ').concat(generateRandomString());
 
               accountProxy.name = name;
-              this.upsertAccountProxyByKey({ ...accountProxy });
 
-              accountProxy.accounts.forEach(({ address }) => {
-                const pair = keyring.getPair(address);
-
-                console.log(pair);
+              if (!storedAccountProxyBefore[accountProxy.id]) {
+                const pair = keyring.getPair(accountProxy.id);
 
                 if (pair) {
                   keyring.saveAccountMeta(pair, { ...pair.meta, name });
                 }
-              });
+              } else {
+                this.upsertAccountProxyByKey(accountProxy);
+
+                accountProxy.accounts.forEach(({ address }) => {
+                  const pair = keyring.getPair(address);
+
+                  if (pair) {
+                    keyring.saveAccountMeta(pair, { ...pair.meta, name });
+                  }
+                });
+              }
             }
           }
         }
