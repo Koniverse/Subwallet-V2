@@ -33,7 +33,6 @@ function Component ({ accountProxy, className }: Props) {
         addressQrModal.open({
           address: item.address,
           chainSlug: item.slug,
-          onBack: addressQrModal.close,
           onCancel: () => {
             addressQrModal.close();
           }
