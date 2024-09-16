@@ -73,7 +73,6 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
     return {
       icon: (
         <Icon
-          className={'__change-version-icon'}
           phosphorIcon={Gear}
         />
       ),
@@ -111,11 +110,13 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
         title={(
           <>
             {t<string>('Your address')}
-            {onBack && isRelatedToTon && <Button
-              {...tonWalletContactSelectorButtonProps}
-              className={'__change-version-button'}
-              size={'xs'}
-            />}
+            {onBack && isRelatedToTon && (
+              <Button
+                {...tonWalletContactSelectorButtonProps}
+                className={'__change-version-button -schema-header'}
+                size={'xs'}
+              />
+            )}
           </>
         )}
       >
@@ -201,14 +202,15 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
       lineHeight: token.lineHeightHeading4,
       fontWeight: token.fontWeightStrong
     },
+
     '.ant-sw-header-center-part': {
       position: 'relative',
       height: 40
     },
 
-    '.__change-version-button': {
+    '.ant-sw-header-center-part .__change-version-button': {
       position: 'absolute',
-      right: -5,
+      right: 0,
       top: 0
     },
 
@@ -239,6 +241,10 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
       'white-space': 'nowrap',
       color: token.colorTextLight4,
       flexShrink: 1
+    },
+
+    '.__change-version-icon': {
+      color: token.colorWhite
     },
 
     '.__copy-button': {

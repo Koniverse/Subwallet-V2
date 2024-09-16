@@ -271,6 +271,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     return result;
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
+  const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
+
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
     const destChainInfo = chainInfoMap[destChain];
@@ -783,7 +785,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           </div>
 
           <Form.Item
-            className={CN({ hidden: (!isAllAccount && accountAddressItems.length < 2) })}
+            className={CN({ hidden: isNotShowAccountSelector })}
             name={'from'}
             statusHelpAsTooltip={true}
           >
@@ -806,6 +808,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           >
             <AddressInputNew
               chainSlug={destChainValue}
+              dropdownHeight={isNotShowAccountSelector ? 317 : 257}
               key={addressInputRenderKey}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}

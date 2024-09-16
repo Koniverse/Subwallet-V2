@@ -8,7 +8,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, checkTonAddressBounceableAndAccountNotActive, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { cellToBase64Str, externalMessage } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { cellToBase64Str, externalMessage, getTonSendMode } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -1211,6 +1211,7 @@ export default class TransactionService {
 
     walletContract.createTransfer({
       signer,
+      sendMode: getTonSendMode(payload.transferAll),
       seqno: seqno,
       messages: messages
     }).then((tx) => {

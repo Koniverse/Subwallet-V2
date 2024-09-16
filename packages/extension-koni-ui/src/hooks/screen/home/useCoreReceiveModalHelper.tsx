@@ -96,7 +96,19 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         const reformatedAddress = getReformatedAddressRelatedToChain(accountJson, specificChainInfo);
 
         if (reformatedAddress) {
-          openAddressQrModal(reformatedAddress, accountJson.type, specificChain, undefined, false);
+          const accountAddressItem: AccountAddressItemType = {
+            accountName: accountJson.name || '',
+            accountProxyId: accountJson.proxyId || '',
+            accountProxyType: currentAccountProxy.accountType,
+            accountType: accountJson.type,
+            address: reformatedAddress
+          };
+
+          setSelectedAccountAddressItem(accountAddressItem);
+
+          openAddressQrModal(reformatedAddress, accountJson.type, specificChain, () => {
+            setSelectedAccountAddressItem(undefined);
+          }, false);
 
           break;
         }
@@ -140,8 +152,9 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
       return;
     }
 
+    setSelectedChain(chainSlug);
+
     if (isAllAccount) {
-      setSelectedChain(chainSlug);
       setTimeout(() => {
         activeModal(accountSelectorModalId);
       }, 100);
@@ -155,8 +168,18 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
       const reformatedAddress = getReformatedAddressRelatedToChain(accountJson, chainInfo);
 
       if (reformatedAddress) {
+        const accountAddressItem: AccountAddressItemType = {
+          accountName: accountJson.name || '',
+          accountProxyId: accountJson.proxyId || '',
+          accountProxyType: currentAccountProxy.accountType,
+          accountType: accountJson.type,
+          address: reformatedAddress
+        };
+
+        setSelectedAccountAddressItem(accountAddressItem);
         openAddressQrModal(reformatedAddress, accountJson.type, chainSlug, () => {
           inactiveModal(tokenSelectorModalId);
+          setSelectedAccountAddressItem(undefined);
         });
 
         break;

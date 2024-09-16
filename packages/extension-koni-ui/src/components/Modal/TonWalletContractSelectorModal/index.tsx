@@ -9,7 +9,7 @@ import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTransla
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TonWalletContractVersion } from '@subwallet/keyring/types';
-import { Button, Icon, SwList, SwModal } from '@subwallet/react-ui';
+import { Button, Icon, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretLeft, CheckCircle, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -88,12 +88,20 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
 
   const renderItem = useCallback((item: TonWalletContractItemType) => {
     return (
-      <TonWalletContractItem
-        className={'item'}
-        key={item.version}
-        onClick={onClickItem(item.version)}
-        {...item}
-      />
+      <>
+        <Tooltip
+          title={item.address}
+        >
+          <div className={'item-wrapper'}>
+            <TonWalletContractItem
+              className={'item'}
+              key={item.version}
+              onClick={onClickItem(item.version)}
+              {...item}
+            />
+          </div>
+        </Tooltip>
+      </>
     );
   }, [onClickItem]);
 
@@ -145,11 +153,11 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
       }
       id={tonWalletContractSelectorModalId}
       onCancel={onCancel}
-      title={t<string>('Wallet version contract')}
+      title={t<string>('Change wallet address & version')}
     >
       <div>
         <div className={'sub-title'}>
-          {t('In TON ecosystem a wallet can have multi contract version. Please choose wallet version contract you want to add.')}
+          {t('TON wallets have multiple versions, each with its own wallet address and balance. Change versions if you don\'t see balances')}
         </div>
         <SwList
           actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
@@ -178,7 +186,7 @@ const TonWalletContractSelectorModal = styled(Component)<Props>(({ theme: { toke
       textAlign: 'center',
       color: token.colorTextTertiary
     },
-    '.item:not(:last-child)': {
+    '.item-wrapper:not(:last-child)': {
       marginBottom: 8
     },
     '.ant-sw-modal-footer': {
