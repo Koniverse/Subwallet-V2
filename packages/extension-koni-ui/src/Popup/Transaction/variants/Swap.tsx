@@ -1251,7 +1251,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                   >
                     <AddressInputNew
                       chainSlug={destChainValue}
-                      dropdownHeight={isNotShowAccountSelectorForm ? 227 : 167}
+                      dropdownHeight={isNotShowAccountSelector ? 227 : 167}
                       label={`${t('To')}:`}
                       labelStyle={'horizontal'}
                       placeholder={t('Input your recipient account')}
