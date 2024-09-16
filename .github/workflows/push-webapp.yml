@@ -47,7 +47,7 @@ jobs:
         accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         projectName: ${{ github.ref_name == 'webapp-ca' && 'chain-abstraction' || vars.CLOUDFLARE_PAGES_PROJECT_NAME }}
         gitHubToken: ${{ secrets.GH_AUTOMATION_TOKEN }}
-        branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
+        branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }} # Branch webapp & webapp-ca will be production branch
         directory: './packages/webapp/build'
         wranglerVersion: '3'
     - if: "github.ref_name == 'webapp-dev' && github.event_name == 'push'"
