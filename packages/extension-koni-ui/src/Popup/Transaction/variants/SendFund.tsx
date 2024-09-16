@@ -807,6 +807,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           >
             <AddressInputNew
               chainSlug={destChainValue}
+              dropdownHeight={isAllAccount ? 257 : 317}
               key={addressInputRenderKey}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
