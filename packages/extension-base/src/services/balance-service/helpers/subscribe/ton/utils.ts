@@ -1,13 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { EXTRA_TON_ESTIMATE_FEE, SW_QUERYID_HEX } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { EXTRA_TON_ESTIMATE_FEE, SendMode, SW_QUERYID_HEX } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { TonApi } from '@subwallet/extension-base/services/chain-service/handler/TonApi';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage, storeMessageRelaxed } from '@ton/core';
 import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV4 } from '@ton/ton';
-import TonWeb from 'tonweb';
 import nacl from 'tweetnacl';
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
@@ -94,6 +93,7 @@ export async function getJettonTxStatus (tonApi: TonApi, jettonTransferMsgHash: 
 export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxed[], walletContract: WalletContractV4, _seqno?: number) {
   const contract = tonApi.open(walletContract);
   const seqno = _seqno ?? await contract.getSeqno();
+  const isInit = seqno !== 0;
 
   const simulatedTxCell = contract.createTransfer({
     secretKey: Buffer.from(new Array(64)),
@@ -101,7 +101,7 @@ export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxe
     messages
   });
 
-  const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract.address, simulatedTxCell);
+  const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract, simulatedTxCell, isInit);
 
   return BigInt(
     estimateFeeInfo.source_fees.gas_fee +
@@ -130,7 +130,13 @@ export function getWalletQueryId () {
 }
 
 export function isBounceableAddress (address: string) {
-  const addr = new TonWeb.Address(address);
+  return Address.isFriendly(address)
+    ? Address.parseFriendly(address).isBounceable
+    : true;
+}
 
-  return !addr.isUserFriendly || addr.isBounceable;
+export function getTonSendMode (isTransferAll: boolean) {
+  return isTransferAll
+    ? SendMode.CARRY_ALL_REMAINING_BALANCE
+    : SendMode.PAY_GAS_SEPARATELY + SendMode.IGNORE_ERRORS;
 }
