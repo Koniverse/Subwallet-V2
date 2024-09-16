@@ -28,7 +28,8 @@ export interface TonTransactionConfig {
   messagePayload: string,
   messages: MessageRelaxed[]; // hide before passing to request service
   estimateFee: string;
-  seqno: number
+  seqno: number,
+  transferAll: boolean
 }
 
 export async function createTonTransaction ({ from, networkKey, to, tokenInfo, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
@@ -43,7 +44,7 @@ export async function createTonTransaction ({ from, networkKey, to, tokenInfo, t
   return [null, value];
 }
 
-async function createTonNativeTransaction ({ from, networkKey, to, tonApi, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
+async function createTonNativeTransaction ({ from, networkKey, to, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
   const keyPair = keyring.getPair(from);
   const walletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
   const contract = tonApi.open(walletContract);
@@ -68,13 +69,14 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, value
     messagePayload,
     messages: [messages],
     estimateFee: estimateExternalFee.toString(),
-    seqno
+    seqno,
+    transferAll
   } as unknown as TonTransactionConfig;
 
   return [transactionObject, transactionObject.value];
 }
 
-async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonApi, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
+async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
   const keyPair = keyring.getPair(from);
   const sendertonAddress = Address.parse(from);
   const destinationAddress = Address.parse(to);
@@ -119,7 +121,8 @@ async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonAp
     messagePayload,
     messages: [messages],
     estimateFee: estimateFee.toString(),
-    seqno
+    seqno,
+    transferAll
   } as unknown as TonTransactionConfig;
 
   return [transactionObject, transactionObject.value];

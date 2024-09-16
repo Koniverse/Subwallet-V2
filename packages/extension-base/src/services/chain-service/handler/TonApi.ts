@@ -143,15 +143,15 @@ export class TonApi implements _TonApi {
     return this.api.open(src);
   }
 
-  estimateExternalMessageFee (walletContract: WalletContractV4, body: Cell, isInit: boolean, ignoreSignature?: boolean) {
-    const initCode = isInit ? walletContract.init.code : null;
-    const initData = isInit ? walletContract.init.data : null;
+  estimateExternalMessageFee (walletContract: WalletContractV4, body: Cell, isInit: boolean, ignoreSignature = true) {
+    const initCode = isInit ? null : walletContract.init.code;
+    const initData = isInit ? null : walletContract.init.data;
 
     return this.api.estimateExternalMessageFee(
       walletContract.address,
       {
         body: body,
-        ignoreSignature: ignoreSignature || true,
+        ignoreSignature: ignoreSignature,
         initCode: initCode,
         initData: initData
       }
