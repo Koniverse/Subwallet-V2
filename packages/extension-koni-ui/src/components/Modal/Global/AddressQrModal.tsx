@@ -241,6 +241,10 @@ const AddressQrModal = styled(Component)<Props>(({ theme: { token } }: Props) =>
       flexShrink: 1
     },
 
+    '.__change-version-icon': {
+      color: token.colorWhite
+    },
+
     '.__copy-button': {
       color: token.colorTextLight3,
 
