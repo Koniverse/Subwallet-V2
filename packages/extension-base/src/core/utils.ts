@@ -62,16 +62,10 @@ export function _isValidAddressForEcosystem (validateRecipientParams: ValidateRe
   const { destChainInfo, toAddress } = validateRecipientParams;
 
   if (!isAddressAndChainCompatible(toAddress, destChainInfo)) {
-    if (_isChainEvmCompatible(destChainInfo)) {
-      return 'The recipient address must be EVM type';
-    }
-
-    if (_isChainSubstrateCompatible(destChainInfo)) {
-      return 'The recipient address must be Substrate type';
-    }
-
-    if (_isChainTonCompatible(destChainInfo)) {
-      return 'The recipient address must be Ton type';
+    if (_isChainEvmCompatible(destChainInfo) ||
+      _isChainSubstrateCompatible(destChainInfo) ||
+      _isChainTonCompatible(destChainInfo)) {
+      return 'Recipient address must be the same type as sender address';
     }
 
     return 'Unknown chain type';
@@ -87,7 +81,7 @@ export function _isValidSubstrateAddressFormat (validateRecipientParams: Validat
   const toAddressFormatted = reformatAddress(toAddress, addressPrefix);
 
   if (toAddressFormatted !== toAddress) {
-    return `Recipient should be a valid ${destChainInfo.name} address`;
+    return `Recipient address must be a valid ${destChainInfo.name} address`;
   }
 
   return '';
@@ -97,7 +91,7 @@ export function _isNotDuplicateAddress (validateRecipientParams: ValidateRecipie
   const { fromAddress, toAddress } = validateRecipientParams;
 
   if (isSameAddress(fromAddress, toAddress)) {
-    return 'The recipient address can not be the same as the sender address';
+    return 'Recipient address must be different from sender address';
   }
 
   return '';
@@ -113,7 +107,7 @@ export function _isSupportLedgerAccount (validateRecipientParams: ValidateRecipi
       const destChainName = destChainInfo?.name || 'Unknown';
 
       if (!availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-        return 'Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.'.replace('{{network}}', destChainName);
+        return 'Your Ledger account is not supported by {{network}} network.'.replace('{{network}}', destChainName);
       }
     } else {
       // For ledger generic
