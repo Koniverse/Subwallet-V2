@@ -96,7 +96,19 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         const reformatedAddress = getReformatedAddressRelatedToChain(accountJson, specificChainInfo);
 
         if (reformatedAddress) {
-          openAddressQrModal(reformatedAddress, accountJson.type, specificChain, undefined, false);
+          const accountAddressItem: AccountAddressItemType = {
+            accountName: accountJson.name || '',
+            accountProxyId: accountJson.proxyId || '',
+            accountProxyType: currentAccountProxy.accountType,
+            accountType: accountJson.type,
+            address: reformatedAddress
+          };
+
+          setSelectedAccountAddressItem(accountAddressItem);
+
+          openAddressQrModal(reformatedAddress, accountJson.type, specificChain, () => {
+            setSelectedAccountAddressItem(undefined);
+          }, false);
 
           break;
         }
@@ -167,6 +179,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         setSelectedAccountAddressItem(accountAddressItem);
         openAddressQrModal(reformatedAddress, accountJson.type, chainSlug, () => {
           inactiveModal(tokenSelectorModalId);
+          setSelectedAccountAddressItem(undefined);
         });
 
         break;
