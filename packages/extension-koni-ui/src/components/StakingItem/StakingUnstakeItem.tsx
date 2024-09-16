@@ -3,7 +3,7 @@
 
 import { UnstakingInfo, UnstakingStatus } from '@subwallet/extension-base/types';
 import { Avatar } from '@subwallet/extension-koni-ui/components';
-import { useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainPrefixBySlug, useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Number, Web3Block } from '@subwallet/react-ui';
@@ -21,6 +21,7 @@ type Props = ThemeProps & {
 const Component: React.FC<Props> = (props: Props) => {
   const { className, isSelected, unstakingInfo } = props;
   const { chain, claimable, status, validatorAddress } = unstakingInfo;
+  const networkPrefix = useGetChainPrefixBySlug(chain);
 
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
@@ -31,9 +32,12 @@ const Component: React.FC<Props> = (props: Props) => {
     if (!validatorAddress) {
       return undefined;
     } else {
-      return <Avatar value={validatorAddress} />;
+      return (<Avatar
+        identPrefix={networkPrefix}
+        value={validatorAddress}
+      />);
     }
-  }, [validatorAddress]);
+  }, [networkPrefix, validatorAddress]);
 
   const middleItem = useMemo((): React.ReactNode => {
     return (

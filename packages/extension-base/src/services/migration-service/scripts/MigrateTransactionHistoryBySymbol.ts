@@ -10,8 +10,8 @@ export default class MigrateTransactionHistoryBySymbol extends BaseMigrationJob 
 
     try {
       const changeSlugsMap: Record<string, string> = {
-        'bobMainnet-LOCAL-wBTC-0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3': 'bobMainnet-LOCAL-WBTC-0x03C7054BCB39f7b2e5B2c7AcB37583e32D70Cfa3',
-        'hydradx_main-LOCAL-LRNA': 'hydradx_main-LOCAL-H2O'
+        'polygon-NATIVE-MATIC': 'polygon-NATIVE-POL',
+        '5irechain_mainnet-NATIVE-5IRE': '5irechain_mainnet-NATIVE-5ire'
       };
 
       const allTxs: ITransactionHistoryItem[] = [];

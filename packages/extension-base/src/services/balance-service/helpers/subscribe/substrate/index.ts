@@ -4,13 +4,13 @@
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { SUB_TOKEN_REFRESH_BALANCE_INTERVAL } from '@subwallet/extension-base/constants';
-import { _getAssetsPalletLockedBalance, _getAssetsPalletTransferable } from '@subwallet/extension-base/core/substrate/assets-pallet';
+import { _getAssetsPalletLocked, _getAssetsPalletTransferable } from '@subwallet/extension-base/core/substrate/assets-pallet';
 import { _getForeignAssetPalletLockedBalance, _getForeignAssetPalletTransferable } from '@subwallet/extension-base/core/substrate/foreign-asset-pallet';
 import { _getTotalStakeInNominationPool } from '@subwallet/extension-base/core/substrate/nominationpools-pallet';
 import { _getOrmlTokensPalletLockedBalance, _getOrmlTokensPalletTransferable } from '@subwallet/extension-base/core/substrate/ormlTokens-pallet';
 import { _getSystemPalletTotalBalance, _getSystemPalletTransferable } from '@subwallet/extension-base/core/substrate/system-pallet';
 import { _getTokensPalletLocked, _getTokensPalletTransferable } from '@subwallet/extension-base/core/substrate/tokens-pallet';
-import { FrameSystemAccountInfo, OrmlTokensAccountData, PalletAssetsAssetAccount, PalletNominationPoolsPoolMember } from '@subwallet/extension-base/core/substrate/types';
+import { FrameSystemAccountInfo, OrmlTokensAccountData, PalletAssetsAssetAccount, PalletAssetsAssetAccountWithStatus, PalletNominationPoolsPoolMember } from '@subwallet/extension-base/core/substrate/types';
 import { _adaptX1Interior } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getPSP22ContractPromise } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
 import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
@@ -120,7 +120,7 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
   const systemAccountKey = 'query_system_account';
   const poolMembersKey = 'query_nominationPools_poolMembers';
 
-  const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation;
+  const isNominationPoolMigrated = await checkNominationPoolCompleteMigrated(substrateApi);
 
   const params: _SubstrateAdapterSubscriptionArgs[] = [
     {
@@ -179,6 +179,31 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
   };
 };
 
+const checkNominationPoolCompleteMigrated = async (substrateApi: _SubstrateApi) => {
+  if (!substrateApi.api.tx.nominationPools || !substrateApi.api.query.staking) {
+    return false;
+  }
+
+  const isNominationPoolMigrated =
+    !!substrateApi.api.tx.nominationPools.migrateDelegation &&
+    !!substrateApi.api.query.staking.counterForVirtualStakers &&
+    !!substrateApi.api.query.staking.virtualStakers;
+
+  if (!isNominationPoolMigrated) {
+    return false;
+  }
+
+  const [nominationPoolCounterRaw, nominationPoolInfoRaw] = await Promise.all([
+    substrateApi.api.query.staking.counterForVirtualStakers(),
+    substrateApi.api.query.staking.virtualStakers.entries()
+  ]);
+
+  const nominationPoolCounter = nominationPoolCounterRaw.toPrimitive() as number;
+  const nominationPoolInfoLength = nominationPoolInfoRaw.length;
+
+  return nominationPoolCounter !== 0 && nominationPoolInfoLength !== 0;
+};
+
 const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, chainInfo, extrinsicType, substrateApi }: SubscribeSubstratePalletBalance) => {
   const foreignAssetsAccountKey = 'query_foreignAssets_account';
   const tokenMap = filterAssetsByChainAndType(assetMap, chainInfo.slug, [_AssetType.LOCAL]);
@@ -198,7 +223,18 @@ const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, cha
         return substrateApi.subscribeDataWithMulti(params, (rs) => {
           const balances = rs[foreignAssetsAccountKey];
           const items: BalanceItem[] = balances.map((_balance, index): BalanceItem => {
-            const balanceInfo = _balance as unknown as PalletAssetsAssetAccount | undefined;
+            const balanceInfo = _balance as unknown as PalletAssetsAssetAccountWithStatus | undefined;
+
+            if (!balanceInfo) { // no balance info response
+              return {
+                address: addresses[index],
+                tokenSlug: tokenInfo.slug,
+                free: '0',
+                locked: '0',
+                state: APIItemState.READY
+              };
+            }
+
             const transferableBalance = _getForeignAssetPalletTransferable(balanceInfo, _getAssetExistentialDeposit(tokenInfo), extrinsicType);
             const totalLockedFromTransfer = _getForeignAssetPalletLockedBalance(balanceInfo);
 
@@ -378,8 +414,19 @@ const subscribeAssetsAccountPallet = async ({ addresses, assetMap, callback, cha
         const balances = rs[assetsAccountKey];
         const items: BalanceItem[] = balances.map((_balance, index): BalanceItem => {
           const balanceInfo = _balance as unknown as PalletAssetsAssetAccount | undefined;
+
+          if (!balanceInfo) { // no balance info response
+            return {
+              address: addresses[index],
+              tokenSlug: tokenInfo.slug,
+              free: '0',
+              locked: '0',
+              state: APIItemState.READY
+            };
+          }
+
           const transferableBalance = _getAssetsPalletTransferable(balanceInfo, _getAssetExistentialDeposit(tokenInfo), extrinsicType);
-          const totalLockedFromTransfer = _getAssetsPalletLockedBalance(balanceInfo);
+          const totalLockedFromTransfer = _getAssetsPalletLocked(balanceInfo);
 
           return {
             address: addresses[index],

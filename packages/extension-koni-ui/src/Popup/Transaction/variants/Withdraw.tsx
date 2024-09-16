@@ -78,6 +78,8 @@ const Component = () => {
   const inputAsset = useGetChainAssetInfo(poolInfo.metadata.inputAsset);
   const decimals = inputAsset?.decimals || 0;
   const symbol = inputAsset?.symbol || '';
+  const poolChain = poolInfo?.chain || '';
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const goHome = useCallback(() => {
     navigate('/home/earning');
@@ -193,6 +195,7 @@ const Component = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
