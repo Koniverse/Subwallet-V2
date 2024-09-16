@@ -228,7 +228,7 @@ const Component: React.FC = () => {
           >
             <AddressInputNew
               chainSlug={chain}
-              dropdownHeight={220}
+              dropdownHeight={227}
               label={t('Send to')}
               placeholder={t('Account address')}
               saveAddress={true}
