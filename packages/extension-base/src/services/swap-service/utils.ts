@@ -76,6 +76,12 @@ export function convertSwapRate (rate: string, fromAsset: _ChainAsset, toAsset: 
 }
 
 export function getChainflipOptions (isTestnet: boolean) {
+  if (isTestnet) {
+    return {
+      network: getChainflipNetwork(isTestnet)
+    };
+  }
+
   return {
     network: getChainflipNetwork(isTestnet),
     broker: getChainflipBroker(isTestnet)
@@ -86,7 +92,7 @@ function getChainflipNetwork (isTestnet: boolean) {
   return isTestnet ? 'perseverance' : 'mainnet';
 }
 
-export function getChainflipBroker (isTestnet: boolean) {
+export function getChainflipBroker (isTestnet: boolean) { // noted: currently not use testnet broker
   if (isTestnet) {
     return {
       url: `https://perseverance.chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
