@@ -33,7 +33,7 @@ enum ChainflipFeeType {
 const INTERMEDIARY_MAINNET_ASSET_SLUG = COMMON_ASSETS.USDC_ETHEREUM;
 const INTERMEDIARY_TESTNET_ASSET_SLUG = COMMON_ASSETS.USDC_SEPOLIA;
 
-export const CHAINFLIP_BROKER_API = process.env.CHAINFLIP_BROKER_API;
+export const CHAINFLIP_BROKER_API = process.env.CHAINFLIP_BROKER_API || '';
 
 enum CHAINFLIP_QUOTE_ERROR {
   InsufficientLiquidity = 'InsufficientLiquidity',

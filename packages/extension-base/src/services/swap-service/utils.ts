@@ -90,12 +90,10 @@ export function getChainflipBroker (isTestnet: boolean) {
   if (isTestnet) {
     return {
       url: `https://perseverance.chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
-      // commissionBps: 0
     };
   } else {
     return {
       url: `https://chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
-      // commissionBps: 0
     };
   }
 }
