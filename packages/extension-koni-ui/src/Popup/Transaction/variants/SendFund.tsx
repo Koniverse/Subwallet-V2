@@ -271,9 +271,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     return result;
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
-  console.log('accountAddressItems', accountAddressItems);
-  console.log('accountProxies', accountProxies);
-
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
     const destChainInfo = chainInfoMap[destChain];
