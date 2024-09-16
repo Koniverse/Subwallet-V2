@@ -62,7 +62,7 @@ const Component: React.FC<Props> = (props: Props) => {
   );
 };
 
-const TonWalletContractItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
+export const TonWalletContractItem = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     background: token.colorBgSecondary,
     paddingLeft: token.paddingSM,
@@ -132,5 +132,3 @@ const TonWalletContractItem = styled(Component)<Props>(({ theme: { token } }: Pr
     }
   };
 });
-
-export default TonWalletContractItem;

@@ -15,7 +15,7 @@ import { CaretLeft, CheckCircle, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 
-import TonWalletContractItem, { TonWalletContractItemType } from './TonWalletContractItem';
+import { TonWalletContractItem, TonWalletContractItemType } from './TonWalletContractItem';
 
 type Props = ThemeProps & {
   onCancel?: VoidFunction;
@@ -164,7 +164,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
   );
 };
 
-const Index = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const TonWalletContractSelectorModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.wallet-version-list': {
       display: 'flex',
@@ -187,4 +187,4 @@ const Index = styled(Component)<Props>(({ theme: { token } }: Props) => {
   };
 });
 
-export default Index;
+export default TonWalletContractSelectorModal;
