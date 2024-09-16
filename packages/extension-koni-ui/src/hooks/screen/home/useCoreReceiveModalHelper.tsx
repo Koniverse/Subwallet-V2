@@ -8,7 +8,7 @@ import { _getAssetOriginChain, _getMultiChainAsset } from '@subwallet/extension-
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetChainSlugsByAccount, useHandleTonAccountWarning } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainSlugsByAccount, useHandleLedgerGenericAccountWarning, useHandleTonAccountWarning } from '@subwallet/extension-koni-ui/hooks';
 import { useChainAssets } from '@subwallet/extension-koni-ui/hooks/assets';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ReceiveModalProps } from '@subwallet/extension-koni-ui/types';
@@ -39,6 +39,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
   const { addressQrModal } = useContext(WalletModalContext);
   const chainSupported = useGetChainSlugsByAccount();
   const onHandleTonAccountWarning = useHandleTonAccountWarning();
+  const onHandleLedgerGenericAccountWarning = useHandleLedgerGenericAccountWarning();
 
   // chain related to tokenGroupSlug, if it is token slug
   const specificChain = useMemo(() => {
@@ -49,7 +50,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
     return undefined;
   }, [assetRegistryMap, tokenGroupSlug]);
 
-  const openAddressQrModal = useCallback((address: string, accountType: KeypairType, chainSlug: string, closeCallback?: VoidCallback, showQrBack = true) => {
+  const openAddressQrModal = useCallback((address: string, accountType: KeypairType, accountProxyId: string, chainSlug: string, closeCallback?: VoidCallback, showQrBack = true) => {
     const processFunction = () => {
       addressQrModal.open({
         address,
@@ -62,8 +63,13 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
       });
     };
 
-    onHandleTonAccountWarning(accountType, processFunction);
-  }, [addressQrModal, onHandleTonAccountWarning]);
+    onHandleTonAccountWarning(accountType, () => {
+      onHandleLedgerGenericAccountWarning({
+        accountProxy: accountProxies.find((ap) => ap.id === accountProxyId),
+        chainSlug
+      }, processFunction);
+    });
+  }, [accountProxies, addressQrModal, onHandleLedgerGenericAccountWarning, onHandleTonAccountWarning]);
 
   const onOpenReceive = useCallback(() => {
     if (!currentAccountProxy) {
@@ -106,7 +112,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
           setSelectedAccountAddressItem(accountAddressItem);
 
-          openAddressQrModal(reformatedAddress, accountJson.type, specificChain, () => {
+          openAddressQrModal(reformatedAddress, accountJson.type, currentAccountProxy.id, specificChain, () => {
             setSelectedAccountAddressItem(undefined);
           }, false);
 
@@ -177,7 +183,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         };
 
         setSelectedAccountAddressItem(accountAddressItem);
-        openAddressQrModal(reformatedAddress, accountJson.type, chainSlug, () => {
+        openAddressQrModal(reformatedAddress, accountJson.type, currentAccountProxy.id, chainSlug, () => {
           inactiveModal(tokenSelectorModalId);
           setSelectedAccountAddressItem(undefined);
         });
@@ -246,7 +252,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
     }
 
     setSelectedAccountAddressItem(item);
-    openAddressQrModal(item.address, item.accountType, targetChain, onCloseAccountSelector);
+    openAddressQrModal(item.address, item.accountType, item.accountProxyId, targetChain, onCloseAccountSelector);
   }, [onCloseAccountSelector, openAddressQrModal, selectedChain, specificChain]);
 
   /* account Selector --- */

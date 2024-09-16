@@ -20,6 +20,8 @@ export { default as useSetSelectedAccountTypes } from './useSetSelectedAccountTy
 export { default as useGetAccountProxyById } from './useGetAccountProxyById';
 export { default as useGetAccountChainAddresses } from './useGetAccountChainAddresses';
 export { default as useSetSelectedMnemonicType } from './useSetSelectedMnemonicType';
+export { default as useHandleTonAccountWarning } from './useHandleTonAccountWarning';
+export { default as useHandleLedgerGenericAccountWarning } from './useHandleLedgerGenericAccountWarning';
 
 export * from './useGetMantaPayConfig';
 export * from './useGetZkAddress';

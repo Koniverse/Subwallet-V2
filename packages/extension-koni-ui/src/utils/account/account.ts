@@ -6,7 +6,7 @@ import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getChainSubstrateAddressPrefix, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AbstractAddressJson, AccountChainType, AccountJson, AccountProxy } from '@subwallet/extension-base/types';
+import { AbstractAddressJson, AccountChainType, AccountJson, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { isAccountAll, reformatAddress, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { MODE_CAN_SIGN } from '@subwallet/extension-koni-ui/constants/signing';
@@ -186,9 +186,17 @@ export function getReformatedAddressRelatedToChain (accountJson: AccountJson, ch
 
 type LedgerMustCheckType = 'polkadot' | 'migration' | 'unnecessary'
 
-export const ledgerMustCheckNetwork = (account: AccountJson | null): LedgerMustCheckType => {
+export const ledgerMustCheckNetwork = (account: AccountJson | null | undefined): LedgerMustCheckType => {
   if (account && account.isHardware && account.isGeneric && !isEthereumAddress(account.address)) {
     return account.originGenesisHash ? 'migration' : 'polkadot';
+  } else {
+    return 'unnecessary';
+  }
+};
+
+export const ledgerGenericAccountProblemCheck = (accountProxy: AccountProxy | null | undefined): LedgerMustCheckType => {
+  if (accountProxy && accountProxy.accountType === AccountProxyType.LEDGER && accountProxy.chainTypes.includes(AccountChainType.SUBSTRATE) && !accountProxy.specialChain) {
+    return ledgerMustCheckNetwork(accountProxy.accounts[0]);
   } else {
     return 'unnecessary';
   }
