@@ -274,16 +274,19 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
           case ChainflipFeeType.NETWORK:
 
           // eslint-disable-next-line no-fallthrough
-          // case ChainflipFeeType.LIQUIDITY: {
-          //   const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
-          //
-          //   feeComponent.push({
-          //     tokenSlug,
-          //     amount: fee.amount,
-          //     feeType: SwapFeeType.PLATFORM_FEE
-          //   });
-          //   break;
-          // }
+          case ChainflipFeeType.BOOST:
+
+          // eslint-disable-next-line no-fallthrough
+          case ChainflipFeeType.BROKER: {
+            const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
+
+            feeComponent.push({
+              tokenSlug,
+              amount: fee.amount,
+              feeType: SwapFeeType.PLATFORM_FEE
+            });
+            break;
+          }
         }
       });
 
