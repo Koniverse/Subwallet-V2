@@ -154,15 +154,16 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
         const domain = await resolveAzeroAddressToDomain(_raw, chain, substrateApi.api);
 
         if (domain) {
-          if (!current) {
-            const rs: AnalyzeAddress = {
-              address: _raw,
-              analyzedGroup: AnalyzedGroup.DOMAIN,
-              displayName: domain,
-              formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
-            };
+          const rs: AnalyzeAddress = {
+            address: _raw,
+            analyzedGroup: AnalyzedGroup.DOMAIN,
+            displayName: domain,
+            formatedAddress: _reformatAddressWithChain(_raw, chainInfo)
+          };
 
-            options.push(rs);
+          options.push(rs);
+
+          if (!current) {
             current = rs;
           }
         }
@@ -170,15 +171,16 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
         const address = await resolveAzeroDomainToAddress(_raw, chain, substrateApi.api);
 
         if (address) {
-          if (!current) {
-            const rs: AnalyzeAddress = {
-              address: address,
-              analyzedGroup: AnalyzedGroup.DOMAIN,
-              displayName: _raw,
-              formatedAddress: _reformatAddressWithChain(address, chainInfo)
-            };
+          const rs: AnalyzeAddress = {
+            address: address,
+            analyzedGroup: AnalyzedGroup.DOMAIN,
+            displayName: _raw,
+            formatedAddress: _reformatAddressWithChain(address, chainInfo)
+          };
 
-            options.push(rs);
+          options.push(rs);
+
+          if (!current) {
             current = rs;
           }
         }
