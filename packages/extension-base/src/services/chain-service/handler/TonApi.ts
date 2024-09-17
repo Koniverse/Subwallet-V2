@@ -159,24 +159,29 @@ export class TonApi implements _TonApi {
   }
 
   async sendTonTransaction (boc: string): Promise<string> {
-    const url = `${this.httpEndPoint}/v2/sendBocReturnHash`;
-    const resp = await fetch(
-      url, {
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-          'X-API-KEY': TON_CENTER_API_KEY
-        },
-        body: JSON.stringify({
-          boc: boc
-        })
-      }
-    );
+    try {
+      const url = `${this.httpEndPoint}/v2/sendBocReturnHash`;
+      const resp = await fetch(
+        url, {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-API-KEY': TON_CENTER_API_KEY
+          },
+          body: JSON.stringify({
+            boc: boc
+          })
+        }
+      );
 
-    const extMsgInfo = await resp.json() as {result: { hash: string}};
+      const extMsgInfo = await resp.json() as {result: { hash: string}};
 
-    return extMsgInfo.result.hash;
+      return extMsgInfo.result.hash;
+    } catch (error) {
+      console.error(`Failed to send transaction with boc`, boc);
+      throw error;
+    }
   }
 
   async getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse> {
