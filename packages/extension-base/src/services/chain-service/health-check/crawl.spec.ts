@@ -2,18 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {ChainInfoMap} from '@subwallet/chain-list';
-import {_AssetType, _ChainAsset, _ChainInfo} from '@subwallet/chain-list/types';
+import {_AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo} from '@subwallet/chain-list/types';
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {chainProvider} from './constants';
 
 jest.setTimeout(3 * 60 * 60 * 1000);
 
 const ALL_CHAIN = [
-  // 'hydradx_main','astar','hydradx_rococo',
+  'hydradx_main','hydradx_rococo',
   // 'statemint', 'acala', 'amplitude', 'kintsugi'
-  'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam',
-  'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main', 'hydradx_rococo',
-  'acala', 'bifrost', 'karura', 'interlay', 'kintsugi', 'amplitude', 'mangatax_para', 'pendulum', 'pioneer'
+  // 'astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain','pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam',
+  // 'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main', 'hydradx_rococo',
+  // 'acala', 'bifrost', 'karura', 'interlay', 'kintsugi', 'amplitude', 'mangatax_para', 'pendulum', 'pioneer'
 ]
 
 type AssetQuery = {
@@ -85,8 +85,8 @@ async function getED(api : ApiPromise, assetId : BigInt){
 }
 
 function removeComma(vari : string){
-  let numstr = vari.replace(/,/g, "")
-  return BigInt(numstr)
+  let numstr = vari.replace(/,/g, "");
+  return BigInt(numstr);
 }
 
 describe('test chain', () => {
@@ -155,4 +155,52 @@ describe('test chain', () => {
     await Promise.all(chain);
 
   });
+
+  it('hydration', async () => {
+    const CHAIN = ['hydradx_main', 'hydradx_rococo'];
+    const chainInfos = Object.values(ChainInfoMap).filter((info) => CHAIN.includes(info.slug));
+
+    async function queryAll(chainInfo : _ChainInfo) {
+      const chain = chainInfo.slug;
+
+      const providerIndex = chainProvider[chain] || chainProvider.default;
+      const provider = Object.values(chainInfo.providers)[providerIndex];
+
+      const wsProvider = new WsProvider(provider);
+      const api = await ApiPromise.create({provider: wsProvider, noInitWarn: true});
+
+      const {pallet, method} = chainMap[chain];
+      const assetEntries = await api.query[pallet][method].entries();
+
+      const assets = assetEntries.map((all) => {
+        const assetToken = all[1].toPrimitive() as unknown as AssetQuery;
+        if (assetToken != null) {
+          const entry = assetEntries.map((ent) => {
+            const assetTokenCon = ent[1].toPrimitive() as unknown as AssetQuery;
+            const assetConversion: _AssetRef = {
+              srcAsset: `${chain}-${_AssetType.LOCAL}-${assetToken.symbol}`,
+              destAsset: `${chain}-${_AssetType.LOCAL}-${assetTokenCon.symbol}`,
+              srcChain: chain,
+              destChain: chain,
+              path: _AssetRefPath.SWAP,
+            };
+            // return assetConversion;
+            if (assetToken.symbol !== null && assetTokenCon.symbol !== null && assetToken.symbol != assetTokenCon.symbol) {
+              return assetConversion;
+            } else {
+              return;
+            }
+          })
+          return entry;
+        }
+        else {return}
+      })
+      console.dir(assets, {'maxArrayLength': null});
+
+      }
+    const chain = chainInfos.map(queryAll);
+    await Promise.all(chain);
+  })
+
+
 });
