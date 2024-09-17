@@ -6,11 +6,12 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
-import { AccountMetadataData, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
+import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { BehaviorSubject, combineLatest } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, first } from 'rxjs';
 
 interface ExistsAccount {
   address: string;
@@ -65,6 +66,7 @@ export class AccountState {
     const modifyPairs = this._modifyPair.observable;
     const accountGroups = this._accountProxy.observable;
     const chainInfoMap = this.koniState.chainService.subscribeChainInfoMap().asObservable();
+    let fireOnFirst = true;
 
     pairs.subscribe((subjectInfo) => {
       // Check if accounts changed
@@ -92,7 +94,57 @@ export class AccountState {
       this.beforeAccount = { ...subjectInfo };
     });
 
-    let fireOnFirst = true;
+    // This Subscribes function is used to check which accounts have duplicate names and will proceed to migrate by appending a random string.
+    // This function will filter values that meet the condition to ensure that the number of `accountProxy` matches the number stored in the store,
+    // and then emit only once.
+    this.accountSubject.pipe(
+      filter((accountMap) => {
+        const accountProxyCount = Object.values(accountMap).map(({ accounts }) => accounts).flat().length;
+
+        if (accountProxyCount > 0) {
+          const addressCount = Object.keys(this.pairSubject.value).length;
+
+          return addressCount === accountProxyCount;
+        }
+
+        return false;
+      }),
+
+      first()
+    )
+      .subscribe((accountProxyMap) => {
+        const transformedAccounts = Object.values(accountProxyMap);
+        const storedAccountProxyBefore = this._accountProxy.value;
+        const accountNameDuplicates = this.getDuplicateAccountNames(transformedAccounts);
+
+        if (accountNameDuplicates.length > 0) {
+          for (const accountProxy of transformedAccounts) {
+            if (accountNameDuplicates.includes(accountProxy.name)) {
+              const name = accountProxy.name.concat(' - ').concat(generateRandomString());
+
+              accountProxy.name = name;
+
+              if (!storedAccountProxyBefore[accountProxy.id]) {
+                const pair = keyring.getPair(accountProxy.id);
+
+                if (pair) {
+                  keyring.saveAccountMeta(pair, { ...pair.meta, name });
+                }
+              } else {
+                this.upsertAccountProxyByKey(accountProxy);
+
+                accountProxy.accounts.forEach(({ address }) => {
+                  const pair = keyring.getPair(address);
+
+                  if (pair) {
+                    keyring.saveAccountMeta(pair, { ...pair.meta, name });
+                  }
+                });
+              }
+            }
+          }
+        }
+      });
 
     combineLatest([pairs, modifyPairs, accountGroups, chainInfoMap]).subscribe(([pairs, modifyPairs, accountGroups, chainInfoMap]) => {
       addLazy('combineAccounts', () => {
@@ -290,6 +342,26 @@ export class AccountState {
 
     return filteredAccounts.some((account) => account.name === name);
   }
+
+  /* Get duplicate account name */
+  public getDuplicateAccountNames = (accounts: AccountProxy[]): string[] => {
+    const duplicates: string[] = [];
+    const accountNameMap = accounts.reduce((map, account) => {
+      const counterAccountNameDuplicate = map.get(account.name) || 0;
+
+      map.set(account.name, counterAccountNameDuplicate + 1);
+
+      return map;
+    }, new Map<string, number>());
+
+    accountNameMap.forEach((count, accountName) => {
+      if (count > 1) {
+        duplicates.push(accountName);
+      }
+    });
+
+    return duplicates;
+  };
 
   /* Auth address */
 

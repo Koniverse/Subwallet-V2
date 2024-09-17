@@ -184,6 +184,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const rawProxyIds = _proxyIds && _proxyIds.length ? _proxyIds : Object.keys(accountProxyMap);
         let _exists: { address: string; name: string; } | undefined;
         const proxiesChangeName: Record<string, string> = {};
+        const accountNameDuplicates = this.state.getDuplicateAccountNames(Object.values(accountProxyMap).filter(({ id }) => rawProxyIds.includes(id)));
 
         const filteredAccountProxies = Object.fromEntries(Object.entries(accountProxyMap)
           .filter(([proxyId, accountProxy]) => {
@@ -195,7 +196,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
             const exists = this.state.checkAddressExists(addresses);
             const name = accountProxy.name;
 
-            if (this.state.checkNameExists(name)) {
+            if (this.state.checkNameExists(name) || accountNameDuplicates.includes(name)) {
               proxiesChangeName[proxyId] = name.concat(' - ').concat(generateRandomString());
             }
 
