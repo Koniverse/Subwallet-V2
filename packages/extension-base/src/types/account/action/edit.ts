@@ -15,6 +15,7 @@ export interface RequestAccountProxyForget {
 
 export interface RequestGetAllTonWalletContractVersion {
   address: string;
+  isTestnet?: boolean
 }
 
 export interface ResponseGetAllTonWalletContractVersion {

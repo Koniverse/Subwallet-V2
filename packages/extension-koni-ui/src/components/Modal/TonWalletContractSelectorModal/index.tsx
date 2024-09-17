@@ -4,7 +4,7 @@
 import { ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useGetAccountByAddress, useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { useFetchChainInfo, useGetAccountByAddress, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -25,10 +25,12 @@ type Props = ThemeProps & {
 };
 
 const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
+const TON_WALLET_CONTRACT_TYPES_URL = 'https://docs.ton.org/participate/wallets/contracts#how-can-wallets-be-different';
 
 const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }: Props) => {
   const { t } = useTranslation();
   const notification = useNotification();
+  const chainInfo = useFetchChainInfo(chainSlug);
   const [tonWalletContractVersionData, setTonWalletContractVersionData] = useState<ResponseGetAllTonWalletContractVersion | null>(null);
   const accountInfo = useGetAccountByAddress(address);
   const [selectedContractVersion, setSelectedContractVersion] = useState<TonWalletContractVersion | undefined>(
@@ -40,7 +42,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
     let sync = true;
 
     if (accountInfo?.address) {
-      tonGetAllWalletContractVersion({ address: accountInfo.address }).then((result) => {
+      tonGetAllWalletContractVersion({ address: accountInfo.address, isTestnet: chainInfo?.isTestnet }).then((result) => {
         if (sync) {
           setTonWalletContractVersionData(result);
         }
@@ -55,7 +57,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
     return () => {
       sync = false;
     };
-  }, [accountInfo?.address, notification]);
+  }, [accountInfo?.address, chainInfo?.isTestnet, notification]);
 
   const renderEmpty = useCallback(() => {
     return <GeneralEmptyList />;
@@ -153,11 +155,18 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
       }
       id={tonWalletContractSelectorModalId}
       onCancel={onCancel}
-      title={t<string>('Change wallet address & version')}
+      title={t<string>('Wallet address & version')}
     >
       <div>
         <div className={'sub-title'}>
-          {t('TON wallets have multiple versions, each with its own wallet address and balance. Change versions if you don\'t see balances')}
+          {t('TON wallets have ')}
+          <a
+            href={TON_WALLET_CONTRACT_TYPES_URL}
+            rel='noreferrer'
+            style={{ textDecoration: 'underline' }}
+            target={'_blank'}
+          >multiple versions</a>
+          {t(', each with its own wallet address and balance. Select a version with the address you want to get')}
         </div>
         <SwList
           actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
