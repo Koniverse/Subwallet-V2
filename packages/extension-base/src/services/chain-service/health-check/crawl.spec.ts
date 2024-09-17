@@ -193,7 +193,9 @@ describe('test chain', () => {
           })
           return entry;
         }
-        else {return}
+        else {
+          return;
+        }
       })
       console.dir(assets, {'maxArrayLength': null});
 
