@@ -11,7 +11,7 @@ import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } f
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { BehaviorSubject, combineLatest, takeWhile } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, takeUntil, timer } from 'rxjs';
 
 interface ExistsAccount {
   address: string;
@@ -66,6 +66,7 @@ export class AccountState {
     const modifyPairs = this._modifyPair.observable;
     const accountGroups = this._accountProxy.observable;
     const chainInfoMap = this.koniState.chainService.subscribeChainInfoMap().asObservable();
+    let fireOnFirst = true;
 
     pairs.subscribe((subjectInfo) => {
       // Check if accounts changed
@@ -94,7 +95,9 @@ export class AccountState {
     });
 
     this.accountSubject.pipe(
-      takeWhile((value) => Object.values(value).length === 0, true))
+      filter((map) => Object.values(map).length > 0 && !fireOnFirst),
+      takeUntil(timer(10000))
+    )
       .subscribe((accountProxyMap) => {
         const transformedAccounts = Object.values(accountProxyMap);
         const storedAccountProxyBefore = this._accountProxy.value;
@@ -128,8 +131,6 @@ export class AccountState {
           }
         }
       });
-
-    let fireOnFirst = true;
 
     combineLatest([pairs, modifyPairs, accountGroups, chainInfoMap]).subscribe(([pairs, modifyPairs, accountGroups, chainInfoMap]) => {
       addLazy('combineAccounts', () => {
