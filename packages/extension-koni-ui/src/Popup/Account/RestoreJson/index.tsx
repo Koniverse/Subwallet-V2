@@ -80,7 +80,9 @@ const getDuplicateAccountNames = (accounts: AccountProxyExtra_[], accountsSelect
     if (!accountsSelected || accountsSelected.includes(account.id)) {
       const count = accountNameMap.get(account.name) || 0;
 
-      accountNameMap.set(account.name, count + 1);
+      if (!account.isExistAccount) {
+        accountNameMap.set(account.name, count + 1);
+      }
     }
   });
 

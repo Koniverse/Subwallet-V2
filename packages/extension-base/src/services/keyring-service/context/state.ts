@@ -11,7 +11,7 @@ import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } f
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { BehaviorSubject, combineLatest, filter, takeUntil, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, first } from 'rxjs';
 
 interface ExistsAccount {
   address: string;
@@ -94,9 +94,23 @@ export class AccountState {
       this.beforeAccount = { ...subjectInfo };
     });
 
+    // This Subscribes function is used to check which accounts have duplicate names and will proceed to migrate by appending a random string.
+    // This function will filter values that meet the condition to ensure that the number of `accountProxy` matches the number stored in the store,
+    // and then emit only once.
     this.accountSubject.pipe(
-      filter((map) => Object.values(map).length > 0 && !fireOnFirst),
-      takeUntil(timer(10000))
+      filter((accountMap) => {
+        const accountProxyCount = Object.values(accountMap).map(({ accounts }) => accounts).flat().length;
+
+        if (accountProxyCount > 0) {
+          const addressCount = Object.keys(this.pairSubject.value).length;
+
+          return addressCount === accountProxyCount;
+        }
+
+        return false;
+      }),
+
+      first()
     )
       .subscribe((accountProxyMap) => {
         const transformedAccounts = Object.values(accountProxyMap);
