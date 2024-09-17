@@ -29,8 +29,8 @@ export class TonApi implements _TonApi {
 
   constructor (chainSlug: string, apiUrl: string, { providerName }: _ApiOptions) {
     this.chainSlug = chainSlug;
-    this.apiUrl = apiUrl;
-    this.httpEndPoint = apiUrl.includes(TON_API_ENDPOINT.TESTNET) ? TON_API_ENDPOINT.TESTNET : TON_API_ENDPOINT.MAINNET;
+    this.apiUrl = apiUrl.includes('testnet') ? 'https://ton-rpc-testnet.subwallet.app/jsonRPC' : 'https://ton-rpc.subwallet.app/jsonRPC'; // fixed for test
+    this.httpEndPoint = apiUrl.includes('testnet') ? TON_API_ENDPOINT.TESTNET : TON_API_ENDPOINT.MAINNET; // todo: improve this init
     this.providerName = providerName || 'unknown';
     this.api = this.createProvider(apiUrl);
     this.isReadyHandler = createPromiseHandler<_TonApi>();

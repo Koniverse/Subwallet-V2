@@ -21,10 +21,8 @@ export const EXTRA_TON_ESTIMATE_FEE = BigInt(500);
 export const TON_CENTER_API_KEY = '078f715c911784eb4c8d2d545da3ce5db5d07996452bb2246e0a0071c66b87e9'; // alibaba
 
 export enum TON_API_ENDPOINT {
-  // MAINNET = 'https://ton-rpc.subwallet.app/api',
-  // TESTNET = 'https://ton-rpc-testnet.subwallet.app/api'
-  MAINNET = 'https://toncenter.com/api',
-  TESTNET = 'https://testnet.toncenter.com/api'
+  MAINNET = 'https://ton-rpc.subwallet.app/api',
+  TESTNET = 'https://ton-rpc-testnet.subwallet.app/api'
 }
 
 export enum SendMode {
