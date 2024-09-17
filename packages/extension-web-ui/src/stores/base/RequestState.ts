@@ -21,10 +21,10 @@ const initialState: RequestState = {
   // Type of confirmation requets
   addNetworkRequest: {},
   addTokenRequest: {},
-  switchNetworkRequest: {},
   evmSignatureRequest: {},
   evmSendTransactionRequest: {},
   evmWatchTransactionRequest: {},
+  errorConnectNetwork: {},
 
   // Summary Info
   reduxStatus: ReduxStatus.INIT,
@@ -39,7 +39,6 @@ export const CONFIRMATIONS_FIELDS: Array<keyof RequestState> = [
   'signingRequest',
   'addNetworkRequest',
   'addTokenRequest',
-  'switchNetworkRequest',
   'evmSignatureRequest',
   'evmSendTransactionRequest',
   'evmWatchTransactionRequest',

@@ -4,7 +4,7 @@
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { AssetSetting, ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson } from '@subwallet/extension-base/background/types';
-import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
+import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getContractAddressOfToken, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
@@ -17,7 +17,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, findNetworkJsonByGenesisHash, formatBalance, isAccountAll, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, findNetworkJsonByGenesisHash, formatBalance, isAccountAll, ledgerMustCheckNetwork, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -237,7 +237,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const assetInfo = useFetchChainAssetInfo(asset);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStatusMap } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const { assetRegistry, assetSettingMap, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
@@ -372,16 +372,21 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     if (account?.isHardware) {
       const destChainInfo = chainInfoMap[destChain];
       const availableGen: string[] = account.availableGenesisHashes || [];
+      const destChainName = destChainInfo?.name || 'Unknown';
 
       if (!account.isGeneric && !availableGen.includes(destChainInfo?.substrateInfo?.genesisHash || '')) {
-        const destChainName = destChainInfo?.name || 'Unknown';
-
         return Promise.reject(t('Wrong network. Your Ledger account is not supported by {{network}}. Please choose another receiving account and try again.', { replace: { network: destChainName } }));
+      }
+
+      const ledgerCheck = ledgerMustCheckNetwork(account);
+
+      if (ledgerCheck !== 'unnecessary' && !ledgerGenericAllowNetworks.includes(destChainInfo.slug)) {
+        return Promise.reject(t('Ledger {{ledgerApp}} address is not supported for this transfer', { replace: { ledgerApp: ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration' } }));
       }
     }
 
     return Promise.resolve();
-  }, [accounts, chainInfoMap, form, t]);
+  }, [accounts, chainInfoMap, form, t, ledgerGenericAllowNetworks]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
@@ -486,16 +491,6 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
             return true;
           }
         }
-      }
-    } else {
-      if (isLedger) {
-        setLoading(false);
-        notification({
-          message: t('This feature is not available for Ledger account'),
-          type: 'warning'
-        });
-
-        return true;
       }
     }
 
@@ -623,12 +618,14 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     if (chain !== destChain) {
       const originChainInfo = chainInfoMap[chain];
       const destChainInfo = chainInfoMap[destChain];
+      const assetSlug = values.asset;
+      const isMythosFromHydrationToMythos = _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
 
-      if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
+      if (_isXcmTransferUnstable(originChainInfo, destChainInfo, assetSlug)) {
         openAlert({
           type: NotificationType.WARNING,
-          content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo)),
-          title: t('Pay attention!'),
+          content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo, assetSlug)),
+          title: isMythosFromHydrationToMythos ? t('High fee alert!') : t('Pay attention!'),
           okButton: {
             text: t('Continue'),
             onClick: () => {
@@ -696,8 +693,8 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
       if (!asset) {
         const account = findAccountByAddress(accounts, from);
 
-        if (account?.originGenesisHash) {
-          const network = findNetworkJsonByGenesisHash(chainInfoMap, account.originGenesisHash);
+        if (account?.genesisHash) {
+          const network = findNetworkJsonByGenesisHash(chainInfoMap, account.genesisHash);
 
           if (network) {
             const token = tokenItems.find((item) => item.originChain === network.slug);
@@ -888,6 +885,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           >
             <AmountInput
               decimals={decimals}
+              disabled={decimals === 0}
               forceUpdateMaxValue={forceUpdateMaxValue}
               maxValue={maxTransfer}
               onSetMax={onSetMaxTransferable}

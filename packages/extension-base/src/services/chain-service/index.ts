@@ -42,7 +42,13 @@ const ignoredList = [
   'rollux_evm',
   'rollux_testnet',
   'boolAlpha',
-  'boolBeta_testnet'
+  'boolBeta_testnet',
+  'core',
+  'satoshivm',
+  'satoshivm_testnet',
+  'ton',
+  'ton_testnet',
+  'storyPartner_testnet'
 ];
 
 const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
@@ -101,6 +107,7 @@ export class ChainService {
   private swapRefMapSubject = new Subject<Record<string, _AssetRef>>();
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
+  private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
   private assetMapPatch: string = JSON.stringify({});
   private assetLogoPatch: string = JSON.stringify({});
 
@@ -129,6 +136,26 @@ export class ChainService {
     this.evmChainHandler = new EvmChainHandler(this);
 
     this.logger = createLogger('chain-service');
+  }
+
+  public get value () {
+    const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+
+    return {
+      get ledgerGenericAllowChains () {
+        return ledgerGenericAllowChains.value;
+      }
+    };
+  }
+
+  public get observable () {
+    const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+
+    return {
+      get ledgerGenericAllowChains () {
+        return ledgerGenericAllowChains.asObservable();
+      }
+    };
   }
 
   public subscribeSwapRefMap () {
@@ -324,7 +351,7 @@ export class ChainService {
   }
 
   public getSupportedSmartContractTypes () {
-    return [_AssetType.ERC20, _AssetType.ERC721, _AssetType.PSP22, _AssetType.PSP34, _AssetType.GRC20, _AssetType.GRC721];
+    return [_AssetType.ERC20, _AssetType.ERC721, _AssetType.PSP22, _AssetType.PSP34, _AssetType.GRC20, _AssetType.GRC721, _AssetType.VFT];
   }
 
   public getActiveChainInfoMap () {
@@ -781,6 +808,12 @@ export class ChainService {
     }
   }
 
+  handleLatestLedgerGenericAllowChains (latestledgerGenericAllowChains: string[]) {
+    this.ledgerGenericAllowChainsSubject.next(latestledgerGenericAllowChains);
+    this.eventService.emit('ledger.ready', true);
+    this.logger.log('Finished updating latest ledger generic allow chains');
+  }
+
   handleLatestData () {
     this.fetchLatestAssetData().then(([latestAssetInfo, latestAssetLogoMap]) => {
       this.eventService.waitAssetReady
@@ -801,6 +834,12 @@ export class ChainService {
     this.fetchLatestPriceIdsData().then((latestPriceIds) => {
       this.handleLatestPriceId(latestPriceIds);
     }).catch(console.error);
+
+    this.fetchLatestLedgerGenericAllowChains()
+      .then((latestledgerGenericAllowChains) => {
+        this.handleLatestLedgerGenericAllowChains(latestledgerGenericAllowChains);
+      })
+      .catch(console.error);
   }
 
   private async initApis () {
@@ -1097,6 +1136,10 @@ export class ChainService {
     return await Promise.all([fetchStaticData<string[]>('chain-assets/disabled-xcm-channels'), fetchPatchData<Record<string, _AssetRef>>('AssetRef.json')]);
   }
 
+  private async fetchLatestLedgerGenericAllowChains () {
+    return await fetchStaticData<string[]>('chains/ledger-generic-allow-chains') || [];
+  }
+
   private async initChains () {
     const storedChainSettings = await this.dbService.getAllChainStore();
     const defaultChainInfoMap = filterChainInfoMap(ChainInfoMap, ignoredList);
@@ -1225,6 +1268,7 @@ export class ChainService {
               evmInfo: storedChainInfo.evmInfo,
               substrateInfo: storedChainInfo.substrateInfo,
               bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
+              tonInfo: storedChainInfo.tonInfo ?? null,
               isTestnet: storedChainInfo.isTestnet,
               chainStatus: storedChainInfo.chainStatus,
               icon: storedChainInfo.icon,
@@ -1470,6 +1514,7 @@ export class ChainService {
       substrateInfo,
       evmInfo,
       bitcoinInfo: null,
+      tonInfo: null,
       isTestnet: false,
       chainStatus: _ChainStatus.ACTIVE,
       icon: '', // Todo: Allow update with custom chain,
@@ -1733,7 +1778,7 @@ export class ChainService {
   private async getSmartContractTokenInfo (contractAddress: string, tokenType: _AssetType, originChain: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     if ([_AssetType.ERC721, _AssetType.ERC20].includes(tokenType)) {
       return await this.evmChainHandler.getEvmContractTokenInfo(contractAddress, tokenType, originChain);
-    } else if ([_AssetType.PSP34, _AssetType.PSP22, _AssetType.GRC20].includes(tokenType)) {
+    } else if ([_AssetType.PSP34, _AssetType.PSP22, _AssetType.GRC20, _AssetType.VFT].includes(tokenType)) {
       return await this.substrateChainHandler.getSubstrateContractTokenInfo(contractAddress, tokenType, originChain, contractCaller);
     }
 

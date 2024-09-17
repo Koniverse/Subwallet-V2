@@ -47,7 +47,7 @@ const filterAccount = (
       return false;
     }
 
-    if (account.originGenesisHash && _getSubstrateGenesisHash(chain) !== account.originGenesisHash) {
+    if (account.genesisHash && _getSubstrateGenesisHash(chain) !== account.genesisHash) {
       return false;
     }
 
@@ -99,6 +99,7 @@ const Component = () => {
   const poolInfo = useMemo(() => poolInfoMap[slug], [poolInfoMap, slug]);
   const poolType = poolInfo.type;
   const poolChain = poolInfo.chain;
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const { list: allPositions } = useYieldPositionDetail(slug);
   const { decimals, symbol } = useGetNativeTokenBasicInfo(chainValue);
@@ -200,6 +201,7 @@ const Component = () => {
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
+              addressPrefix={networkPrefix}
             />
           </Form.Item>
           <FreeBalance

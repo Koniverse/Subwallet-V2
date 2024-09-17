@@ -190,18 +190,17 @@ export function calculateChainStakedReturn (inflation: number, totalEraStake: BN
   return stakedReturn;
 }
 
-export function calculateChainStakedReturnV2 (chainInfo: _ChainInfo, totalIssuance: string, erasPerDay: number, lastTotalStaked: string, validatorEraReward: BigNumber, isCompound?: boolean) {
+export function calculateChainStakedReturnV2 (chainInfo: _ChainInfo, totalIssuance: string, erasPerDay: number, lastTotalStaked: string, validatorEraReward: BigNumber, inflation: BigNumber, isCompound?: boolean) {
   const DAYS_PER_YEAR = 365;
-  // @ts-ignore
-  const DECIMAL = chainInfo.substrateInfo.decimals;
+  const { decimals } = _getChainNativeTokenBasicInfo(chainInfo);
 
-  const lastTotalStakedUnit = (new BigNumber(lastTotalStaked)).dividedBy(new BigNumber(10 ** DECIMAL));
-  const totalIssuanceUnit = (new BigNumber(totalIssuance)).dividedBy(new BigNumber(10 ** DECIMAL));
+  const lastTotalStakedUnit = (new BigNumber(lastTotalStaked)).dividedBy(new BigNumber(10 ** decimals));
+  const totalIssuanceUnit = (new BigNumber(totalIssuance)).dividedBy(new BigNumber(10 ** decimals));
   const supplyStaked = lastTotalStakedUnit.dividedBy(totalIssuanceUnit);
 
   const dayRewardRate = validatorEraReward.multipliedBy(erasPerDay).dividedBy(totalIssuance).multipliedBy(100);
 
-  let inflationToStakers: BigNumber = new BigNumber(0);
+  let inflationToStakers: BigNumber;
 
   if (!isCompound) {
     inflationToStakers = dayRewardRate.multipliedBy(DAYS_PER_YEAR);
@@ -211,7 +210,7 @@ export function calculateChainStakedReturnV2 (chainInfo: _ChainInfo, totalIssuan
     inflationToStakers = new BigNumber(100).multipliedBy(multiplier).minus(100);
   }
 
-  const averageRewardRate = inflationToStakers.dividedBy(supplyStaked);
+  const averageRewardRate = (['avail_mainnet', 'dentnet'].includes(chainInfo.slug) ? inflation : inflationToStakers).dividedBy(supplyStaked);
 
   return averageRewardRate.toNumber();
 }
@@ -232,7 +231,7 @@ export function calculateTernoaValidatorReturn (rewardPerValidator: number, vali
 export function calculateValidatorStakedReturn (chainStakedReturn: number, totalValidatorStake: BN, avgStake: BN, commission: number) {
   const bnAdjusted = avgStake.mul(BN_HUNDRED).div(totalValidatorStake);
   const adjusted = bnAdjusted.toNumber() * chainStakedReturn;
-
+  // todo: should calculated in bignumber instead number?
   const stakedReturn = (adjusted > Number.MAX_SAFE_INTEGER ? Number.MAX_SAFE_INTEGER : adjusted) / 100;
 
   return stakedReturn * (100 - commission) / 100; // Deduct commission
@@ -569,7 +568,7 @@ export function getAvgValidatorEraReward (supportedDays: number, eraRewardHistor
 }
 
 export function getSupportedDaysByHistoryDepth (erasPerDay: number, maxSupportedEras: number, liveDay?: number) {
-  const maxSupportDay = maxSupportedEras / erasPerDay;
+  const maxSupportDay = Math.floor(maxSupportedEras / erasPerDay);
 
   if (liveDay && liveDay <= 30) {
     return Math.min(liveDay - 1, maxSupportDay);
@@ -639,6 +638,25 @@ export function getRelayBlockedValidatorList (validators: any[]) {
   }
 
   return blockValidatorList;
+}
+
+export function getRelayWaitingValidatorList (validators: any[]) {
+  const waitingValidators: string[] = [];
+
+  for (const validator of validators) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    const validatorAddress = validator[0].toHuman()[0] as string;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    const validatorPrefs = validator[1].toHuman() as unknown as PalletStakingValidatorPrefs;
+
+    const isBlocked = validatorPrefs.blocked;
+
+    if (!isBlocked) {
+      waitingValidators.push(validatorAddress);
+    }
+  }
+
+  return waitingValidators;
 }
 
 export function getRelayEraRewardMap (eraRewardPointArray: Codec[], startEraForPoints: number) {

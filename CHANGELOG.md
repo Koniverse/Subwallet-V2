@@ -1,5 +1,170 @@
 # CHANGELOG
 
+## 1.2.28
+Build date: Sep 04, 2024.
+
+Features & Update:
+- Format error when connecting to dApp (#3445)
+- Update connector version (#3363)
+- Update substrate dApp connect interface to allow dApp connect with EVM account (#3401)
+- Improve Amount input field (#1905)
+- Improve fetching era stakers (#3467)
+- Add warning in case user earn for both nomination pool and direct (#3477)
+- Add Notice of need to unstake for users who are simultaneously staking for both Direct and Nomination Pool (#3484)
+- Improve condition for Marketing campaign (#3468)
+- Update chain-list (#3518)
+  - Add support for Polygon zkEVM
+  - Add support for Immutable zkEVM
+  - Add support for Story Public Testnet
+  - Add support for Soneium Testnet
+  - Update logo for some chains, tokens
+
+Bugs fixed:
+- Fix UI bug on the Transfer screen (#3452)
+- Fix bug XCM (#3519)
+
+
+## 1.2.27
+Build date: Aug 22, 2024.
+
+Features & Update:
+- Update balance calculation for DeepBrainChain (#3481)
+- Update chain-list (#3478)
+  - Add support for 5ireChain mainnet
+  - Update decimals for Litmus, Litentry
+  - Update ED for some token: USDT, USDC (PAH), LIT (Litmus), LIT (Litentry), WUD (Hydration)
+
+
+## 1.2.26
+Build date: Aug 19, 2024.
+
+Bugs fixed:
+- Update earning feature with cache from middleware service
+
+## 1.2.25
+Build date: Aug 17, 2024.
+
+Features & Update:
+- Update balance calculation for nomination pool runtime update (#3443)
+- Do not allow send to empty account (Native token balance = 0) (#2783)
+- Add validate for Solochain when receive, transfer with Generic ledger account (#3464)
+- Update chainlist (#3451)
+  - Add support for Blast Mainnet
+  - Add in-app staking support for DENTX
+
+Bugs fixed:
+- Fix Input overflow width issue (#3441)
+- Fix bug Do not show Signature popup in case not enough balance to cover gas fee (#2501)
+
+
+## 1.2.24
+Build date: Aug 09, 2024.
+
+Features & Update:
+- Allow to use Migration Polkadot App to attach Ledger account (#3307, #3402)
+- Hide direct api usage of polkadot/js (#3308)
+- Improve performance upon showing Marketing Campaign (#3414)
+- Update chainlist (#3425)
+  - Add support for Pendulum assets (ASTR, vDOT, BNC)
+  - Add support for Exosama network
+
+
+## 1.2.23
+Build date: Aug 03, 2024.
+
+Features & Update:
+- Update chain-list (#3403)
+  - Add support for ROUTE token
+  - Add support for Aleph Zero EVM (mainnet)
+  - Update price-id for AZERO EVM
+
+
+## 1.2.22
+Build date: Jul 31, 2024.
+
+Features & Update:
+- Update chain-list (#3385)
+- Integrate Avail Ledger app (#2982)
+
+Bugs fixed:
+- Fix bug Show incorrect withdrawal information of the Bifrost liquid staking when all accounts mode (#3327)
+- Fix bug do not show root screen after remove account (#3148)
+- Fix bug Show blank screen when attach account (#3054)
+
+
+## 1.2.21
+Build date: Jul 24, 2024.
+
+Bugs fixed:
+Fix a few bugs for Avail (#3378)
+  - Add AVAIL token on Ethereum
+  - Integrate Avail OG NFT
+  - Setup default nomination pool online
+  - Update Avail staking APY
+  - Fix bug when click "View details" on the Sign transaction from dApp
+
+## 1.2.20
+Build date: Jul 24, 2024.
+
+Features & Update:
+- Update chain-list for Avail
+
+
+## 1.2.19
+Build date: Jul 23, 2024.
+
+Features & Update:
+- Update chain-list for Avail
+
+## 1.2.18
+Build date: Jul 23, 2024.
+
+Features & Update:
+- Update chain-list for Avail (#3369)
+
+## 1.2.17
+Build date: Jul 22, 2024.
+
+Features & Update:
+- Set default pool and default validator for Avail (#3365)
+
+
+## 1.2.16
+Build date: Jul 19, 2024.
+
+Features & Update:
+- Move step shorten metadata and calculate metadataHash to client (#3305)
+- Add support Ledger for Polkadex (#3231)
+- Improve the staking reward information retrieval (#3326)
+- Update Vara token sdk version (#3270)
+- Update chain-list
+  - Remove Avail Goldberg testnet
+  - Add support for Aleph Zero EVM testnet
+  - Add support for Cere Network
+  - Add KOL / Kolkadot on PAH, Hydration
+
+Bugs fixed:
+- Fix bug connecting to uquid dapp with Wallet Connect (#3275)
+
+
+## 1.2.15
+Build date: Jul 12, 2024.
+
+Features & Update:
+- Update chain-list
+  - Add support for Aura Network
+  - Update SQD token logo
+  - Support Decoded collection from Unique
+  - Add multi-chain asset for some token
+- Update chain-list health-check and report RPC connect status (#3243)
+- Update fallback API for SubWallet API (Price, Exchange rate) (#3183)
+- Add validate account in case sign transaction with Ledger account (#3263)
+
+Bugs fixed:
+- Fix bug calculating balance for relaychain (#3312)
+- Fix bug show withdraw information for the Acala liquid staking (#2965)
+
+
 ## 1.2.14
 Build date: Jul 09, 2024.
 

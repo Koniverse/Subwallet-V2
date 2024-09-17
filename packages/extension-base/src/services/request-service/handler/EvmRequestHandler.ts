@@ -26,10 +26,10 @@ export default class EvmRequestHandler {
   private readonly confirmationsQueueSubject = new BehaviorSubject<ConfirmationsQueue>({
     addNetworkRequest: {},
     addTokenRequest: {},
-    switchNetworkRequest: {},
     evmSignatureRequest: {},
     evmSendTransactionRequest: {},
-    evmWatchTransactionRequest: {}
+    evmWatchTransactionRequest: {},
+    errorConnectNetwork: {}
   });
 
   private readonly confirmationsPromiseMap: Record<string, { resolver: Resolver<any>, validator?: (rs: any) => Error | undefined }> = {};

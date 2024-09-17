@@ -10,6 +10,7 @@ export const ACALA_REFRESH_CROWDLOAN_INTERVAL = 300000;
 export const ASTAR_REFRESH_BALANCE_INTERVAL = 60000;
 export const SUB_TOKEN_REFRESH_BALANCE_INTERVAL = 60000;
 export const CRON_REFRESH_NFT_INTERVAL = 7200000;
+export const CRON_REFRESH_MKT_CAMPAIGN_INTERVAL = 15 * BASE_MINUTE_INTERVAL;
 export const CRON_REFRESH_STAKING_REWARD_INTERVAL = 900000;
 export const CRON_REFRESH_STAKING_REWARD_FAST_INTERVAL = 90000;
 export const CRON_REFRESH_HISTORY_INTERVAL = 900000;
@@ -36,6 +37,8 @@ export const NETWORK_MULTI_GAS_FEE = ['*'];
 
 export const ORDINAL_COLLECTION = '__Ordinal__';
 export const ORDINAL_METHODS = ['drc-20', 'pol-20'];
+
+export const PERMISSIONS_TO_REVOKE = ['eth_accounts'];
 
 export * from './staking';
 export * from './storage';

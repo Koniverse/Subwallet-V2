@@ -20,7 +20,8 @@ import { GeneralEmptyList } from '../EmptyList';
 
 interface Props extends ThemeProps, BasicInputWrapper {
   nominators: NominationInfo[];
-  chain: string
+  chain: string,
+  networkPrefix?: number
 }
 
 const renderEmpty = () => <GeneralEmptyList />;
@@ -34,7 +35,7 @@ const renderItem = (item: NominationInfo, isSelected: boolean) => (
 
 // todo: update filter for this component, after updating filter for SelectModal
 const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
-  const { chain = '', className, defaultValue, disabled, id = 'nomination-selector', label, nominators, placeholder, statusHelp, value } = props;
+  const { chain = '', className, defaultValue, disabled, id = 'nomination-selector', label, networkPrefix, nominators, placeholder, statusHelp, value } = props;
 
   const filteredItems = useMemo(() => {
     return nominators.filter((item) => new BigN(item.activeStake).gt(0));
@@ -101,6 +102,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
         placeholder={placeholder || label}
         prefix={
           <Avatar
+            identPrefix={networkPrefix}
             size={20}
             value={value}
           />
