@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getDerivePath } from '@subwallet/keyring';
-import { EthereumKeypairTypes, KeypairType, KeyringPair, SubstrateKeypairTypes } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeypairType, KeyringPair, SubstrateKeypairTypes, TonWalletContractVersion } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
@@ -111,8 +111,13 @@ export const derivePair = (parentPair: KeyringPair, name: string, deriveIndex: n
   const meta = {
     name,
     parentAddress: parentPair.address,
-    suri: suri
+    suri: suri,
+    tonContractVersion: undefined as unknown as TonWalletContractVersion
   };
+
+  if (isTon && parentPair.ton?.contractVersion) {
+    meta.tonContractVersion = parentPair.ton.contractVersion;
+  }
 
   return isEvm
     ? parentPair.evm.derive(_deriveIndex, meta)

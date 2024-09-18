@@ -3,9 +3,8 @@
 
 import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
-import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
-import { AccountSignMode } from '@subwallet/extension-base/types';
+import { AccountActions } from '@subwallet/extension-base/types';
 import { CloseIcon, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_QR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useFetchChainInfo, useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
@@ -58,8 +57,8 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
   }, [scanExplorerAddressUrl]);
 
   const isRelatedToTon = useMemo(() => {
-    return TON_CHAINS.includes(chainSlug) && (accountInfo?.signMode !== AccountSignMode.READ_ONLY);
-  }, [accountInfo, chainSlug]);
+    return accountInfo?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+  }, [accountInfo]);
 
   const onChangeTonWalletContact = useCallback(() => {
     activeModal(tonWalletContractSelectorModalId);

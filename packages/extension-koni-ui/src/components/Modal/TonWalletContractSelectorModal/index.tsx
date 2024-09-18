@@ -73,10 +73,6 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
     return Object.entries(addressMap).map(([version, address]) => {
       const validVersion = version as TonWalletContractVersion;
 
-      if (!selectedContractVersion && (accountInfo?.address === address)) {
-        setSelectedContractVersion(validVersion);
-      }
-
       return {
         version: validVersion,
         address,
@@ -84,7 +80,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
         chainSlug
       };
     });
-  }, [tonWalletContractVersionData?.addressMap, selectedContractVersion, accountInfo?.address, chainSlug]);
+  }, [tonWalletContractVersionData?.addressMap, selectedContractVersion, chainSlug]);
 
   const onClickItem = useCallback((version: TonWalletContractVersion) => {
     return () => {
