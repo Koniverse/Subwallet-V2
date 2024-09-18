@@ -8,11 +8,8 @@ import { AccountJson } from '@subwallet/extension-base/types';
 import { isSameAddress, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { chainsToWalletConnectChainInfos, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { isSubstrateAddress } from '@subwallet/keyring';
 import { ProposalTypes } from '@walletconnect/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { useSelector } from '../common';
 
@@ -98,10 +95,10 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
     Object.keys(params.requiredNamespaces || {}).forEach((namespace) => {
       if (WALLET_CONNECT_SUPPORT_NAMESPACES.includes(namespace)) {
         const available = noAllAccount.some((acc) => {
-          if (namespace === WALLET_CONNECT_EIP155_NAMESPACE) {
-            return isEthereumAddress(acc.address);
-          } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE) {
-            return isSubstrateAddress(acc.address);
+          if (namespace === WALLET_CONNECT_EIP155_NAMESPACE && acc.chainType === 'ethereum') {
+            return true;
+          } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE && acc.chainType === 'substrate') {
+            return true;
           }
 
           return false;
@@ -205,10 +202,10 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
             appliedAccounts: selectReplace ? [] : oldState[namespace]?.appliedAccounts || [],
             availableAccounts: noAllAccount
               .filter((acc) => {
-                if (namespace === WALLET_CONNECT_EIP155_NAMESPACE) {
-                  return isEthereumAddress(acc.address);
-                } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE) {
-                  return isSubstrateAddress(acc.address);
+                if (namespace === WALLET_CONNECT_EIP155_NAMESPACE && acc.chainType === 'ethereum') {
+                  return true;
+                } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE && acc.chainType === 'substrate') {
+                  return true;
                 }
 
                 return false;

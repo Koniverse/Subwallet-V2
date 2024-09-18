@@ -3,7 +3,7 @@
 
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
-import AccountItemWithName from '@subwallet/extension-koni-ui/components/Account/Item/AccountItemWithName';
+import { AccountItemWithProxyAvatar } from "@subwallet/extension-koni-ui/components";
 import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Confirmation/ConfirmationGeneralInfo';
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -282,10 +282,9 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
               const isCurrent = account.address === currentAccount?.address;
 
               return (
-                <AccountItemWithName
+                <AccountItemWithProxyAvatar
+                  account={account}
                   accountName={account.name}
-                  address={account.address}
-                  avatarSize={24}
                   className={CN({
                     '-is-current': isCurrent
                   })}

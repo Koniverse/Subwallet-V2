@@ -4,14 +4,13 @@
 import { AccountAuthType, AuthorizeRequest } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_AUTH_TYPES, ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { AccountItemWithName, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, AccountProxySelectorAllItem, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE, TON_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { useSetSelectedAccountTypes } from '@subwallet/extension-koni-ui/hooks';
 import { approveAuthRequestV2, cancelAuthRequestV2, rejectAuthRequestV2 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll, isNoAccount } from '@subwallet/extension-koni-ui/utils';
-import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -21,8 +20,6 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface Props extends ThemeProps {
   request: AuthorizeRequest
@@ -44,12 +41,12 @@ export const filterAuthorizeAccounts = (accounts: AccountJson[], accountAuthType
   // rs = rs.filter((acc) => acc.isReadOnly !== true);
 
   const rs = accountAuthTypes.reduce<AccountJson[]>((list, accountAuthType) => {
-    if (accountAuthType === 'evm') {
-      accounts.forEach((account) => isEthereumAddress(account.address) && list.push(account));
-    } else if (accountAuthType === 'substrate') {
-      accounts.forEach((account) => isSubstrateAddress(account.address) && list.push(account));
+    if (accountAuthType === 'substrate') {
+      list.push(...accounts.filter((acc) => acc.chainType === 'substrate'));
+    } else if (accountAuthType === 'evm') {
+      list.push(...accounts.filter((acc) => acc.chainType === 'ethereum'));
     } else if (accountAuthType === 'ton') {
-      accounts.forEach((account) => isTonAddress(account.address) && list.push(account));
+      list.push(...accounts.filter((acc) => acc.chainType === 'ton'));
     }
 
     return list;
@@ -66,7 +63,7 @@ function Component ({ className, request }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const { accountAuthTypes, allowedAccounts } = request.request;
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
+  const { accounts } = useSelector((state: RootState) => state.accountState);
   const navigate = useNavigate();
 
   // todo: deprecated, recheck usage
@@ -228,23 +225,18 @@ function Component ({ className, request }: Props) {
               {
                 visibleAccounts.length > 1 &&
                   (
-                    <AccountItemWithName
-                      accountName={'All account'}
-                      accounts={visibleAccounts}
-                      address={ALL_ACCOUNT_KEY}
-                      avatarSize={24}
+                    <AccountProxySelectorAllItem
+                      className={'all-account-selection'}
                       isSelected={selectedMap[ALL_ACCOUNT_KEY]}
                       onClick={onAccountSelect(ALL_ACCOUNT_KEY)}
-                      showUnselectIcon
+                      showUnSelectedIcon
                     />
                   )
               }
               {visibleAccounts.map((item) => (
-                <AccountItemWithName
+                <AccountItemWithProxyAvatar
+                  account={item}
                   accountName={item.name}
-                  address={item.address}
-                  avatarSize={24}
-                  genesisHash={item.genesisHash}
                   isSelected={selectedMap[item.address]}
                   key={item.address}
                   onClick={onAccountSelect(item.address)}
@@ -341,6 +333,13 @@ const AuthorizeConfirmation = styled(Component)<Props>(({ theme: { token } }: Th
     display: 'flex',
     flexDirection: 'column',
     gap: token.sizeXS
+  },
+
+  '.all-account-selection': {
+    '.__middle-part': {
+      textAlign: 'start',
+      fontSize: token.fontSize
+    }
   }
 }));
 

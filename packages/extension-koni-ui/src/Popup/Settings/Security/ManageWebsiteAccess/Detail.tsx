@@ -3,7 +3,7 @@
 
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { AccountItemWithName, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ActionItemType, ActionModal } from '@subwallet/extension-koni-ui/components/Modal/ActionModal';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { changeAuthorization, changeAuthorizationPerAccount, forgetSite, toggleAuthorization } from '@subwallet/extension-koni-ui/messaging';
@@ -11,7 +11,6 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updateAuthUrls } from '@subwallet/extension-koni-ui/stores/utils';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { ManageWebsiteAccessDetailParam } from '@subwallet/extension-koni-ui/types/navigation';
-import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { Icon, ModalContext, Switch, SwList } from '@subwallet/react-ui';
 import { GearSix, MagnifyingGlass, Plugs, PlugsConnected, ShieldCheck, ShieldSlash, X } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -19,8 +18,6 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps & ManageWebsiteAccessDetailParam & {
   authInfo: AuthUrlInfo;
@@ -43,11 +40,11 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
 
     return accountAuthTypes.reduce<AccountJson[]>((list, accountAuthType) => {
       if (accountAuthType === 'evm') {
-        accountListWithoutAll.forEach((account) => isEthereumAddress(account.address) && list.push(account));
+        accountListWithoutAll.forEach((account) => account.chainType === 'ethereum' && list.push(account));
       } else if (accountAuthType === 'substrate') {
-        accountListWithoutAll.forEach((account) => isSubstrateAddress(account.address) && list.push(account));
+        accountListWithoutAll.forEach((account) => account.chainType === 'substrate' && list.push(account));
       } else if (accountAuthType === 'ton') {
-        accountListWithoutAll.forEach((account) => isTonAddress(account.address) && list.push(account));
+        accountListWithoutAll.forEach((account) => account.chainType === 'ton' && list.push(account));
       }
 
       return list;
@@ -144,12 +141,11 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
     };
 
     return (
-      <AccountItemWithName
+      <AccountItemWithProxyAvatar
+        account={item}
         accountName={item.name}
-        address={item.address}
-        avatarSize={token.sizeLG}
         key={item.address}
-        rightItem={(
+        rightPartNode={(
           <Switch
             checked={pendingMap[item.address] === undefined ? isEnabled : pendingMap[item.address]}
             disabled={!authInfo.isAllowed || pendingMap[item.address] !== undefined}
@@ -159,7 +155,7 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
         )}
       />
     );
-  }, [authInfo.isAllowed, authInfo.isAllowedMap, origin, pendingMap, token.sizeLG]);
+  }, [authInfo.isAllowed, authInfo.isAllowedMap, origin, pendingMap]);
 
   const searchFunc = useCallback((item: AccountJson, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
