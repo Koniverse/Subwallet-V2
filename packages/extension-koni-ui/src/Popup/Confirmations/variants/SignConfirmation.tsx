@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SigningRequest } from '@subwallet/extension-base/background/types';
-import { AccountItemWithName, ConfirmationGeneralInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, ConfirmationGeneralInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
 import { useMetadata, useOpenDetailModal, useParseSubstrateRequestPayload } from '@subwallet/extension-koni-ui/hooks';
 import { enableChain } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -66,10 +66,8 @@ function Component ({ className, request }: Props) {
         <div className='description'>
           {t('You are approving a request with the following account')}
         </div>
-        <AccountItemWithName
-          accountName={account.name}
-          address={account.address}
-          avatarSize={24}
+        <AccountItemWithProxyAvatar
+          account={account}
           className='account-item'
           isSelected={true}
         />

@@ -6,6 +6,7 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import { AccountProxyMap, CurrentAccountInfo, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestAccountProxyEdit, RequestAccountProxyForget, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseJsonGetAccountInfo, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
+import { KeyringPair } from '@subwallet/keyring/types';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
 import { AccountDeriveHandler, AccountInjectHandler, AccountJsonHandler, AccountLedgerHandler, AccountMnemonicHandler, AccountModifyHandler, AccountSecretHandler } from './handlers';
@@ -70,6 +71,10 @@ export class AccountContext {
 
   public addressesByProxyId (proxyId: string) {
     return this.state.addressesByProxyId(proxyId);
+  }
+
+  public getSubAccountByAddress (pair: KeyringPair) {
+    return this.state.getSubAccountByAddress(pair);
   }
 
   /* Modify accounts */

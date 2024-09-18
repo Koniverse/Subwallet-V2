@@ -56,6 +56,7 @@ export const getWCAccountList = (accounts: AccountJson[], namespaces: SessionTyp
 
     if (account) {
       return {
+        proxyId: account?.proxyId,
         address: account.address,
         name: account.name
       };

@@ -20,9 +20,9 @@ import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-s
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { AuthUrlInfo, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
-import { canDerive, getEVMChainInfo, pairToAccount, stripUrl } from '@subwallet/extension-base/utils';
+import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { EthereumKeypairTypes, KeyringPair, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { Subscription } from 'rxjs';
 import Web3 from 'web3';
@@ -150,9 +150,15 @@ export default class KoniTabs {
       payloadAfterValidated: request
     };
 
-    const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+    const { errors, pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    return this.#koniState.sign(url, new RequestBytesSign(request), pairToAccount(pair as KeyringPair));
+    if (pair && errors.length === 0) {
+      const account = this.#koniState.keyringService.context.getSubAccountByAddress(pair);
+
+      return this.#koniState.sign(url, new RequestBytesSign(request), account);
+    } else {
+      throw errors[0];
+    }
   }
 
   private async extrinsicSign (url: string, request: SignerPayloadJSON): Promise<ResponseSigning> {
@@ -164,9 +170,15 @@ export default class KoniTabs {
       payloadAfterValidated: request
     };
 
-    const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+    const { errors, pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    return this.#koniState.sign(url, new RequestExtrinsicSign(request), pairToAccount(pair as KeyringPair));
+    if (pair && errors.length === 0) {
+      const account = this.#koniState.keyringService.context.getSubAccountByAddress(pair);
+
+      return this.#koniState.sign(url, new RequestExtrinsicSign(request), account);
+    } else {
+      throw errors[0];
+    }
   }
 
   private metadataProvide (url: string, request: MetadataDef): Promise<boolean> {

@@ -336,7 +336,7 @@ const AuthorizeConfirmation = styled(Component)<Props>(({ theme: { token } }: Th
   },
 
   '.all-account-selection': {
-    '.__middle-part': {
+    '.__item-middle-part': {
       textAlign: 'start',
       fontSize: token.fontSize
     }

@@ -5,7 +5,7 @@ import { ConfirmationResult } from '@subwallet/extension-base/background/KoniTyp
 import { ConfirmationRequestBase } from '@subwallet/extension-base/background/types';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { AccountItemWithName, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
 import { NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
 import { useGetAccountTitleByAddress } from '@subwallet/extension-koni-ui/hooks';
 import { cancelSignRequest, completeConfirmation } from '@subwallet/extension-koni-ui/messaging';
@@ -85,10 +85,8 @@ const Component: React.FC<Props> = (props: Props) => {
             values={{ accountTitle }}
           />
         </div>
-        <AccountItemWithName
-          accountName={account?.name}
-          address={account?.address || ''}
-          avatarSize={24}
+        <AccountItemWithProxyAvatar
+          account={account}
           className='account-item'
           showUnselectIcon={true}
         />

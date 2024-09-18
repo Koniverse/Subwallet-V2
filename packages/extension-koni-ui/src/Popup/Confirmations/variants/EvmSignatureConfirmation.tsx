@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationsQueueItem, EvmSignatureRequest } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountItemWithName, ConfirmationGeneralInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, ConfirmationGeneralInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
 import { useOpenDetailModal } from '@subwallet/extension-koni-ui/hooks';
 import { EvmSignatureSupportType, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button } from '@subwallet/react-ui';
@@ -35,10 +35,8 @@ function Component ({ className, request, type }: Props) {
         <div className='description'>
           {t('You are approving a request with the following account')}
         </div>
-        <AccountItemWithName
-          accountName={account.name}
-          address={account.address}
-          avatarSize={24}
+        <AccountItemWithProxyAvatar
+          account={account}
           className='account-item'
           isSelected={true}
         />

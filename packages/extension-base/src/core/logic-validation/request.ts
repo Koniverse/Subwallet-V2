@@ -9,7 +9,7 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson, BasicTxErrorType } from '@subwallet/extension-base/types';
-import { BN_ZERO, createPromiseHandler, isSameAddress, pairToAccount, stripUrl, wait } from '@subwallet/extension-base/utils';
+import { BN_ZERO, createPromiseHandler, isSameAddress, stripUrl, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { isSubstrateAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
@@ -467,7 +467,7 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
   }
 
   const pair_ = pair || keyring.getPair(fromAddress);
-  const account: AccountJson = pairToAccount(pair_);
+  const account: AccountJson = koni.keyringService.context.getSubAccountByAddress(pair_);
 
   try {
     transaction.nonce = await web3.eth.getTransactionCount(fromAddress);
@@ -531,7 +531,7 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
 
   const pair = pair_ || keyring.getPair(address);
 
-  const account: AccountJson = pairToAccount(pair);
+  const account: AccountJson = koni.keyringService.context.getSubAccountByAddress(pair);
 
   if (method) {
     if (['eth_sign', 'personal_sign', 'eth_signTypedData', 'eth_signTypedData_v1', 'eth_signTypedData_v3', 'eth_signTypedData_v4'].indexOf(method) < 0) {

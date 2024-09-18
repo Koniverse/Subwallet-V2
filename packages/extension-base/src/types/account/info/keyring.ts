@@ -8,6 +8,7 @@ import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 
 export interface AbstractAddressJson extends KeyringPair$Meta {
   address: string;
+  proxyId?: string;
   type?: KeypairType;
   whenCreated?: number;
   name?: string;

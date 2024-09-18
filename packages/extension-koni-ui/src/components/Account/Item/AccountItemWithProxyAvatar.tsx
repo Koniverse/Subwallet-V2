@@ -5,6 +5,7 @@ import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
@@ -12,18 +13,19 @@ import React, { Context, useContext } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
 type Props = ThemeProps & {
-  account: AccountJson;
+  account?: AccountJson;
   accountName?: string;
   isSelected?: boolean;
   showUnselectIcon?: boolean;
   renderRightPart?: (checkedIconNode: React.ReactNode) => React.ReactNode;
   rightPartNode?: React.ReactNode;
   leftPartNode?: React.ReactNode;
+  showFallback?: boolean;
   onClick?: VoidFunction;
 };
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { account, accountName, className, isSelected, leftPartNode, onClick, renderRightPart, rightPartNode, showUnselectIcon } = props;
+  const { account, accountName, className, isSelected, leftPartNode, onClick, renderRightPart, rightPartNode, showFallback = true, showUnselectIcon } = props;
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
 
   const checkedIconNode = ((showUnselectIcon || isSelected) && (
@@ -47,13 +49,14 @@ function Component (props: Props): React.ReactElement<Props> {
           leftPartNode || (
             <AccountProxyAvatar
               size={24}
-              value={account.proxyId}
+              value={account?.proxyId || ''}
             />
           )
         }
       </div>
       <div className='__item-middle-part'>
-        {accountName || account.name}
+        {accountName || account?.name || ''}
+        {showFallback && account && <div className={'account-item-address-wrapper'}>{toShort(account.address, 4, 4)}</div>}
       </div>
       <div className='__item-right-part'>
         {rightPartNode || (renderRightPart ? renderRightPart(checkedIconNode) : checkedIconNode)}
@@ -71,14 +74,25 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
     paddingRight: token.paddingSM,
     borderRadius: token.borderRadiusLG,
     alignItems: 'center',
-    display: 'flex',
+    display: 'flex !important',
     cursor: 'pointer',
     transition: `background ${token.motionDurationMid} ease-in-out`,
     gap: token.sizeSM,
 
     '.__item-middle-part': {
       flex: 1,
-      textAlign: 'left'
+      textAlign: 'left',
+      display: 'flex',
+      flexDirection: 'row',
+
+      '.account-item-address-wrapper:before': {
+        content: "'('",
+        marginLeft: token.marginXXS
+      },
+
+      '.account-item-address-wrapper:after': {
+        content: "')'"
+      }
     },
 
     '.__item-right-part': {
@@ -90,6 +104,11 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
       justifyContent: 'center',
       minWidth: 40,
       marginRight: -token.marginXS
+    },
+
+    '.account-item-address-wrapper': {
+      color: token.colorTextDescription,
+      whiteSpace: 'nowrap'
     },
 
     '&:hover': {
