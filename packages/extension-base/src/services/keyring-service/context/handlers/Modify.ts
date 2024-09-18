@@ -236,16 +236,18 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     keyring.changeTonWalletContractVersion(modifyAddress, version);
 
-    delete modifiedPairs[modifyAddress];
-
     const newAddress = pair.address;
 
-    if (modifiedPair?.accountProxyId === oldAddress) {
-      modifiedPair.accountProxyId = newAddress;
-    }
+    if (modifiedPair) {
+      delete modifiedPairs[modifyAddress];
 
-    modifiedPair.key = newAddress;
-    modifiedPairs[newAddress] = modifiedPair;
+      if (modifiedPair.accountProxyId === oldAddress) {
+        modifiedPair.accountProxyId = newAddress;
+      }
+
+      modifiedPair.key = newAddress;
+      modifiedPairs[newAddress] = modifiedPair;
+    }
 
     // In case the current account is a single account, and is the account being modified, update the current proxy id
     const currentProxy = this.state.currentAccount.proxyId;
