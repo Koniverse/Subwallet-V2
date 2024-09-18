@@ -119,9 +119,9 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
       <>
         <AccountItem
           address={senderAddress}
+          chainSlug={originChain?.slug}
           label={senderLabel || t('Sender')}
           name={senderName}
-          originChain={originChainInfo}
         />
 
         {!!originChain && !!destinationChain && originChain.slug === destinationChain.slug
