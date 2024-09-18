@@ -10,7 +10,7 @@ import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL, PREDEFINED_CHAIN_DAPP_CHAIN_MAP, WEB_APP_URL } from '@subwallet/extension-base/services/request-service/constants';
-import { AuthUrlInfoNeedMigration, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import AuthorizeStore from '@subwallet/extension-base/stores/Authorize';
 import { createPromiseHandler, getDomainFromUrl, PromiseHandler, stripUrl } from '@subwallet/extension-base/utils';
 import { getId } from '@subwallet/extension-base/utils/getId';
@@ -46,9 +46,8 @@ export default class AuthRequestHandler {
       const existKeyAllBothConnect = DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL.some((url_) => url_.includes(key));
 
       if ('accountAuthType' in value) {
-        const oldValueStructure = value as AuthUrlInfoNeedMigration;
-
-        value.accountAuthTypes = oldValueStructure.accountAuthType === 'both' ? ['substrate', 'evm'] : oldValueStructure.accountAuthType && [oldValueStructure.accountAuthType];
+        value.accountAuthTypes = value.accountAuthType === 'both' ? ['substrate', 'evm'] : value.accountAuthType && [value.accountAuthType];
+        delete value.accountAuthType;
         needUpdateAuthList = true;
       }
 

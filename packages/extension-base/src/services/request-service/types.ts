@@ -27,9 +27,8 @@ export interface AuthUrlInfo {
   accountAuthTypes?: AccountAuthType[];
   isAllowedMap: Record<string, boolean>;
   currentEvmNetworkKey?: string;
-}
 
-export interface AuthUrlInfoNeedMigration extends Omit<AuthUrlInfo, 'accountAuthTypes'> {
+  /** @deprecated */
   accountAuthType?: AccountAuthType | 'both';
 }
 
