@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
+import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountItemWithName, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ActionItemType, ActionModal } from '@subwallet/extension-koni-ui/components/Modal/ActionModal';

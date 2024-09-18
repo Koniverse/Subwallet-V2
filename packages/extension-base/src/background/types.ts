@@ -11,12 +11,12 @@ import type { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types'
 import type { HexString } from '@polkadot/util/types';
 
 import { KoniRequestSignatures, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson } from '@subwallet/extension-base/types';
 
 import { TypeRegistry } from '@polkadot/types';
 
 import { ALLOWED_PATH } from '../defaults';
-import { AuthUrls } from './handlers/State';
 
 type KeysWithDefinedValues<T> = {
   [K in keyof T]: T[K] extends undefined ? never : K

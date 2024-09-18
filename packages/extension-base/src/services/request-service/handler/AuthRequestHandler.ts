@@ -4,6 +4,7 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AuthRequestV2, ResultResolver } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType, AuthorizeRequest, RequestAuthorizeTab, Resolver } from '@subwallet/extension-base/background/types';
+import { ALL_ACCOUNT_AUTH_TYPES } from '@subwallet/extension-base/constants';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
@@ -19,7 +20,6 @@ import { BehaviorSubject } from 'rxjs';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 const AUTH_URLS_KEY = 'authUrls';
-const ALL_ACCOUNT_AUTH_TYPES: AccountAuthType[] = ['evm', 'substrate', 'ton'];
 
 export default class AuthRequestHandler {
   readonly #requestService: RequestService;
