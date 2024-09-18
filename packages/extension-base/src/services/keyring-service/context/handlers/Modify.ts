@@ -240,7 +240,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     const newAddress = pair.address;
 
-    if (modifiedPair.accountProxyId === oldAddress) {
+    if (modifiedPair?.accountProxyId === oldAddress) {
       modifiedPair.accountProxyId = newAddress;
     }
 
