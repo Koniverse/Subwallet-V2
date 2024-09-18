@@ -5,7 +5,7 @@ import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/c
 import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountChainAddressItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountChainAddresses, useHandleTonAccountWarning, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountChainAddresses, useHandleLedgerGenericAccountWarning, useHandleTonAccountWarning, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AccountChainAddress, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { copyToClipboard } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwList } from '@subwallet/react-ui';
@@ -24,11 +24,12 @@ function Component ({ accountProxy, className }: Props) {
   const items: AccountChainAddress[] = useGetAccountChainAddresses(accountProxy);
   const notify = useNotification();
   const onHandleTonAccountWarning = useHandleTonAccountWarning();
+  const onHandleLedgerGenericAccountWarning = useHandleLedgerGenericAccountWarning();
   const { addressQrModal } = useContext(WalletModalContext);
 
   const onShowQr = useCallback((item: AccountChainAddress) => {
     return () => {
-      onHandleTonAccountWarning(item.accountType, () => {
+      const processFunction = () => {
         addressQrModal.open({
           address: item.address,
           chainSlug: item.slug,
@@ -36,20 +37,34 @@ function Component ({ accountProxy, className }: Props) {
             addressQrModal.close();
           }
         });
+      };
+
+      onHandleTonAccountWarning(item.accountType, () => {
+        onHandleLedgerGenericAccountWarning({
+          accountProxy: accountProxy,
+          chainSlug: item.slug
+        }, processFunction);
       });
     };
-  }, [addressQrModal, onHandleTonAccountWarning]);
+  }, [accountProxy, addressQrModal, onHandleLedgerGenericAccountWarning, onHandleTonAccountWarning]);
 
   const onCopyAddress = useCallback((item: AccountChainAddress) => {
     return () => {
-      onHandleTonAccountWarning(item.accountType, () => {
+      const processFunction = () => {
         copyToClipboard(item.address || '');
         notify({
           message: t('Copied to clipboard')
         });
+      };
+
+      onHandleTonAccountWarning(item.accountType, () => {
+        onHandleLedgerGenericAccountWarning({
+          accountProxy: accountProxy,
+          chainSlug: item.slug
+        }, processFunction);
       });
     };
-  }, [notify, onHandleTonAccountWarning, t]);
+  }, [accountProxy, notify, onHandleLedgerGenericAccountWarning, onHandleTonAccountWarning, t]);
 
   const renderItem = useCallback(
     (item: AccountChainAddress) => {

@@ -72,7 +72,6 @@ export default class InterlayLendingPoolHandler extends BaseLendingPoolHandler {
         assetEarning: [
           {
             slug: this.rewardAssets[0],
-            apr: 1.29,
             exchangeRate: exchangeRate / decimals
           }
         ],
@@ -83,7 +82,6 @@ export default class InterlayLendingPoolHandler extends BaseLendingPoolHandler {
           defaultUnstake: '0',
           fastUnstake: '0'
         },
-        totalApr: 1.29,
         tvl: '291890000000000'
       }
     };

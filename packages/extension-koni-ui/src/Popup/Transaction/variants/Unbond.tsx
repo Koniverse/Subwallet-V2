@@ -58,6 +58,7 @@ const Component: React.FC = () => {
   const poolInfo = poolInfoMap[slug];
   const poolType = poolInfo.type;
   const poolChain = poolInfo.chain;
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const [form] = Form.useForm<UnStakeParams>();
   const [isBalanceReady, setIsBalanceReady] = useState(true);
@@ -350,6 +351,7 @@ const Component: React.FC = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
@@ -373,6 +375,7 @@ const Component: React.FC = () => {
               defaultValue={persistValidator}
               disabled={!fromValue}
               label={t(`Select ${handleValidatorLabel}`)}
+              networkPrefix={networkPrefix}
               nominators={nominators}
             />
           </Form.Item>

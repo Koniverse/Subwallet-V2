@@ -1278,6 +1278,22 @@ export default class KoniState {
     }
   }
 
+  private async storePreviousVersionData (details: chrome.runtime.InstalledDetails) {
+    if (details.reason === 'update') {
+      const previousVersion = details.previousVersion;
+
+      if (!previousVersion) {
+        return;
+      }
+
+      const storedData = await SWStorage.instance.getItem('previous_version');
+
+      if (!storedData || !storedData.includes(previousVersion)) {
+        await SWStorage.instance.setItem('previous_version', previousVersion);
+      }
+    }
+  }
+
   public async migrateMV3LocalStorage (data: string) {
     try {
       const parsedData = JSON.parse(data) as Record<string, string>;
@@ -1313,6 +1329,7 @@ export default class KoniState {
       this.onMV3Install().catch(console.error);
     } else if (details.reason === 'update') {
       this.onMV3Update().catch(console.error);
+      this.storePreviousVersionData(details).catch(console.error);
     }
   }
 
@@ -1351,6 +1368,16 @@ export default class KoniState {
       console.error(e);
 
       return false;
+    }
+  }
+
+  public async getStorageFromWS (key: string) {
+    try {
+      return await SWStorage.instance.getItem(key);
+    } catch (e) {
+      console.error(e);
+
+      return null;
     }
   }
 

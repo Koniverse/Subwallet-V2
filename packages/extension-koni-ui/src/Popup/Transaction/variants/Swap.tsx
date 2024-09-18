@@ -318,6 +318,8 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return result;
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
+  const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
+
   const showRecipientField = useMemo(() => {
     if (!fromValue || !destChainValue || !chainInfoMap[destChainValue]) {
       return false;
@@ -1219,7 +1221,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                 </div>
 
                 <Form.Item
-                  hidden={!isAllAccount && accountAddressItems.length <= 1}
+                  hidden={isNotShowAccountSelector}
                   name={'from'}
                 >
                   <AccountAddressSelector
@@ -1249,7 +1251,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                   >
                     <AddressInputNew
                       chainSlug={destChainValue}
-                      dropdownHeight={isAllAccount ? 164 : 220}
+                      dropdownHeight={isNotShowAccountSelector ? 227 : 167}
                       label={`${t('To')}:`}
                       labelStyle={'horizontal'}
                       placeholder={t('Input your recipient account')}

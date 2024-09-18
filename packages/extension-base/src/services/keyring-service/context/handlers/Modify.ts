@@ -155,7 +155,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
   }
 
   public tonGetAllTonWalletContractVersion (request: RequestGetAllTonWalletContractVersion): ResponseGetAllTonWalletContractVersion {
-    const { address } = request;
+    const { address, isTestnet } = request;
 
     const pair = keyring.getPair(address);
 
@@ -166,7 +166,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     const contractVersion: TonWalletContractVersion = pair.meta.tonContractVersion as TonWalletContractVersion;
 
     const getContractAddress = (version: TonWalletContractVersion): string => {
-      return pair.ton.contractWithVersion(version).address.toString({ bounceable: false });
+      return pair.ton.contractWithVersion(version).address.toString({ bounceable: false, testOnly: isTestnet });
     };
 
     const addressMap: Record<TonWalletContractVersion, string> = {
@@ -240,7 +240,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     const newAddress = pair.address;
 
-    if (modifiedPair.accountProxyId === oldAddress) {
+    if (modifiedPair?.accountProxyId === oldAddress) {
       modifiedPair.accountProxyId = newAddress;
     }
 

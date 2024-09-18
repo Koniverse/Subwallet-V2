@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountExternalErrorCode } from '@subwallet/extension-base/background/KoniTypes';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { AddressInput } from '@subwallet/extension-koni-ui/components/Field/AddressInput';
@@ -139,7 +140,23 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       })
         .then((errors) => {
           if (errors.length) {
-            form.setFields([{ name: 'name', errors: errors.map((e) => e.message) }]);
+            const errorNameInputs: string[] = [];
+            const errorAddressInputs: string[] = [];
+
+            errors.forEach((error) => {
+              if (error.code === AccountExternalErrorCode.INVALID_ADDRESS) {
+                errorAddressInputs.push(error.message);
+              } else if (error.message.toLowerCase().includes('account name already exists')) {
+                errorNameInputs.push(error.message);
+              } else {
+                errorAddressInputs.push(t('This is not an address'));
+              }
+            });
+
+            form.setFields([
+              { name: 'address', errors: errorAddressInputs.length ? errorAddressInputs : undefined },
+              { name: 'name', errors: errorNameInputs.length ? errorNameInputs : undefined }
+            ]);
           } else {
             onComplete();
           }
@@ -153,7 +170,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     } else {
       setLoading(false);
     }
-  }, [form, reformatAddress, onComplete]);
+  }, [form, reformatAddress, t, onComplete]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLFormElement>) => {
     if (event.key === 'Enter') {
