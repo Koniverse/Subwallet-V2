@@ -2090,25 +2090,16 @@ export default class KoniExtension {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, originTokenInfo.slug);
+    const existentialDeposit = originTokenInfo.minAmount || '0';
 
     if (destinationTokenInfo) {
-      const estimatedFee = BigN(0);
-      const [bnExecutionFee, { value }] = await Promise.all([
+      const [bnMockExecutionFee, { value }] = await Promise.all([
         getXcmMockTxFee(substrateApi, chainInfoMap, originTokenInfo, destinationTokenInfo),
         this.getAddressTransferableBalance({ extrinsicType: ExtrinsicType.TRANSFER_XCM, address, networkKey: originTokenInfo.originChain, token: originTokenInfo.slug })
       ]);
 
       const bnMaxTransferable = new BigN(value);
-
-      estimatedFee.plus(bnExecutionFee.multipliedBy(XCM_FEE_RATIO)); // multiply by weight to account for destination chain fee
-
-      if (substrateApi.api.call.xcmPaymentApi && substrateApi.api.call.xcmPaymentApi.queryDeliveryFees) {
-        estimatedFee.plus(BigN(0)); // todo: handle delivery api
-      } else {
-        const existentialDeposit = originTokenInfo.minAmount || '0';
-
-        estimatedFee.plus(new BigN(existentialDeposit));
-      }
+      const estimatedFee = bnMockExecutionFee.multipliedBy(XCM_FEE_RATIO).plus(new BigN(existentialDeposit));
 
       return bnMaxTransferable.minus(estimatedFee);
     }
