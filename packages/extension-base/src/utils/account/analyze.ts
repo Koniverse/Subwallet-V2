@@ -147,7 +147,7 @@ export const _analyzeAddress = async (data: string, accountProxies: AccountProxy
   if (substrateApi) {
     await substrateApi?.isReady;
 
-    const _raw = _data;
+    const _raw = data.trim();
 
     if (chain === 'aleph' || chain === 'alephTest') {
       if (isAddress(_raw)) {
