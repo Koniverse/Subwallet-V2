@@ -5,13 +5,12 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
-import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountSignMode } from '@subwallet/extension-base/types';
 import { CloseIcon, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_QR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useFetchChainInfo } from '@subwallet/extension-koni-ui/hooks';
+import { useFetchChainInfo, useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, Logo, ModalContext, SwModal, SwQRCode } from '@subwallet/react-ui';
@@ -19,7 +18,6 @@ import CN from 'classnames';
 import { ArrowSquareOut, CaretLeft, CopySimple, Gear } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 export interface AddressQrModalProps {
@@ -41,7 +39,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
   const notify = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
-  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
+  const accountInfo = useGetAccountByAddress(address);
   const isTonWalletContactSelectorModalActive = checkActive(tonWalletContractSelectorModalId);
 
   const scanExplorerAddressUrl = useMemo(() => {
@@ -60,8 +58,8 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
   }, [scanExplorerAddressUrl]);
 
   const isRelatedToTon = useMemo(() => {
-    return TON_CHAINS.includes(chainSlug) && (currentAccountProxy?.accountType !== AccountProxyType.READ_ONLY);
-  }, [chainSlug, currentAccountProxy?.accountType]);
+    return TON_CHAINS.includes(chainSlug) && (accountInfo?.signMode !== AccountSignMode.READ_ONLY);
+  }, [accountInfo, chainSlug]);
 
   const onChangeTonWalletContact = useCallback(() => {
     activeModal(tonWalletContractSelectorModalId);
