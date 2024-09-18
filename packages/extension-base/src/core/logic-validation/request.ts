@@ -8,7 +8,7 @@ import { ConfirmationType, ErrorValidation, EvmProviderErrorType, EvmSendTransac
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
-import { AccountJson, BasicTxErrorType } from '@subwallet/extension-base/types';
+import { BasicTxErrorType } from '@subwallet/extension-base/types';
 import { BN_ZERO, createPromiseHandler, isSameAddress, stripUrl, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { isSubstrateAddress } from '@subwallet/keyring';
@@ -328,7 +328,7 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
   const errors: Error[] = payload.errors || [];
   let estimateGas = '';
   const transactionParams = payload.payloadAfterValidated as EvmSendTransactionParams;
-  const { address: fromAddress, networkKey, pair } = payload;
+  const { address: fromAddress, networkKey } = payload;
   const evmApi = koni.getEvmApi(networkKey || '');
   const web3 = evmApi?.api;
 
@@ -466,9 +466,6 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
     }
   }
 
-  const pair_ = pair || keyring.getPair(fromAddress);
-  const account: AccountJson = koni.keyringService.context.getSubAccountByAddress(pair_);
-
   try {
     transaction.nonce = await web3.eth.getTransactionCount(fromAddress);
   } catch (e) {
@@ -498,7 +495,7 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
     errors,
     payloadAfterValidated: {
       ...transaction,
-      account,
+      address: fromAddress,
       estimateGas,
       hashPayload,
       isToContract,
@@ -531,8 +528,6 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
 
   const pair = pair_ || keyring.getPair(address);
 
-  const account: AccountJson = koni.keyringService.context.getSubAccountByAddress(pair);
-
   if (method) {
     if (['eth_sign', 'personal_sign', 'eth_signTypedData', 'eth_signTypedData_v1', 'eth_signTypedData_v3', 'eth_signTypedData_v4'].indexOf(method) < 0) {
       handleError('Unsupported action');
@@ -546,14 +541,14 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
           hashPayload = payload;
           break;
         case 'eth_sign':
-          if (!account.isExternal) {
+          if (!pair.meta.isExternal) {
             canSign = true;
           }
 
           break;
         case 'eth_signTypedData':
         case 'eth_signTypedData_v1':
-          if (!account.isExternal) {
+          if (!pair.meta.isExternal) {
             canSign = true;
           }
 
@@ -563,7 +558,7 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
 
         case 'eth_signTypedData_v3':
         case 'eth_signTypedData_v4':
-          if (!account.isExternal) {
+          if (!pair.meta.isExternal) {
             canSign = true;
           }
 
@@ -582,7 +577,7 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
   }
 
   const payloadAfterValidated: EvmSignatureRequest = {
-    account: account,
+    address,
     type: method || '',
     payload: payload as unknown,
     hashPayload: hashPayload,

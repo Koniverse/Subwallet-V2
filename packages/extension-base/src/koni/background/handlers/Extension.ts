@@ -2424,7 +2424,7 @@ export default class KoniExtension {
     assert(queued, t('Unable to proceed. Please try again'));
 
     const { reject, request, resolve } = queued;
-    const pair = keyring.getPair(queued.account.address);
+    const pair = keyring.getPair(queued.address);
 
     // unlike queued.account.address the following
     // address is encoded with the default prefix

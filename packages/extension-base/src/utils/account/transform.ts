@@ -560,27 +560,6 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
   return result;
 };
 
-export const _generateSubAccountProxyWithKeyPair = (account: AccountJson, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData): AccountJson => {
-  const address = account.address;
-  const modifyPair = modifyPairs[address];
-
-  if (modifyPair && modifyPair.accountProxyId) {
-    const accountGroup = accountProxies[modifyPair.accountProxyId];
-
-    if (accountGroup) {
-      return {
-        ...account,
-        proxyId: accountGroup.id
-      };
-    }
-  }
-
-  return {
-    ...account,
-    proxyId: address
-  };
-};
-
 export const combineAccountsWithSubjectInfo = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
   const accounts = Object.values(pairs).map((data) => singleAddressToAccount(data, chainInfoMap));
 
@@ -591,12 +570,6 @@ export const combineAccountsWithKeyPair = (pairs: KeyringPair[], modifyPairs?: M
   const accounts = Object.values(pairs).map((data) => pairToAccount(data, chainInfoMap));
 
   return _combineAccounts(accounts, modifyPairs || {}, accountProxies || {});
-};
-
-export const generateSubAccountProxyWithKeyPair = (pairs: KeyringPair, modifyPairs?: ModifyPairStoreData, accountProxies?: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => {
-  const account = pairToAccount(pairs, chainInfoMap);
-
-  return _generateSubAccountProxyWithKeyPair(account, modifyPairs || {}, accountProxies || {});
 };
 
 export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountProxy => {

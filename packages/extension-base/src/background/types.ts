@@ -76,7 +76,7 @@ export interface MetadataRequest extends ConfirmationRequestBase {
 }
 
 export interface SigningRequest extends ConfirmationRequestBase {
-  account: AccountJson;
+  address: string;
   request: RequestSign;
 }
 

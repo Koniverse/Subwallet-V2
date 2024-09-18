@@ -1052,7 +1052,7 @@ export interface EvmSendTransactionParams {
 }
 
 export interface EvmSignRequest {
-  account: AccountJson;
+  address: string;
   hashPayload: string;
   canSign: boolean;
 }

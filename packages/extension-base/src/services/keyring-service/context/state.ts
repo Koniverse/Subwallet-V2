@@ -7,9 +7,8 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
 import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { addLazy, combineAccountsWithSubjectInfo, generateSubAccountProxyWithKeyPair, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
+import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
-import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { BehaviorSubject, combineLatest, filter, first } from 'rxjs';
@@ -409,10 +408,6 @@ export class AccountState {
     const accountProxies = this.accounts;
 
     return Object.values(accountProxies).some((value) => value.accountType === AccountProxyType.UNIFIED && value.id === proxyId);
-  }
-
-  public getSubAccountByAddress (pair: KeyringPair) {
-    return generateSubAccountProxyWithKeyPair(pair, this.modifyPairs, this.accountProxies, this.koniState.chainService.getChainInfoMap());
   }
 
   public belongUnifiedAccount (address: string): string | undefined {

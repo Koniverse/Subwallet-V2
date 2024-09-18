@@ -10,7 +10,7 @@ import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL, PREDEFINED_CHAIN_DAPP_CHAIN_MAP, WEB_APP_URL } from '@subwallet/extension-base/services/request-service/constants';
-import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { AuthUrlInfoNeedMigration, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import AuthorizeStore from '@subwallet/extension-base/stores/Authorize';
 import { createPromiseHandler, getDomainFromUrl, PromiseHandler, stripUrl } from '@subwallet/extension-base/utils';
 import { getId } from '@subwallet/extension-base/utils/getId';
@@ -34,8 +34,9 @@ export default class AuthRequestHandler {
   constructor (requestService: RequestService, chainService: ChainService, private keyringService: KeyringService) {
     this.#requestService = requestService;
     this.#chainService = chainService;
-
-    this.init().catch(console.error);
+    this.migrateAuthUrlInfoToUnified().then(() => {
+      this.init().catch(console.error);
+    }).catch(console.error);
   }
 
   private async init () {
@@ -45,15 +46,30 @@ export default class AuthRequestHandler {
     const updatedAuthList = Object.entries(authList).reduce((acc, [key, value]) => {
       const existKeyAllBothConnect = DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL.some((url_) => url_.includes(key));
 
-      if ('accountAuthType' in value) {
-        value.accountAuthTypes = value.accountAuthType === 'both' ? ['substrate', 'evm'] : value.accountAuthType && [value.accountAuthType];
-        delete value.accountAuthType;
-        needUpdateAuthList = true;
-      }
-
       if (existKeyAllBothConnect && (!value.accountAuthTypes || value.accountAuthTypes.length < ALL_ACCOUNT_AUTH_TYPES.length)) {
         value.accountAuthTypes = ALL_ACCOUNT_AUTH_TYPES;
         needUpdateAuthList = true;
+      }
+
+      acc[key] = { ...value };
+
+      return acc;
+    }, {} as AuthUrls);
+
+    if (needUpdateAuthList) {
+      this.setAuthorize(updatedAuthList);
+    }
+  }
+
+  private async migrateAuthUrlInfoToUnified (): Promise<void> {
+    const authList = await this.getAuthList();
+    let needUpdateAuthList = false;
+    const updatedAuthList = Object.entries(authList).reduce((acc, [key, value]) => {
+      if ('accountAuthType' in authList) {
+        const oldValueStructure = value as AuthUrlInfoNeedMigration;
+
+        needUpdateAuthList = true;
+        value.accountAuthTypes = oldValueStructure.accountAuthType === 'both' ? ['substrate', 'evm'] : oldValueStructure.accountAuthType && [oldValueStructure.accountAuthType];
       }
 
       acc[key] = { ...value };

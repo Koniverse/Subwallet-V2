@@ -85,11 +85,11 @@ const Component: React.FC<Props> = (props: Props) => {
             values={{ accountTitle }}
           />
         </div>
-        <AccountItemWithProxyAvatar
+        {account && <AccountItemWithProxyAvatar
           account={account}
           className='account-item'
           showUnselectIcon={true}
-        />
+        />}
       </div>
       <div className='confirmation-footer'>
         <Button

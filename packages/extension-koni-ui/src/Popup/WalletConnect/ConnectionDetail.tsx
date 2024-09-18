@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson, AccountJson } from '@subwallet/extension-base/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { stripUrl } from '@subwallet/extension-base/utils';
 import { AccountItemWithProxyAvatar, EmptyList, GeneralEmptyList, Layout, MetaInfo, PageWrapper, WCNetworkAvatarGroup } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
@@ -59,7 +59,7 @@ const Component: React.FC<ComponentProps> = (props) => {
     return chainsToWalletConnectChainInfos(chainInfoMap, chains);
   }, [namespaces, chainInfoMap]);
 
-  const accountItems = useMemo((): AbstractAddressJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
+  const accountItems = useMemo((): AccountJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
 
   const modalProps = useMemo((): Partial<SwModalFuncProps> => ({
     id: disconnectModalId,

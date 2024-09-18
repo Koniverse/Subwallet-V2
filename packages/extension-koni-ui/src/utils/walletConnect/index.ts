@@ -4,7 +4,7 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { findChainInfoByChainId, findChainInfoByHalfGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_POLKADOT_NAMESPACE } from '@subwallet/extension-base/services/wallet-connect-service/constants';
-import { AbstractAddressJson, AccountJson } from '@subwallet/extension-base/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { SessionTypes } from '@walletconnect/types';
 
@@ -40,7 +40,7 @@ export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainI
   });
 };
 
-export const getWCAccountList = (accounts: AccountJson[], namespaces: SessionTypes.Namespaces): AbstractAddressJson[] => {
+export const getWCAccountList = (accounts: AccountJson[], namespaces: SessionTypes.Namespaces): AccountJson[] => {
   const rawMap: Record<string, string> = {};
   const rawList = Object.values(namespaces).map((namespace) => namespace.accounts || []).flat();
 
@@ -50,19 +50,9 @@ export const getWCAccountList = (accounts: AccountJson[], namespaces: SessionTyp
     rawMap[address] = address;
   });
 
-  const convertMap: Record<string, AbstractAddressJson> = {};
-  const convertList = Object.keys(rawMap).map((address): AbstractAddressJson | null => {
-    const account = findAccountByAddress(accounts, address);
-
-    if (account) {
-      return {
-        proxyId: account?.proxyId,
-        address: account.address,
-        name: account.name
-      };
-    } else {
-      return null;
-    }
+  const convertMap: Record<string, AccountJson> = {};
+  const convertList = Object.keys(rawMap).map((address): AccountJson | null => {
+    return findAccountByAddress(accounts, address);
   });
 
   convertList.forEach((info) => {

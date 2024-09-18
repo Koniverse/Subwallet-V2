@@ -3,7 +3,7 @@
 
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
-import { AccountItemWithProxyAvatar } from "@subwallet/extension-koni-ui/components";
+import { AccountItemWithProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Confirmation/ConfirmationGeneralInfo';
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';

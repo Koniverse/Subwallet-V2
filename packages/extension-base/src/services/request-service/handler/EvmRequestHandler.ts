@@ -145,8 +145,7 @@ export default class EvmRequestHandler {
   }
 
   private async signMessage (confirmation: ConfirmationDefinitions['evmSignatureRequest'][0]): Promise<string> {
-    const { account, payload, type } = confirmation.payload;
-    const address = account.address;
+    const { address, payload, type } = confirmation.payload;
     const pair = keyring.getPair(address);
 
     if (pair.isLocked) {

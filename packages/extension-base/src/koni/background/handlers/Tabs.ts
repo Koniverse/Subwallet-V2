@@ -150,12 +150,10 @@ export default class KoniTabs {
       payloadAfterValidated: request
     };
 
-    const { errors, pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+    const { errors } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    if (pair && errors.length === 0) {
-      const account = this.#koniState.keyringService.context.getSubAccountByAddress(pair);
-
-      return this.#koniState.sign(url, new RequestBytesSign(request), account);
+    if (errors.length === 0) {
+      return this.#koniState.sign(url, new RequestBytesSign(request));
     } else {
       throw errors[0];
     }
@@ -173,9 +171,7 @@ export default class KoniTabs {
     const { errors, pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
     if (pair && errors.length === 0) {
-      const account = this.#koniState.keyringService.context.getSubAccountByAddress(pair);
-
-      return this.#koniState.sign(url, new RequestExtrinsicSign(request), account);
+      return this.#koniState.sign(url, new RequestExtrinsicSign(request));
     } else {
       throw errors[0];
     }
@@ -306,7 +302,7 @@ export default class KoniTabs {
   private async accountsListV2 (url: string, { accountAuthType = 'substrate', anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthTypes || [accountAuthType]);
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, [accountAuthType] || authInfo?.accountAuthTypes);
   }
 
   // TODO: Update logic
@@ -318,7 +314,7 @@ export default class KoniTabs {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
-            const accountAuthTypes = authInfo?.accountAuthTypes || [accountAuthType];
+            const accountAuthTypes = [accountAuthType] || authInfo?.accountAuthTypes;
             const accounts = this.#koniState.keyringService.context.pairs;
 
             return cb(transformAccountsV2(accounts, false, authInfo, accountAuthTypes));

@@ -13,7 +13,8 @@ import React, { Context, useContext } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
 type Props = ThemeProps & {
-  account?: AccountJson;
+  account: AccountJson | null;
+  accountAddress?: string;
   accountName?: string;
   isSelected?: boolean;
   showUnselectIcon?: boolean;
@@ -25,7 +26,7 @@ type Props = ThemeProps & {
 };
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { account, accountName, className, isSelected, leftPartNode, onClick, renderRightPart, rightPartNode, showFallback = true, showUnselectIcon } = props;
+  const { account, accountAddress, accountName, className, isSelected, leftPartNode, onClick, renderRightPart, rightPartNode, showFallback = true, showUnselectIcon } = props;
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
 
   const checkedIconNode = ((showUnselectIcon || isSelected) && (
@@ -56,7 +57,7 @@ function Component (props: Props): React.ReactElement<Props> {
       </div>
       <div className='__item-middle-part'>
         {accountName || account?.name || ''}
-        {showFallback && account && <div className={'account-item-address-wrapper'}>{toShort(account.address, 4, 4)}</div>}
+        {showFallback && account && <div className={'account-item-address-wrapper'}>{toShort(accountAddress || account.address, 4, 4)}</div>}
       </div>
       <div className='__item-right-part'>
         {rightPartNode || (renderRightPart ? renderRightPart(checkedIconNode) : checkedIconNode)}
