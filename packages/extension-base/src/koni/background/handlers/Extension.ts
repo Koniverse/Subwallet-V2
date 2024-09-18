@@ -1435,13 +1435,13 @@ export default class KoniExtension {
     }
 
     const chainInfoMap = this.#koniState.getChainInfoMap();
-    const isFromSnowBridgeXcm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
+    const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
 
     if (fromKeyPair && destinationTokenInfo) {
-      if (isFromSnowBridgeXcm) {
+      if (isSnowBridgeEvmTransfer) {
         const evmApi = this.#koniState.getEvmApi(originNetworkKey);
 
         extrinsic = await createSnowBridgeExtrinsic({
@@ -1518,7 +1518,7 @@ export default class KoniExtension {
       transaction: extrinsic,
       data: inputData,
       extrinsicType: ExtrinsicType.TRANSFER_XCM,
-      chainType: !isFromSnowBridgeXcm ? ChainType.SUBSTRATE : ChainType.EVM,
+      chainType: !isSnowBridgeEvmTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
       transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
       ignoreWarnings,
       isTransferAll: transferAll,
@@ -4244,6 +4244,8 @@ export default class KoniExtension {
         return this.#koniState.migrateMV3LocalStorage(request as string);
       case 'pri(database.setLocalStorage)':
         return this.#koniState.setStorageFromWS(request as StorageDataInterface);
+      case 'pri(database.getLocalStorage)':
+        return this.#koniState.getStorageFromWS(request as string);
         /* Database */
 
         /* Swap service */

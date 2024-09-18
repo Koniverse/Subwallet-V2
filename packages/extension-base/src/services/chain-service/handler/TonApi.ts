@@ -9,7 +9,7 @@ import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/ha
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { Cell } from '@ton/core';
-import { Address, Contract, OpenedContract, TonClient } from '@ton/ton';
+import { Address, Contract, OpenedContract, TonClient, WalletContractV4 } from '@ton/ton';
 import { BehaviorSubject } from 'rxjs';
 
 export class TonApi implements _TonApi {
@@ -143,37 +143,45 @@ export class TonApi implements _TonApi {
     return this.api.open(src);
   }
 
-  estimateExternalMessageFee (address: Address, body: Cell, ignoreSignature?: boolean, initCode?: Cell, initData?: Cell) {
-    return this.api.estimateExternalMessageFee( // recheck
-      address,
+  estimateExternalMessageFee (walletContract: WalletContractV4, body: Cell, isInit: boolean, ignoreSignature = true) {
+    const initCode = isInit ? null : walletContract.init.code;
+    const initData = isInit ? null : walletContract.init.data;
+
+    return this.api.estimateExternalMessageFee(
+      walletContract.address,
       {
         body: body,
-        ignoreSignature: ignoreSignature || true,
-        initCode: initCode || null,
-        initData: initData || null
+        ignoreSignature: ignoreSignature,
+        initCode: initCode,
+        initData: initData
       }
     );
   }
 
   async sendTonTransaction (boc: string): Promise<string> {
-    const url = `${this.httpEndPoint}/v2/sendBocReturnHash`;
-    const resp = await fetch(
-      url, {
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json',
-          'X-API-KEY': TON_CENTER_API_KEY
-        },
-        body: JSON.stringify({
-          boc: boc
-        })
-      }
-    );
+    try {
+      const url = `${this.httpEndPoint}/v2/sendBocReturnHash`;
+      const resp = await fetch(
+        url, {
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-API-KEY': TON_CENTER_API_KEY
+          },
+          body: JSON.stringify({
+            boc: boc
+          })
+        }
+      );
 
-    const extMsgInfo = await resp.json() as {result: { hash: string}};
+      const extMsgInfo = await resp.json() as {result: { hash: string}};
 
-    return extMsgInfo.result.hash;
+      return extMsgInfo.result.hash;
+    } catch (error) {
+      console.error(`Failed to send transaction with boc`, boc);
+      throw error;
+    }
   }
 
   async getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse> {

@@ -5,7 +5,7 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-validation/recipientAddress';
-import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
+import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
@@ -40,6 +40,7 @@ type WrapperProps = ThemeProps;
 type ComponentProps = {
   className?: string;
   targetAccountProxy: AccountProxy;
+  isAllAccount?: boolean
 };
 
 interface TransferOptions {
@@ -120,7 +121,7 @@ const evmAccountSlug = 'ethereum-NATIVE-ETH';
 const tonAccountSlug = 'ton-NATIVE-TON';
 const defaultAddressInputRenderKey = 'address-input-render-key';
 
-const Component = ({ className = '', targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
+const Component = ({ className = '', isAllAccount, targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
   useSetCurrentPage('/transaction/send-fund');
   const { t } = useTranslation();
   const notification = useNotification();
@@ -269,6 +270,8 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
 
     return result;
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
+
+  const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
@@ -526,12 +529,14 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
+        const assetSlug = values.asset;
+        const isMythosFromHydrationToMythos = _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
 
-        if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
+        if (_isXcmTransferUnstable(originChainInfo, destChainInfo, assetSlug)) {
           openAlert({
             type: NotificationType.WARNING,
-            content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo)),
-            title: t('Pay attention!'),
+            content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo, assetSlug)),
+            title: isMythosFromHydrationToMythos ? t('High fee alert!') : t('Pay attention!'),
             okButton: {
               text: t('Continue'),
               onClick: () => {
@@ -780,6 +785,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           </div>
 
           <Form.Item
+            className={CN({ hidden: isNotShowAccountSelector })}
             name={'from'}
             statusHelpAsTooltip={true}
           >
@@ -802,6 +808,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           >
             <AddressInputNew
               chainSlug={destChainValue}
+              dropdownHeight={isNotShowAccountSelector ? 317 : 257}
               key={addressInputRenderKey}
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
@@ -833,6 +840,7 @@ const Component = ({ className = '', targetAccountProxy }: ComponentProps): Reac
           >
             <AmountInput
               decimals={decimals}
+              disabled={decimals === 0}
               forceUpdateMaxValue={forceUpdateMaxValue}
               maxValue={maxTransfer}
               onSetMax={onSetMaxTransferable}
@@ -888,7 +896,7 @@ const Wrapper: React.FC<WrapperProps> = (props: WrapperProps) => {
   const { className } = props;
   const { defaultData } = useTransactionContext<TransferParams>();
   const { goHome } = useDefaultNavigate();
-  const accountProxies = useSelector((state) => state.accountState.accountProxies);
+  const { accountProxies, isAllAccount } = useSelector((state) => state.accountState);
 
   const targetAccountProxy = useMemo(() => {
     return accountProxies.find((ap) => {
@@ -915,6 +923,7 @@ const Wrapper: React.FC<WrapperProps> = (props: WrapperProps) => {
   return (
     <Component
       className={className}
+      isAllAccount={isAllAccount}
       targetAccountProxy={targetAccountProxy}
     />
   );

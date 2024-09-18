@@ -39,6 +39,7 @@ const Component: React.FC<Props> = (props: Props) => {
     closable,
     content,
     modalId,
+    subtitle,
     okButton,
     title,
     onCancel,
@@ -111,6 +112,12 @@ const Component: React.FC<Props> = (props: Props) => {
             />
           </div>
 
+          {
+            !!subtitle && (
+              <div className={'__subtitle'}>{subtitle}</div>
+            )
+          }
+
           {content}
         </div>
       </SwModal>
@@ -162,6 +169,13 @@ const AlertModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
       '&.-error': {
         '--page-icon-color': token.colorError
       }
+    },
+
+    '.__subtitle': {
+      color: token.colorTextLight1,
+      fontSize: token.fontSizeLG,
+      lineHeight: token.lineHeightLG,
+      marginBottom: 20
     }
   };
 });

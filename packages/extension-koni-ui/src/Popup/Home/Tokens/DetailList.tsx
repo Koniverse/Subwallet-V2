@@ -348,11 +348,13 @@ function Component (): React.ReactElement {
     setIsShrink(false);
   }, [tokenGroupSlug]);
 
-  useEffect(() => {
-    if (!tokenBalanceItems.length) {
-      goHome();
-    }
-  }, [goHome, tokenBalanceItems.length]);
+  // This useEffect triggers when the wallet version changes, causing tokenBalanceItems to temporarily be empty
+
+  // useEffect(() => {
+  //   if (!tokenBalanceItems.length) {
+  //     goHome();
+  //   }
+  // }, [goHome, tokenBalanceItems.length]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
