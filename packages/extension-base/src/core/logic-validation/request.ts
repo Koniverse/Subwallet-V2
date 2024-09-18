@@ -11,6 +11,7 @@ import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/
 import { AccountJson, BasicTxErrorType } from '@subwallet/extension-base/types';
 import { BN_ZERO, createPromiseHandler, isSameAddress, pairToAccount, stripUrl, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { isSubstrateAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { getSdkError } from '@walletconnect/utils';
@@ -614,7 +615,7 @@ export function validationAuthWCMiddleware (koni: KoniState, url: string, payloa
 
     if (isEthereumAddress(address)) {
       sessionAccounts = requestSession.namespaces.eip155.accounts?.map((account) => account.split(':')[2]) || sessionAccounts;
-    } else {
+    } else if (isSubstrateAddress(address)) {
       sessionAccounts = requestSession.namespaces.polkadot.accounts?.map((account) => account.split(':')[2]) || sessionAccounts;
     }
 

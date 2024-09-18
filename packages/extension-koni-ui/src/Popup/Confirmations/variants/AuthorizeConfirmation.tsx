@@ -5,12 +5,14 @@ import { AccountAuthType, AuthorizeRequest } from '@subwallet/extension-base/bac
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountItemWithName, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
-import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
+import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE, TON_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { useSetSelectedAccountTypes } from '@subwallet/extension-koni-ui/hooks';
 import { approveAuthRequestV2, cancelAuthRequestV2, rejectAuthRequestV2 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll, isNoAccount } from '@subwallet/extension-koni-ui/utils';
+import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { PlusCircle, ShieldSlash, XCircle } from 'phosphor-react';
@@ -20,11 +22,13 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface Props extends ThemeProps {
   request: AuthorizeRequest
 }
+
+const ALL_ACCOUNT_AUTH_TYPES: AccountAuthType[] = ['evm', 'substrate', 'ton'];
 
 async function handleConfirm ({ id }: AuthorizeRequest, selectedAccounts: string[]) {
   return await approveAuthRequestV2(id, selectedAccounts.filter((item) => !isAccountAll(item)));
@@ -38,18 +42,20 @@ async function handleBlock ({ id }: AuthorizeRequest) {
   return await rejectAuthRequestV2(id);
 }
 
-export const filterAuthorizeAccounts = (accounts: AccountJson[], accountAuthType: AccountAuthType) => {
-  let rs = [...accounts];
-
+export const filterAuthorizeAccounts = (accounts: AccountJson[], accountAuthTypes: AccountAuthType[]) => {
   // rs = rs.filter((acc) => acc.isReadOnly !== true);
 
-  if (accountAuthType === 'evm') {
-    rs = rs.filter((acc) => (!isAccountAll(acc.address) && acc.type === 'ethereum'));
-  } else if (accountAuthType === 'substrate') {
-    rs = rs.filter((acc) => (!isAccountAll(acc.address) && acc.type !== 'ethereum'));
-  } else {
-    rs = rs.filter((acc) => !isAccountAll(acc.address));
-  }
+  const rs = accountAuthTypes.reduce<AccountJson[]>((list, accountAuthType) => {
+    if (accountAuthType === 'evm') {
+      accounts.forEach((account) => isEthereumAddress(account.address) && list.push(account));
+    } else if (accountAuthType === 'substrate') {
+      accounts.forEach((account) => isSubstrateAddress(account.address) && list.push(account));
+    } else if (accountAuthType === 'ton') {
+      accounts.forEach((account) => isTonAddress(account.address) && list.push(account));
+    }
+
+    return list;
+  }, []);
 
   if (isNoAccount(rs)) {
     return [];
@@ -61,7 +67,7 @@ export const filterAuthorizeAccounts = (accounts: AccountJson[], accountAuthType
 function Component ({ className, request }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const { accountAuthType, allowedAccounts } = request.request;
+  const { accountAuthTypes, allowedAccounts } = request.request;
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const navigate = useNavigate();
 
@@ -69,8 +75,8 @@ function Component ({ className, request }: Props) {
   const setSelectedAccountTypes = useSetSelectedAccountTypes(true);
 
   // List all of all accounts by auth type
-  const visibleAccounts = useMemo(() => (filterAuthorizeAccounts(accounts, accountAuthType || 'both')),
-    [accountAuthType, accounts]);
+  const visibleAccounts = useMemo(() => (filterAuthorizeAccounts(accounts, accountAuthTypes || ALL_ACCOUNT_AUTH_TYPES)),
+    [accountAuthTypes, accounts]);
 
   // Selected map with default values is map of all accounts
   const [selectedMap, setSelectedMap] = useState<Record<string, boolean>>({});
@@ -80,26 +86,36 @@ function Component ({ className, request }: Props) {
   }, [selectedMap, visibleAccounts]);
 
   const noAvailableTitle = useMemo(() => {
-    switch (accountAuthType) {
-      case 'substrate':
-        return t('No available Substrate account');
-      case 'evm':
-        return t('No available EVM account');
-      default:
-        return t('No available account');
+    if (accountAuthTypes && accountAuthTypes.length === 1) {
+      switch (accountAuthTypes[0]) {
+        case 'substrate':
+          return t('No available Substrate account');
+        case 'evm':
+          return t('No available EVM account');
+        case 'ton':
+          return t('No available TON account');
+        default:
+          return t('No available account');
+      }
     }
-  }, [accountAuthType, t]);
+
+    return t('No available account');
+  }, [accountAuthTypes, t]);
 
   const noAvailableDescription = useMemo(() => {
-    switch (accountAuthType) {
-      case 'substrate':
-        return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
-      case 'evm':
-        return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
-      default:
-        return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+    if (accountAuthTypes && accountAuthTypes.length === 1) {
+      switch (accountAuthTypes[0]) {
+        case 'substrate':
+          return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
+        case 'evm':
+          return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
+        default:
+          return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+      }
     }
-  }, [accountAuthType, t]);
+
+    return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+  }, [accountAuthTypes, t]);
 
   // Handle buttons actions
   const onBlock = useCallback(() => {
@@ -128,20 +144,21 @@ function Component ({ className, request }: Props) {
   const onAddAccount = useCallback(() => {
     let types: KeypairType[];
 
-    switch (accountAuthType) {
-      case 'substrate':
-        types = [SUBSTRATE_ACCOUNT_TYPE];
-        break;
-      case 'evm':
-        types = [EVM_ACCOUNT_TYPE];
-        break;
-      default:
-        types = DEFAULT_ACCOUNT_TYPES;
+    const addAccountType: Record<AccountAuthType, KeypairType> = {
+      evm: EVM_ACCOUNT_TYPE,
+      substrate: SUBSTRATE_ACCOUNT_TYPE,
+      ton: TON_ACCOUNT_TYPE
+    };
+
+    if (accountAuthTypes) {
+      types = accountAuthTypes.map((type) => addAccountType[type]);
+    } else {
+      types = DEFAULT_ACCOUNT_TYPES;
     }
 
     setSelectedAccountTypes(types);
     navigate('/accounts/new-seed-phrase', { state: { useGoBack: true } });
-  }, [accountAuthType, setSelectedAccountTypes, navigate]);
+  }, [accountAuthTypes, navigate, setSelectedAccountTypes]);
 
   const onAccountSelect = useCallback((address: string) => {
     const isAll = isAccountAll(address);

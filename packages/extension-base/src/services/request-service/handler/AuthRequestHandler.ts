@@ -234,7 +234,7 @@ export default class AuthRequestHandler {
           isAllowedMap,
           origin,
           url,
-          accountAuthTypes: (existed && existed.accountAuthTypes?.length !== ALL_ACCOUNT_AUTH_TYPES.length) ? ALL_ACCOUNT_AUTH_TYPES : [...accountAuthTypes],
+          accountAuthTypes: [...new Set<AccountAuthType>([...accountAuthTypes, ...(existed?.accountAuthTypes || [])])],
           currentEvmNetworkKey: existed ? existed.currentEvmNetworkKey : defaultEvmNetworkKey
         };
 
@@ -337,15 +337,17 @@ export default class AuthRequestHandler {
 
       let allowedListByRequestType = [...request.allowedAccounts];
 
-      accountAuthTypes.forEach((accountAuthType) => {
+      allowedListByRequestType = accountAuthTypes.reduce<string[]>((list, accountAuthType) => {
         if (accountAuthType === 'evm') {
-          allowedListByRequestType = allowedListByRequestType.filter((a) => isEthereumAddress(a));
+          list.push(...allowedListByRequestType.filter((a) => isEthereumAddress(a)));
         } else if (accountAuthType === 'substrate') {
-          allowedListByRequestType = allowedListByRequestType.filter((a) => isSubstrateAddress(a));
+          list.push(...allowedListByRequestType.filter((a) => isSubstrateAddress(a)));
         } else if (accountAuthType === 'ton') {
-          allowedListByRequestType = allowedListByRequestType.filter((a) => isTonAddress(a));
+          list.push(...allowedListByRequestType.filter((a) => isTonAddress(a)));
         }
-      });
+
+        return list;
+      }, []);
 
       if (!confirmAnotherType && !request.reConfirm && allowedListByRequestType.length !== 0) {
         // Prevent appear confirmation popup

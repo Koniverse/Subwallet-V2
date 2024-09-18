@@ -10,6 +10,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { funcSortByName, isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { BackgroundIcon, Icon, ModalContext, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretDown, Plug, Plugs, PlugsConnected } from 'phosphor-react';
@@ -49,7 +50,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
-  const { accounts: _accounts, currentAccount, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const { accounts: _accounts, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
 
   const [connected, setConnected] = useState(0);
   const { token } = useTheme() as Theme;
@@ -71,21 +72,22 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       result.unshift(all);
     }
 
-    if (!!currentAccount?.address && (currentAccount?.address !== (all && all.address))) {
-      const currentAccountIndex = result.findIndex((item) => {
-        return item.address === currentAccount?.address;
+    if (!!currentAccountProxy?.id && (isAccountAll(currentAccountProxy?.id))) {
+      result.sort((accountProxyA, accountProxyB) => {
+        if (accountProxyA.id === currentAccountProxy.id) {
+          return -1;
+        }
+
+        if (accountProxyB.id === currentAccountProxy.id) {
+          return 1;
+        }
+
+        return 0;
       });
-
-      if (currentAccountIndex > -1) {
-        const _currentAccount = result[currentAccountIndex];
-
-        result.splice(currentAccountIndex, 1);
-        result.splice(1, 0, _currentAccount);
-      }
     }
 
     return result;
-  }, [_accounts, currentAccount?.address]);
+  }, [_accounts, currentAccountProxy]);
 
   const noAllAccounts = useMemo(() => {
     return accounts.filter(({ address }) => !isAccountAll(address));
@@ -98,56 +100,47 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         setConnected(0);
         setConnectionState(ConnectionStatement.BLOCKED);
       } else {
-        const type = currentAuth.accountAuthType;
+        const types = currentAuth.accountAuthTypes || ['substrate'];
         const allowedMap = currentAuth.isAllowedMap;
 
         const filterType = (address: string) => {
-          if (type === 'both') {
+          if (isEthereumAddress(address) && types.includes('evm')) {
             return true;
           }
 
-          const _type = type || 'substrate';
+          if (isSubstrateAddress(address) && types.includes('substrate')) {
+            return true;
+          }
 
-          return _type === 'substrate' ? !isEthereumAddress(address) : isEthereumAddress(address);
+          if (isTonAddress(address) && types.includes('ton')) {
+            return true;
+          }
+
+          return false;
         };
 
-        if (!isAllAccount) {
-          const _allowedMap: Record<string, boolean> = {};
+        let accountToCheck = noAllAccounts;
 
-          Object.entries(allowedMap)
-            .filter(([address]) => filterType(address))
-            .forEach(([address, value]) => {
-              _allowedMap[address] = value;
-            });
+        if (!isAllAccount && currentAccountProxy) {
+          accountToCheck = [...currentAccountProxy.accounts];
+        }
 
-          const isAllowed = _allowedMap[currentAccount?.address || ''];
+        const numberAccounts = accountToCheck.filter(({ address }) => filterType(address)).length;
+        const numberAllowedAccounts = Object.entries(allowedMap)
+          .filter(([address]) => filterType(address))
+          .filter(([, value]) => value)
+          .length;
 
-          setCanConnect(0);
-          setConnected(0);
+        setConnected(numberAllowedAccounts);
+        setCanConnect(numberAccounts);
 
-          if (isAllowed === undefined) {
-            setConnectionState(ConnectionStatement.NOT_CONNECTED);
-          } else {
-            setConnectionState(isAllowed ? ConnectionStatement.CONNECTED : ConnectionStatement.DISCONNECTED);
-          }
+        if (numberAllowedAccounts === 0) {
+          setConnectionState(ConnectionStatement.DISCONNECTED);
         } else {
-          const numberAccounts = noAllAccounts.filter(({ address }) => filterType(address)).length;
-          const numberAllowedAccounts = Object.entries(allowedMap)
-            .filter(([address]) => filterType(address))
-            .filter(([, value]) => value)
-            .length;
-
-          setConnected(numberAllowedAccounts);
-          setCanConnect(numberAccounts);
-
-          if (numberAllowedAccounts === 0) {
-            setConnectionState(ConnectionStatement.DISCONNECTED);
+          if (numberAllowedAccounts > 0 && numberAllowedAccounts < numberAccounts) {
+            setConnectionState(ConnectionStatement.PARTIAL_CONNECTED);
           } else {
-            if (numberAllowedAccounts > 0 && numberAllowedAccounts < numberAccounts) {
-              setConnectionState(ConnectionStatement.PARTIAL_CONNECTED);
-            } else {
-              setConnectionState(ConnectionStatement.CONNECTED);
-            }
+            setConnectionState(ConnectionStatement.CONNECTED);
           }
         }
       }
@@ -156,7 +149,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       setConnected(0);
       setConnectionState(ConnectionStatement.NOT_CONNECTED);
     }
-  }, [currentAccount?.address, currentAuth, isAllAccount, noAllAccounts]);
+  }, [currentAccountProxy, currentAuth, isAllAccount, noAllAccounts]);
 
   const visibleText = useMemo((): string => {
     switch (connectionState) {

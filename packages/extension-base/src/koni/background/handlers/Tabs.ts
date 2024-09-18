@@ -52,10 +52,8 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
     )
     : [];
 
-  let authTypeFilter = ({ type }: SingleAddress) => true;
-
-  if (accountAuthTypes) {
-    authTypeFilter = ({ type }: SingleAddress) => {
+  const authTypeFilter = ({ type }: SingleAddress) => {
+    if (accountAuthTypes) {
       if (!type) {
         return false;
       }
@@ -67,8 +65,10 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
       };
 
       return accountAuthTypes.some((authType) => validTypes[authType]?.includes(type));
-    };
-  }
+    } else {
+      return true;
+    }
+  };
 
   return Object
     .values(accounts)

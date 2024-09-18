@@ -51,8 +51,8 @@ import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createTransactionFrom
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
-import { getKeypairTypeByAddress, isTonAddress } from '@subwallet/keyring';
-import { EthereumKeypairTypes, SubstrateKeypairTypes } from '@subwallet/keyring/types';
+import { getKeypairTypeByAddress, isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
+import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { KeyringAddress, KeyringJson$Meta } from '@subwallet/ui-keyring/types';
@@ -625,26 +625,34 @@ export default class KoniExtension {
     return transformAccounts(storedAccounts);
   }
 
-  private isAddressValidWithAuthType (address: string, accountAuthType?: AccountAuthType): boolean {
+  private isAddressValidWithAuthType (address: string, accountAuthTypes?: AccountAuthType[]): boolean {
     const type = getKeypairTypeByAddress(address);
 
-    if (accountAuthType === 'substrate') {
-      return SubstrateKeypairTypes.includes(type);
-    } else if (accountAuthType === 'evm') {
-      return EthereumKeypairTypes.includes(type);
-    }
+    const validTypes = {
+      evm: EthereumKeypairTypes,
+      substrate: SubstrateKeypairTypes,
+      ton: TonKeypairTypes
+    };
 
-    return true;
+    return !!accountAuthTypes && accountAuthTypes.some((authType) => validTypes[authType]?.includes(type));
   }
 
-  private filterAccountsByAccountAuthType (accounts: AccountJson[], accountAuthType?: AccountAuthType): string[] {
-    if (accountAuthType === 'substrate') {
-      return accounts.filter((account) => SubstrateKeypairTypes.includes(account.type)).map((address) => address.address);
-    } else if (accountAuthType === 'evm') {
-      return accounts.filter((account) => EthereumKeypairTypes.includes(account.type)).map((address) => address.address);
-    } else {
-      return accounts.map((address) => address.address);
+  private filterAccountsByAccountAuthType (accounts: AccountJson[], accountAuthTypes?: AccountAuthType[]): string[] {
+    if (!accountAuthTypes) {
+      return [];
     }
+
+    return accountAuthTypes.reduce<string[]>((list, accountAuthType) => {
+      if (accountAuthType === 'evm') {
+        accounts.forEach(({ address }) => isEthereumAddress(address) && list.push(address));
+      } else if (accountAuthType === 'substrate') {
+        accounts.forEach(({ address }) => isSubstrateAddress(address) && list.push(address));
+      } else if (accountAuthType === 'ton') {
+        accounts.forEach(({ address }) => isTonAddress(address) && list.push(address));
+      }
+
+      return list;
+    }, []);
   }
 
   private _changeAuthorizationAll (connectValue: boolean, callBack?: (value: AuthUrls) => void) {
@@ -658,7 +666,7 @@ export default class KoniExtension {
           return;
         }
 
-        const targetAccounts = this.filterAccountsByAccountAuthType(pairs, value[url].accountAuthType);
+        const targetAccounts = this.filterAccountsByAccountAuthType(pairs, value[url].accountAuthTypes);
 
         targetAccounts.forEach((address) => {
           value[url].isAllowedMap[address] = connectValue;
@@ -689,7 +697,7 @@ export default class KoniExtension {
       assert(value[url], 'The source is not known');
 
       const pairs = this.getPairs();
-      const targetAccounts = this.filterAccountsByAccountAuthType(pairs, value[url].accountAuthType);
+      const targetAccounts = this.filterAccountsByAccountAuthType(pairs, value[url].accountAuthTypes);
 
       targetAccounts.forEach((address) => {
         value[url].isAllowedMap[address] = connectValue;
@@ -732,7 +740,7 @@ export default class KoniExtension {
     this.#koniState.getAuthorize((value) => {
       assert(value, 'The source is not known');
 
-      if (this.isAddressValidWithAuthType(address, value[url].accountAuthType)) {
+      if (this.isAddressValidWithAuthType(address, value[url].accountAuthTypes)) {
         value[url].isAllowedMap[address] = connectValue;
 
         this.#koniState.setAuthorize(value, () => {

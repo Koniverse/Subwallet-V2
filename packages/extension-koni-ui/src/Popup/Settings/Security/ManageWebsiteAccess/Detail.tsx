@@ -11,6 +11,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updateAuthUrls } from '@subwallet/extension-koni-ui/stores/utils';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { ManageWebsiteAccessDetailParam } from '@subwallet/extension-koni-ui/types/navigation';
+import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { Icon, ModalContext, Switch, SwList } from '@subwallet/react-ui';
 import { GearSix, MagnifyingGlass, Plugs, PlugsConnected, ShieldCheck, ShieldSlash, X } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -31,7 +32,7 @@ type WrapperProps = ThemeProps;
 const ActionModalId = 'actionModalId';
 // const FilterModalId = 'filterModalId';
 
-function Component ({ accountAuthType, authInfo, className = '', goBack, origin, siteName }: Props): React.ReactElement<Props> {
+function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin, siteName }: Props): React.ReactElement<Props> {
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const [pendingMap, setPendingMap] = useState<Record<string, boolean>>({});
   const { activeModal, inactiveModal } = useContext(ModalContext);
@@ -40,14 +41,18 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
   const accountItems = useMemo(() => {
     const accountListWithoutAll = accounts.filter((opt) => opt.address !== 'ALL');
 
-    if (accountAuthType === 'substrate') {
-      return accountListWithoutAll.filter((acc) => !isEthereumAddress(acc.address));
-    } else if (accountAuthType === 'evm') {
-      return accountListWithoutAll.filter((acc) => isEthereumAddress(acc.address));
-    } else {
-      return accountListWithoutAll;
-    }
-  }, [accountAuthType, accounts]);
+    return accountAuthTypes.reduce<AccountJson[]>((list, accountAuthType) => {
+      if (accountAuthType === 'evm') {
+        accountListWithoutAll.forEach((account) => isEthereumAddress(account.address) && list.push(account));
+      } else if (accountAuthType === 'substrate') {
+        accountListWithoutAll.forEach((account) => isSubstrateAddress(account.address) && list.push(account));
+      } else if (accountAuthType === 'ton') {
+        accountListWithoutAll.forEach((account) => isTonAddress(account.address) && list.push(account));
+      }
+
+      return list;
+    }, []);
+  }, [accountAuthTypes, accounts]);
 
   const onOpenActionModal = useCallback(() => {
     activeModal(ActionModalId);
@@ -232,7 +237,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
 
 function WrapperComponent (props: WrapperProps) {
   const location = useLocation();
-  const { accountAuthType, origin, siteName } = location.state as ManageWebsiteAccessDetailParam;
+  const { accountAuthTypes, origin, siteName } = location.state as ManageWebsiteAccessDetailParam;
   const authInfo: undefined | AuthUrlInfo = useSelector((state: RootState) => state.settings.authUrls[origin]);
   const goBack = useDefaultNavigate().goBack;
 
@@ -247,7 +252,7 @@ function WrapperComponent (props: WrapperProps) {
       {!!authInfo && (
         <Component
           {...props}
-          accountAuthType={accountAuthType}
+          accountAuthTypes={accountAuthTypes}
           authInfo={authInfo}
           goBack={goBack}
           origin={origin}

@@ -360,7 +360,7 @@ export class AccountState {
     const accountProxies = this.accounts;
 
     if (accountProxies[proxyId]) {
-      return Object.keys(accountProxies[proxyId].accounts.map((account) => account.address));
+      return accountProxies[proxyId].accounts.map((account) => account.address);
     } else {
       return [];
     }
