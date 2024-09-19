@@ -299,14 +299,28 @@ export default class KoniTabs {
     return authList[shortenUrl];
   }
 
-  private async accountsListV2 (url: string, { accountAuthType = 'substrate', anyType }: RequestAccountList): Promise<InjectedAccount[]> {
+  private async accountsListV2 (url: string, { accountAuthType, anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthTypes || [accountAuthType]);
+    const accountAuthTypes: AccountAuthType[] = [];
+
+    if (accountAuthType) {
+      accountAuthTypes.push(accountAuthType);
+    } else if (authInfo) {
+      if (authInfo.accountAuthTypes.includes('substrate')) {
+        accountAuthTypes.push('substrate');
+      }
+
+      if (authInfo.accountAuthTypes.includes('evm')) {
+        accountAuthTypes.push('evm');
+      }
+    }
+
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, accountAuthTypes);
   }
 
   // TODO: Update logic
-  private accountsSubscribeV2 (url: string, { accountAuthType = 'substrate' }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
+  private accountsSubstrateSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
     const cb = createSubscription<'pub(accounts.subscribeV2)'>(id, port);
     const authInfoSubject = this.#koniState.requestService.subscribeAuthorizeUrlSubject;
 
@@ -314,7 +328,20 @@ export default class KoniTabs {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
-            const accountAuthTypes = authInfo?.accountAuthTypes || [accountAuthType];
+            const accountAuthTypes: AccountAuthType[] = [];
+
+            if (accountAuthType) {
+              accountAuthTypes.push(accountAuthType);
+            } else if (authInfo) {
+              if (authInfo.accountAuthTypes.includes('substrate')) {
+                accountAuthTypes.push('substrate');
+              }
+
+              if (authInfo.accountAuthTypes.includes('evm')) {
+                accountAuthTypes.push('evm');
+              }
+            }
+
             const accounts = this.#koniState.keyringService.context.pairs;
 
             return cb(transformAccountsV2(accounts, false, authInfo, accountAuthTypes));
@@ -1215,7 +1242,7 @@ export default class KoniTabs {
       case 'pub(accounts.listV2)':
         return this.accountsListV2(url, request as RequestAccountList);
       case 'pub(accounts.subscribeV2)':
-        return this.accountsSubscribeV2(url, request as RequestAccountSubscribe, id, port);
+        return this.accountsSubstrateSubscribeV2(url, request as RequestAccountSubscribe, id, port);
       case 'pub(accounts.unsubscribe)':
         return this.accountsUnsubscribe(url, request as RequestAccountUnsubscribe);
       case 'evm(events.subscribe)':

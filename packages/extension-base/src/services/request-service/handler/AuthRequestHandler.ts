@@ -9,7 +9,7 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import RequestService from '@subwallet/extension-base/services/request-service';
-import { DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL, PREDEFINED_CHAIN_DAPP_CHAIN_MAP, WEB_APP_URL } from '@subwallet/extension-base/services/request-service/constants';
+import { DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL, PREDEFINED_CHAIN_DAPP_CHAIN_MAP, WEB_APP_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrlInfoNeedMigration, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import AuthorizeStore from '@subwallet/extension-base/stores/Authorize';
 import { createPromiseHandler, getDomainFromUrl, PromiseHandler, stripUrl } from '@subwallet/extension-base/utils';
@@ -44,10 +44,10 @@ export default class AuthRequestHandler {
     let needUpdateAuthList = false;
 
     const updatedAuthList = Object.entries(authList).reduce((acc, [key, value]) => {
-      const existKeyAllBothConnect = DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL.some((url_) => url_.includes(key));
+      const existKeyBothConnectAuthType = DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL.some((url_) => url_.includes(key));
 
-      if (existKeyAllBothConnect && (!value.accountAuthTypes || value.accountAuthTypes.length < ALL_ACCOUNT_AUTH_TYPES.length)) {
-        value.accountAuthTypes = ALL_ACCOUNT_AUTH_TYPES;
+      if (existKeyBothConnectAuthType && (!value.accountAuthTypes || value.accountAuthTypes.length < 2)) {
+        value.accountAuthTypes = ['evm', 'substrate'];
         needUpdateAuthList = true;
       }
 
@@ -279,8 +279,8 @@ export default class AuthRequestHandler {
   public async authorizeUrlV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
     let authList = await this.getAuthList();
     const idStr = stripUrl(url);
-    const isAllowedDappConnectAllType = !!DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL.find((url_) => url.includes(url_));
-    let accountAuthTypes = [...new Set<AccountAuthType>(isAllowedDappConnectAllType ? ALL_ACCOUNT_AUTH_TYPES : (request.accountAuthTypes || ['substrate']))];
+    const isAllowedDappConnectBothType = !!DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL.find((url_) => url.includes(url_));
+    let accountAuthTypes = [...new Set<AccountAuthType>(isAllowedDappConnectBothType ? ['evm', 'substrate'] : (request.accountAuthTypes || ['substrate']))];
 
     if (!authList) {
       authList = {};
