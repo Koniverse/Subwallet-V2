@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## 1.2.29
+Build date: Sep 13, 2024.
+
+Features & Update:
+- Support XCM for Ledger Polkadot generic app (#3458)
+- Adjust showing/validating address on Earning actions (#2703)
+- Update chain-list (#3558)
+  - Add support for Creditcoin CC3 Mainnet
+  - Add support for vASTR on Hydration
+  - Add support for Cypress tokens on Hydration, PAH
+  - Update some network and token information
+  - Add support for new swap pairs on Hydration
+- Support XCM channels (#3453)
+  - MYTH: Hydration --> Mythos
+  - MYTH: PAH --> Mythos
+
+Bugs fixed:
+- Fixed bug Do not show token when standing on All accounts mode in case token does not get balance (#2352)
+- Fix bug do not show lock balance in case account have Kusama nomination pool (#3579)
+- Fix bug XCM for channel: DOT: KAH -> PAH (#3561)
+- Fix bug display wrong APY for Polkadot staking option (#3601)
+
 ## 1.2.28
 Build date: Sep 04, 2024.
 
