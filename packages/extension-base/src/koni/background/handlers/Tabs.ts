@@ -302,7 +302,7 @@ export default class KoniTabs {
   private async accountsListV2 (url: string, { accountAuthType = 'substrate', anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, [accountAuthType] || authInfo?.accountAuthTypes);
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, authInfo?.accountAuthTypes || [accountAuthType]);
   }
 
   // TODO: Update logic
@@ -314,7 +314,7 @@ export default class KoniTabs {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
-            const accountAuthTypes = [accountAuthType] || authInfo?.accountAuthTypes;
+            const accountAuthTypes = authInfo?.accountAuthTypes || [accountAuthType];
             const accounts = this.#koniState.keyringService.context.pairs;
 
             return cb(transformAccountsV2(accounts, false, authInfo, accountAuthTypes));

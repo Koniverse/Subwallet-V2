@@ -23,7 +23,7 @@ export interface AuthUrlInfo {
   isAllowed: boolean;
   origin: string;
   url: string;
-  accountAuthTypes?: AccountAuthType[];
+  accountAuthTypes: AccountAuthType[];
   isAllowedMap: Record<string, boolean>;
   currentEvmNetworkKey?: string;
 }

@@ -65,11 +65,11 @@ export default class AuthRequestHandler {
     const authList = await this.getAuthList();
     let needUpdateAuthList = false;
     const updatedAuthList = Object.entries(authList).reduce((acc, [key, value]) => {
-      if ('accountAuthType' in authList) {
+      if ('accountAuthType' in value) {
         const oldValueStructure = value as AuthUrlInfoNeedMigration;
 
         needUpdateAuthList = true;
-        value.accountAuthTypes = oldValueStructure.accountAuthType === 'both' ? ['substrate', 'evm'] : oldValueStructure.accountAuthType && [oldValueStructure.accountAuthType];
+        value.accountAuthTypes = oldValueStructure.accountAuthType === 'both' ? ['substrate', 'evm'] : [oldValueStructure.accountAuthType || 'substrate'];
       }
 
       acc[key] = { ...value };

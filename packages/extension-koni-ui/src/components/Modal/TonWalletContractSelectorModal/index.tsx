@@ -111,7 +111,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
     if (accountInfo?.address && selectedContractVersion) {
       setIsSubmitting(true);
 
-      tonAccountChangeWalletContractVersion({ proxyId: accountInfo.proxyId || '', address: accountInfo.address, version: selectedContractVersion })
+      tonAccountChangeWalletContractVersion({ proxyId: '', address: accountInfo.address, version: selectedContractVersion })
         .then(() => {
           setTimeout(() => {
             onCancel?.();
@@ -125,7 +125,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           });
         });
     }
-  }, [accountInfo?.address, accountInfo?.proxyId, notification, onCancel, selectedContractVersion]);
+  }, [accountInfo?.address, notification, onCancel, selectedContractVersion]);
 
   return (
     <SwModal
