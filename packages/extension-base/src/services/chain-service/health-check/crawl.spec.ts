@@ -158,6 +158,9 @@ describe('test chain', () => {
 
   it('hydration', async () => {
     const CHAIN = ['hydradx_main', 'hydradx_rococo'];
+    const ASSETID = ['0', '5', '10', '23', '101', '102', '100', '15', '33', '9', '13', '16', '20', '8', '28', '14', '27',
+    '17', '12', '1000085', '30', '1000019', '1000082', '24']
+
     const chainInfos = Object.values(ChainInfoMap).filter((info) => CHAIN.includes(info.slug));
 
     async function queryAll(chainInfo : _ChainInfo) {
@@ -173,9 +176,23 @@ describe('test chain', () => {
       const assetEntries = await api.query[pallet][method].entries();
 
       const assets = assetEntries.map((all) => {
+
         const assetToken = all[1].toPrimitive() as unknown as AssetQuery;
-        if (assetToken != null) {
-          const entry = assetEntries.map((ent) => {
+
+        const assetId = all[0].toHuman() as string[];
+        const numstr = removeComma(assetId[0]);
+        const metadata = String(numstr);
+
+        if (ASSETID.includes(metadata)) {
+
+          let entry : Record<string,_AssetRef>[] = [];
+
+          assetEntries.forEach((ent) => {
+
+            const assetId = ent[0].toHuman() as string[];
+            const numstr = removeComma(assetId[0]);
+            const metadata = String(numstr);
+
             const assetTokenCon = ent[1].toPrimitive() as unknown as AssetQuery;
             const assetConversion: _AssetRef = {
               srcAsset: `${chain}-${_AssetType.LOCAL}-${assetToken.symbol}`,
@@ -184,11 +201,13 @@ describe('test chain', () => {
               destChain: chain,
               path: _AssetRefPath.SWAP,
             };
-            // return assetConversion;
-            if (assetToken.symbol !== null && assetTokenCon.symbol !== null && assetToken.symbol != assetTokenCon.symbol) {
-              return assetConversion;
-            } else {
-              return;
+
+            const assetRef : Record<string, _AssetRef> = {};
+            const key = `${assetConversion.srcAsset}___${assetConversion.destAsset}`;
+            assetRef[key] = assetConversion;
+
+            if (assetToken.symbol != assetTokenCon.symbol && ASSETID.includes(metadata)) {
+              entry.push(assetRef);
             }
           })
           return entry;
