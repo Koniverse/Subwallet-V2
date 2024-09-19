@@ -135,7 +135,13 @@ export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, des
 }
 
 export function checkSupportForFeature (validationResponse: SWTransactionResponse, blockedFeaturesList: string[]) {
-  // todo: add logic
+  const extrinsicType = validationResponse.extrinsicType;
+  const chain = validationResponse.chain;
+  const currentFeature = `${extrinsicType}___${chain}`;
+
+  if (blockedFeaturesList.includes(currentFeature)) {
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t(`This feature is temporarily unavailable on ${chain}.`)));
+  }
 }
 
 export function checkSupportForAction (validationResponse: SWTransactionResponse, blockedActionsMap: Record<ExtrinsicType, string[]>) {
