@@ -21,7 +21,6 @@ import BigN from 'bignumber.js';
 import { t } from 'i18next';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
-import {SubmitJoinNominationPool} from "@subwallet/extension-base/types";
 
 // normal transfer
 export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address, to: _Address, value: string | undefined, transferAll: boolean | undefined): [TransactionError[], KeyringPair | undefined, BigN | undefined] {
@@ -185,14 +184,6 @@ export function checkSupportForAction (validationResponse: SWTransactionResponse
       const providerId = data.provider.id;
 
       currentAction = `${extrinsicType}___${pairSlug}___${providerId}`;
-      break;
-    }
-
-    case ExtrinsicType.STAKING_JOIN_POOL: {
-      const data = validationResponse.data as SubmitJoinNominationPool;
-      const slug = data.slug;
-
-      currentAction = `${extrinsicType}___${slug}`;
       break;
     }
 
