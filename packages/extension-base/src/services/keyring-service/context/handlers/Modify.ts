@@ -230,7 +230,13 @@ export class AccountModifyHandler extends AccountBaseHandler {
       throw new Error('Invalid account type');
     }
 
+    const oldVerion = pair.ton.contractVersion;
     const oldAddress = pair.address;
+
+    if (oldVerion === version) {
+      return oldAddress;
+    }
+
     const modifiedPairs = this.state.modifyPairs;
     const modifiedPair = modifiedPairs[oldAddress];
 
@@ -247,6 +253,15 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
       modifiedPair.key = newAddress;
       modifiedPairs[newAddress] = modifiedPair;
+    }
+
+    const pairs = keyring.getPairs();
+    const childPairs = pairs.filter((pair) => pair.meta.parentAddress === oldAddress);
+
+    for (const childPair of childPairs) {
+      assert(pair, t('Unable to find account'));
+
+      keyring.saveAccountMeta(childPair, { ...childPair.meta, parentAddress: newAddress });
     }
 
     // In case the current account is a single account, and is the account being modified, update the current proxy id

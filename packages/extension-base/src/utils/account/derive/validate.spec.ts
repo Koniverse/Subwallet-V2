@@ -19,28 +19,31 @@ const evmTestCases: DeriveTestCase[] = [
   {
     input: "m/44'/60'/0'/0/0",
     output: {
-      raw: "m/44'/60'/0'/0/0",
       type: 'ethereum',
       suri: '//0',
-      depth: 0
+      depth: 0,
+      derivationPath: "m/44'/60'/0'/0/0",
+      autoIndexes: [0]
     }
   },
   {
     input: "m/44'/60'/0'/0/1",
     output: {
-      raw: "m/44'/60'/0'/0/1",
       type: 'ethereum',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      derivationPath: "m/44'/60'/0'/0/1",
+      autoIndexes: [1]
     }
   },
   {
     input: "m/44'/60'/0'/0/1/2",
     output: {
-      raw: "m/44'/60'/0'/0/1/2",
       type: 'ethereum',
       suri: '//1//2',
-      depth: 2
+      depth: 2,
+      derivationPath: "m/44'/60'/0'/0/1/2",
+      autoIndexes: [1, 2]
     }
   },
   {
@@ -52,38 +55,46 @@ const tonTestCases: DeriveTestCase[] = [
   {
     input: "m/44'/607'/0'",
     output: {
-      raw: "m/44'/607'/0'",
       type: 'ton',
       suri: '//0',
-      depth: 0
+      depth: 0,
+      derivationPath: "m/44'/607'/0'",
+      autoIndexes: [0]
     }
   },
   {
     input: "m/44'/607'/1'",
     output: {
-      raw: "m/44'/607'/1'",
       type: 'ton',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      derivationPath: "m/44'/607'/1'",
+      autoIndexes: [1]
     }
   },
   {
     input: "m/44'/607'/12'",
     output: {
-      raw: "m/44'/607'/12'",
       type: 'ton',
       suri: '//12',
-      depth: 1
+      depth: 1,
+      derivationPath: "m/44'/607'/12'",
+      autoIndexes: [12]
     }
   },
   {
     input: "m/44'/607'/1'/2'",
     output: {
-      raw: "m/44'/607'/1'/2'",
       type: 'ton',
       suri: '//1//2',
-      depth: 2
+      depth: 2,
+      derivationPath: "m/44'/607'/1'/2'",
+      autoIndexes: [1, 2]
     }
+  },
+  {
+    input: "m/44'/607'/1",
+    output: undefined
   },
   {
     input: "m/44'/607'/1'/2'/3'",
@@ -94,37 +105,46 @@ const sr25519TestCases: DeriveTestCase[] = [
   {
     input: '//1',
     output: {
-      raw: '//1',
       type: 'sr25519',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {
     input: '//1//2',
     output: {
-      raw: '//1//2',
       type: 'sr25519',
       suri: '//1//2',
-      depth: 2
+      depth: 2,
+      autoIndexes: [1, 2]
     }
   },
   {
     input: '//1//2//3',
     output: {
-      raw: '//1//2//3',
       type: 'sr25519',
       suri: '//1//2//3',
-      depth: 3
+      depth: 3,
+      autoIndexes: [1, 2, 3]
     }
   },
   {
     input: '/1//2/3',
     output: {
-      raw: '/1//2/3',
       type: 'sr25519',
       suri: '/1//2/3',
-      depth: 3
+      depth: 3,
+      autoIndexes: [undefined, 2, undefined]
+    }
+  },
+  {
+    input: '/avvas//ggaa/asxxvzxv',
+    output: {
+      type: 'sr25519',
+      suri: '/avvas//ggaa/asxxvzxv',
+      depth: 3,
+      autoIndexes: [undefined, undefined, undefined]
     }
   },
   {
@@ -144,28 +164,28 @@ const ed25519TestCases: DeriveTestCase[] = [
   {
     input: '//1',
     output: {
-      raw: '//1',
       type: 'ed25519',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {
     input: '//1//2',
     output: {
-      raw: '//1//2',
       type: 'ed25519',
       suri: '//1//2',
-      depth: 2
+      depth: 2,
+      autoIndexes: [1, 2]
     }
   },
   {
     input: '//1//2//3',
     output: {
-      raw: '//1//2//3',
       type: 'ed25519',
       suri: '//1//2//3',
-      depth: 3
+      depth: 3,
+      autoIndexes: [1, 2, 3]
     }
   },
   {
@@ -189,19 +209,19 @@ const unifiedTestCases: DeriveTestCase[] = [
   {
     input: '//1',
     output: {
-      raw: '//1',
       type: 'unified',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {
     input: '//1//2',
     output: {
-      raw: '//1//2',
       type: 'unified',
       suri: '//1//2',
-      depth: 2
+      depth: 2,
+      autoIndexes: [1, 2]
     }
   },
   {
@@ -217,10 +237,11 @@ const autoTestCases: AutoDeriveTestCase[] = [
   {
     input: "m/44'/60'/0'/0/0",
     output: {
-      raw: "m/44'/60'/0'/0/0",
       type: 'ethereum',
       suri: '//0',
-      depth: 0
+      depth: 0,
+      derivationPath: "m/44'/60'/0'/0/0",
+      autoIndexes: [0]
     }
   },
   {
@@ -232,10 +253,11 @@ const autoTestCases: AutoDeriveTestCase[] = [
     input: "m/44'/607'/0'",
     type: 'ton',
     output: {
-      raw: "m/44'/607'/0'",
       type: 'ton',
       suri: '//0',
-      depth: 0
+      depth: 0,
+      derivationPath: "m/44'/607'/0'",
+      autoIndexes: [0]
     }
   },
   {
@@ -246,10 +268,11 @@ const autoTestCases: AutoDeriveTestCase[] = [
   {
     input: "m/44'/607'/0'",
     output: {
-      raw: "m/44'/607'/0'",
       type: 'ton',
       suri: '//0',
-      depth: 0
+      depth: 0,
+      derivationPath: "m/44'/607'/0'",
+      autoIndexes: [0]
     }
   },
   {
@@ -265,19 +288,19 @@ const autoTestCases: AutoDeriveTestCase[] = [
   {
     input: '//0',
     output: {
-      raw: '//0',
-      type: 'unified',
+      autoIndexes: [0],
+      depth: 1,
       suri: '//0',
-      depth: 1
+      type: 'sr25519'
     }
   },
   {
     input: '//1',
     output: {
-      raw: '//1',
       type: 'unified',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {
@@ -294,29 +317,29 @@ const autoTestCases: AutoDeriveTestCase[] = [
     input: '//1',
     type: 'sr25519',
     output: {
-      raw: '//1',
       type: 'sr25519',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {
     input: '//1',
     type: 'ed25519',
     output: {
-      raw: '//1',
       type: 'ed25519',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {
     input: '//1',
     output: {
-      raw: '//1',
       type: 'unified',
       suri: '//1',
-      depth: 1
+      depth: 1,
+      autoIndexes: [1]
     }
   },
   {

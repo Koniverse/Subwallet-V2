@@ -683,12 +683,6 @@ export interface TransactionHistoryItem<ET extends ExtrinsicType = ExtrinsicType
   nonce?: number,
 }
 
-export interface SWError extends Error {
-  code?: number;
-  errorType: string;
-  data?: unknown;
-}
-
 export interface SWWarning {
   errorType: string;
   code?: number;

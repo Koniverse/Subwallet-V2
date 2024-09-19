@@ -2,15 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { CreateDeriveAccountInfo, DeriveAccountInfo, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, ResponseDeriveValidateV2, ResponseGetDeriveAccounts } from '@subwallet/extension-base/types';
-import { createAccountProxyId, derivePair, findNextDerivePair } from '@subwallet/extension-base/utils';
-import { KeyringPair, KeyringPair$Meta, SubstrateKeypairTypes } from '@subwallet/keyring/types';
+import { AccountJson, AccountProxyData, CreateDeriveAccountInfo, DeriveAccountInfo, NextDerivePair, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, ResponseDeriveValidateV2, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion } from '@subwallet/extension-base/types';
+import { DeriveErrorType, SWDeriveError } from '@subwallet/extension-base/types/account/error/derive';
+import { createAccountProxyId, derivePair, findNextDerivePair, findNextDeriveUnified, getDerivationInfo, parseUnifiedSuriToDerivationPath, validateDerivationPath } from '@subwallet/extension-base/utils';
+import { EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
 import { assert } from '@polkadot/util';
 
 import { AccountBaseHandler } from './Base';
+
+const validDeriveKeypairTypes: KeypairType[] = [...SubstrateKeypairTypes, ...EthereumKeypairTypes, 'ton'];
 
 /**
  * @class AccountDeriveHandler
@@ -124,132 +127,249 @@ export class AccountDeriveHandler extends AccountBaseHandler {
   }
 
   /* Validate derivation path */
-  public validateDerivePath ({ parentAddress, suri }: RequestDeriveValidateV2): ResponseDeriveValidateV2 {
-    const parentPair = keyring.getPair(parentAddress);
-    const isEvm = parentPair.type === 'ethereum';
+  public validateDerivePath ({ proxyId, suri }: RequestDeriveValidateV2): ResponseDeriveValidateV2 {
+    const isUnified = this.state.isUnifiedAccount(proxyId);
 
-    if (parentPair.isLocked) {
-      keyring.unlockPair(parentPair.address);
+    let type: KeypairType | undefined;
+
+    if (!isUnified) {
+      try {
+        const pair = keyring.getPair(proxyId);
+
+        type = pair.type;
+      } catch (e) {
+        throw Error(t('Cannot find account'));
+      }
     }
 
-    const meta: KeyringPair$Meta = {
-      parentAddress
-    };
+    const derivationInfo = validateDerivationPath(suri, type);
+    const account = this.state.accounts[proxyId];
 
-    let childPair: KeyringPair;
+    if (derivationInfo) {
+      const accountTypes = account.accounts.map((acc) => acc.type);
 
-    if (isEvm) {
-      let index = 0;
+      /* Minimum depth is 1 */
+      if (derivationInfo.depth < 1) {
+        return {
+          info: undefined,
+          error: (new SWDeriveError(DeriveErrorType.MIN_DERIVATION_DEPTH)).toJSON()
+        };
+      }
+
+      /* Maximum depth is 2 */
+      if (derivationInfo.depth > 2) {
+        return {
+          info: undefined,
+          error: (new SWDeriveError(DeriveErrorType.MAX_DERIVATION_DEPTH)).toJSON()
+        };
+      }
+
+      if (isUnified && derivationInfo.type === 'unified') {
+        return {
+          info: derivationInfo
+        };
+      } else if (accountTypes.includes(derivationInfo.type as KeypairType)) {
+        return {
+          info: derivationInfo
+        };
+      } else {
+        return {
+          info: undefined,
+          error: (new SWDeriveError(DeriveErrorType.INVALID_DERIVATION_TYPE)).toJSON()
+        };
+      }
+    } else {
+      return {
+        info: undefined,
+        error: new SWDeriveError(DeriveErrorType.INVALID_DERIVATION_PATH).toJSON()
+      };
+    }
+  }
+
+  public getDeriveSuggestion ({ proxyId }: RequestGetDeriveSuggestion): ResponseGetDeriveSuggestion {
+    const isUnified = this.state.isUnifiedAccount(proxyId);
+    let rs: NextDerivePair;
+
+    if (isUnified) {
+      rs = findNextDeriveUnified(proxyId, this.state.accounts);
+    } else {
+      let pair: KeyringPair | undefined;
 
       try {
-        const reg = /^\d+$/;
-        const path = suri.split('//')[1];
+        pair = keyring.getPair(proxyId);
+      } catch (e) {}
 
-        if (reg.test(path)) {
-          index = parseInt(path);
-        }
-      } catch (e) {
-
+      if (!pair) {
+        return {
+          proxyId,
+          error: new SWDeriveError(DeriveErrorType.ACCOUNT_NOT_FOUND).toJSON()
+        };
       }
 
-      if (!index) {
-        throw Error(t('Invalid derive path'));
+      if (!validDeriveKeypairTypes.includes(pair.type)) {
+        return {
+          proxyId,
+          error: new SWDeriveError(DeriveErrorType.INVALID_ACCOUNT_TYPE).toJSON()
+        };
       }
 
-      meta.suri = `//${index}`;
-
-      childPair = parentPair.evm.derive(index, meta);
-    } else {
-      meta.suri = suri;
-      childPair = parentPair.substrate.derive(suri, meta);
+      rs = findNextDerivePair(proxyId);
     }
 
     return {
-      address: childPair.address,
-      suri: meta.suri as string
+      proxyId,
+      info: {
+        suri: rs.suri,
+        derivationPath: rs.derivationPath
+      }
     };
   }
 
-  /* Auto create derive account for solo account */
-  private deriveSoloAccount (request: RequestDeriveCreateV3): boolean {
-    const { name, proxyId, suri } = request;
+  /**
+   * Derive account proxy
+   *  */
+  public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
+    const { name, proxyId: parentProxyId, suri } = request;
+    const isUnified = this.state.isUnifiedAccount(parentProxyId);
 
-    const parentPair = keyring.getPair(proxyId);
+    let parentUnifiedId: string | undefined;
 
-    assert(parentPair, t('Unable to find account'));
-
-    const isSpecialTon = parentPair.type === 'ton-native';
-
-    assert(!isSpecialTon, t('Cannot derive for this account'));
-
-    const isSubstrate = SubstrateKeypairTypes.includes(parentPair.type);
-
-    assert(!isSubstrate ? !suri : true, t('Cannot derive for this account'));
-
-    if (parentPair.isLocked) {
-      keyring.unlockPair(parentPair.address);
+    if (!isUnified) {
+      parentUnifiedId = this.state.belongUnifiedAccount(parentProxyId);
     }
 
-    let childPair: KeyringPair | undefined;
+    const nameExists = this.state.checkNameExists(name);
 
-    if (suri) {
-      childPair = parentPair.substrate.derive(suri, { name, parentAddress: proxyId, suri });
-    } else {
-      const { deriveIndex } = findNextDerivePair(parentPair.address);
-
-      childPair = derivePair(parentPair, name, deriveIndex);
+    if (nameExists) {
+      throw Error(t('Account name already exists'));
     }
 
-    if (!childPair) {
-      throw Error(t('Cannot derive for this account'));
+    const validateRs = this.validateDerivePath({ proxyId: parentProxyId, suri });
+
+    if (!validateRs.info) {
+      if (validateRs.error) {
+        throw Error(validateRs.error.message);
+      } else {
+        throw Error(t('Invalid derivation path'));
+      }
     }
 
-    const address = childPair.address;
-    const exists = this.state.checkAddressExists([childPair.address]);
+    const derivationInfo = validateRs.info;
 
-    assert(!exists, t('Account already exists: {{name}}', { replace: { name: exists?.name || exists?.address || childPair.address } }));
-
-    keyring.addPair(childPair, true);
-
-    this.state.updateMetadataForPair();
-    this.state.saveCurrentAccountProxyId(address, () => {
-      this.state._addAddressToAuthList(address, true);
-    });
-
-    return true;
-  }
-
-  /* Auto create derive account for solo account */
-  private deriveUnifiedAccount (request: RequestDeriveCreateV3): boolean {
-    const { name, proxyId: parentProxyId, suri: _suri } = request;
-    const accountProxyData = this.state.accountProxies;
-    const accountProxy = accountProxyData[parentProxyId];
-
-    assert(!accountProxy.parentId && !_suri, t('Cannot derive this account with suri'));
-
-    const modifyPairs = this.state.modifyPairs;
-    const addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === parentProxyId);
-    const firstAddress = addresses[0];
-
-    assert(firstAddress, t('Cannot find account'));
-
-    const nextDeriveData = findNextDerivePair(firstAddress);
-    const { deriveIndex } = nextDeriveData;
-    const suri = `//${deriveIndex}`;
-    const proxyId = createAccountProxyId(parentProxyId, suri);
     const pairs: KeyringPair[] = [];
+    const modifyPairs = this.state.modifyPairs;
+    let childAccountProxy: AccountProxyData | undefined;
+    let proxyId: string;
 
-    this.state.upsertAccountProxyByKey({ id: proxyId, name, parentId: parentProxyId, suri: suri });
+    const findRootPair = (account: AccountJson): KeyringPair | undefined => {
+      const deriveInfo = getDerivationInfo(account.type, account);
+      const needChangeRoot = (account.type === 'ethereum' || account.type === 'ton') && deriveInfo.depth > 0;
+      let rootPair: KeyringPair | undefined;
 
-    for (const parentAddress of addresses) {
-      const parentPair = keyring.getPair(parentAddress);
-      const childPair = derivePair(parentPair, name, deriveIndex);
-      const address = childPair.address;
+      if (needChangeRoot) {
+        try {
+          rootPair = keyring.getPair(account.parentAddress as string || '');
+        } catch (e) {
 
-      modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
-      pairs.push(childPair);
+        }
+      } else {
+        try {
+          rootPair = keyring.getPair(account.address);
+        } catch (e) {
+
+        }
+      }
+
+      return rootPair;
+    };
+
+    if (derivationInfo.type === 'unified') {
+      const accountProxy = this.state.value.accounts[parentProxyId];
+
+      if (!accountProxy) {
+        throw Error(t('Cannot find account'));
+      }
+
+      const accounts = accountProxy.accounts;
+
+      proxyId = createAccountProxyId(parentProxyId, suri);
+
+      for (const account of accounts) {
+        const rootPair = findRootPair(account);
+
+        if (!rootPair) {
+          throw Error(t('Cannot find root account'));
+        }
+
+        const derivationPath = parseUnifiedSuriToDerivationPath(derivationInfo.suri, account.type);
+        const childPair = derivePair(rootPair, request.name, derivationInfo.suri, derivationPath);
+        const address = childPair.address;
+
+        modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
+        pairs.push(childPair);
+      }
+
+      childAccountProxy = { id: proxyId, name, parentId: parentProxyId, suri: suri };
+    } else {
+      const type = derivationInfo.type;
+
+      if (isUnified) {
+        const accountProxy = this.state.value.accounts[parentProxyId];
+        const account = accountProxy.accounts.find((account) => account.type === type);
+
+        if (!account) {
+          throw Error(t('Cannot find parent account'));
+        }
+
+        const rootPair = findRootPair(account);
+
+        if (!rootPair) {
+          throw Error(t('Cannot find root account'));
+        }
+
+        const childPair = derivePair(rootPair, request.name, derivationInfo.suri, derivationInfo.derivationPath);
+        const address = childPair.address;
+
+        proxyId = address;
+        modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
+        childAccountProxy = { id: proxyId, name, parentId: parentProxyId, suri: suri };
+        pairs.push(childPair);
+      } else {
+        const account = this.state.value.accounts[parentProxyId].accounts[0];
+
+        if (!account) {
+          throw Error(t('Cannot find parent account'));
+        }
+
+        const rootPair = findRootPair(account);
+
+        if (!rootPair) {
+          throw Error(t('Cannot find root account'));
+        }
+
+        const childPair = derivePair(rootPair, request.name, derivationInfo.suri, derivationInfo.derivationPath);
+
+        const address = childPair.address;
+
+        proxyId = address;
+
+        if (parentUnifiedId) {
+          modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
+          childAccountProxy = { id: proxyId, name, parentId: parentUnifiedId, suri: suri };
+        }
+
+        pairs.push(childPair);
+      }
     }
 
+    const addresses = pairs.map((pair) => pair.address);
+    const exists = this.state.checkAddressExists(addresses);
+
+    assert(!exists, t('Account already exists: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+
+    console.log(pairs, childAccountProxy, modifyPairs);
+
+    childAccountProxy && this.state.upsertAccountProxyByKey(childAccountProxy);
     this.state.upsertModifyPairs(modifyPairs);
 
     for (const childPair of pairs) {
@@ -257,38 +377,12 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     }
 
     this.state.updateMetadataForPair();
+    this.state.updateMetadataForProxy();
     this.state.saveCurrentAccountProxyId(proxyId, () => {
       this.state._addAddressesToAuthList(pairs.map((pair) => pair.address), true);
     });
 
     return true;
-  }
-
-  /**
-   * Derive account proxy
-   *  */
-  public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
-    const isUnified = this.state.isUnifiedAccount(request.proxyId);
-
-    if (!isUnified) {
-      const belongUnifiedAccount = this.state.belongUnifiedAccount(request.proxyId);
-
-      if (belongUnifiedAccount) {
-        throw Error(t('Cannot derive this account')); // TODO: Change message
-      }
-    }
-
-    const nameExists = this.state.checkNameExists(request.name);
-
-    if (nameExists) {
-      throw Error(t('Account name already exists'));
-    }
-
-    if (!isUnified) {
-      return this.deriveSoloAccount(request);
-    } else {
-      return this.deriveUnifiedAccount(request);
-    }
   }
 
   /* Derive */

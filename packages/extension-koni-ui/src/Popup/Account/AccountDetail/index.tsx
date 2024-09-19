@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountActions, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountProxyTypeTag, CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
+import DeriveAccountModal from '@subwallet/extension-koni-ui/components/Modal/DeriveAccountModal';
+import { DERIVE_ACCOUNT_ACTION_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
@@ -13,7 +15,7 @@ import { editAccount, forgetAccount, validateAccountName } from '@subwallet/exte
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
-import { Button, Form, Icon, Input } from '@subwallet/react-ui';
+import { Button, Form, Icon, Input, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
@@ -53,12 +55,17 @@ interface DetailFormState {
 }
 
 const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccounts }: ComponentProps) => {
+  const showDerivedAccounts = !!accountProxy.children?.length;
+
   const { t } = useTranslation();
+
   const notify = useNotification();
   const { goHome } = useDefaultNavigate();
-  const showDerivedAccounts = !!accountProxy.children?.length;
-  const { alertModal } = useContext(WalletModalContext);
   const navigate = useNavigate();
+
+  const { alertModal } = useContext(WalletModalContext);
+  const { activeModal } = useContext(ModalContext);
+
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
     requestViewDerivedAccounts && showDerivedAccounts
       ? FilterTabType.DERIVED_ACCOUNT
@@ -131,8 +138,8 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [alertModal, doDelete, t]);
 
   const onDerive = useCallback(() => {
-    //
-  }, []);
+    activeModal(DERIVE_ACCOUNT_ACTION_MODAL);
+  }, [activeModal]);
 
   const onExport = useCallback(() => {
     if (accountProxy?.id) {
@@ -211,7 +218,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       });
   }, [accountProxy.id, accountProxy.name, form]);
 
-  const footerNode = (() => {
+  const footerNode = useMemo(() => {
     if (![AccountProxyType.UNIFIED, AccountProxyType.SOLO].includes(accountProxy.accountType)) {
       return (
         <Button
@@ -250,7 +257,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       <Button
         block={true}
         className={CN('account-button')}
-        disabled={true}
+        disabled={!accountProxy.accountActions.includes(AccountActions.DERIVE)}
         icon={(
           <Icon
             phosphorIcon={GitMerge}
@@ -278,7 +285,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
         {t('Export')}
       </Button>
     </>;
-  })();
+  }, [accountProxy, deleting, deriving, onDelete, onDerive, onExport, t]);
 
   useEffect(() => {
     if (accountProxy) {
@@ -377,6 +384,10 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
           />
         )
       }
+
+      <DeriveAccountModal
+        proxyId={accountProxy.id}
+      />
     </Layout.WithSubHeaderOnly>
   );
 };

@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { SWErrorData } from '@subwallet/extension-base/types';
 import { KeypairType } from '@subwallet/keyring/types';
 
 export interface CreateDeriveAccountInfo {
@@ -20,7 +21,7 @@ export interface RequestDeriveCreateMultiple {
 export interface RequestDeriveCreateV3 {
   proxyId: string;
   name: string;
-  suri?: string;
+  suri: string;
 }
 
 export interface DeriveAccountInfo {
@@ -30,10 +31,13 @@ export interface DeriveAccountInfo {
 
 export interface RequestDeriveValidateV2 {
   suri: string;
-  parentAddress: string;
+  proxyId: string;
 }
 
-export type ResponseDeriveValidateV2 = DeriveAccountInfo;
+export type ResponseDeriveValidateV2 = {
+  info: DerivePathInfo | undefined;
+  error?: SWErrorData;
+};
 
 export interface RequestGetDeriveAccounts {
   page: number;
@@ -54,24 +58,35 @@ export interface RequestGetDeriveSuggestion {
 
 export interface ResponseGetDeriveSuggestion {
   proxyId: string;
-  suri: string;
+  info?: {
+    suri: string;
+    derivationPath?: string;
+  }
+  error?: SWErrorData;
 }
 
 export interface DeriveInfo {
+  parentAddress?: string;
   suri?: string;
-  deriveIndex?: number;
+  derivationPath?: string;
+  depth: number;
+  autoIndexes?: Array<number|undefined>;
 }
 
 export interface NextDerivePair {
   deriveIndex: number;
+  derivationPath?: string;
+  deriveAddress: string;
+  depth: number;
   suri: string;
 }
 
 export interface IDerivePathInfo_ {
-  raw: string;
   type: KeypairType;
   suri: string;
   depth: number;
+  autoIndexes?: Array<number|undefined>;
+  derivationPath?: string;
 }
 
 export interface DerivePathInfo extends Omit<IDerivePathInfo_, 'type'> {

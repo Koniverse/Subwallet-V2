@@ -17,6 +17,7 @@ export * from './balance';
 export * from './buy';
 export * from './campaigns';
 export * from './common';
+export * from './error';
 export * from './fee';
 export * from './metadata';
 export * from './ordinal';

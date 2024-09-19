@@ -1,48 +1,59 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { DerivePathInfo } from '@subwallet/extension-base/types';
+import { DerivePathInfo, IDerivePathInfo_ } from '@subwallet/extension-base/types';
 import { KeypairType, SubstrateKeypairType } from '@subwallet/keyring/types';
 
 export const validateUnifiedDerivationPath = (raw: string): DerivePathInfo | undefined => {
-  const reg = /^\/\/(\d+)(\/\/\d)?$/;
+  const reg = /^\/\/(\d+)(\/\/\d+)?$/;
 
   if (raw.match(reg)) {
     const [, firstIndex, secondData] = raw.match(reg) as string[];
-
     const first = parseInt(firstIndex, 10);
+    const autoIndexes: number[] = [first];
 
-    let depth = 1;
+    let depth: number;
     let suri = `//${first}`;
+
+    if (first === 0) {
+      depth = 0;
+    } else {
+      depth = 1;
+    }
 
     if (secondData) {
       const [, secondIndex] = secondData.match(/\/\/(\d+)/) as string[];
 
       const second = parseInt(secondIndex, 10);
 
+      autoIndexes.push(second);
       depth = 2;
-
       suri += `//${second}`;
+    }
+
+    if (depth === 0) {
+      return undefined;
     }
 
     return {
       depth,
-      raw,
       type: 'unified',
-      suri
+      suri,
+      autoIndexes
     };
   } else {
     return undefined;
   }
 };
 
-export const validateEvmDerivationPath = (raw: string): DerivePathInfo | undefined => {
+export const validateEvmDerivationPath = (raw: string): IDerivePathInfo_ | undefined => {
   const reg = /^m\/44'\/60'\/0'\/0\/(\d+)(\/\d+)?$/;
 
   if (raw.match(reg)) {
     const [, firstIndex, secondData] = raw.match(reg) as string[];
 
     const first = parseInt(firstIndex, 10);
+    const autoIndexes: number[] = [first];
 
     let depth: number;
     let suri = `//${first}`;
@@ -58,29 +69,30 @@ export const validateEvmDerivationPath = (raw: string): DerivePathInfo | undefin
 
       const second = parseInt(secondIndex, 10);
 
+      autoIndexes.push(second);
       depth = 2;
-
       suri += `//${second}`;
     }
 
     return {
       depth,
-      raw,
       type: 'ethereum',
-      suri
+      suri,
+      derivationPath: raw,
+      autoIndexes
     };
   } else {
     return undefined;
   }
 };
 
-export const validateTonDerivationPath = (raw: string): DerivePathInfo | undefined => {
+export const validateTonDerivationPath = (raw: string): IDerivePathInfo_ | undefined => {
   const reg = /^m\/44'\/607'\/(\d+)'(\/\d+')?$/;
 
   if (raw.match(reg)) {
     const [, firstIndex, secondData] = raw.match(reg) as string[];
-
     const first = parseInt(firstIndex, 10);
+    const autoIndexes: number[] = [first];
 
     let depth: number;
     let suri = `//${first}`;
@@ -96,23 +108,24 @@ export const validateTonDerivationPath = (raw: string): DerivePathInfo | undefin
 
       const second = parseInt(secondIndex, 10);
 
+      autoIndexes.push(second);
       depth = 2;
-
       suri += `//${second}`;
     }
 
     return {
       depth,
-      raw,
       type: 'ton',
-      suri
+      suri,
+      derivationPath: raw,
+      autoIndexes
     };
   } else {
     return undefined;
   }
 };
 
-export const validateSr25519DerivationPath = (raw: string): DerivePathInfo | undefined => {
+export const validateSr25519DerivationPath = (raw: string): IDerivePathInfo_ | undefined => {
   const reg = /\/(\/?)([^/]+)/g;
   const parts = raw.match(reg);
   let constructed = '';
@@ -125,15 +138,25 @@ export const validateSr25519DerivationPath = (raw: string): DerivePathInfo | und
     return undefined;
   }
 
+  const autoIndexes = parts.map((part) => {
+    const reg = /^\/\/(\d+)$/;
+
+    if (part.match(reg)) {
+      return parseInt(part.replace('//', ''), 10);
+    } else {
+      return undefined;
+    }
+  });
+
   return {
     depth: parts.length,
     type: 'sr25519',
-    raw,
-    suri: raw
+    suri: raw,
+    autoIndexes
   };
 };
 
-export const validateOtherSubstrateDerivationPath = (raw: string, type: Exclude<SubstrateKeypairType, 'sr25519'>): DerivePathInfo | undefined => {
+export const validateOtherSubstrateDerivationPath = (raw: string, type: Exclude<SubstrateKeypairType, 'sr25519'>): IDerivePathInfo_ | undefined => {
   const reg = /\/\/([^/]+)/g;
   const parts = raw.match(reg);
   let constructed = '';
@@ -146,11 +169,21 @@ export const validateOtherSubstrateDerivationPath = (raw: string, type: Exclude<
     return undefined;
   }
 
+  const autoIndexes = parts.map((part) => {
+    const reg = /^\/\/(\d+)$/;
+
+    if (part.match(reg)) {
+      return parseInt(part.replace('//', ''), 10);
+    } else {
+      return undefined;
+    }
+  });
+
   return {
     depth: parts.length,
     type,
-    raw,
-    suri: raw
+    suri: raw,
+    autoIndexes
   };
 };
 

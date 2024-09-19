@@ -73,3 +73,7 @@ export const EARNING_MIGRATION_MODAL = 'earning-migration-modal';
 /* Ledger */
 export const WARNING_LEDGER_RECEIVE_MODAL = 'warning-ledger-receive-modal';
 /* Ledger */
+
+/* Derive */
+export const DERIVE_ACCOUNT_ACTION_MODAL = 'derive-account-action-modal';
+/* Derive */

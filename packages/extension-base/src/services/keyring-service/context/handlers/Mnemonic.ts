@@ -138,7 +138,13 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
     types.forEach((type) => {
       const suri = getSuri(_suri, type);
-      const rs = keyring.addUri(suri, { name: name }, type);
+      const { derivePath } = keyExtractSuri(suri);
+      const metadata = {
+        name,
+        derivationPath: derivePath ? derivePath.substring(1) : undefined
+      };
+
+      const rs = keyring.addUri(suri, metadata, type);
       const address = rs.pair.address;
 
       this.state._addAddressToAuthList(address, isAllowed);
