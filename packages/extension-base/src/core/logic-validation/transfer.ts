@@ -134,7 +134,11 @@ export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, des
   return [warning, error];
 }
 
-export function checkSupportForAction (validationResponse: SWTransactionResponse, blockedActionsList: string[]) {
+export function checkSupportForFeature (validationResponse: SWTransactionResponse, blockedFeaturesList: string[]) {
+  // todo: add logic
+}
+
+export function checkSupportForAction (validationResponse: SWTransactionResponse, blockedActionsMap: Record<ExtrinsicType, string[]>) {
   const extrinsicType = validationResponse.extrinsicType;
   let currentAction = '';
 
@@ -297,6 +301,8 @@ export function checkSupportForAction (validationResponse: SWTransactionResponse
       break;
     }
   }
+
+  const blockedActionsList = Object.values(blockedActionsMap).flat();
 
   if (blockedActionsList.includes(currentAction)) {
     validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t('This action is temporarily unavailable.')));

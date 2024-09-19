@@ -1,16 +1,16 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { fetchStaticData } from '@subwallet/extension-base/utils';
 
-interface BlockedActionsList {
-  blockedList: string[]
+interface BlockedActionsFeaturesMap {
+  blockedActionsMap: Record<ExtrinsicType, string[]>
+  blockedFeaturesList: string[],
 }
 
-const BLOCKED_ACTIONS_LIST_PROMISE = fetchStaticData<Record<string, number[]>>('blocked-actions-list');
+const BLOCKED_ACTIONS_AND_FEATURES_PROMISE = fetchStaticData<Record<string, number[]>>('blocked-actions-features');
 
-export const fetchLastestBlockedActionsList = async () => {
-  const _blockedActionsList = await BLOCKED_ACTIONS_LIST_PROMISE as unknown as BlockedActionsList;
-
-  return _blockedActionsList.blockedList;
+export const fetchLastestBlockedActionsAndFeatures = async () => {
+  return await BLOCKED_ACTIONS_AND_FEATURES_PROMISE as unknown as BlockedActionsFeaturesMap;
 };
