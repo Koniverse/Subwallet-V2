@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { _Address, AmountData, BasicTxErrorType, BasicTxWarningCode, ExtrinsicType, FeeData, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
+import { _Address, AmountData, BasicTxErrorType, BasicTxWarningCode, ExtrinsicDataTypeMap, ExtrinsicType, FeeData, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
 import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/system-pallet';
@@ -132,6 +132,45 @@ export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, des
   }
 
   return [warning, error];
+}
+
+export function checkSupportForAction (validationResponse: SWTransactionResponse, blockedActionsList: string[]) {
+  const extrinsicType = validationResponse.extrinsicType;
+  let currentAction = '';
+
+  switch (extrinsicType) {
+    case ExtrinsicType.TRANSFER_BALANCE:
+
+    // eslint-disable-next-line no-fallthrough
+    case ExtrinsicType.TRANSFER_TOKEN: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.TRANSFER_BALANCE];
+      const fromAssetSlug = data.tokenSlug;
+
+      currentAction = `${fromAssetSlug}___${extrinsicType}___${fromAssetSlug}`;
+      break;
+    }
+
+    case ExtrinsicType.TRANSFER_XCM: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.TRANSFER_XCM];
+      const fromAssetSlug = data.tokenSlug;
+      const destChain = data.destinationNetworkKey;
+
+      currentAction = `${fromAssetSlug}___${extrinsicType}___${destChain}`;
+      break;
+    }
+
+    // case ExtrinsicType.STAKING_JOIN_POOL: {
+    //   ...
+    // }
+    //
+    // case ExtrinsicType.STAKING_LEAVE_POOL :{
+    //   ...
+    // }
+  }
+
+  if (blockedActionsList.includes(currentAction)) {
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t('This action is temporarily unavailable.')));
+  }
 }
 
 // general validations
