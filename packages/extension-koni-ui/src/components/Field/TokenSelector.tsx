@@ -169,6 +169,7 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
   return (
     <SelectModal
       className={`${className} chain-selector-modal`}
+      destroyOnClose={true}
       disabled={disabled}
       id={id}
       inputClassName={`${className} chain-selector-input`}

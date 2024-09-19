@@ -46,6 +46,7 @@ const Component: React.FC<Props> = ({ className, transaction }: Props) => {
       <MetaInfo hasBackgroundWrapper>
         <MetaInfo.Account
           address={data.from}
+          chainSlug={transaction.chain}
           label={t('Send from')}
           networkPrefix={senderPrefix}
         />

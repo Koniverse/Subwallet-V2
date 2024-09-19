@@ -29,6 +29,7 @@ const Component: React.FC<Props> = (props: Props) => {
     >
       <MetaInfo.Account
         address={account?.address || address}
+        chainSlug={network}
         label={t('Account')}
         name={account?.name}
         networkPrefix={networkPrefix}
