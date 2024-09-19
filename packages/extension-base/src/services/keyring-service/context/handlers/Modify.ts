@@ -233,6 +233,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     const oldAddress = pair.address;
     const modifiedPairs = this.state.modifyPairs;
     const modifiedPair = modifiedPairs[oldAddress];
+    const tonAccount = accounts[proxyId]?.accounts.find((account) => account.chainType === AccountChainType.TON);
 
     keyring.changeTonWalletContractVersion(modifyAddress, version);
 
@@ -255,6 +256,8 @@ export class AccountModifyHandler extends AccountBaseHandler {
     }
 
     this.state.upsertModifyPairs(modifiedPairs);
+
+    this.state.changeAddressAllowedAuthList(tonAccount?.address || oldAddress, newAddress);
 
     return newAddress;
   }
