@@ -109,7 +109,6 @@ export class AccountState {
 
         return false;
       }),
-
       first()
     )
       .subscribe((accountProxyMap) => {
@@ -165,23 +164,23 @@ export class AccountState {
   }
 
   get pairs (): SubjectInfo {
-    return this.pairSubject.value;
+    return structuredClone(this.pairSubject.value);
   }
 
   get contacts (): SubjectInfo {
-    return this.contactSubject.value;
+    return structuredClone(this.contactSubject.value);
   }
 
   get accounts (): AccountProxyMap {
-    return this.accountSubject.value;
+    return structuredClone(this.accountSubject.value);
   }
 
   get accountProxies () {
-    return this._accountProxy.value;
+    return structuredClone(this._accountProxy.value);
   }
 
   get modifyPairs () {
-    return this._modifyPair.value;
+    return structuredClone(this._modifyPair.value);
   }
 
   get value () {
@@ -194,22 +193,22 @@ export class AccountState {
 
     return {
       get pairs () {
-        return pairs.value;
+        return structuredClone(pairs.value);
       },
       get accounts () {
-        return accounts.value;
+        return structuredClone(accounts.value);
       },
       get accountProxy () {
-        return accountProxy.value;
+        return structuredClone(accountProxy.value);
       },
       get currentAccount () {
-        return currentAccount.value;
+        return structuredClone(currentAccount.value);
       },
       get contacts () {
-        return contacts.value;
+        return structuredClone(contacts.value);
       },
       get modifyPair () {
-        return modifyPair.value;
+        return structuredClone(modifyPair.value);
       }
     };
   }
@@ -243,7 +242,7 @@ export class AccountState {
   /* Current account */
 
   get currentAccount (): CurrentAccountInfo {
-    return this._currentAccount.value;
+    return structuredClone(this._currentAccount.value);
   }
 
   private setCurrentAccount (data: CurrentAccountInfo, callback?: () => void): void {

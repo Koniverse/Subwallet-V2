@@ -19,6 +19,7 @@ import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { Context, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import styled, { ThemeContext } from 'styled-components';
+
 import useCompleteCreateAccount from '../../hooks/account/useCompleteCreateAccount';
 
 interface Props extends ThemeProps {
@@ -39,7 +40,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const { t } = useTranslation();
 
-  const { checkActive, inactiveModal, addExclude, removeExclude } = useContext(ModalContext);
+  const { addExclude, checkActive, inactiveModal, removeExclude } = useContext(ModalContext);
   const { logoMap } = useContext<Theme>(ThemeContext as Context<Theme>);
 
   const isActive = checkActive(modalId);
@@ -59,18 +60,18 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const keypairTypeLogoMap = useMemo((): Record<KeypairType, string> => {
     return {
-      'sr25519': logoMap.network.polkadot as string,
-      'ed25519': logoMap.network.polkadot as string,
-      'ecdsa': logoMap.network.polkadot as string,
-      'ethereum': logoMap.network.ethereum as string,
-      'ton': logoMap.network.ton as string,
+      sr25519: logoMap.network.polkadot as string,
+      ed25519: logoMap.network.polkadot as string,
+      ecdsa: logoMap.network.polkadot as string,
+      ethereum: logoMap.network.ethereum as string,
+      ton: logoMap.network.ton as string,
       'ton-native': logoMap.network.ton as string,
       'bitcoin-44': logoMap.network.bitcoin as string,
       'bitcoin-84': logoMap.network.bitcoin as string,
       'bitcoin-86': logoMap.network.bitcoin as string,
-      "bittest-44": logoMap.network.bitcoin as string,
-      "bittest-84": logoMap.network.bitcoin as string,
-      "bittest-86": logoMap.network.bitcoin as string,
+      'bittest-44': logoMap.network.bitcoin as string,
+      'bittest-84': logoMap.network.bitcoin as string,
+      'bittest-86': logoMap.network.bitcoin as string
     };
   }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
 
@@ -153,7 +154,7 @@ const Component: React.FC<Props> = (props: Props) => {
             onComplete();
           })
           .catch((e: Error) => {
-            form.setFields([ { name: 'suri', errors: [e.message] } ])
+            form.setFields([{ name: 'suri', errors: [e.message] }]);
           })
           .finally(() => {
             setLoading(false);
@@ -161,7 +162,7 @@ const Component: React.FC<Props> = (props: Props) => {
       })
       .catch(() => {
       // Unlock is cancelled
-    });
+      });
   }, [form, checkUnlock, proxyId, onComplete, closeModal]);
 
   useEffect(() => {
@@ -187,9 +188,7 @@ const Component: React.FC<Props> = (props: Props) => {
             }
           }
         })
-        .catch(() => {
-
-        });
+        .catch(console.error);
     }
 
     return () => {
@@ -202,7 +201,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
     return () => {
       removeExclude(modalId);
-    }
+    };
   }, [addExclude, removeExclude]);
 
   if (!accountProxy) {
@@ -230,7 +229,7 @@ const Component: React.FC<Props> = (props: Props) => {
             <div className='derive-header-title'>
               <Trans
                 components={{
-                  highlight: <span className='account-name'/>
+                  highlight: <span className='account-name' />
                 }}
                 i18nKey={detectTranslate('This account derived by account "<highlight>{{accountName}}</highlight>"')}
                 values={{ accountName: accountProxy.name }}
@@ -256,7 +255,7 @@ const Component: React.FC<Props> = (props: Props) => {
           <div className='account-name-info'>
             {
               networkType && (
-                <div className="account-type-tag-wrapper">
+                <div className='account-type-tag-wrapper'>
                   <AccountProxyTypeTag
                     className={'account-type-tag'}
                     type={networkType === 'unified' ? AccountProxyType.UNIFIED : AccountProxyType.SOLO}
@@ -275,31 +274,33 @@ const Component: React.FC<Props> = (props: Props) => {
             >
               <Input
                 // id={passwordInputId}
+                disabled={!networkType}
                 label={t('Account name')}
                 placeholder={t('Account name')}
-                disabled={!networkType}
                 suffix={(
-                  <div className="__item-chain-types">
+                  <div className='__item-chain-types'>
                     {
                       networkType
                         ? networkType === 'unified'
                           ? (
-                              accountProxy.accounts.map(({ type }) => {
-                                return (
-                                  <img
-                                    alt='Network type'
-                                    className={'__item-chain-type-item'}
-                                    key={type}
-                                    src={keypairTypeLogoMap[type]}
-                                  />
-                                );
-                              })
+                            accountProxy.accounts.map(({ type }) => {
+                              return (
+                                <img
+                                  alt='Network type'
+                                  className={'__item-chain-type-item'}
+                                  key={type}
+                                  src={keypairTypeLogoMap[type]}
+                                />
+                              );
+                            })
                           )
-                          : <img
-                            alt="Network type"
-                            className={'__item-chain-type-item'}
-                            src={keypairTypeLogoMap[networkType]}
-                          />
+                          : (
+                            <img
+                              alt='Network type'
+                              className={'__item-chain-type-item'}
+                              src={keypairTypeLogoMap[networkType]}
+                            />
+                          )
                         : null
                     }
                   </div>
@@ -311,8 +312,14 @@ const Component: React.FC<Props> = (props: Props) => {
             <Button
               block={true}
               htmlType='submit'
+              icon={(
+                <Icon
+                  phosphorIcon={CheckCircle}
+                  type='phosphor'
+                  weight='fill'
+                />
+              )}
               loading={loading}
-              icon={<Icon phosphorIcon={CheckCircle} type='phosphor' weight='fill'/>}
             >
               {t('Create account')}
             </Button>
@@ -375,7 +382,7 @@ const DeriveAccountModal = styled(Component)<Props>(({ theme: { token } }: Props
       '.ant-input-suffix': {
         marginRight: 0
       }
-    },
+    }
   };
 });
 
