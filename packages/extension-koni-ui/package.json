@@ -79,6 +79,7 @@
     "redux": "^4.2.0",
     "redux-persist": "^6.0.0",
     "redux-toolkit": "^1.1.2",
+    "rehype-raw": "^7.0.0",
     "semantic-ui-react": "^2.1.4",
     "styled-components": "^5.3.6",
     "url-parse": "^1.5.10",

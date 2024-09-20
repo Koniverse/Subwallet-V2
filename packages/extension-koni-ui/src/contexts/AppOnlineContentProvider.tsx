@@ -62,6 +62,10 @@ const getPositionByRouteName = (currentRoute?: string) => {
       return 'earning';
     case '/home/crowdloans':
       return 'crowdloan';
+    case '/home/mission-pools':
+      return 'mission_pool';
+    case '/home/history':
+      return 'history';
     case '/':
     default:
       return 'token';
