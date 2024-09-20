@@ -30,8 +30,9 @@ const convertToBigN = (num: EvmSendTransactionRequest['value']): string | number
 };
 
 function Component ({ className, request, type }: Props) {
-  const { id, payload: { account, chainId, errors, to } } = request;
+  const { id, payload: { address, chainId, errors, to } } = request;
   const { t } = useTranslation();
+  const account = useGetAccountByAddress(address);
 
   const { transactionRequest } = useSelector((state: RootState) => state.requestState);
 
@@ -66,9 +67,9 @@ function Component ({ className, request, type }: Props) {
             )
           }
           <MetaInfo.Account
-            address={account.address}
+            address={address}
             label={t('From account')}
-            name={account.name}
+            name={account?.name || ''}
           />
           {(recipientAddress || recipient?.address) && <MetaInfo.Account
             address={recipient?.address || recipientAddress || ''}
@@ -114,7 +115,8 @@ function Component ({ className, request, type }: Props) {
           title={t('Transaction details')}
         >
           <EvmTransactionDetail
-            account={account}
+            accountName={account?.name}
+            address={address}
             request={request.payload}
           />
         </BaseDetailModal>

@@ -2,17 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
+import { getKeypairTypeByAddress } from '@subwallet/keyring';
+import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 
-import { isEthereumAddress } from '@polkadot/util-crypto';
+export const isAddressValidWithAuthType = (address: string, accountAuthTypes?: AccountAuthType[]): boolean => {
+  const keypairType = getKeypairTypeByAddress(address);
 
-export const isAddressValidWithAuthType = (address: string, accountAuthType?: AccountAuthType): boolean => {
-  if (accountAuthType === 'substrate') {
-    return !isEthereumAddress(address);
-  } else if (accountAuthType === 'evm') {
-    return isEthereumAddress(address);
-  }
+  const validTypes = {
+    evm: EthereumKeypairTypes,
+    substrate: SubstrateKeypairTypes,
+    ton: TonKeypairTypes
+  };
 
-  return true;
+  return !!accountAuthTypes?.some((authType) => validTypes[authType]?.includes(keypairType));
 };
 
 // export const isAddressValidWithAuthType = (address: string, accountAuthType?: AccountAuthType): boolean => {

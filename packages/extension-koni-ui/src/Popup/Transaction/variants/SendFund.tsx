@@ -339,7 +339,11 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         ]);
       }
 
-      if (part.from) {
+      if (part.destChain) {
+        form.resetFields(['to']);
+      }
+
+      if (part.from || part.destChain) {
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
       }
 
