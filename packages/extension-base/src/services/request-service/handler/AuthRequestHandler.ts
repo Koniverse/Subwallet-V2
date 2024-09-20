@@ -233,6 +233,24 @@ export default class AuthRequestHandler {
 
         const existed = authorizeList[stripUrl(url)];
 
+        const isAllowedMap_ = Object.entries({ ...isAllowedMap }).reduce<Record<string, boolean>>((map, [key, value]) => {
+          if (!value) {
+            if (isEthereumAddress(key) && !accountAuthTypes.includes('evm') && existed?.accountAuthTypes.includes('evm')) {
+              map[key] = !!allowedAccounts?.includes(key);
+            }
+
+            if (isSubstrateAddress(key) && !accountAuthTypes.includes('substrate') && existed?.accountAuthTypes.includes('substrate')) {
+              map[key] = !!allowedAccounts?.includes(key);
+            }
+
+            if (isTonAddress(key) && !accountAuthTypes.includes('ton') && existed?.accountAuthTypes.includes('ton')) {
+              map[key] = !!allowedAccounts?.includes(key);
+            }
+          }
+
+          return map;
+        }, { ...isAllowedMap });
+
         // On cancel don't save anything
         if (isCancelled) {
           delete this.#authRequestsV2[id];
@@ -246,7 +264,7 @@ export default class AuthRequestHandler {
           count: 0,
           id: idStr,
           isAllowed,
-          isAllowedMap,
+          isAllowedMap: isAllowedMap_,
           origin,
           url,
           accountAuthTypes: [...new Set<AccountAuthType>([...accountAuthTypes, ...(existed?.accountAuthTypes || [])])],

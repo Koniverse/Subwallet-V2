@@ -122,12 +122,12 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         let accountToCheck = noAllAccounts;
 
         if (!isAllAccount && currentAccountProxy) {
-          accountToCheck = [...currentAccountProxy.accounts];
+          accountToCheck = [...(currentAccountProxy.accounts)];
         }
 
         const numberAccounts = accountToCheck.filter(({ address }) => filterType(address)).length;
         const numberAllowedAccounts = Object.entries(allowedMap)
-          .filter(([address]) => filterType(address))
+          .filter(([address]) => filterType(address) && accountToCheck.some(({ address: accAddress }) => accAddress === address))
           .filter(([, value]) => value)
           .length;
 

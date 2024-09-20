@@ -358,6 +358,12 @@ export const ConnectWebsiteModal = styled(Component)<Props>(({ theme: { token } 
       marginTop: token.margin
     },
 
+    '.__account-item-container': {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4
+    },
+
     '.account-item-with-name': {
       position: 'relative',
       cursor: 'pointer',
