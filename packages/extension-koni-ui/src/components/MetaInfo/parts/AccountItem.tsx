@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { AvatarGroup } from '@subwallet/extension-koni-ui/components/Account';
 import { BaseAccountInfo } from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
-import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
 import { useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
@@ -25,7 +25,7 @@ export interface AccountInfoItem extends InfoItemBase {
 }
 
 const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
-  const { accounts, address: accountAddress, chainSlug, className, label, name: accountName, networkPrefix: addressPrefix, valueColorSchema = 'default' } = props;
+  const { accounts, address: accountAddress, chainSlug, className, label, name: accountName, valueColorSchema = 'default' } = props;
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
 
   const { t } = useTranslation();
@@ -74,9 +74,8 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
                       <>
                         <div className={'__account-item-wrapper ml-xs'}>
                           <div className={'__account-item-name-wrapper'}>
-                            <Avatar
+                            <AccountProxyAvatar
                               className={'__account-avatar'}
-                              identPrefix={addressPrefix}
                               size={24}
                               value={accountAddress}
                             />
@@ -87,9 +86,8 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
                       </>
                     )
                     : (<>
-                      <Avatar
+                      <AccountProxyAvatar
                         className={'__account-avatar'}
-                        identPrefix={addressPrefix}
                         size={24}
                         value={accountAddress}
                       />

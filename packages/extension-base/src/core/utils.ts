@@ -7,7 +7,7 @@ import { BalanceAccountType } from '@subwallet/extension-base/core/substrate/typ
 import { LedgerMustCheckType, ValidateRecipientParams } from '@subwallet/extension-base/core/types';
 import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
+import { _reformatAddressWithChain, isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
 import { isAddress } from '@subwallet/keyring';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
@@ -79,6 +79,18 @@ export function _isValidSubstrateAddressFormat (validateRecipientParams: Validat
 
   const addressPrefix = destChainInfo?.substrateInfo?.addressPrefix ?? 42;
   const toAddressFormatted = reformatAddress(toAddress, addressPrefix);
+
+  if (toAddressFormatted !== toAddress) {
+    return `Recipient address must be a valid ${destChainInfo.name} address`;
+  }
+
+  return '';
+}
+
+export function _isValidTonAddressFormat (validateRecipientParams: ValidateRecipientParams): string {
+  const { destChainInfo, toAddress } = validateRecipientParams;
+
+  const toAddressFormatted = _reformatAddressWithChain(toAddress, destChainInfo);
 
   if (toAddressFormatted !== toAddress) {
     return `Recipient address must be a valid ${destChainInfo.name} address`;

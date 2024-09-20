@@ -8,11 +8,12 @@ import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-v
 import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
+import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
@@ -20,7 +21,8 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop } from '@subwallet/extension-koni-ui/utils';
+import { isTonAddress } from '@subwallet/keyring';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -172,6 +174,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
   const [warnings, setWarnings] = useState<TransactionWarning[]>([]);
+
+  console.log('warnings', warnings);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
@@ -408,8 +412,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     let sendPromise: Promise<SWTransactionResponse>;
 
     const chainInfo = chainInfoMap[chain];
-    const addressPrefix = chainInfo?.substrateInfo?.addressPrefix ?? 42;
-    const from = reformatAddress(_from, addressPrefix);
+    const from = _reformatAddressWithChain(_from, chainInfo);
 
     if (chain === destChain) {
       // Transfer token or send fund
@@ -556,7 +559,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      if (warnings.some((w) => w.warningType === BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS) && !options.isTransferBounceable) {
+      if (isTonAddress(values.to) && isBounceableAddress(values.to) && !options.isTransferBounceable) {
         openAlert({
           type: NotificationType.WARNING,
           content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
@@ -609,7 +612,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     };
 
     _doSubmit();
-  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t, warnings]);
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
 
   // todo: recheck with ledger account
   useEffect(() => {

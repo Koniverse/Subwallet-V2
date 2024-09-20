@@ -3,6 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { tonAddressInfo } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { getAccountChainType } from '@subwallet/extension-base/utils';
@@ -55,7 +56,12 @@ export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo
   if (chainType === AccountChainType.SUBSTRATE) {
     return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
   } else if (chainType === AccountChainType.TON) {
+    const tonInfoData = isTonAddress(address) && tonAddressInfo(address);
     const isTestnet = chainInfo.isTestnet;
+
+    if (tonInfoData && tonInfoData.isBounceable && (tonInfoData.isTestOnly === isTestnet)) {
+      return address;
+    }
 
     return reformatAddress(address, isTestnet ? 0 : 1);
   } else {

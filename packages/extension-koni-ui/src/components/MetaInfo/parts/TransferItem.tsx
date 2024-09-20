@@ -3,7 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
-import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ChainItem from '@subwallet/extension-koni-ui/components/MetaInfo/parts/ChainItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainInfo } from '@subwallet/extension-koni-ui/types/chain';
@@ -71,7 +71,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
         <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
           <div className={'__account-item-wrapper'}>
             <div className={'__account-item-name-wrapper'}>
-              <Avatar
+              <AccountProxyAvatar
                 className={'__account-avatar'}
                 size={24}
                 value={shortAddress}
@@ -86,10 +86,10 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
 
     return (
       <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
-        <Avatar
+        <AccountProxyAvatar
           className={'__account-avatar'}
           size={24}
-          value={address}
+          value={shortAddress}
         />
         <div className={'__account-name ml-xs'}>
           <div className={'__account-item-address'}>{shortAddress}</div>

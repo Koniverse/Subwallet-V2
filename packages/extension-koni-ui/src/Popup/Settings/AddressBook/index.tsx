@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AddressJson } from '@subwallet/extension-base/types';
-import { AccountItemBase, AddContactModal, AddressSelectorItem, BackIcon, EditContactModal, FilterModal, GeneralEmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AddContactModal, AddressSelectorItem, BackIcon, EditContactModal, FilterModal, GeneralEmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ADD_ADDRESS_BOOK_MODAL, EDIT_ADDRESS_BOOK_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useFilterModal, useFormatAddress, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -165,11 +165,10 @@ const Component: React.FC<Props> = (props: Props) => {
 
     if (item.group === AccountGroup.RECENT) {
       return (
-        <AccountItemBase
+        <AddressSelectorItem
           address={address}
-          addressPreLength={8}
-          addressSufLength={8}
-          avatarSize={24}
+          avatarValue={address}
+          className={'address-item'}
           key={item.address}
           onClick={onSelectItem(item)}
         />
