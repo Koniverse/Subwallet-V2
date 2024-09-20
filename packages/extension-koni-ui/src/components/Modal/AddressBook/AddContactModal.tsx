@@ -7,6 +7,7 @@ import { useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks
 import { editContactAddress } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { simpleCheckForm, toShort } from '@subwallet/extension-koni-ui/utils';
+import { isAddress } from '@subwallet/keyring';
 import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { PlusCircle } from 'phosphor-react';
@@ -14,8 +15,6 @@ import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-
-import { isAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps;
 
