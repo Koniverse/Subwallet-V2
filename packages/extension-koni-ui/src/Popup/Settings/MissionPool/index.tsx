@@ -5,7 +5,8 @@ import { FilterModal, Layout } from '@subwallet/extension-koni-ui/components';
 import EmptyList from '@subwallet/extension-koni-ui/components/EmptyList/EmptyList';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import Search from '@subwallet/extension-koni-ui/components/Search';
-import { useFilterModal, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
+import { useFilterModal, useGetBannerByScreen, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { MissionDetailModal, PoolDetailModalId } from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/MissionDetailModal';
 import MissionItem from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/MissionPoolItem';
@@ -32,6 +33,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { activeModal } = useContext(ModalContext);
   const [currentSelectItem, setCurrentSelectItem] = useState<MissionInfo | null>(null);
   const { missions } = useSelector((state: RootState) => state.missionPool);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('missionPools');
   const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('missionPools');
   const computedMission = useMemo(() => {
     return missions.map((item) => {
@@ -200,6 +202,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       title={t<string>('Mission Pools')}
     >
       <div className={'__tool-area'}>
+        <div className={'mission-pool-banner-wrapper'}>
+          {!!banners.length && (<BannerGenerator
+            banners={banners}
+            dismissBanner={dismissBanner}
+            onClickBanner={onClickBanner}
+          />)}
+        </div>
+
         <Search
           actionBtnIcon={(
             <Icon
@@ -247,8 +257,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         title={t('Filter')}
       />
       <MissionDetailModal
-        data={currentSelectItem}
         currentConfirmations={currentConfirmation}
+        data={currentSelectItem}
         renderConfirmationButtons={renderConfirmationButtons}
       />
     </Layout.Base>
@@ -284,12 +294,12 @@ const MissionPool = styled(Component)<Props>(({ theme: { token } }: Props) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingTop: token.paddingXS
+      paddingTop: token.paddingXS,
+      paddingBottom: token.paddingXS
     },
     '.__tool-area': {
       display: 'flex',
       flexDirection: 'column',
-      gap: token.sizeXS,
       marginBottom: token.marginXS
     },
     '.__content-wrapper': {
@@ -300,8 +310,12 @@ const MissionPool = styled(Component)<Props>(({ theme: { token } }: Props) => {
       paddingBottom: 0,
       marginTop: '8px !important',
       marginBottom: '8px !important'
+    },
+    '.mission-pool-banner-wrapper': {
+      paddingTop: token.paddingXS,
+      paddingLeft: token.padding,
+      paddingRight: token.padding
     }
-
   };
 });
 
