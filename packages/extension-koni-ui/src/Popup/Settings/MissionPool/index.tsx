@@ -6,6 +6,7 @@ import EmptyList from '@subwallet/extension-koni-ui/components/EmptyList/EmptyLi
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import { useFilterModal, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { MissionDetailModal, PoolDetailModalId } from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/MissionDetailModal';
 import MissionItem from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/MissionPoolItem';
 import { missionCategories, MissionCategoryType, MissionTab } from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/predefined';
@@ -31,7 +32,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { activeModal } = useContext(ModalContext);
   const [currentSelectItem, setCurrentSelectItem] = useState<MissionInfo | null>(null);
   const { missions } = useSelector((state: RootState) => state.missionPool);
-
+  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('missionPools');
   const computedMission = useMemo(() => {
     return missions.map((item) => {
       return {
@@ -40,6 +41,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       };
     });
   }, [missions]);
+
+  const currentConfirmation = useMemo(() => {
+    if (currentSelectItem) {
+      return getCurrentConfirmation([currentSelectItem.id.toString()]);
+    } else {
+      return undefined;
+    }
+  }, [getCurrentConfirmation, currentSelectItem]);
 
   const filterOptions = useMemo(() => [
     ...missionCategories.map((c) => ({
@@ -239,6 +248,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       />
       <MissionDetailModal
         data={currentSelectItem}
+        currentConfirmations={currentConfirmation}
+        renderConfirmationButtons={renderConfirmationButtons}
       />
     </Layout.Base>
   );

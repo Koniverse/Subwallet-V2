@@ -11,11 +11,11 @@ import { useSelector } from 'react-redux';
 import AppPopupModal from '../components/Modal/Campaign/AppPopupModal';
 import { AppContentButton, PopupFrequency } from '../types/staticContent';
 
-interface AppPopupModalContextProviderProps {
+interface MktCampaignModalContextProviderProps {
   children?: React.ReactElement;
 }
 
-export type AppPopupModalInfo = {
+export type MktCampaignModalInfo = {
   title?: string;
   message?: string;
   buttons?: AppContentButton[];
@@ -25,31 +25,38 @@ export type AppPopupModalInfo = {
   repeat?: PopupFrequency;
 };
 
-export interface AppPopupModalType {
-  openAppPopupModal: (data: AppPopupModalInfo) => void;
-  hideAppPopupModal: () => void;
+export interface MktCampaignModalType {
+  openModal: (data: MktCampaignModalInfo) => void;
+  hideModal: () => void;
 }
 
-export const AppPopupModalContext = React.createContext({} as AppPopupModalType);
+export const MktCampaignModalContext = React.createContext({} as MktCampaignModalType);
 
-export const AppPopupModalContextProvider = ({ children }: AppPopupModalContextProviderProps) => {
-  const [appPopupModal, setAppPopupModal] = useState<AppPopupModalInfo>({});
+export const MktCampaignModalContextProvider = ({ children }: MktCampaignModalContextProviderProps) => {
+  const [mktCampaignModal, setMktCampaignModal] = useState<MktCampaignModalInfo>({});
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { isPopupVisible } = useSelector((state: RootState) => state.campaign);
   const storageEarningPosition = window.localStorage.getItem(EARNING_WARNING_ANNOUNCEMENT);
 
   // TODO: This is a hotfix solution; a better solution must be found.
-  const openAppPopupModal = useCallback((data: AppPopupModalInfo) => {
-    if (isPopupVisible && ((!storageEarningPosition || storageEarningPosition.includes('confirmed')))) {
-      setAppPopupModal(data);
-      activeModal(APP_POPUP_MODAL);
+  const openModal = useCallback((data: MktCampaignModalInfo) => {
+    if (mktCampaignModal.type === 'popup') {
+      if (isPopupVisible && (!storageEarningPosition || storageEarningPosition.includes('confirmed'))) {
+        setMktCampaignModal(data);
+        activeModal(APP_POPUP_MODAL);
+      }
+    } else {
+      if (!storageEarningPosition || storageEarningPosition.includes('confirmed')) {
+        setMktCampaignModal(data);
+        activeModal(APP_POPUP_MODAL);
+      }
     }
-  }, [activeModal, isPopupVisible, storageEarningPosition]);
+  }, [activeModal, isPopupVisible, mktCampaignModal.type, storageEarningPosition]);
 
-  const hideAppPopupModal = useCallback(() => {
+  const hideModal = useCallback(() => {
     toggleCampaignPopup({ value: false }).then(() => {
       inactiveModal(APP_POPUP_MODAL);
-      setAppPopupModal((prevState) => ({
+      setMktCampaignModal((prevState) => ({
         ...prevState,
         title: '',
         message: '',
@@ -60,16 +67,16 @@ export const AppPopupModalContextProvider = ({ children }: AppPopupModalContextP
   }, [inactiveModal]);
 
   return (
-    <AppPopupModalContext.Provider value={{ openAppPopupModal, hideAppPopupModal }}>
+    <MktCampaignModalContext.Provider value={{ openModal, hideModal }}>
       {children}
       <AppPopupModal
-        buttons={appPopupModal.buttons || []}
-        externalButtons={appPopupModal.externalButtons}
-        message={appPopupModal.message || ''}
-        onCloseModal={hideAppPopupModal}
-        onPressButton={appPopupModal.onPressBtn}
-        title={appPopupModal.title || ''}
+        buttons={mktCampaignModal.buttons || []}
+        externalButtons={mktCampaignModal.externalButtons}
+        message={mktCampaignModal.message || ''}
+        onCloseModal={hideModal}
+        onPressButton={mktCampaignModal.onPressBtn}
+        title={mktCampaignModal.title || ''}
       />
-    </AppPopupModalContext.Provider>
+    </MktCampaignModalContext.Provider>
   );
 };

@@ -1,9 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AppConfirmationData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import DefaultLogosMap from '@subwallet/extension-koni-ui/assets/logo';
 import { InfoItemBase, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { NetworkGroup } from '@subwallet/extension-koni-ui/components/MetaInfo/parts';
+import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { missionCategoryMap, MissionCategoryType, tagMap } from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/predefined';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
@@ -17,15 +19,18 @@ import styled, { ThemeContext } from 'styled-components';
 
 type Props = ThemeProps & {
   data: MissionInfo | null,
+  currentConfirmations?: AppConfirmationData[];
+  renderConfirmationButtons: (onClickCancel: () => void, onClickOk: () => void) => React.ReactElement;
 };
 
 export const PoolDetailModalId = 'PoolDetailModalId';
 
 const modalId = PoolDetailModalId;
 
-function Component ({ className = '', data }: Props): React.ReactElement<Props> {
+function Component ({ className = '', currentConfirmations, data, renderConfirmationButtons }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { inactiveModal } = useContext(ModalContext);
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
   const timeline = useMemo<string>(() => {
     if (!data?.start_time && !data?.end_time) {
@@ -49,9 +54,22 @@ function Component ({ className = '', data }: Props): React.ReactElement<Props> 
   }, [data?.twitter_url]);
 
   const onClickJoinNow: ButtonProps['onClick'] = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    data?.url && openInNewTab(data.url)();
-  }, [data?.url]);
+    if (currentConfirmations && currentConfirmations.length) {
+      mktCampaignModalContext.openModal({
+        type: 'confirmation',
+        title: currentConfirmations[0].name,
+        message: currentConfirmations[0].content,
+        externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
+          e.stopPropagation();
+          mktCampaignModalContext.hideModal();
+          data?.url && openInNewTab(data.url)();
+        })
+      });
+    } else {
+      e.stopPropagation();
+      data?.url && openInNewTab(data.url)();
+    }
+  }, [currentConfirmations, data?.url, mktCampaignModalContext, renderConfirmationButtons]);
 
   const onCancel = useCallback(() => {
     inactiveModal(modalId);
