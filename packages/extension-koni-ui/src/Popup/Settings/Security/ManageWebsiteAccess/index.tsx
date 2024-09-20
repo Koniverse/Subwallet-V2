@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
+import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { ActionItemType, ActionModal, EmptyList, FilterModal, PageWrapper, WebsiteAccessItem } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate, useFilterModal } from '@subwallet/extension-koni-ui/hooks';
 import { changeAuthorizationAll, forgetAllSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updateAuthUrls } from '@subwallet/extension-koni-ui/stores/utils';
 import { ManageWebsiteAccessDetailParam, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { FadersHorizontal, GearSix, GlobeHemisphereWest, Plugs, PlugsConnected, X } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
@@ -25,17 +26,25 @@ function getWebsiteItems (authUrlMap: Record<string, AuthUrlInfo>): AuthUrlInfo[
 }
 
 function getAccountCount (item: AuthUrlInfo): number {
-  const authType = item.accountAuthType;
+  const authType = item.accountAuthTypes;
 
-  if (authType === 'evm') {
-    return item.isAllowedMap ? Object.entries(item.isAllowedMap).filter(([address, rs]) => rs && isEthereumAddress(address)).length : 0;
+  if (!authType) {
+    return 0;
   }
 
-  if (authType === 'substrate') {
-    return item.isAllowedMap ? Object.entries(item.isAllowedMap).filter(([address, rs]) => rs && !isEthereumAddress(address)).length : 0;
-  }
+  const addressList = Object.keys(item.isAllowedMap);
 
-  return Object.values(item.isAllowedMap).filter((i) => i).length;
+  return authType.reduce<string[]>((list, accountAuthType) => {
+    if (accountAuthType === 'evm') {
+      addressList.forEach((address) => isEthereumAddress(address) && item.isAllowedMap[address] && list.push(address));
+    } else if (accountAuthType === 'substrate') {
+      addressList.forEach((address) => isSubstrateAddress(address) && item.isAllowedMap[address] && list.push(address));
+    } else if (accountAuthType === 'ton') {
+      addressList.forEach((address) => isTonAddress(address) && item.isAllowedMap[address] && list.push(address));
+    }
+
+    return list;
+  }, []).length;
 }
 
 const ACTION_MODAL_ID = 'actionModalId';
@@ -64,11 +73,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
       for (const filter of selectedFilters) {
         if (filter === FilterValue.SUBSTRATE) {
-          if (item.accountAuthType === 'substrate' || item.accountAuthType === 'both') {
+          if (item.accountAuthTypes?.includes('substrate')) {
             return true;
           }
         } else if (filter === FilterValue.ETHEREUM) {
-          if (item.accountAuthType === 'evm' || item.accountAuthType === 'both') {
+          if (item.accountAuthTypes?.includes('evm')) {
             return true;
           }
         } else if (filter === FilterValue.BLOCKED) {
@@ -151,7 +160,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       navigate('/settings/dapp-access-edit', { state: {
         siteName: item.origin,
         origin: item.id,
-        accountAuthType: item.accountAuthType || ''
+        accountAuthTypes: item.accountAuthTypes || ''
       } as ManageWebsiteAccessDetailParam });
     };
   }, [navigate]);

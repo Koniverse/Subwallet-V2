@@ -7,7 +7,6 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson } from '@subwallet/extension-base/types';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 import { BehaviorSubject } from 'rxjs';
 
@@ -162,8 +161,8 @@ export default class RequestService {
     return this.#substrateRequestHandler.allSubstrateRequests;
   }
 
-  public sign (url: string, request: RequestSign, account: AccountJson, id?: string): Promise<ResponseSigning> {
-    return this.#substrateRequestHandler.sign(url, request, account, id);
+  public sign (url: string, request: RequestSign, id?: string): Promise<ResponseSigning> {
+    return this.#substrateRequestHandler.sign(url, request, id);
   }
 
   public get numSubstrateRequests (): number {

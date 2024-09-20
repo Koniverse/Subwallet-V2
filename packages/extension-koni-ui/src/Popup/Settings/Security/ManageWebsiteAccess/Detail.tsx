@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
+import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { AccountItemWithName, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ActionItemType, ActionModal } from '@subwallet/extension-koni-ui/components/Modal/ActionModal';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { changeAuthorization, changeAuthorizationPerAccount, forgetSite, toggleAuthorization } from '@subwallet/extension-koni-ui/messaging';
@@ -19,8 +19,6 @@ import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
-import { isEthereumAddress } from '@polkadot/util-crypto';
-
 type Props = ThemeProps & ManageWebsiteAccessDetailParam & {
   authInfo: AuthUrlInfo;
   goBack: () => void
@@ -31,7 +29,7 @@ type WrapperProps = ThemeProps;
 const ActionModalId = 'actionModalId';
 // const FilterModalId = 'filterModalId';
 
-function Component ({ accountAuthType, authInfo, className = '', goBack, origin, siteName }: Props): React.ReactElement<Props> {
+function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin, siteName }: Props): React.ReactElement<Props> {
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const [pendingMap, setPendingMap] = useState<Record<string, boolean>>({});
   const { activeModal, inactiveModal } = useContext(ModalContext);
@@ -40,14 +38,18 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
   const accountItems = useMemo(() => {
     const accountListWithoutAll = accounts.filter((opt) => opt.address !== 'ALL');
 
-    if (accountAuthType === 'substrate') {
-      return accountListWithoutAll.filter((acc) => !isEthereumAddress(acc.address));
-    } else if (accountAuthType === 'evm') {
-      return accountListWithoutAll.filter((acc) => isEthereumAddress(acc.address));
-    } else {
-      return accountListWithoutAll;
-    }
-  }, [accountAuthType, accounts]);
+    return accountAuthTypes.reduce<AccountJson[]>((list, accountAuthType) => {
+      if (accountAuthType === 'evm') {
+        accountListWithoutAll.forEach((account) => account.chainType === 'ethereum' && list.push(account));
+      } else if (accountAuthType === 'substrate') {
+        accountListWithoutAll.forEach((account) => account.chainType === 'substrate' && list.push(account));
+      } else if (accountAuthType === 'ton') {
+        accountListWithoutAll.forEach((account) => account.chainType === 'ton' && list.push(account));
+      }
+
+      return list;
+    }, []);
+  }, [accountAuthTypes, accounts]);
 
   const onOpenActionModal = useCallback(() => {
     activeModal(ActionModalId);
@@ -139,12 +141,11 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
     };
 
     return (
-      <AccountItemWithName
+      <AccountItemWithProxyAvatar
+        account={item}
         accountName={item.name}
-        address={item.address}
-        avatarSize={token.sizeLG}
         key={item.address}
-        rightItem={(
+        rightPartNode={(
           <Switch
             checked={pendingMap[item.address] === undefined ? isEnabled : pendingMap[item.address]}
             disabled={!authInfo.isAllowed || pendingMap[item.address] !== undefined}
@@ -154,7 +155,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
         )}
       />
     );
-  }, [authInfo.isAllowed, authInfo.isAllowedMap, origin, pendingMap, token.sizeLG]);
+  }, [authInfo.isAllowed, authInfo.isAllowedMap, origin, pendingMap]);
 
   const searchFunc = useCallback((item: AccountJson, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
@@ -232,7 +233,7 @@ function Component ({ accountAuthType, authInfo, className = '', goBack, origin,
 
 function WrapperComponent (props: WrapperProps) {
   const location = useLocation();
-  const { accountAuthType, origin, siteName } = location.state as ManageWebsiteAccessDetailParam;
+  const { accountAuthTypes, origin, siteName } = location.state as ManageWebsiteAccessDetailParam;
   const authInfo: undefined | AuthUrlInfo = useSelector((state: RootState) => state.settings.authUrls[origin]);
   const goBack = useDefaultNavigate().goBack;
 
@@ -247,7 +248,7 @@ function WrapperComponent (props: WrapperProps) {
       {!!authInfo && (
         <Component
           {...props}
-          accountAuthType={accountAuthType}
+          accountAuthTypes={accountAuthTypes}
           authInfo={authInfo}
           goBack={goBack}
           origin={origin}

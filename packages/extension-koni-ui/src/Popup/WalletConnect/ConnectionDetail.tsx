@@ -1,14 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson, AccountJson } from '@subwallet/extension-base/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { stripUrl } from '@subwallet/extension-base/utils';
-import { AccountItemWithName, EmptyList, GeneralEmptyList, Layout, MetaInfo, PageWrapper, WCNetworkAvatarGroup } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, EmptyList, GeneralEmptyList, Layout, MetaInfo, PageWrapper, WCNetworkAvatarGroup } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useConfirmModal, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { disconnectWalletConnectConnection } from '@subwallet/extension-koni-ui/messaging';
 import { ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
-import { Theme, ThemeProps, WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps, WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { chainsToWalletConnectChainInfos, getWCAccountList, noop } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Image, ModalContext, NetworkItem, SwList, SwModal, SwModalFuncProps } from '@subwallet/react-ui';
 import { SessionTypes } from '@walletconnect/types';
@@ -18,7 +18,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useNavigate } from 'react-router-dom';
-import styled, { useTheme } from 'styled-components';
+import styled from 'styled-components';
 
 interface ComponentProps {
   session: SessionTypes.Struct;
@@ -37,7 +37,6 @@ const Component: React.FC<ComponentProps> = (props) => {
   const { t } = useTranslation();
   const notification = useNotification();
   const navigate = useNavigate();
-  const { token } = useTheme() as Theme;
 
   const domain = useMemo(() => {
     try {
@@ -60,7 +59,7 @@ const Component: React.FC<ComponentProps> = (props) => {
     return chainsToWalletConnectChainInfos(chainInfoMap, chains);
   }, [namespaces, chainInfoMap]);
 
-  const accountItems = useMemo((): AbstractAddressJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
+  const accountItems = useMemo((): AccountJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
 
   const modalProps = useMemo((): Partial<SwModalFuncProps> => ({
     id: disconnectModalId,
@@ -109,14 +108,13 @@ const Component: React.FC<ComponentProps> = (props) => {
 
   const renderAccountItem = useCallback((item: AccountJson) => {
     return (
-      <AccountItemWithName
+      <AccountItemWithProxyAvatar
+        account={item}
         accountName={item.name}
-        address={item.address}
-        avatarSize={token.sizeLG}
         key={item.address}
       />
     );
-  }, [token.sizeLG]);
+  }, []);
 
   const renderChainItem = useCallback((item: WalletConnectChainInfo) => {
     return (

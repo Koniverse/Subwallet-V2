@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SigningRequest } from '@subwallet/extension-base/background/types';
-import { AccountItemWithName, ConfirmationGeneralInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
-import { useMetadata, useOpenDetailModal, useParseSubstrateRequestPayload } from '@subwallet/extension-koni-ui/hooks';
+import { AccountItemWithProxyAvatar, ConfirmationGeneralInfo, ViewDetailIcon } from '@subwallet/extension-koni-ui/components';
+import { useGetAccountByAddress, useMetadata, useOpenDetailModal, useParseSubstrateRequestPayload } from '@subwallet/extension-koni-ui/hooks';
 import { enableChain } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -26,8 +26,9 @@ interface Props extends ThemeProps {
 }
 
 function Component ({ className, request }: Props) {
-  const { account } = request;
+  const { address } = request;
   const { t } = useTranslation();
+  const account = useGetAccountByAddress(address);
 
   const { chainInfoMap, chainStateMap } = useSelector((root: RootState) => root.chainStore);
 
@@ -35,7 +36,7 @@ function Component ({ className, request }: Props) {
     const _payload = request.request.payload;
 
     return isRawPayload(_payload)
-      ? (account.genesisHash || chainInfoMap.polkadot.substrateInfo?.genesisHash || '')
+      ? (account?.genesisHash || chainInfoMap.polkadot.substrateInfo?.genesisHash || '')
       : _payload.genesisHash;
   }, [account, chainInfoMap, request]);
 
@@ -66,10 +67,9 @@ function Component ({ className, request }: Props) {
         <div className='description'>
           {t('You are approving a request with the following account')}
         </div>
-        <AccountItemWithName
-          accountName={account.name}
-          address={account.address}
-          avatarSize={24}
+        <AccountItemWithProxyAvatar
+          account={account}
+          accountAddress={address}
           className='account-item'
           isSelected={true}
         />
@@ -85,7 +85,6 @@ function Component ({ className, request }: Props) {
         </div>
       </div>
       <SubstrateSignArea
-        account={account}
         id={request.id}
         isInternal={request.isInternal}
         request={request.request}
@@ -99,7 +98,8 @@ function Component ({ className, request }: Props) {
           )
           : (
             <SubstrateExtrinsic
-              account={account}
+              accountName={account?.name}
+              address={address}
               payload={payload as ExtrinsicPayload}
               request={request.request.payload as SignerPayloadJSON}
             />

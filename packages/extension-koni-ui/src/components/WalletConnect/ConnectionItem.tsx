@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson } from '@subwallet/extension-base/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { stripUrl } from '@subwallet/extension-base/utils';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -35,7 +35,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const { accounts } = useSelector((state) => state.accountState);
 
-  const accountItems = useMemo((): AbstractAddressJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
+  const accountItems = useMemo((): AccountJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
 
   const _onClick = useCallback(() => {
     onClick(session.topic);

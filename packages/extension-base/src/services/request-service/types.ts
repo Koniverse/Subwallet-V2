@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountAuthType, RequestSign, Resolver, ResponseSigning } from '@subwallet/extension-base/background/types';
-import { AccountJson } from '@subwallet/extension-base/types';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 
 export interface SignRequest extends Resolver<ResponseSigning> {
-  account: AccountJson;
+  address: string;
   id: string;
   request: RequestSign;
   url: string;
@@ -24,9 +23,13 @@ export interface AuthUrlInfo {
   isAllowed: boolean;
   origin: string;
   url: string;
-  accountAuthType?: AccountAuthType;
+  accountAuthTypes: AccountAuthType[];
   isAllowedMap: Record<string, boolean>;
   currentEvmNetworkKey?: string;
+}
+
+export interface AuthUrlInfoNeedMigration extends Omit<AuthUrlInfo, 'accountAuthTypes'> {
+  accountAuthType?: AccountAuthType | 'both';
 }
 
 export type AuthUrls = Record<string, AuthUrlInfo>;
