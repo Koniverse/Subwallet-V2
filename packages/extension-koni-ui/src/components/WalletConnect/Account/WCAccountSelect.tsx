@@ -89,7 +89,7 @@ const Component: React.FC<Props> = (props: Props) => {
         isSelected={selected}
         key={item.address}
         onClick={onSelectAccount(item.address, false)}
-        showFallback={false}
+        showAccountNameFallback={false}
         showUnselectIcon={true}
       />
     );
@@ -178,7 +178,7 @@ const Component: React.FC<Props> = (props: Props) => {
                         isSelected={selected}
                         key={item.address}
                         onClick={onSelectAccount(item.address, true)}
-                        showFallback={false}
+                        showAccountNameFallback={false}
                         showUnselectIcon
                       />
                     );

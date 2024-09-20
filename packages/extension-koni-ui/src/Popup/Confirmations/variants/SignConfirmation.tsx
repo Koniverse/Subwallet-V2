@@ -30,8 +30,6 @@ function Component ({ className, request }: Props) {
   const { t } = useTranslation();
   const account = useGetAccountByAddress(address);
 
-  console.log(address, 'address');
-
   const { chainInfoMap, chainStateMap } = useSelector((root: RootState) => root.chainStore);
 
   const genesisHash = useMemo(() => {

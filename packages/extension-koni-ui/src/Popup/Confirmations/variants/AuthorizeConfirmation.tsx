@@ -93,8 +93,6 @@ function Component ({ className, request }: Props) {
           return t('No available EVM account');
         case 'ton':
           return t('No available TON account');
-        default:
-          return t('No available account');
       }
     }
 
@@ -108,8 +106,6 @@ function Component ({ className, request }: Props) {
           return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
         case 'evm':
           return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
-        default:
-          return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
       }
     }
 
@@ -140,7 +136,6 @@ function Component ({ className, request }: Props) {
           case AccountChainType.SUBSTRATE: return accountAuthTypes?.includes('substrate');
           case AccountChainType.ETHEREUM: return accountAuthTypes?.includes('evm');
           case AccountChainType.TON: return accountAuthTypes?.includes('ton');
-          default: return false;
         }
       }
 
@@ -171,14 +166,14 @@ function Component ({ className, request }: Props) {
     navigate('/accounts/new-seed-phrase', { state: { useGoBack: true } });
   }, [accountAuthTypes, navigate, setSelectedAccountTypes]);
 
-  const onAccountSelect = useCallback((idProxy: string) => {
-    const isAll = isAccountAll(idProxy);
+  const onAccountSelect = useCallback((proxyId: string) => {
+    const isAll = isAccountAll(proxyId);
 
     return () => {
       const visibleProxyId = visibleAccountProxies.map((item) => item.id);
 
       setSelectedMap((map) => {
-        const isChecked = !map[idProxy];
+        const isChecked = !map[proxyId];
         const newMap = { ...map };
 
         if (isAll) {
@@ -189,7 +184,7 @@ function Component ({ className, request }: Props) {
           newMap[ALL_ACCOUNT_KEY] = isChecked;
         } else {
           // Select/deselect single account and trigger all account
-          newMap[idProxy] = isChecked;
+          newMap[proxyId] = isChecked;
           newMap[ALL_ACCOUNT_KEY] = visibleProxyId
             .filter((i) => !isAccountAll(i))
             .every((item) => newMap[item]);
@@ -216,8 +211,6 @@ function Component ({ className, request }: Props) {
                   return accountAuthTypes?.includes('evm');
                 case AccountChainType.TON:
                   return accountAuthTypes?.includes('ton');
-                default:
-                  return false;
               }
             }
 
