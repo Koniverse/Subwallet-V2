@@ -159,7 +159,7 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
   assert(parentPair, t('Unable to find account'));
 
   const deriveInfo = getDerivationInfo(parentPair.type, parentPair.meta);
-  const needChangeRoot = (parentPair.type === 'ethereum' || parentPair.type === 'ton') && deriveInfo.depth > 0;
+  const needChangeRoot = deriveInfo.depth > 0;
   let rootPair: KeyringPair | undefined;
 
   if (needChangeRoot) {
