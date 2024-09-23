@@ -1,10 +1,10 @@
-    2824	AnhMTV                        	Release version 1.2.29
+    2831	AnhMTV                        	Release version 1.2.30
     2533	Nam Phạm                      	[Issue 3467] fix: refactor staking pallet handling logic
-    2185	S2kael                        	[Issue-3558] Update stable version for chain-list
+    2186	S2kael                        	[Issue-3637] Update stable version for chain-list
      848	lw-cdm                        	[Issue-3407] WebApp - Support Avail Ledger app
      565	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
      465	Jaco                          	0.42.5 (#969)
-     301	bluezdot                      	[Issue-3601] test: enable middleware service
+     314	bluezdot                      	[Issue-3635] fix: fix do not show balance
      232	Thiendekaco                   	[Issue 3458] [fix]  Extension - Support XCM for Ledger Polkadot generic app #3
      185	quangdo                       	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
@@ -19,7 +19,7 @@
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
       24	S2kael                        	
-      23	Thanh                         	[Issue-3558] Update chainlist
+      24	Thanh                         	[Issue-3637] Update chainlist
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
