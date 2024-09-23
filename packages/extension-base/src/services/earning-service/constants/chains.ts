@@ -15,7 +15,7 @@ export const _STAKING_CHAIN_GROUP = {
   lending: ['interlay'],
   krest_network: ['krest_network'],
   manta: ['manta_network'],
-  bittensor: ['bittensor', 'bittensor_testnet']
+  bittensor: ['bittensor', 'bittensor_devnet']
 };
 
 export const MaxEraRewardPointsEras = 14;
