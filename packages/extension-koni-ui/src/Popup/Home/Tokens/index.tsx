@@ -261,14 +261,15 @@ const Component = (): React.ReactElement => {
             />
           )
         }
-        <div className={'token-banner-wrapper'}>
-          {!!banners.length && (<BannerGenerator
-            banners={banners}
-            dismissBanner={dismissBanner}
-            onClickBanner={onClickBanner}
-          />)}
-        </div>
-
+        {!!banners.length && (
+          <div className={'token-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         {
           tokenGroupBalanceItems.map((item) => {
             return (

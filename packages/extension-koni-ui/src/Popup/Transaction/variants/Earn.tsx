@@ -110,7 +110,7 @@ const Component = () => {
 
   const chainState = useFetchChainState(poolInfo?.chain || '');
 
-  const currentConfirmations = useMemo(() => {
+  const currentConfirmation = useMemo(() => {
     if (slug) {
       return getCurrentConfirmation([slug]);
     } else {
@@ -562,11 +562,11 @@ const Component = () => {
   }, [chainInfoMap, chainStakingBoth, closeAlert, currentStep, onError, onSuccess, openAlert, poolInfo, poolTargets, processState.feeStructure, processState.steps, setIsDisableHeader, t]);
 
   const onClickSubmit = useCallback((values: EarnParams) => {
-    if (currentConfirmations && currentConfirmations.length) {
+    if (currentConfirmation) {
       mktCampaignModalContext.openModal({
         type: 'confirmation',
-        title: currentConfirmations[0].name,
-        message: currentConfirmations[0].content,
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
         externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
           onSubmit(values);
           mktCampaignModalContext.hideModal();
@@ -575,7 +575,7 @@ const Component = () => {
     } else {
       onSubmit(values);
     }
-  }, [currentConfirmations, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
 
   const renderMetaInfo = useCallback(() => {
     const value = amountValue ? parseFloat(amountValue) / 10 ** assetDecimals : 0;

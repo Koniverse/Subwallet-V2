@@ -166,7 +166,7 @@ const Component: React.FC = () => {
     }
   }, [poolInfo.statistic, t]);
 
-  const currentConfirmations = useMemo(() => {
+  const currentConfirmation = useMemo(() => {
     if (slug) {
       return getCurrentConfirmation([slug]);
     } else {
@@ -260,11 +260,11 @@ const Component: React.FC = () => {
   }, [currentValidator, mustChooseValidator, onError, onSuccess, poolInfo, positionInfo]);
 
   const onClickSubmit = useCallback((values: UnStakeParams) => {
-    if (currentConfirmations && currentConfirmations.length) {
+    if (currentConfirmation) {
       mktCampaignModalContext.openModal({
         type: 'confirmation',
-        title: currentConfirmations[0].name,
-        message: currentConfirmations[0].content,
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
         externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
           onSubmit(values);
           mktCampaignModalContext.hideModal();
@@ -273,7 +273,7 @@ const Component: React.FC = () => {
     } else {
       onSubmit(values);
     }
-  }, [currentConfirmations, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
 
   const renderBounded = useCallback(() => {
     return (

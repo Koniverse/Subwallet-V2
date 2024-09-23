@@ -14,7 +14,7 @@ const useGetConfirmationByScreen = (screen: string) => {
 
   const getCurrentConfirmation = useCallback(
     (compareVals: string[]) => {
-      return confirmations.filter((item) => {
+      return confirmations.find((item) => {
         return checkPositionParam(screen, item.position_params, compareVals);
       });
     },

@@ -248,7 +248,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const checkAction = usePreCheckAction(from, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
   const isZKModeEnabled = useIsMantaPayEnabled(from);
 
-  const currentConfirmations = useMemo(() => {
+  const currentConfirmation = useMemo(() => {
     if (chain && destChain) {
       return getCurrentConfirmation([chain, destChain]);
     } else {
@@ -685,11 +685,11 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   }, [assetInfo, chain, chainInfoMap, closeAlert, destChain, doSubmit, isTransferAll, openAlert, t]);
 
   const onClickSubmit = useCallback((values: TransferParams) => {
-    if (currentConfirmations && currentConfirmations.length) {
+    if (currentConfirmation) {
       mktCampaignModalContext.openModal({
         type: 'confirmation',
-        title: currentConfirmations[0].name,
-        message: currentConfirmations[0].content,
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
         externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
           onSubmit(values);
           mktCampaignModalContext.hideModal();
@@ -698,7 +698,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     } else {
       onSubmit(values);
     }
-  }, [currentConfirmations, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
 
   // TODO: Need to review
   // Auto fill logic

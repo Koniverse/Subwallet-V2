@@ -7,7 +7,6 @@ import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/comp
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { useFilterModal, useGetBannerByScreen, useSelector } from '@subwallet/extension-koni-ui/hooks';
-import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { MissionDetailModal, PoolDetailModalId } from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/MissionDetailModal';
 import MissionItem from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/MissionPoolItem';
 import { missionCategories, MissionCategoryType, MissionTab } from '@subwallet/extension-koni-ui/Popup/Settings/MissionPool/predefined';
@@ -34,7 +33,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [currentSelectItem, setCurrentSelectItem] = useState<MissionInfo | null>(null);
   const { missions } = useSelector((state: RootState) => state.missionPool);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('missionPools');
-  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('missionPools');
   const computedMission = useMemo(() => {
     return missions.map((item) => {
       return {
@@ -43,14 +41,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       };
     });
   }, [missions]);
-
-  const currentConfirmation = useMemo(() => {
-    if (currentSelectItem) {
-      return getCurrentConfirmation([currentSelectItem.id.toString()]);
-    } else {
-      return undefined;
-    }
-  }, [getCurrentConfirmation, currentSelectItem]);
 
   const filterOptions = useMemo(() => [
     ...missionCategories.map((c) => ({
@@ -202,13 +192,15 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       title={t<string>('Mission Pools')}
     >
       <div className={'__tool-area'}>
-        <div className={'mission-pool-banner-wrapper'}>
-          {!!banners.length && (<BannerGenerator
-            banners={banners}
-            dismissBanner={dismissBanner}
-            onClickBanner={onClickBanner}
-          />)}
-        </div>
+        {!!banners.length && (
+          <div className={'mission-pool-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
 
         <Search
           actionBtnIcon={(
@@ -256,11 +248,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         options={filterOptions}
         title={t('Filter')}
       />
-      <MissionDetailModal
-        currentConfirmations={currentConfirmation}
-        data={currentSelectItem}
-        renderConfirmationButtons={renderConfirmationButtons}
-      />
+      <MissionDetailModal data={currentSelectItem} />
     </Layout.Base>
   );
 };

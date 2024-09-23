@@ -166,13 +166,15 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         title={t<string>('Your collections')}
       >
         <>
-          <div className={'nft-banner-wrapper'}>
-            {!!banners.length && (<BannerGenerator
-              banners={banners}
-              dismissBanner={dismissBanner}
-              onClickBanner={onClickBanner}
-            />)}
-          </div>
+          {!!banners.length && (
+            <div className={'nft-banner-wrapper'}>
+              <BannerGenerator
+                banners={banners}
+                dismissBanner={dismissBanner}
+                onClickBanner={onClickBanner}
+              />
+            </div>
+          )}
           <SwList.Section
             className={CN('nft_collection_list__container')}
             displayGrid={true}

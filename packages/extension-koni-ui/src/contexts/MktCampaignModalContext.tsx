@@ -5,7 +5,7 @@ import { APP_POPUP_MODAL, EARNING_WARNING_ANNOUNCEMENT } from '@subwallet/extens
 import { toggleCampaignPopup } from '@subwallet/extension-koni-ui/messaging/campaigns';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ModalContext } from '@subwallet/react-ui';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import AppPopupModal from '../components/Modal/Campaign/AppPopupModal';
@@ -33,14 +33,14 @@ export interface MktCampaignModalType {
 export const MktCampaignModalContext = React.createContext({} as MktCampaignModalType);
 
 export const MktCampaignModalContextProvider = ({ children }: MktCampaignModalContextProviderProps) => {
-  const [mktCampaignModal, setMktCampaignModal] = useState<MktCampaignModalInfo>({});
+  const [mktCampaignModal, setMktCampaignModal] = useState<MktCampaignModalInfo | undefined>(undefined);
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { isPopupVisible } = useSelector((state: RootState) => state.campaign);
   const storageEarningPosition = window.localStorage.getItem(EARNING_WARNING_ANNOUNCEMENT);
 
   // TODO: This is a hotfix solution; a better solution must be found.
   const openModal = useCallback((data: MktCampaignModalInfo) => {
-    if (mktCampaignModal.type === 'popup') {
+    if (mktCampaignModal?.type === 'popup') {
       if (isPopupVisible && (!storageEarningPosition || storageEarningPosition.includes('confirmed'))) {
         setMktCampaignModal(data);
         activeModal(APP_POPUP_MODAL);
@@ -51,32 +51,24 @@ export const MktCampaignModalContextProvider = ({ children }: MktCampaignModalCo
         activeModal(APP_POPUP_MODAL);
       }
     }
-  }, [activeModal, isPopupVisible, mktCampaignModal.type, storageEarningPosition]);
+  }, [activeModal, isPopupVisible, mktCampaignModal?.type, storageEarningPosition]);
 
   const hideModal = useCallback(() => {
     toggleCampaignPopup({ value: false }).then(() => {
       inactiveModal(APP_POPUP_MODAL);
-      setMktCampaignModal((prevState) => ({
-        ...prevState,
-        title: '',
-        message: '',
-        buttons: [],
-        externalButtons: <></>
-      }));
+      setMktCampaignModal(undefined);
     }).catch((e) => console.error(e));
   }, [inactiveModal]);
 
+  const mktCampaignContextValue = useMemo(() => ({ openModal, hideModal }), [hideModal, openModal]);
+
   return (
-    <MktCampaignModalContext.Provider value={{ openModal, hideModal }}>
+    <MktCampaignModalContext.Provider value={mktCampaignContextValue}>
       {children}
-      <AppPopupModal
-        buttons={mktCampaignModal.buttons || []}
-        externalButtons={mktCampaignModal.externalButtons}
-        message={mktCampaignModal.message || ''}
+      {mktCampaignModal && (<AppPopupModal
         onCloseModal={hideModal}
-        onPressButton={mktCampaignModal.onPressBtn}
-        title={mktCampaignModal.title || ''}
-      />
+        {...mktCampaignModal}
+      />)}
     </MktCampaignModalContext.Provider>
   );
 };

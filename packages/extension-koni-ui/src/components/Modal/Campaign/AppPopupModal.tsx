@@ -17,9 +17,9 @@ import { useLocalStorage } from 'usehooks-ts';
 import OnlineButtonGroups from '../../StaticContent/OnlineButtonGroups';
 
 interface Props extends ThemeProps {
-  message: string;
-  title: string;
-  buttons: AppContentButton[];
+  message?: string;
+  title?: string;
+  buttons?: AppContentButton[];
   externalButtons?: React.ReactNode;
   onPressButton?: (url?: string) => void;
   onCloseModal?: () => void;
@@ -106,16 +106,16 @@ const Component: React.FC<Props> = (props: Props) => {
         className={CN(className)}
         closable={false}
         footer={
-          externalButtons || <OnlineButtonGroups
+          externalButtons || (buttons && (<OnlineButtonGroups
             buttons={buttons}
             onClickButton={_onClickButton}
-          />
+          />))
         }
         id={modalId}
         maskClosable={false}
         title={title}
       >
-        <ContentGenerator content={message} />
+        <ContentGenerator content={message || ''} />
       </SwModal>
 
       {!!instructionButton && instructionButton.instruction && currentInstructionData && (

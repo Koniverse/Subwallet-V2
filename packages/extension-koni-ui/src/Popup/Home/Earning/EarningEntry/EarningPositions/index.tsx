@@ -371,13 +371,15 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
         subHeaderPaddingVertical={true}
         title={t<string>('Your earning positions')}
       >
-        <div className={'earning-banner-wrapper'}>
-          {!!banners.length && (<BannerGenerator
-            banners={banners}
-            dismissBanner={dismissBanner}
-            onClickBanner={onClickBanner}
-          />)}
-        </div>
+        {!!banners.length && (
+          <div className={'earning-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         <SwList.Section
           actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
           className={'__section-list-container'}
