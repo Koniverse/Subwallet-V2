@@ -122,6 +122,10 @@ const AccountAddressSelector = styled(forwardRef(Component))<Props>(({ theme: { 
       overflow: 'hidden'
     },
 
+    '.ant-field-container .ant-field-content.ant-field-content.ant-field-content': {
+      color: token.colorTextHeading
+    },
+
     '.__selected-item-name': {
       textOverflow: 'ellipsis',
       fontWeight: token.headingFontWeight,
