@@ -505,16 +505,6 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
           }
         }
       }
-    } else {
-      if (isLedger) {
-        setLoading(false);
-        notification({
-          message: t('This feature is not available for Ledger account'),
-          type: 'warning'
-        });
-
-        return true;
-      }
     }
 
     return false;
