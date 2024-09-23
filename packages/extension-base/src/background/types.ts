@@ -11,12 +11,12 @@ import type { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types'
 import type { HexString } from '@polkadot/util/types';
 
 import { KoniRequestSignatures, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { AccountJson } from '@subwallet/extension-base/types';
 
 import { TypeRegistry } from '@polkadot/types';
 
 import { ALLOWED_PATH } from '../defaults';
-import { AuthUrls } from './handlers/State';
 
 type KeysWithDefinedValues<T> = {
   [K in keyof T]: T[K] extends undefined ? never : K
@@ -76,7 +76,7 @@ export interface MetadataRequest extends ConfirmationRequestBase {
 }
 
 export interface SigningRequest extends ConfirmationRequestBase {
-  account: AccountJson;
+  address: string;
   request: RequestSign;
 }
 
@@ -143,11 +143,11 @@ export interface TransportRequestMessage<TMessageType extends MessageTypes> {
   request: RequestTypes[TMessageType];
 }
 
-export type AccountAuthType = 'substrate' | 'evm' | 'both';
+export type AccountAuthType = 'substrate' | 'evm' | 'ton';
 
 export interface RequestAuthorizeTab {
   origin: string;
-  accountAuthType?: AccountAuthType;
+  accountAuthTypes?: AccountAuthType[];
   allowedAccounts?: string[]
   reConfirm?: boolean
 }

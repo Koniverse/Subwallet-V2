@@ -4,15 +4,17 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AuthRequestV2, ResultResolver } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType, AuthorizeRequest, RequestAuthorizeTab, Resolver } from '@subwallet/extension-base/background/types';
+import { ALL_ACCOUNT_AUTH_TYPES } from '@subwallet/extension-base/constants';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import RequestService from '@subwallet/extension-base/services/request-service';
-import { DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL, PREDEFINED_CHAIN_DAPP_CHAIN_MAP, WEB_APP_URL } from '@subwallet/extension-base/services/request-service/constants';
-import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL, PREDEFINED_CHAIN_DAPP_CHAIN_MAP, WEB_APP_URL } from '@subwallet/extension-base/services/request-service/constants';
+import { AuthUrlInfoNeedMigration, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import AuthorizeStore from '@subwallet/extension-base/stores/Authorize';
 import { createPromiseHandler, getDomainFromUrl, PromiseHandler, stripUrl } from '@subwallet/extension-base/utils';
 import { getId } from '@subwallet/extension-base/utils/getId';
+import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { BehaviorSubject } from 'rxjs';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
@@ -32,28 +34,51 @@ export default class AuthRequestHandler {
   constructor (requestService: RequestService, chainService: ChainService, private keyringService: KeyringService) {
     this.#requestService = requestService;
     this.#chainService = chainService;
-
-    this.init().catch(console.error);
+    this.migrateAuthUrlInfoToUnified().then(() => {
+      this.init().catch(console.error);
+    }).catch(console.error);
   }
 
   private async init () {
     const authList = await this.getAuthList();
     let needUpdateAuthList = false;
 
-    Object.entries(authList).forEach(([key, value]) => {
-      const existKeyAllBothConnect = DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL.find((url_) => url_.includes(key));
+    const updatedAuthList = Object.entries(authList).reduce((acc, [key, value]) => {
+      const existKeyBothConnectAuthType = DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL.some((url_) => url_.includes(key));
 
-      if (existKeyAllBothConnect && value.accountAuthType !== 'both') {
+      if (existKeyBothConnectAuthType && (!value.accountAuthTypes || value.accountAuthTypes.length < 2)) {
+        value.accountAuthTypes = ['evm', 'substrate'];
         needUpdateAuthList = true;
-        authList[key] = {
-          ...value,
-          accountAuthType: 'both'
-        };
       }
-    });
+
+      acc[key] = { ...value };
+
+      return acc;
+    }, {} as AuthUrls);
 
     if (needUpdateAuthList) {
-      this.setAuthorize(authList);
+      this.setAuthorize(updatedAuthList);
+    }
+  }
+
+  private async migrateAuthUrlInfoToUnified (): Promise<void> {
+    const authList = await this.getAuthList();
+    let needUpdateAuthList = false;
+    const updatedAuthList = Object.entries(authList).reduce((acc, [key, value]) => {
+      if ('accountAuthType' in value) {
+        const oldValueStructure = value as AuthUrlInfoNeedMigration;
+
+        needUpdateAuthList = true;
+        value.accountAuthTypes = oldValueStructure.accountAuthType === 'both' ? ['substrate', 'evm'] : [oldValueStructure.accountAuthType || 'substrate'];
+      }
+
+      acc[key] = { ...value };
+
+      return acc;
+    }, {} as AuthUrls);
+
+    if (needUpdateAuthList) {
+      this.setAuthorize(updatedAuthList);
     }
   }
 
@@ -127,7 +152,7 @@ export default class AuthRequestHandler {
 
     let chainInfo: _ChainInfo | undefined;
 
-    if (['both', 'evm'].includes(options.accessType)) {
+    if (options.accessType === 'evm') {
       const evmChains = Object.values(chainInfoMaps).filter(_isChainEvmCompatible);
 
       chainInfo = (defaultChain ? chainInfoMaps[defaultChain] : evmChains.find((chain) => chainStateMap[chain.slug]?.active)) || evmChains[0];
@@ -161,27 +186,43 @@ export default class AuthRequestHandler {
           isAllowedMap[acc] = true;
         });
       } else {
-        // eslint-disable-next-line no-return-assign
-        Object.keys(isAllowedMap).forEach((address) => isAllowedMap[address] = false);
+        Object.keys(isAllowedMap).forEach((address) => {
+          isAllowedMap[address] = false;
+        });
       }
 
-      const { accountAuthType, idStr, request: { allowedAccounts, origin }, url } = this.#authRequestsV2[id];
+      const { accountAuthTypes, idStr, request: { allowedAccounts, origin }, url } = this.#authRequestsV2[id];
 
-      if (accountAuthType !== 'both') {
-        const isEvmType = accountAuthType === 'evm';
+      if (accountAuthTypes.length !== ALL_ACCOUNT_AUTH_TYPES.length) {
+        const backupAllowed = (allowedAccounts || [])
+          .filter((a) => {
+            if (isEthereumAddress(a) && accountAuthTypes.includes('evm')) {
+              return true;
+            }
 
-        const backupAllowed = [...(allowedAccounts || [])].filter((a) => {
-          const isEth = isEthereumAddress(a);
+            if (isSubstrateAddress(a) && accountAuthTypes.includes('substrate')) {
+              return true;
+            }
 
-          return isEvmType ? !isEth : isEth;
-        });
+            if (isTonAddress(a) && accountAuthTypes.includes('ton')) {
+              return true;
+            }
+
+            return false;
+          });
 
         backupAllowed.forEach((acc) => {
           isAllowedMap[acc] = true;
         });
       }
 
-      const defaultEvmNetworkKey = this.getDAppChainInfo({ accessType: accountAuthType, url, autoActive: !isCancelled && isAllowed })?.slug;
+      let defaultEvmNetworkKey: string | undefined;
+
+      if (accountAuthTypes.includes('evm')) {
+        const chainInfo = this.getDAppChainInfo({ accessType: 'evm', autoActive: true, url });
+
+        defaultEvmNetworkKey = chainInfo?.slug;
+      }
 
       this.getAuthorize((value) => {
         let authorizeList = {} as AuthUrls;
@@ -191,6 +232,24 @@ export default class AuthRequestHandler {
         }
 
         const existed = authorizeList[stripUrl(url)];
+
+        const isAllowedMap_ = Object.entries({ ...isAllowedMap }).reduce<Record<string, boolean>>((map, [key, value]) => {
+          if (!value) {
+            if (isEthereumAddress(key) && !accountAuthTypes.includes('evm') && existed?.accountAuthTypes.includes('evm')) {
+              map[key] = !!allowedAccounts?.includes(key);
+            }
+
+            if (isSubstrateAddress(key) && !accountAuthTypes.includes('substrate') && existed?.accountAuthTypes.includes('substrate')) {
+              map[key] = !!allowedAccounts?.includes(key);
+            }
+
+            if (isTonAddress(key) && !accountAuthTypes.includes('ton') && existed?.accountAuthTypes.includes('ton')) {
+              map[key] = !!allowedAccounts?.includes(key);
+            }
+          }
+
+          return map;
+        }, { ...isAllowedMap });
 
         // On cancel don't save anything
         if (isCancelled) {
@@ -205,10 +264,10 @@ export default class AuthRequestHandler {
           count: 0,
           id: idStr,
           isAllowed,
-          isAllowedMap,
+          isAllowedMap: isAllowedMap_,
           origin,
           url,
-          accountAuthType: (existed && existed.accountAuthType !== accountAuthType) ? 'both' : accountAuthType,
+          accountAuthTypes: [...new Set<AccountAuthType>([...accountAuthTypes, ...(existed?.accountAuthTypes || [])])],
           currentEvmNetworkKey: existed ? existed.currentEvmNetworkKey : defaultEvmNetworkKey
         };
 
@@ -238,10 +297,8 @@ export default class AuthRequestHandler {
   public async authorizeUrlV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
     let authList = await this.getAuthList();
     const idStr = stripUrl(url);
-    const isAllowedDappConnectAllType = !!DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL.find((url_) => url.includes(url_));
-    let accountAuthType = isAllowedDappConnectAllType ? 'both' : (request.accountAuthType || 'substrate');
-
-    request.accountAuthType = accountAuthType;
+    const isAllowedDappConnectBothType = !!DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL.find((url_) => url.includes(url_));
+    let accountAuthTypes = [...new Set<AccountAuthType>(isAllowedDappConnectBothType ? ['evm', 'substrate'] : (request.accountAuthTypes || ['substrate']))];
 
     if (!authList) {
       authList = {};
@@ -252,7 +309,7 @@ export default class AuthRequestHandler {
     const { promise, reject, resolve } = promiseHandler;
     const isExistedAuthBothBefore = Object.entries(this.authorizeUrlSubject.value)
       .find(([key, data]) =>
-        (key === idStr && data.accountAuthType === 'both'));
+        (key === idStr && data.accountAuthTypes?.length === ALL_ACCOUNT_AUTH_TYPES.length));
 
     if (isExistedAuthBothBefore) {
       return true;
@@ -271,9 +328,10 @@ export default class AuthRequestHandler {
     Object.entries(this.#authRequestsV2)
       .forEach(([key, _request]) => {
         if (_request.idStr === idStr) {
-          if (_request.accountAuthType !== request.accountAuthType) {
-            request.accountAuthType = 'both';
-            accountAuthType = 'both';
+          if (accountAuthTypes && _request.accountAuthTypes) {
+            const filteredAccountAuthTypes = new Set<AccountAuthType>([..._request.accountAuthTypes, ...accountAuthTypes]);
+
+            accountAuthTypes = [...filteredAccountAuthTypes];
           }
 
           mergeKeys.push(key);
@@ -291,8 +349,8 @@ export default class AuthRequestHandler {
     }
 
     const existedAuth = authList[idStr];
-    const existedAccountAuthType = existedAuth?.accountAuthType;
-    const confirmAnotherType = existedAccountAuthType !== 'both' && existedAccountAuthType !== request.accountAuthType;
+    const existedAccountAuthType = existedAuth?.accountAuthTypes;
+    const confirmAnotherType = !existedAccountAuthType || accountAuthTypes.some((type) => !existedAccountAuthType.includes(type));
 
     if (request.reConfirm && existedAuth) {
       request.origin = existedAuth.origin;
@@ -312,11 +370,17 @@ export default class AuthRequestHandler {
 
       let allowedListByRequestType = [...request.allowedAccounts];
 
-      if (accountAuthType === 'evm') {
-        allowedListByRequestType = allowedListByRequestType.filter((a) => isEthereumAddress(a));
-      } else if (accountAuthType === 'substrate') {
-        allowedListByRequestType = allowedListByRequestType.filter((a) => !isEthereumAddress(a));
-      }
+      allowedListByRequestType = accountAuthTypes.reduce<string[]>((list, accountAuthType) => {
+        if (accountAuthType === 'evm') {
+          list.push(...allowedListByRequestType.filter((a) => isEthereumAddress(a)));
+        } else if (accountAuthType === 'substrate') {
+          list.push(...allowedListByRequestType.filter((a) => isSubstrateAddress(a)));
+        } else if (accountAuthType === 'ton') {
+          list.push(...allowedListByRequestType.filter((a) => isTonAddress(a)));
+        }
+
+        return list;
+      }, []);
 
       if (!confirmAnotherType && !request.reConfirm && allowedListByRequestType.length !== 0) {
         // Prevent appear confirmation popup
@@ -338,7 +402,7 @@ export default class AuthRequestHandler {
           isAllowedMap,
           origin,
           url,
-          accountAuthType: 'both'
+          accountAuthTypes: ALL_ACCOUNT_AUTH_TYPES
         };
 
         this.setAuthorize(authList);
@@ -351,9 +415,9 @@ export default class AuthRequestHandler {
       ...this.authCompleteV2(id, url, resolve, reject),
       id,
       idStr,
-      request,
+      request: { ...request, accountAuthTypes },
       url,
-      accountAuthType: accountAuthType
+      accountAuthTypes: accountAuthTypes || ['substrate']
     };
 
     this.updateIconAuthV2();

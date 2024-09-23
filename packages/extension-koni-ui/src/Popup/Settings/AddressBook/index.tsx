@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AddressJson } from '@subwallet/extension-base/types';
-import { AccountItemBase, AccountItemWithName, AddContactModal, BackIcon, EditContactModal, FilterModal, GeneralEmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountItemBase, AddContactModal, AddressSelectorItem, BackIcon, EditContactModal, FilterModal, GeneralEmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ADD_ADDRESS_BOOK_MODAL, EDIT_ADDRESS_BOOK_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useFilterModal, useFormatAddress, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -177,11 +177,12 @@ const Component: React.FC<Props> = (props: Props) => {
     }
 
     return (
-      <AccountItemWithName
-        accountName={item.name}
+      <AddressSelectorItem
         address={address}
-        avatarSize={24}
+        avatarValue={address}
+        className={'address-item'}
         key={item.address}
+        name={item.name}
         onClick={onSelectItem(item)}
       />
     );
@@ -250,6 +251,10 @@ const ManageAddressBook = styled(Component)<Props>(({ theme: { token } }: Props)
       height: '100%',
       display: 'flex',
       flexDirection: 'column'
+    },
+
+    '.address-item.address-item': {
+      display: 'flex'
     },
 
     '.ant-sw-list-section': {

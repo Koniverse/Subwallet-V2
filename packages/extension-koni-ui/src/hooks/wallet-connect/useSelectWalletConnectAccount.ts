@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
-import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_SUPPORT_NAMESPACES } from '@subwallet/extension-base/services/wallet-connect-service/constants';
+import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_POLKADOT_NAMESPACE, WALLET_CONNECT_SUPPORT_NAMESPACES } from '@subwallet/extension-base/services/wallet-connect-service/constants';
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { isSameAddress, uniqueStringArray } from '@subwallet/extension-base/utils';
@@ -10,8 +10,6 @@ import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { chainsToWalletConnectChainInfos, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { ProposalTypes } from '@walletconnect/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { useSelector } from '../common';
 
@@ -96,7 +94,15 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
 
     Object.keys(params.requiredNamespaces || {}).forEach((namespace) => {
       if (WALLET_CONNECT_SUPPORT_NAMESPACES.includes(namespace)) {
-        const available = noAllAccount.some((acc) => (WALLET_CONNECT_EIP155_NAMESPACE === namespace) === isEthereumAddress(acc.address));
+        const available = noAllAccount.some((acc) => {
+          if (namespace === WALLET_CONNECT_EIP155_NAMESPACE && acc.chainType === 'ethereum') {
+            return true;
+          } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE && acc.chainType === 'substrate') {
+            return true;
+          }
+
+          return false;
+        });
 
         if (!available) {
           result.push(WALLET_CONNECT_EIP155_NAMESPACE === namespace ? 'evm' : 'substrate');
@@ -195,7 +201,15 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
             selectedAccounts: selectReplace ? [] : oldState[namespace]?.selectedAccounts || [],
             appliedAccounts: selectReplace ? [] : oldState[namespace]?.appliedAccounts || [],
             availableAccounts: noAllAccount
-              .filter((acc) => (WALLET_CONNECT_EIP155_NAMESPACE === namespace) === isEthereumAddress(acc.address))
+              .filter((acc) => {
+                if (namespace === WALLET_CONNECT_EIP155_NAMESPACE && acc.chainType === 'ethereum') {
+                  return true;
+                } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE && acc.chainType === 'substrate') {
+                  return true;
+                }
+
+                return false;
+              })
           };
         }
       }
