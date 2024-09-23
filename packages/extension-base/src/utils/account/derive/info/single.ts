@@ -1,15 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountMetadataData, AccountProxyMap, AccountProxyType, DeriveInfo, NextDerivePair } from '@subwallet/extension-base/types';
+import { AccountDeriveData, DeriveInfo, NextDerivePair } from '@subwallet/extension-base/types';
 import { getDerivePath } from '@subwallet/keyring';
-import { EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, SubstrateKeypairType, SubstrateKeypairTypes, TonWalletContractVersion } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeypairType, KeyringPair, SubstrateKeypairType, SubstrateKeypairTypes, TonWalletContractVersion } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
 import { assert } from '@polkadot/util';
 
-import { validateEvmDerivationPath, validateOtherSubstrateDerivationPath, validateSr25519DerivationPath, validateTonDerivationPath, validateUnifiedDerivationPath } from './validate';
+import { validateEvmDerivationPath, validateOtherSubstrateDerivationPath, validateSr25519DerivationPath, validateTonDerivationPath, validateUnifiedDerivationPath } from '../validate';
 
 export const parseUnifiedSuriToDerivationPath = (suri: string, type: KeypairType): string => {
   const reg = /^\/\/(\d+)(\/\/\d+)?$/;
@@ -42,8 +42,7 @@ export const parseUnifiedSuriToDerivationPath = (suri: string, type: KeypairType
   return '';
 };
 
-export const getDerivationInfo = (type: KeypairType, _metadata?: KeyringPair$Meta): DeriveInfo => {
-  const metadata: AccountMetadataData = _metadata || {};
+export const getDerivationInfo = (type: KeypairType, metadata: AccountDeriveData = {}): DeriveInfo => {
   const { derivationPath: derivePath, parentAddress, suri } = metadata;
 
   if (suri) {
@@ -223,7 +222,7 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
 
   indexes.push(index);
 
-  const suri = isSubstrate ? `//${index}` : '//'.concat(indexes.join('//'));
+  const suri = isSubstrate ? [deriveInfo.suri || '', index].join('//') : '//'.concat(indexes.join('//'));
 
   return {
     deriveIndex: index,
@@ -231,90 +230,6 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
     derivationPath: parseUnifiedSuriToDerivationPath(suri, rootPair.type),
     suri,
     deriveAddress: rootAddress
-  };
-};
-
-export const getUnifiedDerivationInfo = (suri?: string): DeriveInfo => {
-  if (suri) {
-    const validateUnifiedRs = validateUnifiedDerivationPath(suri);
-
-    if (validateUnifiedRs) {
-      const { autoIndexes, depth } = validateUnifiedRs;
-
-      return {
-        suri: suri,
-        depth,
-        autoIndexes
-      };
-    }
-  }
-
-  return {
-    depth: 0,
-    suri
-  };
-};
-
-/**
- * @func findNextDeriveUnified
- * @return {NextDerivePair}
- * */
-export const findNextDeriveUnified = (proxyId: string, accounts: AccountProxyMap): NextDerivePair => {
-  const currentProxy = accounts[proxyId];
-  const parentProxyId = currentProxy.parentId || currentProxy.id;
-  const parentProxy = accounts[parentProxyId];
-  const deriveInfo = getUnifiedDerivationInfo(currentProxy.suri);
-  const currentDepth = deriveInfo.depth;
-  const currentIndex = deriveInfo.autoIndexes?.[currentDepth - 1];
-  const children = parentProxy.children?.map((id) => accounts[id]).filter((child) => child.accountType === AccountProxyType.UNIFIED) || [];
-  const childrenMetadata = children
-    .map(({ suri }) => getUnifiedDerivationInfo(suri))
-    .filter(({ autoIndexes, depth }) => {
-      return depth === currentDepth + 1 && currentIndex === autoIndexes?.[currentDepth - 1];
-    })
-    .sort((a, b) => {
-      const aDeriveIndex = a.autoIndexes?.[currentDepth];
-      const bDeriveIndex = b.autoIndexes?.[currentDepth];
-
-      if (aDeriveIndex !== undefined && bDeriveIndex !== undefined) {
-        return aDeriveIndex - bDeriveIndex;
-      } else {
-        if (aDeriveIndex === undefined && bDeriveIndex === undefined) {
-          return 0;
-        } else {
-          return aDeriveIndex === undefined ? 1 : -1;
-        }
-      }
-    });
-
-  let index = currentDepth === 0 ? 1 : 0;
-
-  for (const { autoIndexes, suri } of childrenMetadata) {
-    const _autoIndexes = autoIndexes as number[];
-    const deriveIndex = _autoIndexes[currentDepth];
-
-    if (!suri || deriveIndex === undefined) {
-      break;
-    }
-
-    if (deriveIndex === index) {
-      index++;
-    } else {
-      break;
-    }
-  }
-
-  const indexes: number[] = currentDepth > 0 ? (deriveInfo.autoIndexes || []) as number[] : [];
-
-  indexes.push(index);
-
-  const suri = '//'.concat(indexes.join('//'));
-
-  return {
-    deriveIndex: index,
-    depth: currentDepth + 1,
-    suri,
-    deriveAddress: parentProxy.id
   };
 };
 

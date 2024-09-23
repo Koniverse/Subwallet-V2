@@ -229,14 +229,12 @@ export class AccountDeriveHandler extends AccountBaseHandler {
    * Derive account proxy
    *  */
   public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
-    const { name, proxyId: parentProxyId, suri } = request;
-    const isUnified = this.state.isUnifiedAccount(parentProxyId);
+    const { name, proxyId: deriveId, suri } = request;
+    const isUnified = this.state.isUnifiedAccount(deriveId);
 
-    let parentUnifiedId: string | undefined;
-
-    if (!isUnified) {
-      parentUnifiedId = this.state.belongUnifiedAccount(parentProxyId);
-    }
+    const parentProxyId = this.state.belongUnifiedAccount(deriveId) || deriveId;
+    const rootId = this.state.value.accounts[parentProxyId].parentId || parentProxyId;
+    const rootProxyId = this.state.belongUnifiedAccount(rootId) || rootId;
 
     const nameExists = this.state.checkNameExists(name);
 
@@ -244,7 +242,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
       throw Error(t('Account name already exists'));
     }
 
-    const validateRs = this.validateDerivePath({ proxyId: parentProxyId, suri });
+    const validateRs = this.validateDerivePath({ proxyId: deriveId, suri });
 
     if (!validateRs.info) {
       if (validateRs.error) {
@@ -261,9 +259,13 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     let childAccountProxy: AccountProxyData | undefined;
     let proxyId: string;
 
+    /**
+     * Can change to deep find root pair
+     * Now all root pair is in the first level, so don't need to deep find
+     */
     const findRootPair = (account: AccountJson): KeyringPair | undefined => {
       const deriveInfo = getDerivationInfo(account.type, account);
-      const needChangeRoot = (account.type === 'ethereum' || account.type === 'ton') && deriveInfo.depth > 0;
+      const needChangeRoot = deriveInfo.depth > 0;
       let rootPair: KeyringPair | undefined;
 
       if (needChangeRoot) {
@@ -284,7 +286,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     };
 
     if (derivationInfo.type === 'unified') {
-      const accountProxy = this.state.value.accounts[parentProxyId];
+      const accountProxy = this.state.value.accounts[deriveId];
 
       if (!accountProxy) {
         throw Error(t('Cannot find account'));
@@ -292,7 +294,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
       const accounts = accountProxy.accounts;
 
-      proxyId = createAccountProxyId(parentProxyId, suri);
+      proxyId = createAccountProxyId(rootProxyId, suri);
 
       for (const account of accounts) {
         const rootPair = findRootPair(account);
@@ -309,12 +311,12 @@ export class AccountDeriveHandler extends AccountBaseHandler {
         pairs.push(childPair);
       }
 
-      childAccountProxy = { id: proxyId, name, parentId: parentProxyId, suri: suri };
+      childAccountProxy = { id: proxyId, name, parentId: rootProxyId, suri: suri };
     } else {
       const type = derivationInfo.type;
 
       if (isUnified) {
-        const accountProxy = this.state.value.accounts[parentProxyId];
+        const accountProxy = this.state.value.accounts[deriveId];
         const account = accountProxy.accounts.find((account) => account.type === type);
 
         if (!account) {
@@ -332,10 +334,10 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
         proxyId = address;
         modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
-        childAccountProxy = { id: proxyId, name, parentId: parentProxyId, suri: suri };
+        childAccountProxy = { id: proxyId, name, parentId: rootProxyId, suri: suri };
         pairs.push(childPair);
       } else {
-        const account = this.state.value.accounts[parentProxyId].accounts[0];
+        const account = this.state.value.accounts[deriveId].accounts[0];
 
         if (!account) {
           throw Error(t('Cannot find parent account'));
@@ -353,9 +355,9 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
         proxyId = address;
 
-        if (parentUnifiedId) {
+        if (rootProxyId) {
           modifyPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
-          childAccountProxy = { id: proxyId, name, parentId: parentUnifiedId, suri: suri };
+          childAccountProxy = { id: proxyId, name, parentId: rootProxyId, suri: suri };
         }
 
         pairs.push(childPair);
@@ -366,8 +368,6 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const exists = this.state.checkAddressExists(addresses);
 
     assert(!exists, t('Account already exists: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
-
-    console.log(pairs, childAccountProxy, modifyPairs);
 
     childAccountProxy && this.state.upsertAccountProxyByKey(childAccountProxy);
     this.state.upsertModifyPairs(modifyPairs);
