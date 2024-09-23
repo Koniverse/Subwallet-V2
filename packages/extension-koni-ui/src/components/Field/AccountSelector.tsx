@@ -3,6 +3,7 @@
 
 import { AccountJson } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { BasicInputWrapper } from '@subwallet/extension-koni-ui/components/Field/Base';
 import { useFormatAddress, useSelectModalInputHelper, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -11,10 +12,7 @@ import { InputRef, SelectModal } from '@subwallet/react-ui';
 import React, { ForwardedRef, forwardRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 
-import { isEthereumAddress } from '@polkadot/util-crypto';
-
 import { AccountItemWithName } from '../Account';
-import { Avatar } from '../Avatar';
 import { GeneralEmptyList } from '../EmptyList';
 
 interface Props extends ThemeProps, BasicInputWrapper {
@@ -105,10 +103,9 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
         onSelect={onSelect}
         placeholder={placeholder || t('Select account')}
         prefix={
-          <Avatar
-            identPrefix={addressPrefix}
+          <AccountProxyAvatar
+            className={'__account-avatar'}
             size={20}
-            theme={value ? isEthereumAddress(value) ? 'ethereum' : 'polkadot' : undefined}
             value={value}
           />
         }

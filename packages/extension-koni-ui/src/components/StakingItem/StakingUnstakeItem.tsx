@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { UnstakingInfo, UnstakingStatus } from '@subwallet/extension-base/types';
-import { Avatar } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { useGetChainPrefixBySlug, useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
@@ -32,10 +32,12 @@ const Component: React.FC<Props> = (props: Props) => {
     if (!validatorAddress) {
       return undefined;
     } else {
-      return (<Avatar
-        identPrefix={networkPrefix}
-        value={validatorAddress}
-      />);
+      return (
+        <AccountProxyAvatar
+          className={'__account-avatar'}
+          size={20}
+          value={validatorAddress}
+        />);
     }
   }, [networkPrefix, validatorAddress]);
 
