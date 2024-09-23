@@ -5,17 +5,13 @@ import { NotificationType } from '@subwallet/extension-base/background/KoniTypes
 import { AccountActions, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountProxyTypeTag, CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
-import DeriveAccountModal from '@subwallet/extension-koni-ui/components/Modal/DeriveAccountModal';
-import { DERIVE_ACCOUNT_ACTION_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
-import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
-import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
+import { useDefaultNavigate, useGetAccountProxyById, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import { editAccount, forgetAccount, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
-import { Button, Form, Icon, Input, ModalContext } from '@subwallet/react-ui';
+import { Button, Form, Icon, Input } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
@@ -63,8 +59,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   const { goHome } = useDefaultNavigate();
   const navigate = useNavigate();
 
-  const { alertModal } = useContext(WalletModalContext);
-  const { activeModal } = useContext(ModalContext);
+  const { alertModal, deriveModal: { open: openDeriveModal } } = useContext(WalletModalContext);
 
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
     requestViewDerivedAccounts && showDerivedAccounts
@@ -138,8 +133,12 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [alertModal, doDelete, t]);
 
   const onDerive = useCallback(() => {
-    activeModal(DERIVE_ACCOUNT_ACTION_MODAL);
-  }, [activeModal]);
+    if (accountProxy) {
+      openDeriveModal({
+        proxyId: accountProxy.id
+      });
+    }
+  }, [accountProxy, openDeriveModal]);
 
   const onExport = useCallback(() => {
     if (accountProxy?.id) {
@@ -384,10 +383,6 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
           />
         )
       }
-
-      <DeriveAccountModal
-        proxyId={accountProxy.id}
-      />
     </Layout.WithSubHeaderOnly>
   );
 };

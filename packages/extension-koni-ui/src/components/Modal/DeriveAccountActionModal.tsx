@@ -22,9 +22,12 @@ import styled, { ThemeContext } from 'styled-components';
 
 import useCompleteCreateAccount from '../../hooks/account/useCompleteCreateAccount';
 
-interface Props extends ThemeProps {
+export interface AccountDeriveActionProps {
   proxyId: string;
+  onCompleteCb?: () => void;
 }
+
+type Props = ThemeProps & AccountDeriveActionProps;
 
 interface DeriveFormState {
   suri: string;
@@ -36,7 +39,7 @@ const modalId = DERIVE_ACCOUNT_ACTION_MODAL;
 type DeriveNetworkType = DerivePathInfo['type'] | undefined;
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, proxyId } = props;
+  const { className, onCompleteCb, proxyId } = props;
 
   const { t } = useTranslation();
 
@@ -152,6 +155,7 @@ const Component: React.FC<Props> = (props: Props) => {
           .then(() => {
             closeModal();
             onComplete();
+            onCompleteCb?.();
           })
           .catch((e: Error) => {
             form.setFields([{ name: 'suri', errors: [e.message] }]);
@@ -163,7 +167,7 @@ const Component: React.FC<Props> = (props: Props) => {
       .catch(() => {
       // Unlock is cancelled
       });
-  }, [form, checkUnlock, proxyId, onComplete, closeModal]);
+  }, [form, checkUnlock, proxyId, onComplete, closeModal, onCompleteCb]);
 
   useEffect(() => {
     if (!accountProxy && isActive) {
@@ -330,7 +334,7 @@ const Component: React.FC<Props> = (props: Props) => {
   );
 };
 
-const DeriveAccountModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const DeriveAccountActionModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.derive-header-title': {
       textAlign: 'center',
@@ -386,4 +390,4 @@ const DeriveAccountModal = styled(Component)<Props>(({ theme: { token } }: Props
   };
 });
 
-export default DeriveAccountModal;
+export default DeriveAccountActionModal;

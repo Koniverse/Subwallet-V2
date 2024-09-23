@@ -6,7 +6,7 @@ import BackIcon from '@subwallet/extension-koni-ui/components/Icon/BackIcon';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import { SettingItemSelection } from '@subwallet/extension-koni-ui/components/Setting/SettingItemSelection';
 import { EVM_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants/account';
-import { CREATE_ACCOUNT_MODAL, DERIVE_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { CREATE_ACCOUNT_MODAL, DERIVE_ACCOUNT_LIST_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { useSetSelectedMnemonicType, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import useClickOutSide from '@subwallet/extension-koni-ui/hooks/dom/useClickOutSide';
@@ -95,7 +95,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       label: t('Derive from an existing account'),
       onClick: () => {
         inactiveModal(modalId);
-        activeModal(DERIVE_ACCOUNT_MODAL);
+        activeModal(DERIVE_ACCOUNT_LIST_MODAL);
       }
     }
   ]), [token, t, disableDerive, inactiveModal, setSelectedMnemonicType, navigate, activeModal]);
