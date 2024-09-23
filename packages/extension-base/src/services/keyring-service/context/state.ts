@@ -5,9 +5,10 @@ import { AccountRefMap } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
 import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType } from '@subwallet/extension-base/utils';
+import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType, isSameAddress } from '@subwallet/extension-base/utils';
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -365,13 +366,32 @@ export class AccountState {
       if (value && Object.keys(value).length) {
         Object.keys(value).forEach((url) => {
           addresses.forEach((address) => {
-            if (isAddressValidWithAuthType(address, value[url].accountAuthType)) {
+            if (isAddressValidWithAuthType(address, value[url].accountAuthTypes)) {
               value[url].isAllowedMap[address] = isAllowed;
             }
           });
         });
 
         this.koniState.setAuthorize(value);
+      }
+    });
+  }
+
+  public changeAddressAllowedAuthList (oldAddress: string, newAddress: string): void {
+    this.koniState.getAuthorize((value) => {
+      if (value && Object.keys(value).length) {
+        const newAuthMap = Object.entries(value).reduce<AuthUrls>((acc, [url, authInfo]) => {
+          const isAddressExisted = Object.keys(authInfo.isAllowedMap).find((address) => isSameAddress(oldAddress, address));
+
+          if (isAddressExisted) {
+            authInfo.isAllowedMap[newAddress] = authInfo.isAllowedMap[oldAddress];
+            delete authInfo.isAllowedMap[oldAddress];
+          }
+
+          return { ...acc, [url]: { ...authInfo } };
+        }, {});
+
+        this.koniState.setAuthorize(newAuthMap);
       }
     });
   }
@@ -427,7 +447,7 @@ export class AccountState {
     const accountProxies = this.accounts;
 
     if (accountProxies[proxyId]) {
-      return Object.keys(accountProxies[proxyId].accounts.map((account) => account.address));
+      return accountProxies[proxyId].accounts.map((account) => account.address);
     } else {
       return [];
     }

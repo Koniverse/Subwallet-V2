@@ -273,6 +273,8 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     this.state.upsertModifyPairs(modifiedPairs);
 
+    this.state.changeAddressAllowedAuthList(oldAddress, newAddress);
+
     return newAddress;
   }
 }

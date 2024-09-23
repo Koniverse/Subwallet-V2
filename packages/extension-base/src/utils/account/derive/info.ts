@@ -3,7 +3,7 @@
 
 import { AccountMetadataData, AccountProxyMap, AccountProxyType, DeriveInfo, NextDerivePair } from '@subwallet/extension-base/types';
 import { getDerivePath } from '@subwallet/keyring';
-import { EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, SubstrateKeypairType, SubstrateKeypairTypes } from '@subwallet/keyring/types';
+import { EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, SubstrateKeypairType, SubstrateKeypairTypes, TonWalletContractVersion } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
@@ -330,8 +330,13 @@ export const derivePair = (parentPair: KeyringPair, name: string, suri: string, 
     name,
     parentAddress: parentPair.address,
     suri: suri,
-    derivationPath
+    derivationPath,
+    tonContractVersion: undefined as unknown as TonWalletContractVersion
   };
+
+  if (isTon && parentPair.ton?.contractVersion) {
+    meta.tonContractVersion = parentPair.ton.contractVersion;
+  }
 
   if (derivationPath && (isEvm || isTon)) {
     return isEvm ? parentPair.evm.deriveCustom(derivationPath, meta) : parentPair.ton.deriveCustom(derivationPath, meta);

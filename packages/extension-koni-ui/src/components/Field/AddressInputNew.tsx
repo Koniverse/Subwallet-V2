@@ -28,10 +28,9 @@ import { QrScannerErrorNotice } from '../Qr';
 import { BasicInputWrapper } from './Base';
 
 type AutoCompleteItem = {
-  value: string;
+  graftedValue: string;
   origin: AnalyzeAddress;
   label: React.ReactNode;
-  key: string;
 }
 
 type AutoCompleteGroupItem = {
@@ -50,6 +49,16 @@ interface Props extends BasicInputWrapper, ThemeProps {
 
 const defaultScannerModalId = 'input-account-address-scanner-modal';
 const defaultAddressBookModalId = 'input-account-address-book-modal';
+
+const autoCompleteFieldNames = { label: 'label', value: 'graftedValue' };
+
+function getGraftedValue (responseOption: AnalyzeAddress) {
+  return `${responseOption.formatedAddress}|-|${responseOption.displayName || responseOption.proxyId || ''}|-|${responseOption.analyzedGroup}`;
+}
+
+function getInputValueFromGraftedValue (graftedValue: string) {
+  return graftedValue.split('|-|')[0];
+}
 
 // todo:
 //  - Rename to AddressInput, after this component is done
@@ -125,8 +134,8 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   // autoComplete
 
   // "item: unknown" is hotfix for typescript error of AutoComplete
-  const onSelectAutoComplete = useCallback((_value: string, item: unknown) => {
-    setInputValue(_value);
+  const onSelectAutoComplete = useCallback((graftedValue: string, item: unknown) => {
+    setInputValue(getInputValueFromGraftedValue(graftedValue));
 
     const _selectedOption = (item as AutoCompleteItem)?.origin;
 
@@ -161,7 +170,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
     const genAutoCompleteItem = (responseOption: AnalyzeAddress): AutoCompleteItem => {
       return {
-        value: responseOption.formatedAddress,
+        graftedValue: getGraftedValue(responseOption),
         label: (
           <AddressSelectorItem
             address={responseOption.formatedAddress}
@@ -169,14 +178,13 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
             name={responseOption.displayName}
           />
         ),
-        origin: responseOption,
-        key: `${responseOption.formatedAddress}-${responseOption.displayName || responseOption.proxyId || ''}-${responseOption.analyzedGroup}`
+        origin: responseOption
       };
     };
 
     const genAutoCompleteGroupItem = (label: string, options: AutoCompleteItem[]) => {
       return {
-        label: (<>{label}</>),
+        label,
         options
       };
     };
@@ -365,6 +373,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       <div className={CN(className, '-input-container')}>
         <AutoComplete
           dropdownRender={dropdownRender}
+          fieldNames={autoCompleteFieldNames}
           listHeight={dropdownListHeight}
           onBlur={_onBlur}
           onChange={onChangeInputValue}

@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
 import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AvatarGroup } from '@subwallet/extension-koni-ui/components/Account';
 import { BaseAccountInfo } from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
@@ -22,28 +21,29 @@ export interface AccountInfoItem extends InfoItemBase {
   name?: string;
   networkPrefix?: number;
   accounts?: BaseAccountInfo[];
-  originChain?: _ChainInfo;
+  chainSlug?: string;
 }
 
 const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
-  const { accounts, address: accountAddress, className, label, name: accountName, networkPrefix: addressPrefix, originChain, valueColorSchema = 'default' } = props;
+  const { accounts, address: accountAddress, chainSlug, className, label, name: accountName, networkPrefix: addressPrefix, valueColorSchema = 'default' } = props;
   const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
 
   const { t } = useTranslation();
   const account = useGetAccountByAddress(accountAddress);
 
   const shortAddress = useMemo(() => {
-    const originChainInfo = originChain?.slug ? chainInfoMap[originChain.slug] : undefined;
-    const formattedAddress = originChainInfo ? _reformatAddressWithChain(accountAddress, originChainInfo) : accountAddress;
+    if (!chainSlug) {
+      return toShort(accountAddress);
+    }
+
+    const chainInfo = chainSlug ? chainInfoMap[chainSlug] : undefined;
+    const formattedAddress = chainInfo ? _reformatAddressWithChain(accountAddress, chainInfo) : accountAddress;
 
     return toShort(formattedAddress);
-  }, [accountAddress, chainInfoMap, originChain?.slug]);
+  }, [accountAddress, chainInfoMap, chainSlug]);
 
-  const name = useMemo(() => {
-    return accountName || account?.name;
-  }, [account?.name, accountName]);
-
-  const isAll = useMemo(() => isAccountAll(accountAddress), [accountAddress]);
+  const name = accountName || account?.name;
+  const isAll = isAccountAll(accountAddress);
 
   return (
     <div className={CN(className, '__row -type-account')}>

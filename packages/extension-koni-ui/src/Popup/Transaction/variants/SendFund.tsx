@@ -15,7 +15,7 @@ import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
-import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -114,7 +114,6 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
 }
 
 const hiddenFields: Array<keyof TransferParams> = ['chain', 'fromAccountProxy', 'defaultSlug'];
-const validateFields: Array<keyof TransferParams> = ['value'];
 const alertModalId = 'confirmation-alert-modal';
 const substrateAccountSlug = 'polkadot-NATIVE-DOT';
 const evmAccountSlug = 'ethereum-NATIVE-ETH';
@@ -316,10 +315,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       if (part.asset) {
         const chain = assetRegistry[part.asset].originChain;
 
-        if (values.value) {
-          validateField.add('value');
-        }
-
         form.setFieldsValue({
           chain: chain,
           destChain: chain,
@@ -331,18 +326,25 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         setForceUpdateMaxValue(undefined);
       }
 
-      if (part.destChain) {
-        // if (values.to) {
-        //   validateField.add('to');
-        // }
+      if (part.destChain || part.chain || part.value || part.asset) {
+        form.setFields([
+          {
+            name: 'to',
+            errors: []
+          },
+          {
+            name: 'value',
+            errors: []
+          }
+        ]);
       }
 
-      if (part.from) {
-        setForceUpdateMaxValue(isTransferAll ? {} : undefined);
+      if (part.destChain) {
+        form.resetFields(['to']);
+      }
 
-        // if (values.to) {
-        //   validateField.add('to');
-        // }
+      if (part.from || part.destChain) {
+        setForceUpdateMaxValue(isTransferAll ? {} : undefined);
       }
 
       if (part.to) {
@@ -694,9 +696,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             const value = form.getFieldValue('value') as string;
 
             if (value) {
-              setTimeout(() => {
-                form.validateFields(['value']).finally(() => update({}));
-              }, 100);
+              update({});
             }
           }
         });
@@ -739,7 +739,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [assetValue, chainValue, destChainValue, fromValue, transferAmountValue]);
 
   useRestoreTransaction(form);
-  useInitValidateTransaction(validateFields, form, defaultData);
 
   return (
     <>
@@ -836,7 +835,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               }
             ]}
             statusHelpAsTooltip={true}
-            validateTrigger='onBlur'
+            validateTrigger={false}
           >
             <AmountInput
               decimals={decimals}

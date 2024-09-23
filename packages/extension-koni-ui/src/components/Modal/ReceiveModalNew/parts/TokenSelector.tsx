@@ -70,6 +70,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
   return (
     <SwModal
       className={`${className}`}
+      destroyOnClose={true}
       id={modalId}
       onCancel={onCancel}
       title={t('Select token')}

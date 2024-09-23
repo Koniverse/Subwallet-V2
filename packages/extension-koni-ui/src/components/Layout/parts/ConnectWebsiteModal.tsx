@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
+import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
-import AccountItemWithName from '@subwallet/extension-koni-ui/components/Account/Item/AccountItemWithName';
+import { AccountItemWithProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Confirmation/ConfirmationGeneralInfo';
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { Button, Icon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, GlobeHemisphereWest, ShieldCheck, ShieldSlash, XCircle } from 'phosphor-react';
@@ -77,20 +78,26 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
   }, [authInfo?.id, isSubmit]);
 
   useEffect(() => {
-    if (!!authInfo?.isAllowedMap && !!authInfo?.accountAuthType) {
+    if (!!authInfo?.isAllowedMap && !!authInfo?.accountAuthTypes) {
       // const connected = Object.values(authInfo.isAllowedMap).filter((s) => s).length;
 
-      const type = authInfo.accountAuthType;
+      const types = authInfo.accountAuthTypes;
       const allowedMap = authInfo.isAllowedMap;
 
       const filterType = (address: string) => {
-        if (type === 'both') {
+        if (isEthereumAddress(address) && types.includes('evm')) {
           return true;
         }
 
-        const _type = type || 'substrate';
+        if (isSubstrateAddress(address) && types.includes('substrate')) {
+          return true;
+        }
 
-        return _type === 'substrate' ? !isEthereumAddress(address) : isEthereumAddress(address);
+        if (isTonAddress(address) && types.includes('ton')) {
+          return true;
+        }
+
+        return false;
       };
 
       const result: Record<string, boolean> = {};
@@ -107,7 +114,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       // setOldConnected(0);
       setAllowedMap({});
     }
-  }, [authInfo?.accountAuthType, authInfo?.isAllowedMap]);
+  }, [authInfo?.accountAuthTypes, authInfo?.isAllowedMap]);
 
   const actionButtons = useMemo(() => {
     if (_isNotConnected) {
@@ -275,10 +282,9 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
               const isCurrent = account.address === currentAccount?.address;
 
               return (
-                <AccountItemWithName
+                <AccountItemWithProxyAvatar
+                  account={account}
                   accountName={account.name}
-                  address={account.address}
-                  avatarSize={24}
                   className={CN({
                     '-is-current': isCurrent
                   })}
@@ -350,6 +356,12 @@ export const ConnectWebsiteModal = styled(Component)<Props>(({ theme: { token } 
 
     '.__account-item-container:not(:empty)': {
       marginTop: token.margin
+    },
+
+    '.__account-item-container': {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 4
     },
 
     '.account-item-with-name': {

@@ -4,7 +4,7 @@
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
-import { AccountItemWithName, AlertBox } from '@subwallet/extension-koni-ui/components';
+import { AccountItemWithProxyAvatar, AccountProxySelectorAllItem, AlertBox } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { searchAccountFunction } from '@subwallet/extension-koni-ui/utils';
@@ -83,14 +83,13 @@ const Component: React.FC<Props> = (props: Props) => {
     const selected = !!selectedAccounts.find((address) => isSameAddress(address, item.address));
 
     return (
-      <AccountItemWithName
+      <AccountItemWithProxyAvatar
+        account={item}
         accountName={item.name}
-        address={item.address}
-        avatarSize={24}
-        direction='horizontal'
         isSelected={selected}
         key={item.address}
         onClick={onSelectAccount(item.address, false)}
+        showAccountNameFallback={false}
         showUnselectIcon={true}
       />
     );
@@ -162,27 +161,24 @@ const Component: React.FC<Props> = (props: Props) => {
               <>
                 <div className={CN('account-list', 'no-modal')}>
                   {availableAccounts.length > 1 && (
-                    <AccountItemWithName
-                      accountName={'Select all accounts'}
-                      accounts={availableAccounts}
-                      address={ALL_ACCOUNT_KEY}
-                      avatarSize={24}
+                    <AccountProxySelectorAllItem
+                      className={'all-account-selection'}
                       isSelected={selectedAccounts.length === availableAccounts.length}
                       onClick={onSelectAccount(ALL_ACCOUNT_KEY, true)}
-                      showUnselectIcon
+                      showUnSelectedIcon
                     />
                   )}
                   {availableAccounts.map((item) => {
                     const selected = !!selectedAccounts.find((address) => isSameAddress(address, item.address));
 
                     return (
-                      <AccountItemWithName
+                      <AccountItemWithProxyAvatar
+                        account={item}
                         accountName={item.name}
-                        address={item.address}
-                        avatarSize={24}
                         isSelected={selected}
                         key={item.address}
                         onClick={onSelectAccount(item.address, true)}
+                        showAccountNameFallback={false}
                         showUnselectIcon
                       />
                     );
@@ -223,6 +219,13 @@ const WCAccountSelect = styled(Component)<Props>(({ theme: { token } }: Props) =
       lineHeight: token.lineHeightHeading6,
       textAlign: 'center',
       color: token.colorTextTertiary
+    },
+
+    '.all-account-selection': {
+      '.__item-middle-part': {
+        textAlign: 'start',
+        fontSize: token.fontSize
+      }
     }
   };
 });
