@@ -54,7 +54,7 @@ export const MktCampaignModalContextProvider = ({ children }: MktCampaignModalCo
   }, [activeModal, isPopupVisible, mktCampaignModal?.type, storageEarningPosition]);
 
   const hideModal = useCallback(() => {
-    toggleCampaignPopup({ value: false }).finally(() => {
+    toggleCampaignPopup({ value: false }).catch((e) => console.error(e)).finally(() => {
       inactiveModal(APP_POPUP_MODAL);
       setMktCampaignModal(undefined);
     });
