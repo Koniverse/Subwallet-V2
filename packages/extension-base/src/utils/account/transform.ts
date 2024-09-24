@@ -455,7 +455,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
     temp[address] = {
       id: address,
       name: account.name || account.address,
-      accounts: [account],
+      accounts: [{ ...account, proxyId: address }],
       chainTypes: [account.chainType],
       parentId: account.parentAddress,
       suri: account.suri,
