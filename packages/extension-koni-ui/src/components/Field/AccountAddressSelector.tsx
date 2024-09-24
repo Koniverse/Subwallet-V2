@@ -123,7 +123,7 @@ const AccountAddressSelector = styled(forwardRef(Component))<Props>(({ theme: { 
     },
 
     '.ant-field-container .ant-field-content.ant-field-content.ant-field-content': {
-      color: token.colorTextHeading
+      color: token.colorTextLight2
     },
 
     '.__selected-item-name': {
