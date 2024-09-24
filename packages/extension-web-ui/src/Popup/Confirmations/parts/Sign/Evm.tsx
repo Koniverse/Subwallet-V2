@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationDefinitions, ConfirmationResult, EvmSendTransactionRequest, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { AlertBox } from '@subwallet/extension-web-ui/components';
 import { CONFIRMATION_QR_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-web-ui/contexts/InjectContext';
 import { useGetChainInfoByChainId, useLedger, useNotification } from '@subwallet/extension-web-ui/hooks';
@@ -55,7 +56,7 @@ const handleSignature = async (type: EvmSignatureSupportType, id: string, signat
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, extrinsicType, id, payload, txExpirationTime, type } = props;
-  const { payload: { account, canSign, hashPayload } } = payload;
+  const { payload: { account, canSign, errors, hashPayload } } = payload;
   const chainId = (payload.payload as EvmSendTransactionRequest)?.chainId || 1;
 
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const signMode = useMemo(() => getSignMode(account), [account]);
   const isLedger = useMemo(() => signMode === AccountSignMode.LEGACY_LEDGER || signMode === AccountSignMode.GENERIC_LEDGER, [signMode]);
   const isMessage = isEvmMessage(payload);
-
+  const isErrorTransaction = useMemo(() => errors && errors.length > 0, [errors]);
   const [loading, setLoading] = useState(false);
   const [showQuoteExpired, setShowQuoteExpired] = useState<boolean>(false);
 
@@ -284,56 +285,84 @@ const Component: React.FC<Props> = (props: Props) => {
 
   return (
     <div className={CN(className, 'confirmation-footer')}>
-      <Button
-        disabled={loading}
-        icon={(
-          <Icon
-            phosphorIcon={XCircle}
-            weight='fill'
-          />
-        )}
-        onClick={onCancel}
-        schema={'secondary'}
-      >
-        {t('Cancel')}
-      </Button>
-      <Button
-        disabled={showQuoteExpired || !canSign}
-        icon={(
-          <Icon
-            phosphorIcon={approveIcon}
-            weight='fill'
-          />
-        )}
-        loading={loading}
-        onClick={onConfirm}
-      >
-        {
-          !isLedger
-            ? t('Approve')
-            : !isLedgerConnected
-              ? t('Refresh')
-              : t('Approve')
-        }
-      </Button>
       {
-        signMode === AccountSignMode.QR && (
-          <DisplayPayloadModal>
-            <EvmQr
-              address={account.address}
-              hashPayload={hashPayload}
-              isMessage={isEvmMessage(payload)}
-            />
-          </DisplayPayloadModal>
+        isErrorTransaction && errors && (
+          <AlertBox
+            className={CN(className, 'alert-box')}
+            description={errors[0].message}
+            title={errors[0].name}
+            type={'error'}
+          />
         )
       }
-      {signMode === AccountSignMode.QR && <ScanSignature onSignature={onApproveSignature} />}
+
+      {
+        isErrorTransaction
+          ? <Button
+            disabled={loading}
+            onClick={onCancel}
+            schema={'primary'}
+          >
+            {t('I understand')}
+          </Button>
+          : <Button
+            disabled={loading}
+            icon={(
+              <Icon
+                phosphorIcon={XCircle}
+                weight='fill'
+              />
+            )}
+            onClick={onCancel}
+            schema={'secondary'}
+          >
+            {t('Cancel')}
+          </Button>
+      }
+      {!isErrorTransaction && <>
+        <Button
+          disabled={showQuoteExpired || !canSign}
+          icon={(
+            <Icon
+              phosphorIcon={approveIcon}
+              weight='fill'
+            />
+          )}
+          loading={loading}
+          onClick={onConfirm}
+        >
+          {
+            !isLedger
+              ? t('Approve')
+              : !isLedgerConnected
+                ? t('Refresh')
+                : t('Approve')
+          }
+        </Button>
+        {
+          signMode === AccountSignMode.QR && (
+            <DisplayPayloadModal>
+              <EvmQr
+                address={account.address}
+                hashPayload={hashPayload}
+                isMessage={isEvmMessage(payload)}
+              />
+            </DisplayPayloadModal>
+          )
+        }
+        {signMode === AccountSignMode.QR && <ScanSignature onSignature={onApproveSignature} />}
+      </>}
+
     </div>
   );
 };
 
 const EvmSignArea = styled(Component)<Props>(({ theme: { token } }: Props) => {
-  return {};
+  return {
+    '.alert-box': {
+      width: '100%'
+    }
+  };
 });
 
 export default EvmSignArea;

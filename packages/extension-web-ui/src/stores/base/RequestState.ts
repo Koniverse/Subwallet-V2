@@ -43,6 +43,7 @@ export const CONFIRMATIONS_FIELDS: Array<keyof RequestState> = [
   'evmSendTransactionRequest',
   'evmWatchTransactionRequest',
   'connectWCRequest',
+  'errorConnectNetwork',
   'notSupportWCRequest'
 ];
 
