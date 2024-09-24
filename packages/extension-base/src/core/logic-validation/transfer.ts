@@ -243,6 +243,14 @@ export function checkSupportForAction (validationResponse: SWTransactionResponse
       break;
     }
 
+    case ExtrinsicType.STAKING_CANCEL_UNSTAKE: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_CANCEL_UNSTAKE];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
     case ExtrinsicType.JOIN_YIELD_POOL: {
       const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.JOIN_YIELD_POOL];
       const slug = data.data.slug;
