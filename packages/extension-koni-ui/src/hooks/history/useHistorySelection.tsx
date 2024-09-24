@@ -16,6 +16,9 @@ export default function useHistorySelection () {
 
   const { accountProxies, currentAccountProxy } = useSelector((root) => root.accountState);
 
+  console.log('accountProxies', accountProxies);
+  console.log('currentAccountProxy', currentAccountProxy);
+
   const [selectedAddress, setSelectedAddress] = useState<string>(propAddress || '');
   const [selectedChain, setSelectedChain] = useState<string>(propChain || '');
 
@@ -83,6 +86,8 @@ export default function useHistorySelection () {
 
     return result;
   }, [accountProxies, chainInfoMap, currentAccountProxy, selectedChain]);
+
+  console.log('accountAddressItems', accountAddressItems);
 
   useEffect(() => {
     if (chainItems.length) {

@@ -138,6 +138,11 @@ export default class TransactionService {
     // Check available balance against transaction fee
     checkBalanceWithTransactionFee(validationResponse, transactionInput, nativeTokenInfo, nativeTokenAvailable);
 
+    // Warnings Ton address if bounceable and not active
+    // if (transaction && isTonTransaction(transaction) && tonApi) {
+    //   await checkTonAddressBounceableAndAccountNotActive(tonApi, validationResponse);
+    // }
+
     // Check additional validations
     additionalValidator && await additionalValidator(validationResponse);
 
@@ -174,6 +179,7 @@ export default class TransactionService {
     // Add Transaction
     transactions[transaction.id] = transaction;
     this.transactionSubject.next({ ...transactions });
+    console.log('addTransaction_transactions', transactions);
 
     return await this.sendTransaction(transaction);
   }
@@ -210,17 +216,22 @@ export default class TransactionService {
 
     validatedTransaction.warnings = [];
 
+    console.log('validatedTransaction in handle', validatedTransaction);
+    console.log('validatedTransaction in transaction', transaction);
+
     const emitter = await this.addTransaction(validatedTransaction);
 
     await new Promise<void>((resolve, reject) => {
       // TODO
       if (transaction.resolveOnDone) {
+        console.log('handleTransaction_success');
         emitter.on('success', (data: TransactionEventResponse) => {
           validatedTransaction.id = data.id;
           validatedTransaction.extrinsicHash = data.extrinsicHash;
           resolve();
         });
       } else {
+        console.log('handleTransaction_signed');
         emitter.on('signed', (data: TransactionEventResponse) => {
           validatedTransaction.id = data.id;
           validatedTransaction.extrinsicHash = data.extrinsicHash;
@@ -228,6 +239,7 @@ export default class TransactionService {
         });
       }
 
+      console.log('handleTransaction_error');
       emitter.on('error', (data: TransactionEventResponse) => {
         if (data.errors.length > 0) {
           validatedTransaction.errors.push(...data.errors);
@@ -251,28 +263,34 @@ export default class TransactionService {
     const { eventsHandler } = transaction;
 
     emitter.on('signed', (data: TransactionEventResponse) => {
+      console.log('sendTransaction_signed', data);
       this.onSigned(data);
     });
 
     emitter.on('send', (data: TransactionEventResponse) => {
+      console.log('sendTransaction_send', data);
       this.onSend(data);
     });
 
     emitter.on('extrinsicHash', (data: TransactionEventResponse) => {
+      console.log('sendTransaction_extrinsicHash', data);
       this.onHasTransactionHash(data);
     });
 
     emitter.on('success', (data: TransactionEventResponse) => {
+      console.log('sendTransaction_success', data);
       this.handlePostProcessing(data.id);
       this.onSuccess(data);
     });
 
     emitter.on('error', (data: TransactionEventResponse) => {
       // this.handlePostProcessing(data.id); // might enable this later
+      console.log('sendTransaction_error', data);
       this.onFailed({ ...data, errors: [...data.errors, new TransactionError(BasicTxErrorType.INTERNAL_ERROR)] });
     });
 
     emitter.on('timeout', (data: TransactionEventResponse) => {
+      console.log('sendTransaction_timeOut', data);
       this.onTimeOut({ ...data, errors: [...data.errors, new TransactionError(BasicTxErrorType.TIMEOUT)] });
     });
 
@@ -314,6 +332,9 @@ export default class TransactionService {
 
     const chainInfo = this.state.chainService.getChainInfoByKey(transaction.chain);
     const formattedTransactionAddress = reformatAddress(transaction.address);
+
+    console.log('hsItem_formattedTransactionAddress', formattedTransactionAddress);
+    console.log('hsItem_transaction', transaction);
 
     const historyItem: TransactionHistoryItem = {
       origin: 'app',
@@ -1078,6 +1099,11 @@ export default class TransactionService {
     };
 
     const extrinsic = transaction as SubmittableExtrinsic;
+
+    console.log('extrinsic s_a_s', extrinsic);
+    console.log('address s_a_s', address);
+    console.log('chain s_a_s', chain);
+    console.log('transaction s_a_s', transaction);
     const registry = extrinsic.registry;
     const signedExtensions = registry.signedExtensions;
 

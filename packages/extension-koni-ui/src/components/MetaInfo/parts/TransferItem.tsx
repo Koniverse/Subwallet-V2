@@ -1,18 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
-import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ChainItem from '@subwallet/extension-koni-ui/components/MetaInfo/parts/ChainItem';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainInfo } from '@subwallet/extension-koni-ui/types/chain';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import { Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import AccountItem from './AccountItem';
@@ -42,15 +38,6 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     valueColorSchema = 'default' } = props;
 
   const { t } = useTranslation();
-  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
-
-  const originChainInfo = useMemo(() => {
-    return originChain?.slug ? chainInfoMap[originChain.slug] : undefined;
-  }, [chainInfoMap, originChain?.slug]);
-
-  const destinationChainInfo = useMemo(() => {
-    return destinationChain?.slug ? chainInfoMap[destinationChain.slug] : undefined;
-  }, [chainInfoMap, destinationChain?.slug]);
 
   const nameClassModifier = useMemo(() => {
     if (!!senderName && recipientName === undefined) {
@@ -62,9 +49,8 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     return '';
   }, [recipientName, senderName]);
 
-  const genAccountBlock = (address: string, name?: string, chainInfo?: _ChainInfo) => {
-    const formattedAddress = chainInfo ? _reformatAddressWithChain(address, chainInfo) : address;
-    const shortAddress = toShort(formattedAddress);
+  const genAccountBlock = (address: string, name?: string) => {
+    const shortAddress = toShort(address);
 
     if (name) {
       return (
@@ -158,13 +144,13 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
       <div className={'__col __label-col'}>
         <div className={'__label'}>{senderLabel || t('Sender')}</div>
 
-        {genAccountBlock(senderAddress, senderName, originChainInfo)}
+        {genAccountBlock(senderAddress, senderName)}
         {!!originChain && originChain.slug !== destinationChain?.slug && genChainBlock(originChain)}
       </div>
       <div className={'__col __value-col'}>
         <div className={'__label'}>{recipientLabel || t('Recipient')}</div>
 
-        {genAccountBlock(recipientAddress, recipientName, destinationChainInfo)}
+        {genAccountBlock(recipientAddress, recipientName)}
         {!!destinationChain && destinationChain.slug !== originChain?.slug && genChainBlock(destinationChain)}
       </div>
     </div>

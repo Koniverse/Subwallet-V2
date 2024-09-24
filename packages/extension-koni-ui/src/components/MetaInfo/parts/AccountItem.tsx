@@ -1,17 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { AvatarGroup } from '@subwallet/extension-koni-ui/components/Account';
 import { BaseAccountInfo } from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
 import { useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { isAccountAll, toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { InfoItemBase } from './types';
@@ -25,22 +22,12 @@ export interface AccountInfoItem extends InfoItemBase {
 }
 
 const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
-  const { accounts, address: accountAddress, chainSlug, className, label, name: accountName, valueColorSchema = 'default' } = props;
-  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
+  const { accounts, address: accountAddress, className, label, name: accountName, valueColorSchema = 'default' } = props;
 
   const { t } = useTranslation();
   const account = useGetAccountByAddress(accountAddress);
 
-  const shortAddress = useMemo(() => {
-    if (!chainSlug) {
-      return toShort(accountAddress);
-    }
-
-    const chainInfo = chainSlug ? chainInfoMap[chainSlug] : undefined;
-    const formattedAddress = chainInfo ? _reformatAddressWithChain(accountAddress, chainInfo) : accountAddress;
-
-    return toShort(formattedAddress);
-  }, [accountAddress, chainInfoMap, chainSlug]);
+  const shortAddress = toShort(accountAddress);
 
   const name = accountName || account?.name;
   const isAll = isAccountAll(accountAddress);

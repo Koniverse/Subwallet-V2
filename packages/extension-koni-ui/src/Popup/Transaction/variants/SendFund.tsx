@@ -8,7 +8,6 @@ import { validateRecipientAddress } from '@subwallet/extension-base/core/logic-v
 import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
-import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
@@ -17,12 +16,11 @@ import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwa
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
-import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
+import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop } from '@subwallet/extension-koni-ui/utils';
-import { isTonAddress } from '@subwallet/keyring';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -173,9 +171,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [isBalanceReady, setIsBalanceReady] = useState(true);
   const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
-  const [warnings, setWarnings] = useState<TransactionWarning[]>([]);
-
-  console.log('warnings', warnings);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
@@ -184,8 +179,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       setForceUpdateMaxValue({});
       setIsTransferAll(true);
     }
-
-    setWarnings(warnings);
   }, []);
 
   const { onError, onSuccess } = useHandleSubmitMultiTransaction(dispatchProcessState, handleWarning);
@@ -364,8 +357,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         form.validateFields([...validateField]).catch(noop);
       }
 
-      setWarnings([]);
-
       persistData(form.getFieldsValue());
     },
     [form, assetRegistry, isTransferAll, persistData]
@@ -407,12 +398,12 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [accounts, assetRegistry, notification, t]);
 
   const handleBasicSubmit = useCallback((values: TransferParams, options: TransferOptions): Promise<SWTransactionResponse> => {
-    const { asset, chain, destChain, from: _from, to, value } = values;
+    const { asset, chain, destChain, from, to, value } = values;
+
+    console.log('from_sendfund', from);
+    console.log('to_sendfund', to);
 
     let sendPromise: Promise<SWTransactionResponse>;
-
-    const chainInfo = chainInfoMap[chain];
-    const from = _reformatAddressWithChain(_from, chainInfo);
 
     if (chain === destChain) {
       // Transfer token or send fund
@@ -440,7 +431,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     }
 
     return sendPromise;
-  }, [chainInfoMap]);
+  }, []);
 
   // todo: must refactor later, temporary solution to support SnowBridge
   const handleSnowBridgeSpendingApproval = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
@@ -512,7 +503,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           setLoading(false);
         });
     }, 300);
-  }, [handleBasicSubmit, handleSnowBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState.currentStep, processState.steps]);
+  }, [handleBasicSubmit, handleSnowBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
     const bnMaxTransfer = new BN(maxTransfer);
@@ -559,27 +550,30 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      if (isTonAddress(values.to) && isBounceableAddress(values.to) && !options.isTransferBounceable) {
-        openAlert({
-          type: NotificationType.WARNING,
-          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-          title: t('Pay attention!'),
-          okButton: {
-            text: t('Transfer'),
-            onClick: () => {
-              closeAlert();
-              options.isTransferBounceable = true;
-              _doSubmit();
-            }
-          },
-          cancelButton: {
-            text: t('Cancel'),
-            onClick: closeAlert
+      isTonBounceableAddress({ address: values.to, chain: values.chain })
+        .then((isShowTonBouncealbeModal) => {
+          if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+            openAlert({
+              type: NotificationType.WARNING,
+              content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
+              title: t('Pay attention!'),
+              okButton: {
+                text: t('Transfer'),
+                onClick: () => {
+                  closeAlert();
+                  options.isTransferBounceable = true;
+                  _doSubmit();
+                }
+              },
+              cancelButton: {
+                text: t('Cancel'),
+                onClick: closeAlert
+              }
+            });
           }
+        }).catch((error) => {
+          console.error('Error fetching ton bounceable address:', error);
         });
-
-        return;
-      }
 
       if (_isNativeToken(assetInfo)) {
         const minAmount = _getTokenMinAmount(assetInfo);

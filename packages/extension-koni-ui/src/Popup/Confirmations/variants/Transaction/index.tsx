@@ -95,6 +95,9 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const transaction = useMemo(() => transactionRequest[id], [transactionRequest, id]);
 
+  console.log('transaction before confirmation', transaction);
+  console.log('transactionRequest before confirmation', transactionRequest);
+
   const network = useMemo(() => chainInfoMap[transaction.chain], [chainInfoMap, transaction.chain]);
 
   const renderContent = useCallback((transaction: SWTransactionResult): React.ReactNode => {
