@@ -33,7 +33,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const logoUrl = `https://icons.duckduckgo.com/ip2/${domain}.ico`;
 
-  const { accountProxies } = useSelector((state) => state.accountState);
+  const accountProxies = useSelector((state) => state.accountState.accountProxies);
 
   const accountProxyItems = useMemo((): AccountProxy[] => getWCAccountProxyList(accountProxies, namespaces), [accountProxies, namespaces]);
 

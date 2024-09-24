@@ -51,7 +51,7 @@ const Component: React.FC<ComponentProps> = (props) => {
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
   const { chainInfoMap } = useSelector((state) => state.chainStore);
-  const { accountProxies } = useSelector((state) => state.accountState);
+  const accountProxies = useSelector((state) => state.accountState.accountProxies);
 
   const chains = useMemo((): WalletConnectChainInfo[] => {
     const chains = Object.values(namespaces).map((namespace) => namespace.chains || []).flat();
@@ -214,7 +214,6 @@ const Component: React.FC<ComponentProps> = (props) => {
         </div>
         <SwList.Section
           className='account-list'
-          displayRow
           list={accountProxyItems}
           renderItem={renderAccountProxyItem}
           renderWhenEmpty={renderAccountEmpty}
@@ -344,6 +343,12 @@ const ConnectionDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) =>
 
       '.ant-sw-list-wrapper': {
         flexBasis: 'auto'
+      },
+
+      '.ant-sw-list': {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8
       }
     },
 

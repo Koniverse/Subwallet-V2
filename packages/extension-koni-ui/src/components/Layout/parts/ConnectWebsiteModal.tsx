@@ -56,13 +56,9 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
 
           if (isEthereumAddress(address) && authInfo?.accountAuthTypes.includes('evm')) {
             addressIsValid = true;
-          }
-
-          if (isSubstrateAddress(address) && authInfo?.accountAuthTypes.includes('substrate')) {
+          } else if (isSubstrateAddress(address) && authInfo?.accountAuthTypes.includes('substrate')) {
             addressIsValid = true;
-          }
-
-          if (isTonAddress(address) && authInfo?.accountAuthTypes.includes('ton')) {
+          } else if (isTonAddress(address) && authInfo?.accountAuthTypes.includes('ton')) {
             addressIsValid = true;
           }
 

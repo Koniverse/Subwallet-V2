@@ -8,8 +8,6 @@ import { AccountProxy } from '@subwallet/extension-base/types';
 import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { SessionTypes } from '@walletconnect/types';
 
-import { findAccountByAddress } from '../account';
-
 export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainInfo>, chains: string[]): Array<WalletConnectChainInfo> => {
   return chains.map((chain) => {
     const [namespace, info] = chain.split(':');
@@ -41,25 +39,18 @@ export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainI
 };
 
 export const getWCAccountProxyList = (accountProxies: AccountProxy[], namespaces: SessionTypes.Namespaces): AccountProxy[] => {
-  const rawMap: Record<string, string> = {};
+  const filteredList: string[] = [];
   const rawList = Object.values(namespaces).map((namespace) => namespace.accounts || []).flat();
 
   rawList.forEach((info) => {
     const [,, address] = info.split(':');
 
-    rawMap[address] = address;
-  });
-
-  const convertMap: Record<string, AccountProxy> = {};
-  const convertList = Object.keys(rawMap).map((address): AccountProxy | undefined => {
-    return accountProxies.find((ap) => findAccountByAddress(ap.accounts, address));
-  });
-
-  convertList.forEach((info) => {
-    if (info) {
-      convertMap[info.id] = info;
+    if (!filteredList.includes(address)) {
+      filteredList.push(address);
     }
   });
 
-  return [...new Set<AccountProxy>(Object.values(convertMap))];
+  return accountProxies.filter(({ accounts }) => {
+    return accounts.some(({ address }) => filteredList.includes(address));
+  });
 };

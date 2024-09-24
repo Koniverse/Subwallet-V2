@@ -7,7 +7,7 @@ import { AccountChainType, AccountJson, AccountProxy } from '@subwallet/extensio
 import { AccountProxyItem, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ActionItemType, ActionModal } from '@subwallet/extension-koni-ui/components/Modal/ActionModal';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { changeAuthorization, changeAuthorizationPerAccount, forgetSite, toggleAuthorization } from '@subwallet/extension-koni-ui/messaging';
+import { changeAuthorization, changeAuthorizationPerSite, forgetSite, toggleAuthorization } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updateAuthUrls } from '@subwallet/extension-koni-ui/stores/utils';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -51,15 +51,7 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
   const accountProxyItems = useMemo(() => {
-    return accountProxies.filter((ap) => ap.id !== 'ALL' && ap.chainTypes.some((chainType) => {
-      switch (chainType) {
-        case 'ethereum': return accountAuthTypes.includes('evm');
-        case 'substrate': return accountAuthTypes.includes('substrate');
-        case 'ton': return accountAuthTypes.includes('ton');
-      }
-
-      return false;
-    }));
+    return accountProxies.filter((ap) => ap.id !== 'ALL' && ap.chainTypes.some((chainType) => checkAccountAddressValid(chainType, accountAuthTypes)));
   }, [accountAuthTypes, accountProxies]);
 
   const onOpenActionModal = useCallback(() => {
@@ -138,23 +130,27 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
           [item.id]: !isEnabled
         };
       });
+      const newAllowedMap = { ...authInfo.isAllowedMap };
+
       item.accounts.forEach((account) => {
         if (checkAccountAddressValid(account.chainType, authInfo.accountAuthTypes)) {
-          changeAuthorizationPerAccount(account.address, !isEnabled, origin, updateAuthUrls)
-            .catch(console.log)
-            .finally(() => {
-              setPendingMap((prevMap) => {
-                const newMap = { ...prevMap };
-
-                if (newMap[item.id]) {
-                  delete newMap[item.id];
-                }
-
-                return newMap;
-              });
-            });
+          newAllowedMap[account.address] = !isEnabled;
         }
       });
+
+      changeAuthorizationPerSite({ values: newAllowedMap, id: authInfo.id })
+        .catch(console.log)
+        .finally(() => {
+          setPendingMap((prevMap) => {
+            const newMap = { ...prevMap };
+
+            if (newMap[item.id]) {
+              delete newMap[item.id];
+            }
+
+            return newMap;
+          });
+        });
     };
 
     return (
@@ -171,7 +167,7 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
         )}
       />
     );
-  }, [authInfo.accountAuthTypes, authInfo.isAllowed, authInfo.isAllowedMap, origin, pendingMap]);
+  }, [authInfo.accountAuthTypes, authInfo.id, authInfo.isAllowed, authInfo.isAllowedMap, pendingMap]);
 
   const searchFunc = useCallback((item: AccountJson, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
@@ -224,12 +220,11 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
         title={siteName || authInfo.id}
       >
         <SwList.Section
-          displayRow
+          className={'list-account-item'}
           enableSearchInput
           list={accountProxyItems}
           renderItem={renderItem}
           renderWhenEmpty={renderEmptyList}
-          rowGap = {'8px'}
           searchFunction={searchFunc}
           searchMinCharactersCount={2}
           searchPlaceholder={t<string>('Search account')}
@@ -292,6 +287,12 @@ const ManageWebsiteAccessDetail = styled(WrapperComponent)<Props>(({ theme: { to
       '.__action-item.block .ant-setting-item-name': {
         color: token.colorError
       }
+    },
+
+    '.list-account-item .ant-sw-list': {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8
     }
   });
 });
