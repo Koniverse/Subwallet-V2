@@ -47,6 +47,7 @@
     "boring-avatars": "^1.7.0",
     "bowser": "^2.11.0",
     "classnames": "^2.3.2",
+    "compare-versions": "^6.1.1",
     "copy-to-clipboard": "^3.3.3",
     "cross-fetch": "^4.0.0",
     "file-saver": "^2.0.5",
