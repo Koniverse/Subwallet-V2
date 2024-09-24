@@ -239,13 +239,16 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     const modifiedPairs = this.state.modifyPairs;
     const modifiedPair = modifiedPairs[oldAddress];
+    const accountProxies = this.state.accountProxies;
+    const accountProxy = accountProxies[oldAddress];
 
     keyring.changeTonWalletContractVersion(modifyAddress, version);
 
     const newAddress = pair.address;
 
+    // Migrate modified pair
     if (modifiedPair) {
-      delete modifiedPairs[modifyAddress];
+      delete modifiedPairs[oldAddress];
 
       if (modifiedPair.accountProxyId === oldAddress) {
         modifiedPair.accountProxyId = newAddress;
@@ -254,6 +257,15 @@ export class AccountModifyHandler extends AccountBaseHandler {
       modifiedPair.key = newAddress;
       modifiedPairs[newAddress] = modifiedPair;
     }
+
+    // Migrate account proxy
+    if (accountProxy) {
+      delete accountProxies[oldAddress];
+
+      accountProxy.id = newAddress;
+      accountProxies[newAddress] = accountProxy;
+    }
+
 
     const pairs = keyring.getPairs();
     const childPairs = pairs.filter((pair) => pair.meta.parentAddress === oldAddress);
@@ -272,6 +284,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     }
 
     this.state.upsertModifyPairs(modifiedPairs);
+    this.state.upsertAccountProxy(accountProxies);
 
     this.state.changeAddressAllowedAuthList(oldAddress, newAddress);
 

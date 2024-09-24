@@ -121,8 +121,12 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
     const deriveInfo = getDerivationInfo(type, meta);
 
     if (networkType === AccountChainType.SUBSTRATE) {
-      if (deriveInfo.depth < 2) {
+      if (deriveInfo.depth === 0) {
         result.push(AccountActions.DERIVE);
+      } else if (deriveInfo.depth === 1) {
+        if (parentAccount && parentAccount.accountActions.includes(AccountActions.DERIVE)) {
+          result.push(AccountActions.DERIVE);
+        }
       }
     } else if (type !== 'ton-native') {
       if (deriveInfo.depth === 0) {
