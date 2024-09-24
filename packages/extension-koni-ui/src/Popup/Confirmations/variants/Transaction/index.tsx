@@ -139,7 +139,6 @@ const Component: React.FC<Props> = (props: Props) => {
       {
         type === 'signingRequest' && (
           <SubstrateSignArea
-            account={(item as SigningRequest).account}
             extrinsicType={transaction.extrinsicType}
             id={item.id}
             isInternal={item.isInternal}

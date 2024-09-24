@@ -852,10 +852,6 @@ export default class TransactionService {
     const accountPair = keyring.getPair(address);
     const account: AccountJson = pairToAccount(accountPair);
 
-    if (!payload.account) {
-      payload.account = account;
-    }
-
     // Allow sign transaction
     payload.canSign = true;
 

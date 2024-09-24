@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
-import { isAccountAll } from '@subwallet/extension-base/utils';
-import { AccountItemWithProxyAvatar } from '@subwallet/extension-koni-ui/components';
+import { AccountProxy } from '@subwallet/extension-base/types';
+import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { AccountProxyItem } from '@subwallet/extension-koni-ui/components';
 import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Confirmation/ConfirmationGeneralInfo';
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -37,21 +38,37 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
   const { t } = useTranslation();
 
   const [allowedMap, setAllowedMap] = useState<Record<string, boolean>>(authInfo?.isAllowedMap || {});
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
-  const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   // const [oldConnected, setOldConnected] = useState(0);
   const [isSubmit, setIsSubmit] = useState(false);
   const { token } = useTheme() as Theme;
   const _isNotConnected = isNotConnected || !authInfo;
 
-  const handlerUpdateMap = useCallback((address: string, oldValue: boolean) => {
+  const handlerUpdateMap = useCallback((accountProxy: AccountProxy, oldValue: boolean) => {
     return () => {
-      setAllowedMap((values) => ({
-        ...values,
-        [address]: !oldValue
-      }));
+      setAllowedMap((values) => {
+        const newValues = { ...values };
+        const listAddress = accountProxy.accounts.map(({ address }) => address);
+
+        listAddress.forEach((address) => {
+          let addressIsValid = false;
+
+          if (isEthereumAddress(address) && authInfo?.accountAuthTypes.includes('evm')) {
+            addressIsValid = true;
+          } else if (isSubstrateAddress(address) && authInfo?.accountAuthTypes.includes('substrate')) {
+            addressIsValid = true;
+          } else if (isTonAddress(address) && authInfo?.accountAuthTypes.includes('ton')) {
+            addressIsValid = true;
+          }
+
+          addressIsValid && (newValues[address] = !oldValue);
+        });
+
+        return newValues;
+      });
     };
-  }, []);
+  }, [authInfo?.accountAuthTypes]);
 
   const handlerSubmit = useCallback(() => {
     if (!isSubmit && authInfo?.id) {
@@ -253,15 +270,21 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       );
     }
 
-    const list = Object.entries(allowedMap).map(([address, value]) => ({ address, value }));
+    const listAccountProxy = accountProxies.map((proxy) => {
+      const value = proxy.accounts.some(({ address }) => allowedMap[address]);
 
-    const current = list.find(({ address }) => address === currentAccount?.address);
+      return {
+        ...proxy,
+        value
+      };
+    });
+    const current = listAccountProxy.find(({ id }) => isSameAddress(id, currentAccountProxy?.id || ''));
 
     if (current) {
-      const idx = list.indexOf(current);
+      const idx = listAccountProxy.indexOf(current);
 
-      list.splice(idx, 1);
-      list.unshift(current);
+      listAccountProxy.splice(idx, 1);
+      listAccountProxy.unshift(current);
     }
 
     return (
@@ -272,25 +295,22 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
 
         <div className={'__account-item-container'}>
           {
-            list.map(({ address, value }) => {
-              const account = accounts.find((acc) => acc.address === address);
-
-              if (!account || isAccountAll(account.address)) {
+            listAccountProxy.map((ap) => {
+              if (isAccountAll(ap.id)) {
                 return null;
               }
 
-              const isCurrent = account.address === currentAccount?.address;
+              const isCurrent = ap.id === currentAccountProxy?.id;
 
               return (
-                <AccountItemWithProxyAvatar
-                  account={account}
-                  accountName={account.name}
+                <AccountProxyItem
+                  accountProxy={ap}
                   className={CN({
                     '-is-current': isCurrent
                   })}
-                  isSelected={value}
-                  key={account.address}
-                  onClick={handlerUpdateMap(address, value)}
+                  isSelected={ap.value}
+                  key={ap.id}
+                  onClick={handlerUpdateMap(ap, ap.value)}
                   showUnselectIcon
                 />
               );
