@@ -9,8 +9,8 @@ interface BlockedActionsFeaturesMap {
   blockedFeaturesList: string[],
 }
 
-const BLOCKED_ACTIONS_AND_FEATURES_PROMISE = fetchStaticData<Record<string, number[]>>('blocked-actions-features');
+const BLOCKED_ACTIONS_AND_FEATURES_PROMISE = fetchStaticData<BlockedActionsFeaturesMap>('blocked-actions-features');
 
 export const fetchLastestBlockedActionsAndFeatures = async () => {
-  return await BLOCKED_ACTIONS_AND_FEATURES_PROMISE as unknown as BlockedActionsFeaturesMap;
+  return await BLOCKED_ACTIONS_AND_FEATURES_PROMISE;
 };
