@@ -140,7 +140,7 @@ export function checkSupportForFeature (validationResponse: SWTransactionRespons
   const currentFeature = `${extrinsicType}___${chain}`;
 
   if (blockedFeaturesList.includes(currentFeature)) {
-    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t(`This feature is temporarily unavailable on ${chain}.`)));
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t(`Feature under maintenance on ${chain} network. Try again later`)));
   }
 }
 
@@ -308,7 +308,7 @@ export function checkSupportForAction (validationResponse: SWTransactionResponse
   const blockedActionsList = Object.values(blockedActionsMap).flat();
 
   if (blockedActionsList.includes(currentAction)) {
-    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t('This action is temporarily unavailable.')));
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t('Feature under maintenance. Try again later')));
   }
 }
 
