@@ -72,7 +72,7 @@ const AccountProxyItem = styled(Component)<Props>(({ theme }) => {
     paddingRight: token.paddingSM,
     borderRadius: token.borderRadiusLG,
     alignItems: 'center',
-    display: 'flex',
+    display: 'flex !important',
     cursor: 'pointer',
     transition: `background ${token.motionDurationMid} ease-in-out`,
     gap: token.sizeSM,

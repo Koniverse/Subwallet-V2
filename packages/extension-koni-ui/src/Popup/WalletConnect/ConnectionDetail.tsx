@@ -1,15 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/types';
+import { AccountProxy } from '@subwallet/extension-base/types';
 import { stripUrl } from '@subwallet/extension-base/utils';
-import { AccountItemWithProxyAvatar, EmptyList, GeneralEmptyList, Layout, MetaInfo, PageWrapper, WCNetworkAvatarGroup } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyItem, EmptyList, GeneralEmptyList, Layout, MetaInfo, PageWrapper, WCNetworkAvatarGroup } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useConfirmModal, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { disconnectWalletConnectConnection } from '@subwallet/extension-koni-ui/messaging';
 import { ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 import { ThemeProps, WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
-import { chainsToWalletConnectChainInfos, getWCAccountList, noop } from '@subwallet/extension-koni-ui/utils';
+import { chainsToWalletConnectChainInfos, getWCAccountProxyList, noop } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Image, ModalContext, NetworkItem, SwList, SwModal, SwModalFuncProps } from '@subwallet/react-ui';
 import { SessionTypes } from '@walletconnect/types';
 import CN from 'classnames';
@@ -51,7 +51,7 @@ const Component: React.FC<ComponentProps> = (props) => {
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
   const { chainInfoMap } = useSelector((state) => state.chainStore);
-  const { accounts } = useSelector((state) => state.accountState);
+  const { accountProxies } = useSelector((state) => state.accountState);
 
   const chains = useMemo((): WalletConnectChainInfo[] => {
     const chains = Object.values(namespaces).map((namespace) => namespace.chains || []).flat();
@@ -59,7 +59,7 @@ const Component: React.FC<ComponentProps> = (props) => {
     return chainsToWalletConnectChainInfos(chainInfoMap, chains);
   }, [namespaces, chainInfoMap]);
 
-  const accountItems = useMemo((): AccountJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
+  const accountProxyItems = useMemo((): AccountProxy[] => getWCAccountProxyList(accountProxies, namespaces), [accountProxies, namespaces]);
 
   const modalProps = useMemo((): Partial<SwModalFuncProps> => ({
     id: disconnectModalId,
@@ -106,12 +106,12 @@ const Component: React.FC<ComponentProps> = (props) => {
     navigate('/wallet-connect/list');
   }, [navigate]);
 
-  const renderAccountItem = useCallback((item: AccountJson) => {
+  const renderAccountProxyItem = useCallback((item: AccountProxy) => {
     return (
-      <AccountItemWithProxyAvatar
-        account={item}
-        accountName={item.name}
-        key={item.address}
+      <AccountProxyItem
+        accountProxy={item}
+        accountProxyName={item.name}
+        key={item.id}
       />
     );
   }, []);
@@ -210,13 +210,13 @@ const Component: React.FC<ComponentProps> = (props) => {
           </MetaInfo.Default>
         </MetaInfo>
         <div className='total-account'>
-          {t('{{number}} account connected', { replace: { number: accountItems.length } })}
+          {t('{{number}} account connected', { replace: { number: accountProxyItems.length } })}
         </div>
         <SwList.Section
           className='account-list'
           displayRow
-          list={accountItems}
-          renderItem={renderAccountItem}
+          list={accountProxyItems}
+          renderItem={renderAccountProxyItem}
           renderWhenEmpty={renderAccountEmpty}
           rowGap='var(--row-gap)'
         />
