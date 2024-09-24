@@ -134,13 +134,13 @@ export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, des
   return [warning, error];
 }
 
-export function checkSupportForFeature (validationResponse: SWTransactionResponse, blockedFeaturesList: string[]) {
+export function checkSupportForFeature (validationResponse: SWTransactionResponse, blockedFeaturesList: string[], chainInfo: _ChainInfo) {
   const extrinsicType = validationResponse.extrinsicType;
   const chain = validationResponse.chain;
   const currentFeature = `${extrinsicType}___${chain}`;
 
   if (blockedFeaturesList.includes(currentFeature)) {
-    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t(`Feature under maintenance on ${chain} network. Try again later`)));
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t(`Feature under maintenance on ${chainInfo.name} network. Try again later`)));
   }
 }
 

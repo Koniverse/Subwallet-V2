@@ -95,14 +95,14 @@ export default class TransactionService {
       errors: transactionInput.errors || [],
       warnings: transactionInput.warnings || []
     };
+    const { additionalValidator, address, chain, extrinsicType } = validationResponse;
+    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     const { blockedActionsMap, blockedFeaturesList } = await fetchLastestBlockedActionsAndFeatures();
 
-    checkSupportForFeature(validationResponse, blockedFeaturesList);
+    checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
 
     checkSupportForAction(validationResponse, blockedActionsMap);
-
-    const { additionalValidator, address, chain, extrinsicType } = validationResponse;
 
     const transaction = transactionInput.transaction;
 
@@ -111,8 +111,6 @@ export default class TransactionService {
 
     // Check support for transaction
     checkSupportForTransaction(validationResponse, transaction);
-
-    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     if (!chainInfo) {
       validationResponse.errors.push(new TransactionError(BasicTxErrorType.INTERNAL_ERROR, t('Cannot find network')));
