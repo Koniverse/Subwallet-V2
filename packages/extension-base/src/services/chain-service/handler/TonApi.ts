@@ -179,7 +179,7 @@ export class TonApi implements _TonApi {
 
       return extMsgInfo.result.hash;
     } catch (error) {
-      console.error(`Failed to send transaction with boc`, boc);
+      console.error('Failed to send transaction with boc', boc);
       throw error;
     }
   }

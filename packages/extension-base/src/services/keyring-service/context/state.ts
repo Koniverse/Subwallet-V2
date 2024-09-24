@@ -110,7 +110,6 @@ export class AccountState {
 
         return false;
       }),
-
       first()
     )
       .subscribe((accountProxyMap) => {
@@ -166,23 +165,23 @@ export class AccountState {
   }
 
   get pairs (): SubjectInfo {
-    return this.pairSubject.value;
+    return structuredClone(this.pairSubject.value);
   }
 
   get contacts (): SubjectInfo {
-    return this.contactSubject.value;
+    return structuredClone(this.contactSubject.value);
   }
 
   get accounts (): AccountProxyMap {
-    return this.accountSubject.value;
+    return structuredClone(this.accountSubject.value);
   }
 
   get accountProxies () {
-    return this._accountProxy.value;
+    return structuredClone(this._accountProxy.value);
   }
 
   get modifyPairs () {
-    return this._modifyPair.value;
+    return structuredClone(this._modifyPair.value);
   }
 
   get value () {
@@ -195,22 +194,22 @@ export class AccountState {
 
     return {
       get pairs () {
-        return pairs.value;
+        return structuredClone(pairs.value);
       },
       get accounts () {
-        return accounts.value;
+        return structuredClone(accounts.value);
       },
       get accountProxy () {
-        return accountProxy.value;
+        return structuredClone(accountProxy.value);
       },
       get currentAccount () {
-        return currentAccount.value;
+        return structuredClone(currentAccount.value);
       },
       get contacts () {
-        return contacts.value;
+        return structuredClone(contacts.value);
       },
       get modifyPair () {
-        return modifyPair.value;
+        return structuredClone(modifyPair.value);
       }
     };
   }
@@ -244,7 +243,7 @@ export class AccountState {
   /* Current account */
 
   get currentAccount (): CurrentAccountInfo {
-    return this._currentAccount.value;
+    return structuredClone(this._currentAccount.value);
   }
 
   private setCurrentAccount (data: CurrentAccountInfo, callback?: () => void): void {
@@ -277,12 +276,8 @@ export class AccountState {
     const { proxyId } = result;
 
     if (proxyId === ALL_ACCOUNT_KEY) {
-      const pairs = this.pairs;
-      const accountProxies = this.accountProxies;
-      const modifyPairs = this.modifyPairs;
+      const accounts = Object.keys(this.value.accounts);
 
-      const data = combineAccountsWithSubjectInfo(pairs, modifyPairs, accountProxies);
-      const accounts = Object.keys(data);
       const firstAccount = accounts[0];
 
       if (accounts.length > 1 || !firstAccount) {
@@ -306,7 +301,7 @@ export class AccountState {
   public checkAddressExists (addresses: string[]): ExistsAccount | undefined {
     for (const address of addresses) {
       try {
-        const pair = keyring.getPair(address);
+        const pair = keyring.existsPair(address);
 
         // ignore testing accounts
         if (pair && !pair.meta.isTesting) {
@@ -638,6 +633,51 @@ export class AccountState {
       const pair = pairMap[address];
 
       keyring.saveAccountMeta(pair, pair.meta);
+    });
+  }
+
+  public updateMetadataForProxy () {
+    const proxyMap = Object.fromEntries((Object.entries(this.accountProxies)));
+
+    const needUpdateSet = new Set<string>();
+
+    const deepSearchParentId = (_parentId: string, _suri: string): [string, string] => {
+      const parent = proxyMap[_parentId];
+
+      if (parent) {
+        const parentId = parent.parentId;
+        const parentSuri = parent.suri;
+
+        if (parentId && parentSuri) {
+          const suri = [parentSuri, _suri].join('');
+
+          return deepSearchParentId(parentId, suri);
+        }
+      }
+
+      return [_parentId, _suri];
+    };
+
+    for (const proxy of Object.values(proxyMap)) {
+      const proxyId = proxy.id;
+      const parentId = proxy.parentId;
+      const parentSuri = proxy.suri;
+
+      if (parentId && parentSuri) {
+        const [_parentId, _parentSuri] = deepSearchParentId(parentId, parentSuri);
+
+        if (parentId !== _parentId && parentSuri !== _parentSuri) {
+          proxy.parentId = _parentId;
+          proxy.suri = _parentSuri;
+          needUpdateSet.add(proxyId);
+        }
+      }
+    }
+
+    Array.from(needUpdateSet).forEach((address) => {
+      const proxyData = proxyMap[address];
+
+      this.upsertAccountProxyByKey(proxyData);
     });
   }
 

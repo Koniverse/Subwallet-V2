@@ -5,7 +5,7 @@ export { default as AccountExportPasswordModal } from './AccountExportPasswordMo
 export { default as AccountTypeModal } from './AccountTypeModal';
 export { default as AttachAccountModal } from './AttachAccountModal';
 export { default as CreateAccountModal } from './CreateAccountModal';
-export { default as DeriveAccountModal } from './DeriveAccountModal';
+export { default as DeriveAccountListModal } from './DeriveAccountListModal';
 export { default as ImportAccountModal } from './ImportAccountModal';
 export { default as ImportSeedModal } from './ImportSeedModal';
 export { default as NewSeedModal } from './NewSeedModal';
