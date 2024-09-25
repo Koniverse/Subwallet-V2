@@ -1,11 +1,11 @@
-    2813	AnhMTV                        	Release version 1.2.28
+    2831	AnhMTV                        	Release version 1.2.30
     2533	Nam Phạm                      	[Issue 3467] fix: refactor staking pallet handling logic
-    2184	S2kael                        	[Issue-3518] Update stable version for chain-list
+    2186	S2kael                        	[Issue-3637] Update stable version for chain-list
      848	lw-cdm                        	[Issue-3407] WebApp - Support Avail Ledger app
-     563	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
+     565	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
      465	Jaco                          	0.42.5 (#969)
-     277	bluezdot                      	[Issue-3467] add todo
-     228	Thiendekaco                   	[Issue 3363] Extension - Update standard content #2
+     314	bluezdot                      	[Issue-3635] fix: fix do not show balance
+     232	Thiendekaco                   	[Issue 3458] [fix]  Extension - Support XCM for Ledger Polkadot generic app #3
      185	quangdo                       	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      146	dominhquang                   	[Issue-3468] Improve condition for Marketing campaign
@@ -14,12 +14,12 @@
       83	Hieu Dao                      	Update README.md
       82	Thibaut Sardan                	Add account filtering feature (#832)
       81	leewong                       	Swap - Change idle time to 300s
-      67	bluedot                       	[Issue-2965] fix: Handle earning status for request redeem
+      70	bluedot                       	[Issue-3579] fix: update check fully migrate
+      66	Frenkie Nguyen                	[Issue 2352] fix eslint
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      49	Frenkie Nguyen                	[Issue-3477] fix condition show popup
       24	S2kael                        	
-      17	Thanh                         	[Issue-3518] Update chainlist
+      24	Thanh                         	[Issue-3637] Update chainlist
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined

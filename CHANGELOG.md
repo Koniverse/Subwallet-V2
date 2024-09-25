@@ -1,5 +1,50 @@
 # CHANGELOG
 
+## 1.2.30
+Build date: Sep 20, 2024.
+
+Features & Update:
+- Add Chainflip broker (#3483)
+- Re-calculate max transferable for XCM native token (#3617)
+- Update chain-list (#3637)
+  - Add support for Tether's XAUt token
+  - Add support for BUNS token for PAH, Hydration
+  - Add support for Ternoa zkEVM + Testnet
+  - Update information for some chains (https://github.com/Koniverse/SubWallet-ChainList/issues/302)
+    - DOT <-> CFG
+    - CFG <-> USDT
+    - DOT <-> BNC
+    - BNC <-> USDT
+    - BNC <-> HDX
+  - Add support for new swap pairs on Hydration
+  - Hidden XCM on Pioneer
+
+Bugs fixed:
+- Fix bug not showing balance of VFT tokens (#3612)
+- Fix bug do not show balance (#3653)
+
+## 1.2.29
+Build date: Sep 13, 2024.
+
+Features & Update:
+- Support XCM for Ledger Polkadot generic app (#3458)
+- Adjust showing/validating address on Earning actions (#2703)
+- Update chain-list (#3558)
+  - Add support for Creditcoin CC3 Mainnet
+  - Add support for vASTR on Hydration
+  - Add support for Cypress tokens on Hydration, PAH
+  - Update some network and token information
+  - Add support for new swap pairs on Hydration
+- Support XCM channels (#3453)
+  - MYTH: Hydration --> Mythos
+  - MYTH: PAH --> Mythos
+
+Bugs fixed:
+- Fixed bug Do not show token when standing on All accounts mode in case token does not get balance (#2352)
+- Fix bug do not show lock balance in case account have Kusama nomination pool (#3579)
+- Fix bug XCM for channel: DOT: KAH -> PAH (#3561)
+- Fix bug display wrong APY for Polkadot staking option (#3601)
+
 ## 1.2.28
 Build date: Sep 04, 2024.
 
