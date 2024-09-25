@@ -114,8 +114,6 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
   /* Fetch data */
 
   async fetchDelegates (): Promise<ValidatorResponse> {
-    console.log('API:', BITTENSOR_API_KEY);
-
     return new Promise(function (resolve) {
       fetch('https://api.taostats.io/api/v1/validator?order=amount%3Adesc&limit=29', {
         method: 'GET',
@@ -162,8 +160,6 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
   /* Subscribe pool info */
 
   async subscribePoolInfo (callback: (data: YieldPoolInfo) => void): Promise<VoidFunction> {
-    console.log('Key 1:', BITTENSOR_API_KEY_1);
-    console.log('Key 2:', BITTENSOR_API_KEY_2);
     let cancel = false;
     const substrateApi = this.substrateApi;
 
