@@ -9,17 +9,19 @@ import { getEarningStatusByNominations } from '@subwallet/extension-base/koni/ap
 import BaseParaStakingPoolHandler from '@subwallet/extension-base/services/earning-service/handlers/native-staking/base-para';
 import { BaseYieldPositionInfo, EarningStatus, NativeYieldPoolInfo, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingInfo, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { reformatAddress } from '@subwallet/extension-base/utils';
+import BigN from 'bignumber.js';
 
 import { BN, BN_ZERO } from '@polkadot/util';
 
 import { calculateReward } from '../../utils';
+import { AuthorizationToken } from './config';
 
 interface TaoStakingStakeOption {
   owner: string,
   amount: string,
 }
 
-interface hotKey {
+interface Hotkey {
   ss58: string;
 }
 
@@ -66,10 +68,6 @@ const testnetDelegate = {
     additional: ''
   }
 };
-
-const AuthorizationToken = '7hTzjMbs75WlKoLlpTsdeTnjY5DICafWv4icxq9qah4DBmvltqIQpzvrbh57kurm';
-/* Get API key from https://app.taostats.io/ - Currently in beta */
-/* Use in https://docs.taostats.io/reference/welcome-to-the-taostats-api */
 
 export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHandler {
   /* Unimplemented function  */
@@ -162,12 +160,15 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           return;
         }
 
-        const _getDelegates = await this.fetchDelegates();
-        const getDelegates = _getDelegates as unknown as Record<string, Record<string, string>>;
+        const [getDelegates, minDelegatorStake] = await Promise.all([
+          this.fetchDelegates(),
+          substrateApi.api.query.subtensorModule.nominatorMinRequiredStake()
+        ]);
+
         const delegatorStorages = getDelegates.count;
+        const BNminDelegatorStake = new BigN(minDelegatorStake.toString());
         const expectedReturn = 0;
-        const minDelegatorStake = (await substrateApi.api.query.subtensorModule.nominatorMinRequiredStake()).toString();
-        const BNminDelegatorStake = new BN(minDelegatorStake);
+
         const data: NativeYieldPoolInfo = {
           ...this.baseInfo,
           type: this.type,
@@ -249,7 +250,6 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     const stakingStatus = getEarningStatusByNominations(allActiveStake, nominationList);
 
     return {
-
       status: stakingStatus,
       balanceToken: this.nativeToken.slug,
       totalStake: allActiveStake.toString(),
@@ -267,108 +267,111 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     const defaultInfo = this.baseInfo;
     const chainInfo = this.chainInfo;
 
+    const getDevnetPoolPosition = async () => {
+      const testnetAddress = Object.keys(testnetDelegate)[0];
+      const delegatorState: TaoStakingStakeOption[] = [];
+      let bnTotalBalance = BN_ZERO;
+
+      const stakePromises = useAddresses.map(async (address) => {
+        const stakeAmount = (await substrateApi.api.query.subtensorModule.stake(testnetAddress, address)).toString();
+        const bnStakeAmount = new BN(stakeAmount);
+
+        bnTotalBalance = bnTotalBalance.add(bnStakeAmount);
+
+        delegatorState.push({
+          owner: testnetAddress,
+          amount: bnStakeAmount.toString()
+        });
+
+        rsCallback({
+          ...defaultInfo,
+          type: this.type,
+          address: address,
+          balanceToken: this.nativeToken.slug,
+          totalStake: bnTotalBalance.toString(),
+          activeStake: bnStakeAmount.toString(),
+          unstakeBalance: '0',
+          status: EarningStatus.EARNING_REWARD,
+          isBondedBefore: true,
+          nominations: delegatorState.map((delegate) => ({
+            chain: this.chain,
+            validatorAddress: delegate.owner,
+            activeStake: delegate.amount,
+            status: EarningStatus.EARNING_REWARD
+          })),
+          unstakings: []
+        });
+      });
+
+      await Promise.all(stakePromises);
+    };
+
+    const getMainnetPoolPosition = async () => {
+      const rawDelegateStateInfos = await Promise.all(
+        useAddresses.map((address) => this.fetchDelegateState(address))
+      );
+
+      if (rawDelegateStateInfos.length > 0) {
+        rawDelegateStateInfos.forEach((rawDelegateStateInfo, i) => {
+          const owner = reformatAddress(useAddresses[i], 42);
+          const delegatorState: TaoStakingStakeOption[] = [];
+          let bnTotalBalance = BN_ZERO;
+          const delegateStateInfo = rawDelegateStateInfo?.data?.delegateBalances?.nodes;
+
+          for (const delegate of delegateStateInfo) {
+            bnTotalBalance = bnTotalBalance.add(new BN(delegate.amount));
+            delegatorState.push({
+              owner: delegate.delegate,
+              amount: delegate.amount.toString()
+            });
+          }
+
+          if (delegateStateInfo && delegateStateInfo.length > 0) {
+            this.parseNominatorMetadata(chainInfo, owner, delegatorState)
+              .then((nominatorMetadata) => {
+                rsCallback({
+                  ...defaultInfo,
+                  ...nominatorMetadata,
+                  address: owner,
+                  type: this.type
+                });
+              })
+              .catch(console.error);
+          } else {
+            rsCallback({
+              ...defaultInfo,
+              type: this.type,
+              address: owner,
+              balanceToken: this.nativeToken.slug,
+              totalStake: '0',
+              activeStake: '0',
+              unstakeBalance: '0',
+              status: EarningStatus.NOT_STAKING,
+              isBondedBefore: false,
+              nominations: [],
+              unstakings: []
+            });
+          }
+        });
+      }
+    };
+
     const getStakingPositionInterval = async () => {
       if (cancel) {
         return;
       }
 
       if (this.chain === 'bittensor_devnet') {
-        const testnetAddress = '5G6wdAdS7hpBuH1tjuZDhpzrGw9Wf71WEVakDCxHDm1cxEQ2';
-        const delegatorState: TaoStakingStakeOption[] = [];
-        let bnTotalBalance = BN_ZERO;
-
-        for (const address of useAddresses) {
-          const stakeAmount = (await substrateApi.api.query.subtensorModule.stake(testnetAddress, address)).toString();
-          // @ts-ignore
-          const bnStakeAmount = new BN(stakeAmount);
-
-          bnTotalBalance = bnTotalBalance.add(bnStakeAmount);
-          delegatorState.push({
-            owner: testnetAddress,
-            amount: bnStakeAmount.toString()
-          });
-          rsCallback({
-            ...defaultInfo,
-            type: this.type,
-            address: address,
-            balanceToken: this.nativeToken.slug,
-            totalStake: bnTotalBalance.toString(),
-            activeStake: bnStakeAmount.toString(),
-            unstakeBalance: '0',
-            status: EarningStatus.EARNING_REWARD,
-            isBondedBefore: true,
-            nominations: delegatorState.map((delegate) => {
-              return {
-                chain: this.chain,
-                validatorAddress: delegate.owner,
-                activeStake: delegate.amount,
-                status: EarningStatus.EARNING_REWARD
-              };
-            }),
-            unstakings: []
-          });
-        }
+        await getDevnetPoolPosition();
       } else {
-        const rawDelegateStateInfos = await Promise.all(
-          useAddresses.map(async (address) => {
-            return this.fetchDelegateState(address);
-          })
-        );
-
-        if (rawDelegateStateInfos.length > 0) {
-          rawDelegateStateInfos.forEach((rawDelegateStateInfo, i) => {
-            const owner = reformatAddress(useAddresses[i], 42);
-            const delegatorState: TaoStakingStakeOption[] = [];
-            let bnTotalBalance = BN_ZERO;
-            const delegateStateInfo = rawDelegateStateInfo?.data?.delegateBalances?.nodes;
-
-            for (const delegate of delegateStateInfo) {
-              bnTotalBalance = bnTotalBalance.add(new BN(delegate.amount));
-              delegatorState.push({
-                owner: delegate.delegate,
-                amount: delegate.amount.toString()
-              });
-            }
-
-            if (delegateStateInfo && delegateStateInfo.length > 0) {
-              this.parseNominatorMetadata(chainInfo, owner, delegatorState)
-                .then((nominatorMetadata) => {
-                  rsCallback({
-                    ...defaultInfo,
-                    ...nominatorMetadata,
-                    address: owner,
-                    type: this.type
-                  });
-                })
-                .catch((err) => {
-                  console.error(err);
-                });
-            } else {
-              rsCallback({
-                ...defaultInfo,
-                type: this.type,
-                address: owner,
-                balanceToken: this.nativeToken.slug,
-                totalStake: '0',
-                activeStake: '0',
-                unstakeBalance: '0',
-                status: EarningStatus.NOT_STAKING,
-                isBondedBefore: false,
-                nominations: [],
-                unstakings: []
-              });
-            }
-          });
-        }
+        await getMainnetPoolPosition();
       }
     };
 
     getStakingPositionInterval().catch(console.error);
 
     const intervalId = setInterval(() => {
-      getStakingPositionInterval().catch((err) => {
-        console.error(err);
-      });
+      getStakingPositionInterval().catch(console.error);
     }, BITTENSOR_REFRESH_STAKE_INFO);
 
     return () => {
@@ -381,42 +384,42 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
 
   /* Get pool targets */
 
-  async getPoolTargets (): Promise<ValidatorInfo[]> {
-    let _topValidator;
+  // eslint-disable-next-line @typescript-eslint/require-await
+  private async getDevnetPoolTargets (): Promise<ValidatorInfo[]> {
+    const _topValidator = testnetDelegate;
+    const validatorAddresses = Object.keys(_topValidator);
 
-    if (this.chain === 'bittensor_devnet') {
-      _topValidator = testnetDelegate;
-      const validatorAddresses = Object.keys(_topValidator);
+    return validatorAddresses.map((address) => {
+      return {
+        address: address,
+        totalStake: '0',
+        ownStake: '0',
+        otherStake: '0',
+        minBond: '0',
+        nominatorCount: 0,
+        commission: '0',
+        expectedReturn: 0,
+        blocked: false,
+        isVerified: false,
+        chain: this.chain,
+        isCrowded: false,
+        identity: address
+      } as unknown as ValidatorInfo;
+    });
+  }
 
-      return validatorAddresses.map((address) => {
-        return {
-          address: address,
-          totalStake: '0',
-          ownStake: '0',
-          otherStake: '0',
-          minBond: '0',
-          nominatorCount: 0,
-          commission: '0',
-          expectedReturn: 0,
-          blocked: false,
-          isVerified: false,
-          chain: this.chain,
-          isCrowded: false,
-          identity: address
-        } as unknown as ValidatorInfo;
-      });
-    } else {
-      _topValidator = await this.fetchDelegates();
-      const topValidator = _topValidator as unknown as Record<string, Record<string, Record<string, string>>>;
-      const getNominatorMinRequiredStake = this.substrateApi.api.query.subtensorModule.nominatorMinRequiredStake();
-      const nominatorMinRequiredStake = (await getNominatorMinRequiredStake).toString();
-      const bnMinBond = new BN(nominatorMinRequiredStake);
+  private async getMainnetPoolTargets (): Promise<ValidatorInfo[]> {
+    const _topValidator = await this.fetchDelegates();
+    const topValidator = _topValidator as unknown as Record<string, Record<string, Record<string, string>>>;
+    const getNominatorMinRequiredStake = this.substrateApi.api.query.subtensorModule.nominatorMinRequiredStake();
+    const nominatorMinRequiredStake = (await getNominatorMinRequiredStake).toString();
+    const bnMinBond = new BN(nominatorMinRequiredStake);
+    const validatorList = topValidator.validators;
+    const validatorAddresses = Object.keys(validatorList);
 
-      const validatorList = topValidator.validators;
-      const validatorAddresses = Object.keys(validatorList);
-
-      const results = await Promise.all(validatorAddresses.map(async (i) => {
-        const address = (validatorList[i].hot_key as unknown as hotKey).ss58;
+    const results = await Promise.all(
+      validatorAddresses.map(async (i) => {
+        const address = (validatorList[i].hot_key as unknown as Hotkey).ss58;
         const bnTotalStake = new BN(validatorList[i].amount);
         const bnOwnStake = new BN(validatorList[i].validator_stake);
         const otherStake = bnTotalStake.sub(bnOwnStake);
@@ -424,7 +427,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
         const commission = validatorList[i].take;
         const roundedCommission = (parseFloat(commission) * 100).toFixed(0);
 
-        const apr = ((parseFloat(validatorList[i].apr) / (10 ** 9)) * 100).toFixed(2);
+        const apr = ((parseFloat(validatorList[i].apr) / 10 ** 9) * 100).toFixed(2);
         const apyCalculate = calculateReward(parseFloat(apr));
 
         let name = '';
@@ -447,9 +450,17 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           isCrowded: false,
           identity: name
         } as unknown as ValidatorInfo;
-      }));
+      })
+    );
 
-      return results;
+    return results;
+  }
+
+  async getPoolTargets (): Promise<ValidatorInfo[]> {
+    if (this.chain === 'bittensor_devnet') {
+      return this.getDevnetPoolTargets();
+    } else {
+      return this.getMainnetPoolTargets();
     }
   }
 
