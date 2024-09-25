@@ -1828,15 +1828,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@chainflip/sdk@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@chainflip/sdk@npm:1.3.0"
+"@chainflip/rpc@npm:^1.6.6":
+  version: 1.6.6
+  resolution: "@chainflip/rpc@npm:1.6.6"
   dependencies:
-    "@polkadot/util": ^12.6.2
-    "@polkadot/util-crypto": ^12.6.2
-    axios: ^1.6.8
-    ethers: ^6.11.1
-  checksum: ca4a8461411a15b02fd4d31ee56410b69059db0cd1157726c509f6f59e645a6d955c99b56d32051ec8d7697996af9d0d7c4badc9ab59cc0936cf1a9a0389c747
+    "@chainflip/utils": ^0.3.0
+    zod: ^3.22.8
+  checksum: 92e3e7d8af6445b2ba387fa9f0b74638d21f7777b6703e094021cb8a5ac6f6e085ec72518d0dc39215daba9cd4e4cc74ef2e7f9c3d238913fd4705498d58ae07
+  languageName: node
+  linkType: hard
+
+"@chainflip/sdk@npm:^1.6.0-beta.2":
+  version: 1.6.0-beta.2
+  resolution: "@chainflip/sdk@npm:1.6.0-beta.2"
+  dependencies:
+    "@chainflip/rpc": ^1.6.6
+    "@chainflip/utils": ^0.4.0
+    axios: ^1.7.7
+    ethers: ^6.13.2
+  checksum: 7940ac958ce6c6577a1b2f2b0da013159c4506d53b77365366b206039065a64742cd9d1a191b81f2f19504791ac747b4c074817d343175255218a6b5659d82cd
+  languageName: node
+  linkType: hard
+
+"@chainflip/utils@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@chainflip/utils@npm:0.3.0"
+  checksum: 28d0bdc00ad71255efa51c3a0fc51257b1af0579f1b8c8adb24ad450c42b48246a4a0d7c3eeafbc7d361249bab54b5a1fce4e3ce190a97886da590b704f97ee4
+  languageName: node
+  linkType: hard
+
+"@chainflip/utils@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "@chainflip/utils@npm:0.4.0"
+  checksum: 4d36bc8a2f105ed70ff19f808a38baa9dc7efd735059df7206073b2af4662f5d5e37b93bc7b1fc6c72b0c538f3c0eecaada49469f5469be29c27eb63f350b5bf
   languageName: node
   linkType: hard
 
@@ -2577,9 +2601,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@galacticcouncil/sdk@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "@galacticcouncil/sdk@npm:4.2.0"
+"@galacticcouncil/sdk@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "@galacticcouncil/sdk@npm:4.2.1"
   dependencies:
     "@galacticcouncil/math-lbp": ^1.0.0
     "@galacticcouncil/math-liquidity-mining": ^1.0.0
@@ -2605,7 +2629,7 @@ __metadata:
     "@polkadot/types-known": ^12.1.1
     "@polkadot/util": ^12.6.2
     "@polkadot/util-crypto": ^12.6.2
-  checksum: c552c62338f7ae3969881a50da07f9dc6e3f13c952ed6b1a9c760453c7074656033df8774fe6a8f0df8c394048f97104d0e6579c499286ec5edd17cc928dc4a7
+  checksum: abe10458aa9f0f66c1571d8ac8dfb61b55b9a491e13a454ca0bc7f0793df8a124d6e1a74a4b18f0ea43fb7bca9dc79b5efed81e03e2209ac96a254e35460ecfe
   languageName: node
   linkType: hard
 
@@ -6244,14 +6268,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.87-beta.3":
-  version: 0.2.87-beta.3
-  resolution: "@subwallet/chain-list@npm:0.2.87-beta.3"
+"@subwallet/chain-list@file:/home/pham-duy-thanh/SubWallet-ChainList/packages/chain-list/build::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.2.88-beta.1
+  resolution: "@subwallet/chain-list@file:/home/pham-duy-thanh/SubWallet-ChainList/packages/chain-list/build#/home/pham-duy-thanh/SubWallet-ChainList/packages/chain-list/build::hash=7589f9&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 1d57705158e97f7baf5ba0610f55a3d2a4bab9785bce9129d7a7205866fafd22c03657fde6ec4662507a65e1c2d8186012dc6e9d11b6b91fde0d0e571b6c1d91
+  checksum: c131ad34e291c17858dc3c21b2098a0a3f685b24945962bd0ba9cea4b16c66e8eb9f3b6bee2fdd154c7fa191239a3ac2dfc922fe9e39260b18e1d3ee2327babd
   languageName: node
   linkType: hard
 
@@ -6262,12 +6286,12 @@ __metadata:
     "@acala-network/api": ^5.0.2
     "@apollo/client": ^3.7.14
     "@azns/resolver-core": ^1.4.0
-    "@chainflip/sdk": ^1.3.0
+    "@chainflip/sdk": ^1.6.0-beta.2
     "@equilab/api": ~1.14.25
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
     "@ethersproject/abi": ^5.7.0
-    "@galacticcouncil/sdk": ^4.2.0
+    "@galacticcouncil/sdk": ^4.2.1
     "@gear-js/api": ^0.38.1
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/eth-sig-util": ^7.0.3
@@ -6294,7 +6318,7 @@ __metadata:
     "@reduxjs/toolkit": ^1.9.1
     "@sora-substrate/type-definitions": ^1.17.7
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.87-beta.3
+    "@subwallet/chain-list": /home/pham-duy-thanh/SubWallet-ChainList/packages/chain-list/build
     "@subwallet/extension-base": ^1.2.28-0
     "@subwallet/extension-chains": ^1.2.28-0
     "@subwallet/extension-dapp": ^1.2.28-0
@@ -6427,7 +6451,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.87-beta.3
+    "@subwallet/chain-list": /home/pham-duy-thanh/SubWallet-ChainList/packages/chain-list/build
     "@subwallet/extension-base": ^1.2.28-0
     "@subwallet/extension-chains": ^1.2.28-0
     "@subwallet/extension-dapp": ^1.2.28-0
@@ -6565,7 +6589,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.87-beta.3
+    "@subwallet/chain-list": /home/pham-duy-thanh/SubWallet-ChainList/packages/chain-list/build
     "@subwallet/extension-base": ^1.2.28-0
     "@subwallet/extension-chains": ^1.2.28-0
     "@subwallet/extension-dapp": ^1.2.28-0
@@ -9872,6 +9896,17 @@ __metadata:
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
   checksum: bf007fa4b207d102459300698620b3b0873503c6d47bf5a8f6e43c0c64c90035a4f698b55027ca1958f61ab43723df2781c38a99711848d232cad7accbcdfcdd
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.7.7":
+  version: 1.7.7
+  resolution: "axios@npm:1.7.7"
+  dependencies:
+    follow-redirects: ^1.15.6
+    form-data: ^4.0.0
+    proxy-from-env: ^1.1.0
+  checksum: 882d4fe0ec694a07c7f5c1f68205eb6dc5a62aecdb632cc7a4a3d0985188ce3030e0b277e1a8260ac3f194d314ae342117660a151fabffdc5081ca0b5a8b47fe
   languageName: node
   linkType: hard
 
@@ -14312,9 +14347,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:^6.11.1":
-  version: 6.11.1
-  resolution: "ethers@npm:6.11.1"
+"ethers@npm:^6.13.2":
+  version: 6.13.2
+  resolution: "ethers@npm:6.13.2"
   dependencies:
     "@adraffy/ens-normalize": 1.10.1
     "@noble/curves": 1.2.0
@@ -14322,8 +14357,8 @@ __metadata:
     "@types/node": 18.15.13
     aes-js: 4.0.0-beta.5
     tslib: 2.4.0
-    ws: 8.5.0
-  checksum: e8027c5071ad0370c61a1978f0602ab950d840c5923948f55e88b9808300e4e02e792bb793ea109ce7fa0e748f30a40a05f1202204a2b0402cdffbcb64a218e4
+    ws: 8.17.1
+  checksum: 981860c736c7ae121774ad38ea07e3611ce524a77d2fcb77db499b65afe0cbe8f344cd5204d94b68b316349ff770fd2a7d9c8b2039da41c072f98d9864099925
   languageName: node
   linkType: hard
 
@@ -28525,6 +28560,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ws@npm:8.17.1":
+  version: 8.17.1
+  resolution: "ws@npm:8.17.1"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 442badcce1f1178ec87a0b5372ae2e9771e07c4929a3180321901f226127f252441e8689d765aa5cfba5f50ac60dd830954afc5aeae81609aefa11d3ddf5cecf
+  languageName: node
+  linkType: hard
+
 "ws@npm:8.5.0":
   version: 8.5.0
   resolution: "ws@npm:8.5.0"
@@ -28780,6 +28830,13 @@ __metadata:
   version: 0.8.15
   resolution: "zen-observable@npm:0.8.15"
   checksum: b7289084bc1fc74a559b7259faa23d3214b14b538a8843d2b001a35e27147833f4107590b1b44bf5bc7f6dfe6f488660d3a3725f268e09b3925b3476153b7821
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.22.8":
+  version: 3.23.8
+  resolution: "zod@npm:3.23.8"
+  checksum: 15949ff82118f59c893dacd9d3c766d02b6fa2e71cf474d5aa888570c469dbf5446ac5ad562bb035bf7ac9650da94f290655c194f4a6de3e766f43febd432c5c
   languageName: node
   linkType: hard
 

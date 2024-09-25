@@ -120,6 +120,11 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       const fromAssetId = this.assetMapping[fromAsset.slug];
       const toAssetId = this.assetMapping[toAsset.slug];
 
+      console.log(srcChainId);
+      console.log(destChainId);
+      console.log(fromAssetId);
+      console.log(toAssetId);
+
       if (!srcChainId || !destChainId || !fromAssetId || !toAssetId) {
         return {
           error: SwapErrorType.ASSET_NOT_SUPPORTED
@@ -135,6 +140,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       const supportedDestChainId = supportedDestChains.find((c) => c.chain === destChainId);
       const srcAssetData = srcAssets.find((a) => a.asset === fromAssetId);
       const destAssetData = destAssets.find((a) => a.asset === toAssetId);
+
 
       if (!destAssetData || !srcAssetData || !supportedDestChainId) {
         return { error: SwapErrorType.UNKNOWN };
@@ -229,6 +235,8 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     }
 
     const earlyValidation = await this.validateSwapRequest(request);
+
+    console.log(earlyValidation);
 
     const metadata = earlyValidation.metadata as ChainflipPreValidationMetadata;
 
