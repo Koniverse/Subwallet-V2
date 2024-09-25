@@ -1294,9 +1294,6 @@ export default class KoniExtension {
 
   private async makeTransfer (inputData: RequestTransfer): Promise<SWTransactionResponse> {
     const { from, networkKey, to, tokenSlug, transferAll, transferBounceable, value } = inputData;
-
-    console.log('from_extension.ts', from);
-    console.log('to_extension.ts', to);
     const transferTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
     const [errors, ,] = validateTransferRequest(transferTokenInfo, from, to, value, transferAll);
 
@@ -1407,8 +1404,6 @@ export default class KoniExtension {
     if (transferBounceable) {
       ignoreWarnings.push(BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS);
     }
-
-    console.log('transaction _extension.ts', transaction);
 
     return this.#koniState.transactionService.handleTransaction({
       errors,
@@ -3074,7 +3069,7 @@ export default class KoniExtension {
       const isActive = state === 'active';
       const isBounceable = isBounceableAddress(address);
 
-      return isActive && isBounceable;
+      return !isActive && isBounceable;
     } catch (error) {
       console.error(`Failed to validate address ${address} on chain ${chain}:`, error);
 
