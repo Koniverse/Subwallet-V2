@@ -219,7 +219,6 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
 
   // Insert history without check override origin 'app'
   async insertHistories (historyItems: TransactionHistoryItem[]) {
-    console.log('historyItems', historyItems);
     await this.dbService.upsertHistory(historyItems);
     this.historySubject.next(await this.dbService.getHistories());
   }

@@ -399,10 +399,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   const handleBasicSubmit = useCallback((values: TransferParams, options: TransferOptions): Promise<SWTransactionResponse> => {
     const { asset, chain, destChain, from, to, value } = values;
-
-    console.log('from_sendfund', from);
-    console.log('to_sendfund', to);
-
     let sendPromise: Promise<SWTransactionResponse>;
 
     if (chain === destChain) {
@@ -521,7 +517,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
     let checkTransferAll = false;
 
-    const _doSubmit = () => {
+    const _doSubmit = async () => {
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
@@ -550,31 +546,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      isTonBounceableAddress({ address: values.to, chain: values.chain })
-        .then((isShowTonBouncealbeModal) => {
-          if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
-            openAlert({
-              type: NotificationType.WARNING,
-              content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-              title: t('Pay attention!'),
-              okButton: {
-                text: t('Transfer'),
-                onClick: () => {
-                  closeAlert();
-                  options.isTransferBounceable = true;
-                  _doSubmit();
-                }
-              },
-              cancelButton: {
-                text: t('Cancel'),
-                onClick: closeAlert
-              }
-            });
-          }
-        }).catch((error) => {
-          console.error('Error fetching ton bounceable address:', error);
-        });
-
       if (_isNativeToken(assetInfo)) {
         const minAmount = _getTokenMinAmount(assetInfo);
         const bnMinAmount = new BN(minAmount);
@@ -589,7 +560,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               onClick: () => {
                 closeAlert();
                 checkTransferAll = true;
-                _doSubmit();
+                _doSubmit().catch((error) => {
+                  console.error('Error during submit:', error);
+                });
               }
             },
             cancelButton: {
@@ -602,10 +575,38 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
+      const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
+
+      if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+        openAlert({
+          type: NotificationType.WARNING,
+          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
+          title: t('Pay attention!'),
+          okButton: {
+            text: t('Transfer'),
+            onClick: () => {
+              closeAlert();
+              options.isTransferBounceable = true;
+              _doSubmit().catch((error) => {
+                console.error('Error during submit:', error);
+              });
+            }
+          },
+          cancelButton: {
+            text: t('Cancel'),
+            onClick: closeAlert
+          }
+        });
+
+        return;
+      }
+
       doSubmit(values, options);
     };
 
-    _doSubmit();
+    _doSubmit().catch((error) => {
+      console.error('Error during submit:', error);
+    });
   }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
 
   // todo: recheck with ledger account

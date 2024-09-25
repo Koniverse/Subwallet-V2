@@ -682,6 +682,7 @@ export interface TransactionHistoryItem<ET extends ExtrinsicType = ExtrinsicType
   additionalInfo?: any,
   startBlock?: number,
   nonce?: number,
+  addressPrefix?: number
 }
 
 export interface SWError extends Error {

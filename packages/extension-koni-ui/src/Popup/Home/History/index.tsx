@@ -387,8 +387,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [historyItems, setHistoryItems] = useState<TransactionHistoryDisplayItem[]>(getHistoryItems(DEFAULT_ITEMS_COUNT));
 
-  console.log('historyItems', historyItems);
-
   const [currentAccountProxyid] = useState(currentAccountProxy?.id);
 
   // Handle detail modal
@@ -593,15 +591,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     setLoading(true);
 
     setCurrentItemDisplayCount(DEFAULT_ITEMS_COUNT);
-    console.log('selectedChain', selectedChain);
-    console.log('selectedAddress', selectedAddress);
 
     subscribeTransactionHistory(
       selectedChain,
       selectedAddress,
       (items: TransactionHistoryItem[]) => {
-        console.log('items', items);
-
         if (isSubscribed) {
           setRawHistoryList(isSelectedChainEvm ? filterDuplicateItems(items) : items);
         }
