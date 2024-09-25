@@ -193,18 +193,21 @@ export default class AuthRequestHandler {
 
       const { accountAuthTypes, idStr, request: { allowedAccounts, origin }, url } = this.#authRequestsV2[id];
 
+      // Note: accountAuthTypes represents the accountAuthType of this request
+      //       allowedAccounts is a list of connected accounts that exist for this origin during this request.
+
       if (accountAuthTypes.length !== ALL_ACCOUNT_AUTH_TYPES.length) {
         const backupAllowed = (allowedAccounts || [])
           .filter((a) => {
-            if (isEthereumAddress(a) && accountAuthTypes.includes('evm')) {
+            if (isEthereumAddress(a) && !accountAuthTypes.includes('evm')) {
               return true;
             }
 
-            if (isSubstrateAddress(a) && accountAuthTypes.includes('substrate')) {
+            if (isSubstrateAddress(a) && !accountAuthTypes.includes('substrate')) {
               return true;
             }
 
-            if (isTonAddress(a) && accountAuthTypes.includes('ton')) {
+            if (isTonAddress(a) && !accountAuthTypes.includes('ton')) {
               return true;
             }
 
@@ -233,24 +236,6 @@ export default class AuthRequestHandler {
 
         const existed = authorizeList[stripUrl(url)];
 
-        const isAllowedMap_ = Object.entries({ ...isAllowedMap }).reduce<Record<string, boolean>>((map, [key, value]) => {
-          if (!value) {
-            if (isEthereumAddress(key) && !accountAuthTypes.includes('evm') && existed?.accountAuthTypes.includes('evm')) {
-              map[key] = !!allowedAccounts?.includes(key);
-            }
-
-            if (isSubstrateAddress(key) && !accountAuthTypes.includes('substrate') && existed?.accountAuthTypes.includes('substrate')) {
-              map[key] = !!allowedAccounts?.includes(key);
-            }
-
-            if (isTonAddress(key) && !accountAuthTypes.includes('ton') && existed?.accountAuthTypes.includes('ton')) {
-              map[key] = !!allowedAccounts?.includes(key);
-            }
-          }
-
-          return map;
-        }, { ...isAllowedMap });
-
         // On cancel don't save anything
         if (isCancelled) {
           delete this.#authRequestsV2[id];
@@ -264,7 +249,7 @@ export default class AuthRequestHandler {
           count: 0,
           id: idStr,
           isAllowed,
-          isAllowedMap: isAllowedMap_,
+          isAllowedMap,
           origin,
           url,
           accountAuthTypes: [...new Set<AccountAuthType>([...accountAuthTypes, ...(existed?.accountAuthTypes || [])])],
