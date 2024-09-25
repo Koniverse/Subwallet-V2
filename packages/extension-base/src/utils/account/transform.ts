@@ -534,6 +534,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
           accountType = convertAccountProxyType(account.signMode);
           accountActions = account.accountActions;
 
+          if (account.chainType === AccountChainType.TON) {
+            accountActions = accountActions.filter((action) => action !== AccountActions.DERIVE);
+          }
+
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
