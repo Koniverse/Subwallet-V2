@@ -14,7 +14,6 @@ import BigN from 'bignumber.js';
 import { BN, BN_ZERO } from '@polkadot/util';
 
 import { calculateReward } from '../../utils';
-import { AuthorizationToken } from './config';
 
 interface TaoStakingStakeOption {
   owner: string,
@@ -57,6 +56,17 @@ interface ValidatorName {
     name: string;
   }[];
 }
+export const BITTENSOR_API_KEY_1 = process.env.BITTENSOR_API_KEY_1 || '';
+export const BITTENSOR_API_KEY_2 = process.env.BITTENSOR_API_KEY_2 || '';
+
+function random (...keys: string[]) {
+  const validKeys = keys.filter((key) => key);
+  const randomIndex = Math.floor(Math.random() * validKeys.length);
+
+  return validKeys[randomIndex];
+}
+
+export const BITTENSOR_API_KEY = random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
 
 const testnetDelegate = {
   '5G6wdAdS7hpBuH1tjuZDhpzrGw9Wf71WEVakDCxHDm1cxEQ2': {
@@ -105,12 +115,11 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
 
   async fetchDelegates (): Promise<ValidatorResponse> {
     return new Promise(function (resolve) {
-      // Rate limit: 10
       fetch('https://api.taostats.io/api/v1/validator?order=amount%3Adesc&limit=29', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `${AuthorizationToken}`
+          Authorization: `${BITTENSOR_API_KEY}`
         }
       }).then((resp) => {
         resolve(resp.json());
@@ -124,7 +133,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `${AuthorizationToken}`
+          Authorization: `${BITTENSOR_API_KEY}`
         }
       }).then((resp) => {
         resolve(resp.json());
@@ -160,12 +169,8 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           return;
         }
 
-        const [getDelegates, minDelegatorStake] = await Promise.all([
-          this.fetchDelegates(),
-          substrateApi.api.query.subtensorModule.nominatorMinRequiredStake()
-        ]);
+        const minDelegatorStake = await substrateApi.api.query.subtensorModule.nominatorMinRequiredStake();
 
-        const delegatorStorages = getDelegates.count;
         const BNminDelegatorStake = new BigN(minDelegatorStake.toString());
         const expectedReturn = 0;
 
@@ -190,7 +195,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
               defaultUnstake: '0',
               fastUnstake: '0'
             },
-            farmerCount: parseInt(delegatorStorages.toString()),
+            farmerCount: 0,
             era: 0,
             eraTime: 0,
             tvl: '',
