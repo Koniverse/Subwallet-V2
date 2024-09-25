@@ -1,26 +1,26 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountProxyType, DerivePathInfo } from '@subwallet/extension-base/types';
-import { addLazy, detectTranslate } from '@subwallet/extension-base/utils';
-import { AccountProxyTypeTag } from '@subwallet/extension-koni-ui/components';
+import { detectTranslate } from '@subwallet/extension-base/utils';
 import { DERIVE_ACCOUNT_ACTION_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useGetAccountProxyById, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
+import { useCompleteCreateAccount, useGetAccountProxyById, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { deriveAccountV3, deriveSuggest, validateAccountName, validateDerivePathV2 } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { noop } from '@subwallet/extension-koni-ui/utils';
 import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import CN from 'classnames';
 import { CaretLeft, CheckCircle } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
-import React, { Context, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { Context, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import styled, { ThemeContext } from 'styled-components';
 
-import useCompleteCreateAccount from '../../hooks/account/useCompleteCreateAccount';
+import { AccountProxyTypeTag } from '../AccountProxy';
 
 export interface AccountDeriveActionProps {
   proxyId: string;
@@ -36,7 +36,7 @@ interface DeriveFormState {
 
 const modalId = DERIVE_ACCOUNT_ACTION_MODAL;
 
-type DeriveNetworkType = DerivePathInfo['type'] | undefined;
+const alertTypes: DerivePathInfo['type'][] = ['unified', 'ton', 'ethereum'];
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, onCompleteCb, proxyId } = props;
@@ -44,6 +44,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const { t } = useTranslation();
 
   const { addExclude, checkActive, inactiveModal, removeExclude } = useContext(ModalContext);
+  const { alertModal: { close: closeAlert, open: openAlert } } = useContext(WalletModalContext);
   const { logoMap } = useContext<Theme>(ThemeContext as Context<Theme>);
 
   const isActive = checkActive(modalId);
@@ -51,6 +52,8 @@ const Component: React.FC<Props> = (props: Props) => {
   const accountProxy = useGetAccountProxyById(proxyId);
   const checkUnlock = useUnlockChecker();
   const onComplete = useCompleteCreateAccount();
+
+  const derivationInfoRef = useRef<DerivePathInfo | undefined>(undefined);
 
   const modalCloseButton = useMemo(() => (
     <Icon
@@ -80,7 +83,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const [form] = Form.useForm<DeriveFormState>();
 
-  const [networkType, setNetworkType] = useState<DeriveNetworkType>(undefined);
+  const networkType = derivationInfoRef.current?.type;
   const [loading, setLoading] = useState(false);
 
   const closeModal = useCallback(
@@ -91,31 +94,38 @@ const Component: React.FC<Props> = (props: Props) => {
     [form, inactiveModal]
   );
 
+  const onSuriChange = useCallback(() => {
+    form.setFields([{ name: 'suri', errors: [] }]);
+  }, [form]);
+
   const suriValidator = useCallback((rule: Rule, suri: string): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
-      setNetworkType(undefined);
+      console.log('suri validator', suri);
+      derivationInfoRef.current = undefined;
 
       if (!suri) {
         reject(t('Derive path is required'));
       }
 
-      addLazy('validateDerivationPath', () => {
-        validateDerivePathV2({
-          suri,
-          proxyId
+      validateDerivePathV2({
+        suri,
+        proxyId
+      })
+        .then((rs) => {
+          if (rs.error) {
+            reject(rs.error);
+          } else {
+            derivationInfoRef.current = rs.info;
+            resolve();
+          }
         })
-          .then((rs) => {
-            if (rs.error) {
-              reject(rs.error);
-            } else {
-              setNetworkType(rs.info?.type);
-              resolve();
-            }
-          })
-          .catch(reject);
-      }, 500);
+        .catch(reject);
     });
   }, [t, proxyId]);
+
+  const onAccountNameChange = useCallback(() => {
+    form.setFields([{ name: 'accountName', errors: [] }]);
+  }, [form]);
 
   const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
     return new Promise<void>((resolve, reject) => {
@@ -125,49 +135,78 @@ const Component: React.FC<Props> = (props: Props) => {
         return;
       }
 
-      addLazy('accountNameValidator', () => {
-        validateAccountName({ name: value })
-          .then((rs) => {
-            if (!rs.isValid) {
-              reject(t('Account name already exists'));
-            } else {
-              resolve();
-            }
-          })
-          .catch(() => {
-            reject(t('Account name invalid'));
-          });
-      }, 500);
+      validateAccountName({ name: value })
+        .then((rs) => {
+          if (!rs.isValid) {
+            reject(t('Account name already exists'));
+          } else {
+            resolve();
+          }
+        })
+        .catch(() => {
+          reject(t('Account name invalid'));
+        });
     });
   }, [t]);
 
   const onSubmit: FormCallbacks<DeriveFormState>['onFinish'] = useCallback((values: DeriveFormState) => {
     const { accountName, suri } = values;
 
-    checkUnlock()
-      .then(() => {
-        setLoading(true);
-        deriveAccountV3({
-          proxyId,
-          suri,
-          name: accountName
+    const _suri = suri.trim();
+    const _name = accountName.trim();
+    const _info = derivationInfoRef.current;
+
+    if (!_info) {
+      return;
+    }
+
+    const _doSubmit = () => {
+      checkUnlock()
+        .then(() => {
+          setLoading(true);
+          deriveAccountV3({
+            proxyId,
+            suri: _suri,
+            name: _name
+          })
+            .then(() => {
+              closeModal();
+              onComplete();
+              onCompleteCb?.();
+            })
+            .catch((e: Error) => {
+              form.setFields([{ name: 'suri', errors: [e.message] }]);
+            })
+            .finally(() => {
+              setLoading(false);
+            });
         })
-          .then(() => {
-            closeModal();
-            onComplete();
-            onCompleteCb?.();
-          })
-          .catch((e: Error) => {
-            form.setFields([{ name: 'suri', errors: [e.message] }]);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      })
-      .catch(() => {
-      // Unlock is cancelled
+        .catch(() => {
+          // Unlock is cancelled
+        });
+    };
+
+    if (_info.depth === 2 && alertTypes.includes(_info.type)) {
+      openAlert({
+        type: NotificationType.WARNING,
+        content: t('This derived account can only be used in SubWallet and won’t be compatible with other wallets. Do you still want to continue?'),
+        title: t('Incompatible account'),
+        okButton: {
+          text: t('Continue'),
+          onClick: () => {
+            closeAlert();
+            _doSubmit();
+          }
+        },
+        cancelButton: {
+          text: t('Cancel'),
+          onClick: closeAlert
+        }
       });
-  }, [form, checkUnlock, proxyId, onComplete, closeModal, onCompleteCb]);
+    } else {
+      _doSubmit();
+    }
+  }, [checkUnlock, proxyId, closeModal, onComplete, onCompleteCb, form, openAlert, t, closeAlert]);
 
   useEffect(() => {
     if (!accountProxy && isActive) {
@@ -187,8 +226,7 @@ const Component: React.FC<Props> = (props: Props) => {
             if (rs.info) {
               const suri = rs.info.derivationPath || rs.info.suri;
 
-              form.setFieldValue('suri', suri);
-              form.validateFields(['suri']).catch(noop);
+              form.setFields([{ name: 'suri', value: suri, errors: [] }]);
             }
           }
         })
@@ -218,7 +256,7 @@ const Component: React.FC<Props> = (props: Props) => {
       closeIcon={modalCloseButton}
       id={modalId}
       onCancel={closeModal}
-      title={t('Create derive account')}
+      title={t('Create derived account')}
     >
       <div className='body-container'>
         <Form
@@ -235,25 +273,27 @@ const Component: React.FC<Props> = (props: Props) => {
                 components={{
                   highlight: <span className='account-name' />
                 }}
-                i18nKey={detectTranslate('This account derived by account "<highlight>{{accountName}}</highlight>"')}
+                i18nKey={detectTranslate('You are creating a derived account from account <highlight>{{accountName}}</highlight>. Customize the derivation path and name the account as you wish')}
                 values={{ accountName: accountProxy.name }}
               />
-              <div>{t('You can name and custom derive path name.')}</div>
             </div>
           </Form.Item>
           <Form.Item
             name={'suri'}
             rules={[
               {
+                transform: (value: string) => value.trim(),
                 validator: suriValidator
               }
             ]}
             statusHelpAsTooltip={true}
+            validateTrigger={false}
           >
             <Input
               // id={passwordInputId}
-              label={t('Derive path')}
-              placeholder={t('Derive path')}
+              label={t('Derivation path')}
+              onChange={onSuriChange}
+              placeholder={t('Derivation path')}
             />
           </Form.Item>
           <div className='account-name-info'>
@@ -271,15 +311,17 @@ const Component: React.FC<Props> = (props: Props) => {
               name={'accountName'}
               rules={[
                 {
+                  transform: (value: string) => value.trim(),
                   validator: accountNameValidator
                 }
               ]}
               statusHelpAsTooltip={true}
+              validateTrigger={false}
             >
               <Input
                 // id={passwordInputId}
-                disabled={!networkType}
                 label={t('Account name')}
+                onChange={onAccountNameChange}
                 placeholder={t('Account name')}
                 suffix={(
                   <div className='__item-chain-types'>
@@ -312,7 +354,9 @@ const Component: React.FC<Props> = (props: Props) => {
               />
             </Form.Item>
           </div>
-          <Form.Item>
+          <Form.Item
+            className='submit-button'
+          >
             <Button
               block={true}
               htmlType='submit'
@@ -386,6 +430,10 @@ const DeriveAccountActionModal = styled(Component)<Props>(({ theme: { token } }:
       '.ant-input-suffix': {
         marginRight: 0
       }
+    },
+
+    '.submit-button': {
+      marginBottom: 0
     }
   };
 });
