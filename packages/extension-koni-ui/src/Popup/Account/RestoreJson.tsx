@@ -137,7 +137,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           setSubmitValidateState({});
 
           if (isKeyringPairs$Json(json)) {
-            const accounts: ResponseJsonGetAccountInfo[] = json.accounts.map((account) => {
+            const accounts: ResponseJsonGetAccountInfo[] = [];
+
+            json.accounts.forEach((account) => {
               const genesisHash: string = account.meta.genesisHash as string;
 
               let addressPrefix: number | undefined;
@@ -153,14 +155,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               }
 
               if (isHex(account.address) && hexToU8a(account.address).length !== 20) {
-                address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
+                try {
+                  address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
+                } catch (e) {
+                  if (![33, 65].includes(hexToU8a(account.address).length)) {
+                    return;
+                  }
+
+                  throw e;
+                }
               }
 
-              return {
+              accounts.push({
                 address: address,
                 genesisHash: account.meta.genesisHash,
                 name: account.meta.name
-              } as ResponseJsonGetAccountInfo;
+              } as ResponseJsonGetAccountInfo);
             });
 
             setRequirePassword(true);
