@@ -22,7 +22,7 @@ import { importQrScan } from '@subwallet/extension-koni-ui/utils/scanner/attach'
 import { Icon, Image, ModalContext, SwQrScanner } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { QrCode, Scan, XCircle } from 'phosphor-react';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -95,7 +95,7 @@ const Component: React.FC<Props> = (props: Props) => {
     return promise;
   }, []);
 
-  const onSubmit = useCallback((account: QrAccount) => {
+  const onPreSubmit = useCallback((account: QrAccount) => {
     inactiveModal(modalId);
     setValidateState({
       message: '',
@@ -103,16 +103,16 @@ const Component: React.FC<Props> = (props: Props) => {
     });
     accountAddressValidator(account)
       .then(() => {
-        setScannedAccount(account);
+        activeModal(accountNameModalId);
       }).catch((error: Error) => {
         setValidateState({
           message: error.message,
           status: 'error'
         });
       });
-  }, [inactiveModal, accountAddressValidator]);
+  }, [inactiveModal, accountAddressValidator, activeModal]);
 
-  const onSubmitFinal = useCallback((name: string) => {
+  const onSubmit = useCallback((name: string) => {
     if (scannedAccount) {
       setLoading(true);
       setTimeout(() => {
@@ -149,7 +149,7 @@ const Component: React.FC<Props> = (props: Props) => {
     }
   }, [inactiveModal, onComplete, scannedAccount]);
 
-  const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, importQrScan, setValidateState, onSubmit);
+  const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, importQrScan, setValidateState, onPreSubmit);
 
   const onScan = useCallback(() => {
     checkUnlock().then(() => {
@@ -160,12 +160,6 @@ const Component: React.FC<Props> = (props: Props) => {
       // User cancelled unlock
     });
   }, [checkUnlock, openCamera]);
-
-  useEffect(() => {
-    if (scannedAccount) {
-      activeModal(accountNameModalId);
-    }
-  }, [scannedAccount, activeModal]);
 
   return (
     <PageWrapper className={CN(className)}>
@@ -260,7 +254,7 @@ const Component: React.FC<Props> = (props: Props) => {
       <AccountNameModal
         accountType={AccountProxyType.QR}
         isLoading={loading}
-        onSubmit={onSubmitFinal}
+        onSubmit={onSubmit}
       />
     </PageWrapper>
   );
