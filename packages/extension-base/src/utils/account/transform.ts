@@ -14,7 +14,7 @@ import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/typ
 import { hexStripPrefix, u8aToHex } from '@polkadot/util';
 import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 
-import { getDerivationInfo } from './derive';
+import { getSoloDerivationInfo } from './derive';
 
 export const createAccountProxyId = (_suri: string, derivationPath?: string) => {
   let data: string = _suri;
@@ -118,7 +118,7 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
 
   // Derive
   if (signMode === AccountSignMode.PASSWORD) {
-    const deriveInfo = getDerivationInfo(type, meta);
+    const deriveInfo = getSoloDerivationInfo(type, meta);
 
     if (networkType === AccountChainType.SUBSTRATE) {
       if (deriveInfo.depth === 0) {

@@ -3,7 +3,7 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountJson, AccountProxyData, CommonAccountErrorType, CreateDeriveAccountInfo, DeriveAccountInfo, DeriveErrorType, NextDerivePair, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, ResponseDeriveValidateV2, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, SWCommonAccountError, SWDeriveError } from '@subwallet/extension-base/types';
-import { createAccountProxyId, derivePair, findNextDerivePair, findNextDeriveUnified, getDerivationInfo, parseUnifiedSuriToDerivationPath, validateDerivationPath } from '@subwallet/extension-base/utils';
+import { createAccountProxyId, derivePair, findSoloNextDerive, findUnifiedNextDerive, getSoloDerivationInfo, parseUnifiedSuriToDerivationPath, validateDerivationPath } from '@subwallet/extension-base/utils';
 import { EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
@@ -190,7 +190,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     let rs: NextDerivePair;
 
     if (isUnified) {
-      rs = findNextDeriveUnified(proxyId, this.state.accounts);
+      rs = findUnifiedNextDerive(proxyId, this.state.accounts);
     } else {
       let pair: KeyringPair | undefined;
 
@@ -212,7 +212,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
         };
       }
 
-      rs = findNextDerivePair(proxyId);
+      rs = findSoloNextDerive(proxyId);
     }
 
     return {
@@ -263,7 +263,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
      * Now all root pair is in the first level, so don't need to deep find
      */
     const findRootPair = (account: AccountJson): KeyringPair | undefined => {
-      const deriveInfo = getDerivationInfo(account.type, account);
+      const deriveInfo = getSoloDerivationInfo(account.type, account);
       const needChangeRoot = deriveInfo.depth > 0;
       let rootPair: KeyringPair | undefined;
 

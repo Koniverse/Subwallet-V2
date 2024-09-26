@@ -42,7 +42,7 @@ export const parseUnifiedSuriToDerivationPath = (suri: string, type: KeypairType
   return '';
 };
 
-export const getDerivationInfo = (type: KeypairType, metadata: AccountDeriveData = {}): DeriveInfo => {
+export const getSoloDerivationInfo = (type: KeypairType, metadata: AccountDeriveData = {}): DeriveInfo => {
   const { derivationPath: derivePath, parentAddress, suri } = metadata;
 
   if (suri) {
@@ -144,10 +144,10 @@ export const getDerivationInfo = (type: KeypairType, metadata: AccountDeriveData
 };
 
 /**
- * @func findNextDerivePair
+ * @func findSoloNextDerive
  * @return {NextDerivePair}
  * */
-export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
+export const findSoloNextDerive = (parentAddress: string): NextDerivePair => {
   let parentPair: KeyringPair | undefined;
 
   try {
@@ -158,7 +158,7 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
 
   assert(parentPair, t('Unable to find account'));
 
-  const deriveInfo = getDerivationInfo(parentPair.type, parentPair.meta);
+  const deriveInfo = getSoloDerivationInfo(parentPair.type, parentPair.meta);
   const needChangeRoot = deriveInfo.depth > 0;
   let rootPair: KeyringPair | undefined;
 
@@ -180,7 +180,7 @@ export const findNextDerivePair = (parentAddress: string): NextDerivePair => {
   const pairs = keyring.getPairs();
   const children = pairs.filter((p) => p.meta.parentAddress === rootAddress);
   const childrenMetadata = children
-    .map(({ meta, type }) => getDerivationInfo(type, meta))
+    .map(({ meta, type }) => getSoloDerivationInfo(type, meta))
     .filter(({ autoIndexes, depth }) => {
       return depth === currentDepth + 1 && currentIndex === autoIndexes?.[currentDepth - 1];
     })

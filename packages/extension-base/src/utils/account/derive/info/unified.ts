@@ -4,6 +4,7 @@
 import { AccountProxyMap, AccountProxyType, DeriveInfo, NextDerivePair } from '@subwallet/extension-base/types';
 
 import { validateUnifiedDerivationPath } from '../validate';
+import { getSoloDerivationInfo } from './solo';
 
 export const getUnifiedDerivationInfo = (suri?: string): DeriveInfo => {
   if (suri) {
@@ -27,21 +28,37 @@ export const getUnifiedDerivationInfo = (suri?: string): DeriveInfo => {
 };
 
 /**
- * @func findNextDeriveUnified
+ * @func findUnifiedNextDerive
  * @return {NextDerivePair}
  * */
-export const findNextDeriveUnified = (proxyId: string, accounts: AccountProxyMap): NextDerivePair => {
+export const findUnifiedNextDerive = (proxyId: string, accounts: AccountProxyMap): NextDerivePair => {
   const currentProxy = accounts[proxyId];
   const parentProxyId = currentProxy.parentId || currentProxy.id;
   const parentProxy = accounts[parentProxyId];
   const deriveInfo = getUnifiedDerivationInfo(currentProxy.suri);
   const currentDepth = deriveInfo.depth;
   const currentIndex = deriveInfo.autoIndexes?.[currentDepth - 1];
-  const children = parentProxy.children?.map((id) => accounts[id]).filter((child) => child.accountType === AccountProxyType.UNIFIED) || [];
+  const children = parentProxy.children?.map((id) => accounts[id]) || [];
   const childrenMetadata = children
-    .map(({ suri }) => getUnifiedDerivationInfo(suri))
+    .map(({ accountType, accounts, suri }) => {
+      if (accountType === AccountProxyType.UNIFIED) {
+        return getUnifiedDerivationInfo(suri);
+      } else {
+        const account = accounts[0];
+
+        return getSoloDerivationInfo(account.type, account);
+      }
+    })
     .filter(({ autoIndexes, depth }) => {
-      return depth === currentDepth + 1 && currentIndex === autoIndexes?.[currentDepth - 1];
+      if (depth !== currentDepth + 1) {
+        return false;
+      }
+
+      if (autoIndexes?.includes(undefined)) {
+        return false;
+      }
+
+      return currentIndex === autoIndexes?.[currentDepth - 1];
     })
     .sort((a, b) => {
       const aDeriveIndex = a.autoIndexes?.[currentDepth];
