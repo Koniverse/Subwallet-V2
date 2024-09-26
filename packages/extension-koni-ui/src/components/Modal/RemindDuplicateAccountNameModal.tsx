@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { EXTENSION_VERSION, REMIND_UPGRADE_UNIFIED_ACCOUNT, UPGRADE_UNIFIED_ACCOUNT, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
+import { EXTENSION_VERSION, REMIND_DUPLICATE_ACCOUNT_NAME_MODAL, UPGRADE_DUPLICATE_ACCOUNT_NAME, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { getValueLocalStorageWS, setValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
@@ -15,23 +15,23 @@ import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
 
-const RemindUpdateUnifiedAccountModalId = REMIND_UPGRADE_UNIFIED_ACCOUNT;
+const RemindDuplicateAccountNameModalId = REMIND_DUPLICATE_ACCOUNT_NAME_MODAL;
 const PreviousVersion = 'previous_version';
 const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-guide/account-management/switch-between-accounts-and-change-account-name#change-your-account-name';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const [isNeedRemindUnifiedAccount, setIsNeedRemindUnifiedAccount] = useState(false);
+  const [isNeedRemindDuplicateAccountName, setIsNeedRemindDuplicateAccountName] = useState(false);
   const { token } = useTheme() as Theme;
 
   const onCancel = useCallback(() => {
-    inactiveModal(RemindUpdateUnifiedAccountModalId);
-    setIsNeedRemindUnifiedAccount(true);
-    setValueLocalStorageWS({ key: UPGRADE_UNIFIED_ACCOUNT, value: 'false' }).catch(noop);
+    inactiveModal(RemindDuplicateAccountNameModalId);
+    setIsNeedRemindDuplicateAccountName(true);
+    setValueLocalStorageWS({ key: UPGRADE_DUPLICATE_ACCOUNT_NAME, value: 'false' }).catch(noop);
   }, [inactiveModal]);
 
-  const onCheckNeedRemindUnifiedAccount = useCallback(async () => {
+  const onCheckNeedRemindDuplicateAccountName = useCallback(async () => {
     const currentParts = VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT.split('.').map(Number);
     const nextParts = EXTENSION_VERSION.split('.').map(Number);
     const isUpdateVersion = await getValueLocalStorageWS(PreviousVersion);
@@ -39,28 +39,28 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     if (isUpdateVersion) {
       for (let i = 0; i < currentParts.length; i++) {
         if (nextParts[i] > currentParts[i]) {
-          return isNeedRemindUnifiedAccount;
+          return isNeedRemindDuplicateAccountName;
         }
       }
     }
 
     return false;
-  }, [isNeedRemindUnifiedAccount]);
+  }, [isNeedRemindDuplicateAccountName]);
 
   const onRemindUpdateUnifiedAccount = useCallback(async () => {
-    const showUnifiedAccountModalReminder = await onCheckNeedRemindUnifiedAccount();
+    const showDuplicateAccountNameModalReminder = await onCheckNeedRemindDuplicateAccountName();
 
-    if (showUnifiedAccountModalReminder) {
-      activeModal(RemindUpdateUnifiedAccountModalId);
+    if (showDuplicateAccountNameModalReminder) {
+      activeModal(RemindDuplicateAccountNameModalId);
     } else {
-      inactiveModal(RemindUpdateUnifiedAccountModalId);
+      inactiveModal(RemindDuplicateAccountNameModalId);
     }
-  }, [activeModal, inactiveModal, onCheckNeedRemindUnifiedAccount]);
+  }, [activeModal, inactiveModal, onCheckNeedRemindDuplicateAccountName]);
 
   useEffect(() => {
-    getValueLocalStorageWS(UPGRADE_UNIFIED_ACCOUNT).then((value) => {
+    getValueLocalStorageWS(UPGRADE_DUPLICATE_ACCOUNT_NAME).then((value) => {
       if (value) {
-        setIsNeedRemindUnifiedAccount(value === 'true');
+        setIsNeedRemindDuplicateAccountName(value === 'true');
       }
     }).catch(noop);
   }, []);
@@ -87,7 +87,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         className={CN(className)}
         closable={true}
         footer={footerModal}
-        id={RemindUpdateUnifiedAccountModalId}
+        id={RemindDuplicateAccountNameModalId}
         maskClosable={false}
         onCancel={onCancel}
         title={t('Duplicate account name')}
@@ -115,7 +115,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   );
 }
 
-const RemindUpgradeUnifiedAccount = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const RemindDuplicateAccountNameModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.__modal-content': {
       display: 'flex',
@@ -148,4 +148,4 @@ const RemindUpgradeUnifiedAccount = styled(Component)<Props>(({ theme: { token }
   };
 });
 
-export default RemindUpgradeUnifiedAccount;
+export default RemindDuplicateAccountNameModal;

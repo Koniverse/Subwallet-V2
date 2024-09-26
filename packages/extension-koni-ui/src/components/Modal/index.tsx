@@ -6,7 +6,7 @@ export { default as DeriveAccountActionModal } from './DeriveAccountActionModal'
 export { default as DisconnectExtensionModal } from './DisconnectExtensionModal';
 export { default as ReceiveModal } from './ReceiveModalNew';
 export { default as RemindBackupSeedPhraseModal } from './RemindBackupSeedPhraseModal';
-export { default as RemindUpgradeUnifiedAccount } from './RemindUpgradeUnifiedAccount';
+export { default as RemindUpgradeUnifiedAccount } from './RemindDuplicateAccountNameModal';
 export { default as RemindUpgradeVersionModal } from './RemindUpgradeFirefoxVersion';
 export { default as RequestCameraAccessModal } from './RequestCameraAccessModal';
 export { default as RequestCreatePasswordModal } from './RequestCreatePasswordModal';

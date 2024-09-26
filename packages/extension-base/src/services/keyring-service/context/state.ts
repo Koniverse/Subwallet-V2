@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountRefMap } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY, UPGRADE_UNIFIED_ACCOUNT } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, UPGRADE_DUPLICATE_ACCOUNT_NAME } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
@@ -119,7 +119,7 @@ export class AccountState {
         const accountNameDuplicates = this.getDuplicateAccountNames(transformedAccounts);
 
         if (accountNameDuplicates.length > 0) {
-          SWStorage.instance.setItem(UPGRADE_UNIFIED_ACCOUNT, 'true').catch(console.error);
+          SWStorage.instance.setItem(UPGRADE_DUPLICATE_ACCOUNT_NAME, 'true').catch(console.error);
 
           for (const accountProxy of transformedAccounts) {
             if (accountNameDuplicates.includes(accountProxy.name)) {
