@@ -154,11 +154,12 @@ export class AccountJsonHandler extends AccountBaseHandler {
             isExistName: false
           };
 
-          const addressExists = this.state.checkAddressExists(proxy.accounts.map((account) => account.address));
+          const accountExists = this.state.checkAddressExists(proxy.accounts.map((account) => account.address));
           const nameExists = this.state.checkNameExists(proxy.name);
 
-          rs.isExistAccount = !!addressExists;
+          rs.isExistAccount = !!accountExists;
           rs.isExistName = nameExists;
+          rs.name = accountExists ? accountExists.name : proxy.name;
 
           return rs;
         });

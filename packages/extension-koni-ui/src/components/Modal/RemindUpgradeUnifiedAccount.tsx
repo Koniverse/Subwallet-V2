@@ -22,12 +22,12 @@ const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const [isNeedUpdatedUnifiedAccount, setIsNeedUpdatedUnifiedAccount] = useState(false);
+  const [isNeedRemindUnifiedAccount, setIsNeedRemindUnifiedAccount] = useState(false);
   const { token } = useTheme() as Theme;
 
   const onCancel = useCallback(() => {
     inactiveModal(RemindUpdateUnifiedAccountModalId);
-    setIsNeedUpdatedUnifiedAccount(true);
+    setIsNeedRemindUnifiedAccount(true);
     setValueLocalStorageWS({ key: UPGRADE_UNIFIED_ACCOUNT, value: 'false' }).catch(noop);
   }, [inactiveModal]);
 
@@ -39,28 +39,28 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     if (isUpdateVersion) {
       for (let i = 0; i < currentParts.length; i++) {
         if (nextParts[i] > currentParts[i]) {
-          return true;
+          return isNeedRemindUnifiedAccount;
         }
       }
     }
 
     return false;
-  }, []);
+  }, [isNeedRemindUnifiedAccount]);
 
   const onRemindUpdateUnifiedAccount = useCallback(async () => {
-    const isNeedRemindUnifiedAccount = await onCheckNeedRemindUnifiedAccount();
+    const showUnifiedAccountModalReminder = await onCheckNeedRemindUnifiedAccount();
 
-    if (isNeedRemindUnifiedAccount && !isNeedUpdatedUnifiedAccount) {
+    if (showUnifiedAccountModalReminder) {
       activeModal(RemindUpdateUnifiedAccountModalId);
     } else {
       inactiveModal(RemindUpdateUnifiedAccountModalId);
     }
-  }, [activeModal, inactiveModal, isNeedUpdatedUnifiedAccount, onCheckNeedRemindUnifiedAccount]);
+  }, [activeModal, inactiveModal, onCheckNeedRemindUnifiedAccount]);
 
   useEffect(() => {
     getValueLocalStorageWS(UPGRADE_UNIFIED_ACCOUNT).then((value) => {
       if (value) {
-        setIsNeedUpdatedUnifiedAccount(value === 'true');
+        setIsNeedRemindUnifiedAccount(value === 'true');
       }
     }).catch(noop);
   }, []);

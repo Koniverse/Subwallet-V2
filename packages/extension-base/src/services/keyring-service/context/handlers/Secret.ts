@@ -204,6 +204,12 @@ export class AccountSecretHandler extends AccountBaseHandler {
   }
 
   public checkPublicAndSecretKey ({ publicKey, secretKey }: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
+    let response: ResponseCheckPublicAndSecretKey = {
+      address: '',
+      isValid: true,
+      isEthereum: false
+    };
+
     try {
       const _secret = hexStripPrefix(secretKey);
 
@@ -215,13 +221,13 @@ export class AccountSecretHandler extends AccountBaseHandler {
           const type: KeypairType = 'ethereum';
           const address = keyring.createFromUri(suri, {}, type).address;
 
-          return {
+          response = {
             address: address,
             isValid: true,
             isEthereum: true
           };
         } else {
-          return {
+          response = {
             address: '',
             isValid: false,
             isEthereum: true
@@ -231,7 +237,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
 
       const keyPair = keyring.keyring.createFromPair({ publicKey: hexToU8a(publicKey), secretKey: hexToU8a(secretKey) }, {}, 'sr25519');
 
-      return {
+      response = {
         address: keyPair.address,
         isValid: true,
         isEthereum: false
@@ -245,6 +251,17 @@ export class AccountSecretHandler extends AccountBaseHandler {
         isEthereum: false
       };
     }
+
+    if (response.isValid) {
+      const exists = this.state.checkAddressExists([response.address]);
+
+      if (exists) {
+        response.errorMessage = t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } });
+        response.isValid = false;
+      }
+    }
+
+    return response;
   }
 
   public accountExportPrivateKey (request: RequestAccountExportPrivateKey): ResponseAccountExportPrivateKey {
