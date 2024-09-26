@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { DEFAULT_NOTIFICATION_SETTING, DEMO_WITHDRAWABLE_ITEM, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
+import { CronServiceInterface } from '@subwallet/extension-base/services/base/types';
+import { DEFAULT_NOTIFICATION_SETTING, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { NotificationInfo, NotificationOptions, NotificationSetting, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
-import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
+import { UnstakingStatus, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 
-export class InappNotificationService {
-  private notificationList: NotificationInfo[] = [];
+export class InappNotificationService implements CronServiceInterface {
   private notificationSetting: NotificationSetting = DEFAULT_NOTIFICATION_SETTING;
   readonly dbService: DatabaseService;
 
@@ -16,31 +16,8 @@ export class InappNotificationService {
     this.dbService = dbService;
   }
 
-  async init () {
-    this.addNotifications([DEMO_WITHDRAWABLE_ITEM]);
-    const notifications = this.getNotifications();
-
-    console.log('notifications', notifications);
-
-    const position = await this.getPoolPositionByAddressesFromDB(['5CFh4qpiB5PxsQvPEs6dWAhzgAVLHZa8tZKxeE9XsHBg4n9t']);
-
-    console.log('position', position);
-
-    const pst = await this.getWithdrawNotificationsFromDB(['5CFh4qpiB5PxsQvPEs6dWAhzgAVLHZa8tZKxeE9XsHBg4n9t']);
-
-    console.log('pst', pst);
-  }
-
   getNotification (id: string) {
     this.dbService.getNotification(id);
-  }
-
-  getNotifications () {
-    return this.notificationList;
-  }
-
-  addNotifications (notifications: NotificationInfo[]) {
-    this.notificationList.push(...notifications);
   }
 
   updateNotificationOptions (notificationOptions: NotificationOptions) {
@@ -55,10 +32,9 @@ export class InappNotificationService {
     return this.dbService.getYieldPositionByAddress(addresses);
   }
 
-  async getWithdrawNotificationsFromDB (addresses: string[]) {
+  async getWithdrawNotificationsFromDB (poolPositions: YieldPositionInfo[]) {
     const NOTIFICATION_TRANSACTION_TYPE = NotificationTransactionType.WITHDRAW;
     const allWithdrawNotifications: NotificationInfo[] = [];
-    const poolPositions = await this.getPoolPositionByAddressesFromDB(addresses);
 
     for (const poolPosition of poolPositions) {
       if (!poolPosition.unstakings.length) {

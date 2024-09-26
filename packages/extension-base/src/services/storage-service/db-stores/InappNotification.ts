@@ -8,4 +8,8 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
   async getNotificationInfo (id: string) {
     return this.table.get(id);
   }
+
+  async getAll () {
+    return this.table.toArray();
+  }
 }

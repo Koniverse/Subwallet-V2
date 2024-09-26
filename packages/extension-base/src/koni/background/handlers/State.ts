@@ -334,7 +334,6 @@ export default class KoniState {
     await this.balanceService.init();
     await this.earningService.init();
     await this.swapService.init();
-    await this.inappNotificationService.init();
 
     this.onReady();
     this.onAccountAdd();
@@ -371,6 +370,15 @@ export default class KoniState {
 
     this.dbService.subscribeMantaPayConfig(_DEFAULT_MANTA_ZK_CHAIN, (data) => {
       this.mantaPayConfigSubject.next(data);
+    });
+
+    this.dbService.subscribeYieldPosition([], (yieldPositions) => {
+      this.inappNotificationService.getWithdrawNotificationsFromDB(yieldPositions).then(async (notifications) => {
+        // todo: add condition to upsert notification or not
+        // const currentNotifications = await this.dbService.getAllNotifications();
+        // ...
+        await this.dbService.upsertNotifications(notifications);
+      });
     });
   }
 
