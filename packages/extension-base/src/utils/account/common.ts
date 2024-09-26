@@ -56,17 +56,22 @@ export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo
   if (chainType === AccountChainType.SUBSTRATE) {
     return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
   } else if (chainType === AccountChainType.TON) {
-    const tonInfoData = isTonAddress(address) && tonAddressInfo(address);
     const isTestnet = chainInfo.isTestnet;
-
-    if (tonInfoData && tonInfoData.isBounceable && (tonInfoData.isTestOnly === isTestnet)) {
-      return address;
-    }
 
     return reformatAddress(address, isTestnet ? 0 : 1);
   } else {
     return address;
   }
+};
+
+export const _isBounceableAddressWithChain = (address: string, chainInfo: _ChainInfo): boolean => {
+  const tonInfoData = isTonAddress(address) && tonAddressInfo(address);
+
+  if (tonInfoData && tonInfoData.isBounceable && (tonInfoData.isTestOnly === chainInfo.isTestnet)) {
+    return true;
+  }
+
+  return false;
 };
 
 export const getAccountChainTypeForAddress = (address: string): AccountChainType => {

@@ -9,6 +9,7 @@ import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferU
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
+import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
@@ -575,30 +576,32 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
+      if (TON_CHAINS.includes(values.chain)) {
+        const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
 
-      if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
-        openAlert({
-          type: NotificationType.WARNING,
-          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-          title: t('Pay attention!'),
-          okButton: {
-            text: t('Transfer'),
-            onClick: () => {
-              closeAlert();
-              options.isTransferBounceable = true;
-              _doSubmit().catch((error) => {
-                console.error('Error during submit:', error);
-              });
+        if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+          openAlert({
+            type: NotificationType.WARNING,
+            content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
+            title: t('Pay attention!'),
+            okButton: {
+              text: t('Transfer'),
+              onClick: () => {
+                closeAlert();
+                options.isTransferBounceable = true;
+                _doSubmit().catch((error) => {
+                  console.error('Error during submit:', error);
+                });
+              }
+            },
+            cancelButton: {
+              text: t('Cancel'),
+              onClick: closeAlert
             }
-          },
-          cancelButton: {
-            text: t('Cancel'),
-            onClick: closeAlert
-          }
-        });
+          });
 
-        return;
+          return;
+        }
       }
 
       doSubmit(values, options);

@@ -3,25 +3,10 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ChainType, ExtrinsicStatus, ExtrinsicType, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { getExtrinsicParserKey, subscanExtrinsicParserMap, supportedExtrinsicParser } from '@subwallet/extension-base/services/history-service/helpers/subscan-extrinsic-parser-helper';
 import { ExtrinsicItem, TransferItem } from '@subwallet/extension-base/services/subscan-service/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
-
-import { decodeAddress, encodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
-
-function autoFormatAddress (address: string): string {
-  try {
-    if (isEthereumAddress(address)) {
-      return address;
-    } else {
-      const decoded = decodeAddress(address);
-
-      return encodeAddress(decoded, 42);
-    }
-  } catch (e) {
-    return '';
-  }
-}
 
 export function parseSubscanExtrinsicData (address: string, extrinsicItem: ExtrinsicItem, chainInfo: _ChainInfo): TransactionHistoryItem | null {
   const extrinsicParserKey = getExtrinsicParserKey(extrinsicItem);
@@ -33,7 +18,7 @@ export function parseSubscanExtrinsicData (address: string, extrinsicItem: Extri
   const chainType = chainInfo.substrateInfo ? ChainType.SUBSTRATE : ChainType.EVM;
   const nativeDecimals = chainInfo.substrateInfo?.decimals || chainInfo.evmInfo?.decimals || 18;
   const nativeSymbol = chainInfo.substrateInfo?.symbol || chainInfo.evmInfo?.symbol || '';
-  const networkPrefix = chainInfo.substrateInfo?.addressPrefix ?? 42;
+  const networkPrefix = _getChainSubstrateAddressPrefix(chainInfo) !== -1 ? _getChainSubstrateAddressPrefix(chainInfo) : 42;
   const initData: TransactionHistoryItem = {
     address,
     origin: 'subscan',
@@ -79,7 +64,6 @@ export function parseSubscanTransferData (address: string, transferItem: Transfe
   const chainType = chainInfo.substrateInfo ? ChainType.SUBSTRATE : ChainType.EVM;
   const nativeDecimals = chainInfo.substrateInfo?.decimals || chainInfo.evmInfo?.decimals || 18;
   const nativeSymbol = chainInfo.substrateInfo?.symbol || chainInfo.evmInfo?.symbol || '';
-  const from = autoFormatAddress(transferItem.from);
 
   if (!transferItem.from_account_display || !transferItem.to_account_display) {
     return null;
@@ -92,7 +76,7 @@ export function parseSubscanTransferData (address: string, transferItem: Transfe
     chainType,
     from: transferItem.from,
     fromName: transferItem.from_account_display.display || transferItem.from_account_display.address,
-    direction: isSameAddress(address, from) ? TransactionDirection.SEND : TransactionDirection.RECEIVED,
+    direction: isSameAddress(address, transferItem.from) ? TransactionDirection.SEND : TransactionDirection.RECEIVED,
     blockNumber: transferItem.block_num,
     blockHash: '',
     chain: chainInfo.slug,
