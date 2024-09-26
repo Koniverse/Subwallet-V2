@@ -3,16 +3,15 @@
 
 import { EXTENSION_VERSION, REMIND_UPGRADE_UNIFIED_ACCOUNT, UPGRADE_UNIFIED_ACCOUNT, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { getValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
+import { getValueLocalStorageWS, setValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { noop } from '@subwallet/extension-koni-ui/utils';
 import { Button, ModalContext, PageIcon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ShieldWarning } from 'phosphor-react';
-import React, { useCallback, useContext, useEffect, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import styled, { useTheme } from 'styled-components';
-import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
 
@@ -23,13 +22,14 @@ const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const [isUpdatedUnifiedAccount, setIsUpdatedUnifiedAccount] = useLocalStorage(UPGRADE_UNIFIED_ACCOUNT, false);
+  const [isNeedUpdatedUnifiedAccount, setIsNeedUpdatedUnifiedAccount] = useState(false);
   const { token } = useTheme() as Theme;
 
   const onCancel = useCallback(() => {
     inactiveModal(RemindUpdateUnifiedAccountModalId);
-    setIsUpdatedUnifiedAccount(true);
-  }, [inactiveModal, setIsUpdatedUnifiedAccount]);
+    setIsNeedUpdatedUnifiedAccount(true);
+    setValueLocalStorageWS({ key: UPGRADE_UNIFIED_ACCOUNT, value: 'false' }).catch(noop);
+  }, [inactiveModal]);
 
   const onCheckNeedRemindUnifiedAccount = useCallback(async () => {
     const currentParts = VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT.split('.').map(Number);
@@ -50,13 +50,20 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const onRemindUpdateUnifiedAccount = useCallback(async () => {
     const isNeedRemindUnifiedAccount = await onCheckNeedRemindUnifiedAccount();
 
-    if (isNeedRemindUnifiedAccount && !isUpdatedUnifiedAccount) {
+    if (isNeedRemindUnifiedAccount && !isNeedUpdatedUnifiedAccount) {
       activeModal(RemindUpdateUnifiedAccountModalId);
     } else {
       inactiveModal(RemindUpdateUnifiedAccountModalId);
     }
-  }, [activeModal, inactiveModal, isUpdatedUnifiedAccount, onCheckNeedRemindUnifiedAccount]);
+  }, [activeModal, inactiveModal, isNeedUpdatedUnifiedAccount, onCheckNeedRemindUnifiedAccount]);
 
+  useEffect(() => {
+    getValueLocalStorageWS(UPGRADE_UNIFIED_ACCOUNT).then((value) => {
+      if (value) {
+        setIsNeedUpdatedUnifiedAccount(value === 'true');
+      }
+    }).catch(noop);
+  }, []);
   useEffect(() => {
     onRemindUpdateUnifiedAccount().catch(noop);
   }, [onRemindUpdateUnifiedAccount]);
