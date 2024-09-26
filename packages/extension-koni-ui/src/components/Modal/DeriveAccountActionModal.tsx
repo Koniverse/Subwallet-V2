@@ -10,13 +10,14 @@ import { useCompleteCreateAccount, useGetAccountProxyById, useTranslation, useUn
 import { deriveAccountV3, deriveSuggest, validateAccountName, validateDerivePathV2 } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { noop } from '@subwallet/extension-koni-ui/utils';
 import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import CN from 'classnames';
 import { CaretLeft, CheckCircle } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
-import React, { Context, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Context, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import styled, { ThemeContext } from 'styled-components';
 
@@ -53,8 +54,6 @@ const Component: React.FC<Props> = (props: Props) => {
   const checkUnlock = useUnlockChecker();
   const onComplete = useCompleteCreateAccount();
 
-  const derivationInfoRef = useRef<DerivePathInfo | undefined>(undefined);
-
   const modalCloseButton = useMemo(() => (
     <Icon
       customSize={'24px'}
@@ -83,8 +82,9 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const [form] = Form.useForm<DeriveFormState>();
 
-  const networkType = derivationInfoRef.current?.type;
   const [loading, setLoading] = useState(false);
+  const [derivationInfo, setDerivationInfo] = useState<DerivePathInfo | undefined>(undefined);
+  const networkType = derivationInfo?.type;
 
   const closeModal = useCallback(
     () => {
@@ -100,8 +100,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const suriValidator = useCallback((rule: Rule, suri: string): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
-      console.log('suri validator', suri);
-      derivationInfoRef.current = undefined;
+      setDerivationInfo(undefined);
 
       if (!suri) {
         reject(t('Derive path is required'));
@@ -115,7 +114,7 @@ const Component: React.FC<Props> = (props: Props) => {
           if (rs.error) {
             reject(rs.error);
           } else {
-            derivationInfoRef.current = rs.info;
+            setDerivationInfo(rs.info);
             resolve();
           }
         })
@@ -154,7 +153,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
     const _suri = suri.trim();
     const _name = accountName.trim();
-    const _info = derivationInfoRef.current;
+    const _info = derivationInfo;
 
     if (!_info) {
       return;
@@ -206,7 +205,7 @@ const Component: React.FC<Props> = (props: Props) => {
     } else {
       _doSubmit();
     }
-  }, [checkUnlock, proxyId, closeModal, onComplete, onCompleteCb, form, openAlert, t, closeAlert]);
+  }, [derivationInfo, checkUnlock, proxyId, closeModal, onComplete, onCompleteCb, form, openAlert, t, closeAlert]);
 
   useEffect(() => {
     if (!accountProxy && isActive) {
@@ -226,7 +225,8 @@ const Component: React.FC<Props> = (props: Props) => {
             if (rs.info) {
               const suri = rs.info.derivationPath || rs.info.suri;
 
-              form.setFields([{ name: 'suri', value: suri, errors: [] }]);
+              form.setFieldValue('suri', suri);
+              form.validateFields(['suri']).catch(noop);
             }
           }
         })
@@ -287,7 +287,6 @@ const Component: React.FC<Props> = (props: Props) => {
               }
             ]}
             statusHelpAsTooltip={true}
-            validateTrigger={false}
           >
             <Input
               // id={passwordInputId}
@@ -316,7 +315,6 @@ const Component: React.FC<Props> = (props: Props) => {
                 }
               ]}
               statusHelpAsTooltip={true}
-              validateTrigger={false}
             >
               <Input
                 // id={passwordInputId}

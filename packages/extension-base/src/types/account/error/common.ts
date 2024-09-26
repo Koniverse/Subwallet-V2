@@ -11,7 +11,7 @@ export enum CommonAccountErrorType {
 
 const DEFAULT_DATA: Record<CommonAccountErrorType, { message: string, code: number | undefined }> = {
   [CommonAccountErrorType.ACCOUNT_NOT_FOUND]: { message: 'Account not found', code: 1001 },
-  [CommonAccountErrorType.ACCOUNT_EXISTED]: { message: 'Account already exists under the name {{name}}', code: 1002 },
+  [CommonAccountErrorType.ACCOUNT_EXISTED]: { message: 'Account already exists under the name "{{name}}"', code: 1002 },
   [CommonAccountErrorType.ACCOUNT_NAME_EXISTED]: { message: 'Account name already in use', code: 1003 }
 };
 
