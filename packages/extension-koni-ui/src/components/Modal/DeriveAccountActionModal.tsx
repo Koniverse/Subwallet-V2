@@ -17,7 +17,7 @@ import { Rule } from '@subwallet/react-ui/es/form';
 import CN from 'classnames';
 import { CaretLeft, CheckCircle } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
-import React, { Context, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { Context, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import styled, { ThemeContext } from 'styled-components';
 
@@ -83,8 +83,8 @@ const Component: React.FC<Props> = (props: Props) => {
   const [form] = Form.useForm<DeriveFormState>();
 
   const [loading, setLoading] = useState(false);
-  const [derivationInfo, setDerivationInfo] = useState<DerivePathInfo | undefined>(undefined);
-  const networkType = derivationInfo?.type;
+  const infoRef = useRef<DerivePathInfo | undefined>();
+  const networkType = infoRef.current?.type;
 
   const closeModal = useCallback(
     () => {
@@ -100,7 +100,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const suriValidator = useCallback((rule: Rule, suri: string): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
-      setDerivationInfo(undefined);
+      infoRef.current = undefined;
 
       if (!suri) {
         reject(t('Derive path is required'));
@@ -115,7 +115,7 @@ const Component: React.FC<Props> = (props: Props) => {
             if (rs.error) {
               reject(rs.error);
             } else {
-              setDerivationInfo(rs.info);
+              infoRef.current = rs.info;
               resolve();
             }
           })
@@ -139,7 +139,7 @@ const Component: React.FC<Props> = (props: Props) => {
       validateAccountName({ name: value })
         .then((rs) => {
           if (!rs.isValid) {
-            reject(t('Account name already exists'));
+            reject(t('Account name already in use'));
           } else {
             resolve();
           }
@@ -155,7 +155,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
     const _suri = suri.trim();
     const _name = accountName.trim();
-    const _info = derivationInfo;
+    const _info = infoRef.current;
 
     if (!_info) {
       return;
@@ -207,7 +207,7 @@ const Component: React.FC<Props> = (props: Props) => {
     } else {
       _doSubmit();
     }
-  }, [derivationInfo, checkUnlock, proxyId, closeModal, onComplete, onCompleteCb, form, openAlert, t, closeAlert]);
+  }, [checkUnlock, proxyId, closeModal, onComplete, onCompleteCb, form, openAlert, t, closeAlert]);
 
   useEffect(() => {
     if (!accountProxy && isActive) {
