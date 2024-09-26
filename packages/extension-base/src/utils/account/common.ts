@@ -64,16 +64,6 @@ export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo
   }
 };
 
-export const _isBounceableAddressWithChain = (address: string, chainInfo: _ChainInfo): boolean => {
-  const tonInfoData = isTonAddress(address) && tonAddressInfo(address);
-
-  if (tonInfoData && tonInfoData.isBounceable && (tonInfoData.isTestOnly === chainInfo.isTestnet)) {
-    return true;
-  }
-
-  return false;
-};
-
 export const getAccountChainTypeForAddress = (address: string): AccountChainType => {
   const type = getKeypairTypeByAddress(address);
 

@@ -547,20 +547,19 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      if (_isNativeToken(assetInfo)) {
-        const minAmount = _getTokenMinAmount(assetInfo);
-        const bnMinAmount = new BN(minAmount);
+      if (TON_CHAINS.includes(values.chain)) {
+        const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
 
-        if (bnMinAmount.gt(BN_ZERO) && isTransferAll && values.chain === values.destChain && !checkTransferAll) {
+        if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
           openAlert({
             type: NotificationType.WARNING,
-            content: t('Transferring all will remove all assets on this network. Are you sure?'),
+            content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
             title: t('Pay attention!'),
             okButton: {
               text: t('Transfer'),
               onClick: () => {
                 closeAlert();
-                checkTransferAll = true;
+                options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
                 });
@@ -576,19 +575,20 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      if (TON_CHAINS.includes(values.chain)) {
-        const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
+      if (_isNativeToken(assetInfo)) {
+        const minAmount = _getTokenMinAmount(assetInfo);
+        const bnMinAmount = new BN(minAmount);
 
-        if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+        if (bnMinAmount.gt(BN_ZERO) && isTransferAll && values.chain === values.destChain && !checkTransferAll) {
           openAlert({
             type: NotificationType.WARNING,
-            content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
+            content: t('Transferring all will remove all assets on this network. Are you sure?'),
             title: t('Pay attention!'),
             okButton: {
               text: t('Transfer'),
               onClick: () => {
                 closeAlert();
-                options.isTransferBounceable = true;
+                checkTransferAll = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
                 });

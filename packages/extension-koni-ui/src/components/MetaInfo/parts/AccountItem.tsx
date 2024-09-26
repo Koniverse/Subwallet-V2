@@ -27,8 +27,6 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
   const { t } = useTranslation();
   const account = useGetAccountByAddress(accountAddress);
 
-  console.log('account', account);
-
   const shortAddress = toShort(accountAddress);
 
   const name = accountName || account?.name;
