@@ -9,6 +9,7 @@ import { AssetStore, BalanceStore, ChainStore, CrowdloanStore, MetadataStore, Mi
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
 import CampaignStore from '@subwallet/extension-base/services/storage-service/db-stores/Campaign';
 import ChainStakingMetadataStore from '@subwallet/extension-base/services/storage-service/db-stores/ChainStakingMetadata';
+import InappNotificationStore from '@subwallet/extension-base/services/storage-service/db-stores/InappNotification';
 import MantaPayStore from '@subwallet/extension-base/services/storage-service/db-stores/MantaPay';
 import NominatorMetadataStore from '@subwallet/extension-base/services/storage-service/db-stores/NominatorMetadata';
 import { HistoryQuery } from '@subwallet/extension-base/services/storage-service/db-stores/Transaction';
@@ -64,8 +65,12 @@ export default class DatabaseService {
       nominatorMetadata: new NominatorMetadataStore(this._db.nominatorMetadata),
 
       mantaPay: new MantaPayStore(this._db.mantaPay),
-      campaign: new CampaignStore(this._db.campaign)
+      campaign: new CampaignStore(this._db.campaign),
       // assetRef: new AssetRefStore(this._db.assetRef)
+
+      // inapp notification
+      inappNotification: new InappNotificationStore(this._db.inappNotification)
+
     };
   }
 
@@ -588,6 +593,12 @@ export default class DatabaseService {
 
   public upsertCampaign (campaign: ICampaign) {
     return this.stores.campaign.upsertCampaign(campaign);
+  }
+
+  /* Inapp Notification */
+
+  public getNotification (id: string) {
+    return this.stores.inappNotification.getNotificationInfo(id);
   }
 
   async exportDB () {

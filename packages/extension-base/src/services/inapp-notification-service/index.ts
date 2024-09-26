@@ -31,6 +31,10 @@ export class InappNotificationService {
     console.log('pst', pst);
   }
 
+  getNotification (id: string) {
+    this.dbService.getNotification(id);
+  }
+
   getNotifications () {
     return this.notificationList;
   }
@@ -68,11 +72,11 @@ export class InappNotificationService {
       for (const unstaking of poolPosition.unstakings) {
         if (unstaking.status === UnstakingStatus.CLAIMABLE) {
           allWithdrawNotifications.push({
-            id: `${NOTIFICATION_TRANSACTION_TYPE}___${STAKING_TYPE}___${unstaking.targetTimestampMs}`,
+            id: `${NOTIFICATION_TRANSACTION_TYPE}___${STAKING_TYPE}___${Date.now()}`,
             title: NotificationTitleMap[NOTIFICATION_TRANSACTION_TYPE],
             description: this.getWithdrawNotificationDescription(unstaking.claimable, symbol, STAKING_TYPE), // divide decimal
             address: address,
-            time: unstaking.targetTimestampMs || Date.now(),
+            time: Date.now(),
             extrinsicType: ExtrinsicType.STAKING_WITHDRAW,
             isRead: false,
             actionType: NotificationTransactionType.WITHDRAW
