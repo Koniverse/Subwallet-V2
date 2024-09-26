@@ -560,6 +560,10 @@ export default class DatabaseService {
     await this.stores.yieldPosition.bulkUpsert(data);
   }
 
+  async getYieldPositions () {
+    return this.stores.yieldPosition.getAll();
+  }
+
   async getYieldPositionByAddress (addresses: string[]) {
     return this.stores.yieldPosition.getByAddress(addresses);
   }

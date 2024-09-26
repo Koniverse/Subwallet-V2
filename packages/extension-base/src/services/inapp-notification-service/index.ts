@@ -2,17 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { CronServiceInterface } from '@subwallet/extension-base/services/base/types';
+import { CRON_UPDATE_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
+import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { DEFAULT_NOTIFICATION_SETTING, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { NotificationInfo, NotificationOptions, NotificationSetting, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
-import { UnstakingStatus, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
 
 export class InappNotificationService implements CronServiceInterface {
+  status: ServiceStatus;
   private notificationSetting: NotificationSetting = DEFAULT_NOTIFICATION_SETTING;
-  readonly dbService: DatabaseService;
+  private refreshTimeout: NodeJS.Timeout | undefined;
+  private readonly dbService: DatabaseService;
 
   constructor (dbService: DatabaseService) {
+    this.status = ServiceStatus.NOT_INITIALIZED;
     this.dbService = dbService;
   }
 
@@ -32,9 +36,10 @@ export class InappNotificationService implements CronServiceInterface {
     return this.dbService.getYieldPositionByAddress(addresses);
   }
 
-  async getWithdrawNotificationsFromDB (poolPositions: YieldPositionInfo[]) {
+  async getWithdrawNotificationsFromDB () {
     const NOTIFICATION_TRANSACTION_TYPE = NotificationTransactionType.WITHDRAW;
     const allWithdrawNotifications: NotificationInfo[] = [];
+    const poolPositions = await this.dbService.getYieldPositions();
 
     for (const poolPosition of poolPositions) {
       if (!poolPosition.unstakings.length) {
@@ -66,5 +71,52 @@ export class InappNotificationService implements CronServiceInterface {
 
   getWithdrawNotificationDescription (amount: string, symbol: string, stakingType: YieldPoolType) {
     return `You has ${amount} ${symbol} ${stakingType} to withdraw`;
+  }
+
+  updateLastestNotifications () {
+    clearTimeout(this.refreshTimeout);
+
+    this.getWithdrawNotificationsFromDB().then(async (notifications) => {
+      // todo: add condition to upsert notification or not
+      await this.dbService.upsertNotifications(notifications);
+    });
+
+    this.refreshTimeout = setTimeout(this.updateLastestNotifications.bind(this), CRON_UPDATE_NOTIFICATION_INTERVAL);
+  }
+
+  async start (): Promise<void> {
+    if (this.status === ServiceStatus.STARTED) {
+      return;
+    }
+
+    try {
+      this.status = ServiceStatus.STARTING;
+      await this.startCron();
+      this.status = ServiceStatus.STARTED;
+    } catch (e) {
+
+    }
+  }
+
+  startCron (): Promise<void> {
+    this.updateLastestNotifications();
+
+    return Promise.resolve();
+  }
+
+  async stop (): Promise<void> {
+    try {
+      this.status = ServiceStatus.STOPPING;
+      await this.stopCron();
+      this.status = ServiceStatus.STOPPED;
+    } catch (e) {
+
+    }
+  }
+
+  stopCron (): Promise<void> {
+    clearTimeout(this.refreshTimeout);
+
+    return Promise.resolve(undefined);
   }
 }
