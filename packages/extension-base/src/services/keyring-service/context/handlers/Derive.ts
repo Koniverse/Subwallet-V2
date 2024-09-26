@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountJson, AccountProxyData, CreateDeriveAccountInfo, DeriveAccountInfo, NextDerivePair, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, ResponseDeriveValidateV2, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion } from '@subwallet/extension-base/types';
-import { DeriveErrorType, SWDeriveError } from '@subwallet/extension-base/types/account/error/derive';
+import { AccountJson, AccountProxyData, CommonAccountErrorType, CreateDeriveAccountInfo, DeriveAccountInfo, DeriveErrorType, NextDerivePair, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, ResponseDeriveValidateV2, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, SWCommonAccountError, SWDeriveError } from '@subwallet/extension-base/types';
 import { createAccountProxyId, derivePair, findNextDerivePair, findNextDeriveUnified, getDerivationInfo, parseUnifiedSuriToDerivationPath, validateDerivationPath } from '@subwallet/extension-base/utils';
 import { EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -58,7 +57,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
         }
 
         if (!index) {
-          throw Error(t('Invalid derive path'));
+          throw new SWDeriveError(DeriveErrorType.INVALID_DERIVATION_PATH);
         }
 
         meta.suri = `//${index}`;
@@ -138,7 +137,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
         type = pair.type;
       } catch (e) {
-        throw Error(t('Cannot find account'));
+        throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NOT_FOUND);
       }
     }
 
@@ -202,7 +201,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
       if (!pair) {
         return {
           proxyId,
-          error: new SWDeriveError(DeriveErrorType.ACCOUNT_NOT_FOUND).toJSON()
+          error: new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NOT_FOUND).toJSON()
         };
       }
 
@@ -239,7 +238,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const nameExists = this.state.checkNameExists(name);
 
     if (nameExists) {
-      throw Error(t('Account name already exists'));
+      throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NAME_EXISTED);
     }
 
     const validateRs = this.validateDerivePath({ proxyId: deriveId, suri });
@@ -248,7 +247,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
       if (validateRs.error) {
         throw Error(validateRs.error.message);
       } else {
-        throw Error(t('Invalid derivation path'));
+        throw new SWDeriveError(DeriveErrorType.INVALID_DERIVATION_PATH);
       }
     }
 
@@ -289,7 +288,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
       const accountProxy = this.state.value.accounts[deriveId];
 
       if (!accountProxy) {
-        throw Error(t('Cannot find account'));
+        throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NOT_FOUND);
       }
 
       const accounts = accountProxy.accounts;
@@ -300,7 +299,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
         const rootPair = findRootPair(account);
 
         if (!rootPair) {
-          throw Error(t('Cannot find root account'));
+          throw new SWDeriveError(DeriveErrorType.ROOT_ACCOUNT_NOT_FOUND);
         }
 
         const derivationPath = parseUnifiedSuriToDerivationPath(derivationInfo.suri, account.type);
@@ -320,13 +319,13 @@ export class AccountDeriveHandler extends AccountBaseHandler {
         const account = accountProxy.accounts.find((account) => account.type === type);
 
         if (!account) {
-          throw Error(t('Cannot find parent account'));
+          throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NOT_FOUND);
         }
 
         const rootPair = findRootPair(account);
 
         if (!rootPair) {
-          throw Error(t('Cannot find root account'));
+          throw new SWDeriveError(DeriveErrorType.ROOT_ACCOUNT_NOT_FOUND);
         }
 
         const childPair = derivePair(rootPair, request.name, derivationInfo.suri, derivationInfo.derivationPath);
@@ -340,13 +339,13 @@ export class AccountDeriveHandler extends AccountBaseHandler {
         const account = this.state.value.accounts[deriveId].accounts[0];
 
         if (!account) {
-          throw Error(t('Cannot find parent account'));
+          throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NOT_FOUND);
         }
 
         const rootPair = findRootPair(account);
 
         if (!rootPair) {
-          throw Error(t('Cannot find root account'));
+          throw new SWDeriveError(DeriveErrorType.ROOT_ACCOUNT_NOT_FOUND);
         }
 
         const childPair = derivePair(rootPair, request.name, derivationInfo.suri, derivationInfo.derivationPath);
@@ -367,7 +366,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const addresses = pairs.map((pair) => pair.address);
     const exists = this.state.checkAddressExists(addresses);
 
-    assert(!exists, t('Account already exists: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+    assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     childAccountProxy && this.state.upsertAccountProxyByKey(childAccountProxy);
     this.state.upsertModifyPairs(modifyPairs);
