@@ -14,6 +14,8 @@ import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/typ
 import { hexStripPrefix, u8aToHex } from '@polkadot/util';
 import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 
+import { getDerivationInfo } from './derive';
+
 export const createAccountProxyId = (_suri: string, derivationPath?: string) => {
   let data: string = _suri;
 
@@ -86,7 +88,7 @@ export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): A
   }
 };
 
-export const getAccountActions = (signMode: AccountSignMode, networkType: AccountChainType, type?: KeypairType, _meta?: KeyringPair$Meta): AccountActions[] => {
+export const getAccountActions = (signMode: AccountSignMode, networkType: AccountChainType, type: KeypairType, _meta?: KeyringPair$Meta, parentAccount?: AccountJson): AccountActions[] => {
   const result: AccountActions[] = [];
   const meta = _meta as AccountMetadataData;
 
@@ -116,11 +118,25 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
 
   // Derive
   if (signMode === AccountSignMode.PASSWORD) {
+    const deriveInfo = getDerivationInfo(type, meta);
+
     if (networkType === AccountChainType.SUBSTRATE) {
-      result.push(AccountActions.DERIVE);
-    } else if (type !== 'ton-native') {
-      if (meta && meta.isMasterAccount) {
+      if (deriveInfo.depth === 0) {
         result.push(AccountActions.DERIVE);
+      } else if (deriveInfo.depth === 1) {
+        if (parentAccount && parentAccount.accountActions.includes(AccountActions.DERIVE)) {
+          result.push(AccountActions.DERIVE);
+        }
+      }
+    } else if (type !== 'ton-native') {
+      if (deriveInfo.depth === 0) {
+        if (meta && meta.isMasterAccount) {
+          result.push(AccountActions.DERIVE);
+        }
+      } else if (deriveInfo.depth === 1) {
+        if (parentAccount && parentAccount.accountActions.includes(AccountActions.DERIVE)) {
+          result.push(AccountActions.DERIVE);
+        }
       }
     }
   }
@@ -338,7 +354,7 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
  * 3. If chain information is provided, add full data (accountActions, transactionActions) to account.
  * 4. Returns an `AccountJson` object containing the transformed account data.
  */
-export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => {
+export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>, parentAccount?: AccountJson): AccountJson => {
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
   const chainType: AccountChainType = getAccountChainType(type);
@@ -367,7 +383,7 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
     }
   }
 
-  const accountActions = getAccountActions(signMode, chainType, type, meta);
+  const accountActions = getAccountActions(signMode, chainType, type, meta, parentAccount);
   const transactionActions = getAccountTransactionActions(signMode, chainType, type, meta, specialChain);
   const tokenTypes = getAccountTokenTypes(type);
 
@@ -386,12 +402,17 @@ export const transformAccount = (address: string, _type?: KeypairType, meta?: Ke
   };
 };
 
-export const singleAddressToAccount = ({ json: { address, meta },
-  type }: SingleAddress, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
+export const singleAddressToAccount = (
+  { json: { address, meta }, type }: SingleAddress,
+  chainInfoMap?: Record<string, _ChainInfo>,
+  parentAccount?: AccountJson
+): AccountJson => transformAccount(address, type, meta, chainInfoMap, parentAccount);
 
-export const pairToAccount = ({ address,
-  meta,
-  type }: KeyringPair, chainInfoMap?: Record<string, _ChainInfo>): AccountJson => transformAccount(address, type, meta, chainInfoMap);
+export const pairToAccount = (
+  { address, meta, type }: KeyringPair,
+  chainInfoMap?: Record<string, _ChainInfo>,
+  parentAccount?: AccountJson
+): AccountJson => transformAccount(address, type, meta, chainInfoMap, parentAccount);
 
 export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Object.values(accounts).map((data) => singleAddressToAccount(data));
 
@@ -455,7 +476,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
     temp[address] = {
       id: address,
       name: account.name || account.address,
-      accounts: [account],
+      accounts: [{ ...account, proxyId: address }],
       chainTypes: [account.chainType],
       parentId: account.parentAddress,
       suri: account.suri,
@@ -513,6 +534,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
           accountType = convertAccountProxyType(account.signMode);
           accountActions = account.accountActions;
 
+          if (account.chainType === AccountChainType.TON) {
+            accountActions = accountActions.filter((action) => action !== AccountActions.DERIVE);
+          }
+
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
@@ -560,10 +585,48 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
   return result;
 };
 
+/**
+ * @summary Use for `AccountContext` subscribe account
+ * */
 export const combineAccountsWithSubjectInfo = (pairs: SubjectInfo, modifyPairs: ModifyPairStoreData, accountProxies: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {
-  const accounts = Object.values(pairs).map((data) => singleAddressToAccount(data, chainInfoMap));
+  const accountMap = {} as Record<string, AccountJson>;
 
-  return _combineAccounts(accounts, modifyPairs, accountProxies);
+  const convertAccount = (address: string): AccountJson => {
+    const value = pairs[address];
+
+    if (!value) {
+      throw new Error(`Unable to retrieve account '${address}'`);
+    }
+
+    const { json: { meta } } = value;
+
+    if (accountMap[address]) {
+      return accountMap[address];
+    }
+
+    const { parentAddress } = meta as AccountMetadataData;
+    let parentAccount: AccountJson | undefined;
+
+    if (parentAddress) {
+      parentAccount = accountMap[parentAddress];
+
+      if (!parentAccount && pairs[parentAddress]) {
+        parentAccount = convertAccount(parentAddress);
+      }
+    }
+
+    const rs = singleAddressToAccount(value, chainInfoMap, parentAccount);
+
+    accountMap[address] = rs;
+
+    return rs;
+  };
+
+  for (const address of Object.keys(pairs)) {
+    convertAccount(address);
+  }
+
+  return _combineAccounts(Object.values(accountMap), modifyPairs, accountProxies);
 };
 
 export const combineAccountsWithKeyPair = (pairs: KeyringPair[], modifyPairs?: ModifyPairStoreData, accountProxies?: AccountProxyStoreData, chainInfoMap?: Record<string, _ChainInfo>) => {

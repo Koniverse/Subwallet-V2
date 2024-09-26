@@ -4,11 +4,9 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { findChainInfoByChainId, findChainInfoByHalfGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_POLKADOT_NAMESPACE } from '@subwallet/extension-base/services/wallet-connect-service/constants';
-import { AccountJson } from '@subwallet/extension-base/types';
+import { AccountProxy } from '@subwallet/extension-base/types';
 import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { SessionTypes } from '@walletconnect/types';
-
-import { findAccountByAddress } from '../account';
 
 export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainInfo>, chains: string[]): Array<WalletConnectChainInfo> => {
   return chains.map((chain) => {
@@ -40,26 +38,19 @@ export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainI
   });
 };
 
-export const getWCAccountList = (accounts: AccountJson[], namespaces: SessionTypes.Namespaces): AccountJson[] => {
-  const rawMap: Record<string, string> = {};
+export const getWCAccountProxyList = (accountProxies: AccountProxy[], namespaces: SessionTypes.Namespaces): AccountProxy[] => {
+  const filteredList: string[] = [];
   const rawList = Object.values(namespaces).map((namespace) => namespace.accounts || []).flat();
 
   rawList.forEach((info) => {
     const [,, address] = info.split(':');
 
-    rawMap[address] = address;
-  });
-
-  const convertMap: Record<string, AccountJson> = {};
-  const convertList = Object.keys(rawMap).map((address): AccountJson | null => {
-    return findAccountByAddress(accounts, address);
-  });
-
-  convertList.forEach((info) => {
-    if (info) {
-      convertMap[info.address] = info;
+    if (!filteredList.includes(address)) {
+      filteredList.push(address);
     }
   });
 
-  return Object.values(convertMap);
+  return accountProxies.filter(({ accounts }) => {
+    return accounts.some(({ address }) => filteredList.includes(address));
+  });
 };

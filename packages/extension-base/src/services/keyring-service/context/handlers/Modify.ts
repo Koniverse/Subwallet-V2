@@ -230,16 +230,25 @@ export class AccountModifyHandler extends AccountBaseHandler {
       throw new Error('Invalid account type');
     }
 
+    const oldVerion = pair.ton.contractVersion;
     const oldAddress = pair.address;
+
+    if (oldVerion === version) {
+      return oldAddress;
+    }
+
     const modifiedPairs = this.state.modifyPairs;
     const modifiedPair = modifiedPairs[oldAddress];
+    const accountProxies = this.state.accountProxies;
+    const accountProxy = accountProxies[oldAddress];
 
     keyring.changeTonWalletContractVersion(modifyAddress, version);
 
     const newAddress = pair.address;
 
+    // Migrate modified pair
     if (modifiedPair) {
-      delete modifiedPairs[modifyAddress];
+      delete modifiedPairs[oldAddress];
 
       if (modifiedPair.accountProxyId === oldAddress) {
         modifiedPair.accountProxyId = newAddress;
@@ -247,6 +256,24 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
       modifiedPair.key = newAddress;
       modifiedPairs[newAddress] = modifiedPair;
+    }
+
+    // Migrate account proxy
+    if (accountProxy) {
+      delete accountProxies[oldAddress];
+
+      accountProxy.id = newAddress;
+      accountProxies[newAddress] = accountProxy;
+    }
+
+
+    const pairs = keyring.getPairs();
+    const childPairs = pairs.filter((pair) => pair.meta.parentAddress === oldAddress);
+
+    for (const childPair of childPairs) {
+      assert(pair, t('Unable to find account'));
+
+      keyring.saveAccountMeta(childPair, { ...childPair.meta, parentAddress: newAddress });
     }
 
     // In case the current account is a single account, and is the account being modified, update the current proxy id
@@ -257,6 +284,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     }
 
     this.state.upsertModifyPairs(modifiedPairs);
+    this.state.upsertAccountProxy(accountProxies);
 
     this.state.changeAddressAllowedAuthList(oldAddress, newAddress);
 

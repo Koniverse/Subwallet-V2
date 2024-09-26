@@ -9,7 +9,6 @@ export const IMPORT_ACCOUNT_MODAL = 'import-account-modal';
 export const ATTACH_ACCOUNT_MODAL = 'attach-account-modal';
 export const NEW_SEED_MODAL = 'new-seed-modal';
 export const IMPORT_SEED_MODAL = 'import-seed-modal';
-export const DERIVE_ACCOUNT_MODAL = 'derive-account-modal';
 export const REQUEST_CREATE_PASSWORD_MODAL = 'request-create-password-modal';
 export const CONFIRMATION_DETAIL_MODAL = 'confirmation-detail-modal';
 export const CONFIRMATION_QR_MODAL = 'confirmation-qr-modal';
@@ -73,3 +72,8 @@ export const EARNING_MIGRATION_MODAL = 'earning-migration-modal';
 /* Ledger */
 export const WARNING_LEDGER_RECEIVE_MODAL = 'warning-ledger-receive-modal';
 /* Ledger */
+
+/* Derive */
+export const DERIVE_ACCOUNT_LIST_MODAL = 'derive-account-list-modal';
+export const DERIVE_ACCOUNT_ACTION_MODAL = 'derive-account-action-modal';
+/* Derive */

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
+import { AccountProxy } from '@subwallet/extension-base/types';
 import { ActionItemType, ActionModal, EmptyList, FilterModal, PageWrapper, WebsiteAccessItem } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate, useFilterModal } from '@subwallet/extension-koni-ui/hooks';
 import { changeAuthorizationAll, forgetAllSite } from '@subwallet/extension-koni-ui/messaging';
@@ -25,26 +26,30 @@ function getWebsiteItems (authUrlMap: Record<string, AuthUrlInfo>): AuthUrlInfo[
   return Object.values(authUrlMap);
 }
 
-function getAccountCount (item: AuthUrlInfo): number {
+function getAccountCount (item: AuthUrlInfo, accountProxies: AccountProxy[]): number {
   const authType = item.accountAuthTypes;
 
   if (!authType) {
     return 0;
   }
 
-  const addressList = Object.keys(item.isAllowedMap);
+  return accountProxies.filter((ap) => {
+    return ap.accounts.some((account) => {
+      if (isEthereumAddress(account.address)) {
+        return authType.includes('evm') && item.isAllowedMap[account.address];
+      }
 
-  return authType.reduce<string[]>((list, accountAuthType) => {
-    if (accountAuthType === 'evm') {
-      addressList.forEach((address) => isEthereumAddress(address) && item.isAllowedMap[address] && list.push(address));
-    } else if (accountAuthType === 'substrate') {
-      addressList.forEach((address) => isSubstrateAddress(address) && item.isAllowedMap[address] && list.push(address));
-    } else if (accountAuthType === 'ton') {
-      addressList.forEach((address) => isTonAddress(address) && item.isAllowedMap[address] && list.push(address));
-    }
+      if (isSubstrateAddress(account.address)) {
+        return authType.includes('substrate') && item.isAllowedMap[account.address];
+      }
 
-    return list;
-  }, []).length;
+      if (isTonAddress(account.address)) {
+        return authType.includes('ton') && item.isAllowedMap[account.address];
+      }
+
+      return false;
+    });
+  }).length;
 }
 
 const ACTION_MODAL_ID = 'actionModalId';
@@ -59,6 +64,7 @@ enum FilterValue {
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const authUrlMap = useSelector((state: RootState) => state.settings.authUrls);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -169,7 +175,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     (item: AuthUrlInfo) => {
       return (
         <WebsiteAccessItem
-          accountCount={getAccountCount(item)}
+          accountCount={getAccountCount(item, accountProxies)}
           className={'__item'}
           domain={item.id}
           key={item.id}
@@ -178,7 +184,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         />
       );
     },
-    [onClickItem]
+    [accountProxies, onClickItem]
   );
 
   const renderEmptyList = useCallback(() => {

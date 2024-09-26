@@ -188,9 +188,9 @@ const API_LIST = [
   // 'pri(keyring.unlock)',
   // 'pri(keyring.lock)',
   // 'pri(keyring.export.mnemonic)',
-  // 'pri(derivation.validateV2)',
-  // 'pri(derivation.getList)',
-  // 'pri(derivation.create.multiple)'
+  // 'pri(accounts.derive.validateV2)',
+  // 'pri(accounts.derive.getList)',
+  // 'pri(accounts.derive.create.multiple)'
 ];
 
 let unsub: () => void;

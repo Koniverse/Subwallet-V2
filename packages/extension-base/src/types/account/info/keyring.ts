@@ -76,13 +76,19 @@ export interface AccountInjectData {
 /**
  * @interface AccountDeriveData
  * @prop {string} [parentAddress] - Parent's address
- * @prop {string} [suri] - Derivate path
+ * @prop {string} [suri] - Substrate: Derivation path | Other: Brief for the derivation path
+ * @prop {string} [derivationPath] - Derivation path
  * */
 export interface AccountDeriveData {
   /** Parent's address */
   parentAddress?: string;
-  /** Derivate path */
+  /**
+   * - Substrate: Derivation path
+   * - Other: Brief for the derivation path
+   * */
   suri?: string;
+  /** Derivation path */
+  derivationPath?: string;
 }
 
 /**

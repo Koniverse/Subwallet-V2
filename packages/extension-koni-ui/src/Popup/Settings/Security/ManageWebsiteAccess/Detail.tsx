@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
-import { AccountJson } from '@subwallet/extension-base/types';
-import { AccountItemWithProxyAvatar, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountChainType, AccountJson, AccountProxy } from '@subwallet/extension-base/types';
+import { AccountProxyItem, EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ActionItemType, ActionModal } from '@subwallet/extension-koni-ui/components/Modal/ActionModal';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { changeAuthorization, changeAuthorizationPerAccount, forgetSite, toggleAuthorization } from '@subwallet/extension-koni-ui/messaging';
+import { changeAuthorization, changeAuthorizationPerSite, forgetSite, toggleAuthorization } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updateAuthUrls } from '@subwallet/extension-koni-ui/stores/utils';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -29,27 +30,29 @@ type WrapperProps = ThemeProps;
 const ActionModalId = 'actionModalId';
 // const FilterModalId = 'filterModalId';
 
+const checkAccountAddressValid = (chainType: AccountChainType, accountAuthTypes?: AccountAuthType[]): boolean => {
+  if (!accountAuthTypes) {
+    return false;
+  }
+
+  switch (chainType) {
+    case AccountChainType.SUBSTRATE: return accountAuthTypes.includes('substrate');
+    case AccountChainType.ETHEREUM: return accountAuthTypes.includes('evm');
+    case AccountChainType.TON: return accountAuthTypes.includes('ton');
+  }
+
+  return false;
+};
+
 function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin, siteName }: Props): React.ReactElement<Props> {
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const [pendingMap, setPendingMap] = useState<Record<string, boolean>>({});
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
-  const accountItems = useMemo(() => {
-    const accountListWithoutAll = accounts.filter((opt) => opt.address !== 'ALL');
-
-    return accountAuthTypes.reduce<AccountJson[]>((list, accountAuthType) => {
-      if (accountAuthType === 'evm') {
-        accountListWithoutAll.forEach((account) => account.chainType === 'ethereum' && list.push(account));
-      } else if (accountAuthType === 'substrate') {
-        accountListWithoutAll.forEach((account) => account.chainType === 'substrate' && list.push(account));
-      } else if (accountAuthType === 'ton') {
-        accountListWithoutAll.forEach((account) => account.chainType === 'ton' && list.push(account));
-      }
-
-      return list;
-    }, []);
-  }, [accountAuthTypes, accounts]);
+  const accountProxyItems = useMemo(() => {
+    return accountProxies.filter((ap) => ap.id !== 'ALL' && ap.chainTypes.some((chainType) => checkAccountAddressValid(chainType, accountAuthTypes)));
+  }, [accountAuthTypes, accountProxies]);
 
   const onOpenActionModal = useCallback(() => {
     activeModal(ActionModalId);
@@ -117,23 +120,33 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
     return result;
   }, [authInfo.isAllowed, onCloseActionModal, origin, t, token]);
 
-  const renderItem = useCallback((item: AccountJson) => {
-    const isEnabled: boolean = authInfo.isAllowedMap[item.address];
+  const renderItem = useCallback((item: AccountProxy) => {
+    const isEnabled: boolean = item.accounts.some((account) => authInfo.isAllowedMap[account.address]);
 
     const onClick = () => {
       setPendingMap((prevMap) => {
         return {
           ...prevMap,
-          [item.address]: !isEnabled
+          [item.id]: !isEnabled
         };
       });
-      changeAuthorizationPerAccount(item.address, !isEnabled, origin, updateAuthUrls)
+      const newAllowedMap = { ...authInfo.isAllowedMap };
+
+      item.accounts.forEach((account) => {
+        if (checkAccountAddressValid(account.chainType, authInfo.accountAuthTypes)) {
+          newAllowedMap[account.address] = !isEnabled;
+        }
+      });
+
+      changeAuthorizationPerSite({ values: newAllowedMap, id: authInfo.id })
         .catch(console.log)
         .finally(() => {
           setPendingMap((prevMap) => {
             const newMap = { ...prevMap };
 
-            delete newMap[item.address];
+            if (newMap[item.id]) {
+              delete newMap[item.id];
+            }
 
             return newMap;
           });
@@ -141,21 +154,20 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
     };
 
     return (
-      <AccountItemWithProxyAvatar
-        account={item}
-        accountName={item.name}
-        key={item.address}
+      <AccountProxyItem
+        accountProxy={item}
+        key={item.id}
         rightPartNode={(
           <Switch
-            checked={pendingMap[item.address] === undefined ? isEnabled : pendingMap[item.address]}
-            disabled={!authInfo.isAllowed || pendingMap[item.address] !== undefined}
+            checked={pendingMap[item.id] === undefined ? isEnabled : pendingMap[item.id]}
+            disabled={!authInfo.isAllowed || pendingMap[item.id] !== undefined}
             {...{ onClick }}
             style={{ marginRight: 8 }}
           />
         )}
       />
     );
-  }, [authInfo.isAllowed, authInfo.isAllowedMap, origin, pendingMap]);
+  }, [authInfo.accountAuthTypes, authInfo.id, authInfo.isAllowed, authInfo.isAllowedMap, pendingMap]);
 
   const searchFunc = useCallback((item: AccountJson, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
@@ -208,12 +220,11 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
         title={siteName || authInfo.id}
       >
         <SwList.Section
-          displayRow
+          className={'list-account-item'}
           enableSearchInput
-          list={accountItems}
+          list={accountProxyItems}
           renderItem={renderItem}
           renderWhenEmpty={renderEmptyList}
-          rowGap = {'8px'}
           searchFunction={searchFunc}
           searchMinCharactersCount={2}
           searchPlaceholder={t<string>('Search account')}
@@ -276,6 +287,12 @@ const ManageWebsiteAccessDetail = styled(WrapperComponent)<Props>(({ theme: { to
       '.__action-item.block .ant-setting-item-name': {
         color: token.colorError
       }
+    },
+
+    '.list-account-item .ant-sw-list': {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 8
     }
   });
 });
