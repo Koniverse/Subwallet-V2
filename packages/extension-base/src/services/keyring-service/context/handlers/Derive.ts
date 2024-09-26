@@ -366,7 +366,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const addresses = pairs.map((pair) => pair.address);
     const exists = this.state.checkAddressExists(addresses);
 
-    assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+    assert(!exists, t('Account already exists under the name "{{name}}"', { replace: { name: exists?.name || exists?.address || '' } }));
 
     childAccountProxy && this.state.upsertAccountProxyByKey(childAccountProxy);
     this.state.upsertModifyPairs(modifyPairs);
