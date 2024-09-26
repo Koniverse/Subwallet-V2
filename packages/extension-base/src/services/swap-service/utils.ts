@@ -5,6 +5,7 @@ import { Asset, Assets, Chain, Chains } from '@chainflip/sdk/swap';
 import { COMMON_ASSETS, COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _getAssetDecimals } from '@subwallet/extension-base/services/chain-service/utils';
+import { CHAINFLIP_BROKER_API } from '@subwallet/extension-base/services/swap-service/handler/chainflip-handler';
 import { SwapPair, SwapProviderId } from '@subwallet/extension-base/types/swap';
 import BigN from 'bignumber.js';
 
@@ -72,4 +73,33 @@ export function convertSwapRate (rate: string, fromAsset: _ChainAsset, toAsset: 
   const bnRate = new BigN(rate);
 
   return bnRate.times(10 ** decimalDiff).pow(-1).toNumber();
+}
+
+export function getChainflipOptions (isTestnet: boolean) {
+  if (isTestnet) {
+    return {
+      network: getChainflipNetwork(isTestnet)
+    };
+  }
+
+  return {
+    network: getChainflipNetwork(isTestnet),
+    broker: getChainflipBroker(isTestnet)
+  };
+}
+
+function getChainflipNetwork (isTestnet: boolean) {
+  return isTestnet ? 'perseverance' : 'mainnet';
+}
+
+export function getChainflipBroker (isTestnet: boolean) { // noted: currently not use testnet broker
+  if (isTestnet) {
+    return {
+      url: `https://perseverance.chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
+    };
+  } else {
+    return {
+      url: `https://chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
+    };
+  }
 }

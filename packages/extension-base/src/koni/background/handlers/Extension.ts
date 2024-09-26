@@ -1854,13 +1854,13 @@ export default class KoniExtension {
     }
 
     const chainInfoMap = this.#koniState.getChainInfoMap();
-    const isFromSnowBridgeXcm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
+    const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
 
     if (fromKeyPair && destinationTokenInfo) {
-      if (isFromSnowBridgeXcm) {
+      if (isSnowBridgeEvmTransfer) {
         const evmApi = this.#koniState.getEvmApi(originNetworkKey);
 
         extrinsic = await createSnowBridgeExtrinsic({
@@ -1927,7 +1927,7 @@ export default class KoniExtension {
       transaction: extrinsic,
       data: inputData,
       extrinsicType: ExtrinsicType.TRANSFER_XCM,
-      chainType: !isFromSnowBridgeXcm ? ChainType.SUBSTRATE : ChainType.EVM,
+      chainType: !isSnowBridgeEvmTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
       transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
       ignoreWarnings: inputData.transferAll,
       isTransferAll: inputData.transferAll,
@@ -2090,15 +2090,16 @@ export default class KoniExtension {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, originTokenInfo.slug);
+    const existentialDeposit = originTokenInfo.minAmount || '0';
 
     if (destinationTokenInfo) {
-      const [bnMockFee, { value }] = await Promise.all([
+      const [bnMockExecutionFee, { value }] = await Promise.all([
         getXcmMockTxFee(substrateApi, chainInfoMap, originTokenInfo, destinationTokenInfo),
         this.getAddressTransferableBalance({ extrinsicType: ExtrinsicType.TRANSFER_XCM, address, networkKey: originTokenInfo.originChain, token: originTokenInfo.slug })
       ]);
 
       const bnMaxTransferable = new BigN(value);
-      const estimatedFee = bnMockFee.multipliedBy(XCM_FEE_RATIO); // multiply by weight to account for destination chain fee
+      const estimatedFee = bnMockExecutionFee.multipliedBy(XCM_FEE_RATIO).plus(new BigN(existentialDeposit));
 
       return bnMaxTransferable.minus(estimatedFee);
     }

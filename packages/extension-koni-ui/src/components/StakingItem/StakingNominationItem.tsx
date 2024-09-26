@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NominationInfo } from '@subwallet/extension-base/background/KoniTypes';
-import { useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainPrefixBySlug, useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { formatBalance, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Web3Block } from '@subwallet/react-ui';
@@ -21,6 +21,7 @@ type Props = ThemeProps & {
 const Component: React.FC<Props> = (props: Props) => {
   const { className, isSelected, nominationInfo } = props;
   const { chain } = nominationInfo;
+  const networkPrefix = useGetChainPrefixBySlug(chain);
 
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
@@ -35,6 +36,7 @@ const Component: React.FC<Props> = (props: Props) => {
         className={'validator-item-content'}
         leftItem={
           <SwAvatar
+            identPrefix={networkPrefix}
             size={40}
             value={nominationInfo.validatorAddress}
           />
