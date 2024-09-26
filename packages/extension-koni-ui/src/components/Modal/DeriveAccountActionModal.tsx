@@ -3,7 +3,7 @@
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountProxyType, DerivePathInfo } from '@subwallet/extension-base/types';
-import { detectTranslate } from '@subwallet/extension-base/utils';
+import { addLazy, detectTranslate } from '@subwallet/extension-base/utils';
 import { DERIVE_ACCOUNT_ACTION_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useCompleteCreateAccount, useGetAccountProxyById, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
@@ -106,19 +106,21 @@ const Component: React.FC<Props> = (props: Props) => {
         reject(t('Derive path is required'));
       }
 
-      validateDerivePathV2({
-        suri,
-        proxyId
-      })
-        .then((rs) => {
-          if (rs.error) {
-            reject(rs.error);
-          } else {
-            setDerivationInfo(rs.info);
-            resolve();
-          }
+      addLazy('validateDerivationPath', () => {
+        validateDerivePathV2({
+          suri,
+          proxyId
         })
-        .catch(reject);
+          .then((rs) => {
+            if (rs.error) {
+              reject(rs.error);
+            } else {
+              setDerivationInfo(rs.info);
+              resolve();
+            }
+          })
+          .catch(reject);
+      }, 500);
     });
   }, [t, proxyId]);
 
@@ -315,6 +317,7 @@ const Component: React.FC<Props> = (props: Props) => {
                 }
               ]}
               statusHelpAsTooltip={true}
+              validateTrigger={false}
             >
               <Input
                 // id={passwordInputId}
