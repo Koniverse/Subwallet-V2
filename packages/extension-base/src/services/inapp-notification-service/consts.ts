@@ -1,11 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {ExtrinsicType} from "@subwallet/extension-base/background/KoniTypes";
-import {
-  NotificationTransactionType,
-  NotificationTimePeriod
-} from "@subwallet/extension-base/services/inapp-notification-service/interfaces";
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
 export const DEMO_WITHDRAWABLE_ITEM = {
   id: '1',
@@ -23,13 +20,13 @@ export const DEFAULT_NOTIFICATION_SETTING = {
   notificationOptions: {
     balance: true,
     action: true,
-    announcement: true,
+    announcement: true
   }
-}
+};
 
 export const NotificationTitleMap = {
   [NotificationTransactionType.WITHDRAW]: 'Token Withdrawal',
   [NotificationTransactionType.CLAIM]: 'Token Claimable',
   [NotificationTransactionType.SEND]: 'Token Send',
   [NotificationTransactionType.RECEIVE]: 'Token Receive'
-}
+};

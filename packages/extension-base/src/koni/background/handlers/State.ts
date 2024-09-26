@@ -23,6 +23,7 @@ import { EventService } from '@subwallet/extension-base/services/event-service';
 import FeeService from '@subwallet/extension-base/services/fee-service/service';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
+import { InappNotificationService } from '@subwallet/extension-base/services/inapp-notification-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import MigrationService from '@subwallet/extension-base/services/migration-service';
 import MintCampaignService from '@subwallet/extension-base/services/mint-campaign-service';
@@ -143,6 +144,7 @@ export default class KoniState {
   readonly earningService: EarningService;
   readonly feeService: FeeService;
   readonly swapService: SwapService;
+  readonly inappNotificationService: InappNotificationService;
 
   // Handle the general status of the extension
   private generalStatus: ServiceStatus = ServiceStatus.INITIALIZING;
@@ -175,6 +177,7 @@ export default class KoniState {
     this.earningService = new EarningService(this);
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
+    this.inappNotificationService = new InappNotificationService(this.dbService);
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -331,6 +334,7 @@ export default class KoniState {
     await this.balanceService.init();
     await this.earningService.init();
     await this.swapService.init();
+    await this.inappNotificationService.init();
 
     this.onReady();
     this.onAccountAdd();
