@@ -6270,12 +6270,12 @@ __metadata:
 
 "@subwallet/chain-list@file:/home/nampc/code/subwallet/SubWallet-ChainList/packages/chain-list/build::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.2.88-beta.1
-  resolution: "@subwallet/chain-list@file:/home/nampc/code/subwallet/SubWallet-ChainList/packages/chain-list/build#/home/nampc/code/subwallet/SubWallet-ChainList/packages/chain-list/build::hash=f45ed7&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/chain-list@file:/home/nampc/code/subwallet/SubWallet-ChainList/packages/chain-list/build#/home/nampc/code/subwallet/SubWallet-ChainList/packages/chain-list/build::hash=1beda0&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 881b620e2e96aa1c885c0ac9549138bc22251c3f32af04a2bfd58163386b13eca54e9a7d869e96d636af9c24077c2aef39df9e99ff65d2fc02bd8e7b2d871ead
+  checksum: 602678e3792f46edc25ec9646a0fdcc7acbf56d171e23a7a61af3341c2a8e58d0d639af7505ab91859ea243aeb5c29b1954e59db05ece96164fd55cabe7cba83
   languageName: node
   linkType: hard
 

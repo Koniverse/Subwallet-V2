@@ -279,14 +279,21 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
       quoteResponse.quote.includedFees.forEach((fee) => {
         switch (fee.type) {
-          case ChainflipFeeType.INGRESS:
+          case ChainflipFeeType.INGRESS: {
+            console.log('ingress', fee);
+            feeComponent.push({
+              tokenSlug: fromAsset.slug,
+              amount: fee.amount,
+              feeType: SwapFeeType.NETWORK_FEE
+            });
+            break;
+          }
 
           // eslint-disable-next-line no-fallthrough
           case ChainflipFeeType.EGRESS: {
-            const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
-
+            console.log('egress', fee);
             feeComponent.push({
-              tokenSlug,
+              tokenSlug: toAsset.slug,
               amount: fee.amount,
               feeType: SwapFeeType.NETWORK_FEE
             });
@@ -300,10 +307,10 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
           // eslint-disable-next-line no-fallthrough
           case ChainflipFeeType.BROKER: {
-            const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
+            console.log('broker fee', fee);
 
             feeComponent.push({
-              tokenSlug,
+              tokenSlug: this.intermediaryAssetSlug,
               amount: fee.amount,
               feeType: SwapFeeType.PLATFORM_FEE
             });
@@ -397,14 +404,14 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     const srcChainId = this.chainMapping[fromAsset.originChain];
     const destChainId = this.chainMapping[toAsset.originChain];
 
-    const fromAssetId = this.assetMapping[fromAsset.slug];
-    const toAssetId = this.assetMapping[toAsset.slug];
+    const fromAssetId = _getAssetSymbol(fromAsset);
+    const toAssetId = _getAssetSymbol(toAsset);
 
     const depositAddressResponse = await this.swapSdk.requestDepositAddress({
       srcChain: srcChainId,
       destChain: destChainId,
-      srcAsset: fromAssetId,
-      destAsset: toAssetId,
+      srcAsset: fromAssetId as Asset,
+      destAsset: toAssetId as Asset,
       destAddress: receiver,
       amount: quote.fromAmount
     });
