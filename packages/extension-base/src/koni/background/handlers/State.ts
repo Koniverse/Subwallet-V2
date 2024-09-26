@@ -371,15 +371,6 @@ export default class KoniState {
     this.dbService.subscribeMantaPayConfig(_DEFAULT_MANTA_ZK_CHAIN, (data) => {
       this.mantaPayConfigSubject.next(data);
     });
-
-    this.dbService.subscribeYieldPosition([], (yieldPositions) => {
-      this.inappNotificationService.getWithdrawNotificationsFromDB(yieldPositions).then(async (notifications) => {
-        // todo: add condition to upsert notification or not
-        // const currentNotifications = await this.dbService.getAllNotifications();
-        // ...
-        await this.dbService.upsertNotifications(notifications);
-      });
-    });
   }
 
   public onReady () {
@@ -1674,7 +1665,7 @@ export default class KoniState {
     this.campaignService.stop();
     await Promise.all([this.cron.stop(), this.subscription.stop()]);
     await this.pauseAllNetworks(undefined, 'IDLE mode');
-    await Promise.all([this.historyService.stop(), this.priceService.stop(), this.balanceService.stop(), this.earningService.stop(), this.swapService.stop()]);
+    await Promise.all([this.historyService.stop(), this.priceService.stop(), this.balanceService.stop(), this.earningService.stop(), this.swapService.stop(), this.inappNotificationService.stop()]);
 
     // Complete sleeping
     sleeping.resolve();
@@ -1711,7 +1702,7 @@ export default class KoniState {
     }
 
     // Start services
-    await Promise.all([this.cron.start(), this.subscription.start(), this.historyService.start(), this.priceService.start(), this.balanceService.start(), this.earningService.start(), this.swapService.start()]);
+    await Promise.all([this.cron.start(), this.subscription.start(), this.historyService.start(), this.priceService.start(), this.balanceService.start(), this.earningService.start(), this.swapService.start(), this.inappNotificationService.start()]);
 
     // Complete starting
     starting.resolve();
