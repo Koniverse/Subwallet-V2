@@ -64,11 +64,13 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const account = transformAccount(address, type, meta);
         const accountExists = this.state.checkAddressExists([address]);
         const nameExists = this.state.checkNameExists(name as string);
+        // Note: Show accountName of account exists to support user to know which account is existed
+        const accountName = accountExists ? accountExists.name : account.name || account.address;
 
         const proxy: AccountProxyExtra = {
           id: address,
           accountType: convertAccountProxyType(account.signMode),
-          name: account.name || account.address,
+          name: accountName,
           accounts: [account],
           chainTypes: [account.chainType],
           parentId: account.parentAddress,
