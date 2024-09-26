@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountRefMap } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, UPGRADE_DUPLICATE_ACCOUNT_NAME } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountProxyStoreSubject, CurrentAccountStoreSubject, ModifyPairStoreSubject } from '@subwallet/extension-base/services/keyring-service/context/stores';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
 import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType, isSameAddress } from '@subwallet/extension-base/utils';
@@ -118,6 +119,8 @@ export class AccountState {
         const accountNameDuplicates = this.getDuplicateAccountNames(transformedAccounts);
 
         if (accountNameDuplicates.length > 0) {
+          SWStorage.instance.setItem(UPGRADE_DUPLICATE_ACCOUNT_NAME, 'true').catch(console.error);
+
           for (const accountProxy of transformedAccounts) {
             if (accountNameDuplicates.includes(accountProxy.name)) {
               const name = accountProxy.name.concat(' - ').concat(generateRandomString());

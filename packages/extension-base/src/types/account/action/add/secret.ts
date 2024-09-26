@@ -58,5 +58,6 @@ export interface RequestCheckPublicAndSecretKey {
 export interface ResponseCheckPublicAndSecretKey {
   address: string;
   isValid: boolean;
+  errorMessage?: string;
   isEthereum: boolean;
 }
