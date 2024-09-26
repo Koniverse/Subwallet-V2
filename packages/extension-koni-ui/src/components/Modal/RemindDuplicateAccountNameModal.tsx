@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { EXTENSION_VERSION, REMIND_DUPLICATE_ACCOUNT_NAME_MODAL, UPGRADE_DUPLICATE_ACCOUNT_NAME, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
+import { REMIND_DUPLICATE_ACCOUNT_NAME_MODAL, UPGRADE_DUPLICATE_ACCOUNT_NAME } from '@subwallet/extension-koni-ui/constants';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { getValueLocalStorageWS, setValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
@@ -10,63 +10,31 @@ import { noop } from '@subwallet/extension-koni-ui/utils';
 import { Button, ModalContext, PageIcon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ShieldWarning } from 'phosphor-react';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
 
 const RemindDuplicateAccountNameModalId = REMIND_DUPLICATE_ACCOUNT_NAME_MODAL;
-const PreviousVersion = 'previous_version';
 const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-guide/account-management/switch-between-accounts-and-change-account-name#change-your-account-name';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const [isNeedRemindDuplicateAccountName, setIsNeedRemindDuplicateAccountName] = useState(false);
   const { token } = useTheme() as Theme;
 
   const onCancel = useCallback(() => {
     inactiveModal(RemindDuplicateAccountNameModalId);
-    setIsNeedRemindDuplicateAccountName(true);
     setValueLocalStorageWS({ key: UPGRADE_DUPLICATE_ACCOUNT_NAME, value: 'false' }).catch(noop);
   }, [inactiveModal]);
 
-  const onCheckNeedRemindDuplicateAccountName = useCallback(async () => {
-    const currentParts = VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT.split('.').map(Number);
-    const nextParts = EXTENSION_VERSION.split('.').map(Number);
-    const isUpdateVersion = await getValueLocalStorageWS(PreviousVersion);
-
-    if (isUpdateVersion) {
-      for (let i = 0; i < currentParts.length; i++) {
-        if (nextParts[i] > currentParts[i]) {
-          return isNeedRemindDuplicateAccountName;
-        }
-      }
-    }
-
-    return false;
-  }, [isNeedRemindDuplicateAccountName]);
-
-  const onRemindUpdateUnifiedAccount = useCallback(async () => {
-    const showDuplicateAccountNameModalReminder = await onCheckNeedRemindDuplicateAccountName();
-
-    if (showDuplicateAccountNameModalReminder) {
-      activeModal(RemindDuplicateAccountNameModalId);
-    } else {
-      inactiveModal(RemindDuplicateAccountNameModalId);
-    }
-  }, [activeModal, inactiveModal, onCheckNeedRemindDuplicateAccountName]);
-
   useEffect(() => {
     getValueLocalStorageWS(UPGRADE_DUPLICATE_ACCOUNT_NAME).then((value) => {
-      if (value) {
-        setIsNeedRemindDuplicateAccountName(value === 'true');
+      if (value === 'true') {
+        activeModal(RemindDuplicateAccountNameModalId);
       }
     }).catch(noop);
-  }, []);
-  useEffect(() => {
-    onRemindUpdateUnifiedAccount().catch(noop);
-  }, [onRemindUpdateUnifiedAccount]);
+  }, [activeModal]);
 
   const footerModal = useMemo(() => {
     return (

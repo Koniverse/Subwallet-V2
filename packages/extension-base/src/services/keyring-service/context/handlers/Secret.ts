@@ -233,15 +233,15 @@ export class AccountSecretHandler extends AccountBaseHandler {
             isEthereum: true
           };
         }
+      } else {
+        const keyPair = keyring.keyring.createFromPair({ publicKey: hexToU8a(publicKey), secretKey: hexToU8a(secretKey) }, {}, 'sr25519');
+
+        response = {
+          address: keyPair.address,
+          isValid: true,
+          isEthereum: false
+        };
       }
-
-      const keyPair = keyring.keyring.createFromPair({ publicKey: hexToU8a(publicKey), secretKey: hexToU8a(secretKey) }, {}, 'sr25519');
-
-      response = {
-        address: keyPair.address,
-        isValid: true,
-        isEthereum: false
-      };
     } catch (e) {
       console.error(e);
 
