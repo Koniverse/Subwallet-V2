@@ -5,8 +5,8 @@ import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
-import { AccountProxyAvatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
-import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { Avatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
+import { useGetChainPrefixBySlug, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
@@ -28,6 +28,7 @@ function Component ({ className, compound,
 
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(poolInfo.chain), [poolInfo.chain]);
 
+  const networkPrefix = useGetChainPrefixBySlug(poolInfo.chain);
   const haveNomination = useMemo(() => {
     return [YieldPoolType.NOMINATION_POOL, YieldPoolType.NATIVE_STAKING].includes(poolInfo.type);
   }, [poolInfo.type]);
@@ -61,12 +62,11 @@ function Component ({ className, compound,
               key={item.validatorAddress}
               label={(
                 <>
-                  <AccountProxyAvatar
-                    className={'__account-avatar'}
+                  <Avatar
+                    identPrefix={networkPrefix}
                     size={24}
                     value={item.validatorAddress}
                   />
-
                   <div className={'__nomination-name'}>
                     {item.validatorIdentity || toShort(item.validatorAddress)}
                   </div>

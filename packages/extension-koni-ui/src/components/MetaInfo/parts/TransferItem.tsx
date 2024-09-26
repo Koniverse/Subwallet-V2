@@ -1,10 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { reformatAddress } from '@subwallet/extension-base/utils';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ChainItem from '@subwallet/extension-koni-ui/components/MetaInfo/parts/ChainItem';
+import { useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainInfo } from '@subwallet/extension-koni-ui/types/chain';
-import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
@@ -38,6 +41,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     valueColorSchema = 'default' } = props;
 
   const { t } = useTranslation();
+  const accounts = useSelector((state: RootState) => state.accountState.accounts);
 
   const nameClassModifier = useMemo(() => {
     if (!!senderName && recipientName === undefined) {
@@ -50,6 +54,8 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
   }, [recipientName, senderName]);
 
   const genAccountBlock = (address: string, name?: string) => {
+    const originAddress = reformatAddress(address, 42);
+    const account = findAccountByAddress(accounts, originAddress);
     const shortAddress = toShort(address);
 
     if (name) {
@@ -60,7 +66,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
               <AccountProxyAvatar
                 className={'__account-avatar'}
                 size={24}
-                value={shortAddress}
+                value={account?.proxyId || address}
               />
               <div className={'__account-item-name'}>{name}</div>
             </div>
@@ -75,7 +81,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
         <AccountProxyAvatar
           className={'__account-avatar'}
           size={24}
-          value={shortAddress}
+          value={account?.proxyId || address}
         />
         <div className={'__account-name ml-xs'}>
           <div className={'__account-item-address'}>{shortAddress}</div>

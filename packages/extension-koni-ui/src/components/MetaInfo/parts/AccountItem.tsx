@@ -27,6 +27,8 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
   const { t } = useTranslation();
   const account = useGetAccountByAddress(accountAddress);
 
+  console.log('account', account);
+
   const shortAddress = toShort(accountAddress);
 
   const name = accountName || account?.name;
@@ -64,7 +66,7 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
                             <AccountProxyAvatar
                               className={'__account-avatar'}
                               size={24}
-                              value={accountAddress}
+                              value={account?.proxyId || accountAddress}
                             />
                             <div className={'__account-item-name'}>{name}</div>
                           </div>
@@ -76,7 +78,7 @@ const Component: React.FC<AccountInfoItem> = (props: AccountInfoItem) => {
                       <AccountProxyAvatar
                         className={'__account-avatar'}
                         size={24}
-                        value={accountAddress}
+                        value={account?.proxyId || accountAddress}
                       />
                       <div className={'__account-name ml-xs'}>
                         <div className={'__account-item-address'}>{shortAddress}</div>

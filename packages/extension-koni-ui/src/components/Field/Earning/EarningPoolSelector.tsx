@@ -4,8 +4,9 @@
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { YieldPoolType } from '@subwallet/extension-base/types';
 import { fetchStaticData } from '@subwallet/extension-base/utils';
-import { AccountProxyAvatar, StakingPoolItem } from '@subwallet/extension-koni-ui/components';
+import { StakingPoolItem } from '@subwallet/extension-koni-ui/components';
 import EmptyValidator from '@subwallet/extension-koni-ui/components/Account/EmptyValidator';
+import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
 import { BasicInputWrapper } from '@subwallet/extension-koni-ui/components/Field/Base';
 import { EarningPoolDetailModal } from '@subwallet/extension-koni-ui/components/Modal/Earning';
 import { EarningPoolDetailModalId } from '@subwallet/extension-koni-ui/components/Modal/Earning/EarningPoolDetailModal';
@@ -407,8 +408,8 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
         onSelect={_onSelectItem}
         placeholder={placeholder || t('Select pool')}
         prefix={(
-          <AccountProxyAvatar
-            className={'__account-avatar'}
+          <Avatar
+            identPrefix={networkPrefix}
             size={20}
             value={selectedAddress}
           />

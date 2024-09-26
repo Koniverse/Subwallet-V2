@@ -4,7 +4,7 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { SpecialYieldPositionInfo, YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
-import { AccountProxyAvatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
+import { Avatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { InfoItemBase } from '@subwallet/extension-koni-ui/components/MetaInfo/parts';
 import { EarningNominationModal } from '@subwallet/extension-koni-ui/components/Modal/Earning';
 import { EARNING_NOMINATION_MODAL, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
@@ -112,8 +112,8 @@ function Component ({ className, compound, inputAsset, list, poolInfo }: Props) 
 
       return (
         <>
-          <AccountProxyAvatar
-            className={'__account-avatar'}
+          <Avatar
+            identPrefix={networkPrefix}
             size={24}
             value={item.address}
           />

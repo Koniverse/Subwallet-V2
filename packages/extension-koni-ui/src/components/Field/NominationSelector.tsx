@@ -3,7 +3,8 @@
 
 import { NominationInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
-import { AccountProxyAvatar, StakingNominationItem } from '@subwallet/extension-koni-ui/components';
+import { StakingNominationItem } from '@subwallet/extension-koni-ui/components';
+import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
 import { BasicInputWrapper } from '@subwallet/extension-koni-ui/components/Field/Base';
 import { useSelectModalInputHelper } from '@subwallet/extension-koni-ui/hooks/form/useSelectModalInputHelper';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -34,7 +35,7 @@ const renderItem = (item: NominationInfo, isSelected: boolean) => (
 
 // todo: update filter for this component, after updating filter for SelectModal
 const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
-  const { chain = '', className, defaultValue, disabled, id = 'nomination-selector', label, nominators, placeholder, statusHelp, value } = props;
+  const { chain = '', className, defaultValue, disabled, id = 'nomination-selector', label, networkPrefix, nominators, placeholder, statusHelp, value } = props;
 
   const filteredItems = useMemo(() => {
     return nominators.filter((item) => new BigN(item.activeStake).gt(0));
@@ -100,8 +101,8 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
         onSelect={onSelect}
         placeholder={placeholder || label}
         prefix={
-          <AccountProxyAvatar
-            className={'__account-avatar'}
+          <Avatar
+            identPrefix={networkPrefix}
             size={20}
             value={value}
           />
