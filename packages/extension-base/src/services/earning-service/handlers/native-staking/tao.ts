@@ -50,12 +50,12 @@ interface Validator {
   system_total_stake: string;
 }
 
-interface ValidatorName {
-  count: number;
-  delegates: {
-    name: string;
-  }[];
-}
+// interface ValidatorName {
+//   count: number;
+//   delegates: {
+//     name: string;
+//   }[];
+// }
 export const BITTENSOR_API_KEY_1 = process.env.BITTENSOR_API_KEY_1 || '';
 export const BITTENSOR_API_KEY_2 = process.env.BITTENSOR_API_KEY_2 || '';
 
@@ -65,8 +65,6 @@ function random (...keys: string[]) {
 
   return validKeys[randomIndex];
 }
-
-export const BITTENSOR_API_KEY = random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
 
 const testnetDelegate = {
   '5G6wdAdS7hpBuH1tjuZDhpzrGw9Wf71WEVakDCxHDm1cxEQ2': {
@@ -89,6 +87,10 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     throw new Error('Method not implemented.');
   }
   /* Unimplemented function  */
+
+  get bittensorApiKey (): string {
+    return random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
+  }
 
   private static parseDelegateState (address: string) {
     return {
@@ -114,12 +116,14 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
   /* Fetch data */
 
   async fetchDelegates (): Promise<ValidatorResponse> {
+    const apiKey = this.bittensorApiKey;
+
     return new Promise(function (resolve) {
       fetch('https://api.taostats.io/api/v1/validator?order=amount%3Adesc&limit=29', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `${BITTENSOR_API_KEY}`
+          Authorization: `${apiKey}`
         }
       }).then((resp) => {
         resolve(resp.json());
@@ -127,19 +131,21 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     });
   }
 
-  async fetchDelegatesInfo (address: string): Promise<ValidatorName> {
-    return new Promise(function (resolve) {
-      fetch(`https://api.taostats.io/api/v1/delegate/info?address=${address}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `${BITTENSOR_API_KEY}`
-        }
-      }).then((resp) => {
-        resolve(resp.json());
-      }).catch(console.error);
-    });
-  }
+  // async fetchDelegatesInfo (address: string): Promise<ValidatorName> {
+  //   const apiKey = this.bittensorApiKey;
+
+  //   return new Promise(function (resolve) {
+  //     fetch(`https://api.taostats.io/api/v1/delegate/info?address=${address}`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `${apiKey}`
+  //       }
+  //     }).then((resp) => {
+  //       resolve(resp.json());
+  //     }).catch(console.error);
+  //   });
+  // }
 
   async fetchDelegateState (address: string): Promise<RawDelegateState> {
     return new Promise(function (resolve) {
@@ -423,7 +429,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     const validatorAddresses = Object.keys(validatorList);
 
     const results = await Promise.all(
-      validatorAddresses.map(async (i) => {
+      validatorAddresses.map((i) => {
         const address = (validatorList[i].hot_key as unknown as Hotkey).ss58;
         const bnTotalStake = new BN(validatorList[i].amount);
         const bnOwnStake = new BN(validatorList[i].validator_stake);
@@ -435,10 +441,10 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
         const apr = ((parseFloat(validatorList[i].apr) / 10 ** 9) * 100).toFixed(2);
         const apyCalculate = calculateReward(parseFloat(apr));
 
-        let name = '';
-        const delegateInfo = await this.fetchDelegatesInfo(address);
+        // let name = '';
+        // const delegateInfo = await this.fetchDelegatesInfo(address);
 
-        name = delegateInfo.delegates[0]?.name || address;
+        // name = delegateInfo.delegates[0]?.name || address;
 
         return {
           address: address,
@@ -453,7 +459,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           isVerified: false,
           chain: this.chain,
           isCrowded: false,
-          identity: name
+          identity: address // name
         } as unknown as ValidatorInfo;
       })
     );
