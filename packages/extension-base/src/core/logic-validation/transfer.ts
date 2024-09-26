@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { _Address, AmountData, BasicTxErrorType, BasicTxWarningCode, ExtrinsicType, FeeData, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
+import { _Address, AmountData, BasicTxErrorType, BasicTxWarningCode, ExtrinsicDataTypeMap, ExtrinsicType, FeeData, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
 import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/system-pallet';
@@ -132,6 +132,192 @@ export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, des
   }
 
   return [warning, error];
+}
+
+export function checkSupportForFeature (validationResponse: SWTransactionResponse, blockedFeaturesList: string[], chainInfo: _ChainInfo) {
+  const extrinsicType = validationResponse.extrinsicType;
+  const chain = validationResponse.chain;
+  const currentFeature = `${extrinsicType}___${chain}`;
+
+  if (blockedFeaturesList.includes(currentFeature)) {
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t(`Feature under maintenance on ${chainInfo.name} network. Try again later`)));
+  }
+}
+
+export function checkSupportForAction (validationResponse: SWTransactionResponse, blockedActionsMap: Record<ExtrinsicType, string[]>) {
+  const extrinsicType = validationResponse.extrinsicType;
+  let currentAction = '';
+
+  switch (extrinsicType) {
+    case ExtrinsicType.TRANSFER_BALANCE:
+
+    // eslint-disable-next-line no-fallthrough
+    case ExtrinsicType.TRANSFER_TOKEN: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.TRANSFER_BALANCE];
+      const tokenSlug = data.tokenSlug;
+
+      currentAction = `${extrinsicType}___${tokenSlug}`;
+      break;
+    }
+
+    case ExtrinsicType.TRANSFER_XCM: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.TRANSFER_XCM];
+      const tokenSlug = data.tokenSlug;
+      const destinationNetworkKey = data.destinationNetworkKey;
+
+      currentAction = `${extrinsicType}___${tokenSlug}___${destinationNetworkKey}`;
+      break;
+    }
+
+    case ExtrinsicType.SEND_NFT: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.SEND_NFT];
+      const networkKey = data.networkKey;
+      const collectionId = data.nftItem.collectionId;
+
+      currentAction = `${extrinsicType}___${networkKey}___${collectionId}`;
+      break;
+    }
+
+    case ExtrinsicType.SWAP: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.SWAP];
+      const pairSlug = data.quote.pair.slug;
+      const providerId = data.provider.id;
+
+      currentAction = `${extrinsicType}___${pairSlug}___${providerId}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_BOND: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_BOND];
+      const chain = data.chain;
+
+      currentAction = `${extrinsicType}___${chain}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_LEAVE_POOL: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_LEAVE_POOL];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_UNBOND: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_UNBOND];
+      const chain = data.chain;
+
+      currentAction = `${extrinsicType}___${chain}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_CLAIM_REWARD: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_CLAIM_REWARD];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_WITHDRAW: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_WITHDRAW];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_COMPOUNDING: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_COMPOUNDING];
+      const networkKey = data.networkKey;
+
+      currentAction = `${extrinsicType}___${networkKey}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_CANCEL_COMPOUNDING: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_CANCEL_COMPOUNDING];
+      const networkKey = data.networkKey;
+
+      currentAction = `${extrinsicType}___${networkKey}`;
+      break;
+    }
+
+    case ExtrinsicType.STAKING_CANCEL_UNSTAKE: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.STAKING_CANCEL_UNSTAKE];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.JOIN_YIELD_POOL: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.JOIN_YIELD_POOL];
+      const slug = data.data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.MINT_VDOT:
+    case ExtrinsicType.MINT_LDOT:
+    case ExtrinsicType.MINT_SDOT:
+    case ExtrinsicType.MINT_QDOT:
+    case ExtrinsicType.MINT_STDOT:
+
+    // eslint-disable-next-line no-fallthrough
+    case ExtrinsicType.MINT_VMANTA: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.MINT_VMANTA];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.REDEEM_VDOT:
+    case ExtrinsicType.REDEEM_LDOT:
+    case ExtrinsicType.REDEEM_SDOT:
+    case ExtrinsicType.REDEEM_QDOT:
+    case ExtrinsicType.REDEEM_STDOT:
+
+    // eslint-disable-next-line no-fallthrough
+    case ExtrinsicType.REDEEM_VMANTA: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.REDEEM_VMANTA];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.UNSTAKE_VDOT:
+    case ExtrinsicType.UNSTAKE_LDOT:
+    case ExtrinsicType.UNSTAKE_SDOT:
+    case ExtrinsicType.UNSTAKE_QDOT:
+    case ExtrinsicType.UNSTAKE_STDOT:
+
+    // eslint-disable-next-line no-fallthrough
+    case ExtrinsicType.UNSTAKE_VMANTA: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.UNSTAKE_VMANTA];
+      const slug = data.slug;
+
+      currentAction = `${extrinsicType}___${slug}`;
+      break;
+    }
+
+    case ExtrinsicType.TOKEN_SPENDING_APPROVAL: {
+      const data = validationResponse.data as ExtrinsicDataTypeMap[ExtrinsicType.TOKEN_SPENDING_APPROVAL];
+      const chain = data.chain;
+
+      currentAction = `${extrinsicType}___${chain}`;
+      break;
+    }
+  }
+
+  const blockedActionsList = Object.values(blockedActionsMap).flat();
+
+  if (blockedActionsList.includes(currentAction)) {
+    validationResponse.errors.push(new TransactionError(BasicTxErrorType.UNSUPPORTED, t('Feature under maintenance. Try again later')));
+  }
 }
 
 // general validations

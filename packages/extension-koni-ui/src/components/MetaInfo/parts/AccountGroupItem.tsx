@@ -12,10 +12,11 @@ import { InfoItemBase } from './types';
 export interface AccountGroupInfoItem extends InfoItemBase {
   accounts: Array<BaseAccountInfo>;
   content: string;
+  identPrefix?: number
 }
 
 const Component: React.FC<AccountGroupInfoItem> = (props: AccountGroupInfoItem) => {
-  const { accounts, className, content, label, valueColorSchema = 'default' } = props;
+  const { accounts, className, content, identPrefix, label, valueColorSchema = 'default' } = props;
 
   return (
     <div className={CN(className, '__row -type-account')}>
@@ -26,7 +27,10 @@ const Component: React.FC<AccountGroupInfoItem> = (props: AccountGroupInfoItem) 
       </div>}
       <div className={'__col __value-col -to-right'}>
         <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema}`}>
-          <AvatarGroup accounts={accounts} />
+          <AvatarGroup
+            accounts={accounts}
+            identPrefix={identPrefix}
+          />
           <div className={'__account-name ml-xs'}>
             {content}
           </div>

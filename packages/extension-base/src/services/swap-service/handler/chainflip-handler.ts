@@ -14,7 +14,7 @@ import { createTransferExtrinsic } from '@subwallet/extension-base/services/bala
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
-import { calculateSwapRate, CHAIN_FLIP_SUPPORTED_MAINNET_ASSET_MAPPING, CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING, CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING, CHAIN_FLIP_SUPPORTED_TESTNET_MAPPING, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
+import { calculateSwapRate, CHAIN_FLIP_SUPPORTED_MAINNET_ASSET_MAPPING, CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING, CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING, CHAIN_FLIP_SUPPORTED_TESTNET_MAPPING, getChainflipOptions, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { TransactionData } from '@subwallet/extension-base/types';
 import { BaseStepDetail, CommonFeeComponent, CommonOptimalPath, CommonStepFeeInfo, CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { ChainflipPreValidationMetadata, ChainflipSwapTxData, OptimalSwapPathParams, SwapEarlyValidation, SwapErrorType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -27,11 +27,14 @@ enum ChainflipFeeType {
   INGRESS = 'INGRESS',
   NETWORK = 'NETWORK',
   EGRESS = 'EGRESS',
-  LIQUIDITY = 'LIQUIDITY'
+  BOOST = 'BOOST',
+  BROKER = 'BROKER'
 }
 
 const INTERMEDIARY_MAINNET_ASSET_SLUG = COMMON_ASSETS.USDC_ETHEREUM;
 const INTERMEDIARY_TESTNET_ASSET_SLUG = COMMON_ASSETS.USDC_SEPOLIA;
+
+export const CHAINFLIP_BROKER_API = process.env.CHAINFLIP_BROKER_API || '';
 
 enum CHAINFLIP_QUOTE_ERROR {
   InsufficientLiquidity = 'InsufficientLiquidity',
@@ -55,9 +58,8 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     this.isTestnet = isTestnet;
     this.providerSlug = isTestnet ? SwapProviderId.CHAIN_FLIP_TESTNET : SwapProviderId.CHAIN_FLIP_MAINNET;
 
-    this.swapSdk = new SwapSDK({
-      network: isTestnet ? 'perseverance' : 'mainnet'
-    });
+    // @ts-ignore
+    this.swapSdk = new SwapSDK(getChainflipOptions(isTestnet));
   }
 
   get chainService () {
@@ -272,7 +274,10 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
           case ChainflipFeeType.NETWORK:
 
           // eslint-disable-next-line no-fallthrough
-          case ChainflipFeeType.LIQUIDITY: {
+          case ChainflipFeeType.BOOST:
+
+          // eslint-disable-next-line no-fallthrough
+          case ChainflipFeeType.BROKER: {
             const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
 
             feeComponent.push({

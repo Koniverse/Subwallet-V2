@@ -76,6 +76,7 @@ const Component: React.FC<Props> = (props: Props) => {
         label={(
           <div className='account-info'>
             <Avatar
+              identPrefix={addressPrefix}
               size={24}
               value={address}
             />

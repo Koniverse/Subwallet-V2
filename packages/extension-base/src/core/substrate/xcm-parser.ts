@@ -60,8 +60,8 @@ export function _getXcmMultiLocation (originChainInfo: _ChainInfo, destChainInfo
   };
 }
 
-export function _isXcmTransferUnstable (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
-  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo);
+export function _isXcmTransferUnstable (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
+  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) || _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
 }
 
 function getAssetHubBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
@@ -78,17 +78,23 @@ function getAssetHubBridgeUnstableWarning (originChainInfo: _ChainInfo): string 
 function getSnowBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
   switch (originChainInfo.slug) {
     case COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB:
-      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of 70$ and takes up to 1 hour to complete. Continue at your own risk';
+      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of $70 and takes up to 1 hour to complete. Continue at your own risk';
     case COMMON_CHAIN_SLUGS.ETHEREUM:
-      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of 5$ and takes up to 1 hour to complete. Continue at your own risk';
+      return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a fee of $5 and takes up to 1 hour to complete. Continue at your own risk';
     default:
       return 'Cross-chain transfer of this token is not recommended as it is in beta, incurs a high fee and takes up to 1 hour to complete. Continue at your own risk';
   }
 }
 
-export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): string {
+function getMythosFromHydrationToMythosWarning (): string {
+  return 'Cross-chain transfer of this token requires a high transaction fee. Do you want to continue?';
+}
+
+export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): string {
   if (_isSnowBridgeXcm(originChainInfo, destChainInfo)) {
     return getSnowBridgeUnstableWarning(originChainInfo);
+  } else if (_isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug)) {
+    return getMythosFromHydrationToMythosWarning();
   } else {
     return getAssetHubBridgeUnstableWarning(originChainInfo);
   }
@@ -100,6 +106,10 @@ export function _isXcmWithinSameConsensus (originChainInfo: _ChainInfo, destChai
 
 export function _isSnowBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
   return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) && (_isPureEvmChain(originChainInfo) || _isPureEvmChain(destChainInfo));
+}
+
+export function _isMythosFromHydrationToMythos (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
+  return originChainInfo.slug === 'hydradx_main' && destChainInfo.slug === 'mythos' && assetSlug === 'hydradx_main-LOCAL-MYTH';
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -215,7 +225,7 @@ function _getAssetIdentifier (tokenInfo: _ChainAsset, version: number) {
     throw new Error('Asset must have multilocation');
   }
 
-  const assetIdentifier = ['statemint-LOCAL-KSM'].includes(tokenInfo.slug) // todo: hotfix for ksm statemint recheck all chain
+  const assetIdentifier = ['statemint-LOCAL-KSM', 'statemine-LOCAL-DOT'].includes(tokenInfo.slug) // todo: hotfix for ksm statemint recheck all chain
     ? _assetIdentifier
     : _adaptX1Interior(structuredClone(_assetIdentifier), version);
 
