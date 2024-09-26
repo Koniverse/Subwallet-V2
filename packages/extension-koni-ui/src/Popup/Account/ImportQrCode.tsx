@@ -106,11 +106,11 @@ const Component: React.FC<Props> = (props: Props) => {
         activeModal(accountNameModalId);
       }).catch((error: Error) => {
         setValidateState({
-          message: error.message,
+          message: t(error.message),
           status: 'error'
         });
       });
-  }, [inactiveModal, accountAddressValidator, activeModal]);
+  }, [inactiveModal, accountAddressValidator, activeModal, t]);
 
   const onSubmit = useCallback((name: string) => {
     if (scannedAccount) {
@@ -129,14 +129,14 @@ const Component: React.FC<Props> = (props: Props) => {
               onComplete();
             } else {
               setValidateState({
-                message: errors[0].message,
+                message: t(errors[0].message),
                 status: 'error'
               });
             }
           })
           .catch((error: Error) => {
             setValidateState({
-              message: error.message,
+              message: t(error.message),
               status: 'error'
             });
           })
@@ -147,7 +147,7 @@ const Component: React.FC<Props> = (props: Props) => {
           });
       }, 300);
     }
-  }, [inactiveModal, onComplete, scannedAccount]);
+  }, [inactiveModal, onComplete, scannedAccount, t]);
 
   const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, importQrScan, setValidateState, onPreSubmit);
 
@@ -252,7 +252,7 @@ const Component: React.FC<Props> = (props: Props) => {
       </Layout.WithSubHeaderOnly>
 
       <AccountNameModal
-        accountType={AccountProxyType.QR}
+        accountType={AccountProxyType.SOLO}
         isLoading={loading}
         onSubmit={onSubmit}
       />

@@ -248,7 +248,8 @@ export class AccountSecretHandler extends AccountBaseHandler {
       return {
         address: '',
         isValid: false,
-        isEthereum: false
+        isEthereum: false,
+        errorMessage: t((e as Error).message)
       };
     }
 
