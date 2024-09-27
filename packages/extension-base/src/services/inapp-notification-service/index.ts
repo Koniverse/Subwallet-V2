@@ -8,12 +8,14 @@ import { DEFAULT_NOTIFICATION_SETTING, NotificationTitleMap } from '@subwallet/e
 import { NotificationInfo, NotificationOptions, NotificationSetting, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
+import { BehaviorSubject } from 'rxjs';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
   private notificationSetting: NotificationSetting = DEFAULT_NOTIFICATION_SETTING;
   private refreshTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
+  private unreadNotificationCountSubject = new BehaviorSubject<number>(0);
 
   constructor (dbService: DatabaseService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
@@ -80,12 +82,29 @@ export class InappNotificationService implements CronServiceInterface {
     this.getWithdrawNotifications()
       .then(async (notifications) => {
         await this.dbService.upsertNotifications(notifications);
+        await this.updateUnreadNotificationCount();
       })
       .catch((e) => {
         console.error(e);
       });
 
     this.refreshTimeout = setTimeout(this.updateLastestNotifications.bind(this), CRON_UPDATE_NOTIFICATION_INTERVAL);
+  }
+
+  private async updateUnreadNotificationCount () {
+    const unreadNotificationCount = await this.dbService.getAllUnreadNotifications();
+
+    this.unreadNotificationCountSubject.next(unreadNotificationCount);
+  }
+
+  public subscribeUnreadNotificationCount (callback: (data: number) => void) {
+    return this.unreadNotificationCountSubject.subscribe({
+      next: callback
+    });
+  }
+
+  public getUnreadNotificationCount () {
+    return this.unreadNotificationCountSubject.getValue();
   }
 
   async start (): Promise<void> {
@@ -102,7 +121,7 @@ export class InappNotificationService implements CronServiceInterface {
     }
   }
 
-  startCron (): Promise<void> {
+  async startCron (): Promise<void> {
     this.updateLastestNotifications();
 
     return Promise.resolve();

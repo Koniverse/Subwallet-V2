@@ -1842,12 +1842,6 @@ export enum NotificationType {
   ERROR = 'error',
 }
 
-export enum NotificationTransactionType {
-  SEND = 'send',
-  RECEIVE = 'receive',
-  WITHDRAW = 'withdraw',
-}
-
 export interface NotificationButton {
   title: string;
 }
@@ -2449,8 +2443,12 @@ export interface KoniRequestSignatures {
   'pri(swapService.validateSwapProcess)': [ValidateSwapProcessParams, TransactionError[]];
   /* Swap */
 
-  /* Ledger */
+  /* Notification Service */
+  // 'pri(notifications.getSubscription': [null, NotificationInfo[], NotificationInfo[]];
+  'pri(unreadNotificationCount.getSubscription)': [null, number, number];
+  /* Notification Service */
 
+  /* Ledger */
   'pri(ledger.generic.allow)': [null, string[], string[]];
 }
 

@@ -614,6 +614,10 @@ export default class DatabaseService {
     return this.stores.inappNotification.getAll();
   }
 
+  public getAllUnreadNotifications () {
+    return this.stores.inappNotification.getAllUnreadNotifications();
+  }
+
   public upsertNotifications (notifications: NotificationInfo[]) {
     return this.stores.inappNotification.bulkUpsert(notifications);
   }

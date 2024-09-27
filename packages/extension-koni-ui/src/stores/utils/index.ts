@@ -494,3 +494,17 @@ export const updateLedgerGenericAllowNetworks = (data: string[]) => {
 
 export const subscribeLedgerGenericAllowNetworks = lazySubscribeMessage('pri(ledger.generic.allow)', null, updateLedgerGenericAllowNetworks, updateLedgerGenericAllowNetworks);
 /* Ledger */
+
+/* Notification service */
+export const updateUnreadNotiCount = (data: number) => {
+  store.dispatch({ type: 'notification/updateUnreadNotificationCount', payload: data });
+};
+
+export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(unreadNotificationCount.getSubscription)', null, updateUnreadNotiCount, updateUnreadNotiCount);
+
+// export const updateNotifications = (data: NotificationInfo[]) => {
+//   store.dispatch({ type: 'notifications/updateNotifications', payload: data });
+// };
+
+// export const subscribeNotifications = lazySubscribeMessage('pri(notifications.getSubscription)', null, updateNotifications, updateNotifications);
+/* Notification service */

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationTransactionType } from '@subwallet/extension-base/background/KoniTypes';
+import { NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { PageWrapper, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -14,15 +14,9 @@ import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
 
-enum ViewValue {
-  TODAY = 'today',
-  THIS_WEEK = 'this_week',
-  THIS_MONTH = 'this_month',
-}
-
 interface ViewOption {
   label: string;
-  value: ViewValue;
+  value: NotificationTimePeriod;
 }
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
@@ -38,22 +32,23 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const notificationOptions = [
     { label: t('Hide send notifications'), value: NotificationTransactionType.SEND },
     { label: t('Hide receive notifications'), value: NotificationTransactionType.RECEIVE },
-    { label: t('Hide withdraw notifications'), value: NotificationTransactionType.WITHDRAW }
+    { label: t('Hide withdraw notifications'), value: NotificationTransactionType.WITHDRAW },
+    { label: t('Hide claim notifications'), value: NotificationTransactionType.CLAIM }
   ];
 
   const viewOptions = useMemo((): ViewOption[] => {
     return [
       {
         label: t('Today'),
-        value: ViewValue.TODAY
+        value: NotificationTimePeriod.TODAY
       },
       {
         label: t('This week'),
-        value: ViewValue.THIS_WEEK
+        value: NotificationTimePeriod.THIS_WEEK
       },
       {
         label: t('This month'),
-        value: ViewValue.THIS_MONTH
+        value: NotificationTimePeriod.THIS_MONTH
       }
     ];
   }, [t]);

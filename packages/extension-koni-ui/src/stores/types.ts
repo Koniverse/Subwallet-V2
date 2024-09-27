@@ -6,6 +6,7 @@ import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State
 import { AddressBookState, AllLogoMap, AssetSetting, CampaignBanner, ChainStakingMetadata, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationType, CrowdloanItem, KeyringState, LanguageType, MantaPayConfig, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, StakingRewardItem, TransactionHistoryItem, UiSettings, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountJson, AccountsContext, AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
+import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
@@ -210,4 +211,9 @@ export interface MissionPoolStore extends BaseReduxStore {
 
 export interface SwapStore extends BaseReduxStore {
   swapPairs: SwapPair[];
+}
+
+export interface NotificationStore extends BaseReduxStore {
+  notifications: NotificationInfo[],
+  unreadNotificationCount: number
 }

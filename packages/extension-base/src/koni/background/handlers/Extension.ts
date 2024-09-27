@@ -4522,6 +4522,48 @@ export default class KoniExtension {
   }
   /* Swap service */
 
+  /* Notification service */
+  // private subscribeNotification (id: string, port: chrome.runtime.Port): Promise<NotificationInfo[]> {
+  //   const cb = createSubscription<'pri(notifications.getSubscription)'>(id, port);
+  //   const notificationSubscription = this.#koniState.subscribeNotification().subscribe({
+  //     next: (rs) => {
+  //       cb(rs);
+  //     }
+  //   });
+  //
+  //   this.createUnsubscriptionHandle(id, nftCollectionSubscription.unsubscribe);
+  //
+  //   port.onDisconnect.addListener((): void => {
+  //     this.cancelSubscription(id);
+  //   });
+  //
+  //   return this.getNftCollection();
+  // }
+
+  private subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): number {
+    const cb = createSubscription<'pri(unreadNotificationCount.getSubscription)'>(id, port);
+    let ready = false;
+
+    const callback = (rs: number) => {
+      if (ready) {
+        cb(rs);
+      }
+    };
+
+    const subscription = this.#koniState.inappNotificationService.subscribeUnreadNotificationCount(callback);
+
+    this.createUnsubscriptionHandle(id, subscription.unsubscribe);
+
+    port.onDisconnect.addListener((): void => {
+      this.cancelSubscription(id);
+    });
+
+    ready = true;
+
+    return this.#koniState.inappNotificationService.getUnreadNotificationCount();
+  }
+  /* Notification service */
+
   /* Ledger */
 
   private async subscribeLedgerGenericAllowChains (id: string, port: chrome.runtime.Port): Promise<string[]> {
@@ -5138,6 +5180,13 @@ export default class KoniExtension {
       case 'pri(swapService.handleSwapStep)':
         return this.handleSwapStep(request as SwapSubmitParams);
         /* Swap service */
+
+        /* Notification service */
+      // case 'pri(notifications.getSubscription)':
+      //   return await this.subscribeNotification(id, port);
+      case 'pri(unreadNotificationCount.getSubscription)':
+        return this.subscribeUnreadNotificationCount(id, port);
+        /* Notification service */
 
         /* Ledger */
       case 'pri(ledger.generic.allow)':

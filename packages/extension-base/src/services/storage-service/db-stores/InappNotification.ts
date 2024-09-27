@@ -12,4 +12,8 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
   async getAll () {
     return this.table.toArray();
   }
+
+  getAllUnreadNotifications () {
+    return this.table.filter((item) => !item.isRead).count();
+  }
 }

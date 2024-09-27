@@ -117,6 +117,8 @@ export default class KoniState {
     data: {}
   } as StakingRewardJson;
 
+  private unreadNotificationCount = new Subject<number>();
+
   private lazyMap: Record<string, unknown> = {};
 
   readonly notificationService: NotificationService;
@@ -576,6 +578,14 @@ export default class KoniState {
 
   public subscribeNft () {
     return this.nftSubject;
+  }
+
+  // public subscribeNotification () {
+  //   return this.notificationSubject;
+  // }
+
+  public subscribeUnreadNotificationCount () {
+    return this.unreadNotificationCount;
   }
 
   public resetStakingReward () {
