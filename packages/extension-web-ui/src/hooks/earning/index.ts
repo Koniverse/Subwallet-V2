@@ -9,3 +9,4 @@ export { default as useYieldPositionDetail } from './useYieldPositionDetail';
 export { default as useYieldRewardTotal } from './useYieldRewardTotal';
 export { default as usePreviewYieldGroupInfo } from './usePreviewYieldGroupInfo';
 export { default as usePreviewYieldPoolInfoByGroup } from './usePreviewYieldPoolInfoByGroup';
+export { default as useGetYieldPositionForSpecificAccount } from './useGetYieldPositionForSpecificAccount';

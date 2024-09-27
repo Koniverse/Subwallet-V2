@@ -18,7 +18,7 @@ import { EarningInstructionModal } from '@subwallet/extension-web-ui/components/
 import { CREATE_RETURN, DEFAULT_ROUTER_PATH, EARNING_INSTRUCTION_MODAL, EVM_ACCOUNT_TYPE, STAKE_ALERT_DATA, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
-import { useChainConnection, useFetchChainState, useGetBalance, useGetNativeTokenSlug, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetSelectedAccountTypes, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-web-ui/hooks';
+import { useChainConnection, useFetchChainState, useGetBalance, useGetNativeTokenSlug, useGetYieldPositionForSpecificAccount, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useSetSelectedAccountTypes, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-web-ui/hooks';
 import { fetchPoolTarget, getOptimalYieldPath, submitJoinYieldPool, validateYieldProcess } from '@subwallet/extension-web-ui/messaging';
 // import { unlockDotCheckCanMint } from '@subwallet/extension-web-ui/messaging/campaigns';
 import { DEFAULT_YIELD_PROCESS, EarningActionType, earningReducer } from '@subwallet/extension-web-ui/reducer';
@@ -115,6 +115,7 @@ const Component = ({ className }: ComponentProps) => {
   const submitStepType = processState.steps?.[!currentStep ? currentStep + 1 : currentStep]?.type;
 
   const { compound } = useYieldPositionDetail(slug);
+  const specificList = useGetYieldPositionForSpecificAccount(fromValue);
   const { nativeTokenBalance } = useGetBalance(chainValue, fromValue);
   const { checkChainConnected, turnOnChain } = useChainConnection();
   const [isConnectingChainSuccess, setIsConnectingChainSuccess] = useState<boolean>(false);
@@ -146,6 +147,26 @@ const Component = ({ className }: ComponentProps) => {
     () => !!poolType && [YieldPoolType.NATIVE_STAKING, YieldPoolType.NOMINATION_POOL].includes(poolType as YieldPoolType),
     [poolType]
   );
+
+  const chainStakingBoth = useMemo(() => {
+    const hasNativeStaking = (chain: string) => specificList.some((item) => item.chain === chain && item.type === YieldPoolType.NATIVE_STAKING);
+    const hasNominationPool = (chain: string) => specificList.some((item) => item.chain === chain && item.type === YieldPoolType.NOMINATION_POOL);
+
+    const chains = ['polkadot', 'kusama'];
+    let chainStakingInBoth;
+
+    for (const chain of chains) {
+      if (hasNativeStaking(chain) && hasNominationPool(chain) && [YieldPoolType.NOMINATION_POOL, YieldPoolType.NATIVE_STAKING].includes(poolType) && chain === chainValue) {
+        chainStakingInBoth = chain;
+        break;
+      } else if (((hasNativeStaking(chain) && poolType === YieldPoolType.NOMINATION_POOL) || (hasNominationPool(chain) && poolType === YieldPoolType.NATIVE_STAKING)) && chain === chainValue) {
+        chainStakingInBoth = chain;
+        break;
+      }
+    }
+
+    return chainStakingInBoth;
+  }, [specificList, poolType, chainValue]);
 
   const balanceTokens = useMemo(() => {
     const result: Array<{ chain: string; token: string }> = [];
@@ -525,46 +546,96 @@ const Component = ({ className }: ComponentProps) => {
       }
     };
 
-    const maxCount = poolInfo?.statistic?.maxCandidatePerFarmer ?? 1;
-    const userSelectedPoolCount = poolTargetValue?.split(',').length ?? 1;
-    const label = getValidatorLabel(chainValue);
+    const checkValidatorConfirmationModal = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const maxCount = poolInfo?.statistic?.maxCandidatePerFarmer ?? 1;
+        const userSelectedPoolCount = poolTargetValue?.split(',').length ?? 1;
+        const label = getValidatorLabel(chainValue);
 
-    if (userSelectedPoolCount < maxCount && label === 'Validator') {
-      openAlert({
-        title: t('Pay attention!'),
-        content: t('You are recommended to choose {{maxCount}} validators to optimize your earnings. Do you wish to continue with {{userSelectedPoolCount}} validator{{x}}?', { replace: { maxCount, userSelectedPoolCount, x: userSelectedPoolCount === 1 ? '' : 's' } }),
-        okButton: {
-          text: t('Continue'),
-          onClick: () => {
-            closeAlert();
-            submitData(currentStep)
-              .catch(onError)
-              .finally(() => {
-                setSubmitLoading(false);
-              });
-          }
-        },
-        cancelButton: {
-          text: t('Go back'),
-          onClick: () => {
-            setSubmitLoading(false);
-            closeAlert();
-          }
-        },
-        closable: false
+        if (userSelectedPoolCount < maxCount && label === 'Validator') {
+          openAlert({
+            title: t('Pay attention!'),
+            content: t('You are recommended to choose {{maxCount}} validators to optimize your earnings. Do you wish to continue with {{userSelectedPoolCount}} validator{{x}}?', { replace: { maxCount, userSelectedPoolCount, x: userSelectedPoolCount === 1 ? '' : 's' } }),
+            okButton: {
+              text: t('Continue'),
+              onClick: () => {
+                closeAlert();
+                resolve();
+              }
+            },
+            cancelButton: {
+              text: t('Go back'),
+              onClick: () => {
+                // eslint-disable-next-line prefer-promise-reject-errors
+                reject();
+                closeAlert();
+              }
+            },
+            closable: false
+          });
+        } else {
+          resolve();
+        }
       });
+    };
 
-      return;
-    }
+    const checkStakingWarningModal = (): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        if (chainStakingBoth) {
+          const chainInfo = chainStakingBoth && chainInfoMap[chainStakingBoth];
+
+          const symbol = (!!chainInfo && chainInfo?.substrateInfo?.symbol) || '';
+          const originChain = (!!chainInfo && chainInfo?.name) || '';
+
+          openAlert({
+            type: NotificationType.WARNING,
+            content:
+              (<>
+                <div className={'earning-alert-content'}>
+                  {t(`You're currently staking ${symbol} via direct nomination. Due to ${originChain}'s upcoming changes, continuing to stake via nomination pool will lead to pool-staked funds being frozen (e.g., can't unstake, claim rewards)`)}
+                </div>
+              </>),
+            title: t('Continue staking?'),
+            okButton: {
+              text: t('Continue'),
+              onClick: () => {
+                closeAlert();
+                resolve();
+              }
+            },
+            cancelButton: {
+              text: t('Cancel'),
+              onClick: () => {
+                closeAlert();
+                // eslint-disable-next-line prefer-promise-reject-errors
+                reject();
+              }
+            }
+          });
+        } else {
+          resolve();
+        }
+      });
+    };
+
+    const runSequentialChecks = async () => {
+      try {
+        await checkStakingWarningModal();
+        await checkValidatorConfirmationModal();
+        await submitData(currentStep);
+      } catch (error) {
+        setSubmitLoading(false);
+      } finally {
+        setSubmitLoading(false);
+      }
+    };
 
     setTimeout(() => {
-      submitData(currentStep)
-        .catch(onError)
-        .finally(() => {
-          setSubmitLoading(false);
-        });
+      runSequentialChecks().catch((error) => {
+        console.error('Error occurred during sequential checks:', error);
+      });
     }, 300);
-  }, [chainValue, closeAlert, currentStep, onError, onSuccess, openAlert, poolInfo, poolTargetValue, poolTargets, processState.feeStructure, processState.steps, t]);
+  }, [chainInfoMap, chainStakingBoth, chainValue, closeAlert, currentStep, onError, onSuccess, openAlert, poolInfo, poolTargetValue, poolTargets, processState.feeStructure, processState.steps, t]);
 
   const renderMetaInfo = useCallback(() => {
     if (!poolInfo || !inputAsset) {

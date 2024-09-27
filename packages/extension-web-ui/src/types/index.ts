@@ -29,6 +29,7 @@ export type AlertDialogProps = {
   content: React.ReactNode,
   cancelButton?: AlertDialogButtonProps,
   okButton: AlertDialogButtonProps,
+  onCancel?: VoidFunction
 };
 
 export type AccountType = 'ALL' | 'ETHEREUM' | 'SUBSTRATE';
