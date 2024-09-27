@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
-import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AlertBox, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import AvatarGroup from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
@@ -86,6 +86,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const [password, setPassword] = useState('');
   const [jsonFile, setJsonFile] = useState<KeyringPair$Json | KeyringPairs$Json | undefined>(undefined);
   const [accountsInfo, setAccountsInfo] = useState<ResponseJsonGetAccountInfo[]>([]);
+  const [countAccountInvalid, setCountAccountInvalid] = useState(0);
   const checkUnlock = useUnlockChecker();
 
   const closeModal = useCallback(() => {
@@ -133,6 +134,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           return;
         }
 
+        setCountAccountInvalid(0);
+
         try {
           setSubmitValidateState({});
 
@@ -158,11 +161,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 try {
                   address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
                 } catch (e) {
-                  if (![33, 65].includes(hexToU8a(account.address).length)) {
-                    return;
-                  }
+                  setCountAccountInvalid((pre) => pre + 1);
 
-                  throw e;
+                  return;
                 }
               }
 
@@ -199,6 +200,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                   message: e.message
                 });
                 setValidating(false);
+                setCountAccountInvalid((pre) => pre + 1);
               });
           }
         } catch (e) {
@@ -346,37 +348,46 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               />
             </Form.Item>
             {
-              !!accountsInfo.length && (
-                <Form.Item>
-                  {
-                    accountsInfo.length > 1
-                      ? (
-                        <SettingItem
-                          className='account-list-item'
-                          leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                          name={t('Import {{number}} accounts', { replace: { number: String(accountsInfo.length).padStart(2, '0') } })}
-                          onPressItem={openModal}
-                          rightItem={(
-                            <Icon
-                              phosphorIcon={DotsThree}
-                              size='sm'
-                            />
-                          )}
-                        />
-                      )
-                      : (
-                        <SettingItem
-                          className='account-list-item'
-                          leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                          name={accountsInfo[0].name}
-                        />
-                      )
-                  }
-                </Form.Item>
-              )
+              accountsInfo.length > 0
+                ? (
+                  <Form.Item>
+                    {
+                      accountsInfo.length > 1
+                        ? (
+                          <SettingItem
+                            className='account-list-item'
+                            leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
+                            name={t('Import {{number}} accounts', { replace: { number: String(accountsInfo.length).padStart(2, '0') } })}
+                            onPressItem={openModal}
+                            rightItem={(
+                              <Icon
+                                phosphorIcon={DotsThree}
+                                size='sm'
+                              />
+                            )}
+                          />
+                        )
+                        : (
+                          <SettingItem
+                            className='account-list-item'
+                            leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
+                            name={accountsInfo[0].name}
+                          />
+                        )
+                    }
+                  </Form.Item>
+                )
+                : countAccountInvalid
+                  ? (<AlertBox
+                    className={'alert-warning-name-duplicate'}
+                    description={t('Invalid account address')}
+                    title={t('Invalid account address')}
+                    type='warning'
+                  />)
+                  : <></>
             }
             {
-              requirePassword && (
+              requirePassword && accountsInfo.length > 0 && (
                 <Form.Item
                   validateStatus={submitValidateState.status}
                 >
@@ -395,19 +406,26 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               )
             }
           </Form>
-          <SwModal
-            className={className}
-            id={modalId}
-            onCancel={closeModal}
-            title={t('Accounts')}
-          >
-            <SwList.Section
-              displayRow={true}
-              list={accountsInfo}
-              renderItem={renderItem}
-              rowGap='var(--row-gap)'
-            />
-          </SwModal>
+          {accountsInfo.length > 0 &&
+            <SwModal
+              className={className}
+              id={modalId}
+              onCancel={closeModal}
+              title={t('Accounts')}
+            >
+              {countAccountInvalid > 0 && <AlertBox
+                className={'alert-warning-name-duplicate -item'}
+                description={t('Invalid account address')}
+                title={t('Invalid account address')}
+                type='warning'
+              />}
+              <SwList.Section
+                displayRow={true}
+                list={accountsInfo}
+                renderItem={renderItem}
+                rowGap='var(--row-gap)'
+              />
+            </SwModal>}
         </div>
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
@@ -479,6 +497,14 @@ const ImportJson = styled(Component)<Props>(({ theme: { token } }: Props) => {
       '.ant-upload-drag-single': {
         height: 168
       }
+    },
+
+    '.alert-warning-name-duplicate.-item': {
+      margin: `0px ${token.margin}px ${token.marginXS}px ${token.margin}px`
+    },
+
+    '.alert-warning-name-duplicate': {
+      margin: `-${token.marginXS}px 0px 0px 0px`
     }
   };
 });
