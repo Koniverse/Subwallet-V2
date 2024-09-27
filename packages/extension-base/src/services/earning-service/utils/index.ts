@@ -4,6 +4,7 @@
 import { PalletIdentityRegistration, PalletIdentitySuper } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
+import { RawDelegateState } from '@subwallet/extension-base/services/earning-service/handlers/native-staking/tao';
 import { LendingYieldPoolInfo, LiquidYieldPoolInfo, NativeYieldPoolInfo, NominationYieldPoolInfo, YieldAssetExpectedEarning, YieldCompoundingPeriod, YieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
 
 import { BN, hexToString, isHex } from '@polkadot/util';
@@ -153,4 +154,53 @@ export function applyDecimal (bnNumber: BN, decimals: number) {
   const bnDecimals = new BN((10 ** decimals).toString());
 
   return bnNumber.div(bnDecimals);
+}
+
+export function getTaoTotalStake (rawDelegateState: RawDelegateState) {
+  const nodeInfos = rawDelegateState.data.delegateBalances.nodes;
+  const stakes = nodeInfos.map((stake) => stake.amount);
+  let totalStake = BigInt(0);
+
+  for (const _stake of stakes) {
+    const stakeAmount = BigInt(_stake);
+
+    totalStake += stakeAmount;
+  }
+
+  return totalStake;
+}
+
+export async function fetchTaoDelegateState (address: string): Promise<RawDelegateState> {
+  return new Promise(function (resolve) {
+    fetch('https://api.subquery.network/sq/TaoStats/bittensor-indexer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(parseTaoDelegateState(address))
+    }).then((resp) => {
+      resolve(resp.json());
+    }).catch(console.error);
+  });
+}
+
+export function parseTaoDelegateState (address: string) {
+  return {
+    query: 'query ($first: Int!, $after: Cursor, $filter: DelegateBalanceFilter, $order: [DelegateBalancesOrderBy!]!) {  delegateBalances(first: $first, after: $after, filter: $filter, orderBy: $order) { nodes { id account delegate amount updatedAt delegateFrom } pageInfo { endCursor hasNextPage hasPreviousPage } totalCount } }',
+    variables: {
+      first: 50,
+      filter: {
+        account: {
+          equalTo: address
+        },
+        amount: {
+          greaterThan: 0
+        },
+        updatedAt: {
+          greaterThan: 0
+        }
+      },
+      order: 'AMOUNT_DESC'
+    }
+  };
 }

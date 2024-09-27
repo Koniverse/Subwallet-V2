@@ -13,7 +13,7 @@ import BigN from 'bignumber.js';
 
 import { BN, BN_ZERO } from '@polkadot/util';
 
-import { calculateReward } from '../../utils';
+import { calculateReward, fetchTaoDelegateState } from '../../utils';
 
 interface TaoStakingStakeOption {
   owner: string,
@@ -24,7 +24,7 @@ interface Hotkey {
   ss58: string;
 }
 
-interface RawDelegateState {
+export interface RawDelegateState {
   data: {
     delegateBalances: {
       nodes:
@@ -92,27 +92,6 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     return random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
   }
 
-  private static parseDelegateState (address: string) {
-    return {
-      query: 'query ($first: Int!, $after: Cursor, $filter: DelegateBalanceFilter, $order: [DelegateBalancesOrderBy!]!) {  delegateBalances(first: $first, after: $after, filter: $filter, orderBy: $order) { nodes { id account delegate amount updatedAt delegateFrom } pageInfo { endCursor hasNextPage hasPreviousPage } totalCount } }',
-      variables: {
-        first: 10,
-        filter: {
-          account: {
-            equalTo: address
-          },
-          amount: {
-            greaterThan: 1000000
-          },
-          updatedAt: {
-            greaterThan: 0
-          }
-        },
-        order: 'AMOUNT_DESC'
-      }
-    };
-  }
-
   /* Fetch data */
 
   async fetchDelegates (): Promise<ValidatorResponse> {
@@ -148,17 +127,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
   // }
 
   async fetchDelegateState (address: string): Promise<RawDelegateState> {
-    return new Promise(function (resolve) {
-      fetch('https://api.subquery.network/sq/TaoStats/bittensor-indexer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(TaoNativeStakingPoolHandler.parseDelegateState(address))
-      }).then((resp) => {
-        resolve(resp.json());
-      }).catch(console.error);
-    });
+    return fetchTaoDelegateState(address);
   }
 
   /* Fetch data */
