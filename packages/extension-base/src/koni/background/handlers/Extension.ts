@@ -1548,10 +1548,14 @@ export default class KoniExtension {
           this.#koniState.keyringService.removeNoneHardwareGenesisHash();
 
           const successAddressList = addressList.reduce<string[]>((addressList, address) => {
-            const account = keyring.getPair(address);
+            try {
+              const account = keyring.getPair(address);
 
-            if (account) {
-              addressList.push(address);
+              if (account) {
+                addressList.push(address);
+              }
+            } catch (error) {
+              console.log(error);
             }
 
             return addressList;
