@@ -33,6 +33,14 @@ interface CollectionDetail {
   banner_image: string;
 }
 
+interface FetchResponse {
+  data: {
+    nftEntities: {
+      nodes: NftMetadata[] | null;
+    };
+  };
+}
+
 export class TernoaNftApi extends BaseNftApi {
   constructor (api: _SubstrateApi | null, addresses: string[], chain: string) {
     super(chain, api, addresses);
@@ -78,9 +86,8 @@ export class TernoaNftApi extends BaseNftApi {
         body: JSON.stringify(query)
       });
 
-      const result = await response.json() as Record<string, any>;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const nftEntities = result?.data?.nftEntities?.nodes as NftMetadata[] | null;
+      const result = await response.json() as FetchResponse;
+      const nftEntities = result.data.nftEntities.nodes;
 
       if (!nftEntities) {
         return null;
