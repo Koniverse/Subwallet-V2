@@ -368,6 +368,12 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     };
   }, [chainSlug, inputValue]);
 
+  useEffect(() => {
+    if (inputValue !== value) {
+      setInputValue(value);
+    }
+  }, [value]);
+
   return (
     <>
       <div className={CN(className, '-input-container')}>

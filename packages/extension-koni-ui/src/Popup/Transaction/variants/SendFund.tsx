@@ -13,7 +13,7 @@ import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/c
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
+import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
@@ -549,6 +549,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       if (TON_CHAINS.includes(values.chain)) {
         const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
+        const chainInfo = chainInfoMap[values.destChain];
 
         if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
           openAlert({
@@ -558,6 +559,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             okButton: {
               text: t('Transfer'),
               onClick: () => {
+                form.setFieldValue('to', _reformatAddressWithChain(values.to, chainInfo));
                 closeAlert();
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
@@ -567,7 +569,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             },
             cancelButton: {
               text: t('Cancel'),
-              onClick: closeAlert
+              onClick: () => {
+                form.setFieldValue('to', _reformatAddressWithChain(values.to, chainInfo));
+                closeAlert();
+              }
             }
           });
 
@@ -604,7 +609,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      doSubmit(values, options);
+      const lastestValue = form.getFieldsValue();
+
+      doSubmit(lastestValue, options);
     };
 
     _doSubmit().catch((error) => {
