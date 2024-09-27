@@ -178,7 +178,6 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
         const minDelegatorStake = await substrateApi.api.query.subtensorModule.nominatorMinRequiredStake();
 
         const BNminDelegatorStake = new BigN(minDelegatorStake.toString());
-        const expectedReturn = 0;
 
         const data: NativeYieldPoolInfo = {
           ...this.baseInfo,
@@ -190,8 +189,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           statistic: {
             assetEarning: [
               {
-                slug: this.nativeToken.slug,
-                apy: expectedReturn
+                slug: this.nativeToken.slug
               }
             ],
             maxCandidatePerFarmer: 16,
@@ -201,11 +199,8 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
               defaultUnstake: '0',
               fastUnstake: '0'
             },
-            farmerCount: 0,
+            eraTime: 1.2,
             era: 0,
-            eraTime: 0,
-            tvl: '',
-            totalApy: expectedReturn,
             unstakingPeriod: 1.2
           }
         };
