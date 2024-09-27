@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { reformatAddress } from '@subwallet/extension-base/utils';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ChainItem from '@subwallet/extension-koni-ui/components/MetaInfo/parts/ChainItem';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
@@ -54,8 +53,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
   }, [recipientName, senderName]);
 
   const genAccountBlock = (address: string, name?: string) => {
-    const originAddress = reformatAddress(address, 42);
-    const account = findAccountByAddress(accounts, originAddress);
+    const account = findAccountByAddress(accounts, address);
     const shortAddress = toShort(address);
 
     if (name) {

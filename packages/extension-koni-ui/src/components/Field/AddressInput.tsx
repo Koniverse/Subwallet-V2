@@ -4,7 +4,6 @@
 import { CHAINS_SUPPORTED_DOMAIN, isAzeroDomain } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { AbstractAddressJson } from '@subwallet/extension-base/types';
 import { reformatAddress } from '@subwallet/extension-base/utils';
-import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { useForwardInputRef, useOpenQrScanner, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { resolveAddressToDomain, resolveDomainToAddress, saveRecentAccount } from '@subwallet/extension-koni-ui/messaging';
 import { ScannerResult, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -17,6 +16,7 @@ import styled from 'styled-components';
 
 import { decodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
+import { Avatar } from '../Avatar';
 import { QrScannerErrorNotice } from '../Qr';
 import { BasicInputWrapper } from './Base';
 
@@ -239,9 +239,9 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
                 </div>
               )
             }
-            <AccountProxyAvatar
-              className={'__account-avatar'}
+            <Avatar
               size={20}
+              theme={value ? isEthereumAddress(value) ? 'ethereum' : 'polkadot' : undefined}
               value={value}
             />
           </>
