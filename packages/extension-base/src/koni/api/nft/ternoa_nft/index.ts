@@ -34,7 +34,7 @@ interface CollectionDetail {
 }
 
 export class TernoaNftApi extends BaseNftApi {
-  constructor (api: _SubstrateApi, addresses: string[], chain: string) {
+  constructor (api: _SubstrateApi | null, addresses: string[], chain: string) {
     super(chain, api, addresses);
   }
 
