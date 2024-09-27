@@ -135,6 +135,12 @@ export function isBounceableAddress (address: string) {
     : true;
 }
 
+export function tonAddressInfo (address: string) {
+  return Address.isFriendly(address)
+    ? Address.parseFriendly(address)
+    : undefined;
+}
+
 export function getTonSendMode (isTransferAll: boolean) {
   return isTransferAll
     ? SendMode.CARRY_ALL_REMAINING_BALANCE

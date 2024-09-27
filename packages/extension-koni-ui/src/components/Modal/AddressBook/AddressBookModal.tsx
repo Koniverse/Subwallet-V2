@@ -168,7 +168,7 @@ const Component: React.FC<Props> = (props: Props) => {
     return (
       <AddressSelectorItem
         address={item.formatedAddress}
-        avatarValue={item.proxyId}
+        avatarValue={item.proxyId || item.address}
         className={'__list-item'}
         isSelected={value.toLowerCase() === item.formatedAddress.toLowerCase()}
         key={`${item.formatedAddress}_${item.analyzedGroup}`}
