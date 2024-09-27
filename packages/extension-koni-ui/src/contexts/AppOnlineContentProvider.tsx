@@ -221,6 +221,10 @@ export const AppOnlineContentContextProvider = ({ children }: AppOnlineContentCo
                 symbol: urlQueryMap.symbol
               } as EarningPoolsParam });
             }
+
+            if (parseUrl.pathname.startsWith('/main/tokens/tokens/token-groups-detail')) {
+              navigate(`home/tokens/detail/${urlQueryMap.slug}`);
+            }
           } else {
             openInNewTab(url)();
           }
@@ -258,7 +262,7 @@ export const AppOnlineContentContextProvider = ({ children }: AppOnlineContentCo
             title: item.info?.name,
             message: item.content || '',
             buttons: item.buttons,
-            onPressBtn: (url?: string) => {
+            onClickBtn: (url?: string) => {
               handleButtonClick(`${item.position}-${item.id}`)('popup', url);
             }
           }));

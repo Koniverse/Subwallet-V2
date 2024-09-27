@@ -21,7 +21,7 @@ interface Props extends ThemeProps {
   title?: string;
   buttons?: AppContentButton[];
   externalButtons?: React.ReactNode;
-  onPressButton?: (url?: string) => void;
+  onClickBtn?: (url?: string) => void;
   onCloseModal?: () => void;
 }
 
@@ -39,7 +39,7 @@ const modalId = APP_POPUP_MODAL;
 const instructionModalId = APP_INSTRUCTION_MODAL;
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { buttons, className, externalButtons, message, onCloseModal, onPressButton, title } = props;
+  const { buttons, className, externalButtons, message, onClickBtn, onCloseModal, title } = props;
   const [appInstructionData] = useLocalStorage(APP_INSTRUCTION_DATA, '[]');
   const instructionDataList: StaticDataProps[] = useMemo(() => {
     try {
@@ -77,10 +77,10 @@ const Component: React.FC<Props> = (props: Props) => {
   const onAccept = useCallback(
     (url?: string) => {
       inactiveModal(instructionModalId);
-      onPressButton && onPressButton(url);
+      onClickBtn && onClickBtn(url);
       onCloseModal && onCloseModal();
     },
-    [onCloseModal, onPressButton, inactiveModal]
+    [onCloseModal, onClickBtn, inactiveModal]
   );
 
   const _onClickButton = useCallback(

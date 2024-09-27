@@ -21,7 +21,7 @@ export type MktCampaignModalInfo = {
   buttons?: AppContentButton[];
   externalButtons?: React.ReactElement;
   type?: 'popup' | 'banner' | 'confirmation';
-  onPressBtn?: (url?: string) => void;
+  onClickBtn?: (url?: string) => void;
   repeat?: PopupFrequency;
 };
 
