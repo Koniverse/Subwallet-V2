@@ -198,7 +198,7 @@ function Component (props: Props): React.ReactElement<Props> {
                   }
                   onClick={_onClickDeriveButton}
                   size='xs'
-                  tooltip={t('View derived accounts')}
+                  tooltip={t('Derive this account')}
                   type='ghost'
                 />
               )

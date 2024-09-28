@@ -13,8 +13,8 @@ import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/c
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
-import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
+import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
+import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
@@ -27,7 +27,7 @@ import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
 import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useIsFirstRender, useLocalStorage } from 'usehooks-ts';
@@ -269,6 +269,22 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
   const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
+
+  const addressInputRef = useRef<AddressInputRef>(null);
+
+  const updateAddressInputValue = useCallback((value: string) => {
+    addressInputRef.current?.setInputValue(value);
+    addressInputRef.current?.setSelectedOption((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        formatedAddress: value
+      };
+    });
+  }, []);
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
@@ -549,15 +565,22 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       if (TON_CHAINS.includes(values.chain)) {
         const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
+        const chainInfo = chainInfoMap[values.destChain];
 
         if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+          const bounceableAddressPrefix = values.to.substring(0, 2);
+          const formattedAddress = _reformatAddressWithChain(values.to, chainInfo);
+          const formattedAddressPrefix = formattedAddress.substring(0, 2);
+
           openAlert({
             type: NotificationType.WARNING,
-            content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-            title: t('Pay attention!'),
+            content: t(`Transferring to an ${bounceableAddressPrefix} address is not supported. Continuing will result in a transfer to the corresponding ${formattedAddressPrefix} address (same seed phrase)`),
+            title: t('Unsupported address'),
             okButton: {
               text: t('Transfer'),
               onClick: () => {
+                form.setFieldValue('to', formattedAddress);
+                updateAddressInputValue(formattedAddress);
                 closeAlert();
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
@@ -567,7 +590,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             },
             cancelButton: {
               text: t('Cancel'),
-              onClick: closeAlert
+              onClick: () => {
+                closeAlert();
+              }
             }
           });
 
@@ -604,13 +629,15 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      doSubmit(values, options);
+      const latestValue = form.getFieldsValue();
+
+      doSubmit(latestValue, options);
     };
 
     _doSubmit().catch((error) => {
       console.error('Error during submit:', error);
     });
-  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, form, isTransferAll, openAlert, t, updateAddressInputValue]);
 
   // todo: recheck with ledger account
   useEffect(() => {
@@ -813,6 +840,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
+              ref={addressInputRef}
               saveAddress={true}
               showAddressBook={true}
               showScanner={true}
