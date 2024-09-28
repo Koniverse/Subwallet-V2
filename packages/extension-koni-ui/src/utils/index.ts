@@ -6,7 +6,7 @@ import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountWithChildren } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getChainSubstrateAddressPrefix, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountJson, AccountSignMode } from '@subwallet/extension-base/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { Recoded } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils/account/accountAll';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
@@ -42,12 +42,7 @@ export function getEthereumChains (networkMap: Record<string, NetworkJson>): str
 export const defaultRecoded: Recoded = { account: null, formatted: null, prefix: 42, isEthereum: false };
 
 export const accountAllRecoded: Recoded = {
-  account: {
-    address: ALL_ACCOUNT_KEY,
-    accountActions: [],
-    transactionActions: [],
-    signMode: AccountSignMode.ALL_ACCOUNT
-  },
+  account: null,
   formatted: ALL_ACCOUNT_KEY,
   prefix: 42,
   isEthereum: false

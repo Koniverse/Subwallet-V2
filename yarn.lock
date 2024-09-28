@@ -6355,6 +6355,7 @@ __metadata:
     protobufjs: ^7.2.4
     rxjs: ^7.8.1
     sails-js: ^0.1.6
+    tweetnacl: ^1.0.3
     uuid: ^9.0.0
     web3: ^1.10.0
     web3-core: ^1.10.0
@@ -6421,6 +6422,7 @@ __metadata:
     "@polkadot/util": ^12.6.2
     "@polkadot/util-crypto": ^12.6.2
     "@polkadot/x-global": ^12.2.1
+    "@subwallet/keyring": ^0.1.6
     "@types/chrome": ^0.0.254
     "@types/firefox-webext-browser": ^120.0.0
     web3-core: ^1.10.0
@@ -6662,7 +6664,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.6
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=5a96aa&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=a35ae1&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6682,7 +6684,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 5da43a9324028f55c66b663229352f660dbb2bfc8f5bd5daf8623e131cc293a5f57d7f9bad055c7c4f41c598df01cd6912c05dd86434a84fb582a81899d01af5
+  checksum: 4c911135e89ef348b607ad547d1ca6c66eba69f13a572346b939699c3fcf5ab1229e7518fc0c8931d126154df77b4127771de093e8a52903749b054a023bd87f
   languageName: node
   linkType: hard
 
@@ -6766,7 +6768,7 @@ __metadata:
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.6
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=d7397c&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=c483f6&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
@@ -6776,7 +6778,7 @@ __metadata:
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: 52599f78d03183121263b81352056b750d32e784a1935bf7088880d93bd29db2d66f261cd9325f96d6a0a138b2572267fda35256a9afa7cd8564649e4a215eb7
+  checksum: 71f25ea6fff56e9a4702485eaa62e4b1e1852d4ad4f1b180af3bc4598e6ba9f9c72bffa8c053c6f3a08266abe85f5d1d4512ed3366c5454e4e498f57c3d60fb4
   languageName: node
   linkType: hard
 
@@ -29162,7 +29164,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.22.8":
+"zod@npm:^3.21.4, zod@npm:^3.22.8":
   version: 3.23.8
   resolution: "zod@npm:3.23.8"
   checksum: 15949ff82118f59c893dacd9d3c766d02b6fa2e71cf474d5aa888570c469dbf5446ac5ad562bb035bf7ac9650da94f290655c194f4a6de3e766f43febd432c5c
