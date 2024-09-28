@@ -3158,7 +3158,7 @@ export default class KoniExtension {
 
           registry.register(metadata.types);
           registry.setChainProperties(registry.createType('ChainProperties', {
-            ss58Format: chainInfo?.substrateInfo?.addressPrefix || 42,
+            ss58Format: chainInfo?.substrateInfo?.addressPrefix ?? 42,
             tokenDecimals: chainInfo?.substrateInfo?.decimals,
             tokenSymbol: chainInfo?.substrateInfo?.symbol
           }) as unknown as ChainProperties);
