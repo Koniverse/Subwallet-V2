@@ -16,6 +16,7 @@ export class InappNotificationService implements CronServiceInterface {
   private refreshTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
   private unreadNotificationCountSubject = new BehaviorSubject<number>(0);
+  private notificationsSubject = new BehaviorSubject<NotificationInfo[]>([]);
 
   constructor (dbService: DatabaseService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
@@ -30,6 +31,7 @@ export class InappNotificationService implements CronServiceInterface {
     await this.dbService.updateNotification(notification);
   }
 
+  /* Notification Setting */
   updateNotificationOptions (notificationOptions: NotificationOptions) {
     this.notificationSetting.notificationOptions = notificationOptions;
   }
@@ -37,6 +39,7 @@ export class InappNotificationService implements CronServiceInterface {
   updateNotificationTimePeriod (notificationTimePeriod: NotificationTimePeriod) {
     this.notificationSetting.timePeriod = notificationTimePeriod;
   }
+  /* Notification Setting */
 
   async markAllRead (address: string) {
     await this.dbService.markAllRead(address);
@@ -94,16 +97,21 @@ export class InappNotificationService implements CronServiceInterface {
     this.getWithdrawNotifications()
       .then(async (notifications) => {
         await this.dbService.upsertNotifications(notifications);
-        await this.updateUnreadNotificationCount();
       })
       .catch((e) => {
         console.error(e);
       });
 
+    this.updateUnreadNotificationCountSubject()
+      .then().catch((e) => console.error(e));
+
+    this.updateNotificationsSubject()
+      .then().catch((e) => console.error(e));
+
     this.refreshTimeout = setTimeout(this.updateLastestNotifications.bind(this), CRON_UPDATE_NOTIFICATION_INTERVAL);
   }
 
-  private async updateUnreadNotificationCount () {
+  private async updateUnreadNotificationCountSubject () {
     const unreadNotificationCount = await this.dbService.getAllUnreadNotifications();
 
     this.unreadNotificationCountSubject.next(unreadNotificationCount);
@@ -117,6 +125,22 @@ export class InappNotificationService implements CronServiceInterface {
 
   public getUnreadNotificationCount () {
     return this.unreadNotificationCountSubject.getValue();
+  }
+
+  public async updateNotificationsSubject () {
+    const notifications = await this.dbService.getAllNotifications();
+
+    this.notificationsSubject.next(notifications);
+  }
+
+  public subscribeNotifications (callback: (data: NotificationInfo[]) => void) {
+    return this.notificationsSubject.subscribe({
+      next: callback
+    });
+  }
+
+  public getNotifications () {
+    return this.notificationsSubject.getValue();
   }
 
   async start (): Promise<void> {

@@ -4524,25 +4524,31 @@ export default class KoniExtension {
   /* Swap service */
 
   /* Notification service */
-  // private subscribeNotification (id: string, port: chrome.runtime.Port): Promise<NotificationInfo[]> {
-  //   const cb = createSubscription<'pri(notifications.getSubscription)'>(id, port);
-  //   const notificationSubscription = this.#koniState.subscribeNotification().subscribe({
-  //     next: (rs) => {
-  //       cb(rs);
-  //     }
-  //   });
-  //
-  //   this.createUnsubscriptionHandle(id, nftCollectionSubscription.unsubscribe);
-  //
-  //   port.onDisconnect.addListener((): void => {
-  //     this.cancelSubscription(id);
-  //   });
-  //
-  //   return this.getNftCollection();
-  // }
+  private subscribeInappNotifications (id: string, port: chrome.runtime.Port): NotificationInfo[] {
+    const cb = createSubscription<'pri(inappNotification.subscribeNotifications)'>(id, port);
+    let ready = false;
+
+    const callback = (rs: NotificationInfo[]) => {
+      if (ready) {
+        cb(rs);
+      }
+    };
+
+    const subscription = this.#koniState.inappNotificationService.subscribeNotifications(callback);
+
+    this.createUnsubscriptionHandle(id, subscription.unsubscribe);
+
+    port.onDisconnect.addListener((): void => {
+      this.cancelSubscription(id);
+    });
+
+    ready = true;
+
+    return this.#koniState.inappNotificationService.getNotifications();
+  }
 
   private subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): number {
-    const cb = createSubscription<'pri(unreadNotificationCount.getSubscription)'>(id, port);
+    const cb = createSubscription<'pri(inappNotification.subscribeUnreadNotificationCount)'>(id, port);
     let ready = false;
 
     const callback = (rs: number) => {
@@ -5195,9 +5201,9 @@ export default class KoniExtension {
         /* Swap service */
 
         /* Notification service */
-      // case 'pri(notifications.getSubscription)':
-      //   return await this.subscribeNotification(id, port);
-      case 'pri(unreadNotificationCount.getSubscription)':
+      case 'pri(inappNotification.subscribeNotifications)':
+        return this.subscribeInappNotifications(id, port);
+      case 'pri(inappNotification.subscribeUnreadNotificationCount)':
         return this.subscribeUnreadNotificationCount(id, port);
       case 'pri(inappNotification.markAllReadNotification)':
         return this.markAllReadNotification(request as string);

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationInfo } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
+import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { formatConditionalDuration } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Button, Icon } from '@subwallet/react-ui';
@@ -10,7 +10,7 @@ import { DotsThree } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback } from 'react';
 import styled from 'styled-components';
 
-type Props = ThemeProps & NotificationInfo & {
+type Props = ThemeProps & NotificationInfoItem & {
   onClick?: (value: string) => void;
   onClickMoreBtn: (e: SyntheticEvent) => void;
   disabled?: boolean;

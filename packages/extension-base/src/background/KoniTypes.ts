@@ -2445,8 +2445,8 @@ export interface KoniRequestSignatures {
   /* Swap */
 
   /* Notification Service */
-  // 'pri(notifications.getSubscription': [null, NotificationInfo[], NotificationInfo[]];
-  'pri(unreadNotificationCount.getSubscription)': [null, number, number];
+  'pri(inappNotification.subscribeNotifications)': [null, NotificationInfo[], NotificationInfo[]];
+  'pri(inappNotification.subscribeUnreadNotificationCount)': [null, number, number];
   'pri(inappNotification.markAllReadNotification)': [string, null];
   'pri(inappNotification.markReadNotification)': [NotificationInfo, null];
   'pri(inappNotification.markUnreadNotification)': [NotificationInfo, null]

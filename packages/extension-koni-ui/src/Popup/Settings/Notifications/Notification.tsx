@@ -6,12 +6,12 @@ import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components'
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
+import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
-import { BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
+import { BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, ListBullets } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ export enum NotificationTab {
   READ='read'
 }
 
-export interface NotificationInfo {
+export interface NotificationInfoItem {
   id: string;
   title: string;
   description: string;
@@ -45,32 +45,49 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { token } = useTheme() as Theme;
 
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(NotificationTab.ALL);
-  const [viewDetailItem, setViewDetailItem] = useState<NotificationInfo | undefined>(undefined);
+  const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
   const [enableNotification, setEnableNotification] = useState<boolean>(false);
 
-  const notificationItems = useMemo((): NotificationInfo[] => {
-    const sampleData: NotificationInfo[] = [{
-      id: '1',
-      title: '[Hieudao123] Claim 1200 DOT',
-      description: 'You have 1200 DOT to claim. Please click here for claim',
-      time: 1725426988201,
-      notificationType: ExtrinsicType.TRANSFER_TOKEN,
-      backgroundColor: token['yellow-7'],
-      leftIcon: Gift
-    },
-    {
-      id: '2',
-      title: '[Hieudao123] Withdraw 200 DOT',
-      description: 'You have 1200 DOT to claim. Please click here for claim',
-      time: 1725426988707,
-      notificationType: ExtrinsicType.STAKING_WITHDRAW,
-      backgroundColor: token['blue-8'],
-      leftIcon: DownloadSimple
-    }
-    ];
+  const notifications = useSelector((state) => state.notification.notifications);
+  // const unreadNotificationCount = useSelector((state) => state.notification.unreadNotificationCount);
 
-    return sampleData;
+  const notificationItems = useMemo((): NotificationInfoItem[] => {
+    return notifications.map((item) => {
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        time: item.time,
+        notificationType: ExtrinsicType.TRANSFER_TOKEN,
+        backgroundColor: token['blue-8'],
+        leftIcon: DownloadSimple
+      };
+    });
   }, [token]);
+
+  // const notificationItems2 = useMemo((): NotificationInfoItem[] => {
+  //   const sampleData: NotificationInfoItem[] = [{
+  //     id: '1',
+  //     title: '[Hieudao123] Claim 1200 DOT',
+  //     description: 'You have 1200 DOT to claim. Please click here for claim',
+  //     time: 1725426988201,
+  //     notificationType: ExtrinsicType.TRANSFER_TOKEN,
+  //     backgroundColor: token['yellow-7'],
+  //     leftIcon: Gift
+  //   },
+  //   {
+  //     id: '2',
+  //     title: '[Hieudao123] Withdraw 200 DOT',
+  //     description: 'You have 1200 DOT to claim. Please click here for claim',
+  //     time: 1725426988707,
+  //     notificationType: ExtrinsicType.STAKING_WITHDRAW,
+  //     backgroundColor: token['blue-8'],
+  //     leftIcon: DownloadSimple
+  //   }
+  //   ];
+  //
+  //   return sampleData;
+  // }, [token]);
 
   const onNotificationConfig = useCallback(() => {
     navigate('/settings/notification-config');
@@ -97,13 +114,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     setSelectedFilterTab(value);
   }, []);
 
-  const onClickItem = useCallback((item: NotificationInfo) => {
+  const onClickItem = useCallback((item: NotificationInfoItem) => {
     return () => {
       alert('clicked item');
     };
   }, []);
 
-  const onClickMore = useCallback((item: NotificationInfo) => {
+  const onClickMore = useCallback((item: NotificationInfoItem) => {
     return (e: SyntheticEvent) => {
       e.stopPropagation();
       setViewDetailItem(item);
@@ -112,7 +129,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [activeModal]);
 
   const renderItem = useCallback(
-    (item: NotificationInfo) => {
+    (item: NotificationInfoItem) => {
       return (
         <NotificationItem
           backgroundColor={item.backgroundColor}
@@ -164,7 +181,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     );
   }, [enableNotification, t]);
 
-  const searchFunc = useCallback((item: NotificationInfo, searchText: string) => {
+  const searchFunc = useCallback((item: NotificationInfoItem, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
 
     return (
