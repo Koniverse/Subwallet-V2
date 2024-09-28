@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { EXTENSION_VERSION, REMIND_UPGRADE_UNIFIED_ACCOUNT, UPGRADE_UNIFIED_ACCOUNT, VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT } from '@subwallet/extension-koni-ui/constants';
+import { REMIND_DUPLICATE_ACCOUNT_NAME_MODAL, UPGRADE_DUPLICATE_ACCOUNT_NAME } from '@subwallet/extension-koni-ui/constants';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { getValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
+import { getValueLocalStorageWS, setValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { noop } from '@subwallet/extension-koni-ui/utils';
@@ -12,54 +12,29 @@ import CN from 'classnames';
 import { ShieldWarning } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import styled, { useTheme } from 'styled-components';
-import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
 
-const RemindUpdateUnifiedAccountModalId = REMIND_UPGRADE_UNIFIED_ACCOUNT;
-const PreviousVersion = 'previous_version';
+const RemindDuplicateAccountNameModalId = REMIND_DUPLICATE_ACCOUNT_NAME_MODAL;
 const CHANGE_ACCOUNT_NAME_URL = 'https://docs.subwallet.app/main/extension-user-guide/account-management/switch-between-accounts-and-change-account-name#change-your-account-name';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const [isUpdatedUnifiedAccount, setIsUpdatedUnifiedAccount] = useLocalStorage(UPGRADE_UNIFIED_ACCOUNT, false);
   const { token } = useTheme() as Theme;
 
   const onCancel = useCallback(() => {
-    inactiveModal(RemindUpdateUnifiedAccountModalId);
-    setIsUpdatedUnifiedAccount(true);
-  }, [inactiveModal, setIsUpdatedUnifiedAccount]);
-
-  const onCheckNeedRemindUnifiedAccount = useCallback(async () => {
-    const currentParts = VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT.split('.').map(Number);
-    const nextParts = EXTENSION_VERSION.split('.').map(Number);
-    const isUpdateVersion = await getValueLocalStorageWS(PreviousVersion);
-
-    if (isUpdateVersion) {
-      for (let i = 0; i < currentParts.length; i++) {
-        if (nextParts[i] > currentParts[i]) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }, []);
-
-  const onRemindUpdateUnifiedAccount = useCallback(async () => {
-    const isNeedRemindUnifiedAccount = await onCheckNeedRemindUnifiedAccount();
-
-    if (isNeedRemindUnifiedAccount && !isUpdatedUnifiedAccount) {
-      activeModal(RemindUpdateUnifiedAccountModalId);
-    } else {
-      inactiveModal(RemindUpdateUnifiedAccountModalId);
-    }
-  }, [activeModal, inactiveModal, isUpdatedUnifiedAccount, onCheckNeedRemindUnifiedAccount]);
+    inactiveModal(RemindDuplicateAccountNameModalId);
+    setValueLocalStorageWS({ key: UPGRADE_DUPLICATE_ACCOUNT_NAME, value: 'false' }).catch(noop);
+  }, [inactiveModal]);
 
   useEffect(() => {
-    onRemindUpdateUnifiedAccount().catch(noop);
-  }, [onRemindUpdateUnifiedAccount]);
+    getValueLocalStorageWS(UPGRADE_DUPLICATE_ACCOUNT_NAME).then((value) => {
+      if (value === 'true') {
+        activeModal(RemindDuplicateAccountNameModalId);
+      }
+    }).catch(noop);
+  }, [activeModal]);
 
   const footerModal = useMemo(() => {
     return (
@@ -80,7 +55,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         className={CN(className)}
         closable={true}
         footer={footerModal}
-        id={RemindUpdateUnifiedAccountModalId}
+        id={RemindDuplicateAccountNameModalId}
         maskClosable={false}
         onCancel={onCancel}
         title={t('Duplicate account name')}
@@ -108,7 +83,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   );
 }
 
-const RemindUpgradeUnifiedAccount = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const RemindDuplicateAccountNameModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
     '.__modal-content': {
       display: 'flex',
@@ -141,4 +116,4 @@ const RemindUpgradeUnifiedAccount = styled(Component)<Props>(({ theme: { token }
   };
 });
 
-export default RemindUpgradeUnifiedAccount;
+export default RemindDuplicateAccountNameModal;

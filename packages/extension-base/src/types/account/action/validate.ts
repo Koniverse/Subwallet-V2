@@ -12,6 +12,11 @@ export interface RequestAccountNameValidate {
   proxyId?: string;
 }
 
+export interface RequestBounceableValidate {
+  address: string;
+  chain: string;
+}
+
 export interface ResponseAccountNameValidate {
   isValid: boolean;
 }

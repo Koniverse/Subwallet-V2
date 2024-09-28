@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountExternalError, AccountExternalErrorCode, RequestAccountCreateExternalV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountChainType, RequestCheckPublicAndSecretKey, RequestPrivateKeyValidateV2, ResponseCheckPublicAndSecretKey, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { AccountChainType, CommonAccountErrorType, RequestCheckPublicAndSecretKey, RequestPrivateKeyValidateV2, ResponseCheckPublicAndSecretKey, ResponsePrivateKeyValidateV2, SWCommonAccountError } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress } from '@subwallet/keyring';
 import { decodePair } from '@subwallet/keyring/pair/decode';
 import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
@@ -80,7 +80,8 @@ export class AccountSecretHandler extends AccountBaseHandler {
   }
 
   /* Import ethereum account with the private key  */
-  private _checkValidatePrivateKey ({ chainType, privateKey }: RequestPrivateKeyValidateV2, autoAddPrefix = false): ResponsePrivateKeyValidateV2 {
+  private _checkValidatePrivateKey ({ chainType,
+    privateKey }: RequestPrivateKeyValidateV2, autoAddPrefix = false): ResponsePrivateKeyValidateV2 {
     const { phrase } = keyExtractSuri(privateKey);
     const rs = { autoAddPrefix: autoAddPrefix, addressMap: {} } as ResponsePrivateKeyValidateV2;
     const types: KeypairType[] = [];
@@ -174,7 +175,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
 
       const nameExists = this.state.checkNameExists(name);
 
-      assert(!nameExists, t('Account name already exists'));
+      assert(!nameExists, new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NAME_EXISTED).message);
 
       const modifyPairs = this.state.modifyPairs;
 
@@ -203,7 +204,14 @@ export class AccountSecretHandler extends AccountBaseHandler {
     }
   }
 
-  public checkPublicAndSecretKey ({ publicKey, secretKey }: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
+  public checkPublicAndSecretKey ({ publicKey,
+    secretKey }: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
+    let response: ResponseCheckPublicAndSecretKey = {
+      address: '',
+      isValid: true,
+      isEthereum: false
+    };
+
     try {
       const _secret = hexStripPrefix(secretKey);
 
@@ -215,36 +223,51 @@ export class AccountSecretHandler extends AccountBaseHandler {
           const type: KeypairType = 'ethereum';
           const address = keyring.createFromUri(suri, {}, type).address;
 
-          return {
+          response = {
             address: address,
             isValid: true,
             isEthereum: true
           };
         } else {
-          return {
+          response = {
             address: '',
             isValid: false,
             isEthereum: true
           };
         }
+      } else {
+        const keyPair = keyring.keyring.createFromPair({
+          publicKey: hexToU8a(publicKey),
+          secretKey: hexToU8a(secretKey)
+        }, {}, 'sr25519');
+
+        response = {
+          address: keyPair.address,
+          isValid: true,
+          isEthereum: false
+        };
       }
-
-      const keyPair = keyring.keyring.createFromPair({ publicKey: hexToU8a(publicKey), secretKey: hexToU8a(secretKey) }, {}, 'sr25519');
-
-      return {
-        address: keyPair.address,
-        isValid: true,
-        isEthereum: false
-      };
     } catch (e) {
       console.error(e);
 
       return {
         address: '',
         isValid: false,
-        isEthereum: false
+        isEthereum: false,
+        errorMessage: t((e as Error).message)
       };
     }
+
+    if (response.isValid) {
+      const exists = this.state.checkAddressExists([response.address]);
+
+      if (exists) {
+        response.errorMessage = t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } });
+        response.isValid = false;
+      }
+    }
+
+    return response;
   }
 
   public accountExportPrivateKey (request: RequestAccountExportPrivateKey): ResponseAccountExportPrivateKey {

@@ -3,7 +3,7 @@
 
 import { RequestChangeMasterPassword, RequestMigratePassword, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountChainType, RequestAccountProxyEdit, RequestAccountProxyForget, RequestChangeTonWalletContractVersion, RequestGetAllTonWalletContractVersion, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
+import { AccountChainType, CommonAccountErrorType, RequestAccountProxyEdit, RequestAccountProxyForget, RequestChangeTonWalletContractVersion, RequestGetAllTonWalletContractVersion, ResponseGetAllTonWalletContractVersion, SWCommonAccountError } from '@subwallet/extension-base/types';
 import { KeyringPair$Meta, TonKeypairTypes, TonWalletContractVersion } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
@@ -94,7 +94,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     const nameExists = this.state.checkNameExists(name, proxyId);
 
     if (nameExists) {
-      throw Error(t('Account name already exists'));
+      throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NAME_EXISTED);
     }
 
     if (!accountProxies[proxyId]) {
@@ -265,7 +265,6 @@ export class AccountModifyHandler extends AccountBaseHandler {
       accountProxy.id = newAddress;
       accountProxies[newAddress] = accountProxy;
     }
-
 
     const pairs = keyring.getPairs();
     const childPairs = pairs.filter((pair) => pair.meta.parentAddress === oldAddress);

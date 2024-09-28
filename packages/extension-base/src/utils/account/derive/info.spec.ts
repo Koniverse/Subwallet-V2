@@ -7,7 +7,7 @@ import { keyring } from '@subwallet/ui-keyring';
 
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 
-import { findNextDerivePair, getDerivationInfo } from './info';
+import { findSoloNextDerive, getSoloDerivationInfo } from './info';
 
 interface TestCase {
   input: {
@@ -200,7 +200,7 @@ const simplePairs: SimplePair[] = [
 
 describe('info', () => {
   test.each(testCases)('getDerivationInfo', ({ input, output }) => {
-    expect(getDerivationInfo(input.type, input.metadata as KeyringPair$Meta)).toEqual(output);
+    expect(getSoloDerivationInfo(input.type, input.metadata as KeyringPair$Meta)).toEqual(output);
   });
 
   describe('findNextDerivePair', () => {
@@ -217,7 +217,7 @@ describe('info', () => {
     });
 
     test('findNextDerivePair', () => {
-      console.log(findNextDerivePair('UQA--62uJoJNKzGD1MWnYHF8-V9jhzmI1a8jThl0I-HvtGPq'));
+      console.log(findSoloNextDerive('UQA--62uJoJNKzGD1MWnYHF8-V9jhzmI1a8jThl0I-HvtGPq'));
     });
   });
 });

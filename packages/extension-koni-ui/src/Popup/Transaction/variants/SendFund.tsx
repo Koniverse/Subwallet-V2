@@ -9,6 +9,7 @@ import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferU
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
+import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
@@ -16,11 +17,11 @@ import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
-import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
+import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -171,7 +172,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [isBalanceReady, setIsBalanceReady] = useState(true);
   const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
-  const [warnings, setWarnings] = useState<TransactionWarning[]>([]);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
@@ -180,8 +180,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       setForceUpdateMaxValue({});
       setIsTransferAll(true);
     }
-
-    setWarnings(warnings);
   }, []);
 
   const { onError, onSuccess } = useHandleSubmitMultiTransaction(dispatchProcessState, handleWarning);
@@ -360,8 +358,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         form.validateFields([...validateField]).catch(noop);
       }
 
-      setWarnings([]);
-
       persistData(form.getFieldsValue());
     },
     [form, assetRegistry, isTransferAll, persistData]
@@ -403,13 +399,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [accounts, assetRegistry, notification, t]);
 
   const handleBasicSubmit = useCallback((values: TransferParams, options: TransferOptions): Promise<SWTransactionResponse> => {
-    const { asset, chain, destChain, from: _from, to, value } = values;
-
+    const { asset, chain, destChain, from, to, value } = values;
     let sendPromise: Promise<SWTransactionResponse>;
-
-    const chainInfo = chainInfoMap[chain];
-    const addressPrefix = chainInfo?.substrateInfo?.addressPrefix ?? 42;
-    const from = reformatAddress(_from, addressPrefix);
 
     if (chain === destChain) {
       // Transfer token or send fund
@@ -437,7 +428,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     }
 
     return sendPromise;
-  }, [chainInfoMap]);
+  }, []);
 
   // todo: must refactor later, temporary solution to support SnowBridge
   const handleSnowBridgeSpendingApproval = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
@@ -509,7 +500,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           setLoading(false);
         });
     }, 300);
-  }, [handleBasicSubmit, handleSnowBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState.currentStep, processState.steps]);
+  }, [handleBasicSubmit, handleSnowBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
     const bnMaxTransfer = new BN(maxTransfer);
@@ -527,7 +518,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
     let checkTransferAll = false;
 
-    const _doSubmit = () => {
+    const _doSubmit = async () => {
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
@@ -556,26 +547,32 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      if (warnings.some((w) => w.warningType === BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS) && !options.isTransferBounceable) {
-        openAlert({
-          type: NotificationType.WARNING,
-          content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-          title: t('Pay attention!'),
-          okButton: {
-            text: t('Transfer'),
-            onClick: () => {
-              closeAlert();
-              options.isTransferBounceable = true;
-              _doSubmit();
-            }
-          },
-          cancelButton: {
-            text: t('Cancel'),
-            onClick: closeAlert
-          }
-        });
+      if (TON_CHAINS.includes(values.chain)) {
+        const isShowTonBouncealbeModal = await isTonBounceableAddress({ address: values.to, chain: values.chain });
 
-        return;
+        if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+          openAlert({
+            type: NotificationType.WARNING,
+            content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
+            title: t('Pay attention!'),
+            okButton: {
+              text: t('Transfer'),
+              onClick: () => {
+                closeAlert();
+                options.isTransferBounceable = true;
+                _doSubmit().catch((error) => {
+                  console.error('Error during submit:', error);
+                });
+              }
+            },
+            cancelButton: {
+              text: t('Cancel'),
+              onClick: closeAlert
+            }
+          });
+
+          return;
+        }
       }
 
       if (_isNativeToken(assetInfo)) {
@@ -592,7 +589,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               onClick: () => {
                 closeAlert();
                 checkTransferAll = true;
-                _doSubmit();
+                _doSubmit().catch((error) => {
+                  console.error('Error during submit:', error);
+                });
               }
             },
             cancelButton: {
@@ -608,8 +607,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       doSubmit(values, options);
     };
 
-    _doSubmit();
-  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t, warnings]);
+    _doSubmit().catch((error) => {
+      console.error('Error during submit:', error);
+    });
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
 
   // todo: recheck with ledger account
   useEffect(() => {

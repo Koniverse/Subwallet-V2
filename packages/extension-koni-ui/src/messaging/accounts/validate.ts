@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestAccountNameValidate, ResponseAccountNameValidate, ResponseCheckPublicAndSecretKey, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
+import { RequestAccountNameValidate, RequestBounceableValidate, ResponseAccountNameValidate, ResponseCheckPublicAndSecretKey, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging/base';
 
 export async function checkPublicAndPrivateKey (publicKey: string, secretKey: string): Promise<ResponseCheckPublicAndSecretKey> {
@@ -18,4 +18,8 @@ export async function validateMetamaskPrivateKeyV2 (privateKey: string): Promise
 
 export async function validateAccountName (request: RequestAccountNameValidate): Promise<ResponseAccountNameValidate> {
   return sendMessage('pri(accounts.validate.name)', request);
+}
+
+export async function isTonBounceableAddress (request: RequestBounceableValidate): Promise<boolean> {
+  return sendMessage('pri(accounts.validate.bounceable)', request);
 }

@@ -5,10 +5,11 @@ import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { LEDGER_GENERIC_ALLOW_NETWORKS } from '@subwallet/extension-base/core/consts';
 import { BalanceAccountType } from '@subwallet/extension-base/core/substrate/types';
 import { LedgerMustCheckType, ValidateRecipientParams } from '@subwallet/extension-base/core/types';
+import { tonAddressInfo } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
-import { isAddress } from '@subwallet/keyring';
+import { isAddress, isTonAddress } from '@subwallet/keyring';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -81,6 +82,17 @@ export function _isValidSubstrateAddressFormat (validateRecipientParams: Validat
   const toAddressFormatted = reformatAddress(toAddress, addressPrefix);
 
   if (toAddressFormatted !== toAddress) {
+    return `Recipient address must be a valid ${destChainInfo.name} address`;
+  }
+
+  return '';
+}
+
+export function _isValidTonAddressFormat (validateRecipientParams: ValidateRecipientParams): string {
+  const { destChainInfo, toAddress } = validateRecipientParams;
+  const tonInfoData = isTonAddress(toAddress) && tonAddressInfo(toAddress);
+
+  if (tonInfoData && tonInfoData.isTestOnly !== destChainInfo.isTestnet) {
     return `Recipient address must be a valid ${destChainInfo.name} address`;
   }
 
