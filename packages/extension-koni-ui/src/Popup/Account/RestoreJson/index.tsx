@@ -173,6 +173,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       result.push(...exitedAccount);
     }
 
+    if (result.length === 1) {
+      setAccountProxiesSelected([result[0].id]);
+    }
+
     return result;
   }, [accountProxies, t]);
 

@@ -9,7 +9,6 @@ import { Typography } from '@subwallet/react-ui';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
-import AccountProxyAvatar from './AccountProxyAvatar';
 import AccountProxyAvatarGroup from './AccountProxyAvatarGroup';
 
 interface Props extends ThemeProps {
@@ -23,12 +22,6 @@ const Component: React.FC<Props> = ({ accountProxy, className }: Props) => {
   return (
     <div className={className}>
       {isAll && <AccountProxyAvatarGroup />}
-      {!isAll && (
-        <AccountProxyAvatar
-          size={24}
-          value={accountProxy.id}
-        />
-      )}
       <Typography.Text
         className='account-name'
         ellipsis={true}

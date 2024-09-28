@@ -380,6 +380,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         title={t('Select account')}
       >
         <Search
+          autoFocus={true}
           className={'__search-box'}
           onSearch={handleSearch}
           placeholder={t<string>('Account name')}
