@@ -552,14 +552,18 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         const chainInfo = chainInfoMap[values.destChain];
 
         if (isShowTonBouncealbeModal && !options.isTransferBounceable) {
+          const bounceableAddressPrefix = values.to.substring(0, 2);
+          const formattedAddress = _reformatAddressWithChain(values.to, chainInfo);
+          const formattedAddressPrefix = formattedAddress.substring(0, 2);
+
           openAlert({
             type: NotificationType.WARNING,
-            content: t('We are not supporting for bounceable address. The send mode is work as non-bounceable address.'),
-            title: t('Pay attention!'),
+            content: t(`Transferring to an ${bounceableAddressPrefix} address is not supported. Continuing will result in a transfer to the corresponding ${formattedAddressPrefix} address (same seed phrase)`),
+            title: t('Unsupported address'),
             okButton: {
               text: t('Transfer'),
               onClick: () => {
-                form.setFieldValue('to', _reformatAddressWithChain(values.to, chainInfo));
+                form.setFieldValue('to', formattedAddress);
                 closeAlert();
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
@@ -570,7 +574,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             cancelButton: {
               text: t('Cancel'),
               onClick: () => {
-                form.setFieldValue('to', _reformatAddressWithChain(values.to, chainInfo));
                 closeAlert();
               }
             }
@@ -617,7 +620,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     _doSubmit().catch((error) => {
       console.error('Error during submit:', error);
     });
-  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, isTransferAll, openAlert, t]);
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, form, isTransferAll, openAlert, t]);
 
   // todo: recheck with ledger account
   useEffect(() => {

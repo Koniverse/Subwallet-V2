@@ -372,7 +372,7 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     if (inputValue !== value) {
       setInputValue(value);
     }
-  }, [value]);
+  }, [inputValue, value]);
 
   return (
     <>
