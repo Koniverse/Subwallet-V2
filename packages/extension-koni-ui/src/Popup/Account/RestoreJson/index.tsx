@@ -201,15 +201,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         }
       })
       .catch((e: Error) => {
-        let message;
-        if (e.message.includes('is not valid JSON')) {
-          message = 'Invalid file format';
-        } else if (e.message.includes('Cannot read properties of undefined')) {
-          message = 'Invalid JSON file';
-        }
         setFileValidateState({
           status: 'error',
-          message: message || e.message
+          message: e.message
         });
       })
       .finally(() => {
@@ -225,18 +219,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     setPasswordValidating(true);
 
     const onFail = (e: Error) => {
-      if (e.message.includes('Incorrect password')) {
-        setPasswordValidateState({
-          status: 'error',
-          message: e.message
-        });
-      } else {
-        setFileValidateState({
-          status: 'error',
-          message: e.message
-        });
-      }
-
+      setPasswordValidateState({
+        status: 'error',
+        message: e.message
+      });
       selectPassword();
     };
 

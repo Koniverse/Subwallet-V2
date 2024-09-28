@@ -146,7 +146,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             errors.forEach((error) => {
               if (error.code === AccountExternalErrorCode.INVALID_ADDRESS) {
                 errorAddressInputs.push(error.message);
-              } else if (error.message.includes('Account name already in use')) {
+              } else if (error.message.toLowerCase().includes('account name already exists')) {
                 errorNameInputs.push(error.message);
               } else {
                 errorAddressInputs.push(t('Invalid address'));
