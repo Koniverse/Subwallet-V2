@@ -26,21 +26,17 @@ export default function useHandleTonAccountWarning (): HookType {
     if (accountType === 'ton') {
       alertModal.open({
         closable: false,
-        title: t('Seed phrase incompatibility'),
+        title: t('Incompatible seed phrase'),
         type: NotificationType.WARNING,
         content: (
           <>
             <div>
-              {t('Importing this seed phrase will generate a unified account that can be used on multiple ecosystems including Polkadot, Ethereum, Bitcoin, and TON.')}
-            </div>
-            <br />
-            <div>
-              {t('However, SubWallet is not compatible with TON-native wallets. This means that with the same seed phrase, SubWallet and TON-native wallets will generate two different TON addresses.')}
+              {t('This address\'s seed phrase is not compatible with TON-native wallets. Continue using this address or create a new account that can be used on both SubWallet and TON-native wallets')}
             </div>
           </>
         ),
         cancelButton: {
-          text: t('Cancel'),
+          text: t('Get address'),
           icon: XCircle,
           iconWeight: 'fill',
           onClick: () => {
@@ -50,7 +46,7 @@ export default function useHandleTonAccountWarning (): HookType {
           schema: 'secondary'
         },
         okButton: {
-          text: t('OK'),
+          text: t('Create new'),
           icon: CheckCircle,
           iconWeight: 'fill',
           onClick: () => {

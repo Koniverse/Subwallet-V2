@@ -111,7 +111,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
           if (account.address === result.content) {
             setReformatAttachAddress('');
 
-            return Promise.reject(t('Account already exists'));
+            return Promise.reject(t('Account name already in use'));
           }
         }
       } else {
