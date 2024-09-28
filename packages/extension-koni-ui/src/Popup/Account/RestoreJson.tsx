@@ -6,7 +6,7 @@ import { AlertBox, Layout, PageWrapper } from '@subwallet/extension-koni-ui/comp
 import AvatarGroup from '@subwallet/extension-koni-ui/components/Account/Info/AvatarGroup';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
@@ -14,7 +14,7 @@ import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnloc
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { batchRestoreV2, jsonGetAccountInfo, jsonRestoreV2 } from '@subwallet/extension-koni-ui/messaging';
-import { ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
+import { Theme, ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
 import { findNetworkJsonByGenesisHash, reformatAddress } from '@subwallet/extension-koni-ui/utils';
 import { isKeyringPairs$Json } from '@subwallet/extension-koni-ui/utils/account/typeGuards';
 import { KeyringPair$Json } from '@subwallet/keyring/types';
@@ -23,10 +23,10 @@ import { UploadChangeParam, UploadFile } from '@subwallet/react-ui/es/upload/int
 import AccountCard from '@subwallet/react-ui/es/web3-block/account-card';
 import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import CN from 'classnames';
-import { DotsThree, FileArrowDown } from 'phosphor-react';
-import React, { ChangeEventHandler, useCallback, useContext, useEffect, useState } from 'react';
+import { DotsThree, FileArrowDown, Info } from 'phosphor-react';
+import React, { ChangeEventHandler, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 
 import { hexToU8a, isHex, u8aToHex, u8aToString } from '@polkadot/util';
 import { ethereumEncode, keccakAsU8a, secp256k1Expand } from '@polkadot/util-crypto';
@@ -71,10 +71,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { t } = useTranslation();
   const onComplete = useCompleteCreateAccount();
   const navigate = useNavigate();
+  const { token } = useTheme() as Theme;
   const onBack = useGoBackFromCreateAccount(IMPORT_ACCOUNT_MODAL);
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+  const notify = useNotification();
 
   const [form] = Form.useForm();
 
@@ -195,9 +197,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
               })
               .catch((e: Error) => {
                 setRequirePassword(false);
+                console.error(e);
                 setFileValidateState({
                   status: 'error',
-                  message: e.message
+                  message: t<string>('Invalid JSON file')
                 });
                 setValidating(false);
                 setCountAccountInvalid((pre) => pre + 1);
@@ -245,8 +248,20 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             isAllowed: true,
             withMasterPassword: true
           }))
-          .then(() => {
+          .then((addressList) => {
             setTimeout(() => {
+              if (addressList.length === 1) {
+                notify({
+                  message: t('1 account imported'),
+                  type: 'success'
+                });
+              } else if (addressList.length > 1) {
+                notify({
+                  message: t('{{number}} accounts imported', { replace: { number: addressList.length } }),
+                  type: 'success'
+                });
+              }
+
               if (isMultiple) {
                 navigate('/keyring/migrate-password');
               } else {
@@ -268,7 +283,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }).catch(() => {
       // User cancel unlock
     });
-  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, navigate, onComplete]);
+  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, notify, t, navigate, onComplete]);
 
   const renderItem = useCallback((account: ResponseJsonGetAccountInfo): React.ReactNode => {
     return (
@@ -298,6 +313,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     setPassword(value);
   }, [t]);
+
+  const nameImportAccountItem = useMemo(() => {
+    const countAccount = String(accountsInfo.length).padStart(2, '0');
+
+    if (countAccountInvalid > 0) {
+      return t('{{number}} accounts found', { replace: { number: countAccount } });
+    }
+
+    return t('Import {{number}} accounts', { replace: { number: countAccount } });
+  }, [accountsInfo.length, countAccountInvalid, t]);
 
   useEffect(() => {
     if (requirePassword) {
@@ -357,13 +382,25 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                           <SettingItem
                             className='account-list-item'
                             leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                            name={t('Import {{number}} accounts', { replace: { number: String(accountsInfo.length).padStart(2, '0') } })}
+                            name={nameImportAccountItem}
                             onPressItem={openModal}
                             rightItem={(
-                              <Icon
-                                phosphorIcon={DotsThree}
-                                size='sm'
-                              />
+                              <>
+                                {!!countAccountInvalid && <div className={'__check-icon'}>
+                                  <Icon
+                                    iconColor={token.colorWarning}
+                                    phosphorIcon={Info}
+                                    size='sm'
+                                    type='phosphor'
+                                    weight='fill'
+                                  />
+                                </div>}
+                                <Icon
+                                  phosphorIcon={DotsThree}
+                                  size='sm'
+                                />
+                              </>
+
                             )}
                           />
                         )
@@ -415,7 +452,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             >
               {countAccountInvalid > 0 && <AlertBox
                 className={'alert-warning-name-duplicate -item'}
-                description={t('One or more accounts found in this file are invalid. Only {x} accounts can be imported as listed below')}
+                description={t('One or more accounts found in this file are invalid. Only {{x}} accounts can be imported as listed below', { replace: { x: accountsInfo.length } })}
                 title={t('Some accounts can’t be imported')}
                 type='warning'
               />}
@@ -505,6 +542,12 @@ const ImportJson = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
     '.alert-warning-name-duplicate': {
       margin: `-${token.marginXS}px 0px 0px 0px`
+    },
+
+    '.__check-icon': {
+      display: 'flex',
+      width: 40,
+      justifyContent: 'center'
     }
   };
 });

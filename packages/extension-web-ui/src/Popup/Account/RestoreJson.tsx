@@ -9,7 +9,7 @@ import InstructionContainer, { InstructionContentType } from '@subwallet/extensi
 import { BaseModal } from '@subwallet/extension-web-ui/components/Modal/BaseModal';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { useSelector } from '@subwallet/extension-web-ui/hooks';
+import { useNotification, useSelector } from '@subwallet/extension-web-ui/hooks';
 import useCompleteCreateAccount from '@subwallet/extension-web-ui/hooks/account/useCompleteCreateAccount';
 import useGoBackFromCreateAccount from '@subwallet/extension-web-ui/hooks/account/useGoBackFromCreateAccount';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
@@ -97,6 +97,7 @@ function Component ({ className }: Props): JSX.Element {
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+  const notify = useNotification();
   const { isWebUI } = useContext(ScreenContext);
 
   const [form] = Form.useForm();
@@ -269,8 +270,20 @@ function Component ({ className }: Props): JSX.Element {
             isAllowed: true,
             withMasterPassword: true
           }))
-          .then(() => {
+          .then((addressList) => {
             setTimeout(() => {
+              if (addressList.length === 1) {
+                notify({
+                  message: t('1 account imported'),
+                  type: 'success'
+                });
+              } else if (addressList.length > 1) {
+                notify({
+                  message: t('{{number}} accounts imported', { replace: { number: addressList.length } }),
+                  type: 'success'
+                });
+              }
+
               if (isMultiple) {
                 navigate('/keyring/migrate-password');
               } else {
@@ -292,7 +305,7 @@ function Component ({ className }: Props): JSX.Element {
     }).catch(() => {
       // User cancel unlock
     });
-  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, navigate, onComplete]);
+  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, notify, t, navigate, onComplete]);
 
   const renderItem = useCallback((account: ResponseJsonGetAccountInfo): React.ReactNode => {
     return (

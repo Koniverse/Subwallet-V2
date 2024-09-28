@@ -2192,8 +2192,8 @@ export interface KoniRequestSignatures {
   'pri(derivation.createV2)': [RequestDeriveCreateV2, boolean]; // Substrate
 
   // Restore by json
-  'pri(json.restoreV2)': [RequestJsonRestoreV2, void];
-  'pri(json.batchRestoreV2)': [RequestBatchRestoreV2, void];
+  'pri(json.restoreV2)': [RequestJsonRestoreV2, string[]];
+  'pri(json.batchRestoreV2)': [RequestBatchRestoreV2, string[]];
 
   // Export account
   'pri(accounts.batchExportV2)': [RequestAccountBatchExportV2, ResponseAccountBatchExportV2];
