@@ -38,6 +38,18 @@ export class InappNotificationService implements CronServiceInterface {
     this.notificationSetting.timePeriod = notificationTimePeriod;
   }
 
+  async markAllRead (address: string) {
+    await this.dbService.markAllRead(address);
+  }
+
+  async markRead (notification: NotificationInfo) {
+    await this.dbService.markRead(notification);
+  }
+
+  async markUnread (notification: NotificationInfo) {
+    await this.dbService.markUnread(notification);
+  }
+
   async getWithdrawNotifications () {
     const NOTIFICATION_TRANSACTION_TYPE = NotificationTransactionType.WITHDRAW;
     const allWithdrawNotifications: NotificationInfo[] = [];

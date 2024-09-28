@@ -32,6 +32,7 @@ import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getSubstrateGenesisHash, _isAssetSmartContractNft, _isChainEvmCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
+import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
@@ -4562,6 +4563,18 @@ export default class KoniExtension {
 
     return this.#koniState.inappNotificationService.getUnreadNotificationCount();
   }
+
+  private markAllReadNotification (address: string) {
+    return this.#koniState.inappNotificationService.markAllRead(address);
+  }
+
+  private markReadNotification (notification: NotificationInfo) {
+    return this.#koniState.inappNotificationService.markRead(notification);
+  }
+
+  private markUnreadNotification (notification: NotificationInfo) {
+    return this.#koniState.inappNotificationService.markUnread(notification);
+  }
   /* Notification service */
 
   /* Ledger */
@@ -5186,6 +5199,12 @@ export default class KoniExtension {
       //   return await this.subscribeNotification(id, port);
       case 'pri(unreadNotificationCount.getSubscription)':
         return this.subscribeUnreadNotificationCount(id, port);
+      case 'pri(inappNotification.markAllReadNotification)':
+        return this.markAllReadNotification(request as string);
+      case 'pri(inappNotification.markReadNotification)':
+        return this.markReadNotification(request as NotificationInfo);
+      case 'pri(inappNotification.markUnreadNotification)':
+        return this.markUnreadNotification(request as NotificationInfo);
         /* Notification service */
 
         /* Ledger */

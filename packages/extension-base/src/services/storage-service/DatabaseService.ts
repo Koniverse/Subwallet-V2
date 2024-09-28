@@ -622,6 +622,18 @@ export default class DatabaseService {
     return this.stores.inappNotification.bulkUpsert(notifications);
   }
 
+  public markAllRead (address: string) {
+    return this.stores.inappNotification.markAllRead(address);
+  }
+
+  public markRead (notification: NotificationInfo) {
+    return this.stores.inappNotification.markRead(notification);
+  }
+
+  public markUnread (notification: NotificationInfo) {
+    return this.stores.inappNotification.markUnread(notification);
+  }
+
   async exportDB () {
     const blob = await exportDB(this._db, {
       filter: (table, value, key) => {

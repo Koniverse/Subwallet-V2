@@ -16,4 +16,30 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
   getAllUnreadNotifications () {
     return this.table.filter((item) => !item.isRead).count();
   }
+
+  markAllRead (address: string) {
+    return this.table.where('address')
+      .equalsIgnoreCase(address)
+      .modify({ isRead: true });
+  }
+
+  markRead (notification: NotificationInfo) {
+    const id = notification.id;
+    const address = notification.address;
+
+    return this.table.where('address')
+      .equalsIgnoreCase(address)
+      .and((notification) => notification.id === id)
+      .modify({ isRead: true });
+  }
+
+  markUnread (notification: NotificationInfo) {
+    const id = notification.id;
+    const address = notification.address;
+
+    return this.table.where('address')
+      .equalsIgnoreCase(address)
+      .and((notification) => notification.id === id)
+      .modify({ isRead: false });
+  }
 }

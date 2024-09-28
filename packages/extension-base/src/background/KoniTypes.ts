@@ -8,6 +8,7 @@ import { AccountAuthType, AccountJson, AddressJson, AuthorizeRequest, Confirmati
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
+import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
@@ -2446,6 +2447,9 @@ export interface KoniRequestSignatures {
   /* Notification Service */
   // 'pri(notifications.getSubscription': [null, NotificationInfo[], NotificationInfo[]];
   'pri(unreadNotificationCount.getSubscription)': [null, number, number];
+  'pri(inappNotification.markAllReadNotification)': [string, null];
+  'pri(inappNotification.markReadNotification)': [NotificationInfo, null];
+  'pri(inappNotification.markUnreadNotification)': [NotificationInfo, null]
   /* Notification Service */
 
   /* Ledger */
