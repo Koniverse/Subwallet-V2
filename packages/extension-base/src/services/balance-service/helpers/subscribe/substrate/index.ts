@@ -120,7 +120,7 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
   const systemAccountKey = 'query_system_account';
   const poolMembersKey = 'query_nominationPools_poolMembers';
 
-  const isNominationPoolMigrated = !!substrateApi.api.tx?.nominationPools?.migrateDelegation;
+  const isNominationPoolMigrated = await checkNominationPoolCompleteMigrated(substrateApi);
 
   const params: _SubstrateAdapterSubscriptionArgs[] = [
     {
@@ -177,6 +177,31 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
   return () => {
     subscription.unsubscribe();
   };
+};
+
+const checkNominationPoolCompleteMigrated = async (substrateApi: _SubstrateApi) => {
+  if (!substrateApi.api.tx.nominationPools || !substrateApi.api.query.staking) {
+    return false;
+  }
+
+  const isNominationPoolMigrated =
+    !!substrateApi.api.tx.nominationPools.migrateDelegation &&
+    !!substrateApi.api.query.staking.counterForVirtualStakers &&
+    !!substrateApi.api.query.staking.virtualStakers;
+
+  if (!isNominationPoolMigrated) {
+    return false;
+  }
+
+  const [nominationPoolCounterRaw, nominationPoolInfoRaw] = await Promise.all([
+    substrateApi.api.query.staking.counterForVirtualStakers(),
+    substrateApi.api.query.staking.virtualStakers.entries()
+  ]);
+
+  const nominationPoolCounter = nominationPoolCounterRaw.toPrimitive() as number;
+  const nominationPoolInfoLength = nominationPoolInfoRaw.length;
+
+  return nominationPoolCounter !== 0 && nominationPoolInfoLength !== 0;
 };
 
 const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, chainInfo, extrinsicType, substrateApi }: SubscribeSubstratePalletBalance) => {

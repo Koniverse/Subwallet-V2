@@ -329,7 +329,7 @@ export class HydradxHandler implements SwapBaseInterface {
 
         switch (defaultError) {
           case PoolError.InsufficientTradingAmount:
-            return new SwapError(SwapErrorType.SWAP_NOT_ENOUGH_BALANCE);
+            return new SwapError(SwapErrorType.NOT_MEET_MIN_SWAP);
           case PoolError.TradeNotAllowed:
             return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
           case PoolError.MaxInRatioExceeded:
