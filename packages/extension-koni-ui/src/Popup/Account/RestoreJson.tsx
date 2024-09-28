@@ -318,11 +318,25 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     const countAccount = String(accountsInfo.length).padStart(2, '0');
 
     if (countAccountInvalid > 0) {
+      if (accountsInfo.length === 1) {
+        return t('{{number}} account found', { replace: { number: countAccount } });
+      }
+
       return t('{{number}} accounts found', { replace: { number: countAccount } });
     }
 
     return t('Import {{number}} accounts', { replace: { number: countAccount } });
   }, [accountsInfo.length, countAccountInvalid, t]);
+
+  const descriptionAlertWarningBox = useMemo(() => {
+    const countAccount = String(accountsInfo.length).padStart(2, '0');
+
+    if (accountsInfo.length === 1) {
+      return t('One or more accounts found in this file are invalid. Only {{x}} account can be imported as listed below', { replace: { x: countAccount } });
+    }
+
+    return t('One or more accounts found in this file are invalid. Only {{x}} accounts can be imported as listed below', { replace: { x: countAccount } });
+  }, [accountsInfo.length, t]);
 
   useEffect(() => {
     if (requirePassword) {
@@ -377,7 +391,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 ? (
                   <Form.Item>
                     {
-                      accountsInfo.length > 1
+                      accountsInfo.length > 1 || (accountsInfo.length === 1 && countAccountInvalid > 0)
                         ? (
                           <SettingItem
                             className='account-list-item'
@@ -452,7 +466,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             >
               {countAccountInvalid > 0 && <AlertBox
                 className={'alert-warning-name-duplicate -item'}
-                description={t('One or more accounts found in this file are invalid. Only {{x}} accounts can be imported as listed below', { replace: { x: accountsInfo.length } })}
+                description={descriptionAlertWarningBox}
                 title={t('Some accounts can’t be imported')}
                 type='warning'
               />}
