@@ -1520,7 +1520,7 @@ export default class KoniExtension {
           this.#koniState.notificationService.notify({
             type: NotificationType.SUCCESS,
             title: t(''),
-            message: t('Imported account successfully')
+            message: t('1 account imported')
           });
           this._addAddressToAuthList(address, isAllowed);
         });
@@ -1561,12 +1561,10 @@ export default class KoniExtension {
             return addressList;
           }, []);
 
-          const totalAccountImport = file.accounts.length;
-
           this.#koniState.notificationService.notify({
             type: NotificationType.SUCCESS,
             title: t(''),
-            message: t('Imported {{successCount}}/{{totalCount}} accounts successfully', { replace: { successCount: successAddressList.length, totalCount: totalAccountImport } })
+            message: t('{{successCount}} accounts imported', { replace: { successCount: successAddressList.length } })
           });
           this._addAddressesToAuthList(successAddressList, isAllowed);
         });

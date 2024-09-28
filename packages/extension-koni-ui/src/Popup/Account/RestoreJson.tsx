@@ -380,9 +380,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                 : countAccountInvalid
                   ? (<AlertBox
                     className={'alert-warning-name-duplicate'}
-                    description={t('Invalid account address')}
-                    title={t('Invalid account address')}
-                    type='warning'
+                    description={t('All accounts found in this file are invalid. Import another JSON file and try again')}
+                    title={t('Unable to import')}
+                    type='error'
                   />)
                   : <></>
             }
@@ -415,8 +415,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             >
               {countAccountInvalid > 0 && <AlertBox
                 className={'alert-warning-name-duplicate -item'}
-                description={t('Invalid account address')}
-                title={t('Invalid account address')}
+                description={t('One or more accounts found in this file are invalid. Only {x} accounts can be imported as listed below')}
+                title={t('Some accounts can’t be imported')}
                 type='warning'
               />}
               <SwList.Section
