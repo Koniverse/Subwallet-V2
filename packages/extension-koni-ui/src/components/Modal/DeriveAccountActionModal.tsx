@@ -83,6 +83,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const [form] = Form.useForm<DeriveFormState>();
 
   const [loading, setLoading] = useState(false);
+  const [, setUpdate] = useState({});
   const infoRef = useRef<DerivePathInfo | undefined>();
   const networkType = infoRef.current?.type;
 
@@ -98,9 +99,14 @@ const Component: React.FC<Props> = (props: Props) => {
     form.setFields([{ name: 'suri', errors: [] }]);
   }, [form]);
 
+  const setInfo = useCallback((data: DerivePathInfo | undefined) => {
+    infoRef.current = data;
+    setUpdate({});
+  }, []);
+
   const suriValidator = useCallback((rule: Rule, suri: string): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
-      infoRef.current = undefined;
+      setInfo(undefined);
 
       if (!suri) {
         reject(t('Derive path is required'));
@@ -115,14 +121,14 @@ const Component: React.FC<Props> = (props: Props) => {
             if (rs.error) {
               reject(rs.error);
             } else {
-              infoRef.current = rs.info;
+              setInfo(rs.info);
               resolve();
             }
           })
           .catch(reject);
-      }, 500);
+      }, 300, 1000);
     });
-  }, [t, proxyId]);
+  }, [setInfo, t, proxyId]);
 
   const onAccountNameChange = useCallback(() => {
     form.setFields([{ name: 'accountName', errors: [] }]);
