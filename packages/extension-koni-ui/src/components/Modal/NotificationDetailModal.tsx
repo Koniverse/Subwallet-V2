@@ -3,6 +3,7 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { markReadNotification, markUnreadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
@@ -40,7 +41,7 @@ function Component (props: Props): React.ReactElement<Props> {
     onCancel && onCancel();
   }, [inactiveModal, onCancel]);
 
-  const getNotificationAction = (type: string) => {
+  const getNotificationAction = (type: ExtrinsicType) => {
     switch (type) {
       case ExtrinsicType.STAKING_WITHDRAW:
         return {
@@ -74,6 +75,7 @@ function Component (props: Props): React.ReactElement<Props> {
 
   const onClickReadButton = useCallback(() => {
     setReadNotification(!readNotification);
+    // readNotification ? await markReadNotification(notificationInfo) : await markUnreadNotification(notificationInfo); // get current notificationInfo
   }, [readNotification]);
 
   return (

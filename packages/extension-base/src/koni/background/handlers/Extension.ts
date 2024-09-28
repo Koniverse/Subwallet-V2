@@ -44,6 +44,7 @@ import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, Wall
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
+import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
@@ -4581,6 +4582,10 @@ export default class KoniExtension {
   private markUnreadNotification (notification: NotificationInfo) {
     return this.#koniState.inappNotificationService.markUnread(notification);
   }
+
+  private async getInappNotifications (params: GetNotificationParams) {
+    return await this.#koniState.inappNotificationService.getNotificationsByParams(params);
+  }
   /* Notification service */
 
   /* Ledger */
@@ -5211,6 +5216,8 @@ export default class KoniExtension {
         return this.markReadNotification(request as NotificationInfo);
       case 'pri(inappNotification.markUnreadNotification)':
         return this.markUnreadNotification(request as NotificationInfo);
+      case 'pri(inappNotification.getInappNotifications)':
+        return await this.getInappNotifications(request as GetNotificationParams);
         /* Notification service */
 
         /* Ledger */

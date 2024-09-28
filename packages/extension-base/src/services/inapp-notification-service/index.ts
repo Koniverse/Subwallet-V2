@@ -8,6 +8,7 @@ import { DEFAULT_NOTIFICATION_SETTING, NotificationTitleMap } from '@subwallet/e
 import { NotificationInfo, NotificationOptions, NotificationSetting, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
+import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { BehaviorSubject } from 'rxjs';
 
 export class InappNotificationService implements CronServiceInterface {
@@ -141,6 +142,10 @@ export class InappNotificationService implements CronServiceInterface {
 
   public getNotifications () {
     return this.notificationsSubject.getValue();
+  }
+
+  public async getNotificationsByParams (params: GetNotificationParams) {
+    return await this.dbService.getNotificationsByParams(params);
   }
 
   async start (): Promise<void> {

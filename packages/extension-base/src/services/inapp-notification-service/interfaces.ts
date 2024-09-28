@@ -1,13 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+
 export interface NotificationInfo {
   id: string,
   title: string,
   description: string,
   address: string,
   time: number,
-  extrinsicType: string,
+  extrinsicType: ExtrinsicType,
   isRead: boolean,
   actionType: NotificationTransactionType
 }
@@ -35,4 +37,10 @@ export enum NotificationTransactionType {
   RECEIVE = 'RECEIVE',
   WITHDRAW = 'WITHDRAW',
   CLAIM = 'CLAIM'
+}
+
+export enum NotificationTab {
+  ALL = 'ALL',
+  UNREAD = 'UNREAD',
+  READ = 'READ'
 }

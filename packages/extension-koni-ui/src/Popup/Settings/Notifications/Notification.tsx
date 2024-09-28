@@ -1,40 +1,32 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import { BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, ListBullets } from 'phosphor-react';
-import React, { SyntheticEvent, useCallback, useContext, useMemo, useState } from 'react';
+import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
 
-export enum NotificationTab {
-  ALL='all',
-  UNREAD='unread',
-  READ='read'
-}
-
-export interface NotificationInfoItem {
-  id: string;
-  title: string;
-  description: string;
-  time: number;
-  notificationType: ExtrinsicType; // extrinsic type
+export interface NotificationInfoItem extends NotificationInfo {
   backgroundColor: string;
   leftIcon?: SwIconProps['phosphorIcon'];
   disabled?: boolean;
-  isRead?: boolean;
 }
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
@@ -47,9 +39,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(NotificationTab.ALL);
   const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
   const [enableNotification, setEnableNotification] = useState<boolean>(false);
+  const [notifications, setNotifications] = useState<NotificationInfo[]>([]);
+  const { currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const [currentAddress] = useState<string | undefined>(currentAccount?.address);
 
-  const notifications = useSelector((state) => state.notification.notifications);
-  // const unreadNotificationCount = useSelector((state) => state.notification.unreadNotificationCount);
+  const unreadNotificationCount = useSelector((state) => state.notification.unreadNotificationCount);
+
+  console.log('notifications', notifications);
+  console.log('unreadNotificationCount', unreadNotificationCount);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     return notifications.map((item) => {
@@ -57,37 +54,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         id: item.id,
         title: item.title,
         description: item.description,
+        address: item.address,
         time: item.time,
-        notificationType: ExtrinsicType.TRANSFER_TOKEN,
-        backgroundColor: token['blue-8'],
+        extrinsicType: item.extrinsicType,
+        isRead: item.isRead,
+        actionType: item.actionType,
+        backgroundColor: token['red-10'],
         leftIcon: DownloadSimple
-      };
+      } as unknown as NotificationInfoItem;
     });
-  }, [token]);
-
-  // const notificationItems2 = useMemo((): NotificationInfoItem[] => {
-  //   const sampleData: NotificationInfoItem[] = [{
-  //     id: '1',
-  //     title: '[Hieudao123] Claim 1200 DOT',
-  //     description: 'You have 1200 DOT to claim. Please click here for claim',
-  //     time: 1725426988201,
-  //     notificationType: ExtrinsicType.TRANSFER_TOKEN,
-  //     backgroundColor: token['yellow-7'],
-  //     leftIcon: Gift
-  //   },
-  //   {
-  //     id: '2',
-  //     title: '[Hieudao123] Withdraw 200 DOT',
-  //     description: 'You have 1200 DOT to claim. Please click here for claim',
-  //     time: 1725426988707,
-  //     notificationType: ExtrinsicType.STAKING_WITHDRAW,
-  //     backgroundColor: token['blue-8'],
-  //     leftIcon: DownloadSimple
-  //   }
-  //   ];
-  //
-  //   return sampleData;
-  // }, [token]);
+  }, [notifications, token]);
 
   const onNotificationConfig = useCallback(() => {
     navigate('/settings/notification-config');
@@ -112,6 +88,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value);
+    getInappNotifications({
+      address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
+      notificationTab: value // todo: set this corresponding to selected tab
+    } as GetNotificationParams)
+      .then((rs) => {
+        setNotifications(rs);
+      })
+      .catch();
   }, []);
 
   const onClickItem = useCallback((item: NotificationInfoItem) => {
@@ -132,16 +116,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     (item: NotificationInfoItem) => {
       return (
         <NotificationItem
-          backgroundColor={item.backgroundColor}
-          className={'item'}
-          description={item.description}
           id={item.id}
+          title={item.title}
+          description={item.description}
+          address={item.address}
+          time={item.time}
+          extrinsicType={item.extrinsicType}
+          isRead={item.isRead}
+          actionType={item.actionType}
+          backgroundColor={item.backgroundColor}
           leftIcon={item.leftIcon}
-          notificationType={item.notificationType}
+          className={'item'}
           onClick={onClickItem(item)}
           onClickMoreBtn={onClickMore(item)}
-          time={item.time}
-          title={item.title}
         />
       );
     },
@@ -189,8 +176,20 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     );
   }, []);
 
-  const handleSwitchClick = useCallback(() => {
+  const handleSwitchClick = useCallback(async () => {
+    await markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY); // todo: handle mark all read for all account
     alert('Read all account button is clicked');
+  }, []);
+
+  useEffect(() => {
+    getInappNotifications({
+      address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
+      notificationTab: NotificationTab.ALL
+    } as GetNotificationParams)
+      .then((rs) => {
+        setNotifications(rs);
+      })
+      .catch();
   }, []);
 
   return (
