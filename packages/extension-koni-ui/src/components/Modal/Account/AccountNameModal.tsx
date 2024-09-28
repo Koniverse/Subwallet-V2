@@ -115,6 +115,7 @@ const Component: React.FC<Props> = ({ accountType, className, isLoading, onSubmi
                 validator: accountNameValidator
               }
             ]}
+            statusHelpAsTooltip={true}
           >
             <Input
               className='__account-name-input'
