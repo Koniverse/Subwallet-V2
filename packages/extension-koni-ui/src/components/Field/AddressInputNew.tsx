@@ -19,7 +19,7 @@ import { isAddress } from '@subwallet/keyring';
 import { AutoComplete, Button, Icon, Input, ModalContext, Switch, SwQrScanner } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Book, CheckCircle, MagicWand, Scan, XCircle } from 'phosphor-react';
-import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { ForwardedRef, forwardRef, SyntheticEvent, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
@@ -47,6 +47,11 @@ interface Props extends BasicInputWrapper, ThemeProps {
   dropdownHeight?: number;
 }
 
+export interface AddressInputRef extends BaseSelectRef {
+  setInputValue: React.Dispatch<React.SetStateAction<string | undefined>>;
+  setSelectedOption: React.Dispatch<React.SetStateAction<AnalyzeAddress | undefined>>;
+}
+
 const defaultScannerModalId = 'input-account-address-scanner-modal';
 const defaultAddressBookModalId = 'input-account-address-book-modal';
 
@@ -63,7 +68,7 @@ function getInputValueFromGraftedValue (graftedValue: string) {
 // todo:
 //  - Rename to AddressInput, after this component is done
 
-function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.ReactElement<Props> {
+function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.ReactElement<Props> {
   const { chainSlug, className = '', disabled, dropdownHeight = 240,
     id, label, labelStyle, onBlur, onChange, onFocus, placeholder, readOnly,
     saveAddress, showAddressBook, showScanner, status, statusHelp, value } = props;
@@ -83,7 +88,8 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   const scannerId = useMemo(() => id ? `${id}-scanner-modal` : defaultScannerModalId, [id]);
   const addressBookId = useMemo(() => id ? `${id}-address-book-modal` : defaultAddressBookModalId, [id]);
 
-  const fieldRef = useForwardFieldRef<BaseSelectRef>(ref);
+  const fieldRef = useForwardFieldRef<AddressInputRef>(ref);
+  const fieldRefCurrent = fieldRef.current;
   const [scanError, setScanError] = useState('');
 
   const parseAndChangeValue = useCallback((_value: string) => {
@@ -144,18 +150,18 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
     }
 
     setTimeout(() => {
-      fieldRef?.current?.blur();
+      fieldRefCurrent?.blur();
     }, 300);
-  }, [fieldRef]);
+  }, [fieldRefCurrent]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape' || event.key === 'Enter') {
       event.preventDefault();
       event.stopPropagation();
 
-      fieldRef?.current?.blur();
+      fieldRefCurrent?.blur();
     }
-  }, [fieldRef]);
+  }, [fieldRefCurrent]);
 
   const autoCompleteOptions = useMemo<AutoCompleteGroupItem[]>(() => {
     if (!responseOptions.length) {
@@ -294,13 +300,13 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
   }, [activeModal, addressBookId]);
 
   const onSelectAddressBook = useCallback((_value: string, item: AnalyzeAddress) => {
-    fieldRef?.current?.focus();
+    fieldRefCurrent?.focus();
     onChangeInputValue(_value);
     setSelectedOption(item);
     setTimeout(() => {
-      fieldRef?.current?.blur();
+      fieldRefCurrent?.blur();
     }, 300);
-  }, [onChangeInputValue, fieldRef]);
+  }, [onChangeInputValue, fieldRefCurrent]);
 
   // scanner
 
@@ -323,20 +329,44 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
 
     // timeout to make the output value is updated
     setTimeout(() => {
-      fieldRef?.current?.focus();
+      fieldRefCurrent?.focus();
       setOpenDropdownManually(true);
     }, 300);
-  }, [onChangeInputValue, fieldRef, inactiveModal, scannerId]);
+  }, [onChangeInputValue, fieldRefCurrent, inactiveModal, scannerId]);
 
   const onCloseScan = useCallback(() => {
-    fieldRef?.current?.focus();
+    fieldRefCurrent?.focus();
     setScanError('');
-    fieldRef?.current?.blur();
-  }, [fieldRef]);
+    fieldRefCurrent?.blur();
+  }, [fieldRefCurrent]);
 
   const dropdownListHeight = useMemo(() => {
     return isShowAdvancedAddressDetection ? dropdownHeight - 60 : (dropdownHeight - 24);
   }, [dropdownHeight, isShowAdvancedAddressDetection]);
+
+  useImperativeHandle(ref, () => {
+    if (fieldRefCurrent) {
+      return {
+        ...fieldRefCurrent,
+        setInputValue,
+        setSelectedOption
+      };
+    }
+
+    return {
+      setInputValue,
+      setSelectedOption,
+      focus: () => {
+        //
+      },
+      blur: () => {
+        //
+      },
+      scrollTo: () => {
+        //
+      }
+    };
+  }, [fieldRefCurrent]);
 
   useEffect(() => {
     let sync = true;
@@ -367,12 +397,6 @@ function Component (props: Props, ref: ForwardedRef<BaseSelectRef>): React.React
       }
     };
   }, [chainSlug, inputValue]);
-
-  useEffect(() => {
-    if (inputValue !== value) {
-      setInputValue(value);
-    }
-  }, [inputValue, value]);
 
   return (
     <>

@@ -14,7 +14,7 @@ import { SWTransactionResponse } from '@subwallet/extension-base/services/transa
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
-import { AccountAddressSelector, AddressInputNew, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
+import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
@@ -27,7 +27,7 @@ import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
 import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useIsFirstRender, useLocalStorage } from 'usehooks-ts';
@@ -269,6 +269,22 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [accountProxies, chainInfoMap, chainValue, targetAccountProxy]);
 
   const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
+
+  const addressInputRef = useRef<AddressInputRef>(null);
+
+  const updateAddressInputValue = useCallback((value: string) => {
+    addressInputRef.current?.setInputValue(value);
+    addressInputRef.current?.setSelectedOption((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        formatedAddress: value
+      };
+    });
+  }, []);
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
@@ -564,6 +580,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Transfer'),
               onClick: () => {
                 form.setFieldValue('to', formattedAddress);
+                updateAddressInputValue(formattedAddress);
                 closeAlert();
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
@@ -612,15 +629,15 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         }
       }
 
-      const lastestValue = form.getFieldsValue();
+      const latestValue = form.getFieldsValue();
 
-      doSubmit(lastestValue, options);
+      doSubmit(latestValue, options);
     };
 
     _doSubmit().catch((error) => {
       console.error('Error during submit:', error);
     });
-  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, form, isTransferAll, openAlert, t]);
+  }, [assetInfo, chainInfoMap, closeAlert, doSubmit, form, isTransferAll, openAlert, t, updateAddressInputValue]);
 
   // todo: recheck with ledger account
   useEffect(() => {
@@ -823,6 +840,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               label={`${t('To')}:`}
               labelStyle={'horizontal'}
               placeholder={t('Enter address')}
+              ref={addressInputRef}
               saveAddress={true}
               showAddressBook={true}
               showScanner={true}
