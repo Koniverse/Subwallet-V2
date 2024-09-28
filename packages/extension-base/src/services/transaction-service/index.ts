@@ -873,6 +873,10 @@ export default class TransactionService {
       }
     }
 
+    if (!payload.address) {
+      payload.address = address;
+    }
+
     if ('data' in payload && payload.data === undefined) {
       delete payload.data;
     }
