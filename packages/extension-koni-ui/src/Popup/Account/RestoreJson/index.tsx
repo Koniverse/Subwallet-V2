@@ -173,6 +173,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       result.push(...exitedAccount);
     }
 
+    if (result.length === 1) {
+      setAccountProxiesSelected([result[0].id]);
+    }
+
     return result;
   }, [accountProxies, t]);
 
@@ -381,6 +385,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const renderItem = useCallback((item: ListItem): React.ReactNode => {
     const selected = accountProxiesSelected.includes(item.id);
+    console.log('selected', selected);
+    console.log('accountProxiesSelected', accountProxiesSelected);
 
     if ((item as ListItemGroupLabel).groupLabel) {
       return (
