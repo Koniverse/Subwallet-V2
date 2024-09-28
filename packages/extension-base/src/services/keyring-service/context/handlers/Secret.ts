@@ -41,7 +41,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
       const nameExists = this.state.checkNameExists(name);
 
       if (nameExists) {
-        throw Error(t('Account name already exists'));
+        throw Error(t('Account name already in use'));
       }
 
       const meta: KeyringPair$Meta = {
@@ -115,12 +115,12 @@ export class AccountSecretHandler extends AccountBaseHandler {
       rs.keyTypes = types;
     } else {
       rs.autoAddPrefix = false;
-      assert(false, t('Invalid private key. Please try again.'));
+      assert(false, t('Invalid private key'));
     }
 
     const exists = this.state.checkAddressExists(Object.values(rs.addressMap));
 
-    assert(!exists, t('Have already created account with this private key: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+    assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     return rs;
   }
@@ -171,7 +171,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
       const _address = keyringPair.address;
       const exists = this.state.checkAddressExists([_address]);
 
-      assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+      assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
       const nameExists = this.state.checkNameExists(name);
 
@@ -262,7 +262,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
       const exists = this.state.checkAddressExists([response.address]);
 
       if (exists) {
-        response.errorMessage = t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || '' } });
+        response.errorMessage = t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } });
         response.isValid = false;
       }
     }

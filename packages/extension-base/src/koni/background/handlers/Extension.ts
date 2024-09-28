@@ -445,7 +445,7 @@ export default class KoniExtension {
         return { ...result.json, publicKey: decodeAddress(address) };
       }
     } else {
-      throw Error(t('This is not an address'));
+      throw Error(t('Invalid address'));
     }
   }
 
@@ -460,7 +460,7 @@ export default class KoniExtension {
 
       return true;
     } else {
-      throw Error(t('This is not an address'));
+      throw Error(t('Invalid address'));
     }
   }
 
@@ -475,7 +475,7 @@ export default class KoniExtension {
 
       return true;
     } else {
-      throw Error(t('This is not an address'));
+      throw Error(t('Invalid address'));
     }
   }
 

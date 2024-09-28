@@ -93,7 +93,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           setReformatAddress('');
           setIsHideAccountNameInput(true);
 
-          return Promise.reject(t('Account already exists'));
+          return Promise.reject(t('Account name already in use'));
         }
       }
     } else {
@@ -101,7 +101,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       setIsHideAccountNameInput(true);
 
       if (value !== '') {
-        return Promise.reject(t('This is not an address'));
+        return Promise.reject(t('Invalid address'));
       }
     }
 
@@ -146,10 +146,10 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             errors.forEach((error) => {
               if (error.code === AccountExternalErrorCode.INVALID_ADDRESS) {
                 errorAddressInputs.push(error.message);
-              } else if (error.message.toLowerCase().includes('account name already exists')) {
+              } else if (error.message.includes('Account name already in use')) {
                 errorNameInputs.push(error.message);
               } else {
-                errorAddressInputs.push(t('This is not an address'));
+                errorAddressInputs.push(t('Invalid address'));
               }
             });
 

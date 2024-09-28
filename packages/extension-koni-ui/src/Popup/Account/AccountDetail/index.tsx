@@ -161,7 +161,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
         const { isValid } = await validateAccountName({ name: value, proxyId: accountProxyId });
 
         if (!isValid) {
-          return Promise.reject(t('Account already exists'));
+          return Promise.reject(t('Account name already in use'));
         }
       } catch (e) {
         return Promise.reject(t('Account name invalid'));

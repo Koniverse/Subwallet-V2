@@ -47,18 +47,18 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
     let pairTypes: KeypairType[] = [];
 
     if (isHex(phrase)) {
-      assert(isHex(phrase, 256), t('Invalid seed phrase. Please try again.'));
+      assert(isHex(phrase, 256), t('Invalid seed phrase'));
     } else {
       // sadly isHex detects as string, so we need a cast here
       assert(SEED_LENGTHS.includes((phrase).split(' ').length), t('Seed phrase needs to contain {{x}} words', { replace: { x: SEED_LENGTHS.join(', ') } }));
 
       try {
-        assert(mnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
+        assert(mnemonicValidate(phrase), t('Invalid seed phrase'));
 
         mnemonicTypes = 'general';
         pairTypes = ['sr25519', 'ethereum', 'ton'];
       } catch (e) {
-        assert(tonMnemonicValidate(phrase), t('Invalid seed phrase. Please try again.'));
+        assert(tonMnemonicValidate(phrase), t('Invalid seed phrase'));
         mnemonicTypes = 'ton';
         pairTypes = ['ton-native'];
       }
@@ -125,7 +125,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists(Object.values(addressDict));
 
-    assert(!exists, t('Have already created account with this seed: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+    assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     // Upsert account group first, to avoid combine latest have no account group data.
     if (proxyId) {
