@@ -136,14 +136,16 @@ export class TernoaNftApi extends BaseNftApi {
         return null;
       }
 
-      if (!collectionMetadata?.offchainData) {
-        console.error(collectionId);
-
-        return null;
-      }
-
       const ipfsUrl = `${TERNOA_MAINNET_GATEWAY}${collectionMetadata.offchainData}`;
       const ipfsResponse = await fetch(ipfsUrl);
+
+      if (!ipfsResponse.ok) {
+        return {
+          name: collectionMetadata.offchainData,
+          banner_image: ''
+        };
+      }
+
       const collectionDetail = await ipfsResponse.json() as CollectionDetail;
 
       collectionDetail.banner_image = `${TERNOA_MAINNET_GATEWAY}${collectionDetail.banner_image}`;
@@ -159,6 +161,8 @@ export class TernoaNftApi extends BaseNftApi {
   /* Get Collection */
 
   public async handleNfts (params: HandleNftParams): Promise<void> {
+    const collectionMap = new Map<string, boolean>();
+
     await Promise.all(this.addresses.map(async (address) => {
       address = encodeAddress(decodeAddress(address), 42);
       const nftDetails = await this.fetchNftsWithDetail(address);
@@ -167,8 +171,7 @@ export class TernoaNftApi extends BaseNftApi {
         return;
       }
 
-      const collectionIds: string[] = [];
-
+      // eslint-disable-next-line @typescript-eslint/require-await
       await Promise.all(nftDetails.map(async (nft) => {
         const { detail, metadata } = nft;
 
@@ -190,32 +193,30 @@ export class TernoaNftApi extends BaseNftApi {
 
         params.updateItem(this.chain, parsedNft, address);
 
-        /* Handle collection */
-
-        if (!collectionIds.includes(collectionId)) {
-          collectionIds.push(collectionId);
+        if (!collectionMap.has(collectionId)) {
+          collectionMap.set(collectionId, true);
         }
-
-        const collectionDetail = collectionId !== 'Ternoa_Collection'
-          ? await this.getCollectionDetail(collectionId)
-          : {
-            name: 'Ternoa NFTs',
-            description: 'Collection for NFTs without a specific collection',
-            banner_image: ''
-          };
-
-        const parsedCollection = {
-          collectionId,
-          chain: this.chain,
-          collectionName: collectionDetail?.name,
-          image: collectionDetail?.banner_image ? this.parseUrl(collectionDetail?.banner_image) : undefined
-        } as NftCollection;
-
-        params.updateCollection(this.chain, parsedCollection);
-
-        /* Handle collection */
       }));
     }));
+
+    for (const collectionId of collectionMap.keys()) {
+      const collectionDetail = collectionId !== 'Ternoa_Collection'
+        ? await this.getCollectionDetail(collectionId)
+        : {
+          name: 'Ternoa NFTs',
+          description: 'Collection for NFTs without a specific collection',
+          banner_image: ''
+        };
+
+      const parsedCollection = {
+        collectionId,
+        chain: this.chain,
+        collectionName: collectionDetail?.name,
+        image: collectionDetail?.banner_image ? this.parseUrl(collectionDetail?.banner_image) : undefined
+      } as NftCollection;
+
+      params.updateCollection(this.chain, parsedCollection);
+    }
   }
 
   public async fetchNfts (params: HandleNftParams): Promise<number> {
