@@ -577,7 +577,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             content: t(`Transferring to an ${bounceableAddressPrefix} address is not supported. Continuing will result in a transfer to the corresponding ${formattedAddressPrefix} address (same seed phrase)`),
             title: t('Unsupported address'),
             okButton: {
-              text: t('Transfer'),
+              text: t('Continue'),
               onClick: () => {
                 form.setFieldValue('to', formattedAddress);
                 updateAddressInputValue(formattedAddress);
