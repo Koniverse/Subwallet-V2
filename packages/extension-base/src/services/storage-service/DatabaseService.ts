@@ -639,6 +639,10 @@ export default class DatabaseService {
     return this.stores.inappNotification.markUnread(notification);
   }
 
+  public changeReadStatus (notification: NotificationInfo) {
+    return this.stores.inappNotification.changeReadStatus(notification);
+  }
+
   async exportDB () {
     const blob = await exportDB(this._db, {
       filter: (table, value, key) => {

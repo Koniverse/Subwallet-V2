@@ -4583,6 +4583,10 @@ export default class KoniExtension {
     return this.#koniState.inappNotificationService.markUnread(notification);
   }
 
+  private changeReadNotificationStatus (notification: NotificationInfo) {
+    return this.#koniState.inappNotificationService.changeReadStatus(notification);
+  }
+
   private async getInappNotifications (params: GetNotificationParams) {
     return await this.#koniState.inappNotificationService.getNotificationsByParams(params);
   }
@@ -5216,6 +5220,8 @@ export default class KoniExtension {
         return this.markReadNotification(request as NotificationInfo);
       case 'pri(inappNotification.markUnreadNotification)':
         return this.markUnreadNotification(request as NotificationInfo);
+      case 'pri(inappNotification.changeReadNotificationStatus)':
+        return this.changeReadNotificationStatus(request as NotificationInfo);
       case 'pri(inappNotification.getInappNotifications)':
         return await this.getInappNotifications(request as GetNotificationParams);
         /* Notification service */

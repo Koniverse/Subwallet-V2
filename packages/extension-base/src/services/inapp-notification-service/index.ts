@@ -54,6 +54,10 @@ export class InappNotificationService implements CronServiceInterface {
     await this.dbService.markUnread(notification);
   }
 
+  async changeReadStatus (notification: NotificationInfo) {
+    await this.dbService.changeReadStatus(notification);
+  }
+
   async getWithdrawNotifications () {
     const NOTIFICATION_TRANSACTION_TYPE = NotificationTransactionType.WITHDRAW;
     const allWithdrawNotifications: NotificationInfo[] = [];

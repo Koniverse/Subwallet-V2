@@ -17,6 +17,10 @@ export async function markUnreadNotification (request: NotificationInfo) {
   return sendMessage('pri(inappNotification.markUnreadNotification)', request);
 }
 
+export async function changeReadNotificationStatus (request: NotificationInfo) {
+  return sendMessage('pri(inappNotification.changeReadNotificationStatus)', request);
+}
+
 export async function getInappNotifications (request: GetNotificationParams) {
   return sendMessage('pri(inappNotification.getInappNotifications)', request);
 }

@@ -3,7 +3,7 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { markReadNotification, markUnreadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { changeReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
@@ -20,7 +20,7 @@ type Props = ThemeProps & {
 
 export interface ActionInfo {
   title: string;
-  notificationType: ExtrinsicType;
+  extrinsicType: ExtrinsicType;
   backgroundColor: string;
   leftIcon?: SwIconProps['phosphorIcon'];
   disabled?: boolean;
@@ -29,7 +29,7 @@ export interface ActionInfo {
 
 function Component (props: Props): React.ReactElement<Props> {
   const { className, notificationItem, onCancel } = props;
-  const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead || false);
+  const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead);
 
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
@@ -62,21 +62,21 @@ function Component (props: Props): React.ReactElement<Props> {
   };
 
   const handleActionNotification = useCallback(() => {
-    const { icon, title } = getNotificationAction(notificationItem.notificationType);
+    const { icon, title } = getNotificationAction(notificationItem.extrinsicType);
     const sampleData: ActionInfo = {
       title,
-      notificationType: ExtrinsicType.TRANSFER_TOKEN,
+      extrinsicType: ExtrinsicType.TRANSFER_TOKEN,
       backgroundColor: token.geekblue,
       leftIcon: icon
     };
 
     return sampleData;
-  }, [notificationItem.notificationType, token.geekblue]);
+  }, [notificationItem.extrinsicType, token.geekblue]);
 
-  const onClickReadButton = useCallback(() => {
+  const onClickReadButton = useCallback(async () => {
     setReadNotification(!readNotification);
-    // readNotification ? await markReadNotification(notificationInfo) : await markUnreadNotification(notificationInfo); // get current notificationInfo
-  }, [readNotification]);
+    await changeReadNotificationStatus(notificationItem);
+  }, [notificationItem, readNotification]);
 
   return (
     <SwModal
