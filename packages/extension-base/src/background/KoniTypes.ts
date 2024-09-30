@@ -491,15 +491,16 @@ export enum ExtrinsicType {
   SEND_NFT = 'send_nft',
   CROWDLOAN = 'crowdloan',
 
-  STAKING_JOIN_POOL = 'staking.join_pool',
-  STAKING_LEAVE_POOL = 'staking.leave_pool',
-  STAKING_POOL_WITHDRAW = 'staking.pool_withdraw',
+  STAKING_JOIN_POOL = 'staking.join_pool', // todo: merge to JOIN_YIELD_POOL
+  STAKING_LEAVE_POOL = 'staking.leave_pool', // todo: deprecated, STAKING_LEAVE_POOL + STAKING_UNBOND
+  STAKING_POOL_WITHDRAW = 'staking.pool_withdraw', // todo: deprecated, STAKING_POOL_WITHDRAW + STAKING_WITHDRAW
+
   STAKING_BOND = 'staking.bond',
-  STAKING_UNBOND = 'staking.unbond',
+  STAKING_UNBOND = 'staking.unbond', // todo: STAKING_LEAVE_POOL + STAKING_UNBOND
   STAKING_CLAIM_REWARD = 'staking.claim_reward',
-  STAKING_WITHDRAW = 'staking.withdraw',
-  STAKING_COMPOUNDING = 'staking.compounding',
-  STAKING_CANCEL_COMPOUNDING = 'staking.cancel_compounding',
+  STAKING_WITHDRAW = 'staking.withdraw', // todo: STAKING_POOL_WITHDRAW + STAKING_WITHDRAW
+  STAKING_COMPOUNDING = 'staking.compounding', // deprecated
+  STAKING_CANCEL_COMPOUNDING = 'staking.cancel_compounding', // deprecated
   STAKING_CANCEL_UNSTAKE = 'staking.cancel_unstake',
 
   JOIN_YIELD_POOL = 'earn.join_pool', // TODO: review this
@@ -2194,8 +2195,8 @@ export interface KoniRequestSignatures {
   'pri(derivation.createV2)': [RequestDeriveCreateV2, boolean]; // Substrate
 
   // Restore by json
-  'pri(json.restoreV2)': [RequestJsonRestoreV2, void];
-  'pri(json.batchRestoreV2)': [RequestBatchRestoreV2, void];
+  'pri(json.restoreV2)': [RequestJsonRestoreV2, string[]];
+  'pri(json.batchRestoreV2)': [RequestBatchRestoreV2, string[]];
 
   // Export account
   'pri(accounts.batchExportV2)': [RequestAccountBatchExportV2, ResponseAccountBatchExportV2];
