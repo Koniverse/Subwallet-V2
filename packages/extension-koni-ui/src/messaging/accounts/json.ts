@@ -20,10 +20,10 @@ export async function batchRestore (file: KeyringPairs$Json, password: string, a
   return sendMessage('pri(json.batchRestore)', { file, password, address });
 }
 
-export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<void> {
+export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<string[]> {
   return sendMessage('pri(json.restoreV2)', request);
 }
 
-export async function batchRestoreV2 (file: KeyringPairs$Json, password: string, accountsInfo: ResponseJsonGetAccountInfo[], isAllowed: boolean): Promise<void> {
+export async function batchRestoreV2 (file: KeyringPairs$Json, password: string, accountsInfo: ResponseJsonGetAccountInfo[], isAllowed: boolean): Promise<string[]> {
   return sendMessage('pri(json.batchRestoreV2)', { file, password, accountsInfo, isAllowed });
 }
