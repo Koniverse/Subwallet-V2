@@ -36,6 +36,10 @@ export async function saveEnableChainPatrol (value: boolean): Promise<boolean> {
   return sendMessage('pri(settings.saveEnableChainPatrol)', { enable: value });
 }
 
+export async function saveEnableNotification (value: boolean): Promise<boolean> {
+  return sendMessage('pri(settings.saveEnableNotification)', { enable: value });
+}
+
 export async function saveLanguage (lang: LanguageType): Promise<boolean> {
   return sendMessage('pri(settings.saveLanguage)', { language: lang });
 }

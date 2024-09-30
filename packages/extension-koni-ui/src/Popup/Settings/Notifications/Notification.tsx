@@ -9,6 +9,7 @@ import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/comp
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { saveEnableNotification } from '@subwallet/extension-koni-ui/messaging';
 import { getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -38,14 +39,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [selectedFilterTab, setSelectedFilterTab] = useState<string>(NotificationTab.ALL);
   const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
-  const [enableNotification, setEnableNotification] = useState<boolean>(false);
+  const { enableNotification: isEnableNotification } = useSelector((state: RootState) => state.settings);
+  const [enableNotification, setEnableNotification] = useState<boolean>(isEnableNotification);
   const [notifications, setNotifications] = useState<NotificationInfo[]>([]);
   const { currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [currentAddress] = useState<string | undefined>(currentAccount?.address);
 
   const unreadNotificationCount = useSelector((state) => state.notification.unreadNotificationCount);
 
-  console.log('notifications', notifications);
   console.log('unreadNotificationCount', unreadNotificationCount);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
@@ -96,7 +97,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         setNotifications(rs);
       })
       .catch();
-  }, []);
+  }, [currentAddress, isAllAccount]);
 
   const onClickItem = useCallback((item: NotificationInfoItem) => {
     return () => {
@@ -116,19 +117,19 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     (item: NotificationInfoItem) => {
       return (
         <NotificationItem
-          id={item.id}
-          title={item.title}
-          description={item.description}
-          address={item.address}
-          time={item.time}
-          extrinsicType={item.extrinsicType}
-          isRead={item.isRead}
           actionType={item.actionType}
+          address={item.address}
           backgroundColor={item.backgroundColor}
-          leftIcon={item.leftIcon}
           className={'item'}
+          description={item.description}
+          extrinsicType={item.extrinsicType}
+          id={item.id}
+          isRead={item.isRead}
+          leftIcon={item.leftIcon}
           onClick={onClickItem(item)}
           onClickMoreBtn={onClickMore(item)}
+          time={item.time}
+          title={item.title}
         />
       );
     },
@@ -156,6 +157,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             />),
           onClick: () => {
             setEnableNotification(!enableNotification);
+            saveEnableNotification(!enableNotification)
+              .catch(console.error);
           },
           size: 'xs',
           shape: 'circle',
@@ -177,9 +180,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, []);
 
   const handleSwitchClick = useCallback(async () => {
-    await markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY); // todo: handle mark all read for all account
+    await markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY);
     alert('Read all account button is clicked');
-  }, []);
+  }, [currentAddress]);
 
   useEffect(() => {
     getInappNotifications({
@@ -190,7 +193,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         setNotifications(rs);
       })
       .catch();
-  }, []);
+  }, [currentAddress, isAllAccount]);
 
   return (
     <PageWrapper className={`manage-website-access ${className}`}>

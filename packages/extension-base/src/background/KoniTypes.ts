@@ -446,6 +446,7 @@ export interface UiSettings {
   timeAutoLock: number;
   unlockType: WalletUnlockType;
   enableChainPatrol: boolean;
+  enableNotification: boolean;
   // On-ramp service account reference
   walletReference: string;
 }
@@ -459,6 +460,8 @@ export type RequestChangeTimeAutoLock = { autoLockTime: number };
 export type RequestUnlockType = { unlockType: WalletUnlockType };
 
 export type RequestChangeEnableChainPatrol = { enable: boolean };
+
+export type RequestChangeEnableNotification = { enable: boolean };
 
 export type RequestChangeShowZeroBalance = { show: boolean };
 
@@ -2233,6 +2236,7 @@ export interface KoniRequestSignatures {
   'pri(settings.saveAutoLockTime)': [RequestChangeTimeAutoLock, boolean];
   'pri(settings.saveUnlockType)': [RequestUnlockType, boolean];
   'pri(settings.saveEnableChainPatrol)': [RequestChangeEnableChainPatrol, boolean];
+  'pri(settings.saveEnableNotification)': [RequestChangeEnableNotification, boolean];
   'pri(settings.saveLanguage)': [RequestChangeLanguage, boolean];
   'pri(settings.savePriceCurrency)': [RequestChangePriceCurrency, boolean];
   'pri(settings.saveShowZeroBalance)': [RequestChangeShowZeroBalance, boolean];
