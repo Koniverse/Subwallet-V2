@@ -48,7 +48,7 @@ import { AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, 
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createPromiseHandler, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
@@ -2474,7 +2474,7 @@ export default class KoniExtension {
 
           registry.register(metadata.types);
           registry.setChainProperties(registry.createType('ChainProperties', {
-            ss58Format: chainInfo?.substrateInfo?.addressPrefix || 42,
+            ss58Format: chainInfo?.substrateInfo?.addressPrefix ?? 42,
             tokenDecimals: chainInfo?.substrateInfo?.decimals,
             tokenSymbol: chainInfo?.substrateInfo?.symbol
           }) as unknown as ChainProperties);
