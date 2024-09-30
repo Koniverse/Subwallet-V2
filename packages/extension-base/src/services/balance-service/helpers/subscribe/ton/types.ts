@@ -3,7 +3,7 @@
 
 import { Cell } from '@ton/core';
 
-export type Signer = (message: Cell) => Promise<Buffer>; // alibaba
+export type Signer = (message: Cell) => Promise<Buffer>;
 
 export interface TxByMsgResponse {
   transactions: TxDetailInfo[]
