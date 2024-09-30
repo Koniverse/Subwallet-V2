@@ -6662,7 +6662,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.7
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=5a96aa&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=3714dd&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6682,7 +6682,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 5da43a9324028f55c66b663229352f660dbb2bfc8f5bd5daf8623e131cc293a5f57d7f9bad055c7c4f41c598df01cd6912c05dd86434a84fb582a81899d01af5
+  checksum: 3553c8c6313c8be7a06a9f58d65f16febadf4ef993cb1dc13db0c7d94671d642f4662be3065b442c2cfdfaf7f01566dd31aa21374744bf545721b4e48e6a2054
   languageName: node
   linkType: hard
 
@@ -6766,7 +6766,7 @@ __metadata:
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.7
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=d7397c&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=c748eb&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
@@ -6776,7 +6776,7 @@ __metadata:
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: 52599f78d03183121263b81352056b750d32e784a1935bf7088880d93bd29db2d66f261cd9325f96d6a0a138b2572267fda35256a9afa7cd8564649e4a215eb7
+  checksum: 9182a2be4292b35a9925ef7316b5af1c498fc9ac6e5855d43f34d77d8bf8cbc9b45e652308778a31c56abeacd9cfb06d58f10daa8ab455ede6c721d897e3efb9
   languageName: node
   linkType: hard
 
@@ -29173,7 +29173,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.22.8":
+"zod@npm:^3.21.4, zod@npm:^3.22.8":
   version: 3.23.8
   resolution: "zod@npm:3.23.8"
   checksum: 15949ff82118f59c893dacd9d3c766d02b6fa2e71cf474d5aa888570c469dbf5446ac5ad562bb035bf7ac9650da94f290655c194f4a6de3e766f43febd432c5c

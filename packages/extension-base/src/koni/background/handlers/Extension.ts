@@ -48,7 +48,7 @@ import { AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, 
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createPromiseHandler, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
@@ -1108,20 +1108,22 @@ export default class KoniExtension {
     return this.#koniState.keyringService.context.parseInfoSingleJson(request);
   }
 
-  private jsonRestoreV2 (request: RequestJsonRestoreV2): void {
-    this.#koniState.keyringService.context.jsonRestoreV2(request);
-
-    if (this.#alwaysLock) {
-      this.keyringLock();
-    }
+  private async jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<string[]> {
+    return await this.#koniState.keyringService.context.jsonRestoreV2(request,
+      () => {
+        if (this.#alwaysLock) {
+          this.keyringLock();
+        }
+      }
+    );
   }
 
   private parseInfoMultiJson (request: RequestBatchJsonGetAccountInfo): ResponseBatchJsonGetAccountInfo {
     return this.#koniState.keyringService.context.parseInfoMultiJson(request);
   }
 
-  private batchRestoreV2 (request: RequestBatchRestoreV2): void {
-    this.#koniState.keyringService.context.batchRestoreV2(request);
+  private batchRestoreV2 (request: RequestBatchRestoreV2): Promise<string[]> {
+    return this.#koniState.keyringService.context.batchRestoreV2(request);
   }
 
   private async batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {
