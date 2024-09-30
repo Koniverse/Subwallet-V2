@@ -20,13 +20,6 @@ export const EXTRA_TON_ESTIMATE_FEE = BigInt(500);
 // export const TON_CENTER_API_KEY = '870ff97c30ad16dc4297bcac8bcf2243a4daffeba6c6d6c31553e342811e673a'; // alibaba
 export const TON_CENTER_API_KEY = '078f715c911784eb4c8d2d545da3ce5db5d07996452bb2246e0a0071c66b87e9'; // alibaba
 
-export enum TON_API_ENDPOINT {
-  // MAINNET = 'https://ton-rpc.subwallet.app/api',
-  // TESTNET = 'https://ton-rpc-testnet.subwallet.app/api'
-  MAINNET = 'https://toncenter.com/api',
-  TESTNET = 'https://testnet.toncenter.com/api'
-}
-
 export enum SendMode {
   CARRY_ALL_REMAINING_BALANCE = 128,
   CARRY_ALL_REMAINING_INCOMING_VALUE = 64,
