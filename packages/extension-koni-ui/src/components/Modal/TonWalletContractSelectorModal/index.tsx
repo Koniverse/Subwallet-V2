@@ -1,18 +1,20 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
+import { AccountActions, AccountProxyType, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useFetchChainInfo, useGetAccountByAddress, useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { useFetchChainInfo, useGetAccountByAddress, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
+import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TonWalletContractVersion } from '@subwallet/keyring/types';
 import { Button, Icon, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretLeft, CheckCircle, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { TonWalletContractItem, TonWalletContractItemType } from './TonWalletContractItem';
@@ -36,7 +38,10 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
   const [selectedContractVersion, setSelectedContractVersion] = useState<TonWalletContractVersion | undefined>(
     accountInfo ? accountInfo.tonContractVersion as TonWalletContractVersion : undefined
   );
+  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     let sync = true;
@@ -112,10 +117,23 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
       setIsSubmitting(true);
 
       tonAccountChangeWalletContractVersion({ proxyId: '', address: accountInfo.address, version: selectedContractVersion })
-        .then(() => {
+        .then((newAddress) => {
           setTimeout(() => {
             onCancel?.();
             setIsSubmitting(false);
+
+            const isOnAccountDetailScreen = location.pathname.includes('/accounts/detail');
+            const isSoloAccount = currentAccountProxy?.accountType === AccountProxyType.SOLO;
+            const hasTonChangeWalletAction = currentAccountProxy?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+            const shouldNavigate = isOnAccountDetailScreen && isSoloAccount && hasTonChangeWalletAction;
+
+            if (shouldNavigate) {
+              navigate(`/accounts/detail/${newAddress}`, {
+                state: {
+                  requestViewDerivedAccounts: true
+                } as AccountDetailParam
+              });
+            }
           }, 300);
         })
         .catch((e: Error) => {
@@ -125,7 +143,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           });
         });
     }
-  }, [accountInfo?.address, notification, onCancel, selectedContractVersion]);
+  }, [accountInfo?.address, location.pathname, navigate, notification, onCancel, selectedContractVersion]);
 
   return (
     <SwModal

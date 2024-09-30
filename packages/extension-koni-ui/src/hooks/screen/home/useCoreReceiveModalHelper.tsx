@@ -6,6 +6,7 @@ import type { KeypairType } from '@subwallet/keyring/types';
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _getAssetOriginChain, _getMultiChainAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
+import { AccountActions, AccountProxyType } from '@subwallet/extension-base/types';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useGetChainSlugsByAccount, useHandleLedgerGenericAccountWarning, useHandleTonAccountWarning } from '@subwallet/extension-koni-ui/hooks';
@@ -266,6 +267,18 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
         const targetAddress = accountSelectorItems.find((i) => i.accountProxyId === selectedAccountAddressItem.accountProxyId)?.address;
 
+        const isSoloAccount = selectedAccountAddressItem.accountProxyType === AccountProxyType.SOLO;
+        const hasTonChangeAction = currentAccountProxy?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+
+        if (!targetAddress && isSoloAccount && hasTonChangeAction) {
+          const latestAddress = accountSelectorItems.find((i) => i.accountName === selectedAccountAddressItem.accountName)?.address;
+
+          return {
+            ...prev,
+            address: latestAddress
+          };
+        }
+
         if (!targetAddress) {
           return prev;
         }
@@ -276,7 +289,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         };
       });
     }
-  }, [accountSelectorItems, addressQrModal, selectedAccountAddressItem]);
+  }, [accountSelectorItems, addressQrModal, currentAccountProxy?.accountActions, selectedAccountAddressItem]);
 
   return useMemo(() => ({
     onOpenReceive,

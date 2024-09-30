@@ -4,7 +4,7 @@
 import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { CurrentAccountInfo } from '@subwallet/extension-base/background/types';
-import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountActions, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { AccountChainAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import ExportAllSelector from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/ExportAllSelector';
 import SelectAccountFooter from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/Footer';
@@ -20,7 +20,7 @@ import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Circle, Export } from 'phosphor-react';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
@@ -90,15 +90,19 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
 
-  const [idOfAccountProxyToGetAddresses, setIdOfAccountProxyToGetAddresses] = useState<string | undefined>();
+  const [idOfAccountProxyToGetAddresses, setIdOfAccountProxyToGetAddresses] = useState<{ name?: string; proxyId?: string } | undefined>();
 
   const accountProxyToGetAddresses = useMemo(() => {
     if (!idOfAccountProxyToGetAddresses) {
       return undefined;
     }
 
-    return accountProxies.find((ap) => ap.id === idOfAccountProxyToGetAddresses);
+    return accountProxies.find((ap) => ap.id === idOfAccountProxyToGetAddresses.proxyId);
   }, [accountProxies, idOfAccountProxyToGetAddresses]);
+
+  console.log('accountProxyToGetAddresses', accountProxyToGetAddresses);
+  console.log('idOfAccountProxyToGetAddresses', idOfAccountProxyToGetAddresses);
+  console.log('currentAccountProxy', currentAccountProxy);
 
   const listItems = useMemo<ListItem[]>(() => {
     let accountAll: AccountProxy | undefined;
@@ -240,7 +244,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onViewChainAddresses = useCallback((accountProxy: AccountProxy) => {
     return () => {
-      setIdOfAccountProxyToGetAddresses(accountProxy.id);
+      setIdOfAccountProxyToGetAddresses({ name: accountProxy.name, proxyId: accountProxy.id });
       setTimeout(() => {
         activeModal(accountChainAddressesModalId);
       }, 100);
@@ -316,6 +320,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const exportAllAccounts = useCallback(() => {
     activeModal(multiExportAccountModalId);
   }, [activeModal]);
+
+  useEffect(() => {
+    const isSoloAccount = currentAccountProxy?.accountType === AccountProxyType.SOLO;
+    const hasTonChangeWalletAction = currentAccountProxy?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+    const isSameAccount = currentAccountProxy?.name === idOfAccountProxyToGetAddresses?.name;
+
+    if (isSoloAccount && hasTonChangeWalletAction && isSameAccount) {
+      setIdOfAccountProxyToGetAddresses({ name: currentAccountProxy?.name, proxyId: currentAccountProxy?.id });
+    }
+  }, [currentAccountProxy?.accountActions, currentAccountProxy?.accountType, currentAccountProxy?.id, currentAccountProxy?.name, idOfAccountProxyToGetAddresses?.name]);
 
   const rightIconProps = useMemo((): ButtonProps | undefined => {
     if (!enableExtraction) {
