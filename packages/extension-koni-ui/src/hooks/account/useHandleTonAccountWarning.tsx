@@ -35,7 +35,7 @@ export default function useHandleTonAccountWarning (): HookType {
             </div>
           </>
         ),
-        cancelButton: {
+        okButton: {
           text: t('Get address'),
           icon: XCircle,
           iconWeight: 'fill',
@@ -43,9 +43,9 @@ export default function useHandleTonAccountWarning (): HookType {
             alertModal.close();
             processFunction();
           },
-          schema: 'secondary'
+          schema: 'primary'
         },
-        okButton: {
+        cancelButton: {
           text: t('Create new'),
           icon: CheckCircle,
           iconWeight: 'fill',
@@ -63,7 +63,7 @@ export default function useHandleTonAccountWarning (): HookType {
 
             alertModal.close();
           },
-          schema: 'primary'
+          schema: 'secondary'
         }
       });
 
