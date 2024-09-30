@@ -27,11 +27,12 @@ export const getShortMetadata = (blob: HexString, extraInfo: ExtraInfo, metadata
 
 export const cacheMetadata = (
   chain: string,
-  substrateApi: _SubstrateApi,
+  _substrateApi: _SubstrateApi,
   chainService?: ChainService
 ): void => {
   // Update metadata to database with async methods
-  substrateApi.api.isReady.then(async (api) => {
+  _substrateApi.isReady.then(async (substrateApi) => {
+    const api = await substrateApi.api.isReady;
     const currentSpecVersion = api.runtimeVersion.specVersion.toString();
     const specName = api.runtimeVersion.specName.toString();
     const genesisHash = api.genesisHash.toHex();
@@ -42,15 +43,23 @@ export const cacheMetadata = (
       return;
     }
 
-    const systemChain = await api.rpc.system.chain();
+    const systemChain = api.runtimeChain;
     // const _metadata: Option<OpaqueMetadata> = await api.call.metadata.metadataAtVersion(15);
     // const metadataHex = _metadata.isSome ? _metadata.unwrap().toHex().slice(2) : ''; // Need unwrap to create metadata object
     let hexV15: HexString | undefined;
 
-    const metadataV15 = await api.call.metadata.metadataAtVersion(15);
+    const metadataHex = api.runtimeMetadata.toHex();
 
-    if (!metadataV15.isEmpty) {
-      hexV15 = metadataV15.unwrap().toHex();
+    if (api.call.metadata.metadataAtVersion) {
+      const metadataV15 = await api.call.metadata.metadataAtVersion(15);
+
+      if (!metadataV15.isEmpty) {
+        hexV15 = metadataV15.unwrap().toHex();
+      }
+    } else {
+      if (api.runtimeMetadata.version === 15) {
+        hexV15 = metadataHex;
+      }
     }
 
     chainService?.upsertMetadata(chain, {
@@ -58,7 +67,7 @@ export const cacheMetadata = (
       genesisHash: genesisHash,
       specName: specName,
       specVersion: currentSpecVersion,
-      hexValue: api.runtimeMetadata.toHex(),
+      hexValue: metadataHex,
       types: getSpecTypes(api.registry, systemChain, api.runtimeVersion.specName, api.runtimeVersion.specVersion) as unknown as Record<string, string>,
       userExtensions: getSpecExtensions(api.registry, systemChain, api.runtimeVersion.specName),
       hexV15

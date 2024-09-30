@@ -57,7 +57,7 @@ export class HydradxHandler implements SwapBaseInterface {
 
     const substrateApi = this.chainService.getSubstrateApi(this.chain());
 
-    await substrateApi.api.isReady;
+    await substrateApi.isReady;
     const poolService = new PoolService(substrateApi.api);
 
     this.tradeRouter = new TradeRouter(poolService);

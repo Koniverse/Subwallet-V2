@@ -1,0 +1,12 @@
+diff --git a/node_modules/@polkadot/api/promise/Api.d.ts b/node_modules/@polkadot/api/promise/Api.d.ts
+index eddfb37..9ff0b4e 100644
+--- a/node_modules/@polkadot/api/promise/Api.d.ts
++++ b/node_modules/@polkadot/api/promise/Api.d.ts
+@@ -125,6 +125,7 @@ export declare class ApiPromise extends ApiBase<'promise'> {
+     static create(options?: ApiOptions): Promise<ApiPromise>;
+     /**
+      * @description Promise that resolves the first time we are connected and loaded
++     * @deprecated
+      */
+     get isReady(): Promise<ApiPromise>;
+     /**

@@ -204,7 +204,7 @@ export class SubstrateApi implements _SubstrateApi {
 
       this.api.connect()
         .then(() => {
-          this.api.isReady.then(() => {
+          this.isReady.then(() => {
             this.updateConnectionStatus(_ChainConnectionStatus.CONNECTED);
             _callbackUpdateMetadata?.(this);
           }).catch(console.error);

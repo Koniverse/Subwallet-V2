@@ -91,6 +91,7 @@ export interface _SubstrateApiState {
 
 export interface _SubstrateApi extends _SubstrateApiState, _ChainBaseApi, _SubstrateApiAdapter {
   api: ApiPromise;
+  // Alternative for `api.isReady`
   isReady: Promise<_SubstrateApi>;
   connect: (_callbackUpdateMetadata?: (substrateApi: _SubstrateApi) => void) => void;
 
