@@ -201,7 +201,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       >
         <div className={CN('container')}>
           <div className='description'>
-            {t('Track the activity of any wallet without a private key 1')}
+            {t('Track the activity of any wallet without a private key')}
           </div>
           <div className='page-icon'>
             <PageIcon
