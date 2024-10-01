@@ -6,8 +6,9 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { AlertModal, EmptyList, FilterModal, Layout } from '@subwallet/extension-koni-ui/components';
 import { EarningPositionItem } from '@subwallet/extension-koni-ui/components/Earning';
+import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { ASTAR_PORTAL_URL, BN_TEN, EARNING_WARNING_ANNOUNCEMENT } from '@subwallet/extension-koni-ui/constants';
-import { useAlert, useFilterModal, useGetYieldPositionForSpecificAccount, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useFilterModal, useGetBannerByScreen, useGetYieldPositionForSpecificAccount, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { reloadCron } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { EarningEntryView, EarningPositionDetailParam, ExtraYieldPositionInfo, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -46,6 +47,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
   const specificList = useGetYieldPositionForSpecificAccount(currentAccount?.address);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
   const [announcement, setAnnouncement] = useLocalStorage(EARNING_WARNING_ANNOUNCEMENT, 'nonConfirmed');
 
   const items: ExtraYieldPositionInfo[] = useMemo(() => {
@@ -369,6 +371,15 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
         subHeaderPaddingVertical={true}
         title={t<string>('Your earning positions')}
       >
+        {!!banners.length && (
+          <div className={'earning-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         <SwList.Section
           actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
           className={'__section-list-container'}
@@ -434,6 +445,12 @@ const EarningPositions = styled(Component)<Props>(({ theme: { token } }: Props) 
     '+ .earning-position-item': {
       marginTop: token.marginXS
     }
+  },
+
+  '.earning-banner-wrapper': {
+    paddingLeft: token.padding,
+    paddingRight: token.padding,
+    marginBottom: token.sizeXS
   }
 }));
 

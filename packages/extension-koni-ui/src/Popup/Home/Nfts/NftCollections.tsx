@@ -3,8 +3,9 @@
 
 import { NftCollection, NftItem } from '@subwallet/extension-base/background/KoniTypes';
 import { EmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
-import { useGetNftByAccount, useNotification, useSetCurrentPage, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetBannerByScreen, useGetNftByAccount, useNotification, useSetCurrentPage, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { reloadCron } from '@subwallet/extension-koni-ui/messaging';
 import { NftGalleryWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Nfts/component/NftGalleryWrapper';
 import { INftCollectionDetail } from '@subwallet/extension-koni-ui/Popup/Home/Nfts/utils';
@@ -38,6 +39,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { nftCollections, nftItems } = useGetNftByAccount();
   const [loading, setLoading] = React.useState<boolean>(false);
   const notify = useNotification();
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('nft');
 
   const subHeaderButton: ButtonProps[] = [
     {
@@ -163,20 +165,31 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         subHeaderPaddingVertical={true}
         title={t<string>('Your collections')}
       >
-        <SwList.Section
-          className={CN('nft_collection_list__container')}
-          displayGrid={true}
-          enableSearchInput={true}
-          gridGap={'14px'}
-          list={nftCollections}
-          minColumnWidth={'160px'}
-          renderItem={renderNftCollection}
-          renderOnScroll={true}
-          renderWhenEmpty={emptyNft}
-          searchFunction={searchCollection}
-          searchMinCharactersCount={2}
-          searchPlaceholder={t<string>('Search collection name')}
-        />
+        <>
+          {!!banners.length && (
+            <div className={'nft-banner-wrapper'}>
+              <BannerGenerator
+                banners={banners}
+                dismissBanner={dismissBanner}
+                onClickBanner={onClickBanner}
+              />
+            </div>
+          )}
+          <SwList.Section
+            className={CN('nft_collection_list__container')}
+            displayGrid={true}
+            enableSearchInput={true}
+            gridGap={'14px'}
+            list={nftCollections}
+            minColumnWidth={'160px'}
+            renderItem={renderNftCollection}
+            renderOnScroll={true}
+            renderWhenEmpty={emptyNft}
+            searchFunction={searchCollection}
+            searchMinCharactersCount={2}
+            searchPlaceholder={t<string>('Search collection name')}
+          />
+        </>
       </Layout.Base>
     </PageWrapper>
   );
@@ -207,6 +220,12 @@ const NftCollections = styled(Component)<Props>(({ theme: { token } }: Props) =>
         paddingBottom: 1,
         marginBottom: -1
       }
+    },
+
+    '.nft-banner-wrapper': {
+      paddingLeft: token.padding,
+      paddingRight: token.padding,
+      marginBottom: token.sizeXS
     }
   });
 });

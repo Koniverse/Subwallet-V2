@@ -17,11 +17,11 @@ import { useLocalStorage } from 'usehooks-ts';
 import OnlineButtonGroups from '../../StaticContent/OnlineButtonGroups';
 
 interface Props extends ThemeProps {
-  message: string;
-  title: string;
-  buttons: AppContentButton[];
+  message?: string;
+  title?: string;
+  buttons?: AppContentButton[];
   externalButtons?: React.ReactNode;
-  onPressButton?: (url?: string) => void;
+  onClickBtn?: (url?: string) => void;
   onCloseModal?: () => void;
 }
 
@@ -39,7 +39,7 @@ const modalId = APP_POPUP_MODAL;
 const instructionModalId = APP_INSTRUCTION_MODAL;
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { buttons, className, externalButtons, message, onCloseModal, onPressButton, title } = props;
+  const { buttons, className, externalButtons, message, onClickBtn, onCloseModal, title } = props;
   const [appInstructionData] = useLocalStorage(APP_INSTRUCTION_DATA, '[]');
   const instructionDataList: StaticDataProps[] = useMemo(() => {
     try {
@@ -77,10 +77,10 @@ const Component: React.FC<Props> = (props: Props) => {
   const onAccept = useCallback(
     (url?: string) => {
       inactiveModal(instructionModalId);
-      onPressButton && onPressButton(url);
+      onClickBtn && onClickBtn(url);
       onCloseModal && onCloseModal();
     },
-    [onCloseModal, onPressButton, inactiveModal]
+    [onCloseModal, onClickBtn, inactiveModal]
   );
 
   const _onClickButton = useCallback(
@@ -106,16 +106,16 @@ const Component: React.FC<Props> = (props: Props) => {
         className={CN(className)}
         closable={false}
         footer={
-          externalButtons || <OnlineButtonGroups
+          externalButtons || (buttons && (<OnlineButtonGroups
             buttons={buttons}
             onClickButton={_onClickButton}
-          />
+          />))
         }
         id={modalId}
         maskClosable={false}
         title={title}
       >
-        <ContentGenerator content={message} />
+        <ContentGenerator content={message || ''} />
       </SwModal>
 
       {!!instructionButton && instructionButton.instruction && currentInstructionData && (
