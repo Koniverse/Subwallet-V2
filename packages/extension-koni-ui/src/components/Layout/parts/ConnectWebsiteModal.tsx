@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
-import { AccountProxy } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy } from '@subwallet/extension-base/types';
 import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountProxyItem } from '@subwallet/extension-koni-ui/components';
 import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Confirmation/ConfirmationGeneralInfo';
@@ -270,7 +270,25 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       );
     }
 
-    const listAccountProxy = accountProxies.map((proxy) => {
+    const listAccountProxy = accountProxies.filter(({ chainTypes }) => {
+      return chainTypes.some((chainType) => {
+        if (authInfo?.accountAuthTypes) {
+          if (chainType === AccountChainType.ETHEREUM && authInfo?.accountAuthTypes.includes('evm')) {
+            return true;
+          }
+
+          if (chainType === AccountChainType.SUBSTRATE && authInfo?.accountAuthTypes.includes('substrate')) {
+            return true;
+          }
+
+          if (chainType === AccountChainType.TON && authInfo?.accountAuthTypes.includes('ton')) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+    }).map((proxy) => {
       const value = proxy.accounts.some(({ address }) => allowedMap[address]);
 
       return {

@@ -250,6 +250,7 @@ function Component ({ className, request }: Props) {
                 visibleAccountProxies.length > 1 &&
                   (
                     <AccountProxySelectorAllItem
+                      accountProxies={visibleAccountProxies}
                       className={'all-account-selection'}
                       isSelected={selectedMap[ALL_ACCOUNT_KEY]}
                       onClick={onAccountSelect(ALL_ACCOUNT_KEY)}

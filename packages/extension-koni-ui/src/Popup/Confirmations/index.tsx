@@ -48,6 +48,7 @@ const Component = function ({ className }: Props) {
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
   const { transactionRequest } = useSelector((state) => state.requestState);
 
+  console.log(confirmation, 'confirmation');
   const nextConfirmation = useCallback(() => {
     setIndex((val) => Math.min(val + 1, numberOfConfirmations - 1));
   }, [numberOfConfirmations]);

@@ -10,16 +10,17 @@ import { CheckCircle } from 'phosphor-react';
 import React, { Context, useContext } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
-import AccountProxyAvatarGroup from './AccountProxyAvatarGroup';
+import AccountProxyAvatarGroup, { BasicAccountProxyInfo } from './AccountProxyAvatarGroup';
 
 type Props = ThemeProps & {
   isSelected?: boolean;
   onClick?: VoidFunction;
   showUnSelectedIcon?: boolean;
+  accountProxies?: BasicAccountProxyInfo[];
 };
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { className, isSelected, onClick, showUnSelectedIcon } = props;
+  const { accountProxies, className, isSelected, onClick, showUnSelectedIcon } = props;
   const { t } = useTranslation();
 
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
@@ -30,7 +31,7 @@ function Component (props: Props): React.ReactElement<Props> {
       onClick={onClick}
     >
       <div className='__item-left-part'>
-        <AccountProxyAvatarGroup />
+        <AccountProxyAvatarGroup accountProxies={ accountProxies } />
       </div>
       <div className='__item-middle-part'>
         {t('All accounts')}
