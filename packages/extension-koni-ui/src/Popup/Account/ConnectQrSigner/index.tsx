@@ -70,7 +70,7 @@ const Component: React.FC<Props> = (props: Props) => {
       for (const account of accounts) {
         // todo: Recheck this logic with master account
         if (isSameAddress(account.address, scannedAccount.content)) {
-          return Promise.reject(new Error(t('Account name already in use')));
+          return Promise.reject(new Error(t('Account already exists')));
         }
       }
     }

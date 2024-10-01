@@ -93,7 +93,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           setReformatAddress('');
           setIsHideAccountNameInput(true);
 
-          return Promise.reject(t('Account name already in use'));
+          return Promise.reject(t('Account already exists'));
         }
       }
     } else {
