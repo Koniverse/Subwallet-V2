@@ -4,8 +4,8 @@
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { ALL_ACCOUNT_KEY, fetchLastestBlockedActionsAndFeatures } from '@subwallet/extension-base/constants';
+import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForAction, checkSupportForFeature, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { cellToBase64Str, externalMessage, getTonSendMode } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -98,8 +98,14 @@ export default class TransactionService {
       errors: transactionInput.errors || [],
       warnings: transactionInput.warnings || []
     };
-
     const { additionalValidator, address, chain, extrinsicType } = validationResponse;
+    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
+
+    const { blockedActionsMap, blockedFeaturesList } = await fetchLastestBlockedActionsAndFeatures();
+
+    checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
+
+    checkSupportForAction(validationResponse, blockedActionsMap);
 
     const transaction = transactionInput.transaction;
 
@@ -108,8 +114,6 @@ export default class TransactionService {
 
     // Check support for transaction
     checkSupportForTransaction(validationResponse, transaction);
-
-    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     if (!chainInfo) {
       validationResponse.errors.push(new TransactionError(BasicTxErrorType.INTERNAL_ERROR, t('Cannot find network')));
