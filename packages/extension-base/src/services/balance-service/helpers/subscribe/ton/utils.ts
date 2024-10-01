@@ -23,10 +23,6 @@ export async function getJettonWalletContract (jettonMasterContract: OpenedContr
   return tonApi.open(JettonWallet.create(jettonWalletAddress));
 }
 
-export function sleep (ms: number) { // alibaba for test
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function externalMessage (contract: WalletContractV4, seqno: number, body: Cell) {
   return beginCell()
     .storeWritable(

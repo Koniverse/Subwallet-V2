@@ -77,7 +77,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists(Object.values(rs.addressMap));
 
-    assert(!exists, t('Have already created account with this seed: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+    assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     return rs;
   }
@@ -125,7 +125,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
     const exists = this.state.checkAddressExists(Object.values(addressDict));
 
-    assert(!exists, t('Have already created account with this seed: {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
+    assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || '' } }));
 
     // Upsert account group first, to avoid combine latest have no account group data.
     if (proxyId) {

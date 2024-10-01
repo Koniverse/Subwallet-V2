@@ -11,10 +11,10 @@ export async function jsonGetAccountInfo (json: KeyringPair$Json): Promise<Respo
   return sendMessage('pri(accounts.json.info)', json);
 }
 
-export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<void> {
+export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<string[]> {
   return sendMessage('pri(accounts.json.restoreV2)', request);
 }
 
-export async function batchRestoreV2 (file: KeyringPairs$Json, password: string, accountsInfo: ResponseJsonGetAccountInfo[], isAllowed: boolean): Promise<void> {
+export async function batchRestoreV2 (file: KeyringPairs$Json, password: string, accountsInfo: ResponseJsonGetAccountInfo[], isAllowed: boolean): Promise<string[]> {
   return sendMessage('pri(accounts.json.batchRestoreV2)', { file, password, accountsInfo, isAllowed });
 }

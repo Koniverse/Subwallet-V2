@@ -1108,20 +1108,22 @@ export default class KoniExtension {
     return this.#koniState.keyringService.context.parseInfoSingleJson(request);
   }
 
-  private jsonRestoreV2 (request: RequestJsonRestoreV2): void {
-    this.#koniState.keyringService.context.jsonRestoreV2(request);
-
-    if (this.#alwaysLock) {
-      this.keyringLock();
-    }
+  private async jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<string[]> {
+    return await this.#koniState.keyringService.context.jsonRestoreV2(request,
+      () => {
+        if (this.#alwaysLock) {
+          this.keyringLock();
+        }
+      }
+    );
   }
 
   private parseInfoMultiJson (request: RequestBatchJsonGetAccountInfo): ResponseBatchJsonGetAccountInfo {
     return this.#koniState.keyringService.context.parseInfoMultiJson(request);
   }
 
-  private batchRestoreV2 (request: RequestBatchRestoreV2): void {
-    this.#koniState.keyringService.context.batchRestoreV2(request);
+  private batchRestoreV2 (request: RequestBatchRestoreV2): Promise<string[]> {
+    return this.#koniState.keyringService.context.batchRestoreV2(request);
   }
 
   private async batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {
@@ -2474,7 +2476,7 @@ export default class KoniExtension {
 
           registry.register(metadata.types);
           registry.setChainProperties(registry.createType('ChainProperties', {
-            ss58Format: chainInfo?.substrateInfo?.addressPrefix || 42,
+            ss58Format: chainInfo?.substrateInfo?.addressPrefix ?? 42,
             tokenDecimals: chainInfo?.substrateInfo?.decimals,
             tokenSymbol: chainInfo?.substrateInfo?.symbol
           }) as unknown as ChainProperties);
