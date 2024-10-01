@@ -68,6 +68,7 @@ function Component ({ className, request, type }: Props) {
           }
           <MetaInfo.Account
             address={address}
+            className={'account-info-item'}
             label={t('From account')}
             name={account?.name || ''}
           />
@@ -140,6 +141,12 @@ const EvmTransactionConfirmation = styled(Component)<Props>(({ theme: { token } 
 
   '.__label': {
     textAlign: 'left'
+  },
+
+  '.account-info-item': {
+    '.__account-item-address': {
+      textAlign: 'right'
+    }
   }
 }));
 

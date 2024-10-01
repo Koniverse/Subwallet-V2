@@ -56,7 +56,9 @@ function Component (props: Props): React.ReactElement<Props> {
         }
       </div>
       <div className='__item-middle-part'>
-        {accountName || account?.name || ''}
+        <div className={'__account-name-item'}>
+          {accountName || account?.name || ''}
+        </div>
         {showAccountNameFallback && account && <div className={'account-item-address-wrapper'}>{toShort(accountAddress || account.address, 4, 4)}</div>}
       </div>
       <div className='__item-right-part'>
@@ -93,6 +95,13 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
 
       '.account-item-address-wrapper:after': {
         content: "')'"
+      },
+
+      '.__account-name-item': {
+        width: '150px',
+        overflow: 'hidden',
+        textWrap: 'nowrap',
+        textOverflow: 'ellipsis'
       }
     },
 
