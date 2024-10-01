@@ -37,13 +37,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const goBack = useDefaultNavigate().goBack;
   const { token } = useTheme() as Theme;
 
-  const [selectedFilterTab, setSelectedFilterTab] = useState<string>(NotificationTab.ALL);
+  const [selectedFilterTab, setSelectedFilterTab] = useState<NotificationTab>(NotificationTab.ALL);
   const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
   const { enableNotification: isEnableNotification } = useSelector((state: RootState) => state.settings);
   const [enableNotification, setEnableNotification] = useState<boolean>(isEnableNotification);
   const [notifications, setNotifications] = useState<NotificationInfo[]>([]);
   const { currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [currentAddress] = useState<string | undefined>(currentAccount?.address);
+  const [currentNotificationTab, setCurrentNotificationTab] = useState<NotificationTab>(NotificationTab.ALL);
 
   const unreadNotificationCount = useSelector((state) => state.notification.unreadNotificationCount);
 
@@ -87,8 +88,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     ];
   }, [t]);
 
-  const onSelectFilterTab = useCallback((value: string) => {
+  const onSelectFilterTab = useCallback((value: NotificationTab) => {
     setSelectedFilterTab(value);
+    setCurrentNotificationTab(value);
     getInappNotifications({
       address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
       notificationTab: value // todo: set this corresponding to selected tab
@@ -181,8 +183,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const handleSwitchClick = useCallback(async () => {
     await markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY);
-    alert('Read all account button is clicked');
-  }, [currentAddress]);
+
+    getInappNotifications({
+      address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
+      notificationTab: currentNotificationTab // todo: set this corresponding to selected tab
+    } as GetNotificationParams)
+      .then((rs) => {
+        setNotifications(rs);
+      })
+      .catch();
+  }, [currentNotificationTab, currentAddress]);
 
   useEffect(() => {
     getInappNotifications({

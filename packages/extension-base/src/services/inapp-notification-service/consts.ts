@@ -4,7 +4,7 @@
 import { NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
 export const DEFAULT_NOTIFICATION_SETTING = {
-  timePeriod: NotificationTimePeriod.ALL,
+  timePeriod: NotificationTimePeriod.THIS_MONTH,
   notificationOptions: {
     balance: true,
     action: true,

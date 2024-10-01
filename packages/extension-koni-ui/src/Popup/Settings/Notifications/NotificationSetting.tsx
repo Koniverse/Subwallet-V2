@@ -4,12 +4,15 @@
 import { NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { PageWrapper, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
+import { saveEnableNotification } from '@subwallet/extension-koni-ui/messaging';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, Button, Checkbox, SettingItem, Switch, SwSubHeader } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { BellSimpleRinging } from 'phosphor-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
@@ -23,7 +26,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
   const goBack = useDefaultNavigate().goBack;
-  const [enableNotification, setEnableNotification] = useState<boolean>(false);
+  const enableNotification = useSelector((state: RootState) => state.settings.enableNotification);
+  const [loadingNotification, setLoadingNotification] = useState(false);
 
   // const _onChangeOption = useCallback((e: CheckboxChangeEvent) => {
   //   onChangeOption(e.target.value as string, e.target.checked);
@@ -57,9 +61,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     alert('Save settings');
   }, []);
 
-  const onSwitchNotification = useCallback(() => {
-    setEnableNotification(!enableNotification);
-  }, [enableNotification]);
+  const onSwitchNotification = useCallback((currentValue: boolean) => {
+    return () => {
+      setLoadingNotification(true);
+
+      saveEnableNotification(!currentValue)
+        .catch(console.error)
+        .finally(() => {
+          setLoadingNotification(false);
+        });
+    };
+  }, []);
 
   return (
     <PageWrapper className={`notification-setting ${className}`}>
@@ -89,8 +101,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             rightItem={(
               <Switch
                 checked={enableNotification}
-                loading={false}
-                onClick={onSwitchNotification}
+                loading={loadingNotification}
+                onClick={onSwitchNotification(enableNotification)}
               />
             )}
           />

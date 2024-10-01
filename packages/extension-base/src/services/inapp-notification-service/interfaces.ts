@@ -26,7 +26,6 @@ export interface NotificationOptions {
 }
 
 export enum NotificationTimePeriod {
-  ALL = 'ALL',
   TODAY = 'TODAY',
   THIS_WEEK = 'THIS_WEEK',
   THIS_MONTH = 'THIS_MONTH'
