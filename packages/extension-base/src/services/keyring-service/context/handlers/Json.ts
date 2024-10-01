@@ -89,7 +89,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         throw new Error((e as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      throw new Error(t('Incorrect password'));
     }
   }
 
@@ -101,7 +101,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         const _pair = keyring.createFromJson(file);
         const exists = this.state.checkAddressExists([_pair.address]);
 
-        assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || _pair.address } }));
+        assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || _pair.address } }));
 
         keyring.restoreAccount(file, password, withMasterPassword);
 
@@ -124,7 +124,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         throw new Error((error as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      throw new Error(t('Incorrect password'));
     }
   }
 
@@ -172,7 +172,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         throw new Error((e as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      throw new Error(t('Incorrect password'));
     }
   }
 
@@ -214,7 +214,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
 
         if (!addresses.length) {
           if (_exists) {
-            throw new Error(t('Account already exists account: {{name}}', { replace: { name: _exists.name || _exists.address || '' } }));
+            throw new Error(t('Account already exists under the name {{name}}', { replace: { name: _exists.name || _exists.address || '' } }));
           } else {
             throw new Error(t('No accounts found to import'));
           }
@@ -277,7 +277,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
         throw new Error((error as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      throw new Error(t('Incorrect password'));
     }
   }
 
@@ -310,7 +310,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
       const error = e as Error;
 
       if (error.message === 'Invalid master password') {
-        throw new Error(t('Wrong password'));
+        throw new Error(t('Incorrect password'));
       } else {
         throw error;
       }

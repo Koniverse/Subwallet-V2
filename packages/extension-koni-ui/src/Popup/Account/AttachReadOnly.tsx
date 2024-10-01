@@ -93,7 +93,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           setReformatAddress('');
           setIsHideAccountNameInput(true);
 
-          return Promise.reject(t('Account name already in use'));
+          return Promise.reject(t('Account already exists'));
         }
       }
     } else {
@@ -201,7 +201,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       >
         <div className={CN('container')}>
           <div className='description'>
-            {t('Track the activity of any wallet without a private key')}
+            {t('Track the activity of any wallet without a private key 1')}
           </div>
           <div className='page-icon'>
             <PageIcon
