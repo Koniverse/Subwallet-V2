@@ -8,7 +8,7 @@ import { useFetchChainInfo, useGetAccountByAddress, useNotification, useSelector
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TonWalletContractVersion } from '@subwallet/keyring/types';
 import { Button, Icon, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -33,12 +33,12 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
   const { t } = useTranslation();
   const notification = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const [tonWalletContractVersionData, setTonWalletContractVersionData] = useState<ResponseGetAllTonWalletContractVersion | null>(null);
   const accountInfo = useGetAccountByAddress(address);
   const [selectedContractVersion, setSelectedContractVersion] = useState<TonWalletContractVersion | undefined>(
     accountInfo ? accountInfo.tonContractVersion as TonWalletContractVersion : undefined
   );
-  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -121,20 +121,16 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           setTimeout(() => {
             onCancel?.();
             setIsSubmitting(false);
-
+            const accountSelected = accountProxies.find((account) => account.id === accountInfo.proxyId);
             const isOnAccountDetailScreen = location.pathname.includes('/accounts/detail');
-            const isSoloAccount = currentAccountProxy?.accountType === AccountProxyType.SOLO;
-            const hasTonChangeWalletAction = currentAccountProxy?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+            const isSoloAccount = accountSelected?.accountType === AccountProxyType.SOLO;
+            const hasTonChangeWalletAction = accountSelected?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
             const shouldNavigate = isOnAccountDetailScreen && isSoloAccount && hasTonChangeWalletAction;
 
             if (shouldNavigate) {
-              navigate(`/accounts/detail/${newAddress}`, {
-                state: {
-                  requestViewDerivedAccounts: true
-                } as AccountDetailParam
-              });
+              navigate(`/accounts/detail/${newAddress}`);
             }
-          }, 300);
+          }, 400);
         })
         .catch((e: Error) => {
           notification({
@@ -143,7 +139,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           });
         });
     }
-  }, [accountInfo?.address, location.pathname, navigate, notification, onCancel, selectedContractVersion]);
+  }, [accountInfo?.address, accountInfo?.proxyId, accountProxies, location.pathname, navigate, notification, onCancel, selectedContractVersion]);
 
   return (
     <SwModal

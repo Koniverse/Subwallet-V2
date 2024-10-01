@@ -218,7 +218,8 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
             accountProxyId: ap.id,
             accountProxyType: ap.accountType,
             accountType: a.type,
-            address: reformatedAddress
+            address: reformatedAddress,
+            accountActions: ap.accountActions
           });
         }
       });
@@ -267,26 +268,31 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
         const targetAddress = accountSelectorItems.find((i) => i.accountProxyId === selectedAccountAddressItem.accountProxyId)?.address;
 
-        const isSoloAccount = selectedAccountAddressItem.accountProxyType === AccountProxyType.SOLO;
-        const hasTonChangeAction = currentAccountProxy?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
-
-        if (!targetAddress && isSoloAccount && hasTonChangeAction) {
-          const latestAddress = accountSelectorItems.find((i) => i.accountName === selectedAccountAddressItem.accountName)?.address;
-
+        if (targetAddress) {
           return {
             ...prev,
-            address: latestAddress
+            address: targetAddress
           };
         }
 
-        if (!targetAddress) {
-          return prev;
+        const accountSelected = accountSelectorItems.find((item) => item.accountName === selectedAccountAddressItem.accountName);
+        const isSoloAccount = accountSelected?.accountProxyType === AccountProxyType.SOLO;
+        const hasTonChangeAction = accountSelected?.accountActions?.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+
+        if (isSoloAccount && hasTonChangeAction) {
+          const latestAddress = accountSelected.address;
+
+          if (latestAddress) {
+            setSelectedAccountAddressItem(accountSelected);
+
+            return {
+              ...prev,
+              address: latestAddress
+            };
+          }
         }
 
-        return {
-          ...prev,
-          address: targetAddress
-        };
+        return prev;
       });
     }
   }, [accountSelectorItems, addressQrModal, currentAccountProxy?.accountActions, selectedAccountAddressItem]);

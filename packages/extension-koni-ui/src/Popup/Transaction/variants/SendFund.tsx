@@ -552,7 +552,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Continue'),
               onClick: () => {
                 closeAlert();
-                setLoading(false);
+                setLoading(true);
                 doSubmit(values, options);
               }
             },
@@ -588,7 +588,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
                 form.setFieldValue('to', formattedAddress);
                 updateAddressInputValue(formattedAddress);
                 closeAlert();
-                setLoading(false);
+                setLoading(true);
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
@@ -621,7 +621,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Transfer'),
               onClick: () => {
                 closeAlert();
-                setLoading(false);
+                setLoading(true);
                 checkTransferAll = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
@@ -643,7 +643,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       const latestValue = form.getFieldsValue();
 
-      setLoading(false);
       doSubmit(latestValue, options);
     };
 
