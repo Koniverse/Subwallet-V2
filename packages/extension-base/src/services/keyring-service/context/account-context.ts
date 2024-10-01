@@ -177,16 +177,16 @@ export class AccountContext {
     return this.jsonHandler.parseInfoSingleJson(request);
   }
 
-  public jsonRestoreV2 (request: RequestJsonRestoreV2): void {
-    this.jsonHandler.jsonRestoreV2(request);
+  public jsonRestoreV2 (request: RequestJsonRestoreV2, onDone: VoidFunction): Promise<string[]> {
+    return this.jsonHandler.jsonRestoreV2(request, onDone);
   }
 
   public parseInfoMultiJson (request: RequestBatchJsonGetAccountInfo): ResponseBatchJsonGetAccountInfo {
     return this.jsonHandler.parseInfoMultiJson(request);
   }
 
-  public batchRestoreV2 (request: RequestBatchRestoreV2): void {
-    this.jsonHandler.batchRestoreV2(request);
+  public batchRestoreV2 (request: RequestBatchRestoreV2): Promise<string[]> {
+    return this.jsonHandler.batchRestoreV2(request);
   }
 
   public batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {

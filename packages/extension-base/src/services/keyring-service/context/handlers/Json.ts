@@ -3,7 +3,7 @@
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { AccountProxyExtra, AccountProxyStoreData, KeyringPairs$JsonV2, ModifyPairStoreData, RequestAccountBatchExportV2, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestJsonGetAccountInfo, RequestJsonRestoreV2, ResponseAccountBatchExportV2, ResponseBatchJsonGetAccountInfo, ResponseJsonGetAccountInfo } from '@subwallet/extension-base/types';
-import { combineAccountsWithKeyPair, convertAccountProxyType, transformAccount } from '@subwallet/extension-base/utils';
+import { combineAccountsWithKeyPair, convertAccountProxyType, createPromiseHandler, transformAccount } from '@subwallet/extension-base/utils';
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { createPair } from '@subwallet/keyring';
 import { KeypairType, KeyringPair$Json } from '@subwallet/keyring/types';
@@ -89,19 +89,20 @@ export class AccountJsonHandler extends AccountBaseHandler {
         throw new Error((e as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      throw new Error(t('Incorrect password'));
     }
   }
 
-  public jsonRestoreV2 ({ address, file, isAllowed, password, withMasterPassword }: RequestJsonRestoreV2): void {
+  public jsonRestoreV2 ({ address, file, isAllowed, password, withMasterPassword }: RequestJsonRestoreV2, onDone: VoidFunction): Promise<string[]> {
     const isPasswordValidated = this.validatePassword(file, password);
+    const { promise, reject, resolve } = createPromiseHandler<string[]>();
 
     if (isPasswordValidated) {
       try {
         const _pair = keyring.createFromJson(file);
         const exists = this.state.checkAddressExists([_pair.address]);
 
-        assert(!exists, t('Account already exists account: {{name}}', { replace: { name: exists?.name || exists?.address || _pair.address } }));
+        assert(!exists, t('Account already exists under the name {{name}}', { replace: { name: exists?.name || exists?.address || _pair.address } }));
 
         keyring.restoreAccount(file, password, withMasterPassword);
 
@@ -119,13 +120,17 @@ export class AccountJsonHandler extends AccountBaseHandler {
         this.state.saveCurrentAccountProxyId(address, () => {
           this.state.updateMetadataForPair();
           this.state._addAddressToAuthList(address, isAllowed);
+          resolve([address]);
+          onDone();
         });
       } catch (error) {
-        throw new Error((error as Error).message);
+        reject(error);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      reject(new Error(t('Incorrect password')));
     }
+
+    return promise;
   }
 
   private validatedAccountsPassword (json: EncryptedJson, password: string): KeyringPair$Json[] | null {
@@ -172,12 +177,13 @@ export class AccountJsonHandler extends AccountBaseHandler {
         throw new Error((e as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      throw new Error(t('Incorrect password'));
     }
   }
 
-  public batchRestoreV2 ({ file, isAllowed, password, proxyIds: _proxyIds }: RequestBatchRestoreV2): void {
+  public batchRestoreV2 ({ file, isAllowed, password, proxyIds: _proxyIds }: RequestBatchRestoreV2): Promise<string[]> {
     const jsons = this.validatedAccountsPassword(file, password);
+    const { promise, reject, resolve } = createPromiseHandler<string[]>();
 
     if (jsons) {
       try {
@@ -214,7 +220,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
 
         if (!addresses.length) {
           if (_exists) {
-            throw new Error(t('Account already exists account: {{name}}', { replace: { name: _exists.name || _exists.address || '' } }));
+            throw new Error(t('Account already exists under the name {{name}}', { replace: { name: _exists.name || _exists.address || '' } }));
           } else {
             throw new Error(t('No accounts found to import'));
           }
@@ -269,16 +275,33 @@ export class AccountJsonHandler extends AccountBaseHandler {
           }
         }
 
+        const successAddressList = addresses.reduce<string[]>((rs, address) => {
+          try {
+            const account = keyring.getPair(address);
+
+            if (account) {
+              rs.push(address);
+            }
+          } catch (error) {
+            console.log(error);
+          }
+
+          return rs;
+        }, []);
+
         this.state.saveCurrentAccountProxyId(nextAccountProxyId, () => {
           this.state.updateMetadataForPair();
           this.state._addAddressesToAuthList(addresses, isAllowed);
+          resolve(successAddressList);
         });
       } catch (error) {
         throw new Error((error as Error).message);
       }
     } else {
-      throw new Error(t('Wrong password'));
+      reject(new Error(t('Incorrect password')));
     }
+
+    return promise;
   }
 
   public async batchExportV2 (request: RequestAccountBatchExportV2): Promise<ResponseAccountBatchExportV2> {
@@ -310,7 +333,7 @@ export class AccountJsonHandler extends AccountBaseHandler {
       const error = e as Error;
 
       if (error.message === 'Invalid master password') {
-        throw new Error(t('Wrong password'));
+        throw new Error(t('Incorrect password'));
       } else {
         throw error;
       }

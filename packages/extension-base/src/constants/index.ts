@@ -48,3 +48,4 @@ export const PERMISSIONS_TO_REVOKE = ['eth_accounts'];
 export * from './signing';
 export * from './staking';
 export * from './storage';
+export * from './blocked-actions-list';
