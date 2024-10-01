@@ -1828,25 +1828,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@chainflip/rpc@npm:^1.5.6":
-  version: 1.6.6
-  resolution: "@chainflip/rpc@npm:1.6.6"
+"@chainflip/rpc@npm:^1.6.7":
+  version: 1.6.7
+  resolution: "@chainflip/rpc@npm:1.6.7"
   dependencies:
     "@chainflip/utils": ^0.3.0
     zod: ^3.22.8
-  checksum: 92e3e7d8af6445b2ba387fa9f0b74638d21f7777b6703e094021cb8a5ac6f6e085ec72518d0dc39215daba9cd4e4cc74ef2e7f9c3d238913fd4705498d58ae07
+  checksum: ee0cec236fa88d2869bb20037b274fc2cc11623ad268d8c262d998210769e92b37c8107f9a28f7ee14de21cf6bb7b772d3329354ec9deb5762e9c6933b569d27
   languageName: node
   linkType: hard
 
-"@chainflip/sdk@npm:^1.5.2":
-  version: 1.5.2
-  resolution: "@chainflip/sdk@npm:1.5.2"
+"@chainflip/sdk@npm:^1.6.0":
+  version: 1.6.3
+  resolution: "@chainflip/sdk@npm:1.6.3"
   dependencies:
-    "@chainflip/rpc": ^1.5.6
+    "@chainflip/rpc": ^1.6.7
     "@chainflip/utils": ^0.4.0
-    axios: ^1.6.8
+    axios: ^1.7.7
     ethers: ^6.13.2
-  checksum: fd68aa496555925146b7ffbfe04959b452d6ab0429547362d3d6f88e5a90c0748e80b41cfbc5f314fba0b2e542ef525688bc5c9f6a4a13a27c4866c2975f7c05
+  checksum: f1b2d79e2e96c7ca17429062f82f084f616cc8f5adf540777c20206e7bc25cf22780936d587d014caaea5684784b6c52cf614319f76cf20e426518699950274d
   languageName: node
   linkType: hard
 
@@ -2601,9 +2601,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@galacticcouncil/sdk@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "@galacticcouncil/sdk@npm:4.2.0"
+"@galacticcouncil/sdk@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "@galacticcouncil/sdk@npm:4.2.1"
   dependencies:
     "@galacticcouncil/math-lbp": ^1.0.0
     "@galacticcouncil/math-liquidity-mining": ^1.0.0
@@ -2629,7 +2629,7 @@ __metadata:
     "@polkadot/types-known": ^12.1.1
     "@polkadot/util": ^12.6.2
     "@polkadot/util-crypto": ^12.6.2
-  checksum: c552c62338f7ae3969881a50da07f9dc6e3f13c952ed6b1a9c760453c7074656033df8774fe6a8f0df8c394048f97104d0e6579c499286ec5edd17cc928dc4a7
+  checksum: abe10458aa9f0f66c1571d8ac8dfb61b55b9a491e13a454ca0bc7f0793df8a124d6e1a74a4b18f0ea43fb7bca9dc79b5efed81e03e2209ac96a254e35460ecfe
   languageName: node
   linkType: hard
 
@@ -6286,12 +6286,12 @@ __metadata:
     "@acala-network/api": ^5.0.2
     "@apollo/client": ^3.7.14
     "@azns/resolver-core": ^1.4.0
-    "@chainflip/sdk": ^1.5.2
+    "@chainflip/sdk": ^1.6.0
     "@equilab/api": ~1.14.25
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
     "@ethersproject/abi": ^5.7.0
-    "@galacticcouncil/sdk": ^4.2.0
+    "@galacticcouncil/sdk": ^4.2.1
     "@gear-js/api": ^0.38.1
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/eth-sig-util": ^7.0.3
@@ -6324,8 +6324,8 @@ __metadata:
     "@subwallet/extension-dapp": ^1.2.30-0
     "@subwallet/extension-inject": ^1.2.30-0
     "@subwallet/extension-mocks": ^1.2.30-0
-    "@subwallet/keyring": ^0.1.6
-    "@subwallet/ui-keyring": ^0.1.6
+    "@subwallet/keyring": ^0.1.7
+    "@subwallet/ui-keyring": ^0.1.7
     "@types/uuid": ^9.0.1
     "@walletconnect/keyvaluestorage": ^1.1.1
     "@walletconnect/sign-client": ^2.14.0
@@ -6457,9 +6457,9 @@ __metadata:
     "@subwallet/extension-dapp": ^1.2.30-0
     "@subwallet/extension-inject": ^1.2.30-0
     "@subwallet/extension-mocks": ^1.2.30-0
-    "@subwallet/keyring": ^0.1.6
+    "@subwallet/keyring": ^0.1.7
     "@subwallet/react-ui": 5.1.2-b77
-    "@subwallet/ui-keyring": ^0.1.6
+    "@subwallet/ui-keyring": ^0.1.7
     "@types/bn.js": ^5.1.1
     "@types/enzyme": ^3.10.12
     "@types/enzyme-adapter-react-16": ^1.0.6
@@ -6595,9 +6595,9 @@ __metadata:
     "@subwallet/extension-dapp": ^1.2.30-0
     "@subwallet/extension-inject": ^1.2.30-0
     "@subwallet/extension-mocks": ^1.2.30-0
-    "@subwallet/keyring": ^0.1.6
+    "@subwallet/keyring": ^0.1.7
     "@subwallet/react-ui": ^5.1.2-b77
-    "@subwallet/ui-keyring": ^0.1.6
+    "@subwallet/ui-keyring": ^0.1.7
     "@types/bn.js": ^5.1.1
     "@types/enzyme": ^3.10.12
     "@types/enzyme-adapter-react-16": ^1.0.6
@@ -6660,9 +6660,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subwallet/keyring@npm:^0.1.6":
-  version: 0.1.6
-  resolution: "@subwallet/keyring@npm:0.1.6"
+"@subwallet/keyring@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "@subwallet/keyring@npm:0.1.7"
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6673,7 +6673,7 @@ __metadata:
     eventemitter3: ^4.0.7
     rxjs: ^7.5.6
     tslib: ^2.6.2
-  checksum: 9a2ff48e22a717e56c38376ab58e421b5ee2580f9598b9aaf2b16f89572c326938524aeceb89e56d4b4b8b412ea6c77ea2505342e9be0c84d8c0622da350d35b
+  checksum: 74f615b5837b9abaec00547b36ba989414f3db5706cb23163cd9745cded1138a3c241fbc042c3114343912a062d0200ba4655b390b59dc1163c740ddc616f927
   languageName: node
   linkType: hard
 
@@ -6755,19 +6755,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/ui-keyring@npm:^0.1.6":
-  version: 0.1.6
-  resolution: "@subwallet/ui-keyring@npm:0.1.6"
+"@subwallet/ui-keyring@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "@subwallet/ui-keyring@npm:0.1.7"
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
     "@polkadot/util": ^12.2.1
     "@polkadot/util-crypto": ^12.2.1
-    "@subwallet/keyring": ^0.1.6
+    "@subwallet/keyring": ^0.1.7
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: d36dd1b5c2cd69c9c9b24d03acd07c1389c68e625a26f579a6873f64398cfc2834ab1cf9c824ce93663ef813d4ac031b056bd7cfb0a202d02d9547fab2970d0b
+  checksum: a9fe5a4e01848f5aadc3c4db9e288e54dd095db7021a887a411e2134f98b31d4d91670ae6289e68e3d979287afa8e83c6c4a40d0d782a163e9bf0fbd8020523a
   languageName: node
   linkType: hard
 
@@ -9896,6 +9896,17 @@ __metadata:
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
   checksum: bf007fa4b207d102459300698620b3b0873503c6d47bf5a8f6e43c0c64c90035a4f698b55027ca1958f61ab43723df2781c38a99711848d232cad7accbcdfcdd
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.7.7":
+  version: 1.7.7
+  resolution: "axios@npm:1.7.7"
+  dependencies:
+    follow-redirects: ^1.15.6
+    form-data: ^4.0.0
+    proxy-from-env: ^1.1.0
+  checksum: 882d4fe0ec694a07c7f5c1f68205eb6dc5a62aecdb632cc7a4a3d0985188ce3030e0b277e1a8260ac3f194d314ae342117660a151fabffdc5081ca0b5a8b47fe
   languageName: node
   linkType: hard
 

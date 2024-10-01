@@ -16,6 +16,8 @@ export const marketingCampaigns: Record<string, unknown> = require('./marketingC
 export const termAndCondition: Record<string, unknown> = require('./termAndCondition.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const currencySymbol: Record<string, unknown> = require('./currencySymbol.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+export const blockedActionsFeatures: Record<string, unknown> = require('./blockedActionsFeatures.json');
 
 export enum StaticKey {
   BUY_SERVICE_INFOS = 'buy-service-infos',
@@ -24,7 +26,8 @@ export enum StaticKey {
   MARKETING_CAMPAINGS = 'marketing-campaigns',
   CROWDLOAN_FUNDS = 'crowdloan-funds',
   TERM_AND_CONDITION = 'term-and-condition',
-  BUY_TOKEN_CONFIGS = 'buy-token-configs'
+  BUY_TOKEN_CONFIGS = 'buy-token-configs',
+  BLOCKED_ACTIONS_FEATURES = 'blocked-actions-features'
 }
 
 export const staticData = {
@@ -34,5 +37,6 @@ export const staticData = {
   [StaticKey.CROWDLOAN_FUNDS]: crowdloanFunds,
   [StaticKey.MARKETING_CAMPAINGS]: marketingCampaigns,
   [StaticKey.TERM_AND_CONDITION]: termAndCondition.default,
-  [StaticKey.BUY_TOKEN_CONFIGS]: buyTokenConfigs
+  [StaticKey.BUY_TOKEN_CONFIGS]: buyTokenConfigs,
+  [StaticKey.BLOCKED_ACTIONS_FEATURES]: blockedActionsFeatures
 };

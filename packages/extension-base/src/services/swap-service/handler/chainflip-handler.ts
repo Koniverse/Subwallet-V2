@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { SwapSDK } from '@chainflip/sdk/swap';
+import { Asset, SwapSDK } from '@chainflip/sdk/swap';
 import { COMMON_ASSETS } from '@subwallet/chain-list';
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
@@ -12,7 +12,7 @@ import { BalanceService } from '@subwallet/extension-base/services/balance-servi
 import { getERC20TransactionObject, getEVMTransactionObject } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getAssetDecimals, _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenSlug, _getContractAddressOfToken, _isNativeToken, _isSmartContractToken, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { calculateSwapRate, CHAIN_FLIP_SUPPORTED_MAINNET_ASSET_MAPPING, CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING, CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING, CHAIN_FLIP_SUPPORTED_TESTNET_MAPPING, getChainflipOptions, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
 import { TransactionData } from '@subwallet/extension-base/types';
@@ -115,12 +115,14 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       const srcChain = fromAsset.originChain;
       const destChain = toAsset.originChain;
 
+      const isSwapCrossChain = srcChain !== destChain;
+
       const srcChainInfo = this.chainService.getChainInfoByKey(srcChain);
       const srcChainId = this.chainMapping[srcChain];
       const destChainId = this.chainMapping[destChain];
 
-      const fromAssetId = this.assetMapping[fromAsset.slug];
-      const toAssetId = this.assetMapping[toAsset.slug];
+      const fromAssetId = _getAssetSymbol(fromAsset);
+      const toAssetId = _getAssetSymbol(toAsset);
 
       if (!srcChainId || !destChainId || !fromAssetId || !toAssetId) {
         return {
@@ -135,10 +137,23 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       ]);
 
       const supportedDestChainId = supportedDestChains.find((c) => c.chain === destChainId);
-      const srcAssetData = srcAssets.find((a) => a.asset === fromAssetId);
-      const destAssetData = destAssets.find((a) => a.asset === toAssetId);
+      const srcAssetData = srcAssets.find((a) => {
+        if (_isSmartContractToken(fromAsset)) {
+          return a?.contractAddress?.toLowerCase() === _getContractAddressOfToken(fromAsset).toLowerCase() && a.asset === fromAssetId;
+        }
 
-      if (!destAssetData || !srcAssetData || !supportedDestChainId) {
+        return a.asset === fromAssetId;
+      });
+
+      const destAssetData = destAssets.find((a) => {
+        if (_isSmartContractToken(toAsset)) {
+          return a?.contractAddress?.toLowerCase() === _getContractAddressOfToken(toAsset).toLowerCase() && a.asset === toAssetId;
+        }
+
+        return a.asset === toAssetId;
+      });
+
+      if (!destAssetData || !srcAssetData || (isSwapCrossChain && !supportedDestChainId)) {
         return { error: SwapErrorType.UNKNOWN };
       }
 
@@ -241,15 +256,15 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     const srcChainId = this.chainMapping[fromAsset.originChain];
     const destChainId = this.chainMapping[toAsset.originChain];
 
-    const fromAssetId = this.assetMapping[fromAsset.slug];
-    const toAssetId = this.assetMapping[toAsset.slug];
+    const fromAssetId = _getAssetSymbol(fromAsset);
+    const toAssetId = _getAssetSymbol(toAsset);
 
     try {
       const quoteResponse = await this.swapSdk.getQuote({
         srcChain: srcChainId,
         destChain: destChainId,
-        srcAsset: fromAssetId,
-        destAsset: toAssetId,
+        srcAsset: fromAssetId as Asset,
+        destAsset: toAssetId as Asset,
         amount: request.fromAmount
       });
 
@@ -257,14 +272,21 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
       quoteResponse.quote.includedFees.forEach((fee) => {
         switch (fee.type) {
-          case ChainflipFeeType.INGRESS:
+          case ChainflipFeeType.INGRESS: {
+            console.log('ingress', fee);
+            feeComponent.push({
+              tokenSlug: fromAsset.slug,
+              amount: fee.amount,
+              feeType: SwapFeeType.NETWORK_FEE
+            });
+            break;
+          }
 
           // eslint-disable-next-line no-fallthrough
           case ChainflipFeeType.EGRESS: {
-            const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
-
+            console.log('egress', fee);
             feeComponent.push({
-              tokenSlug,
+              tokenSlug: toAsset.slug,
               amount: fee.amount,
               feeType: SwapFeeType.NETWORK_FEE
             });
@@ -278,10 +300,10 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
           // eslint-disable-next-line no-fallthrough
           case ChainflipFeeType.BROKER: {
-            const tokenSlug = Object.keys(this.assetMapping).find((assetSlug) => this.assetMapping[assetSlug] === fee.asset) as string;
+            console.log('broker fee', fee);
 
             feeComponent.push({
-              tokenSlug,
+              tokenSlug: this.intermediaryAssetSlug,
               amount: fee.amount,
               feeType: SwapFeeType.PLATFORM_FEE
             });
@@ -375,14 +397,14 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     const srcChainId = this.chainMapping[fromAsset.originChain];
     const destChainId = this.chainMapping[toAsset.originChain];
 
-    const fromAssetId = this.assetMapping[fromAsset.slug];
-    const toAssetId = this.assetMapping[toAsset.slug];
+    const fromAssetId = _getAssetSymbol(fromAsset);
+    const toAssetId = _getAssetSymbol(toAsset);
 
     const depositAddressResponse = await this.swapSdk.requestDepositAddress({
       srcChain: srcChainId,
       destChain: destChainId,
-      srcAsset: fromAssetId,
-      destAsset: toAssetId,
+      srcAsset: fromAssetId as Asset,
+      destAsset: toAssetId as Asset,
       destAddress: receiver,
       amount: quote.fromAmount
     });

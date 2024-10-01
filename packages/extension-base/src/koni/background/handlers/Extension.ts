@@ -45,7 +45,7 @@ import { AccountsStore } from '@subwallet/extension-base/stores';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
-import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { BN_ZERO, convertSubjectInfoToAddresses, createPromiseHandler, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
@@ -1504,8 +1504,9 @@ export default class KoniExtension {
     return true;
   }
 
-  private jsonRestoreV2 ({ address, file, isAllowed, password, withMasterPassword }: RequestJsonRestoreV2): void {
+  private jsonRestoreV2 ({ address, file, isAllowed, password, withMasterPassword }: RequestJsonRestoreV2): Promise<string[]> {
     const isPasswordValidated = this.validatePassword(file, password);
+    const { promise, resolve } = createPromiseHandler<string[]>();
 
     if (isPasswordValidated) {
       try {
@@ -1518,11 +1519,14 @@ export default class KoniExtension {
           }
 
           this._addAddressToAuthList(address, isAllowed);
+          resolve([address]);
         });
 
         if (this.#alwaysLock) {
           this.keyringLock();
         }
+
+        return promise;
       } catch (error) {
         throw new Error((error as Error).message);
       }
@@ -1531,9 +1535,10 @@ export default class KoniExtension {
     }
   }
 
-  private batchRestoreV2 ({ accountsInfo, file, isAllowed, password }: RequestBatchRestoreV2): void {
+  private batchRestoreV2 ({ accountsInfo, file, isAllowed, password }: RequestBatchRestoreV2): Promise<string[]> {
     const addressList: string[] = accountsInfo.map((acc) => acc.address);
     const isPasswordValidated = this.validatedAccountsPassword(file, password);
+    const { promise, resolve } = createPromiseHandler<string[]>();
 
     if (isPasswordValidated) {
       try {
@@ -1541,12 +1546,30 @@ export default class KoniExtension {
           keyring.restoreAccounts(file, password);
 
           this.#koniState.keyringService.removeNoneHardwareGenesisHash();
-          this._addAddressesToAuthList(addressList, isAllowed);
+
+          const successAddressList = addressList.reduce<string[]>((addressList, address) => {
+            try {
+              const account = keyring.getPair(address);
+
+              if (account) {
+                addressList.push(address);
+              }
+            } catch (error) {
+              console.log(error);
+            }
+
+            return addressList;
+          }, []);
+
+          this._addAddressesToAuthList(successAddressList, isAllowed);
+          resolve(successAddressList);
         });
 
         // if (this.#alwaysLock) {
         //   this.keyringLock();
         // }
+
+        return promise;
       } catch (error) {
         throw new Error((error as Error).message);
       }
@@ -3158,7 +3181,7 @@ export default class KoniExtension {
 
           registry.register(metadata.types);
           registry.setChainProperties(registry.createType('ChainProperties', {
-            ss58Format: chainInfo?.substrateInfo?.addressPrefix || 42,
+            ss58Format: chainInfo?.substrateInfo?.addressPrefix ?? 42,
             tokenDecimals: chainInfo?.substrateInfo?.decimals,
             tokenSymbol: chainInfo?.substrateInfo?.symbol
           }) as unknown as ChainProperties);
@@ -4706,9 +4729,9 @@ export default class KoniExtension {
       case 'pri(accounts.batchExportV2)':
         return this.batchExportV2(request as RequestAccountBatchExportV2);
       case 'pri(json.restoreV2)':
-        return this.jsonRestoreV2(request as RequestJsonRestoreV2);
+        return await this.jsonRestoreV2(request as RequestJsonRestoreV2);
       case 'pri(json.batchRestoreV2)':
-        return this.batchRestoreV2(request as RequestBatchRestoreV2);
+        return await this.batchRestoreV2(request as RequestBatchRestoreV2);
       case 'pri(nft.getNft)':
         return await this.getNft();
       case 'pri(nft.getSubscription)':
