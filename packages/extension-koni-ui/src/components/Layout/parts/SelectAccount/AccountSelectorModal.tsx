@@ -100,10 +100,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     return accountProxies.find((ap) => ap.id === idOfAccountProxyToGetAddresses.proxyId);
   }, [accountProxies, idOfAccountProxyToGetAddresses]);
 
-  console.log('accountProxyToGetAddresses', accountProxyToGetAddresses);
-  console.log('idOfAccountProxyToGetAddresses', idOfAccountProxyToGetAddresses);
-  console.log('currentAccountProxy', currentAccountProxy);
-
   const listItems = useMemo<ListItem[]>(() => {
     let accountAll: AccountProxy | undefined;
     const result: ListItem[] = [];

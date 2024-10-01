@@ -535,6 +535,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     let checkTransferAll = false;
 
     const _doSubmit = async () => {
+      setLoading(true);
+
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
@@ -550,12 +552,16 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Continue'),
               onClick: () => {
                 closeAlert();
+                setLoading(false);
                 doSubmit(values, options);
               }
             },
             cancelButton: {
               text: t('Cancel'),
-              onClick: closeAlert
+              onClick: () => {
+                closeAlert();
+                setLoading(false);
+              }
             }
           });
 
@@ -582,6 +588,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
                 form.setFieldValue('to', formattedAddress);
                 updateAddressInputValue(formattedAddress);
                 closeAlert();
+                setLoading(false);
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
@@ -592,6 +599,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Cancel'),
               onClick: () => {
                 closeAlert();
+                setLoading(false);
               }
             }
           });
@@ -613,6 +621,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Transfer'),
               onClick: () => {
                 closeAlert();
+                setLoading(false);
                 checkTransferAll = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
@@ -621,7 +630,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             },
             cancelButton: {
               text: t('Cancel'),
-              onClick: closeAlert
+              onClick: () => {
+                closeAlert();
+                setLoading(false);
+              }
             }
           });
 
@@ -631,6 +643,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       const latestValue = form.getFieldsValue();
 
+      setLoading(false);
       doSubmit(latestValue, options);
     };
 
