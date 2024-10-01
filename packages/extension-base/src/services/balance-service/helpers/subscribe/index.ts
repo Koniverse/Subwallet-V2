@@ -159,16 +159,6 @@ export function subscribeBalance (
 
     const substrateApi = await substrateApiMap[chainSlug].isReady;
 
-    if (!substrateApi.isApiReady) {
-      handleUnsupportedOrPendingAddresses(
-        useAddresses,
-        chainSlug,
-        chainAssetMap,
-        APIItemState.PENDING,
-        callback
-      );
-    }
-
     return subscribeSubstrateBalance(useAddresses, chainInfo, chainAssetMap, substrateApi, evmApi, callback, extrinsicType);
   });
 
