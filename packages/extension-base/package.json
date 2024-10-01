@@ -64,7 +64,7 @@
     "@subwallet/ui-keyring": "^0.1.6",
     "@ton/core": "^0.56.3",
     "@ton/crypto": "^3.2.0",
-    "@ton/ton": "^14.0.0",
+    "@ton/ton": "^15.0.0",
     "@walletconnect/keyvaluestorage": "^1.1.1",
     "@walletconnect/sign-client": "^2.14.0",
     "@walletconnect/types": "^2.14.0",

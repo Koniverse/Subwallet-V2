@@ -6325,7 +6325,7 @@ __metadata:
     "@subwallet/ui-keyring": ^0.1.6
     "@ton/core": ^0.56.3
     "@ton/crypto": ^3.2.0
-    "@ton/ton": ^14.0.0
+    "@ton/ton": ^15.0.0
     "@types/uuid": ^9.0.1
     "@walletconnect/keyvaluestorage": ^1.1.1
     "@walletconnect/sign-client": ^2.14.0
@@ -6661,8 +6661,8 @@ __metadata:
   linkType: soft
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.1.6
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=5a96aa&locator=root-workspace-0b6124%40workspace%3A."
+  version: 0.1.7
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=7a21cc&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6682,7 +6682,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 5da43a9324028f55c66b663229352f660dbb2bfc8f5bd5daf8623e131cc293a5f57d7f9bad055c7c4f41c598df01cd6912c05dd86434a84fb582a81899d01af5
+  checksum: e7a4b12509d56e3bdb65984b8ebcf485a9d84604e740e6c9b5da025fcbbc94c2d93054df415b8a6a24721d65319cf017f8530e3d67a13a7dcb217ed2a6c27390
   languageName: node
   linkType: hard
 
@@ -6765,18 +6765,18 @@ __metadata:
   linkType: hard
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.1.6
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=d7397c&locator=root-workspace-0b6124%40workspace%3A."
+  version: 0.1.7
+  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=c748eb&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
     "@polkadot/util": ^12.2.1
     "@polkadot/util-crypto": ^12.2.1
-    "@subwallet/keyring": ^0.1.6
+    "@subwallet/keyring": ^0.1.7
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: 52599f78d03183121263b81352056b750d32e784a1935bf7088880d93bd29db2d66f261cd9325f96d6a0a138b2572267fda35256a9afa7cd8564649e4a215eb7
+  checksum: 9182a2be4292b35a9925ef7316b5af1c498fc9ac6e5855d43f34d77d8bf8cbc9b45e652308778a31c56abeacd9cfb06d58f10daa8ab455ede6c721d897e3efb9
   languageName: node
   linkType: hard
 
@@ -7037,22 +7037,6 @@ __metadata:
     jssha: 3.2.0
     tweetnacl: 1.0.3
   checksum: 0851fad506796573ec6079c1f36d3d07f4070abb90a4a2f3e621f6b2b2c6725c13096a5afdabb24611aa2a063ba335dcbc742e98a3c1cd0bbf3645ae55c1a8c6
-  languageName: node
-  linkType: hard
-
-"@ton/ton@npm:^14.0.0":
-  version: 14.0.0
-  resolution: "@ton/ton@npm:14.0.0"
-  dependencies:
-    axios: ^1.6.7
-    dataloader: ^2.0.0
-    symbol.inspect: 1.0.1
-    teslabot: ^1.3.0
-    zod: ^3.21.4
-  peerDependencies:
-    "@ton/core": ">=0.56.0"
-    "@ton/crypto": ">=3.2.0"
-  checksum: b0be725460cf12a5c4ef9e71a1a04b93759d1fb917d410ba2249c1bec6bdbc826b8b77a1ae5d4cdb2f7a02ec5d73136c3556f81ab62260649f7203ed77708aea
   languageName: node
   linkType: hard
 
@@ -29162,7 +29146,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.22.8":
+"zod@npm:^3.21.4, zod@npm:^3.22.8":
   version: 3.23.8
   resolution: "zod@npm:3.23.8"
   checksum: 15949ff82118f59c893dacd9d3c766d02b6fa2e71cf474d5aa888570c469dbf5446ac5ad562bb035bf7ac9650da94f290655c194f4a6de3e766f43febd432c5c

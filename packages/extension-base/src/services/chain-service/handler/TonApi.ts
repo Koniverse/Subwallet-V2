@@ -8,8 +8,9 @@ import { getJettonTxStatus, retry } from '@subwallet/extension-base/services/bal
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
+import { TonWalletContract } from '@subwallet/keyring/types';
 import { Cell } from '@ton/core';
-import { Address, Contract, OpenedContract, TonClient, WalletContractV4 } from '@ton/ton';
+import { Address, Contract, OpenedContract, TonClient } from '@ton/ton';
 import { BehaviorSubject } from 'rxjs';
 
 export class TonApi implements _TonApi {
@@ -145,7 +146,7 @@ export class TonApi implements _TonApi {
     return this.api.open(src);
   }
 
-  estimateExternalMessageFee (walletContract: WalletContractV4, body: Cell, isInit: boolean, ignoreSignature = true) {
+  estimateExternalMessageFee (walletContract: TonWalletContract, body: Cell, isInit: boolean, ignoreSignature = true) {
     const initCode = isInit ? null : walletContract.init.code;
     const initData = isInit ? null : walletContract.init.data;
 

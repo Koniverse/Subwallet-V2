@@ -3,10 +3,14 @@
 
 import { EXTRA_TON_ESTIMATE_FEE, SendMode, SW_QUERYID_HEX } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
+import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { TonApi } from '@subwallet/extension-base/services/chain-service/handler/TonApi';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
+import { TonWalletContract } from '@subwallet/keyring/types';
 import { Address, beginCell, Cell, MessageRelaxed, storeMessage, storeMessageRelaxed } from '@ton/core';
-import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV4 } from '@ton/ton';
+import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV3R1, WalletContractV3R2, WalletContractV4, WalletContractV5R1 } from '@ton/ton';
+import { Maybe } from '@ton/ton/dist/utils/maybe';
+import { Buffer } from 'buffer';
 import nacl from 'tweetnacl';
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
@@ -23,7 +27,7 @@ export async function getJettonWalletContract (jettonMasterContract: OpenedContr
   return tonApi.open(JettonWallet.create(jettonWalletAddress));
 }
 
-export function externalMessage (contract: WalletContractV4, seqno: number, body: Cell) {
+export function externalMessage (contract: TonWalletContract, seqno: number, body: Cell) {
   return beginCell()
     .storeWritable(
       storeMessage(
@@ -86,16 +90,13 @@ export async function getJettonTxStatus (tonApi: TonApi, jettonTransferMsgHash: 
   return false;
 }
 
-export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxed[], walletContract: WalletContractV4, _seqno?: number) {
+export async function estimateTonTxFee (tonApi: _TonApi, messages: MessageRelaxed[], walletContract: TonWalletContract, _seqno?: number) {
   const contract = tonApi.open(walletContract);
   const seqno = _seqno ?? await contract.getSeqno();
   const isInit = seqno !== 0;
+  const similatedSecretKey = Buffer.from(new Array(64));
 
-  const simulatedTxCell = contract.createTransfer({
-    secretKey: Buffer.from(new Array(64)),
-    seqno,
-    messages
-  });
+  const simulatedTxCell = getTransferCell(walletContract, similatedSecretKey, seqno, messages);
 
   const estimateFeeInfo = await tonApi.estimateExternalMessageFee(walletContract, simulatedTxCell, isInit);
 
@@ -141,4 +142,81 @@ export function getTonSendMode (isTransferAll: boolean) {
   return isTransferAll
     ? SendMode.CARRY_ALL_REMAINING_BALANCE
     : SendMode.PAY_GAS_SEPARATELY + SendMode.IGNORE_ERRORS;
+}
+
+type WalletBasicSendArgsSigned = {
+  seqno: number;
+  messages: MessageRelaxed[];
+  sendMode?: Maybe<SendMode>;
+  signer: (message: Cell) => Promise<Buffer>;
+};
+
+type WalletBasicSendArgsSignable = {
+  seqno: number;
+  messages: MessageRelaxed[];
+  sendMode?: Maybe<SendMode>;
+  secretKey: Buffer;
+};
+
+const isVersionv3r1 = (walletContract: TonWalletContract): walletContract is WalletContractV3R1 => {
+  return walletContract instanceof WalletContractV3R1;
+};
+
+const isVersionv3r2 = (walletContract: TonWalletContract): walletContract is WalletContractV3R2 => {
+  return walletContract instanceof WalletContractV3R2;
+};
+
+const isVersionv4 = (walletContract: TonWalletContract): walletContract is WalletContractV4 => {
+  return walletContract instanceof WalletContractV4;
+};
+
+const isVersionv5r1 = (walletContract: TonWalletContract): walletContract is WalletContractV5R1 => {
+  return walletContract instanceof WalletContractV5R1;
+};
+
+export function getTransferCellPromise (walletContract: TonWalletContract, signer: (message: Cell) => Promise<Buffer>, payload: TonTransactionConfig, seqno: number, messages: MessageRelaxed[]) {
+  let promise: Promise<Cell>;
+  const params: WalletBasicSendArgsSigned = {
+    signer,
+    sendMode: getTonSendMode(payload.transferAll),
+    seqno: seqno,
+    messages: messages
+  };
+
+  if (isVersionv3r1(walletContract)) {
+    promise = walletContract.createTransfer(params);
+  } else if (isVersionv3r2(walletContract)) {
+    promise = walletContract.createTransfer(params);
+  } else if (isVersionv4(walletContract)) {
+    promise = walletContract.createTransfer(params);
+  } else if (isVersionv5r1(walletContract)) {
+    promise = walletContract.createTransfer(params);
+  } else {
+    throw new Error('Unknown wallet contract address');
+  }
+
+  return promise;
+}
+
+export function getTransferCell (walletContract: TonWalletContract, secretKey: Buffer, seqno: number, messages: MessageRelaxed[]) {
+  let cell: Cell;
+  const params: WalletBasicSendArgsSignable = {
+    secretKey,
+    seqno,
+    messages
+  };
+
+  if (isVersionv3r1(walletContract)) {
+    cell = walletContract.createTransfer(params);
+  } else if (isVersionv3r2(walletContract)) {
+    cell = walletContract.createTransfer(params);
+  } else if (isVersionv4(walletContract)) {
+    cell = walletContract.createTransfer(params);
+  } else if (isVersionv5r1(walletContract)) {
+    cell = walletContract.createTransfer(params);
+  } else {
+    throw new Error('Unknown wallet contract address');
+  }
+
+  return cell;
 }
