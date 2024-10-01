@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { TON_API_ENDPOINT, TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { getJettonTxStatus, retry } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
@@ -15,7 +15,6 @@ import { BehaviorSubject } from 'rxjs';
 export class TonApi implements _TonApi {
   chainSlug: string;
   private api: TonClient;
-  private httpEndPoint: string;
   apiUrl: string;
   apiError?: string;
   apiRetry = 0;
@@ -30,7 +29,6 @@ export class TonApi implements _TonApi {
   constructor (chainSlug: string, apiUrl: string, { providerName }: _ApiOptions) {
     this.chainSlug = chainSlug;
     this.apiUrl = apiUrl;
-    this.httpEndPoint = apiUrl.includes(TON_API_ENDPOINT.TESTNET) ? TON_API_ENDPOINT.TESTNET : TON_API_ENDPOINT.MAINNET;
     this.providerName = providerName || 'unknown';
     this.api = this.createProvider(apiUrl);
     this.isReadyHandler = createPromiseHandler<_TonApi>();
@@ -72,7 +70,7 @@ export class TonApi implements _TonApi {
     // Create new provider and api
     this.apiUrl = apiUrl;
     this.api = new TonClient({
-      endpoint: this.apiUrl,
+      endpoint: this.getJsonRpc(this.apiUrl),
       apiKey: TON_CENTER_API_KEY
     });
   }
@@ -86,9 +84,13 @@ export class TonApi implements _TonApi {
 
   private createProvider (apiUrl: string) {
     return new TonClient({
-      endpoint: apiUrl,
+      endpoint: this.getJsonRpc(apiUrl),
       apiKey: TON_CENTER_API_KEY
     });
+  }
+
+  private getJsonRpc (url: string) {
+    return `${url}/jsonRPC`;
   }
 
   connect (): void {
@@ -160,7 +162,7 @@ export class TonApi implements _TonApi {
 
   async sendTonTransaction (boc: string): Promise<string> {
     try {
-      const url = `${this.httpEndPoint}/v2/sendBocReturnHash`;
+      const url = `${this.apiUrl}/api/v2/sendBocReturnHash`;
       const resp = await fetch(
         url, {
           method: 'POST',
@@ -185,7 +187,7 @@ export class TonApi implements _TonApi {
   }
 
   async getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse> {
-    const url = `${this.httpEndPoint}/v3/transactionsByMessage?msg_hash=${encodeURIComponent(extMsgHash)}&direction=in`;
+    const url = `${this.apiUrl}/api/v3/transactionsByMessage?msg_hash=${encodeURIComponent(extMsgHash)}&direction=in`;
     const resp = await fetch(
       url, {
         method: 'GET',
@@ -234,7 +236,7 @@ export class TonApi implements _TonApi {
   }
 
   async getAccountState (address: string): Promise<AccountState> {
-    const url = `${this.httpEndPoint}/v2/getAddressState?address=${address}`;
+    const url = `${this.apiUrl}/api/v2/getAddressState?address=${address}`;
     const resp = await fetch(
       url, {
         method: 'GET',
