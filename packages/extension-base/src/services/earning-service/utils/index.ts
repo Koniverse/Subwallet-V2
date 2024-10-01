@@ -157,8 +157,8 @@ export function applyDecimal (bnNumber: BN, decimals: number) {
 }
 
 export function getTaoTotalStake (rawDelegateState: RawDelegateState) {
-  const nodeInfos = rawDelegateState.data.delegateBalances.nodes;
-  const stakes = nodeInfos.map((stake) => stake.amount);
+  const nodeInfos = rawDelegateState.items;
+  const stakes = nodeInfos.map((stake) => stake.balance);
   let totalStake = BigInt(0);
 
   for (const _stake of stakes) {
@@ -168,39 +168,4 @@ export function getTaoTotalStake (rawDelegateState: RawDelegateState) {
   }
 
   return totalStake;
-}
-
-export async function fetchTaoDelegateState (address: string): Promise<RawDelegateState> {
-  return new Promise(function (resolve) {
-    fetch('https://api.subquery.network/sq/TaoStats/bittensor-indexer', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(parseTaoDelegateState(address))
-    }).then((resp) => {
-      resolve(resp.json());
-    }).catch(console.error);
-  });
-}
-
-export function parseTaoDelegateState (address: string) {
-  return {
-    query: 'query ($first: Int!, $after: Cursor, $filter: DelegateBalanceFilter, $order: [DelegateBalancesOrderBy!]!) {  delegateBalances(first: $first, after: $after, filter: $filter, orderBy: $order) { nodes { id account delegate amount updatedAt delegateFrom } pageInfo { endCursor hasNextPage hasPreviousPage } totalCount } }',
-    variables: {
-      first: 50,
-      filter: {
-        account: {
-          equalTo: address
-        },
-        amount: {
-          greaterThan: 0
-        },
-        updatedAt: {
-          greaterThan: 0
-        }
-      },
-      order: 'AMOUNT_DESC'
-    }
-  };
 }
