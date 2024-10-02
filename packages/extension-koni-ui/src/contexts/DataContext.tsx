@@ -261,7 +261,7 @@ export const DataContextProvider = ({ children }: DataContextProviderProps) => {
 
   // Notification
   _DataContext.addHandler({ ...subscribeUnreadNotificationCount, name: 'subscribeUnreadNotificationCount', relatedStores: ['notification'], isStartImmediately: true });
-  _DataContext.addHandler({ ...subscribeNotifications, name: 'subscribeNotifications', relatedStores: ['notification'], isStartImmediately: true});
+  _DataContext.addHandler({ ...subscribeNotifications, name: 'subscribeNotifications', relatedStores: ['notification'], isStartImmediately: true });
 
   return <Provider store={store}>
     <PersistGate persistor={persistor}>

@@ -9,7 +9,7 @@ import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/comp
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
-import { saveEnableNotification } from '@subwallet/extension-koni-ui/messaging';
+import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -39,16 +39,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [selectedFilterTab, setSelectedFilterTab] = useState<NotificationTab>(NotificationTab.ALL);
   const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
-  const { enableNotification: isEnableNotification } = useSelector((state: RootState) => state.settings);
-  const [enableNotification, setEnableNotification] = useState<boolean>(isEnableNotification);
+  const { notificationSetup } = useSelector((state: RootState) => state.settings);
+  const enableNotification = notificationSetup.isEnabled;
   const [notifications, setNotifications] = useState<NotificationInfo[]>([]);
   const { currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [currentAddress] = useState<string | undefined>(currentAccount?.address);
-  const [currentNotificationTab, setCurrentNotificationTab] = useState<NotificationTab>(NotificationTab.ALL);
-
-  const unreadNotificationCount = useSelector((state) => state.notification.unreadNotificationCount);
-
-  console.log('unreadNotificationCount', unreadNotificationCount);
+  const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     return notifications.map((item) => {
@@ -66,6 +62,21 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       } as unknown as NotificationInfoItem;
     });
   }, [notifications, token]);
+
+  const onEnableNotification = useCallback(() => {
+    const newNotificationSetup = {
+      ...notificationSetup,
+      isEnabled: true
+    };
+
+    setLoadingNotification(true);
+    saveNotificationSetup(newNotificationSetup)
+      .catch(console.error)
+      .finally(() => {
+        setLoadingNotification(false);
+      });
+    navigate('/settings/notification-config');
+  }, [navigate, notificationSetup]);
 
   const onNotificationConfig = useCallback(() => {
     navigate('/settings/notification-config');
@@ -88,17 +99,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     ];
   }, [t]);
 
-  const onSelectFilterTab = useCallback((value: NotificationTab) => {
-    setSelectedFilterTab(value);
-    setCurrentNotificationTab(value);
+  const onSelectFilterTab = useCallback((value: string) => {
+    setSelectedFilterTab(value as NotificationTab);
     getInappNotifications({
       address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
-      notificationTab: value // todo: set this corresponding to selected tab
+      notificationTab: value
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
       })
-      .catch();
+      .catch(console.error);
   }, [currentAddress, isAllAccount]);
 
   const onClickItem = useCallback((item: NotificationInfoItem) => {
@@ -115,28 +125,25 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     };
   }, [activeModal]);
 
-  const renderItem = useCallback(
-    (item: NotificationInfoItem) => {
-      return (
-        <NotificationItem
-          actionType={item.actionType}
-          address={item.address}
-          backgroundColor={item.backgroundColor}
-          className={'item'}
-          description={item.description}
-          extrinsicType={item.extrinsicType}
-          id={item.id}
-          isRead={item.isRead}
-          leftIcon={item.leftIcon}
-          onClick={onClickItem(item)}
-          onClickMoreBtn={onClickMore(item)}
-          time={item.time}
-          title={item.title}
-        />
-      );
-    },
-    [onClickItem, onClickMore]
-  );
+  const renderItem = useCallback((item: NotificationInfoItem) => {
+    return (
+      <NotificationItem
+        actionType={item.actionType}
+        address={item.address}
+        backgroundColor={item.backgroundColor}
+        className={'item'}
+        description={item.description}
+        extrinsicType={item.extrinsicType}
+        id={item.id}
+        isRead={item.isRead}
+        leftIcon={item.leftIcon}
+        onClick={onClickItem(item)}
+        onClickMoreBtn={onClickMore(item)}
+        time={item.time}
+        title={item.title}
+      />
+    );
+  }, [onClickItem, onClickMore]);
 
   const renderEmptyList = useCallback(() => {
     return (
@@ -157,11 +164,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               phosphorIcon={BellSimpleRinging}
               weight={'fill'}
             />),
-          onClick: () => {
-            setEnableNotification(!enableNotification);
-            saveEnableNotification(!enableNotification)
-              .catch(console.error);
-          },
+          onClick: onEnableNotification,
+          loading: loadingNotification,
           size: 'xs',
           shape: 'circle',
           children: t('Enable notification')
@@ -171,7 +175,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         phosphorIcon={BellSimpleSlash}
       />
     );
-  }, [enableNotification, t]);
+  }, [loadingNotification, onEnableNotification, t]);
 
   const searchFunc = useCallback((item: NotificationInfoItem, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
@@ -186,13 +190,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     getInappNotifications({
       address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
-      notificationTab: currentNotificationTab // todo: set this corresponding to selected tab
+      notificationTab: selectedFilterTab
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
       })
-      .catch();
-  }, [currentNotificationTab, currentAddress]);
+      .catch(console.error);
+  }, [currentAddress, isAllAccount, selectedFilterTab]);
 
   useEffect(() => {
     getInappNotifications({
@@ -202,7 +206,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       .then((rs) => {
         setNotifications(rs);
       })
-      .catch();
+      .catch(console.error);
   }, [currentAddress, isAllAccount]);
 
   return (

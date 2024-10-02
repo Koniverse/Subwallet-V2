@@ -32,7 +32,7 @@ import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getSubstrateGenesisHash, _isAssetSmartContractNft, _isChainEvmCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
-import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
@@ -1054,6 +1054,13 @@ export default class KoniExtension {
 
   private setEnableNotification ({ enable }: RequestChangeEnableNotification) {
     this.#koniState.updateSetting('enableNotification', enable);
+
+    return true;
+  }
+
+  private saveNotificationSetup (request: NotificationSetup) {
+    console.log('req', request);
+    this.#koniState.updateSetting('notificationSetup', request);
 
     return true;
   }
@@ -4756,6 +4763,8 @@ export default class KoniExtension {
         return this.setEnableChainPatrol(request as RequestChangeEnableChainPatrol);
       case 'pri(settings.saveEnableNotification)':
         return this.setEnableNotification(request as RequestChangeEnableNotification);
+      case 'pri(settings.saveNotificationSetup)':
+        return this.saveNotificationSetup(request as NotificationSetup);
       case 'pri(settings.saveShowZeroBalance)':
         return this.setShowZeroBalance(request as RequestChangeShowZeroBalance);
       case 'pri(settings.saveLanguage)':

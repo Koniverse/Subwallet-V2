@@ -8,7 +8,7 @@ import DefaultLogosMap from '@subwallet/extension-koni-ui/assets/logo';
 import { GeneralEmptyList, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { saveBrowserConfirmationType, saveEnableNotification, saveLanguage, savePriceCurrency, saveTheme } from '@subwallet/extension-koni-ui/messaging';
+import { saveBrowserConfirmationType, saveLanguage, savePriceCurrency, saveTheme } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { PhosphorIcon, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { noop } from '@subwallet/extension-koni-ui/utils';
@@ -19,6 +19,7 @@ import { ArrowSquareUpRight, BellSimpleRinging, CaretRight, CheckCircle, Corners
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
@@ -139,10 +140,11 @@ const SettingsListUrl = '/settings/list';
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const dataContext = useContext(DataContext);
+  const navigate = useNavigate();
   const theme = useSelector((state: RootState) => state.settings.theme);
   const _language = useSelector((state: RootState) => state.settings.language);
   const _browserConfirmationType = useSelector((state: RootState) => state.settings.browserConfirmationType);
-  const enableNotification = useSelector((state: RootState) => state.settings.enableNotification);
+  const enableNotification = useSelector((state: RootState) => state.settings.notificationSetup.isEnabled);
   const { currency } = useSelector((state: RootState) => state.price);
   const [loadingMap, setLoadingMap] = useState<LoadingMap>({
     browserConfirmationType: false,
@@ -281,19 +283,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     saveTheme(value as ThemeNames).finally(noop);
   }, []);
 
-  const [loadingNotification, setLoadingNotification] = useState(false);
-
-  const handleSwitchClick = useCallback((currentValue: boolean) => {
-    return () => {
-      setLoadingNotification(true);
-
-      saveEnableNotification(!currentValue)
-        .catch(console.error)
-        .finally(() => {
-          setLoadingNotification(false);
-        });
-    };
-  }, []);
+  const handleSwitchClick = useCallback(() => {
+    navigate('/settings/notification-config');
+  }, [navigate]);
 
   return (
     <PageWrapper
@@ -413,8 +405,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             rightItem={(
               <Switch
                 checked={enableNotification}
-                loading={loadingNotification}
-                onClick={handleSwitchClick(enableNotification)}
+                onClick={handleSwitchClick}
               />
             )}
           />

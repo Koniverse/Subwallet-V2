@@ -1,10 +1,10 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationSetup, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { PageWrapper, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
-import { saveEnableNotification } from '@subwallet/extension-koni-ui/messaging';
+import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, Button, Checkbox, SettingItem, Switch, SwSubHeader } from '@subwallet/react-ui';
@@ -26,12 +26,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
   const goBack = useDefaultNavigate().goBack;
-  const enableNotification = useSelector((state: RootState) => state.settings.enableNotification);
+  const { notificationSetup } = useSelector((state: RootState) => state.settings);
+  const enableNotification = notificationSetup.isEnabled;
   const [loadingNotification, setLoadingNotification] = useState(false);
-
-  // const _onChangeOption = useCallback((e: CheckboxChangeEvent) => {
-  //   onChangeOption(e.target.value as string, e.target.checked);
-  // }, [onChangeOption]);
 
   const notificationOptions = [
     { label: t('Hide send notifications'), value: NotificationTransactionType.SEND },
@@ -40,7 +37,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     { label: t('Hide claim notifications'), value: NotificationTransactionType.CLAIM }
   ];
 
-  const viewOptions = useMemo((): ViewOption[] => {
+  const timeSetup = useMemo((): ViewOption[] => {
     return [
       {
         label: t('Today'),
@@ -57,21 +54,32 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     ];
   }, [t]);
 
-  const onSaveSetting = useCallback(() => {
-    alert('Save settings');
-  }, []);
-
-  const onSwitchNotification = useCallback((currentValue: boolean) => {
+  const onSaveNotificationSetup = useCallback((setup: NotificationSetup) => {
     return () => {
       setLoadingNotification(true);
-
-      saveEnableNotification(!currentValue)
+      saveNotificationSetup(setup)
         .catch(console.error)
         .finally(() => {
           setLoadingNotification(false);
         });
     };
   }, []);
+
+  const onSwitchNotification = useCallback((currentValue: boolean) => {
+    return () => {
+      const newNotificationSetup = {
+        ...notificationSetup,
+        isEnabled: !currentValue
+      };
+
+      setLoadingNotification(true);
+      saveNotificationSetup(newNotificationSetup)
+        .catch(console.error)
+        .finally(() => {
+          setLoadingNotification(false);
+        });
+    };
+  }, [notificationSetup]);
 
   return (
     <PageWrapper className={`notification-setting ${className}`}>
@@ -116,8 +124,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                     key={option.value}
                   >
                     <Checkbox
-                      // checked={optionSelectionMap[option.value]}
-                      // onChange={_onChangeOption}
                       value={option.value}
                     >
                       <span className={'option-label'}>{option.label}</span>
@@ -131,14 +137,24 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <RadioGroup
                 className={'radio-wrapper'}
                 optionType='default'
-                options={viewOptions}
+                options={timeSetup}
               />
             </div>
           </div>}
         </div>
         <Button
           block={true}
-          onClick={onSaveSetting}
+          // todo: handle params for notification setup
+          onClick={onSaveNotificationSetup({
+            isEnabled: true,
+            notificationSetup: {
+              isHideAnnouncement: true,
+              isHideMarketing: true,
+              isHideReceive: false,
+              isHideSend: false,
+              isHideWithdraw: false
+            }
+          })}
         >
           {t('Save setting')}
         </Button>

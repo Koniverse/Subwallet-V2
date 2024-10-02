@@ -8,7 +8,7 @@ import { AccountAuthType, AccountJson, AddressJson, AuthorizeRequest, Confirmati
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
@@ -447,6 +447,7 @@ export interface UiSettings {
   unlockType: WalletUnlockType;
   enableChainPatrol: boolean;
   enableNotification: boolean;
+  notificationSetup: NotificationSetup;
   // On-ramp service account reference
   walletReference: string;
 }
@@ -2237,6 +2238,7 @@ export interface KoniRequestSignatures {
   'pri(settings.saveUnlockType)': [RequestUnlockType, boolean];
   'pri(settings.saveEnableChainPatrol)': [RequestChangeEnableChainPatrol, boolean];
   'pri(settings.saveEnableNotification)': [RequestChangeEnableNotification, boolean];
+  'pri(settings.saveNotificationSetup)': [NotificationSetup, boolean]
   'pri(settings.saveLanguage)': [RequestChangeLanguage, boolean];
   'pri(settings.savePriceCurrency)': [RequestChangePriceCurrency, boolean];
   'pri(settings.saveShowZeroBalance)': [RequestChangeShowZeroBalance, boolean];

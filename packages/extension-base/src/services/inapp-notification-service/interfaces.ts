@@ -43,3 +43,14 @@ export enum NotificationTab {
   UNREAD = 'UNREAD',
   READ = 'READ'
 }
+
+export interface NotificationSetup {
+  isEnabled: boolean,
+  notificationSetup: {
+    isHideSend: boolean,
+    isHideReceive: boolean,
+    isHideWithdraw: boolean,
+    isHideMarketing: boolean,
+    isHideAnnouncement: boolean
+  }
+}
