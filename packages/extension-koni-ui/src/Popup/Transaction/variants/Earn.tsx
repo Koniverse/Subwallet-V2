@@ -14,7 +14,9 @@ import { EarningProcessItem } from '@subwallet/extension-koni-ui/components/Earn
 import { getInputValuesFromString } from '@subwallet/extension-koni-ui/components/Field/AmountInput';
 import { EarningInstructionModal } from '@subwallet/extension-koni-ui/components/Modal/Earning';
 import { EARNING_INSTRUCTION_MODAL, STAKE_ALERT_DATA } from '@subwallet/extension-koni-ui/constants';
+import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useChainConnection, useFetchChainState, useGetBalance, useGetNativeTokenSlug, useGetYieldPositionForSpecificAccount, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-koni-ui/hooks';
+import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { fetchPoolTarget, getOptimalYieldPath, submitJoinYieldPool, validateYieldProcess } from '@subwallet/extension-koni-ui/messaging';
 import { DEFAULT_YIELD_PROCESS, EarningActionType, earningReducer } from '@subwallet/extension-koni-ui/reducer';
 import { store } from '@subwallet/extension-koni-ui/stores';
@@ -48,7 +50,7 @@ const Component = () => {
   const { t } = useTranslation();
   const notify = useNotification();
   const { activeModal } = useContext(ModalContext);
-
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
   const { closeAlert, defaultData, goBack, onDone,
     openAlert, persistData,
     setBackProps, setIsDisableHeader, setSubHeaderRightButtons } = useTransactionContext<EarnParams>();
@@ -65,7 +67,7 @@ const Component = () => {
 
   const [form] = Form.useForm<EarnParams>();
   const formDefault = useMemo((): EarnParams => ({ ...defaultData }), [defaultData]);
-
+  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('stake');
   const fromValue = useWatchTransaction('from', form, defaultData);
   const amountValue = useWatchTransaction('value', form, defaultData);
   const chainValue = useWatchTransaction('chain', form, defaultData);
@@ -107,6 +109,14 @@ const Component = () => {
   const [isFormInvalid, setIsFormInvalid] = useState(true);
 
   const chainState = useFetchChainState(poolInfo?.chain || '');
+
+  const currentConfirmation = useMemo(() => {
+    if (slug) {
+      return getCurrentConfirmation([slug]);
+    } else {
+      return undefined;
+    }
+  }, [slug, getCurrentConfirmation]);
 
   const mustChooseTarget = useMemo(
     () => [YieldPoolType.NATIVE_STAKING, YieldPoolType.NOMINATION_POOL].includes(poolType),
@@ -551,6 +561,22 @@ const Component = () => {
     }
   }, [chainInfoMap, chainStakingBoth, closeAlert, currentStep, onError, onSuccess, openAlert, poolInfo, poolTargets, processState.feeStructure, processState.steps, setIsDisableHeader, t]);
 
+  const onClickSubmit = useCallback((values: EarnParams) => {
+    if (currentConfirmation) {
+      mktCampaignModalContext.openModal({
+        type: 'confirmation',
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
+        externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
+          onSubmit(values);
+          mktCampaignModalContext.hideModal();
+        })
+      });
+    } else {
+      onSubmit(values);
+    }
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
+
   const renderMetaInfo = useCallback(() => {
     const value = amountValue ? parseFloat(amountValue) / 10 ** assetDecimals : 0;
     const assetSymbol = inputAsset.symbol;
@@ -965,7 +991,7 @@ const Component = () => {
                 form={form}
                 initialValues={formDefault}
                 onFieldsChange={onFieldsChange}
-                onFinish={onSubmit}
+                onFinish={onClickSubmit}
               >
                 <HiddenInput fields={hideFields} />
 

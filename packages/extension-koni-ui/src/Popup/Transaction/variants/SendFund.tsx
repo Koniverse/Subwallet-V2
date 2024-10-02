@@ -11,7 +11,9 @@ import { SWTransactionResponse } from '@subwallet/extension-base/services/transa
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountSelector, AddressInput, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
+import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useAlert, useFetchChainAssetInfo, useGetChainPrefixBySlug, useInitValidateTransaction, useIsMantaPayEnabled, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import useHandleSubmitMultiTransaction from '@subwallet/extension-koni-ui/hooks/transaction/useHandleSubmitMultiTransaction';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
@@ -23,7 +25,7 @@ import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
 import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useIsFirstRender } from 'usehooks-ts';
@@ -216,6 +218,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   useSetCurrentPage('/transaction/send-fund');
   const { t } = useTranslation();
   const notification = useNotification();
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
 
   const { defaultData, persistData } = useTransactionContext<TransferParams>();
   const { defaultSlug: sendFundSlug } = defaultData;
@@ -241,8 +244,17 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
   const { assetRegistry, assetSettingMap, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
+  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('send-fund');
   const checkAction = usePreCheckAction(from, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
   const isZKModeEnabled = useIsMantaPayEnabled(from);
+
+  const currentConfirmation = useMemo(() => {
+    if (chain && destChain) {
+      return getCurrentConfirmation([chain, destChain]);
+    } else {
+      return undefined;
+    }
+  }, [chain, destChain, getCurrentConfirmation]);
 
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chain];
@@ -672,6 +684,22 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
     doSubmit(values);
   }, [assetInfo, chain, chainInfoMap, closeAlert, destChain, doSubmit, isTransferAll, openAlert, t]);
 
+  const onClickSubmit = useCallback((values: TransferParams) => {
+    if (currentConfirmation) {
+      mktCampaignModalContext.openModal({
+        type: 'confirmation',
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
+        externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
+          onSubmit(values);
+          mktCampaignModalContext.hideModal();
+        })
+      });
+    } else {
+      onSubmit(values);
+    }
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
+
   // TODO: Need to review
   // Auto fill logic
   useEffect(() => {
@@ -805,7 +833,7 @@ const _SendFund = ({ className = '' }: Props): React.ReactElement<Props> => {
           className={'form-container form-space-sm'}
           form={form}
           initialValues={formDefault}
-          onFinish={onSubmit}
+          onFinish={onClickSubmit}
           onValuesChange={onValuesChange}
         >
           <Form.Item

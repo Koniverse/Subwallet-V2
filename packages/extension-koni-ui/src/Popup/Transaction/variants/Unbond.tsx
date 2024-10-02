@@ -9,7 +9,9 @@ import { isActionFromValidator } from '@subwallet/extension-base/services/earnin
 import { RequestYieldLeave, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { AccountSelector, AlertBox, AmountInput, HiddenInput, InstructionItem, NominationSelector } from '@subwallet/extension-koni-ui/components';
 import { BN_ZERO, UNSTAKE_ALERT_DATA } from '@subwallet/extension-koni-ui/constants';
+import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-koni-ui/hooks';
+import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { yieldSubmitLeavePool } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, ThemeProps, UnStakeParams } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, getBannerButtonIcon, noop, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
@@ -18,7 +20,7 @@ import { getAlphaColor } from '@subwallet/react-ui/lib/theme/themes/default/colo
 import BigN from 'bignumber.js';
 import CN from 'classnames';
 import { MinusCircle } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -49,10 +51,10 @@ const validateFields: Array<keyof UnStakeParams> = ['value'];
 
 const Component: React.FC = () => {
   const { t } = useTranslation();
-
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
   const { defaultData, persistData, setCustomScreenTitle } = useTransactionContext<UnStakeParams>();
   const { slug } = defaultData;
-
+  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('unstake');
   const { accounts, isAllAccount } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const { poolInfoMap } = useSelector((state) => state.earning);
@@ -164,6 +166,14 @@ const Component: React.FC = () => {
     }
   }, [poolInfo.statistic, t]);
 
+  const currentConfirmation = useMemo(() => {
+    if (slug) {
+      return getCurrentConfirmation([slug]);
+    } else {
+      return undefined;
+    }
+  }, [getCurrentConfirmation, slug]);
+
   const handleDataForInsufficientAlert = useCallback(
     (estimateFee: AmountData) => {
       return {
@@ -248,6 +258,22 @@ const Component: React.FC = () => {
         });
     }, 300);
   }, [currentValidator, mustChooseValidator, onError, onSuccess, poolInfo, positionInfo]);
+
+  const onClickSubmit = useCallback((values: UnStakeParams) => {
+    if (currentConfirmation) {
+      mktCampaignModalContext.openModal({
+        type: 'confirmation',
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
+        externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
+          onSubmit(values);
+          mktCampaignModalContext.hideModal();
+        })
+      });
+    } else {
+      onSubmit(values);
+    }
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
 
   const renderBounded = useCallback(() => {
     return (
@@ -344,7 +370,7 @@ const Component: React.FC = () => {
           initialValues={formDefault}
           name='unstake-form'
           onFieldsChange={onFieldsChange}
-          onFinish={onSubmit}
+          onFinish={onClickSubmit}
           onValuesChange={onValuesChange}
         >
           <HiddenInput fields={hideFields} />
