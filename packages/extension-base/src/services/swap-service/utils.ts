@@ -55,7 +55,8 @@ export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.POLKADOT_ASSET_HUB]: [COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB],
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
   [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB],
-  [SwapProviderId.UNISWAP_SEPOLIA]: [COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA, 'base_sepolia']
+  [SwapProviderId.UNISWAP_SEPOLIA]: [COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA, 'base_sepolia'],
+  [SwapProviderId.UNISWAP_ETHEREUM]: ['base_mainnet']
 };
 
 export function getSwapAlternativeAsset (swapPair: SwapPair): string | undefined {
@@ -121,17 +122,21 @@ export interface UniSwapPoolInfo {
   tick: number
 }
 
-export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi, chainService: ChainService): Promise<[string, string]> {
+export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi, chainService: ChainService, isTestnet: boolean): Promise<[string, string]> {
   const { from, to: _to } = request.pair;
   let to = _to;
+  let chainId: number = ChainId.SEPOLIA;
 
   if (to === 'base_sepolia-ERC20-WETH-0x4200000000000000000000000000000000000006') {
     to = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
+    chainId = ChainId.SEPOLIA;
+  } else if (to === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
+    to = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+    chainId = ChainId.BASE;
   }
 
   const fromToken = chainService.getAssetBySlug(from);
   const toToken = chainService.getAssetBySlug(to);
-  const chainId = ChainId.SEPOLIA;
 
   const fromContract = _getContractAddressOfToken(fromToken);
   const toContract = _getContractAddressOfToken(toToken);
@@ -156,7 +161,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
     fee: FeeAmount.HIGH,
     tokenA: fromTokenStruct,
     tokenB: toTokenStruct,
-    factoryAddress: V3_CORE_FACTORY_ADDRESSES[chainId as number]
+    factoryAddress: V3_CORE_FACTORY_ADDRESSES[chainId]
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
@@ -234,7 +239,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
   );
 
   const quoteCallReturnData = await provider.call({
-    to: QUOTER_ADDRESSES[chainId as number],
+    to: QUOTER_ADDRESSES[chainId],
     data: calldata
   });
 

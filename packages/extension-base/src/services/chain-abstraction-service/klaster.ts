@@ -3,7 +3,8 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
-import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, QuoteResponse, rawTx, TransactionBatch } from 'klaster-sdk';
+import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, QuoteResponse, rawTx, singleTx, TransactionBatch } from 'klaster-sdk';
+import { TransactionConfig } from 'web3-core';
 
 import { getAcrossBridgeData } from './helper/tx-encoder';
 
@@ -11,6 +12,7 @@ export class KlasterService {
   public sdk: KlasterSDK<BiconomyV2AccountInitData>;
   private readonly bridgePlugin: BridgePlugin;
   private isInit = false;
+  static chainTestnetMap: Record<number, boolean> = {};
 
   static async getSmartAccount (ownerAddress: string): Promise<string> {
     const klasterSdk = await initKlaster({
@@ -34,7 +36,8 @@ export class KlasterService {
         destinationTokenContract: data.destinationToken,
         sourceChainId: data.sourceChainId,
         sourceTokenContract: data.sourceToken,
-        srcAccount: srcAddress as string
+        srcAccount: srcAddress as string,
+        isTestnet: KlasterService.chainTestnetMap[data.sourceChainId]
       });
 
       const outputAmount = data.amount - BigInt(feeResponse.totalRelayFee.total);
@@ -70,14 +73,29 @@ export class KlasterService {
     }
   }
 
+  static updateChainMap (chainInfo: _ChainInfo) {
+    const chainId = _getEvmChainId(chainInfo) as number;
+
+    if (chainId in KlasterService.chainTestnetMap) {
+      return;
+    }
+
+    KlasterService.chainTestnetMap[chainId] = chainInfo.isTestnet;
+  }
+
   async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string, otherTx?: TransactionBatch): Promise<QuoteResponse> {
+    KlasterService.updateChainMap(srcChain);
+    KlasterService.updateChainMap(destChain);
+
+    const sourceChainId = _getEvmChainId(srcChain) as number;
+
     const res = await this.bridgePlugin({
       account: this.sdk.account,
       amount: BigInt(value),
-      sourceChainId: _getEvmChainId(srcChain) as number,
+      sourceChainId: sourceChainId,
       destinationChainId: _getEvmChainId(destChain) as number,
       sourceToken: _getContractAddressOfToken(srcToken) as `0x${string}`,
-      destinationToken: _getContractAddressOfToken(destToken) as `0x${string}`
+      destinationToken: _getContractAddressOfToken(destToken) as `0x${string}`,
     });
 
     const steps = [res.txBatch];
@@ -86,7 +104,7 @@ export class KlasterService {
 
     const iTx = buildItx({
       steps,
-      feeTx: this.sdk.encodePaymentFee(_getEvmChainId(srcChain) as number, 'USDC')
+      feeTx: this.sdk.encodePaymentFee(sourceChainId, 'USDC')
     });
 
     const quote = await this.sdk.getQuote(iTx);

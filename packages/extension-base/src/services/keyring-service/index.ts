@@ -3,8 +3,11 @@
 
 import { CurrentAccountInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
+import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ParticleAAHandler, ParticleContract } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { EventService } from '@subwallet/extension-base/services/event-service';
+import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { CurrentAccountStore } from '@subwallet/extension-base/stores';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -14,7 +17,6 @@ import { BehaviorSubject } from 'rxjs';
 
 import { stringShorten } from '@polkadot/util';
 import { isEthereumAddress } from '@polkadot/util-crypto';
-import {KlasterService} from "@subwallet/extension-base/services/chain-abstraction-service/klaster";
 
 export class KeyringService {
   private readonly currentAccountStore = new CurrentAccountStore();
@@ -31,13 +33,14 @@ export class KeyringService {
     isLocked: false
   });
 
-  constructor (private eventService: EventService) {
+  constructor (private eventService: EventService, private settingService: SettingService) {
     this.injected = false;
     this.eventService.waitCryptoReady.then(() => {
       this.currentAccountStore.get('CurrentAccountInfo', (rs) => {
         rs && this.currentAccountSubject.next(rs);
       });
       this.subscribeAccounts().catch(console.error);
+      this.subscribeCASetting().catch(console.error);
     }).catch(console.error);
   }
 
@@ -71,6 +74,46 @@ export class KeyringService {
       }
 
       this.beforeAccount = { ...subjectInfo };
+    });
+  }
+
+  private async subscribeCASetting () {
+    await this.eventService.waitInjectReady;
+    const subject = this.settingService.getCASubject();
+    let currentProvider = (await this.settingService.getCASettings()).caProvider;
+
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    subject.asObservable().subscribe(async ({ caProvider }) => {
+      if (currentProvider !== caProvider) {
+        const oldProvider = currentProvider;
+
+        currentProvider = caProvider;
+
+        const oldPairs = keyring.getPairs();
+        const accounts = oldPairs.filter(({ meta }) => meta.aaSdk === oldProvider && meta.isInjected);
+        const currentAddress = this.currentAccountSubject.value.address;
+        const currentAccountOwner = accounts.find(({ address }) => address === currentAddress)?.meta.smartAccountOwner;
+
+        await this.addInjectAccounts(accounts.map(({ meta, type }): InjectedAccountWithMeta => ({
+          address: meta.smartAccountOwner as string,
+          meta: {
+            source: meta.source as string,
+            name: meta.name as string
+          },
+          type
+        })), caProvider);
+
+        if (currentAccountOwner) {
+          const newPairs = keyring.getPairs();
+          const newPair = newPairs.find(({ meta }) => meta.smartAccountOwner === currentAccountOwner && meta.aaSdk === caProvider);
+
+          if (newPair) {
+            this.setCurrentAccount({ address: newPair.address, currentGenesisHash: null });
+          }
+        }
+
+        keyring.removeInjects(accounts.map(({ address }) => address));
+      }
     });
   }
 
@@ -118,13 +161,19 @@ export class KeyringService {
 
   /* Inject */
 
-  public async addInjectAccounts (_accounts: InjectedAccountWithMeta[]) {
+  public async addInjectAccounts (_accounts: InjectedAccountWithMeta[], _caProvider?: CAProvider) {
+    const caProvider = _caProvider || (await this.settingService.getCASettings()).caProvider;
     const accounts: InjectAccount[] = await Promise.all(_accounts.map(async (acc): Promise<InjectAccount> => {
       const isEthereum = isEthereumAddress(acc.address);
 
       if (isEthereum) {
-        // const smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
-        const smartAddress = await KlasterService.getSmartAccount(acc.address);
+        let smartAddress: string;
+
+        if (caProvider === CAProvider.KLASTER) {
+          smartAddress = await KlasterService.getSmartAccount(acc.address);
+        } else {
+          smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
+        }
 
         return {
           ...acc,
@@ -133,7 +182,7 @@ export class KeyringService {
             ...acc.meta,
             isSmartAccount: true,
             smartAccountOwner: acc.address,
-            aaSdk: 'particle',
+            aaSdk: caProvider,
             aaProvider: ParticleContract
           }
         };
@@ -182,11 +231,16 @@ export class KeyringService {
   }
 
   public async removeInjectAccounts (_addresses: string[]) {
+    const caProvider = (await this.settingService.getCASettings()).caProvider;
     const convertedAddresses = await Promise.all(_addresses.map(async (address) => {
       const isEthereum = isEthereumAddress(address);
 
       if (isEthereum) {
-        return await ParticleAAHandler.getSmartAccount({ owner: address });
+        if (caProvider === CAProvider.KLASTER) {
+          return await KlasterService.getSmartAccount(address);
+        } else {
+          return await ParticleAAHandler.getSmartAccount({ owner: address });
+        }
       }
 
       return address;

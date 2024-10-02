@@ -38,10 +38,11 @@ export interface BridgeParams {
   amount: bigint;
   srcAccount: string;
   destAccount: string;
+  isTestnet?: boolean;
 }
 
 export async function getAcrossSuggestedFee (data: BridgeParams): Promise<AcrossSuggestedFeeResp> {
-  const url = 'https://testnet.across.to/api/suggested-fees?' + new URLSearchParams({
+  const url = (data.isTestnet ? 'https://testnet.across.to/api/suggested-fees?' : 'https://across.to/api/suggested-fees?') + new URLSearchParams({
     originChainId: data.sourceChainId.toString(),
     destinationChainId: data.destinationChainId.toString(),
     inputToken: data.sourceTokenContract,

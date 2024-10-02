@@ -73,13 +73,15 @@ export class UniswapHandler implements SwapBaseInterface {
 
     if (to === 'base_sepolia-ERC20-WETH-0x4200000000000000000000000000000000000006') {
       to = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
+    } else if (to === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
+      to = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
     }
 
     const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(from);
     const toToken = this.swapBaseHandler.chainService.getAssetBySlug(to);
     const fromChain = this.swapBaseHandler.chainService.getChainInfoByKey(fromToken.originChain);
 
-    const [availQuote] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService);
+    const [availQuote] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService, this.isTestnet);
     const result: SwapQuote = {
       pair: request.pair,
       fromAmount: request.fromAmount,
@@ -118,16 +120,26 @@ export class UniswapHandler implements SwapBaseInterface {
     const toTokenSlug = params.quote.pair.to;
     const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(fromTokenSlug);
     const toToken = this.swapBaseHandler.chainService.getAssetBySlug(toTokenSlug);
-    const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug('sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14');
+    let bridgeTokenSlug = '0x';
+    let chainId: ChainId = ChainId.SEPOLIA;
+
+    if (toTokenSlug === 'base_sepolia-ERC20-WETH-0x4200000000000000000000000000000000000006') {
+      bridgeTokenSlug = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
+      chainId = ChainId.SEPOLIA;
+    } else if (toTokenSlug === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
+      bridgeTokenSlug = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+      chainId = ChainId.BASE;
+    }
+
+    const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug(bridgeTokenSlug);
 
     const bridgeOriginChain = this.swapBaseHandler.chainService.getChainInfoByKey(bridgeOriginToken.originChain);
     const bridgeDestChain = this.swapBaseHandler.chainService.getChainInfoByKey(toToken.originChain);
-    const chainId = ChainId.SEPOLIA;
 
     const toAddress = CHAIN_TO_ADDRESSES_MAP[chainId].swapRouter02Address;
 
     const evmApi = this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain);
-    const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService);
+    const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService, this.isTestnet);
 
     const owner = getEthereumSmartAccountOwner(request.address);
     let tx: UserOpBundle | QuoteResponse;
@@ -167,7 +179,8 @@ export class UniswapHandler implements SwapBaseInterface {
         destinationTokenContract: _getContractAddressOfToken(toToken),
         sourceChainId: _getEvmChainId(bridgeOriginChain) as number,
         sourceTokenContract: _getContractAddressOfToken(bridgeOriginToken),
-        srcAccount: owner?.owner as string
+        srcAccount: owner?.owner as string,
+        isTestnet: this.isTestnet
       });
 
       tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [spendingApprovalTxConfig, swapTxConfig, bridgeTxConfig]);

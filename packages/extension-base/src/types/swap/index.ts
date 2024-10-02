@@ -82,7 +82,8 @@ export const _SUPPORTED_SWAP_PROVIDERS: SwapProviderId[] = [
   SwapProviderId.POLKADOT_ASSET_HUB,
   SwapProviderId.KUSAMA_ASSET_HUB,
   SwapProviderId.ROCOCO_ASSET_HUB,
-  SwapProviderId.UNISWAP_SEPOLIA
+  SwapProviderId.UNISWAP_SEPOLIA,
+  SwapProviderId.UNISWAP_ETHEREUM
 ];
 
 export interface SwapProvider {

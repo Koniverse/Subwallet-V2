@@ -1909,7 +1909,8 @@ export default class KoniExtension {
           destinationTokenContract: _getContractAddressOfToken(destinationTokenInfo),
           sourceChainId: _getEvmChainId(originChainInfo) as number,
           sourceTokenContract: _getContractAddressOfToken(originTokenInfo),
-          srcAccount: smartAccountOwner.owner
+          srcAccount: smartAccountOwner.owner,
+          isTestnet: originChainInfo.isTestnet
         });
 
         const spendingApprovalTxConfig = await getERC20SpendingApprovalTx(feeResp.spokePoolAddress, from, _getContractAddressOfToken(originTokenInfo), evmApi);

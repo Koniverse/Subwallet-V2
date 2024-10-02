@@ -72,6 +72,10 @@ export default class SettingService {
     return await this.caSettingStore.asyncGet('CASetting');
   }
 
+  public getCASubject () {
+    return this.caSettingStore.getSubject();
+  }
+
   public passPhishingSubject (): Subject<Record<string, PassPhishing>> {
     return this.passPhishingStore.getSubject();
   }

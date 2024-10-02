@@ -25,7 +25,7 @@ const config: SmartAccountConfig = {
         },
         {
           version: '2.0.0',
-          chainIds: [1, 11155111]
+          chainIds: [1, 11155111, 8453, 42161]
         }
       ],
       CYBERCONNECT: [
