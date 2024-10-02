@@ -21,7 +21,8 @@ import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-s
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
-import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
+import { canDerive, createPromiseHandler, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
+import { isSameRequestEVM } from '@subwallet/extension-base/utils/request';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { Subscription } from 'rxjs';
@@ -38,6 +39,13 @@ import { isEthereumAddress } from '@polkadot/util-crypto';
 interface AccountSub {
   subscription: Subscription;
   url: string;
+}
+
+interface PromiseEvmRequest {
+  url: string;
+  request: RequestArguments;
+  promiseHandler: Promise<unknown>;
+  hasChildRequest: boolean;
 }
 
 function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthType?: AccountAuthType): InjectedAccount[] {
@@ -975,10 +983,40 @@ export default class KoniTabs {
     return transactionHash;
   }
 
+  private promiseEvmRequestMap: Record<string, PromiseEvmRequest> = {};
+
   private async handleEvmRequest (id: string, url: string, request: RequestArguments): Promise<unknown> {
     const { method } = request;
 
-    try {
+    const promiseHandler = createPromiseHandler<unknown>();
+    const { promise, reject, resolve } = promiseHandler;
+
+    promise.finally(() => {
+      delete this.promiseEvmRequestMap[id];
+    });
+
+    const isExistedRequest = !!Object.values(this.promiseEvmRequestMap)
+      .find(({ hasChildRequest, promiseHandler, request: request_, url: url_ }) => {
+        if (url_ === url && !hasChildRequest && isSameRequestEVM(request, request_)) {
+          hasChildRequest = true;
+          promiseHandler
+            .then((rs) => resolve(rs))
+            .catch((error) => reject(error));
+
+          return true;
+        }
+
+        return false;
+      });
+
+    this.promiseEvmRequestMap[id] = {
+      url,
+      request,
+      promiseHandler: promise,
+      hasChildRequest: false
+    };
+
+    const getHandlerByMethodRequest = async () => {
       switch (method) {
         case 'eth_chainId':
           return await this.getEvmCurrentChainId(url);
@@ -1014,19 +1052,27 @@ export default class KoniTabs {
           return await this.switchEvmChain(id, url, request);
         case 'wallet_watchAsset':
           return await this.addEvmToken(id, url, request);
-
         default:
           return this.performWeb3Method(id, url, request);
       }
-    } catch (e) {
-      // @ts-ignore
-      if (e.code) {
-        throw e;
-      } else {
-        console.error(e);
-        throw new EvmProviderError(EvmProviderErrorType.INTERNAL_ERROR, e?.toString());
+    };
+
+    if (!isExistedRequest) {
+      try {
+        await getHandlerByMethodRequest()
+          .then((rs) => resolve(rs));
+      } catch (e) {
+        // @ts-ignore
+        if (e.code) {
+          reject(e);
+        } else {
+          console.error(e);
+          reject(new EvmProviderError(EvmProviderErrorType.INTERNAL_ERROR, e?.toString()));
+        }
       }
     }
+
+    return promise;
   }
 
   private async handleEvmSend (id: string, url: string, port: chrome.runtime.Port, request: RequestEvmProviderSend) {
