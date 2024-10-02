@@ -423,6 +423,13 @@ function Component (): React.ReactElement {
       <div
         className={'__scroll-container'}
       >
+        <div className={'token-detail-banner-wrapper'}>
+          {!!banners.length && (<BannerGenerator
+            banners={banners}
+            dismissBanner={dismissBanner}
+            onClickBanner={onClickBanner}
+          />)}
+        </div>
         {
           tokenBalanceItems.map((item) => (
             <TokenBalanceDetailItem
@@ -432,14 +439,6 @@ function Component (): React.ReactElement {
             />
           ))
         }
-
-        <div className={'token-detail-banner-wrapper'}>
-          {!!banners.length && (<BannerGenerator
-            banners={banners}
-            dismissBanner={dismissBanner}
-            onClickBanner={onClickBanner}
-          />)}
-        </div>
       </div>
 
       <DetailModal

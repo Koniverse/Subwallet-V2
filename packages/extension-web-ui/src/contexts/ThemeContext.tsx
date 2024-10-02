@@ -261,6 +261,10 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
       }
     },
 
+    '.ant-input': {
+      minWidth: 0 // fix issue related to input overflow width
+    },
+
     '.ledger-warning-modal': {
       '.ant-sw-modal-confirm-btns': {
         flexDirection: 'row',

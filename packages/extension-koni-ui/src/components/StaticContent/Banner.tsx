@@ -101,8 +101,8 @@ const Banner = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
     '.dismiss-button': {
       position: 'absolute',
-      right: -3,
-      top: token.sizeXXS
+      right: -token.sizeXXS,
+      top: -token.sizeXXS
     }
   };
 });
