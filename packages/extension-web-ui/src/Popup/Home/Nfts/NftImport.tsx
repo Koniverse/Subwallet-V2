@@ -212,7 +212,7 @@ function Component ({ className = '', modalContent, onSubmitCallback }: Props): 
               }
 
               if (!validationResult.isCompatible) {
-                reject(t('Incompatible NFT'));
+                reject(t('Failed to import. Incompatible NFT'));
               }
 
               if (!validationResult.isExist && !validationResult.contractError) {

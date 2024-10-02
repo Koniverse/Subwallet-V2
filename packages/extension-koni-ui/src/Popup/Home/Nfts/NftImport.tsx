@@ -203,7 +203,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               }
 
               if (!validationResult.isCompatible) {
-                reject(t('Incompatible NFT'));
+                reject(t('Failed to import. Incompatible NFT'));
               }
 
               if (!validationResult.isExist && !validationResult.contractError) {
