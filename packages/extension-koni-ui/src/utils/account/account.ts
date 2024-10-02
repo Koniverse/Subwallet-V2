@@ -13,7 +13,7 @@ import { MODE_CAN_SIGN } from '@subwallet/extension-koni-ui/constants/signing';
 import { AccountAddressType, AccountSignMode, AccountType } from '@subwallet/extension-koni-ui/types';
 import { getNetworkKeyByGenesisHash } from '@subwallet/extension-koni-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { AccountInfoByNetwork } from '@subwallet/extension-koni-ui/utils/types';
-import { isAddress } from '@subwallet/keyring';
+import { isAddress, isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
 import { decodeAddress, encodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
@@ -200,4 +200,20 @@ export const ledgerGenericAccountProblemCheck = (accountProxy: AccountProxy | nu
   } else {
     return 'unnecessary';
   }
+};
+
+export const isAddressAllowedWithAuthType = (address: string, authAccountTypes?: AccountAuthType[]) => {
+  if (isEthereumAddress(address) && authAccountTypes?.includes('evm')) {
+    return true;
+  }
+
+  if (isSubstrateAddress(address) && authAccountTypes?.includes('substrate')) {
+    return true;
+  }
+
+  if (isTonAddress(address) && authAccountTypes?.includes('ton')) {
+    return true;
+  }
+
+  return false;
 };

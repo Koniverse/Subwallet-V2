@@ -9,7 +9,7 @@ import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Con
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
+import { filterAuthorizeAccountProxies, isAddressAllowedWithAuthType } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, GlobeHemisphereWest, ShieldCheck, ShieldSlash, XCircle } from 'phosphor-react';
@@ -17,8 +17,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps & {
   id: string;
@@ -52,15 +50,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
         const listAddress = accountProxy.accounts.map(({ address }) => address);
 
         listAddress.forEach((address) => {
-          let addressIsValid = false;
-
-          if (isEthereumAddress(address) && authInfo?.accountAuthTypes.includes('evm')) {
-            addressIsValid = true;
-          } else if (isSubstrateAddress(address) && authInfo?.accountAuthTypes.includes('substrate')) {
-            addressIsValid = true;
-          } else if (isTonAddress(address) && authInfo?.accountAuthTypes.includes('ton')) {
-            addressIsValid = true;
-          }
+          const addressIsValid = isAddressAllowedWithAuthType(address, authInfo?.accountAuthTypes || []);
 
           addressIsValid && (newValues[address] = !oldValue);
         });
@@ -102,19 +92,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       const allowedMap = authInfo.isAllowedMap;
 
       const filterType = (address: string) => {
-        if (isEthereumAddress(address) && types.includes('evm')) {
-          return true;
-        }
-
-        if (isSubstrateAddress(address) && types.includes('substrate')) {
-          return true;
-        }
-
-        if (isTonAddress(address) && types.includes('ton')) {
-          return true;
-        }
-
-        return false;
+        return isAddressAllowedWithAuthType(address, types);
       };
 
       const result: Record<string, boolean> = {};
@@ -270,7 +248,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       );
     }
 
-    const listAccountProxy = accountProxies.map((proxy) => {
+    const listAccountProxy = filterAuthorizeAccountProxies(accountProxies, authInfo?.accountAuthTypes || []).map((proxy) => {
       const value = proxy.accounts.some(({ address }) => allowedMap[address]);
 
       return {

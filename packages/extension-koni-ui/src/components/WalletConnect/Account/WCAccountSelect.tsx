@@ -65,6 +65,10 @@ const Component: React.FC<Props> = (props: Props) => {
     }
   }, [namespace, t]);
 
+  const basicProxyAccounts = useMemo(() => {
+    return availableAccounts.map(({ name, proxyId }) => ({ name, id: proxyId || '' }));
+  }, [availableAccounts]);
+
   const onOpenModal = useCallback(() => {
     activeModal(id);
   }, [activeModal, id]);
@@ -162,6 +166,7 @@ const Component: React.FC<Props> = (props: Props) => {
                 <div className={CN('account-list', 'no-modal')}>
                   {availableAccounts.length > 1 && (
                     <AccountProxySelectorAllItem
+                      accountProxies={basicProxyAccounts}
                       className={'all-account-selection'}
                       isSelected={selectedAccounts.length === availableAccounts.length}
                       onClick={onSelectAccount(ALL_ACCOUNT_KEY, true)}

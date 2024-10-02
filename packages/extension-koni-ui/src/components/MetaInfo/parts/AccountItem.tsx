@@ -108,7 +108,8 @@ const AccountItem = styled(Component)<AccountInfoItem>(({ theme: { token } }: Ac
       '.__account-item-address': {
         paddingLeft: 32,
         fontSize: token.fontSizeSM,
-        lineHeight: token.lineHeightSM
+        lineHeight: token.lineHeightSM,
+        marginRight: 0
       }
     },
     '.__col.__value-col.__value-col': {
