@@ -1,42 +1,16 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {APIItemState, NotificationType} from '@subwallet/extension-base/background/KoniTypes';
+import { APIItemState, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { EarningRewardItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { AlertModal, BaseModal, EarningInstructionModal, EarningPositionDesktopItem, EarningPositionItem, EmptyList, FilterModal, Layout } from '@subwallet/extension-web-ui/components';
 import { FilterTabsNode } from '@subwallet/extension-web-ui/components/FilterTabsNode';
 import BannerGenerator from '@subwallet/extension-web-ui/components/StaticContent/BannerGenerator';
-import {
-  ASTAR_PORTAL_URL,
-  BN_TEN,
-  CANCEL_UN_STAKE_TRANSACTION,
-  CLAIM_REWARD_TRANSACTION,
-  DEFAULT_CANCEL_UN_STAKE_PARAMS,
-  DEFAULT_CLAIM_REWARD_PARAMS,
-  DEFAULT_EARN_PARAMS,
-  DEFAULT_UN_STAKE_PARAMS,
-  DEFAULT_WITHDRAW_PARAMS,
-  EARN_TRANSACTION,
-  EARNING_INSTRUCTION_MODAL,
-  EARNING_WARNING_ANNOUNCEMENT,
-  TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL,
-  TRANSACTION_YIELD_CLAIM_MODAL,
-  TRANSACTION_YIELD_UNSTAKE_MODAL,
-  TRANSACTION_YIELD_WITHDRAW_MODAL,
-  UN_STAKE_TRANSACTION,
-  WITHDRAW_TRANSACTION
-} from '@subwallet/extension-web-ui/constants';
+import { ASTAR_PORTAL_URL, BN_TEN, CANCEL_UN_STAKE_TRANSACTION, CLAIM_REWARD_TRANSACTION, DEFAULT_CANCEL_UN_STAKE_PARAMS, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_EARN_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, EARN_TRANSACTION, EARNING_INSTRUCTION_MODAL, EARNING_WARNING_ANNOUNCEMENT, TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL, TRANSACTION_YIELD_CLAIM_MODAL, TRANSACTION_YIELD_UNSTAKE_MODAL, TRANSACTION_YIELD_WITHDRAW_MODAL, UN_STAKE_TRANSACTION, WITHDRAW_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import {
-  useAlert,
-  useFilterModal,
-  useGetBannerByScreen,
-  useGetYieldPositionForSpecificAccount,
-  useSelector,
-  useTranslation
-} from '@subwallet/extension-web-ui/hooks';
+import { useAlert, useFilterModal, useGetBannerByScreen, useGetYieldPositionForSpecificAccount, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { reloadCron } from '@subwallet/extension-web-ui/messaging';
 import EarningPositionBalance from '@subwallet/extension-web-ui/Popup/Home/Earning/EarningEntry/EarningPositions/EarningPositionsBalance';
 import { Toolbar } from '@subwallet/extension-web-ui/Popup/Home/Earning/shared/desktop/Toolbar';
@@ -95,7 +69,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   const { currencyData, priceMap } = useSelector((state) => state.price);
   const { assetRegistry: assetInfoMap } = useSelector((state) => state.assetRegistry);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
-  const { currentAccount, accounts } = useSelector((state) => state.accountState);
+  const { accounts, currentAccount } = useSelector((state) => state.accountState);
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);

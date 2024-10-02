@@ -124,7 +124,7 @@ const Component = ({ className }: ComponentProps) => {
   const setSelectedAccountTypes = useSetSelectedAccountTypes(false);
 
   const poolInfo = poolInfoMap[slug] as YieldPoolInfo | undefined;
-  const poolType = poolInfo?.type || '';
+  const poolType = poolInfo?.type || '' as YieldPoolType;
   const poolChain = poolInfo?.chain || '';
 
   const [isBalanceReady, setIsBalanceReady] = useState<boolean>(true);
@@ -144,7 +144,7 @@ const Component = ({ className }: ComponentProps) => {
   const chainState = useFetchChainState(poolInfo?.chain || '');
 
   const mustChooseTarget = useMemo(
-    () => !!poolType && [YieldPoolType.NATIVE_STAKING, YieldPoolType.NOMINATION_POOL].includes(poolType as YieldPoolType),
+    () => !!poolType && [YieldPoolType.NATIVE_STAKING, YieldPoolType.NOMINATION_POOL].includes(poolType),
     [poolType]
   );
 
