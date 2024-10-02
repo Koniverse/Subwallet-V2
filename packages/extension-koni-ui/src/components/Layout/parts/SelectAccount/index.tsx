@@ -9,16 +9,13 @@ import { useGetCurrentAuth, useGetCurrentTab, useIsPopup, useTranslation } from 
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { funcSortByName, isAccountAll } from '@subwallet/extension-koni-ui/utils';
-import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
+import { funcSortByName, isAccountAll, isAddressAllowedWithAuthType } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Icon, ModalContext, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretDown, Plug, Plugs, PlugsConnected } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { ConnectWebsiteModal } from '../ConnectWebsiteModal';
 
@@ -104,19 +101,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         const allowedMap = currentAuth.isAllowedMap;
 
         const filterType = (address: string) => {
-          if (isEthereumAddress(address) && types.includes('evm')) {
-            return true;
-          }
-
-          if (isSubstrateAddress(address) && types.includes('substrate')) {
-            return true;
-          }
-
-          if (isTonAddress(address) && types.includes('ton')) {
-            return true;
-          }
-
-          return false;
+          return isAddressAllowedWithAuthType(address, types);
         };
 
         let accountToCheck = noAllAccounts;
