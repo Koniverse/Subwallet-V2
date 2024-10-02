@@ -37,10 +37,6 @@ export async function saveEnableChainPatrol (value: boolean): Promise<boolean> {
   return sendMessage('pri(settings.saveEnableChainPatrol)', { enable: value });
 }
 
-export async function saveEnableNotification (value: boolean): Promise<boolean> {
-  return sendMessage('pri(settings.saveEnableNotification)', { enable: value });
-}
-
 export async function saveNotificationSetup (request: NotificationSetup): Promise<boolean> {
   return sendMessage('pri(settings.saveNotificationSetup)', request);
 }
