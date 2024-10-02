@@ -275,15 +275,15 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
           };
         }
 
-        const accountSelected = accountSelectorItems.find((item) => item.accountName === selectedAccountAddressItem.accountName);
-        const isSoloAccount = accountSelected?.accountProxyType === AccountProxyType.SOLO;
-        const hasTonChangeAction = accountSelected?.accountActions?.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+        const selectedAccount = accountSelectorItems.find((item) => item.accountName === selectedAccountAddressItem.accountName);
+        const isSoloAccount = selectedAccount?.accountProxyType === AccountProxyType.SOLO;
+        const hasTonChangeAction = selectedAccount?.accountActions?.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
 
         if (isSoloAccount && hasTonChangeAction) {
-          const latestAddress = accountSelected.address;
+          const latestAddress = selectedAccount.address;
 
           if (latestAddress) {
-            setSelectedAccountAddressItem(accountSelected);
+            setSelectedAccountAddressItem(selectedAccount);
 
             return {
               ...prev,
@@ -295,7 +295,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         return prev;
       });
     }
-  }, [accountSelectorItems, addressQrModal, currentAccountProxy?.accountActions, selectedAccountAddressItem]);
+  }, [accountSelectorItems, addressQrModal, selectedAccountAddressItem]);
 
   return useMemo(() => ({
     onOpenReceive,

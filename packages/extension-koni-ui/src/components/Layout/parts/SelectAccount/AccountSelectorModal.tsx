@@ -90,15 +90,15 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
 
-  const [accountProxySelectedToGetAddresses, setAccountProxySelectedToGetAddresses] = useState<{ name?: string; proxyId?: string } | undefined>();
+  const [selectedAccountProxy, setSelectedAccountProxy] = useState<{ name?: string; proxyId?: string } | undefined>();
 
   const accountProxyToGetAddresses = useMemo(() => {
-    if (!accountProxySelectedToGetAddresses) {
+    if (!selectedAccountProxy) {
       return undefined;
     }
 
-    return accountProxies.find((ap) => ap.id === accountProxySelectedToGetAddresses.proxyId);
-  }, [accountProxies, accountProxySelectedToGetAddresses]);
+    return accountProxies.find((ap) => ap.id === selectedAccountProxy.proxyId);
+  }, [accountProxies, selectedAccountProxy]);
 
   const listItems = useMemo<ListItem[]>(() => {
     let accountAll: AccountProxy | undefined;
@@ -240,7 +240,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onViewChainAddresses = useCallback((accountProxy: AccountProxy) => {
     return () => {
-      setAccountProxySelectedToGetAddresses({ name: accountProxy.name, proxyId: accountProxy.id });
+      setSelectedAccountProxy({ name: accountProxy.name, proxyId: accountProxy.id });
       setTimeout(() => {
         activeModal(accountChainAddressesModalId);
       }, 100);
@@ -318,14 +318,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   }, [activeModal]);
 
   useEffect(() => {
-    const accountSelected = accountProxies.find((account) => account.name === accountProxySelectedToGetAddresses?.name);
-    const isSoloAccount = accountSelected?.accountType === AccountProxyType.SOLO;
-    const hasTonChangeWalletAction = accountSelected?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+    const selectedAccount = accountProxies.find((account) => account.name === selectedAccountProxy?.name);
+    const isSoloAccount = selectedAccount?.accountType === AccountProxyType.SOLO;
+    const hasTonChangeWalletAction = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
 
     if (isSoloAccount && hasTonChangeWalletAction) {
-      setAccountProxySelectedToGetAddresses({ name: accountSelected?.name, proxyId: accountSelected?.id });
+      setSelectedAccountProxy({ name: selectedAccount?.name, proxyId: selectedAccount?.id });
     }
-  }, [accountProxies, accountProxySelectedToGetAddresses?.name]);
+  }, [accountProxies, selectedAccountProxy?.name]);
 
   const rightIconProps = useMemo((): ButtonProps | undefined => {
     if (!enableExtraction) {
@@ -367,7 +367,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const closeAccountChainAddressesModal = useCallback(() => {
     inactiveModal(accountChainAddressesModalId);
-    setAccountProxySelectedToGetAddresses(undefined);
+    setSelectedAccountProxy(undefined);
   }, [inactiveModal]);
 
   const onBackAccountChainAddressesModal = useCallback(() => {

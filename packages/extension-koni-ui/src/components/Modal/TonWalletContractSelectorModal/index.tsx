@@ -121,10 +121,10 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           setTimeout(() => {
             onCancel?.();
             setIsSubmitting(false);
-            const accountSelected = accountProxies.find((account) => account.id === accountInfo.proxyId);
+            const selectedAccount = accountProxies.find((account) => account.id === accountInfo.proxyId);
             const isOnAccountDetailScreen = location.pathname.includes('/accounts/detail');
-            const isSoloAccount = accountSelected?.accountType === AccountProxyType.SOLO;
-            const hasTonChangeWalletAction = accountSelected?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+            const isSoloAccount = selectedAccount?.accountType === AccountProxyType.SOLO;
+            const hasTonChangeWalletAction = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
             const shouldNavigate = isOnAccountDetailScreen && isSoloAccount && hasTonChangeWalletAction;
 
             if (shouldNavigate) {
