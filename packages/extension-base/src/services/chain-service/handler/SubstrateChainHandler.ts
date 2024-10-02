@@ -240,7 +240,8 @@ export class SubstrateChainHandler extends AbstractChainHandler {
         name,
         decimals,
         symbol,
-        contractError
+        contractError,
+        isCompatible: true
       };
     } catch (e) {
       this.logger.error(e);
@@ -249,7 +250,8 @@ export class SubstrateChainHandler extends AbstractChainHandler {
         name: '',
         decimals: -1,
         symbol: '',
-        contractError: true
+        contractError: true,
+        isCompatible: true
       };
     }
   }

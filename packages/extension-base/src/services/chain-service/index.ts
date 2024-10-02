@@ -1786,7 +1786,8 @@ export class ChainService {
       decimals: -1,
       name: '',
       symbol: '',
-      contractError: false
+      contractError: false,
+      isCompatible: true
     };
   }
 
@@ -1810,18 +1811,20 @@ export class ChainService {
         symbol: existedToken.symbol,
         isExist: !!existedToken,
         existedSlug: existedToken?.slug,
-        contractError: false
+        contractError: false,
+        isCompatible: true
       };
     }
 
-    const { contractError, decimals, name, symbol } = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller);
+    const { contractError, decimals, isCompatible, name, symbol } = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller);
 
     return {
       name,
       decimals,
       symbol,
       isExist: !!existedToken,
-      contractError
+      contractError,
+      isCompatible
     };
   }
 

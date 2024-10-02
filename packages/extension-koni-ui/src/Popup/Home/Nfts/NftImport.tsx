@@ -202,6 +202,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 reject(t('Invalid contract for the selected chain'));
               }
 
+              if (!validationResult.isCompatible) {
+                reject(t('Incompatible NFT'));
+              }
+
               if (!validationResult.isExist && !validationResult.contractError) {
                 form.setFieldValue('collectionName', validationResult.name);
                 form.setFieldValue('symbol', validationResult.symbol);
