@@ -7,6 +7,7 @@ import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/servi
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useFetchChainInfo, useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
+import { copyToClipboard, noop } from '@subwallet/extension-web-ui/utils';
 import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatAddress';
 import { Button, Icon } from '@subwallet/react-ui';
 import TokenItem, { TokenItemProps } from '@subwallet/react-ui/es/web3-block/token-item';
@@ -21,10 +22,11 @@ interface Props extends ThemeProps, Omit<TokenItemProps, 'name' | 'subName' | 's
   item: _ChainAsset;
   onClickCopyBtn?: () => void;
   onClickQrBtn?: () => void;
+  onPreCopy?: () => Promise<void>;
 }
 
 const Component = (props: Props) => {
-  const { address, className, item, onClickCopyBtn, onClickQrBtn, onPressItem, ...restProps } = props;
+  const { address, className, item, onClickCopyBtn, onClickQrBtn, onPreCopy, onPressItem, ...restProps } = props;
   const { name, originChain: chain, slug, symbol } = item;
   const chainInfo = useFetchChainInfo(chain || '');
   const notify = useNotification();
@@ -42,8 +44,22 @@ const Component = (props: Props) => {
     return reformatAddress(address || '', networkPrefix, isEvmChain);
   }, [address, chainInfo, symbol]);
 
+  const _onClickCopyBtnAsync = useCallback((e: React.SyntheticEvent) => {
+    e.stopPropagation();
+    onPreCopy?.()
+      .then(() => {
+        notify({
+          message: t('Copied to clipboard')
+        });
+        copyToClipboard(formattedAddress);
+        onClickCopyBtn && onClickCopyBtn();
+      })
+      .catch(noop);
+  }, [formattedAddress, notify, onClickCopyBtn, onPreCopy, t]);
+
   const _onCLickCopyBtn = useCallback((e: React.SyntheticEvent) => {
     e.stopPropagation();
+
     notify({
       message: t('Copied to clipboard')
     });
@@ -81,20 +97,39 @@ const Component = (props: Props) => {
         rightItem={
           (
             <>
-              <CopyToClipboard text={formattedAddress}>
-                <Button
-                  icon={
-                    <Icon
-                      phosphorIcon={Copy}
-                      size='sm'
+              {
+                onPreCopy
+                  ? (
+                    <Button
+                      icon={
+                        <Icon
+                          phosphorIcon={Copy}
+                          size='sm'
+                        />
+                      }
+                      onClick={_onClickCopyBtnAsync}
+                      size='xs'
+                      tooltip={isWebUI ? t('Copy address') : undefined}
+                      type='ghost'
                     />
-                  }
-                  onClick={_onCLickCopyBtn}
-                  size='xs'
-                  tooltip={isWebUI ? t('Copy address') : undefined}
-                  type='ghost'
-                />
-              </CopyToClipboard>
+                  )
+                  : (
+                    <CopyToClipboard text={formattedAddress}>
+                      <Button
+                        icon={
+                          <Icon
+                            phosphorIcon={Copy}
+                            size='sm'
+                          />
+                        }
+                        onClick={_onCLickCopyBtn}
+                        size='xs'
+                        tooltip={isWebUI ? t('Copy address') : undefined}
+                        type='ghost'
+                      />
+                    </CopyToClipboard>
+                  )
+              }
               <Button
                 disabled={_MANTA_ZK_CHAIN_GROUP.includes(chainInfo.slug) && symbol?.startsWith(_ZK_ASSET_PREFIX)}
                 icon={

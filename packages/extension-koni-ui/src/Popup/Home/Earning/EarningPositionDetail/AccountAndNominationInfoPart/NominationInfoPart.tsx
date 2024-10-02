@@ -6,7 +6,7 @@ import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning
 import { YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
 import { Avatar, CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
-import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainPrefixBySlug, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
@@ -28,6 +28,7 @@ function Component ({ className, compound,
 
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(poolInfo.chain), [poolInfo.chain]);
 
+  const networkPrefix = useGetChainPrefixBySlug(poolInfo.chain);
   const haveNomination = useMemo(() => {
     return [YieldPoolType.NOMINATION_POOL, YieldPoolType.NATIVE_STAKING].includes(poolInfo.type);
   }, [poolInfo.type]);
@@ -62,6 +63,7 @@ function Component ({ className, compound,
               label={(
                 <>
                   <Avatar
+                    identPrefix={networkPrefix}
                     size={24}
                     value={item.validatorAddress}
                   />

@@ -1,6 +1,92 @@
 # CHANGELOG
 
-## 1.2.24
+## 1.2.30
+Build date: Sep 20, 2024.
+
+Features & Update:
+- Add Chainflip broker (#3483)
+- Re-calculate max transferable for XCM native token (#3617)
+- Update chain-list (#3637)
+  - Add support for Tether's XAUt token
+  - Add support for BUNS token for PAH, Hydration
+  - Add support for Ternoa zkEVM + Testnet
+  - Update information for some chains (https://github.com/Koniverse/SubWallet-ChainList/issues/302)
+    - DOT <-> CFG
+    - CFG <-> USDT
+    - DOT <-> BNC
+    - BNC <-> USDT
+    - BNC <-> HDX
+  - Add support for new swap pairs on Hydration
+  - Hidden XCM on Pioneer
+
+Bugs fixed:
+- Fix bug not showing balance of VFT tokens (#3612)
+- Fix bug do not show balance (#3653)
+
+## 1.2.29
+Build date: Sep 13, 2024.
+
+Features & Update:
+- Support XCM for Ledger Polkadot generic app (#3458)
+- Adjust showing/validating address on Earning actions (#2703)
+- Update chain-list (#3558)
+  - Add support for Creditcoin CC3 Mainnet
+  - Add support for vASTR on Hydration
+  - Add support for Cypress tokens on Hydration, PAH
+  - Update some network and token information
+  - Add support for new swap pairs on Hydration
+- Support XCM channels (#3453)
+  - MYTH: Hydration --> Mythos
+  - MYTH: PAH --> Mythos
+
+Bugs fixed:
+- Fixed bug Do not show token when standing on All accounts mode in case token does not get balance (#2352)
+- Fix bug do not show lock balance in case account have Kusama nomination pool (#3579)
+- Fix bug XCM for channel: DOT: KAH -> PAH (#3561)
+- Fix bug display wrong APY for Polkadot staking option (#3601)
+
+## 1.2.28
+Build date: Sep 04, 2024.
+
+Features & Update:
+- Format error when connecting to dApp (#3445)
+- Update connector version (#3363)
+- Update substrate dApp connect interface to allow dApp connect with EVM account (#3401)
+- Improve Amount input field (#1905)
+- Improve fetching era stakers (#3467)
+- Add warning in case user earn for both nomination pool and direct (#3477)
+- Add Notice of need to unstake for users who are simultaneously staking for both Direct and Nomination Pool (#3484)
+- Improve condition for Marketing campaign (#3468)
+- Update chain-list (#3518)
+  - Add support for Polygon zkEVM
+  - Add support for Immutable zkEVM
+  - Add support for Story Public Testnet
+  - Add support for Soneium Testnet
+  - Update logo for some chains, tokens
+
+Bugs fixed:
+- Fix UI bug on the Transfer screen (#3452)
+- Fix bug XCM (#3519)
+
+
+## 1.2.27
+Build date: Aug 22, 2024.
+
+Features & Update:
+- Update balance calculation for DeepBrainChain (#3481)
+- Update chain-list (#3478)
+  - Add support for 5ireChain mainnet
+  - Update decimals for Litmus, Litentry
+  - Update ED for some token: USDT, USDC (PAH), LIT (Litmus), LIT (Litentry), WUD (Hydration)
+
+
+## 1.2.26
+Build date: Aug 19, 2024.
+
+Bugs fixed:
+- Update earning feature with cache from middleware service
+
+## 1.2.25
 Build date: Aug 17, 2024.
 
 Features & Update:

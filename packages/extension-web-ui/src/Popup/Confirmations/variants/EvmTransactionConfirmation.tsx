@@ -28,7 +28,7 @@ const convertToBigN = (num: EvmSendTransactionRequest['value']): string | number
 };
 
 function Component ({ className, request, type }: Props) {
-  const { id, payload: { account, chainId, to } } = request;
+  const { id, payload: { account, chainId, errors, to } } = request;
   const { t } = useTranslation();
   const chainInfo = useGetChainInfoByChainId(chainId);
   const recipientAddress = to;
@@ -63,12 +63,12 @@ function Component ({ className, request, type }: Props) {
             label={t('From account')}
             name={account.name}
           />
-          <MetaInfo.Account
+          {(recipientAddress || recipient?.address) && <MetaInfo.Account
             address={recipient?.address || recipientAddress || ''}
             className='to-account'
             label={request.payload.isToContract ? t('To contract') : t('To account')}
             name={recipient?.name}
-          />
+          />}
           {request.payload.estimateGas &&
               <MetaInfo.Number
                 decimals={chainInfo?.evmInfo?.decimals}
@@ -78,14 +78,16 @@ function Component ({ className, request, type }: Props) {
               />}
         </MetaInfo>
         <div>
-          <Button
-            icon={<ViewDetailIcon />}
-            onClick={onClickDetail}
-            size='xs'
-            type='ghost'
-          >
-            {t('View details')}
-          </Button>
+          {(!errors || errors.length === 0) &&
+            <Button
+              icon={<ViewDetailIcon />}
+              onClick={onClickDetail}
+              size='xs'
+              type='ghost'
+            >
+              {t('View details')}
+            </Button>
+          }
         </div>
       </div>
       <EvmSignArea
@@ -93,14 +95,16 @@ function Component ({ className, request, type }: Props) {
         payload={request}
         type={type}
       />
-      <BaseDetailModal
-        title={t('Transaction details')}
-      >
-        <EvmTransactionDetail
-          account={account}
-          request={request.payload}
-        />
-      </BaseDetailModal>
+      {(!errors || errors.length === 0) &&
+        <BaseDetailModal
+          title={t('Transaction details')}
+        >
+          <EvmTransactionDetail
+            account={account}
+            request={request.payload}
+          />
+        </BaseDetailModal>
+      }
     </>
   );
 }

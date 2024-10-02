@@ -1,12 +1,12 @@
-// Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
+// Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationResult, ConfirmationsQueueItem, ErrorNetworkConnection } from '@subwallet/extension-base/background/KoniTypes';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { AlertBox, ConfirmationGeneralInfo, MetaInfo } from '@subwallet/extension-koni-ui/components';
-import { useGetAccountByAddress } from '@subwallet/extension-koni-ui/hooks';
-import { completeConfirmation } from '@subwallet/extension-koni-ui/messaging';
-import { EvmErrorSupportType, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AlertBox, ConfirmationGeneralInfo, MetaInfo } from '@subwallet/extension-web-ui/components';
+import { useGetAccountByAddress } from '@subwallet/extension-web-ui/hooks';
+import { completeConfirmation } from '@subwallet/extension-web-ui/messaging';
+import { EvmErrorSupportType, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { Button } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -81,6 +81,7 @@ function Component ({ className, request, type }: Props) {
         <MetaInfo>
           {account && <MetaInfo.Account
             address={account.address}
+            className={'meta-info-item'}
             label={t('Account')}
             name={account.name}
           />}
@@ -88,6 +89,7 @@ function Component ({ className, request, type }: Props) {
             ? (
               <MetaInfo.Chain
                 chain={networkKey}
+                className={'meta-info-item'}
                 label={t<string>('Network')}
               />)
             : <></>}
@@ -130,7 +132,7 @@ const NetworkConnectionErrorConfirmation = styled(Component)<Props>(({ theme: { 
     }
   },
 
-  '.__label': {
+  '.meta-info-item .__label': {
     textAlign: 'left'
   },
 

@@ -19,7 +19,7 @@ import { SignerPayloadJSON } from '@polkadot/types/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { ConfirmationHeader } from './parts';
-import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
+import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NetworkConnectionErrorConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
 
 type Props = ThemeProps
 
@@ -32,9 +32,9 @@ const titleMap: Record<ConfirmationType, string> = {
   evmSignatureRequest: detectTranslate('Signature request'),
   metadataRequest: detectTranslate('Update metadata'),
   signingRequest: detectTranslate('Signature request'),
-  switchNetworkRequest: detectTranslate('Add network request'),
   connectWCRequest: detectTranslate('WalletConnect'),
-  notSupportWCRequest: detectTranslate('WalletConnect')
+  notSupportWCRequest: detectTranslate('WalletConnect'),
+  errorConnectNetwork: detectTranslate('Transaction request')
 } as Record<ConfirmationType, string>;
 
 const alertModalId = 'confirmation-alert-modal';
@@ -167,6 +167,11 @@ const Component = function ({ className }: Props) {
         );
       case 'notSupportWCRequest':
         return (<NotSupportWCConfirmation request={confirmation.item as WalletConnectNotSupportRequest} />);
+      case 'errorConnectNetwork':
+        return (<NetworkConnectionErrorConfirmation
+          request={confirmation.item as ConfirmationDefinitions['errorConnectNetwork'][0]}
+          type={confirmation.type}
+        />);
     }
 
     return null;

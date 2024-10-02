@@ -22,10 +22,11 @@ type Props = ThemeProps & {
   disabled?: boolean;
   loading?: boolean;
   chain: string;
+  identPrefix?: number;
 }
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { chain, className, disabled, label, loading, onClick, placeholder, value } = props;
+  const { chain, className, disabled, identPrefix, label, loading, onClick, placeholder, value } = props;
   const { t } = useTranslation();
 
   const addressList = useMemo(() => {
@@ -76,10 +77,11 @@ const Component: React.FC<Props> = (props: Props) => {
     >
       <div className={'select-validator-input__label'}>{label}</div>
       <div className={'select-validator-input__content-wrapper'}>
-        {!!addressList.length && <AvatarGroup
+        {!!addressList.length && (<AvatarGroup
           accounts={addressList}
           className={'select-validator-input__avatar-gr'}
-        />}
+          identPrefix={identPrefix}
+        />)}
         <div className={'select-validator-input__content'}>{renderContent()}</div>
         <div className={'select-validator-input__button-wrapper'}>
           {
