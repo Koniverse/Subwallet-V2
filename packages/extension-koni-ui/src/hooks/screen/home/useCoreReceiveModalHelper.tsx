@@ -6,6 +6,7 @@ import type { KeypairType } from '@subwallet/keyring/types';
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _getAssetOriginChain, _getMultiChainAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
+import { AccountActions, AccountProxyType } from '@subwallet/extension-base/types';
 import { RECEIVE_MODAL_ACCOUNT_SELECTOR, RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useGetChainSlugsByAccount, useHandleLedgerGenericAccountWarning, useHandleTonAccountWarning } from '@subwallet/extension-koni-ui/hooks';
@@ -217,7 +218,8 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
             accountProxyId: ap.id,
             accountProxyType: ap.accountType,
             accountType: a.type,
-            address: reformatedAddress
+            address: reformatedAddress,
+            accountActions: ap.accountActions
           });
         }
       });
@@ -266,14 +268,28 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
         const targetAddress = accountSelectorItems.find((i) => i.accountProxyId === selectedAccountAddressItem.accountProxyId)?.address;
 
-        if (!targetAddress) {
-          return prev;
+        if (targetAddress) {
+          return {
+            ...prev,
+            address: targetAddress
+          };
         }
 
-        return {
-          ...prev,
-          address: targetAddress
-        };
+        const selectedAccount = accountSelectorItems.find((item) => item.accountName === selectedAccountAddressItem.accountName);
+        const isSoloAccount = selectedAccount?.accountProxyType === AccountProxyType.SOLO;
+        const hasTonChangeWalletContractVersion = selectedAccount?.accountActions?.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+        const latestAddress = selectedAccount?.address;
+
+        if (isSoloAccount && hasTonChangeWalletContractVersion && latestAddress) {
+          setSelectedAccountAddressItem(selectedAccount);
+
+          return {
+            ...prev,
+            address: latestAddress
+          };
+        }
+
+        return prev;
       });
     }
   }, [accountSelectorItems, addressQrModal, selectedAccountAddressItem]);

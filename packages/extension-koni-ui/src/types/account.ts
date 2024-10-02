@@ -3,7 +3,7 @@
 
 import type { KeypairType } from '@subwallet/keyring/types';
 
-import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountActions, AccountProxyType } from '@subwallet/extension-base/types';
 
 export interface WordItem {
   index: number;
@@ -41,4 +41,5 @@ export type AccountAddressItemType = {
   accountProxyType: AccountProxyType;
   accountType: KeypairType;
   address: string;
+  accountActions?: AccountActions[]
 }
