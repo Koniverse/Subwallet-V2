@@ -20,3 +20,4 @@ export * from './GlobalSearchTokenModal';
 export * from './ReceiveModal';
 export * from './Common';
 export * from './Announcement';
+export * from './NotificationDetailModal';

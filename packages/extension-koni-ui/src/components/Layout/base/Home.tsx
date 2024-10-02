@@ -4,7 +4,7 @@
 import { Layout } from '@subwallet/extension-koni-ui/components';
 import { CUSTOMIZE_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { ButtonProps, Icon, ModalContext } from '@subwallet/react-ui';
-import { FadersHorizontal, MagnifyingGlass } from 'phosphor-react';
+import { BellSimpleRinging, FadersHorizontal, MagnifyingGlass } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ type Props = {
   children?: React.ReactNode;
   showFilterIcon?: boolean;
   showSearchIcon?: boolean;
+  showNotificationIcon?: boolean;
   onClickFilterIcon?: () => void;
   onClickSearchIcon?: () => void;
   showTabBar?: boolean;
@@ -20,7 +21,7 @@ type Props = {
 
 };
 
-const Home = ({ children, isDisableHeader, onClickFilterIcon, onClickSearchIcon, showFilterIcon, showSearchIcon, showTabBar }: Props) => {
+const Home = ({ children, isDisableHeader, onClickFilterIcon, onClickSearchIcon, showFilterIcon, showNotificationIcon, showSearchIcon, showTabBar }: Props) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { activeModal } = useContext(ModalContext);
@@ -28,6 +29,10 @@ const Home = ({ children, isDisableHeader, onClickFilterIcon, onClickSearchIcon,
   const onOpenCustomizeModal = useCallback(() => {
     activeModal(CUSTOMIZE_MODAL);
   }, [activeModal]);
+
+  const onOpenNotification = useCallback(() => {
+    navigate('/settings/notification');
+  }, [navigate]);
 
   const headerIcons = useMemo<ButtonProps[]>(() => {
     const icons: ButtonProps[] = [];
@@ -60,8 +65,22 @@ const Home = ({ children, isDisableHeader, onClickFilterIcon, onClickSearchIcon,
       });
     }
 
+    if (showNotificationIcon) {
+      icons.push({
+        icon: (
+          <Icon
+            phosphorIcon={BellSimpleRinging}
+            size='md'
+          />
+        ),
+        onClick: onOpenNotification,
+        tooltip: t('Notifications'),
+        tooltipPlacement: 'bottomRight'
+      });
+    }
+
     return icons;
-  }, [onClickFilterIcon, onClickSearchIcon, onOpenCustomizeModal, showFilterIcon, showSearchIcon, t]);
+  }, [onClickFilterIcon, onClickSearchIcon, onOpenCustomizeModal, onOpenNotification, showFilterIcon, showNotificationIcon, showSearchIcon, t]);
 
   const onClickListIcon = useCallback(() => {
     navigate('/settings/list');

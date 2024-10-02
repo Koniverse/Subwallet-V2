@@ -1842,6 +1842,12 @@ export enum NotificationType {
   ERROR = 'error',
 }
 
+export enum NotificationTransactionType {
+  SEND = 'send',
+  RECEIVE = 'receive',
+  WITHDRAW = 'withdraw',
+}
+
 export interface NotificationButton {
   title: string;
 }
