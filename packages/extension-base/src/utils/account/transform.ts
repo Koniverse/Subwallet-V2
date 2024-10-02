@@ -14,7 +14,7 @@ import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/typ
 import { hexStripPrefix, u8aToHex } from '@polkadot/util';
 import { blake2AsHex, mnemonicToEntropy, mnemonicValidate } from '@polkadot/util-crypto';
 
-import { getSoloDerivationInfo } from './derive';
+import { getSoloDerivationInfo, parseUnifiedSuriToDerivationPath } from './derive';
 
 export const createAccountProxyId = (_suri: string, derivationPath?: string) => {
   let data: string = _suri;
@@ -473,13 +473,19 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
       }
     }
 
+    let formatedDerivationPath;
+
+    if (account.suri && EthereumKeypairTypes.includes(account.type)) {
+      formatedDerivationPath = parseUnifiedSuriToDerivationPath(account.suri, account.type);
+    }
+
     temp[address] = {
       id: address,
       name: account.name || account.address,
       accounts: [{ ...account, proxyId: address }],
       chainTypes: [account.chainType],
       parentId: account.parentAddress,
-      suri: account.suri,
+      suri: formatedDerivationPath || account.suri,
       tokenTypes: account.tokenTypes,
       accountActions: []
     };
