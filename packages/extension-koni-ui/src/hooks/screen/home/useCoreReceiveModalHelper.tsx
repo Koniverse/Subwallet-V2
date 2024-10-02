@@ -277,19 +277,16 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
         const selectedAccount = accountSelectorItems.find((item) => item.accountName === selectedAccountAddressItem.accountName);
         const isSoloAccount = selectedAccount?.accountProxyType === AccountProxyType.SOLO;
-        const hasTonChangeAction = selectedAccount?.accountActions?.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+        const hasTonChangeWalletContractVersion = selectedAccount?.accountActions?.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+        const latestAddress = selectedAccount?.address;
 
-        if (isSoloAccount && hasTonChangeAction) {
-          const latestAddress = selectedAccount.address;
+        if (isSoloAccount && hasTonChangeWalletContractVersion && latestAddress) {
+          setSelectedAccountAddressItem(selectedAccount);
 
-          if (latestAddress) {
-            setSelectedAccountAddressItem(selectedAccount);
-
-            return {
-              ...prev,
-              address: latestAddress
-            };
-          }
+          return {
+            ...prev,
+            address: latestAddress
+          };
         }
 
         return prev;

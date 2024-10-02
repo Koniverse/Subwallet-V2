@@ -320,9 +320,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   useEffect(() => {
     const selectedAccount = accountProxies.find((account) => account.name === selectedAccountProxy?.name);
     const isSoloAccount = selectedAccount?.accountType === AccountProxyType.SOLO;
-    const hasTonChangeWalletAction = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+    const hasTonChangeWalletContractVersion = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
 
-    if (isSoloAccount && hasTonChangeWalletAction) {
+    if (isSoloAccount && hasTonChangeWalletContractVersion) {
       setSelectedAccountProxy({ name: selectedAccount?.name, proxyId: selectedAccount?.id });
     }
   }, [accountProxies, selectedAccountProxy?.name]);

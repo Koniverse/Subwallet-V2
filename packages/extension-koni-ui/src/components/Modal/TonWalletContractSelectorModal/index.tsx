@@ -124,8 +124,8 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
             const selectedAccount = accountProxies.find((account) => account.id === accountInfo.proxyId);
             const isOnAccountDetailScreen = location.pathname.includes('/accounts/detail');
             const isSoloAccount = selectedAccount?.accountType === AccountProxyType.SOLO;
-            const hasTonChangeWalletAction = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
-            const shouldNavigate = isOnAccountDetailScreen && isSoloAccount && hasTonChangeWalletAction;
+            const hasTonChangeWalletContractVersion = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+            const shouldNavigate = isOnAccountDetailScreen && isSoloAccount && hasTonChangeWalletContractVersion;
 
             if (shouldNavigate) {
               navigate(`/accounts/detail/${newAddress}`);
