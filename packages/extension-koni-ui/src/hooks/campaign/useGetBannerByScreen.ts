@@ -37,7 +37,7 @@ const useGetBannerByScreen = (screen: string, compareValue?: string) => {
         const isBannerVisible = checkBannerVisible(bannerHistory?.showTimes);
 
         if (compareValue) {
-          return checkPositionParam(screen, banner.position_params, compareValue) && isBannerVisible;
+          return checkPositionParam(screen, banner.position_params, [compareValue]) && isBannerVisible;
         } else {
           return isBannerVisible;
         }
