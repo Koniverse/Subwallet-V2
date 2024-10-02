@@ -1053,7 +1053,6 @@ export default class KoniExtension {
   }
 
   private saveNotificationSetup (request: NotificationSetup) {
-    console.log('req', request);
     this.#koniState.updateSetting('notificationSetup', request);
 
     return true;

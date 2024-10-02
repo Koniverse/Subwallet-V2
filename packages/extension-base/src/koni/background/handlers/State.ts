@@ -788,8 +788,6 @@ export default class KoniState {
         [key]: value
       };
 
-      console.log('neweww', newSettings);
-
       this.settingService.setSettings(newSettings);
     });
   }

@@ -14,17 +14,6 @@ export interface NotificationInfo {
   actionType: NotificationTransactionType
 }
 
-export interface NotificationSetting {
-  timePeriod: NotificationTimePeriod,
-  notificationOptions: NotificationOptions
-}
-
-export interface NotificationOptions {
-  balance: boolean,
-  action: boolean,
-  announcement: boolean
-}
-
 export enum NotificationTimePeriod {
   TODAY = 'TODAY',
   THIS_WEEK = 'THIS_WEEK',

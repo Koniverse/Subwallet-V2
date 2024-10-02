@@ -4,8 +4,8 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_UPDATE_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
-import { DEFAULT_NOTIFICATION_SETTING, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { NotificationInfo, NotificationOptions, NotificationSetting, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
+import { NotificationInfo, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
@@ -13,7 +13,6 @@ import { BehaviorSubject } from 'rxjs';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
-  private notificationSetting: NotificationSetting = DEFAULT_NOTIFICATION_SETTING;
   private refreshTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
   private unreadNotificationCountSubject = new BehaviorSubject<number>(0);
@@ -31,16 +30,6 @@ export class InappNotificationService implements CronServiceInterface {
   async updateNotification (notification: NotificationInfo) {
     await this.dbService.updateNotification(notification);
   }
-
-  /* Notification Setting */
-  updateNotificationOptions (notificationOptions: NotificationOptions) {
-    this.notificationSetting.notificationOptions = notificationOptions;
-  }
-
-  updateNotificationTimePeriod (notificationTimePeriod: NotificationTimePeriod) {
-    this.notificationSetting.timePeriod = notificationTimePeriod;
-  }
-  /* Notification Setting */
 
   async markAllRead (address: string) {
     await this.dbService.markAllRead(address);

@@ -1,16 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-
-export const DEFAULT_NOTIFICATION_SETTING = {
-  timePeriod: NotificationTimePeriod.THIS_MONTH,
-  notificationOptions: {
-    balance: true,
-    action: true,
-    announcement: true
-  }
-};
+import { NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
 export const NotificationTitleMap = {
   [NotificationTransactionType.WITHDRAW]: 'Token Withdrawal',
