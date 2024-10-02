@@ -1825,22 +1825,22 @@ export default class KoniExtension {
 
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
       let senderTransferTokenTransferable: string | undefined;
-      let receiverNativeTransferable: string | undefined;
+      let receiverNativeTotal: string | undefined;
 
       // Check ed for sender
       if (!isTransferNativeToken) {
-        const [_senderTransferTokenTransferable, _receiverNativeTransferable] = await Promise.all([
+        const [_senderTransferTokenTransferable, _receiverNativeTotal] = await Promise.all([
           this.getAddressTransferableBalance({ address: from, networkKey, token: tokenSlug, extrinsicType }),
-          this.getAddressTransferableBalance({ address: to, networkKey, token: nativeTokenSlug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE })
+          this.getAddressTotalBalance({ address: to, networkKey, token: nativeTokenSlug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE })
         ]);
 
         senderTransferTokenTransferable = _senderTransferTokenTransferable.value;
-        receiverNativeTransferable = _receiverNativeTransferable.value;
+        receiverNativeTotal = _receiverNativeTotal.value;
       }
 
-      const { value: receiverTransferTokenTransferable } = await this.getAddressTransferableBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
+      const { value: receiverTransferTokenTransferable } = await this.getAddressTotalBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
 
-      const [warnings, errors] = additionalValidateTransfer(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverTransferTokenTransferable, transferAmount.value, senderTransferTokenTransferable, receiverNativeTransferable);
+      const [warnings, errors] = additionalValidateTransfer(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverTransferTokenTransferable, transferAmount.value, senderTransferTokenTransferable, receiverNativeTotal);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);
@@ -2079,6 +2079,10 @@ export default class KoniExtension {
     }
 
     return await this.#koniState.balanceService.getTransferableBalance(address, networkKey, token, extrinsicType);
+  }
+
+  private async getAddressTotalBalance ({ address, extrinsicType, networkKey, token }: RequestFreeBalance): Promise<AmountData> {
+    return await this.#koniState.balanceService.getTotalBalance(address, networkKey, token, extrinsicType);
   }
 
   private async getMaxTransferable ({ address, destChain, isXcmTransfer, networkKey, token }: RequestMaxTransferable): Promise<AmountData> {

@@ -49,7 +49,7 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
   return [errors, keypair, transferValue];
 }
 
-export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverTransferTokenFreeBalance: string, transferAmount: string, senderTransferTokenTransferable?: string, receiverNativeTransferable?: string): [TransactionWarning[], TransactionError[]] {
+export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverTransferTokenTotalBalance: string, transferAmount: string, senderTransferTokenTransferable?: string, _receiverNativeTotal?: string): [TransactionWarning[], TransactionError[]] {
   const minAmount = _getTokenMinAmount(tokenInfo);
   const nativeMinAmount = _getTokenMinAmount(nativeTokenInfo);
   const warnings: TransactionWarning[] = [];
@@ -65,17 +65,17 @@ export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenI
   }
 
   // Check ed for receiver before sending
-  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN && receiverNativeTransferable) {
-    if (new BigN(receiverNativeTransferable).lt(nativeMinAmount)) {
-      const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: receiverNativeTransferable, nativeSymbol: nativeTokenInfo.symbol, localSymbol: tokenInfo.symbol } }));
+  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN && _receiverNativeTotal) {
+    if (new BigN(_receiverNativeTotal).lt(nativeMinAmount) && new BigN(nativeMinAmount).gt(0)) {
+      const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: _receiverNativeTotal, nativeSymbol: nativeTokenInfo.symbol, localSymbol: tokenInfo.symbol } }));
 
       errors.push(error);
     }
   }
 
   // Check ed for receiver after sending
-  if (new BigN(receiverTransferTokenFreeBalance).plus(transferAmount).lt(minAmount)) {
-    const atLeast = new BigN(minAmount).minus(receiverTransferTokenFreeBalance).plus((tokenInfo.decimals || 0) === 0 ? 0 : 1);
+  if (new BigN(receiverTransferTokenTotalBalance).plus(transferAmount).lt(minAmount)) {
+    const atLeast = new BigN(minAmount).minus(receiverTransferTokenTotalBalance).plus((tokenInfo.decimals || 0) === 0 ? 0 : 1);
 
     const atLeastStr = formatNumber(atLeast, tokenInfo.decimals || 0, balanceFormatter, { maxNumberFormat: tokenInfo.decimals || 6 });
 
