@@ -343,7 +343,6 @@ const AuthorizeConfirmation = styled(Component)<Props>(({ theme: { token } }: Th
 
   '.__account-proxy-item': {
     '.__item-middle-part': {
-      maxWidth: 170,
       textWrap: 'nowrap',
       textOverflow: 'ellipsis',
       overflow: 'hidden'
