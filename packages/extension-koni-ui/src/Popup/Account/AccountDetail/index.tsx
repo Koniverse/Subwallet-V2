@@ -35,7 +35,6 @@ type Props = ThemeProps;
 type ComponentProps = {
   accountProxy: AccountProxy;
   onBack: VoidFunction;
-  requestViewDerivedAccounts?: boolean;
   requestViewDerivedAccountDetails?: boolean;
 };
 
@@ -56,7 +55,7 @@ interface DetailFormState {
   [FormFieldName.NAME]: string;
 }
 
-const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccountDetails, requestViewDerivedAccounts }: ComponentProps) => {
+const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccountDetails }: ComponentProps) => {
   const showDerivedAccounts = !!accountProxy.children?.length;
 
   const { t } = useTranslation();
@@ -69,7 +68,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
 
   const getDefaultFilterTab = () => {
-    if (requestViewDerivedAccounts && showDerivedAccounts) {
+    if (requestViewDerivedAccountDetails && showDerivedAccounts) {
       return FilterTabType.DERIVED_ACCOUNT;
     } else if (requestViewDerivedAccountDetails) {
       return FilterTabType.DERIVATION_INFO;
@@ -105,7 +104,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       });
     }
 
-    if (requestViewDerivedAccountDetails) {
+    if (!showDerivedAccounts && requestViewDerivedAccountDetails) {
       result.push({
         label: t('Derivation info'),
         value: FilterTabType.DERIVATION_INFO
@@ -321,14 +320,14 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [accountProxy, form]);
 
   useEffect(() => {
-    if (requestViewDerivedAccounts && showDerivedAccounts) {
+    if (requestViewDerivedAccountDetails && showDerivedAccounts) {
       setSelectedFilterTab(FilterTabType.DERIVED_ACCOUNT);
     } else if (requestViewDerivedAccountDetails) {
       setSelectedFilterTab(FilterTabType.DERIVATION_INFO);
     } else {
       setSelectedFilterTab(FilterTabType.ACCOUNT_ADDRESS);
     }
-  }, [requestViewDerivedAccounts, requestViewDerivedAccountDetails, showDerivedAccounts]);
+  }, [requestViewDerivedAccountDetails, requestViewDerivedAccountDetails, showDerivedAccounts]);
 
   const renderDetailDerivedAccount = () => {
     return (
@@ -488,7 +487,6 @@ const Wrapper = ({ className }: Props) => {
         accountProxy={accountProxy}
         onBack={goHome}
         requestViewDerivedAccountDetails={locationState?.requestViewDerivedAccountDetails}
-        requestViewDerivedAccounts={locationState?.requestViewDerivedAccounts}
       />
     </PageWrapper>
   );

@@ -247,13 +247,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     };
   }, [activeModal]);
 
-  const onViewAccountDetail = useCallback((accountProxy: AccountProxy, requestViewDerivedAccounts?: boolean) => {
+  const onViewAccountDetail = useCallback((accountProxy: AccountProxy) => {
+    // Note: This variable checks if it is a derived account: parent account and child accounts.
+    const requestViewDerivedAccountDetails = !!accountProxy.children?.length || !!accountProxy.parentId;
+
     return () => {
       inactiveModal(modalId);
       setTimeout(() => {
         navigate(`/accounts/detail/${accountProxy.id}`, {
           state: {
-            requestViewDerivedAccounts
+            requestViewDerivedAccountDetails
           } as AccountDetailParam
         });
       }, 100);
@@ -297,7 +300,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         key={item.id}
         onClick={onSelect(item as AccountProxy)}
         onClickCopyButton={onViewChainAddresses(item as AccountProxy)}
-        onClickDeriveButton={onViewAccountDetail(item as AccountProxy, true)}
+        onClickDeriveButton={onViewAccountDetail(item as AccountProxy)}
         onClickMoreButton={onViewAccountDetail(item as AccountProxy)}
       />
     );
