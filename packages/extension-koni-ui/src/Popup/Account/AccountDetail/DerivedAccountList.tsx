@@ -63,7 +63,7 @@ function Component ({ accountProxy, className }: Props) {
         navigate(`/accounts/detail/${accountProxy.id}`, {
           state: {
             requestViewDerivedAccounts: false,
-            requestViewDetailDerivedAccount: true
+            requestViewDerivedAccountDetails: true
           } as AccountDetailParam
         });
       }, 100);
