@@ -81,7 +81,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
           size={24}
           value={account?.proxyId || address}
         />
-        <div className={'__account-name ml-xs'}>
+        <div className={'__account-name'}>
           <div className={'__account-item-address'}>{shortAddress}</div>
         </div>
       </div>

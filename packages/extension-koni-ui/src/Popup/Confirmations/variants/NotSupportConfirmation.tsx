@@ -110,14 +110,12 @@ const NotSupportConfirmation = styled(Component)<Props>(({ theme: { token } }: P
     },
 
     '.account-item': {
-      '.ant-web3-block': {
-        cursor: 'not-allowed',
-        opacity: token.opacityDisable
-      },
+      cursor: 'not-allowed',
+      opacity: token.opacityDisable,
+      background: token.colorBgSecondary,
 
-      '.ant-web3-block:hover': {
-        cursor: 'not-allowed',
-        background: token.colorBgSecondary
+      '&:hover': {
+        cursor: 'not-allowed'
       }
     }
   };
