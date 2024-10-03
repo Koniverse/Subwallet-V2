@@ -9,8 +9,9 @@ import { AuthUrls } from '@subwallet/extension-base/services/request-service/typ
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountRefStore } from '@subwallet/extension-base/stores';
 import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
-import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType, isSameAddress } from '@subwallet/extension-base/utils';
+import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType, isSameAddress, parseUnifiedSuriToDerivationPath } from '@subwallet/extension-base/utils';
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
+import { EthereumKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { BehaviorSubject, combineLatest, filter, first } from 'rxjs';
@@ -609,6 +610,10 @@ export class AccountState {
           const suri = [parentSuri, _suri].join('');
 
           return deepSearchParentId(parentAddress, suri);
+        } else if (EthereumKeypairTypes.includes(parent.type) || TonKeypairTypes.includes(parent.type)) {
+          const suri = parseUnifiedSuriToDerivationPath(_suri, parent.type);
+
+          return [_parentAddress, suri];
         }
       }
 
@@ -628,14 +633,19 @@ export class AccountState {
           metadata.parentAddress = _parentAddress;
           metadata.suri = _parentSuri;
           needUpdateSet.add(address);
+        } else if ('suri' in metadata && !('derivationPath' in metadata)) {
+          needUpdateSet.add(address);
         }
       }
     }
 
     Array.from(needUpdateSet).forEach((address) => {
       const pair = pairMap[address];
+      const metadata = pair.meta;
 
-      keyring.saveAccountMeta(pair, pair.meta);
+      metadata.derivationPath = parseUnifiedSuriToDerivationPath(metadata?.suri as string, pair.type);
+
+      keyring.saveAccountMeta(pair, metadata);
     });
   }
 

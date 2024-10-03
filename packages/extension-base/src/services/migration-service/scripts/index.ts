@@ -62,7 +62,8 @@ export default <Record<string, typeof BaseMigrationJob>>{
   '1.2.69-01': MigrateRemoveGenesisHash,
   '1.2.13-01': ReloadMetadata,
   '1.2.14-01': ClearMetadataDatabase,
-  '1.2.23-01': MigratePairData
+  '1.2.23-01': MigratePairData,
+  '1.2.32-01': MigratePairData
   // [`${EVERYTIME}-1.1.42-02`]: MigrateTransactionHistoryBySymbol
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
 };
