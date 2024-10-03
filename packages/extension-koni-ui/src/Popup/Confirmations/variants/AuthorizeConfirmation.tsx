@@ -235,6 +235,7 @@ function Component ({ className, request }: Props) {
               {visibleAccountProxies.map((item) => (
                 <AccountProxyItem
                   accountProxy={item}
+                  className={'__account-proxy-item'}
                   isSelected={selectedMap[item.id]}
                   key={item.id}
                   onClick={onAccountSelect(item.id)}
@@ -338,6 +339,16 @@ const AuthorizeConfirmation = styled(Component)<Props>(({ theme: { token } }: Th
       textAlign: 'start',
       fontSize: token.fontSize
     }
+  },
+
+  '.__account-proxy-item': {
+    '.__item-middle-part': {
+      maxWidth: 170,
+      textWrap: 'nowrap',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden'
+    }
+
   }
 }));
 

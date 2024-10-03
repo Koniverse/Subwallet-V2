@@ -56,7 +56,10 @@ function Component (props: Props): React.ReactElement<Props> {
         }
       </div>
       <div className='__item-middle-part'>
-        <div className={'__account-name-item'}>
+        <div className={CN('__account-name-item', {
+          '-is-show-fallback': showAccountNameFallback
+        })}
+        >
           {accountName || account?.name || ''}
         </div>
         {showAccountNameFallback && account && <div className={'account-item-address-wrapper'}>{toShort(accountAddress || account.address, 4, 4)}</div>}
@@ -81,7 +84,7 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
     display: 'flex',
     cursor: 'pointer',
     transition: `background ${token.motionDurationMid} ease-in-out`,
-    gap: token.sizeSM,
+    gap: token.sizeXS,
 
     '.__item-middle-part': {
       flex: 1,
@@ -99,10 +102,14 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
       },
 
       '.__account-name-item': {
-        maxWidth: '150px',
+        maxWidth: 250,
         overflow: 'hidden',
         textWrap: 'nowrap',
         textOverflow: 'ellipsis'
+      },
+
+      '.__account-name-item.-is-show-fallback': {
+        maxWidth: 150
       }
     },
 

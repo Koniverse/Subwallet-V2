@@ -81,6 +81,7 @@ function Component ({ className, request, type }: Props) {
         <MetaInfo>
           {account && <MetaInfo.Account
             address={account.address}
+            className={'account-info-item'}
             label={t('Account')}
             name={account.name}
           />}
@@ -136,6 +137,12 @@ const NetworkConnectionErrorConfirmation = styled(Component)<Props>(({ theme: { 
 
   '.alert-box': {
     width: '100%'
+  },
+
+  '.account-info-item': {
+    '.__account-item-address': {
+      textAlign: 'right'
+    }
   }
 }));
 

@@ -234,6 +234,10 @@ const WCAccountSelect = styled(Component)<Props>(({ theme: { token } }: Props) =
       }
     },
 
+    '.account-list.no-modal .__account-proxy-item': {
+      marginBottom: 0
+    },
+
     '.__account-proxy-item': {
       marginBottom: token.marginXS,
       background: token.colorBgSecondary,
