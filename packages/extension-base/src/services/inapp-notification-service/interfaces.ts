@@ -11,7 +11,8 @@ export interface NotificationInfo {
   time: number,
   extrinsicType: ExtrinsicType,
   isRead: boolean,
-  actionType: NotificationTransactionType
+  actionType: NotificationActionType,
+  // data: ActionTypeToMetadataMap[NotificationActionType]
 }
 
 export enum NotificationTimePeriod {
@@ -20,7 +21,7 @@ export enum NotificationTimePeriod {
   THIS_MONTH = 'THIS_MONTH'
 }
 
-export enum NotificationTransactionType {
+export enum NotificationActionType {
   SEND = 'SEND',
   RECEIVE = 'RECEIVE',
   WITHDRAW = 'WITHDRAW',

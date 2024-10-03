@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { CRON_UPDATE_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
+import { CRON_FETCH_NOTIFICATION_INTERVAL, CRON_LISTEN_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { NotificationInfo, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationActionType, NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
@@ -13,7 +13,8 @@ import { BehaviorSubject } from 'rxjs';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
-  private refreshTimeout: NodeJS.Timeout | undefined;
+  private refreshGetNotificationTimeout: NodeJS.Timeout | undefined;
+  private refreshListenNotificationTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
   private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({count: 0});
   private notificationsSubject = new BehaviorSubject<NotificationInfo[]>([]);
@@ -48,7 +49,7 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   async getWithdrawNotifications () {
-    const NOTIFICATION_TRANSACTION_TYPE = NotificationTransactionType.WITHDRAW;
+    const NOTIFICATION_ACTION_TYPE = NotificationActionType.WITHDRAW;
     const allWithdrawNotifications: NotificationInfo[] = [];
     const poolPositions = await this.dbService.getYieldPositions();
 
@@ -65,14 +66,14 @@ export class InappNotificationService implements CronServiceInterface {
       for (const unstaking of poolPosition.unstakings) {
         if (unstaking.status === UnstakingStatus.CLAIMABLE) {
           allWithdrawNotifications.push({
-            id: `${NOTIFICATION_TRANSACTION_TYPE}___${STAKING_TYPE}___${timestamp}`,
-            title: NotificationTitleMap[NOTIFICATION_TRANSACTION_TYPE],
+            id: `${NOTIFICATION_ACTION_TYPE}___${STAKING_TYPE}___${timestamp}`,
+            title: NotificationTitleMap[NOTIFICATION_ACTION_TYPE],
             description: this.getWithdrawNotificationDescription(unstaking.claimable, symbol, STAKING_TYPE), // divide decimal
             address: address,
             time: timestamp,
             extrinsicType: ExtrinsicType.STAKING_WITHDRAW,
             isRead: false,
-            actionType: NotificationTransactionType.WITHDRAW
+            actionType: NotificationActionType.WITHDRAW
           });
         }
       }
@@ -85,8 +86,8 @@ export class InappNotificationService implements CronServiceInterface {
     return `You has ${amount} ${symbol} ${stakingType} to withdraw`;
   }
 
-  updateLastestNotifications () {
-    clearTimeout(this.refreshTimeout);
+  createLastestNotifications () {
+    clearTimeout(this.refreshGetNotificationTimeout);
 
     this.getWithdrawNotifications()
       .then(async (notifications) => {
@@ -96,13 +97,19 @@ export class InappNotificationService implements CronServiceInterface {
         console.error(e);
       });
 
+    this.refreshGetNotificationTimeout = setTimeout(this.createLastestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
+  }
+
+  listenLastestNotifications () {
+    clearTimeout(this.refreshListenNotificationTimeout);
+
     this.updateUnreadNotificationCountSubject()
       .then().catch((e) => console.error(e));
 
     this.updateNotificationsSubject()
       .then().catch((e) => console.error(e));
 
-    this.refreshTimeout = setTimeout(this.updateLastestNotifications.bind(this), CRON_UPDATE_NOTIFICATION_INTERVAL);
+    this.refreshListenNotificationTimeout = setTimeout(this.listenLastestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);
   }
 
   private async updateUnreadNotificationCountSubject () {
@@ -156,7 +163,8 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   async startCron (): Promise<void> {
-    this.updateLastestNotifications();
+    this.listenLastestNotifications();
+    this.createLastestNotifications();
 
     return Promise.resolve();
   }
@@ -172,7 +180,8 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   stopCron (): Promise<void> {
-    clearTimeout(this.refreshTimeout);
+    clearTimeout(this.refreshGetNotificationTimeout);
+    clearTimeout(this.refreshListenNotificationTimeout);
 
     return Promise.resolve(undefined);
   }

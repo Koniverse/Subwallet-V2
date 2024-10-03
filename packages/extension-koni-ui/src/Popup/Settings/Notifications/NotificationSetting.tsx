@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationSetup, NotificationTimePeriod, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationSetup, NotificationTimePeriod, NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { PageWrapper, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
@@ -31,10 +31,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [loadingNotification, setLoadingNotification] = useState(false);
 
   const notificationOptions = [
-    { label: t('Hide send notifications'), value: NotificationTransactionType.SEND },
-    { label: t('Hide receive notifications'), value: NotificationTransactionType.RECEIVE },
-    { label: t('Hide withdraw notifications'), value: NotificationTransactionType.WITHDRAW },
-    { label: t('Hide claim notifications'), value: NotificationTransactionType.CLAIM }
+    { label: t('Hide send notifications'), value: NotificationActionType.SEND },
+    { label: t('Hide receive notifications'), value: NotificationActionType.RECEIVE },
+    { label: t('Hide withdraw notifications'), value: NotificationActionType.WITHDRAW },
+    { label: t('Hide claim notifications'), value: NotificationActionType.CLAIM }
   ];
 
   const timeSetup = useMemo((): ViewOption[] => {
