@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountProxyType } from '@subwallet/extension-base/types';
-import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
+import { AccountChainType, AccountProxyType } from '@subwallet/extension-base/types';
+import { detectTranslate } from '@subwallet/extension-base/utils';
+import { EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
-import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, IS_SHOW_TON_WARNING, SWAP_TRANSACTION, TON_WALLET_CONTRACT_SELECTOR_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
 import { useCoreReceiveModalHelper, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
@@ -17,16 +18,19 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
 import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
-import { Button, Icon, SwAlert } from '@subwallet/react-ui';
+import { isTonAddress } from '@subwallet/keyring';
+import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
 import classNames from 'classnames';
-import { Coins, FadersHorizontal } from 'phosphor-react';
+import { Coins, FadersHorizontal, X } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
+const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 
 const Component = (): React.ReactElement => {
   useSetCurrentPage('/home/tokens');
@@ -50,6 +54,9 @@ const Component = (): React.ReactElement => {
   const allowedChains = useGetChainSlugsByAccount();
   const buyTokenInfos = useSelector((state: RootState) => state.buyService.tokens);
   const swapPairs = useSelector((state: RootState) => state.swap.swapPairs);
+  const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
+  const isTonWalletContactSelectorModalActive = checkActive(tonWalletContractSelectorModalId);
+  const [isShowTonWarning, setIsShowTonWarning] = useLocalStorage(IS_SHOW_TON_WARNING, true);
 
   const fromAndToTokenMap = useMemo<Record<string, string[]>>(() => {
     const result: Record<string, string[]> = {};
@@ -148,6 +155,23 @@ const Component = (): React.ReactElement => {
   const isSupportBuyTokens = useMemo(() => {
     return Object.values(buyTokenInfos).some((item) => allowedChains.includes(item.network));
   }, [allowedChains, buyTokenInfos]);
+
+  const tonAddress = useMemo(() => {
+    return currentAccountProxy?.accounts.find((acc) => isTonAddress(acc.address))?.address;
+  }, [currentAccountProxy]);
+
+  const isTonSoloAccount = useMemo(() => {
+    return currentAccountProxy?.accountType === AccountProxyType.SOLO && currentAccountProxy?.chainTypes.includes(AccountChainType.TON);
+  }, [currentAccountProxy]);
+
+  const onCloseTonWalletContactModal = useCallback(() => {
+    setIsShowTonWarning(false);
+    inactiveModal(tonWalletContractSelectorModalId);
+  }, [inactiveModal, setIsShowTonWarning]);
+
+  const onOpenTonWalletContactModal = useCallback(() => {
+    activeModal(tonWalletContractSelectorModalId);
+  }, [activeModal]);
 
   const onClickItem = useCallback((item: TokenBalanceItemType) => {
     return () => {
@@ -283,6 +307,37 @@ const Component = (): React.ReactElement => {
               title={t('Zk mode is syncing: {{percent}}%', { replace: { percent: zkModeSyncProgress || '0' } })}
               type={'warning'}
             />
+          )
+        }
+        {
+          isTonSoloAccount && isShowTonWarning && (
+            <>
+              <SwAlert
+                className={classNames('ton-solo-acc-alert-area')}
+                description={<Trans
+                  components={{
+                    highlight: (
+                      <a
+                        className='link'
+                        onClick={onOpenTonWalletContactModal}
+                      />
+                    )
+                  }}
+                  i18nKey={detectTranslate("TON wallets have multiple versions, each with its own wallet address and balance. <highlight>Change versions</highlight> if you don't see balances")}
+                />}
+                title={t('Change wallet address & version')}
+                type={'warning'}
+              />
+              {tonAddress && isTonWalletContactSelectorModalActive &&
+                <TonWalletContractSelectorModal
+                  address={tonAddress}
+                  chainSlug={'ton'}
+                  closeIcon={X}
+                  id={tonWalletContractSelectorModalId}
+                  onCancel={onCloseTonWalletContactModal}
+                />
+              }
+            </>
           )
         }
         {!!banners.length && (
@@ -421,7 +476,7 @@ const Tokens = styled(WrapperComponent)<ThemeProps>(({ theme: { extendToken, tok
       }
     },
 
-    '.zk-mode-alert-area': {
+    '.zk-mode-alert-area, .ton-solo-acc-alert-area': {
       marginBottom: token.marginXS
     },
 

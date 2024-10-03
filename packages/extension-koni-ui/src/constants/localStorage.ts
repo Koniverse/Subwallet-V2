@@ -24,7 +24,7 @@ export const TRANSACTION_STORAGES = [TRANSFER_TRANSACTION, NFT_TRANSACTION, EARN
 export const SELECTED_ACCOUNT_TYPE = 'account.selected-type';
 export const SELECTED_MNEMONIC_TYPE = 'account.selected-mnemonic-type';
 export const SEED_PREVENT_MODAL = 'seed.prevent-modal';
-
+export const IS_SHOW_TON_WARNING = 'account.is-show-ton-warning';
 export const CONFIRM_GENERAL_TERM = 'general.term-and-condition';
 export const MISSIONS_POOL_LIVE_ID = 'mission-pool-live-id';
 export const CONFIRM_SWAP_TERM = 'swap.term-and-service';
