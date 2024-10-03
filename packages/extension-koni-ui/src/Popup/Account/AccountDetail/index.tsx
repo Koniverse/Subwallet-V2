@@ -330,11 +330,11 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     }
   }, [requestViewDerivedAccounts, requestViewDerivedAccountDetails, showDerivedAccounts]);
 
-  const renderDetailDerivedAccount = useCallback(() => {
+  const renderDetailDerivedAccount = () => {
     return (
       <>
         <Form
-          className={'derivation-info-form'}
+          className={'derivation-info-form form-space-sm'}
           form={form}
           initialValues={{
             [FormFieldName.DERIVED_SURI]: accountProxy.suri || '',
@@ -366,7 +366,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
         </Form>
       </>
     );
-  }, [accountProxy.suri, form, parentDerivedAccountProxy?.name, t]);
+  };
 
   return (
     <Layout.WithSubHeaderOnly
@@ -502,8 +502,11 @@ const AccountDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       flexDirection: 'column'
     },
     '.derivation-wrapper': {
-      paddingLeft: 16,
-      paddingRight: 16
+      paddingLeft: token.padding,
+      paddingRight: token.padding
+    },
+    '.derivation-info-form.derivation-info-form': {
+      paddingTop: 0
     },
 
     '.ant-sw-screen-layout-footer': {
