@@ -5,7 +5,6 @@ import { _AssetRef, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet
 import { AddressBookState, AllLogoMap, AssetSetting, CampaignBanner, ChainStakingMetadata, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueTon, ConfirmationType, CrowdloanItem, KeyringState, LanguageType, MantaPayConfig, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, StakingRewardItem, TransactionHistoryItem, UiSettings, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountsContext, AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
-import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
@@ -215,6 +214,5 @@ export interface SwapStore extends BaseReduxStore {
 }
 
 export interface NotificationStore extends BaseReduxStore {
-  notifications: NotificationInfo[],
   unreadNotificationCount: number
 }

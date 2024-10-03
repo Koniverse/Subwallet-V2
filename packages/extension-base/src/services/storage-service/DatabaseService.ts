@@ -611,10 +611,6 @@ export default class DatabaseService {
     return this.stores.inappNotification.upsert(notification);
   }
 
-  public getAllNotifications () {
-    return this.stores.inappNotification.getAll();
-  }
-
   public async getNotificationsByParams (params: GetNotificationParams) {
     return this.stores.inappNotification.getNotificationsByParams(params);
   }

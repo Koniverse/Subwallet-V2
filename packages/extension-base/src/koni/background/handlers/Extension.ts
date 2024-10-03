@@ -3709,29 +3709,6 @@ export default class KoniExtension {
   /* Swap service */
 
   /* Notification service */
-  private subscribeInappNotifications (id: string, port: chrome.runtime.Port): NotificationInfo[] {
-    const cb = createSubscription<'pri(inappNotification.subscribeNotifications)'>(id, port);
-    let ready = false;
-
-    const callback = (rs: NotificationInfo[]) => {
-      if (ready) {
-        cb(rs);
-      }
-    };
-
-    const subscription = this.#koniState.inappNotificationService.subscribeNotifications(callback);
-
-    this.createUnsubscriptionHandle(id, subscription.unsubscribe);
-
-    port.onDisconnect.addListener((): void => {
-      this.cancelSubscription(id);
-    });
-
-    ready = true;
-
-    return this.#koniState.inappNotificationService.getNotifications();
-  }
-
   private subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): GetNotificationCountResult {
     const cb = createSubscription<'pri(inappNotification.subscribeUnreadNotificationCount)'>(id, port);
     let ready = false;
@@ -4360,8 +4337,6 @@ export default class KoniExtension {
         /* Swap service */
 
         /* Notification service */
-      case 'pri(inappNotification.subscribeNotifications)':
-        return this.subscribeInappNotifications(id, port);
       case 'pri(inappNotification.subscribeUnreadNotificationCount)':
         return this.subscribeUnreadNotificationCount(id, port);
       case 'pri(inappNotification.markAllReadNotification)':

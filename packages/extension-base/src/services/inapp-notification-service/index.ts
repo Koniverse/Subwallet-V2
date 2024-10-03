@@ -21,7 +21,6 @@ export class InappNotificationService implements CronServiceInterface {
   private readonly dbService: DatabaseService;
   private readonly chainService: ChainService;
   private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({ count: 0 });
-  private notificationsSubject = new BehaviorSubject<NotificationInfo[]>([]);
 
   constructor (dbService: DatabaseService, chainService: ChainService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
@@ -109,22 +108,6 @@ export class InappNotificationService implements CronServiceInterface {
     return this.unreadNotificationCountSubject.getValue();
   }
 
-  public async updateNotificationsSubject () {
-    const notifications = await this.dbService.getAllNotifications();
-
-    this.notificationsSubject.next(notifications);
-  }
-
-  public subscribeNotifications (callback: (data: NotificationInfo[]) => void) {
-    return this.notificationsSubject.subscribe({
-      next: callback
-    });
-  }
-
-  public getNotifications () {
-    return this.notificationsSubject.getValue();
-  }
-
   public async getNotificationsByParams (params: GetNotificationParams) {
     return await this.dbService.getNotificationsByParams(params);
   }
@@ -147,9 +130,6 @@ export class InappNotificationService implements CronServiceInterface {
     clearTimeout(this.refreshListenNotificationTimeout);
 
     this.updateUnreadNotificationCountSubject()
-      .then().catch((e) => console.error(e));
-
-    this.updateNotificationsSubject()
       .then().catch((e) => console.error(e));
 
     this.refreshListenNotificationTimeout = setTimeout(this.listenLastestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);

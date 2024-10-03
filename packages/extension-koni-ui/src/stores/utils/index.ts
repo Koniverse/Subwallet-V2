@@ -5,7 +5,6 @@ import { _AssetRef, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet
 import { AddressBookInfo, AssetSetting, CampaignBanner, ChainStakingMetadata, ConfirmationsQueue, ConfirmationsQueueTon, CrowdloanJson, KeyringState, MantaPayConfig, MantaPaySyncState, NftCollection, NftJson, NominatorMetadata, PriceJson, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, TransactionHistoryItem, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountsContext, AuthorizeRequest, ConfirmationRequestBase, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
-import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
@@ -509,10 +508,4 @@ export const updateUnreadNotificationCount = (data: GetNotificationCountResult) 
 };
 
 export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappNotification.subscribeUnreadNotificationCount)', null, updateUnreadNotificationCount, updateUnreadNotificationCount);
-
-export const updateNotifications = (data: NotificationInfo[]) => {
-  store.dispatch({ type: 'notification/updateNotifications', payload: data });
-};
-
-export const subscribeNotifications = lazySubscribeMessage('pri(inappNotification.subscribeNotifications)', null, updateNotifications, updateNotifications);
 /* Notification service */
