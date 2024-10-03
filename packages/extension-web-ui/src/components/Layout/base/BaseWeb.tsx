@@ -26,6 +26,7 @@ export type HeaderItemType = {
   label: string;
   value: string;
   icon: SwIconProps;
+  disabled: boolean;
 };
 type Props = LayoutBaseWebProps & ThemeProps;
 const StyledLayout = styled('div')<ThemeProps>(({ theme: { extendToken, token } }: ThemeProps) => {
@@ -199,7 +200,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: false
       },
       {
         label: t('Wormhole'),
@@ -215,7 +217,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: true
       },
       {
         label: t('LayerZero'),
@@ -231,7 +234,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: true
       }
     ];
   }, [t]);
@@ -252,7 +256,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: false
       },
       {
         label: t('Klaster'),
@@ -268,7 +273,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: false
       },
       {
         label: t('Near'),
@@ -284,7 +290,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: true
       },
       {
         label: t('Polygon'),
@@ -300,7 +307,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: true
       },
       {
         label: t('Arcana'),
@@ -316,7 +324,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: true
       },
       {
         label: t('Orby'),
@@ -332,7 +341,8 @@ const Component = ({ children, className }: Props) => {
               />
             </>
           )
-        }
+        },
+        disabled: true
       }
     ];
   }, [t]);
@@ -392,6 +402,7 @@ const Component = ({ children, className }: Props) => {
           {LEFT_BLOCK_DATA_LIST.map((item) => (
             <BlockHeaderItem
               className={'side-menu-item'}
+              disabled={item.disabled}
               icon={item.icon}
               isActivated={selectedHeaderItem?.left === item.value}
               key={item.value}
@@ -406,6 +417,7 @@ const Component = ({ children, className }: Props) => {
           {RIGHT_BLOCK_DATA_LIST.map((item) => (
             <BlockHeaderItem
               className={'side-menu-item'}
+              disabled={item.disabled}
               icon={item.icon}
               isActivated={selectedHeaderItem?.right === item.value}
               key={item.value}

@@ -11,17 +11,23 @@ import styled from 'styled-components';
 type Props = HeaderItemType & ThemeProps & {
   isActivated: boolean;
   onClick: (key: string) => void;
+  disabled: boolean
 };
 
-function Component ({ className = '', icon, isActivated, label, onClick, value }: Props): React.ReactElement<Props> {
+function Component ({ className = '', disabled, icon, isActivated, label, onClick, value }: Props): React.ReactElement<Props> {
   const _onClick = useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
     onClick(value);
-  }, [value, onClick]);
+  }, [value, onClick, disabled]);
 
   return (
     <div
       className={CN(className, {
-        '-activated': isActivated
+        '-activated': isActivated,
+        '-disabled': disabled
       })}
       onClick={_onClick}
       tabIndex={-1}
@@ -112,6 +118,11 @@ export const BlockHeaderItem = styled(Component)<Props>(({ theme: { token } }: P
       '.__label': {
         color: token.colorTextLight1
       }
+    },
+
+    '&.-disabled': {
+      opacity: token.opacityDisable,
+      cursor: 'not-allowed'
     }
   });
 });
