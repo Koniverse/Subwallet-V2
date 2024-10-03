@@ -62,7 +62,8 @@ function Component ({ accountProxy, className }: Props) {
       setTimeout(() => {
         navigate(`/accounts/detail/${accountProxy.id}`, {
           state: {
-            requestViewDerivedAccounts: false
+            requestViewDerivedAccounts: false,
+            requestViewDerivedAccountDetails: true
           } as AccountDetailParam
         });
       }, 100);

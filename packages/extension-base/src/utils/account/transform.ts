@@ -479,7 +479,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
       accounts: [{ ...account, proxyId: address }],
       chainTypes: [account.chainType],
       parentId: account.parentAddress,
-      suri: account.suri,
+      suri: account.derivationPath || account.suri,
       tokenTypes: account.tokenTypes,
       accountActions: []
     };
