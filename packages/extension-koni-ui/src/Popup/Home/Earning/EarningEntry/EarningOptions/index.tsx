@@ -15,7 +15,7 @@ import { useFilterModal, useGetBannerByScreen, useGroupYieldPosition, useHandleC
 import { getBalanceValue } from '@subwallet/extension-koni-ui/hooks/screen/home/useAccountBalance';
 import { ChainConnectionWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { EarningEntryView, EarningPoolsParam, ThemeProps, YieldGroupInfo } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll, isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { FadersHorizontal, Vault } from 'phosphor-react';
@@ -70,7 +70,7 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
   const { poolInfoMap } = useSelector((state) => state.earning);
   const assetRegistry = useSelector((state) => state.assetRegistry.assetRegistry);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy } = useSelector((state) => state.accountState);
   const { accountBalance: { tokenBalanceMap } } = useContext(HomeContext);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
   const isShowBalance = useSelector((state) => state.settings.isShowBalance);
@@ -130,11 +130,11 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
         ...DEFAULT_EARN_PARAMS,
         slug,
         chain,
-        from: currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : ''
+        fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
       });
       navigate('/transaction/earn');
     },
-    [currentAccount?.address, navigate, setEarnStorage]
+    [currentAccountProxy, navigate, setEarnStorage]
   );
 
   const onConnectChainSuccess = useCallback(() => {

@@ -3,8 +3,8 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { StakingType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _getSubstrateGenesisHash, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { ALL_KEY } from '@subwallet/extension-web-ui/constants/common';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils';
 

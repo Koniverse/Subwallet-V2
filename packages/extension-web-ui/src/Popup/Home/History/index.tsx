@@ -3,9 +3,9 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicStatus, ExtrinsicType, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { YIELD_EXTRINSIC_TYPES } from '@subwallet/extension-base/koni/api/yield/helper/utils';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { quickFormatAddressToCompare } from '@subwallet/extension-base/utils';
 import { AccountSelector, BasicInputEvent, ChainSelector, FilterModal, HistoryItem, Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-web-ui/components/FilterTabs';

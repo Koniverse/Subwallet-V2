@@ -274,8 +274,8 @@ export const router = createHashRouter([
           ConnectPolkadotVault.generateRouterObject('connect-polkadot-vault'),
           ConnectKeystone.generateRouterObject('connect-keystone'),
           ConnectLedger.generateRouterObject('connect-ledger'),
-          AccountDetail.generateRouterObject('detail/:accountAddress'),
-          AccountExport.generateRouterObject('export/:accountAddress'),
+          AccountDetail.generateRouterObject('detail/:accountProxyId'),
+          AccountExport.generateRouterObject('export/:accountProxyId'),
           ExportAllDone.generateRouterObject('export-all-done')
         ]
       },

@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ConfirmationDefinitions, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ConfirmationDefinitions, ConfirmationDefinitionsTon, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { SigningRequest } from '@subwallet/extension-base/background/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { SwapTxData } from '@subwallet/extension-base/types/swap';
 import { AlertBox } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import TonSignArea from '@subwallet/extension-koni-ui/Popup/Confirmations/parts/Sign/Ton';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ConfirmationQueueItem } from '@subwallet/extension-koni-ui/stores/base/RequestState';
 import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -138,7 +139,6 @@ const Component: React.FC<Props> = (props: Props) => {
       {
         type === 'signingRequest' && (
           <SubstrateSignArea
-            account={(item as SigningRequest).account}
             extrinsicType={transaction.extrinsicType}
             id={item.id}
             isInternal={item.isInternal}
@@ -153,6 +153,17 @@ const Component: React.FC<Props> = (props: Props) => {
             extrinsicType={transaction.extrinsicType}
             id={item.id}
             payload={(item as ConfirmationDefinitions['evmSendTransactionRequest' | 'evmWatchTransactionRequest'][0])}
+            txExpirationTime={txExpirationTime}
+            type={type}
+          />
+        )
+      }
+      {
+        (type === 'tonSendTransactionRequest' || type === 'tonWatchTransactionRequest') && (
+          <TonSignArea
+            extrinsicType={transaction.extrinsicType}
+            id={item.id}
+            payload={(item as ConfirmationDefinitionsTon['tonSendTransactionRequest' | 'tonWatchTransactionRequest'][0])}
             txExpirationTime={txExpirationTime}
             type={type}
           />

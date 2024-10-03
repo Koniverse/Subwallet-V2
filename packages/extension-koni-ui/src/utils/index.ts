@@ -1,17 +1,18 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainLogoMap } from '@subwallet/chain-list';
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, AccountWithChildren } from '@subwallet/extension-base/background/types';
+import { AccountWithChildren } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getChainSubstrateAddressPrefix, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson, AccountSignMode } from '@subwallet/extension-base/types';
 import { Recoded } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils/account/accountAll';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
+import { decodeAddress } from '@subwallet/keyring';
 
-import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
 
 import { findAccountByAddress } from './account/account';
@@ -42,7 +43,10 @@ export const defaultRecoded: Recoded = { account: null, formatted: null, prefix:
 
 export const accountAllRecoded: Recoded = {
   account: {
-    address: ALL_ACCOUNT_KEY
+    address: ALL_ACCOUNT_KEY,
+    accountActions: [],
+    transactionActions: [],
+    signMode: AccountSignMode.ALL_ACCOUNT
   },
   formatted: ALL_ACCOUNT_KEY,
   prefix: 42,
@@ -80,10 +84,6 @@ export const NFT_GRID_HEIGHT_THRESHOLD = 600;
 export const NFT_HEADER_HEIGHT = 202;
 
 export const NFT_PER_ROW = 3;
-
-export function getLogoByNetworkKey (networkKey: string, defaultLogo = 'default'): string {
-  return ChainLogoMap[networkKey] || ChainLogoMap[defaultLogo] || ChainLogoMap.default;
-}
 
 export const subscanByNetworkKey: Record<string, string> = {
   acala: 'https://acala.subscan.io',
@@ -230,4 +230,5 @@ export * from './scanner';
 export * from './sort';
 export * from './transaction';
 export * from './walletConnect';
+export * from './accountProxy';
 // export * from './handleRemindBackupTime.ts'; This will load in create view => load direct file to get better performance

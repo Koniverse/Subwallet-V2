@@ -2,15 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountChainType } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { ALL_STAKING_ACTIONS, isLedgerCapable, isProductionMode, ledgerIncompatible } from '@subwallet/extension-koni-ui/constants';
-import { BLOCK_ACTION_LEDGER_NETWORKS, PredefinedLedgerNetwork } from '@subwallet/extension-koni-ui/constants/ledger';
+// TODO: Use AccountSignMode from the background for consistency.
 import { AccountSignMode } from '@subwallet/extension-koni-ui/types';
-import { getSignMode } from '@subwallet/extension-koni-ui/utils';
 import { useCallback } from 'react';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { useNotification, useTranslation } from '../common';
 import useGetAccountByAddress from './useGetAccountByAddress';
@@ -21,9 +18,7 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
 
   const account = useGetAccountByAddress(address);
 
-  const getAccountTypeTitle = useCallback((account: AccountJson): string => {
-    const signMode = getSignMode(account);
-
+  const getAccountTypeTitle = useCallback((signMode: AccountSignMode): string => {
     switch (signMode) {
       case AccountSignMode.LEGACY_LEDGER:
       case AccountSignMode.GENERIC_LEDGER:
@@ -51,33 +46,39 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
           duration: 1.5
         });
       } else {
-        const mode = getSignMode(account);
+        const mode = account.signMode;
         let block = false;
-        let accountTitle = getAccountTypeTitle(account);
+        let accountTitle = getAccountTypeTitle(mode);
         let defaultMessage = detectTranslate('The account you are using is {{accountTitle}}, you cannot use this feature with it');
-        const isEthereumAccount = isEthereumAddress(account.address);
-
-        switch (mode) {
-          case AccountSignMode.READ_ONLY:
-          case AccountSignMode.UNKNOWN:
-            block = true;
-            break;
-          case AccountSignMode.ALL_ACCOUNT:
-            if (blockAllAccount) {
-              block = true;
-            }
-
-            break;
-        }
 
         if (ALL_STAKING_ACTIONS.includes(action)) {
           defaultMessage = detectTranslate('You are using a {{accountTitle}}. Earning is not supported with this account type');
         }
 
-        if (mode === AccountSignMode.QR) {
-          if (isEthereumAccount && isProductionMode) {
-            accountTitle = t('EVM QR signer account');
-            block = true;
+        if (!account.transactionActions.includes(action) || (mode === AccountSignMode.QR && account.chainType === 'ethereum' && isProductionMode)) {
+          block = true;
+
+          switch (mode) {
+            case AccountSignMode.ALL_ACCOUNT:
+              if (!blockAllAccount) {
+                block = false;
+              }
+
+              break;
+
+            case AccountSignMode.QR:
+              accountTitle = t('EVM QR signer account');
+              break;
+
+            case AccountSignMode.LEGACY_LEDGER:
+            case AccountSignMode.GENERIC_LEDGER:
+              if (account.chainType === AccountChainType.ETHEREUM) {
+                accountTitle = t('Ledger - EVM account');
+              } else if (account.chainType === AccountChainType.SUBSTRATE) {
+                accountTitle = t('Ledger - Substrate account');
+              }
+
+              break;
           }
         }
 
@@ -90,38 +91,6 @@ const usePreCheckAction = (address?: string, blockAllAccount = true, message?: s
             });
 
             return;
-          }
-
-          const networkBlock: string[] = BLOCK_ACTION_LEDGER_NETWORKS[action] || [];
-
-          if (networkBlock.includes('*')) { // Block all networks
-            block = true;
-          } else if ((networkBlock.includes('evm') && isEthereumAccount)) { // Block evm network
-            accountTitle = t('Ledger - EVM account');
-            block = true;
-          } else if ((networkBlock.includes('substrate') && !isEthereumAccount)) { // Block substrate network
-            accountTitle = t('Ledger - Substrate account');
-            block = true;
-          } else if ((networkBlock.includes('substrate_legacy') && !isEthereumAccount)) { // Block substrate legacy network
-            accountTitle = t('Ledger - Substrate account');
-            block = !account.isGeneric;
-          } else {
-            const ledgerNetwork = PredefinedLedgerNetwork.find((network) => network.genesisHash === account.genesisHash);
-            const networkName = ledgerNetwork?.accountName || 'Unknown';
-            const slug = ledgerNetwork?.slug || '';
-
-            if (networkBlock.includes(slug)) {
-              notify({
-                message: t(
-                  'Ledger does not support this action with {{network}}',
-                  { replace: { network: networkName } }
-                ),
-                type: 'info',
-                duration: 8
-              });
-
-              return;
-            }
           }
         }
 

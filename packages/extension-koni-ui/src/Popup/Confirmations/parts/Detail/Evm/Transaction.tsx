@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { EvmSendTransactionRequest, EvmTransactionArg } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import MetaInfo from '@subwallet/extension-koni-ui/components/MetaInfo/MetaInfo';
 import useGetAccountByAddress from '@subwallet/extension-koni-ui/hooks/account/useGetAccountByAddress';
 import useGetChainInfoByChainId from '@subwallet/extension-koni-ui/hooks/chain/useGetChainInfoByChainId';
@@ -14,7 +13,8 @@ import styled from 'styled-components';
 
 interface Props extends ThemeProps {
   request: EvmSendTransactionRequest;
-  account: AccountJson;
+  address: string;
+  accountName?: string;
 }
 
 const convertToBigN = (num: EvmSendTransactionRequest['value']): string | number | undefined => {
@@ -26,7 +26,7 @@ const convertToBigN = (num: EvmSendTransactionRequest['value']): string | number
 };
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { account, className, request } = props;
+  const { accountName, address, className, request } = props;
   const { chainId } = request;
 
   const recipient = useGetAccountByAddress(request.to);
@@ -115,9 +115,9 @@ const Component: React.FC<Props> = (props: Props) => {
         recipientAddress={recipient?.address || request.to || ''}
         recipientLabel={t('To')}
         recipientName={recipient?.name || ''}
-        senderAddress={account.address}
+        senderAddress={address}
         senderLabel={t('From')}
-        senderName={account.name}
+        senderName={accountName || ''}
       />
       {
         (!request.isToContract || amount !== 0) &&

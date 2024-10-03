@@ -94,14 +94,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         if (account.address === result.content) {
           setReformatAddress('');
 
-          return Promise.reject(t('Account already exists'));
+          return Promise.reject(t('Account name already in use'));
         }
       }
     } else {
       setReformatAddress('');
 
       if (value !== '') {
-        return Promise.reject(t('This is not an address'));
+        return Promise.reject(t('Invalid address'));
       }
     }
 

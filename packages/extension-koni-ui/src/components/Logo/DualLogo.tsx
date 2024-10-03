@@ -33,13 +33,19 @@ const defaultLogo = <Logo2D />;
 const Component = ({ className, leftLogo = defaultLogo, linkIcon = defaultLinkIcon, rightLogo = defaultLogo, sizeSquircleBorder, innerSize }: Props) => {
   return (
     <div className={CN(className, 'dual-logo-container')}>
-      <LogoWithSquircleBorder size={sizeSquircleBorder} innerSize={innerSize}>
+      <LogoWithSquircleBorder
+        innerSize={innerSize}
+        size={sizeSquircleBorder}
+      >
         {leftLogo}
       </LogoWithSquircleBorder>
       <div className='link-icon'>
         {linkIcon}
       </div>
-      <LogoWithSquircleBorder size={sizeSquircleBorder} innerSize={innerSize}>
+      <LogoWithSquircleBorder
+        innerSize={innerSize}
+        size={sizeSquircleBorder}
+      >
         {rightLogo}
       </LogoWithSquircleBorder>
     </div>
