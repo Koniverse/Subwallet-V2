@@ -631,14 +631,6 @@ export default class DatabaseService {
     return this.stores.inappNotification.markAllRead(address);
   }
 
-  public markRead (notification: NotificationInfo) {
-    return this.stores.inappNotification.markRead(notification);
-  }
-
-  public markUnread (notification: NotificationInfo) {
-    return this.stores.inappNotification.markUnread(notification);
-  }
-
   public changeReadStatus (notification: NotificationInfo) {
     return this.stores.inappNotification.changeReadStatus(notification);
   }

@@ -2252,8 +2252,6 @@ export interface KoniRequestSignatures {
   'pri(inappNotification.subscribeNotifications)': [null, NotificationInfo[], NotificationInfo[]];
   'pri(inappNotification.subscribeUnreadNotificationCount)': [null, GetNotificationCountResult, GetNotificationCountResult];
   'pri(inappNotification.markAllReadNotification)': [string, null];
-  'pri(inappNotification.markReadNotification)': [NotificationInfo, null];
-  'pri(inappNotification.markUnreadNotification)': [NotificationInfo, null];
   'pri(inappNotification.changeReadNotificationStatus)': [NotificationInfo, null];
   'pri(inappNotification.getInappNotifications)': [GetNotificationParams, NotificationInfo[]];
   /* Notification Service */

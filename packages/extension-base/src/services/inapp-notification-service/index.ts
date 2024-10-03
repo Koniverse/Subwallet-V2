@@ -7,9 +7,10 @@ import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/s
 import { NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { NotificationActionType, NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
-import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
+import { UnstakingStatus } from '@subwallet/extension-base/types';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { BehaviorSubject } from 'rxjs';
+import { getWithdrawNotificationDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
@@ -34,14 +35,6 @@ export class InappNotificationService implements CronServiceInterface {
 
   async markAllRead (address: string) {
     await this.dbService.markAllRead(address);
-  }
-
-  async markRead (notification: NotificationInfo) {
-    await this.dbService.markRead(notification);
-  }
-
-  async markUnread (notification: NotificationInfo) {
-    await this.dbService.markUnread(notification);
   }
 
   async changeReadStatus (notification: NotificationInfo) {
@@ -74,7 +67,7 @@ export class InappNotificationService implements CronServiceInterface {
           allWithdrawNotifications.push({
             id: `${notificationActionType}___${stakingSlug}___${timestamp}`,
             title: NotificationTitleMap[notificationActionType],
-            description: this.getWithdrawNotificationDescription(unstaking.claimable, symbol, stakingType), // divide decimal
+            description: getWithdrawNotificationDescription(unstaking.claimable, symbol, stakingType), // divide decimal
             address: address,
             time: timestamp,
             extrinsicType: ExtrinsicType.STAKING_WITHDRAW,
@@ -90,36 +83,6 @@ export class InappNotificationService implements CronServiceInterface {
     }
 
     return allWithdrawNotifications;
-  }
-
-  getWithdrawNotificationDescription (amount: string, symbol: string, stakingType: YieldPoolType) {
-    return `You has ${amount} ${symbol} ${stakingType} to withdraw`;
-  }
-
-  createLastestNotifications () {
-    clearTimeout(this.refreshGetNotificationTimeout);
-
-    this.createWithdrawNotifications()
-      .then(async (notifications) => {
-        await this.dbService.upsertNotifications(notifications);
-      })
-      .catch((e) => {
-        console.error(e);
-      });
-
-    this.refreshGetNotificationTimeout = setTimeout(this.createLastestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
-  }
-
-  listenLastestNotifications () {
-    clearTimeout(this.refreshListenNotificationTimeout);
-
-    this.updateUnreadNotificationCountSubject()
-      .then().catch((e) => console.error(e));
-
-    this.updateNotificationsSubject()
-      .then().catch((e) => console.error(e));
-
-    this.refreshListenNotificationTimeout = setTimeout(this.listenLastestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);
   }
 
   private async updateUnreadNotificationCountSubject () {
@@ -156,6 +119,32 @@ export class InappNotificationService implements CronServiceInterface {
 
   public async getNotificationsByParams (params: GetNotificationParams) {
     return await this.dbService.getNotificationsByParams(params);
+  }
+
+  createLastestNotifications () {
+    clearTimeout(this.refreshGetNotificationTimeout);
+
+    this.createWithdrawNotifications()
+      .then(async (notifications) => {
+        await this.dbService.upsertNotifications(notifications);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+
+    this.refreshGetNotificationTimeout = setTimeout(this.createLastestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
+  }
+
+  listenLastestNotifications () {
+    clearTimeout(this.refreshListenNotificationTimeout);
+
+    this.updateUnreadNotificationCountSubject()
+      .then().catch((e) => console.error(e));
+
+    this.updateNotificationsSubject()
+      .then().catch((e) => console.error(e));
+
+    this.refreshListenNotificationTimeout = setTimeout(this.listenLastestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);
   }
 
   async start (): Promise<void> {
