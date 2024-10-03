@@ -157,12 +157,6 @@ const Component: React.FC<Props> = (props: Props) => {
 
 const EvmTransactionDetail = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-    '.__chain-item, .__status-item, .__account-item': {
-      display: 'flex',
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: token.sizeXS
-    },
 
     '.__label': {
       fontFamily: token.fontFamily,
@@ -190,11 +184,7 @@ const EvmTransactionDetail = styled(Component)<Props>(({ theme: { token } }: Pro
     '.meta-info-transfer.-no-account-name-item .__account-item ': {
       minHeight: 44,
       display: 'flex',
-      alignItems: 'flex-start',
-
-      '.__account-name': {
-        marginLeft: 0
-      }
+      alignItems: 'flex-start'
     },
 
     details: {
