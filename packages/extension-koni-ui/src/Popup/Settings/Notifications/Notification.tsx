@@ -42,8 +42,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { notificationSetup } = useSelector((state: RootState) => state.settings);
   const enableNotification = notificationSetup.isEnabled;
   const [notifications, setNotifications] = useState<NotificationInfo[]>([]);
-  const { currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);
-  const [currentAddress] = useState<string | undefined>(currentAccount?.address);
+  const { currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const [currentAddress] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {

@@ -16,10 +16,12 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
   }
 
   async getNotificationsByParams (params: GetNotificationParams) {
+    // todo: improve this function for read
     const { address, notificationTab } = params;
     const isAllAccount = address === ALL_ACCOUNT_KEY;
+    const isTabAll = notificationTab === NotificationTab.ALL;
 
-    const getIsReadFromParams = (notificationTab: NotificationTab) => {
+    const getIsTabRead = (notificationTab: NotificationTab) => {
       if (notificationTab === NotificationTab.UNREAD) {
         return false;
       }
@@ -31,15 +33,15 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
       return undefined;
     };
 
-    if (isAllAccount && notificationTab === NotificationTab.ALL) {
+    if (isTabAll && isAllAccount) {
       return this.getAll();
     }
 
     const filteredTable = this.table.filter((item) => {
       const matchesAddress = item.address === address;
-      const matchesReadStatus = item.isRead === getIsReadFromParams(notificationTab);
+      const matchesReadStatus = item.isRead === getIsTabRead(notificationTab);
 
-      if (notificationTab === NotificationTab.ALL) {
+      if (isTabAll) {
         return matchesAddress;
       }
 
@@ -59,9 +61,7 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
 
   markAllRead (address: string) {
     if (address === ALL_ACCOUNT_KEY) {
-      return this.table.where('address')
-        .equalsIgnoreCase(address)
-        .modify({ isRead: true });
+      return this.table.toCollection().modify({ isRead: true });
     }
 
     return this.table.where('address')
