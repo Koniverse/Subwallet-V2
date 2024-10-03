@@ -72,12 +72,13 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
   const { token } = theme as Theme;
 
   return {
-    background: token.colorBgSecondary,
+    background: token.colorBgInput,
     padding: token.paddingSM,
+    minHeight: 52,
     paddingRight: token.paddingSM,
     borderRadius: token.borderRadiusLG,
     alignItems: 'center',
-    display: 'flex !important',
+    display: 'flex',
     cursor: 'pointer',
     transition: `background ${token.motionDurationMid} ease-in-out`,
     gap: token.sizeSM,
@@ -98,7 +99,7 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
       },
 
       '.__account-name-item': {
-        width: '150px',
+        maxWidth: '150px',
         overflow: 'hidden',
         textWrap: 'nowrap',
         textOverflow: 'ellipsis'
@@ -119,16 +120,6 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
     '.account-item-address-wrapper': {
       color: token.colorTextDescription,
       whiteSpace: 'nowrap'
-    },
-
-    '&:hover': {
-      background: token.colorBgInput,
-      '.__item-actions-overlay': {
-        opacity: 0
-      },
-      '.-show-on-hover': {
-        opacity: 1
-      }
     }
   };
 });

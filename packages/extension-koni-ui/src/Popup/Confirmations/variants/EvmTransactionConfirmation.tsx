@@ -143,7 +143,7 @@ const EvmTransactionConfirmation = styled(Component)<Props>(({ theme: { token } 
     textAlign: 'left'
   },
 
-  '.account-info-item': {
+  '.account-info-item, .to-account': {
     '.__account-item-address': {
       textAlign: 'right'
     }

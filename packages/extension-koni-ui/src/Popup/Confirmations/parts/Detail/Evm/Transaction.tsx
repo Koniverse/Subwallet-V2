@@ -7,6 +7,7 @@ import useGetAccountByAddress from '@subwallet/extension-koni-ui/hooks/account/u
 import useGetChainInfoByChainId from '@subwallet/extension-koni-ui/hooks/chain/useGetChainInfoByChainId';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import BigN from 'bignumber.js';
+import CN from 'classnames';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -112,6 +113,9 @@ const Component: React.FC<Props> = (props: Props) => {
             : null
       }
       <MetaInfo.Transfer
+        className={CN('meta-info-transfer', {
+          '-no-account-name-item': !recipient?.name || !accountName
+        })}
         recipientAddress={recipient?.address || request.to || ''}
         recipientLabel={t('To')}
         recipientName={recipient?.name || ''}
@@ -181,6 +185,12 @@ const EvmTransactionDetail = styled(Component)<Props>(({ theme: { token } }: Pro
           wordBreak: 'break-word'
         }
       }
+    },
+
+    '.meta-info-transfer.-no-account-name-item .__account-item ': {
+      minHeight: 44,
+      display: 'flex',
+      alignItems: 'flex-start'
     },
 
     details: {

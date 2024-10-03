@@ -90,6 +90,7 @@ const Component: React.FC<Props> = (props: Props) => {
       <AccountItemWithProxyAvatar
         account={item}
         accountName={item.name}
+        className={'__account-proxy-item'}
         isSelected={selected}
         key={item.address}
         onClick={onSelectAccount(item.address, false)}
@@ -147,7 +148,6 @@ const Component: React.FC<Props> = (props: Props) => {
                 >
                   <SwList.Section
                     className='account-list'
-                    displayRow
                     enableSearchInput={true}
                     list={availableAccounts}
                     ref={sectionRef}
@@ -180,6 +180,7 @@ const Component: React.FC<Props> = (props: Props) => {
                       <AccountItemWithProxyAvatar
                         account={item}
                         accountName={item.name}
+                        className={'__account-proxy-item'}
                         isSelected={selected}
                         key={item.address}
                         onClick={onSelectAccount(item.address, true)}
@@ -230,6 +231,21 @@ const WCAccountSelect = styled(Component)<Props>(({ theme: { token } }: Props) =
       '.__item-middle-part': {
         textAlign: 'start',
         fontSize: token.fontSize
+      }
+    },
+
+    '.__account-proxy-item': {
+      marginBottom: token.marginXS,
+      background: token.colorBgSecondary,
+
+      '&:hover': {
+        background: token.colorBgInput,
+        '.__item-actions-overlay': {
+          opacity: 0
+        },
+        '.-show-on-hover': {
+          opacity: 1
+        }
       }
     }
   };

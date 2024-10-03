@@ -132,6 +132,14 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         const numberAllowedAccountProxies = allowedIdProxies.size;
         const numberAllAccountProxiesCanConnect = idProxiesCanConnect.size;
 
+        if (numberAllAccountProxiesCanConnect === 0) {
+          setCanConnect(0);
+          setConnected(0);
+          setConnectionState(ConnectionStatement.NOT_CONNECTED);
+
+          return;
+        }
+
         setConnected(numberAllowedAccountProxies);
         setCanConnect(numberAllAccountProxiesCanConnect);
 
@@ -196,7 +204,9 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
     return (
       <div
-        className='selected-account'
+        className={CN('selected-account', {
+          'is-no-all-account': !isAccountAll(currentAccountProxy.id)
+        })}
         onClick={onOpenSelectAccountModal}
       >
         <AccountProxyBriefInfo accountProxy={currentAccountProxy} />
@@ -259,7 +269,6 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'row',
-      gap: token.sizeXS,
 
       '.ant-select-modal-input-container.ant-select-modal-input-border-round::before': {
         display: 'none'
@@ -355,6 +364,14 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       paddingLeft: 0,
       gap: 8,
       cursor: 'pointer'
+    },
+
+    '.selected-account.is-no-all-account': {
+      marginLeft: token.marginXXS,
+
+      '.account-name ': {
+        maxWidth: 165
+      }
     },
 
     '.connect-icon': {

@@ -285,7 +285,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
                   accountProxy={ap}
                   className={CN({
                     '-is-current': isCurrent
-                  })}
+                  }, '__account-proxy-connect-item')}
                   isSelected={ap.value}
                   key={ap.id}
                   onClick={handlerUpdateMap(ap, ap.value)}
@@ -359,7 +359,20 @@ export const ConnectWebsiteModal = styled(Component)<Props>(({ theme: { token } 
     '.__account-item-container': {
       display: 'flex',
       flexDirection: 'column',
-      gap: 4
+      gap: token.sizeXS,
+
+      '.__account-proxy-connect-item': {
+        minHeight: 52,
+
+        '.__item-middle-part': {
+          textWrap: 'nowrap',
+          textOverflow: 'ellipsis',
+          overflow: 'hidden',
+          fontWeight: 600,
+          fontSize: token.fontSizeHeading6,
+          lineHeight: token.lineHeightHeading6
+        }
+      }
     },
 
     '.account-item-with-name': {
