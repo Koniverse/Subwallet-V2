@@ -11,6 +11,7 @@ import { AccountRefStore } from '@subwallet/extension-base/stores';
 import { AccountMetadataData, AccountProxy, AccountProxyData, AccountProxyMap, AccountProxyStoreData, AccountProxyType, CurrentAccountInfo, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { addLazy, combineAccountsWithSubjectInfo, isAddressValidWithAuthType, isSameAddress, parseUnifiedSuriToDerivationPath } from '@subwallet/extension-base/utils';
 import { generateRandomString } from '@subwallet/extension-base/utils/getId';
+import { EthereumKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { BehaviorSubject, combineLatest, filter, first } from 'rxjs';
@@ -628,7 +629,16 @@ export class AccountState {
           metadata.parentAddress = _parentAddress;
           metadata.suri = _parentSuri;
           needUpdateSet.add(address);
-        } else if ('suri' in metadata && !('derivationPath' in metadata)) {
+        }
+
+        const hasSuri = 'suri' in metadata;
+        const lacksDerivationPath = !('derivationPath' in metadata);
+        const isEthereumType = EthereumKeypairTypes.includes(pair.type);
+        const isTonType = TonKeypairTypes.includes(pair.type);
+        const isSupportedType = isEthereumType || isTonType;
+
+        if (hasSuri && lacksDerivationPath && isSupportedType) {
+          metadata.derivationPath = parseUnifiedSuriToDerivationPath(metadata?.suri as string, pair.type);
           needUpdateSet.add(address);
         }
       }
@@ -636,11 +646,8 @@ export class AccountState {
 
     Array.from(needUpdateSet).forEach((address) => {
       const pair = pairMap[address];
-      const metadata = pair.meta;
 
-      metadata.derivationPath = parseUnifiedSuriToDerivationPath(metadata?.suri as string, pair.type);
-
-      keyring.saveAccountMeta(pair, metadata);
+      keyring.saveAccountMeta(pair, pair.meta);
     });
   }
 
