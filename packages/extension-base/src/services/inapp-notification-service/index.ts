@@ -4,25 +4,29 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_FETCH_NOTIFICATION_INTERVAL, CRON_LISTEN_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
+import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { NotificationActionType, NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { getWithdrawNotificationDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus } from '@subwallet/extension-base/types';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { formatNumber } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
-import { getWithdrawNotificationDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
   private refreshGetNotificationTimeout: NodeJS.Timeout | undefined;
   private refreshListenNotificationTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
+  private readonly chainService: ChainService;
   private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({ count: 0 });
   private notificationsSubject = new BehaviorSubject<NotificationInfo[]>([]);
 
-  constructor (dbService: DatabaseService) {
+  constructor (dbService: DatabaseService, chainService: ChainService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
     this.dbService = dbService;
+    this.chainService = chainService;
   }
 
   async getNotification (id: string) {
@@ -59,23 +63,27 @@ export class InappNotificationService implements CronServiceInterface {
       const stakingType = poolPosition.type;
       const stakingSlug = poolPosition.slug;
       const symbol = poolPosition.slug.split('___')[0];
-      const address = poolPosition.address;
       const timestamp = Date.now();
 
       for (const unstaking of poolPosition.unstakings) {
-        if (unstaking.status === UnstakingStatus.CLAIMABLE) {
+        const isClaimable = unstaking.status === UnstakingStatus.CLAIMABLE;
+        const claimableAmount = unstaking.claimable;
+        const decimal = this.chainService.getAssetBySlug(poolPosition.balanceToken).decimals || 0;
+        const amount = formatNumber(claimableAmount, decimal);
+
+        if (isClaimable) {
           allWithdrawNotifications.push({
             id: `${notificationActionType}___${stakingSlug}___${timestamp}`,
             title: NotificationTitleMap[notificationActionType],
-            description: getWithdrawNotificationDescription(unstaking.claimable, symbol, stakingType), // divide decimal
-            address: address,
+            description: getWithdrawNotificationDescription(amount, symbol, stakingType),
+            address: poolPosition.address,
             time: timestamp,
             extrinsicType: ExtrinsicType.STAKING_WITHDRAW,
             isRead: false,
-            actionType: NotificationActionType.WITHDRAW,
+            actionType: notificationActionType,
             metadata: {
-              stakingType: stakingType,
-              stakingSlug: stakingSlug
+              stakingType,
+              stakingSlug
             }
           });
         }
