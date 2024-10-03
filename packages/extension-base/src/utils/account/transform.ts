@@ -288,10 +288,10 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...NATIVE_STAKE_ACTIONS,
           ...POOL_STAKE_ACTIONS,
           ...EARN_VDOT_ACTIONS,
-          ...EARN_LDOT_ACTIONS,
-          ...EARN_SDOT_ACTIONS,
-          ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
+          // ...EARN_LDOT_ACTIONS,
+          // ...EARN_SDOT_ACTIONS,
+          // ...EARN_QDOT_ACTIONS,
           ...OTHER_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
@@ -324,17 +324,17 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
       result.push(...EARN_VDOT_ACTIONS, ...EARN_VMANTA_ACTIONS);
     }
 
-    if (specialNetwork === 'acala') {
-      result.push(...EARN_LDOT_ACTIONS);
-    }
+    // if (specialNetwork === 'acala') {
+    //   result.push(...EARN_LDOT_ACTIONS);
+    // }
 
-    if (specialNetwork === 'parallel') {
-      result.push(...EARN_SDOT_ACTIONS);
-    }
+    // if (specialNetwork === 'parallel') {
+    //   result.push(...EARN_SDOT_ACTIONS);
+    // }
 
-    if (specialNetwork === 'interlay') {
-      result.push(...EARN_QDOT_ACTIONS);
-    }
+    // if (specialNetwork === 'interlay') {
+    //   result.push(...EARN_QDOT_ACTIONS);
+    // }
 
     // Transfer XCM
     if (['polkadot', 'kusama', 'statemint', 'statemine'].includes(specialNetwork)) {
