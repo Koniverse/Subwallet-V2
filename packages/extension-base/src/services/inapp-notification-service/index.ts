@@ -16,7 +16,7 @@ export class InappNotificationService implements CronServiceInterface {
   private refreshGetNotificationTimeout: NodeJS.Timeout | undefined;
   private refreshListenNotificationTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
-  private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({count: 0});
+  private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({ count: 0 });
   private notificationsSubject = new BehaviorSubject<NotificationInfo[]>([]);
 
   constructor (dbService: DatabaseService) {
@@ -48,8 +48,13 @@ export class InappNotificationService implements CronServiceInterface {
     await this.dbService.changeReadStatus(notification);
   }
 
-  async getWithdrawNotifications () {
-    const NOTIFICATION_ACTION_TYPE = NotificationActionType.WITHDRAW;
+  // todo:
+  // createSendNotifications
+  // createReceiveNotifications
+  // createClaimNotifications
+
+  async createWithdrawNotifications () {
+    const notificationActionType = NotificationActionType.WITHDRAW;
     const allWithdrawNotifications: NotificationInfo[] = [];
     const poolPositions = await this.dbService.getYieldPositions();
 
@@ -58,7 +63,8 @@ export class InappNotificationService implements CronServiceInterface {
         continue;
       }
 
-      const STAKING_TYPE = poolPosition.type;
+      const stakingType = poolPosition.type;
+      const stakingSlug = poolPosition.slug;
       const symbol = poolPosition.slug.split('___')[0];
       const address = poolPosition.address;
       const timestamp = Date.now();
@@ -66,14 +72,18 @@ export class InappNotificationService implements CronServiceInterface {
       for (const unstaking of poolPosition.unstakings) {
         if (unstaking.status === UnstakingStatus.CLAIMABLE) {
           allWithdrawNotifications.push({
-            id: `${NOTIFICATION_ACTION_TYPE}___${STAKING_TYPE}___${timestamp}`,
-            title: NotificationTitleMap[NOTIFICATION_ACTION_TYPE],
-            description: this.getWithdrawNotificationDescription(unstaking.claimable, symbol, STAKING_TYPE), // divide decimal
+            id: `${notificationActionType}___${stakingSlug}___${timestamp}`,
+            title: NotificationTitleMap[notificationActionType],
+            description: this.getWithdrawNotificationDescription(unstaking.claimable, symbol, stakingType), // divide decimal
             address: address,
             time: timestamp,
             extrinsicType: ExtrinsicType.STAKING_WITHDRAW,
             isRead: false,
-            actionType: NotificationActionType.WITHDRAW
+            actionType: NotificationActionType.WITHDRAW,
+            metadata: {
+              stakingType: stakingType,
+              stakingSlug: stakingSlug
+            }
           });
         }
       }
@@ -89,7 +99,7 @@ export class InappNotificationService implements CronServiceInterface {
   createLastestNotifications () {
     clearTimeout(this.refreshGetNotificationTimeout);
 
-    this.getWithdrawNotifications()
+    this.createWithdrawNotifications()
       .then(async (notifications) => {
         await this.dbService.upsertNotifications(notifications);
       })
@@ -115,7 +125,7 @@ export class InappNotificationService implements CronServiceInterface {
   private async updateUnreadNotificationCountSubject () {
     const unreadNotificationCount = await this.dbService.getAllUnreadNotifications();
 
-    this.unreadNotificationCountSubject.next({count: unreadNotificationCount});
+    this.unreadNotificationCountSubject.next({ count: unreadNotificationCount });
   }
 
   public subscribeUnreadNotificationCount (callback: (data: GetNotificationCountResult) => void) {
@@ -125,7 +135,7 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   public getUnreadNotificationCount () {
-    return this.unreadNotificationCountSubject.getValue()
+    return this.unreadNotificationCountSubject.getValue();
   }
 
   public async updateNotificationsSubject () {

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { YieldPoolType } from '@subwallet/extension-base/types';
 
 export interface NotificationInfo {
   id: string,
@@ -12,7 +13,28 @@ export interface NotificationInfo {
   extrinsicType: ExtrinsicType,
   isRead: boolean,
   actionType: NotificationActionType,
-  // data: ActionTypeToMetadataMap[NotificationActionType]
+  metadata: ActionTypeToMetadataMap[NotificationActionType]
+}
+
+export interface ActionTypeToMetadataMap {
+  [NotificationActionType.SEND]: SendReceiveNotificationMetadata,
+  [NotificationActionType.RECEIVE]: SendReceiveNotificationMetadata
+  [NotificationActionType.WITHDRAW]: WithdrawClaimNotificationMetadata,
+  [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
+}
+
+interface SendReceiveNotificationMetadata {
+  chain: string,
+  from: string,
+  to: string,
+  extrinsicHash: string,
+  amount: bigint,
+  tokenSlug: string
+}
+
+interface WithdrawClaimNotificationMetadata {
+  stakingType: YieldPoolType,
+  stakingSlug: string
 }
 
 export enum NotificationTimePeriod {

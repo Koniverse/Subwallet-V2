@@ -137,6 +137,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         id={item.id}
         isRead={item.isRead}
         leftIcon={item.leftIcon}
+        metadata={item.metadata}
         onClick={onClickItem(item)}
         onClickMoreBtn={onClickMore(item)}
         time={item.time}
