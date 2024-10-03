@@ -1,5 +1,42 @@
 # CHANGELOG
 
+## 1.2.31
+Build date: Sep 28, 2024.
+
+Features & Update:
+- Block action online (#3635)
+- Update chain-list (#3680)
+  - Add XCM support for KSM between Bifrost KSM <> Kusama
+  - Update RPC for Cess Network
+- Add swap pairs for Hydration and ChainFlip (#3633, #3651)
+
+Bugs fixed:
+- Fix bug Do not show earning position for StellaSwap (#3647)
+- Fix bug Can't import JSON file containing Unified account (#3643)
+
+## 1.2.30
+Build date: Sep 20, 2024.
+
+Features & Update:
+- Add Chainflip broker (#3483)
+- Re-calculate max transferable for XCM native token (#3617)
+- Update chain-list (#3637)
+  - Add support for Tether's XAUt token
+  - Add support for BUNS token for PAH, Hydration
+  - Add support for Ternoa zkEVM + Testnet
+  - Update information for some chains (https://github.com/Koniverse/SubWallet-ChainList/issues/302)
+    - DOT <-> CFG
+    - CFG <-> USDT
+    - DOT <-> BNC
+    - BNC <-> USDT
+    - BNC <-> HDX
+  - Add support for new swap pairs on Hydration
+  - Hidden XCM on Pioneer
+
+Bugs fixed:
+- Fix bug not showing balance of VFT tokens (#3612)
+- Fix bug do not show balance (#3653)
+
 ## 1.2.29
 Build date: Sep 13, 2024.
 
