@@ -185,8 +185,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     );
   }, []);
 
-  const handleSwitchClick = useCallback(async () => {
-    await markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY);
+  const handleSwitchClick = useCallback(() => {
+    markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY)
+      .catch(console.error);
 
     getInappNotifications({
       address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,

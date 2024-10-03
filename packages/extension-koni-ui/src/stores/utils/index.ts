@@ -11,6 +11,7 @@ import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/ext
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { GetNotificationCountResult } from '@subwallet/extension-base/types/notification';
 import { SwapPair } from '@subwallet/extension-base/types/swap';
 import { addLazy, canDerive, fetchStaticData } from '@subwallet/extension-base/utils';
 import { lazySubscribeMessage } from '@subwallet/extension-koni-ui/messaging';
@@ -497,11 +498,11 @@ export const subscribeLedgerGenericAllowNetworks = lazySubscribeMessage('pri(led
 /* Ledger */
 
 /* Notification service */
-export const updateUnreadNotiCount = (data: number) => {
+export const updateUnreadNotificationCount = (data: GetNotificationCountResult) => {
   store.dispatch({ type: 'notification/updateUnreadNotificationCount', payload: data });
 };
 
-export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappNotification.subscribeUnreadNotificationCount)', null, updateUnreadNotiCount, updateUnreadNotiCount);
+export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappNotification.subscribeUnreadNotificationCount)', null, updateUnreadNotificationCount, updateUnreadNotificationCount);
 
 export const updateNotifications = (data: NotificationInfo[]) => {
   store.dispatch({ type: 'notification/updateNotifications', payload: data });

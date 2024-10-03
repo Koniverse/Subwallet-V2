@@ -8,14 +8,14 @@ import { NotificationTitleMap } from '@subwallet/extension-base/services/inapp-n
 import { NotificationInfo, NotificationTransactionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { BehaviorSubject } from 'rxjs';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
   private refreshTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
-  private unreadNotificationCountSubject = new BehaviorSubject<number>(0);
+  private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({count: 0});
   private notificationsSubject = new BehaviorSubject<NotificationInfo[]>([]);
 
   constructor (dbService: DatabaseService) {
@@ -108,17 +108,17 @@ export class InappNotificationService implements CronServiceInterface {
   private async updateUnreadNotificationCountSubject () {
     const unreadNotificationCount = await this.dbService.getAllUnreadNotifications();
 
-    this.unreadNotificationCountSubject.next(unreadNotificationCount);
+    this.unreadNotificationCountSubject.next({count: unreadNotificationCount});
   }
 
-  public subscribeUnreadNotificationCount (callback: (data: number) => void) {
+  public subscribeUnreadNotificationCount (callback: (data: GetNotificationCountResult) => void) {
     return this.unreadNotificationCountSubject.subscribe({
       next: callback
     });
   }
 
   public getUnreadNotificationCount () {
-    return this.unreadNotificationCountSubject.getValue();
+    return this.unreadNotificationCountSubject.getValue()
   }
 
   public async updateNotificationsSubject () {

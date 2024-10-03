@@ -44,7 +44,7 @@ import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, Wall
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
@@ -4554,11 +4554,11 @@ export default class KoniExtension {
     return this.#koniState.inappNotificationService.getNotifications();
   }
 
-  private subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): number {
+  private subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): GetNotificationCountResult {
     const cb = createSubscription<'pri(inappNotification.subscribeUnreadNotificationCount)'>(id, port);
     let ready = false;
 
-    const callback = (rs: number) => {
+    const callback = (rs: GetNotificationCountResult) => {
       if (ready) {
         cb(rs);
       }

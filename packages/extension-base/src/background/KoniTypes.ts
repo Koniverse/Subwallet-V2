@@ -14,7 +14,7 @@ import { CrowdloanContributionsResponse } from '@subwallet/extension-base/servic
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseEarlyValidateYield, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import {GetNotificationCountResult, GetNotificationParams} from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapErrorType, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
@@ -2449,7 +2449,7 @@ export interface KoniRequestSignatures {
 
   /* Notification Service */
   'pri(inappNotification.subscribeNotifications)': [null, NotificationInfo[], NotificationInfo[]];
-  'pri(inappNotification.subscribeUnreadNotificationCount)': [null, number, number];
+  'pri(inappNotification.subscribeUnreadNotificationCount)': [null, GetNotificationCountResult, GetNotificationCountResult];
   'pri(inappNotification.markAllReadNotification)': [string, null];
   'pri(inappNotification.markReadNotification)': [NotificationInfo, null];
   'pri(inappNotification.markUnreadNotification)': [NotificationInfo, null];

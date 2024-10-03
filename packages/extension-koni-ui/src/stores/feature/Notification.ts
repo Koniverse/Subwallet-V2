@@ -3,6 +3,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { GetNotificationCountResult } from '@subwallet/extension-base/types/notification';
 import { NotificationStore, ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 
 const initialState: NotificationStore = {
@@ -24,10 +25,10 @@ const notificationSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updateUnreadNotificationCount (state, action: PayloadAction<number>): NotificationStore {
+    updateUnreadNotificationCount (state, action: PayloadAction<GetNotificationCountResult>): NotificationStore {
       return {
         ...state,
-        unreadNotificationCount: action.payload,
+        unreadNotificationCount: action.payload.count,
         reduxStatus: ReduxStatus.READY
       };
     }

@@ -73,9 +73,10 @@ function Component (props: Props): React.ReactElement<Props> {
     return sampleData;
   }, [notificationItem.extrinsicType, token.geekblue]);
 
-  const onClickReadButton = useCallback(async () => {
+  const onClickReadButton = useCallback(() => {
     setReadNotification(!readNotification);
-    await changeReadNotificationStatus(notificationItem);
+    changeReadNotificationStatus(notificationItem)
+      .catch(console.error);
   }, [notificationItem, readNotification]);
 
   return (
