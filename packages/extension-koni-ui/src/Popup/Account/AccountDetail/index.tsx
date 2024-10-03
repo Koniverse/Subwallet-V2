@@ -8,6 +8,7 @@ import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/comp
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useDefaultNavigate, useGetAccountProxyById, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import { editAccount, forgetAccount, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
 import { convertFieldToObject } from '@subwallet/extension-koni-ui/utils/form/form';
@@ -17,6 +18,7 @@ import { CircleNotch, Export, FloppyDiskBack, GitMerge, Trash } from 'phosphor-r
 import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -26,6 +28,7 @@ import { DerivedAccountList } from './DerivedAccountList';
 enum FilterTabType {
   ACCOUNT_ADDRESS = 'account-address',
   DERIVED_ACCOUNT = 'derived-account',
+  DERIVATION_INFO = 'derivation-info',
 }
 
 type Props = ThemeProps;
@@ -33,10 +36,13 @@ type ComponentProps = {
   accountProxy: AccountProxy;
   onBack: VoidFunction;
   requestViewDerivedAccounts?: boolean;
+  requestViewDerivedAccountDetails?: boolean;
 };
 
 enum FormFieldName {
-  NAME = 'name'
+  NAME = 'name',
+  DERIVED_SURI = 'derived-suri',
+  DERIVED_NAME = 'derived-name',
 }
 
 // @ts-ignore
@@ -50,7 +56,7 @@ interface DetailFormState {
   [FormFieldName.NAME]: string;
 }
 
-const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccounts }: ComponentProps) => {
+const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccountDetails, requestViewDerivedAccounts }: ComponentProps) => {
   const showDerivedAccounts = !!accountProxy.children?.length;
 
   const { t } = useTranslation();
@@ -60,12 +66,19 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   const navigate = useNavigate();
 
   const { alertModal, deriveModal: { open: openDeriveModal } } = useContext(WalletModalContext);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
 
-  const [selectedFilterTab, setSelectedFilterTab] = useState<string>(
-    requestViewDerivedAccounts && showDerivedAccounts
-      ? FilterTabType.DERIVED_ACCOUNT
-      : FilterTabType.ACCOUNT_ADDRESS
-  );
+  const getDefaultFilterTab = () => {
+    if (requestViewDerivedAccounts && showDerivedAccounts) {
+      return FilterTabType.DERIVED_ACCOUNT;
+    } else if (requestViewDerivedAccountDetails) {
+      return FilterTabType.DERIVATION_INFO;
+    } else {
+      return FilterTabType.ACCOUNT_ADDRESS;
+    }
+  };
+
+  const [selectedFilterTab, setSelectedFilterTab] = useState<string>(getDefaultFilterTab());
 
   const [form] = Form.useForm<DetailFormState>();
 
@@ -92,8 +105,15 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       });
     }
 
+    if (requestViewDerivedAccountDetails) {
+      result.push({
+        label: t('Derivation info'),
+        value: FilterTabType.DERIVATION_INFO
+      });
+    }
+
     return result;
-  }, [showDerivedAccounts, t]);
+  }, [requestViewDerivedAccountDetails, showDerivedAccounts, t]);
 
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value);
@@ -152,6 +172,14 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       message: t('Copied to clipboard')
     });
   }, [notify, t]);
+
+  const parentDerivedAccountProxy = useMemo(() => {
+    if (requestViewDerivedAccountDetails) {
+      return accountProxies.find((acc) => acc.id === accountProxy.parentId);
+    }
+
+    return null;
+  }, [accountProxies, accountProxy.parentId, requestViewDerivedAccountDetails]);
 
   const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
     const accountProxyId = accountProxy.id;
@@ -293,10 +321,52 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [accountProxy, form]);
 
   useEffect(() => {
-    setSelectedFilterTab(requestViewDerivedAccounts && showDerivedAccounts
-      ? FilterTabType.DERIVED_ACCOUNT
-      : FilterTabType.ACCOUNT_ADDRESS);
-  }, [requestViewDerivedAccounts, showDerivedAccounts]);
+    if (requestViewDerivedAccounts && showDerivedAccounts) {
+      setSelectedFilterTab(FilterTabType.DERIVED_ACCOUNT);
+    } else if (requestViewDerivedAccountDetails) {
+      setSelectedFilterTab(FilterTabType.DERIVATION_INFO);
+    } else {
+      setSelectedFilterTab(FilterTabType.ACCOUNT_ADDRESS);
+    }
+  }, [requestViewDerivedAccounts, requestViewDerivedAccountDetails, showDerivedAccounts]);
+
+  const renderDetailDerivedAccount = () => {
+    return (
+      <>
+        <Form
+          className={'derivation-info-form form-space-sm'}
+          form={form}
+          initialValues={{
+            [FormFieldName.DERIVED_SURI]: accountProxy.suri || '',
+            [FormFieldName.DERIVED_NAME]: parentDerivedAccountProxy?.name || ''
+
+          }}
+          name='derivation-info-form'
+        >
+          <Form.Item
+            name={'derived-suri'}
+            statusHelpAsTooltip={true}
+          >
+            <Input
+              disabled={true}
+              label={t('Derivation path')}
+              placeholder={t('Derivation path')}
+            />
+          </Form.Item>
+          <Form.Item
+            name={'derived-name'}
+            statusHelpAsTooltip={true}
+          >
+            <Input
+              disabled={true}
+              label={t('Parent account')}
+              placeholder={t('Parent account')}
+            />
+          </Form.Item>
+        </Form>
+      </>
+    );
+  };
 
   return (
     <Layout.WithSubHeaderOnly
@@ -383,6 +453,11 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
           />
         )
       }
+      {
+        selectedFilterTab === FilterTabType.DERIVATION_INFO && (
+          renderDetailDerivedAccount()
+        )
+      }
     </Layout.WithSubHeaderOnly>
   );
 };
@@ -412,6 +487,7 @@ const Wrapper = ({ className }: Props) => {
       <Component
         accountProxy={accountProxy}
         onBack={goHome}
+        requestViewDerivedAccountDetails={locationState?.requestViewDerivedAccountDetails}
         requestViewDerivedAccounts={locationState?.requestViewDerivedAccounts}
       />
     </PageWrapper>
@@ -425,6 +501,13 @@ const AccountDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       overflow: 'hidden',
       flexDirection: 'column'
     },
+    '.derivation-wrapper': {
+      paddingLeft: token.padding,
+      paddingRight: token.padding
+    },
+    '.derivation-info-form.derivation-info-form': {
+      paddingTop: 0
+    },
 
     '.ant-sw-screen-layout-footer': {
       paddingTop: token.paddingSM,
@@ -436,7 +519,7 @@ const AccountDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       gap: token.sizeSM
     },
 
-    '.account-detail-form': {
+    '.account-detail-form, .derivation-info-form': {
       paddingTop: token.padding,
       paddingLeft: token.padding,
       paddingRight: token.padding
