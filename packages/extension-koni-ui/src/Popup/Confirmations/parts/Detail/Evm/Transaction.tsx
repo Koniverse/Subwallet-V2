@@ -190,7 +190,11 @@ const EvmTransactionDetail = styled(Component)<Props>(({ theme: { token } }: Pro
     '.meta-info-transfer.-no-account-name-item .__account-item ': {
       minHeight: 44,
       display: 'flex',
-      alignItems: 'flex-start'
+      alignItems: 'flex-start',
+
+      '.__account-name': {
+        marginLeft: 0
+      }
     },
 
     details: {
