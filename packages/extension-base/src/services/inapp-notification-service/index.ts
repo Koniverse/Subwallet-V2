@@ -28,14 +28,6 @@ export class InappNotificationService implements CronServiceInterface {
     this.chainService = chainService;
   }
 
-  async getNotification (id: string) {
-    await this.dbService.getNotification(id);
-  }
-
-  async updateNotification (notification: NotificationInfo) {
-    await this.dbService.updateNotification(notification);
-  }
-
   async markAllRead (address: string) {
     await this.dbService.markAllRead(address);
   }
@@ -112,7 +104,7 @@ export class InappNotificationService implements CronServiceInterface {
     return await this.dbService.getNotificationsByParams(params);
   }
 
-  createLastestNotifications () {
+  cronCreateLatestNotifications () {
     clearTimeout(this.refreshGetNotificationTimeout);
 
     this.createWithdrawNotifications()
@@ -123,16 +115,16 @@ export class InappNotificationService implements CronServiceInterface {
         console.error(e);
       });
 
-    this.refreshGetNotificationTimeout = setTimeout(this.createLastestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
+    this.refreshGetNotificationTimeout = setTimeout(this.cronCreateLatestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
   }
 
-  listenLastestNotifications () {
+  cronListenLatestNotifications () {
     clearTimeout(this.refreshListenNotificationTimeout);
 
     this.updateUnreadNotificationCountSubject()
       .then().catch((e) => console.error(e));
 
-    this.refreshListenNotificationTimeout = setTimeout(this.listenLastestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);
+    this.refreshListenNotificationTimeout = setTimeout(this.cronListenLatestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);
   }
 
   async start (): Promise<void> {
@@ -150,8 +142,8 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   async startCron (): Promise<void> {
-    this.listenLastestNotifications();
-    this.createLastestNotifications();
+    this.cronListenLatestNotifications();
+    this.cronCreateLatestNotifications();
 
     return Promise.resolve();
   }
