@@ -3,7 +3,7 @@
 
 import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, isProductionMode } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyring';
@@ -248,7 +248,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...BASE_TRANSFER_ACTIONS
         ];
     }
-  } else if (signMode === AccountSignMode.QR || signMode === AccountSignMode.GENERIC_LEDGER) {
+  } else if (signMode === AccountSignMode.QR) {
     switch (networkType) {
       case AccountChainType.SUBSTRATE:
         return [
@@ -264,9 +264,42 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         ];
       case AccountChainType.ETHEREUM:
         return [
+          ...(
+            isProductionMode
+              ? []
+              : [
+                ...BASE_TRANSFER_ACTIONS,
+                ...NATIVE_STAKE_ACTIONS,
+                ...POOL_STAKE_ACTIONS,
+                ...EARN_STDOT_ACTIONS,
+                ...OTHER_ACTIONS,
+                ...EVM_ACTIONS
+              ]
+          )
+        ];
+      case AccountChainType.TON:
+        return [];
+    }
+  } else if (signMode === AccountSignMode.GENERIC_LEDGER) {
+    switch (networkType) {
+      case AccountChainType.SUBSTRATE:
+        return [
+          ...BASE_TRANSFER_ACTIONS,
+          ...NATIVE_STAKE_ACTIONS,
+          ...POOL_STAKE_ACTIONS,
+          ...EARN_VDOT_ACTIONS,
+          ...EARN_VMANTA_ACTIONS,
+          // ...EARN_LDOT_ACTIONS,
+          // ...EARN_SDOT_ACTIONS,
+          // ...EARN_QDOT_ACTIONS,
+          ...OTHER_ACTIONS
+        ];
+      case AccountChainType.ETHEREUM:
+        return [
           ...BASE_TRANSFER_ACTIONS,
           ...EARN_STDOT_ACTIONS,
           ...EVM_ACTIONS,
+          ExtrinsicType.STAKING_WITHDRAW, // For liquid staking
           ExtrinsicType.SEND_NFT,
           ExtrinsicType.SWAP
         ];
@@ -291,17 +324,17 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
       result.push(...EARN_VDOT_ACTIONS, ...EARN_VMANTA_ACTIONS);
     }
 
-    if (specialNetwork === 'acala') {
-      result.push(...EARN_LDOT_ACTIONS);
-    }
+    // if (specialNetwork === 'acala') {
+    //   result.push(...EARN_LDOT_ACTIONS);
+    // }
 
-    if (specialNetwork === 'parallel') {
-      result.push(...EARN_SDOT_ACTIONS);
-    }
+    // if (specialNetwork === 'parallel') {
+    //   result.push(...EARN_SDOT_ACTIONS);
+    // }
 
-    if (specialNetwork === 'interlay') {
-      result.push(...EARN_QDOT_ACTIONS);
-    }
+    // if (specialNetwork === 'interlay') {
+    //   result.push(...EARN_QDOT_ACTIONS);
+    // }
 
     // Transfer XCM
     if (['polkadot', 'kusama', 'statemint', 'statemine'].includes(specialNetwork)) {

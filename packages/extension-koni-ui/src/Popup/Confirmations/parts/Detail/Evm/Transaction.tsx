@@ -157,12 +157,6 @@ const Component: React.FC<Props> = (props: Props) => {
 
 const EvmTransactionDetail = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-    '.__chain-item, .__status-item, .__account-item': {
-      display: 'flex',
-      alignItems: 'center',
-      flexDirection: 'row',
-      gap: token.sizeXS
-    },
 
     '.__label': {
       fontFamily: token.fontFamily,

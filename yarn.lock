@@ -6321,8 +6321,8 @@ __metadata:
     "@subwallet/extension-dapp": ^1.2.32-0
     "@subwallet/extension-inject": ^1.2.32-0
     "@subwallet/extension-mocks": ^1.2.32-0
-    "@subwallet/keyring": ^0.1.7
-    "@subwallet/ui-keyring": ^0.1.7
+    "@subwallet/keyring": ^0.1.8-beta.0
+    "@subwallet/ui-keyring": ^0.1.8-beta.0
     "@ton/core": ^0.56.3
     "@ton/crypto": ^3.2.0
     "@ton/ton": ^15.0.0
@@ -6355,6 +6355,7 @@ __metadata:
     protobufjs: ^7.2.4
     rxjs: ^7.8.1
     sails-js: ^0.1.6
+    tweetnacl: ^1.0.3
     uuid: ^9.0.0
     web3: ^1.10.0
     web3-core: ^1.10.0
@@ -6421,6 +6422,7 @@ __metadata:
     "@polkadot/util": ^12.6.2
     "@polkadot/util-crypto": ^12.6.2
     "@polkadot/x-global": ^12.2.1
+    "@subwallet/keyring": ^0.1.8-beta.0
     "@types/chrome": ^0.0.254
     "@types/firefox-webext-browser": ^120.0.0
     web3-core: ^1.10.0
@@ -6457,9 +6459,9 @@ __metadata:
     "@subwallet/extension-dapp": ^1.2.32-0
     "@subwallet/extension-inject": ^1.2.32-0
     "@subwallet/extension-mocks": ^1.2.32-0
-    "@subwallet/keyring": ^0.1.7
+    "@subwallet/keyring": ^0.1.8-beta.0
     "@subwallet/react-ui": 5.1.2-b77
-    "@subwallet/ui-keyring": ^0.1.7
+    "@subwallet/ui-keyring": ^0.1.8-beta.0
     "@types/bn.js": ^5.1.1
     "@types/enzyme": ^3.10.12
     "@types/enzyme-adapter-react-16": ^1.0.6
@@ -6597,9 +6599,9 @@ __metadata:
     "@subwallet/extension-dapp": ^1.2.32-0
     "@subwallet/extension-inject": ^1.2.32-0
     "@subwallet/extension-mocks": ^1.2.32-0
-    "@subwallet/keyring": ^0.1.7
+    "@subwallet/keyring": ^0.1.8-beta.0
     "@subwallet/react-ui": ^5.1.2-b77
-    "@subwallet/ui-keyring": ^0.1.7
+    "@subwallet/ui-keyring": ^0.1.8-beta.0
     "@types/bn.js": ^5.1.1
     "@types/enzyme": ^3.10.12
     "@types/enzyme-adapter-react-16": ^1.0.6
@@ -6662,9 +6664,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.1.7
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=7a21cc&locator=root-workspace-0b6124%40workspace%3A."
+"@subwallet/keyring@npm:^0.1.8-beta.0":
+  version: 0.1.8-beta.0
+  resolution: "@subwallet/keyring@npm:0.1.8-beta.0"
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6684,7 +6686,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: e7a4b12509d56e3bdb65984b8ebcf485a9d84604e740e6c9b5da025fcbbc94c2d93054df415b8a6a24721d65319cf017f8530e3d67a13a7dcb217ed2a6c27390
+  checksum: f29e78fd71ddf09c8e531b682f93b49305580ab2c266d781558322d6af5d0bfae8d80ae21e0c35d7a25711a270991e290cbe49d891b6b47388bb566aa5befb06
   languageName: node
   linkType: hard
 
@@ -6766,19 +6768,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
-  version: 0.1.7
-  resolution: "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/#../SubWallet-Base/packages/ui-keyring/build/::hash=c748eb&locator=root-workspace-0b6124%40workspace%3A."
+"@subwallet/ui-keyring@npm:0.1.8-beta.0 ":
+  version: 0.1.8-beta.0
+  resolution: "@subwallet/ui-keyring@npm:0.1.8-beta.0"
   dependencies:
     "@babel/runtime": ^7.20.1
     "@polkadot/ui-settings": 2.9.14
     "@polkadot/util": ^12.2.1
     "@polkadot/util-crypto": ^12.2.1
-    "@subwallet/keyring": ^0.1.7
+    "@subwallet/keyring": ^0.1.8-beta.0
     mkdirp: ^1.0.4
     rxjs: ^7.5.7
     store: ^2.0.12
-  checksum: 9182a2be4292b35a9925ef7316b5af1c498fc9ac6e5855d43f34d77d8bf8cbc9b45e652308778a31c56abeacd9cfb06d58f10daa8ab455ede6c721d897e3efb9
+  checksum: 6ebb69675403eb36300b0aea895364852bff24f05a69ab69f5b7a6734c3f4a2c27ca5a9b5f3d5c1b2a2e970bf17a22a0b8985d90f1d237871f3132425cd6ef70
   languageName: node
   linkType: hard
 

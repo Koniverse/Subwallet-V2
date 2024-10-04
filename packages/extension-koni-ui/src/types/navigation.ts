@@ -62,6 +62,6 @@ export type RemindBackUpSeedPhraseParamState = {
 // account detail
 
 export type AccountDetailParam = {
-  requestViewDerivedAccounts?: boolean,
+  requestViewDerivedAccounts?: boolean
   requestViewDerivedAccountDetails?: boolean
 }
