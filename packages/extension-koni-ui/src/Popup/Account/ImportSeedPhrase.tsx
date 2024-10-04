@@ -147,12 +147,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                     </div>
                     <br />
                     <div>
-                      {t('Note that importing this seed phrase into TON-native wallets will generate a different TON address, as SubWallet is incompatible with TON-native wallets.')}
+                      {t('Note that you can’t import this seed phrase into TON-native wallets, as SubWallet is incompatible with TON-native wallets.')}
                     </div>
                   </>
                 ),
                 cancelButton: {
-                  text: t('Cancel'),
+                  text: t('Go back'),
                   icon: XCircle,
                   iconWeight: 'fill',
                   onClick: () => {
@@ -162,7 +162,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                   schema: 'secondary'
                 },
                 okButton: {
-                  text: t('Apply'),
+                  text: t('Import'),
                   icon: CheckCircle,
                   iconWeight: 'fill',
                   onClick: () => {
