@@ -6355,6 +6355,7 @@ __metadata:
     protobufjs: ^7.2.4
     rxjs: ^7.8.1
     sails-js: ^0.1.6
+    tweetnacl: ^1.0.3
     uuid: ^9.0.0
     web3: ^1.10.0
     web3-core: ^1.10.0
@@ -6421,6 +6422,7 @@ __metadata:
     "@polkadot/util": ^12.6.2
     "@polkadot/util-crypto": ^12.6.2
     "@polkadot/x-global": ^12.2.1
+    "@subwallet/keyring": ^0.1.6
     "@types/chrome": ^0.0.254
     "@types/firefox-webext-browser": ^120.0.0
     web3-core: ^1.10.0
@@ -6664,7 +6666,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.7
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=7a21cc&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=3714dd&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6684,7 +6686,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: e7a4b12509d56e3bdb65984b8ebcf485a9d84604e740e6c9b5da025fcbbc94c2d93054df415b8a6a24721d65319cf017f8530e3d67a13a7dcb217ed2a6c27390
+  checksum: 3553c8c6313c8be7a06a9f58d65f16febadf4ef993cb1dc13db0c7d94671d642f4662be3065b442c2cfdfaf7f01566dd31aa21374744bf545721b4e48e6a2054
   languageName: node
   linkType: hard
 
