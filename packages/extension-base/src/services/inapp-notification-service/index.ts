@@ -47,6 +47,7 @@ export class InappNotificationService implements CronServiceInterface {
   async createClaimNotifications () {
     const notificationActionType = NotificationActionType.CLAIM;
     const allClaimNotifications: NotificationInfo[] = [];
+
     await this.earningService.waitEarningRewardReady();
     const claimRewardMap = this.earningService.getEarningRewards().data;
 

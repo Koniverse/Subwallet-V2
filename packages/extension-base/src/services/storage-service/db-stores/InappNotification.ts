@@ -5,6 +5,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import {getIsTabRead} from "@subwallet/extension-base/services/inapp-notification-service/utils";
 
 export default class InappNotificationStore extends BaseStore<NotificationInfo> {
   async getNotificationInfo (id: string) {
@@ -16,22 +17,9 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
   }
 
   async getNotificationsByParams (params: GetNotificationParams) {
-    // todo: improve this function for read
     const { address, notificationTab } = params;
     const isAllAccount = address === ALL_ACCOUNT_KEY;
     const isTabAll = notificationTab === NotificationTab.ALL;
-
-    const getIsTabRead = (notificationTab: NotificationTab) => {
-      if (notificationTab === NotificationTab.UNREAD) {
-        return false;
-      }
-
-      if (notificationTab === NotificationTab.READ) {
-        return true;
-      }
-
-      return undefined;
-    };
 
     if (isTabAll && isAllAccount) {
       return this.getAll();
@@ -53,6 +41,26 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
     });
 
     return filteredTable.toArray();
+  }
+
+  async getNotificationsByParams2 (params: GetNotificationParams) {
+    const { address, notificationTab } = params;
+    const isAllAccount = address === ALL_ACCOUNT_KEY;
+    const isTabAll = notificationTab === NotificationTab.ALL;
+
+    if (isAllAccount) {
+      if (isTabAll) {
+        return this.getAll();
+      }
+
+      return this.table.filter((item) => item.isRead === getIsTabRead(notificationTab)).toArray();
+    } else {
+      if (isTabAll) {
+        return this.table.filter((item) => item.address === address).toArray();
+      }
+
+      return this.table.filter((item) => item.address === address && item.isRead === getIsTabRead(notificationTab)).toArray();
+    }
   }
 
   getAllUnreadNotifications () {
