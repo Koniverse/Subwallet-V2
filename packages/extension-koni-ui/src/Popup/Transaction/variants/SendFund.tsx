@@ -16,7 +16,9 @@ import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
+import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -27,7 +29,7 @@ import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
 import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useIsFirstRender, useLocalStorage } from 'usehooks-ts';
@@ -125,6 +127,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   useSetCurrentPage('/transaction/send-fund');
   const { t } = useTranslation();
   const notification = useNotification();
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
 
   const { defaultData, persistData } = useTransactionContext<TransferParams>();
   const { defaultSlug: sendFundSlug } = defaultData;
@@ -153,7 +156,16 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
+  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('send-fund');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
+
+  const currentConfirmation = useMemo(() => {
+    if (chainValue && destChainValue) {
+      return getCurrentConfirmation([chainValue, destChainValue]);
+    } else {
+      return undefined;
+    }
+  }, [chainValue, destChainValue, getCurrentConfirmation]);
 
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chainValue];
@@ -535,6 +547,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     let checkTransferAll = false;
 
     const _doSubmit = async () => {
+      setLoading(true);
+
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
@@ -550,12 +564,16 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Continue'),
               onClick: () => {
                 closeAlert();
+                setLoading(true);
                 doSubmit(values, options);
               }
             },
             cancelButton: {
               text: t('Cancel'),
-              onClick: closeAlert
+              onClick: () => {
+                closeAlert();
+                setLoading(false);
+              }
             }
           });
 
@@ -577,11 +595,12 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             content: t(`Transferring to an ${bounceableAddressPrefix} address is not supported. Continuing will result in a transfer to the corresponding ${formattedAddressPrefix} address (same seed phrase)`),
             title: t('Unsupported address'),
             okButton: {
-              text: t('Transfer'),
+              text: t('Continue'),
               onClick: () => {
                 form.setFieldValue('to', formattedAddress);
                 updateAddressInputValue(formattedAddress);
                 closeAlert();
+                setLoading(true);
                 options.isTransferBounceable = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
@@ -592,6 +611,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Cancel'),
               onClick: () => {
                 closeAlert();
+                setLoading(false);
               }
             }
           });
@@ -613,6 +633,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               text: t('Transfer'),
               onClick: () => {
                 closeAlert();
+                setLoading(true);
                 checkTransferAll = true;
                 _doSubmit().catch((error) => {
                   console.error('Error during submit:', error);
@@ -621,7 +642,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             },
             cancelButton: {
               text: t('Cancel'),
-              onClick: closeAlert
+              onClick: () => {
+                closeAlert();
+                setLoading(false);
+              }
             }
           });
 
@@ -638,6 +662,22 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       console.error('Error during submit:', error);
     });
   }, [assetInfo, chainInfoMap, closeAlert, doSubmit, form, isTransferAll, openAlert, t, updateAddressInputValue]);
+
+  const onClickSubmit = useCallback((values: TransferParams) => {
+    if (currentConfirmation) {
+      mktCampaignModalContext.openModal({
+        type: 'confirmation',
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
+        externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
+          onSubmit(values);
+          mktCampaignModalContext.hideModal();
+        })
+      });
+    } else {
+      onSubmit(values);
+    }
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
 
   // todo: recheck with ledger account
   useEffect(() => {
@@ -779,7 +819,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           className={'form-container form-space-sm'}
           form={form}
           initialValues={formDefault}
-          onFinish={onSubmit}
+          onFinish={onClickSubmit}
           onValuesChange={onValuesChange}
         >
           <HiddenInput fields={hiddenFields} />

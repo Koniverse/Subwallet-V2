@@ -1,18 +1,20 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
+import { AccountActions, AccountProxyType, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
 import { GeneralEmptyList } from '@subwallet/extension-koni-ui/components';
 import { TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useFetchChainInfo, useGetAccountByAddress, useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { useFetchChainInfo, useGetAccountByAddress, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { tonAccountChangeWalletContractVersion, tonGetAllWalletContractVersion } from '@subwallet/extension-koni-ui/messaging';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TonWalletContractVersion } from '@subwallet/keyring/types';
 import { Button, Icon, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretLeft, CheckCircle, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { TonWalletContractItem, TonWalletContractItemType } from './TonWalletContractItem';
@@ -31,12 +33,15 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
   const { t } = useTranslation();
   const notification = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const [tonWalletContractVersionData, setTonWalletContractVersionData] = useState<ResponseGetAllTonWalletContractVersion | null>(null);
   const accountInfo = useGetAccountByAddress(address);
   const [selectedContractVersion, setSelectedContractVersion] = useState<TonWalletContractVersion | undefined>(
     accountInfo ? accountInfo.tonContractVersion as TonWalletContractVersion : undefined
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     let sync = true;
@@ -112,11 +117,20 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
       setIsSubmitting(true);
 
       tonAccountChangeWalletContractVersion({ proxyId: '', address: accountInfo.address, version: selectedContractVersion })
-        .then(() => {
+        .then((newAddress) => {
           setTimeout(() => {
             onCancel?.();
             setIsSubmitting(false);
-          }, 300);
+            const selectedAccount = accountProxies.find((account) => account.id === accountInfo.proxyId);
+            const isOnAccountDetailScreen = location.pathname.includes('/accounts/detail');
+            const isSoloAccount = selectedAccount?.accountType === AccountProxyType.SOLO;
+            const hasTonChangeWalletContractVersion = selectedAccount?.accountActions.includes(AccountActions.TON_CHANGE_WALLET_CONTRACT_VERSION);
+            const shouldNavigate = isOnAccountDetailScreen && isSoloAccount && hasTonChangeWalletContractVersion;
+
+            if (shouldNavigate) {
+              navigate(`/accounts/detail/${newAddress}`);
+            }
+          }, 400);
         })
         .catch((e: Error) => {
           notification({
@@ -125,7 +139,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel }:
           });
         });
     }
-  }, [accountInfo?.address, notification, onCancel, selectedContractVersion]);
+  }, [accountInfo?.address, accountInfo?.proxyId, accountProxies, location.pathname, navigate, notification, onCancel, selectedContractVersion]);
 
   return (
     <SwModal

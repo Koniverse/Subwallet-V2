@@ -5,7 +5,6 @@ import { GearApi } from '@gear-js/api';
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { getPSP22ContractPromise } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
 import { getWasmContractGasLimit } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
-import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { estimateTonTxFee } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
@@ -14,7 +13,7 @@ import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-se
 import { getGRC20ContractPromise, getVFTContractPromise } from '@subwallet/extension-base/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { internal } from '@ton/core';
-import { Address, WalletContractV4 } from '@ton/ton';
+import { Address } from '@ton/ton';
 import BigN from 'bignumber.js';
 import { TransactionConfig } from 'web3-core';
 
@@ -148,7 +147,7 @@ export const getTransferMockTxFee = async (address: string, chainInfo: _ChainInf
         estimatedFee = new BigN(priority.gasPrice).multipliedBy(gasLimit);
       }
     } else if (_isChainTonCompatible(chainInfo) && _isTokenTransferredByTon(tokenInfo)) {
-      const keyPair = keyring.getPair(address);
+      const mockWalletContract = keyring.getPair(address).ton.currentContract;
       const tonApi = api as _TonApi;
       const maxBlance = await tonApi.getBalance(Address.parse(address));
       const mockMessage =
@@ -157,8 +156,6 @@ export const getTransferMockTxFee = async (address: string, chainInfo: _ChainInf
           value: maxBlance, // estimate value
           bounce: false // anyMode
         });
-
-      const mockWalletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
 
       estimatedFee = new BigN((await estimateTonTxFee(tonApi, [mockMessage], mockWalletContract)).toString());
     } else {

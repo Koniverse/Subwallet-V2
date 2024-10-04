@@ -3,14 +3,14 @@
 
 import { AccountAuthType, AuthorizeRequest } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_AUTH_TYPES, ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountChainType, AccountProxy } from '@subwallet/extension-base/types';
+import { AccountChainType } from '@subwallet/extension-base/types';
 import { AccountProxyItem, AccountProxySelectorAllItem, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE, TON_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { useSetSelectedAccountTypes } from '@subwallet/extension-koni-ui/hooks';
 import { approveAuthRequestV2, cancelAuthRequestV2, rejectAuthRequestV2 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { filterAuthorizeAccountProxies, isAccountAll } from '@subwallet/extension-koni-ui/utils';
 import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -37,32 +37,6 @@ async function handleBlock ({ id }: AuthorizeRequest) {
   return await rejectAuthRequestV2(id);
 }
 
-export const filterAuthorizeAccounts = (accountProxies: AccountProxy[], accountAuthTypes: AccountAuthType[]) => {
-  const rs = accountProxies.filter(({ chainTypes, id }) => {
-    if (isAccountAll(id)) {
-      return false;
-    }
-
-    return accountAuthTypes.some((type) => {
-      if (type === 'substrate') {
-        return chainTypes.includes(AccountChainType.SUBSTRATE);
-      } else if (type === 'evm') {
-        return chainTypes.includes(AccountChainType.ETHEREUM);
-      } else if (type === 'ton') {
-        return chainTypes.includes(AccountChainType.TON);
-      }
-
-      return false;
-    });
-  });
-
-  if (!rs.length) {
-    return [];
-  }
-
-  return rs;
-};
-
 function Component ({ className, request }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -74,7 +48,7 @@ function Component ({ className, request }: Props) {
   const setSelectedAccountTypes = useSetSelectedAccountTypes(true);
 
   // List all of all accounts by auth type
-  const visibleAccountProxies = useMemo(() => (filterAuthorizeAccounts(accountProxies, accountAuthTypes || ALL_ACCOUNT_AUTH_TYPES)),
+  const visibleAccountProxies = useMemo(() => (filterAuthorizeAccountProxies(accountProxies, accountAuthTypes || ALL_ACCOUNT_AUTH_TYPES)),
     [accountAuthTypes, accountProxies]);
 
   // Selected map with default values is map of all accounts
@@ -250,6 +224,7 @@ function Component ({ className, request }: Props) {
                 visibleAccountProxies.length > 1 &&
                   (
                     <AccountProxySelectorAllItem
+                      accountProxies={visibleAccountProxies}
                       className={'all-account-selection'}
                       isSelected={selectedMap[ALL_ACCOUNT_KEY]}
                       onClick={onAccountSelect(ALL_ACCOUNT_KEY)}
@@ -260,6 +235,7 @@ function Component ({ className, request }: Props) {
               {visibleAccountProxies.map((item) => (
                 <AccountProxyItem
                   accountProxy={item}
+                  className={'__account-proxy-item'}
                   isSelected={selectedMap[item.id]}
                   key={item.id}
                   onClick={onAccountSelect(item.id)}
@@ -363,6 +339,15 @@ const AuthorizeConfirmation = styled(Component)<Props>(({ theme: { token } }: Th
       textAlign: 'start',
       fontSize: token.fontSize
     }
+  },
+
+  '.__account-proxy-item': {
+    '.__item-middle-part': {
+      textWrap: 'nowrap',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden'
+    }
+
   }
 }));
 

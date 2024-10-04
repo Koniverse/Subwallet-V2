@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
-import { INIT_FEE_JETTON_TRANSFER, TON_OPCODES, WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
+import { INIT_FEE_JETTON_TRANSFER, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { cellToBase64Str, estimateTonTxFee, getWalletQueryId, messageRelaxedToCell } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken, _isJettonToken, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { beginCell, fromNano, internal, MessageRelaxed, toNano } from '@ton/core';
-import { Address, JettonMaster, WalletContractV4 } from '@ton/ton';
+import { Address, JettonMaster } from '@ton/ton';
 
 interface TonTransactionConfigProps {
   tokenInfo: _ChainAsset;
@@ -45,8 +45,7 @@ export async function createTonTransaction ({ from, networkKey, to, tokenInfo, t
 }
 
 async function createTonNativeTransaction ({ from, networkKey, to, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
-  const keyPair = keyring.getPair(from);
-  const walletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
+  const walletContract = keyring.getPair(from).ton.currentContract;
   const contract = tonApi.open(walletContract);
   const seqno = await contract.getSeqno();
 
@@ -77,10 +76,9 @@ async function createTonNativeTransaction ({ from, networkKey, to, tonApi, trans
 }
 
 async function createJettonTransaction ({ from, networkKey, to, tokenInfo, tonApi, transferAll, value }: TonTransactionConfigProps): Promise<[TonTransactionConfig | null, string]> {
-  const keyPair = keyring.getPair(from);
+  const walletContract = keyring.getPair(from).ton.currentContract;
   const sendertonAddress = Address.parse(from);
   const destinationAddress = Address.parse(to);
-  const walletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
   const contract = tonApi.open(walletContract);
   const seqno = await contract.getSeqno();
 

@@ -7,7 +7,6 @@ import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/Wallet
 import { useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { SeedPhraseTermStorage, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { KeypairType } from '@subwallet/keyring/types';
-import { CheckCircle, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLocalStorage } from 'usehooks-ts';
@@ -35,20 +34,16 @@ export default function useHandleTonAccountWarning (): HookType {
             </div>
           </>
         ),
-        cancelButton: {
+        okButton: {
           text: t('Get address'),
-          icon: XCircle,
-          iconWeight: 'fill',
           onClick: () => {
             alertModal.close();
             processFunction();
           },
-          schema: 'secondary'
+          schema: 'primary'
         },
-        okButton: {
+        cancelButton: {
           text: t('Create new'),
-          icon: CheckCircle,
-          iconWeight: 'fill',
           onClick: () => {
             setSelectedMnemonicType('ton');
             setConfirmedTermSeedPhrase((prevState: string | SeedPhraseTermStorage) => {
@@ -63,7 +58,7 @@ export default function useHandleTonAccountWarning (): HookType {
 
             alertModal.close();
           },
-          schema: 'primary'
+          schema: 'secondary'
         }
       });
 

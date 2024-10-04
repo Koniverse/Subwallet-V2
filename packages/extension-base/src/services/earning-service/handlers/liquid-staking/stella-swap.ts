@@ -93,20 +93,19 @@ export default class StellaSwapLiquidStakingPoolHandler extends BaseLiquidStakin
     const tvlCall = stakingContract.methods.fundRaisedBalance();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
     const exchangeRateCall = stakingContract.methods.getPooledTokenByShares(sampleTokenShare);
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const [aprObject, tvl, equivalentTokenShare] = await Promise.all([
-      aprPromise,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-      tvlCall.call(),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-      exchangeRateCall.call()
-    ]);
-
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    const equivalentTokenShare = (await exchangeRateCall.call());
     const rate = equivalentTokenShare as number;
     const exchangeRate = rate / (10 ** _getAssetDecimals(derivativeTokenInfo));
 
     this.updateExchangeRate(rate);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const [aprObject, tvl] = await Promise.all([
+      aprPromise,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+      tvlCall.call()
+    ]);
 
     return {
       ...this.baseInfo,

@@ -225,4 +225,5 @@ export * from './scanner';
 export * from './sort';
 export * from './transaction';
 export * from './walletConnect';
+export * from './accountProxy';
 // export * from './handleRemindBackupTime.ts'; This will load in create view => load direct file to get better performance

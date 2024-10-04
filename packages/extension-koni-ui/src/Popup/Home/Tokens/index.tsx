@@ -4,11 +4,12 @@
 import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountProxyType } from '@subwallet/extension-base/types';
 import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
+import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useCoreReceiveModalHelper, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
+import { useCoreReceiveModalHelper, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
@@ -45,6 +46,7 @@ const Component = (): React.ReactElement => {
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
   const [, setStorage] = useLocalStorage<TransferParams>(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token');
   const allowedChains = useGetChainSlugsByAccount();
   const buyTokenInfos = useSelector((state: RootState) => state.buyService.tokens);
   const swapPairs = useSelector((state: RootState) => state.swap.swapPairs);
@@ -283,7 +285,15 @@ const Component = (): React.ReactElement => {
             />
           )
         }
-
+        {!!banners.length && (
+          <div className={'token-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         {
           tokenGroupBalanceItems.map((item) => {
             return (
@@ -413,6 +423,10 @@ const Tokens = styled(WrapperComponent)<ThemeProps>(({ theme: { extendToken, tok
 
     '.zk-mode-alert-area': {
       marginBottom: token.marginXS
+    },
+
+    '.token-banner-wrapper': {
+      marginBottom: token.sizeXS
     }
   });
 });

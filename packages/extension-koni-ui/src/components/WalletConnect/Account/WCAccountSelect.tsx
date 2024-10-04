@@ -65,6 +65,10 @@ const Component: React.FC<Props> = (props: Props) => {
     }
   }, [namespace, t]);
 
+  const basicProxyAccounts = useMemo(() => {
+    return availableAccounts.map(({ name, proxyId }) => ({ name, id: proxyId || '' }));
+  }, [availableAccounts]);
+
   const onOpenModal = useCallback(() => {
     activeModal(id);
   }, [activeModal, id]);
@@ -86,6 +90,7 @@ const Component: React.FC<Props> = (props: Props) => {
       <AccountItemWithProxyAvatar
         account={item}
         accountName={item.name}
+        className={'__account-proxy-item'}
         isSelected={selected}
         key={item.address}
         onClick={onSelectAccount(item.address, false)}
@@ -143,7 +148,6 @@ const Component: React.FC<Props> = (props: Props) => {
                 >
                   <SwList.Section
                     className='account-list'
-                    displayRow
                     enableSearchInput={true}
                     list={availableAccounts}
                     ref={sectionRef}
@@ -162,6 +166,7 @@ const Component: React.FC<Props> = (props: Props) => {
                 <div className={CN('account-list', 'no-modal')}>
                   {availableAccounts.length > 1 && (
                     <AccountProxySelectorAllItem
+                      accountProxies={basicProxyAccounts}
                       className={'all-account-selection'}
                       isSelected={selectedAccounts.length === availableAccounts.length}
                       onClick={onSelectAccount(ALL_ACCOUNT_KEY, true)}
@@ -175,6 +180,7 @@ const Component: React.FC<Props> = (props: Props) => {
                       <AccountItemWithProxyAvatar
                         account={item}
                         accountName={item.name}
+                        className={'__account-proxy-item'}
                         isSelected={selected}
                         key={item.address}
                         onClick={onSelectAccount(item.address, true)}
@@ -225,6 +231,25 @@ const WCAccountSelect = styled(Component)<Props>(({ theme: { token } }: Props) =
       '.__item-middle-part': {
         textAlign: 'start',
         fontSize: token.fontSize
+      }
+    },
+
+    '.account-list.no-modal .__account-proxy-item': {
+      marginBottom: 0
+    },
+
+    '.__account-proxy-item': {
+      marginBottom: token.marginXS,
+      background: token.colorBgSecondary,
+
+      '&:hover': {
+        background: token.colorBgInput,
+        '.__item-actions-overlay': {
+          opacity: 0
+        },
+        '.-show-on-hover': {
+          opacity: 1
+        }
       }
     }
   };

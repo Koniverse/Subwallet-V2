@@ -4,11 +4,10 @@
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { ALL_ACCOUNT_KEY, fetchLastestBlockedActionsAndFeatures } from '@subwallet/extension-base/constants';
+import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForAction, checkSupportForFeature, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
-import { WORKCHAIN } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
-import { cellToBase64Str, externalMessage, getTonSendMode } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -28,7 +27,6 @@ import { isContractAddress, parseContractInput } from '@subwallet/extension-base
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
 import keyring from '@subwallet/ui-keyring';
 import { Cell } from '@ton/core';
-import { WalletContractV4 } from '@ton/ton';
 import { addHexPrefix } from 'ethereumjs-util';
 import { ethers, TransactionLike } from 'ethers';
 import EventEmitter from 'eventemitter3';
@@ -98,8 +96,14 @@ export default class TransactionService {
       errors: transactionInput.errors || [],
       warnings: transactionInput.warnings || []
     };
-
     const { additionalValidator, address, chain, extrinsicType } = validationResponse;
+    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
+
+    const { blockedActionsMap, blockedFeaturesList } = await fetchLastestBlockedActionsAndFeatures();
+
+    checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
+
+    checkSupportForAction(validationResponse, blockedActionsMap);
 
     const transaction = transactionInput.transaction;
 
@@ -108,8 +112,6 @@ export default class TransactionService {
 
     // Check support for transaction
     checkSupportForTransaction(validationResponse, transaction);
-
-    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     if (!chainInfo) {
       validationResponse.errors.push(new TransactionError(BasicTxErrorType.INTERNAL_ERROR, t('Cannot find network')));
@@ -1167,7 +1169,7 @@ export default class TransactionService {
   }
 
   private signAndSendTonTransaction ({ address, chain, extrinsicType, id, transaction, url }: SWTransaction): TransactionEmitter {
-    const keyPair = keyring.getPair(address);
+    const walletContract = keyring.getPair(address).ton.currentContract;
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1207,14 +1209,9 @@ export default class TransactionService {
     const seqno = tonTransactionConfig.seqno;
     const messages = tonTransactionConfig.messages;
 
-    const walletContract = WalletContractV4.create({ workchain: WORKCHAIN, publicKey: Buffer.from(keyPair.publicKey) });
+    const transferObjectPromise = getTransferCellPromise(walletContract, signer, payload, seqno, messages);
 
-    walletContract.createTransfer({
-      signer,
-      sendMode: getTonSendMode(payload.transferAll),
-      seqno: seqno,
-      messages: messages
-    }).then((tx) => {
+    transferObjectPromise.then((tx) => {
       // Emit signed event
       emitter.emit('signed', eventData);
       const boc = externalMessage(walletContract, seqno, tx).toBoc().toString('base64');

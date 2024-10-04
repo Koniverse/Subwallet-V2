@@ -9,16 +9,13 @@ import { useGetCurrentAuth, useGetCurrentTab, useIsPopup, useTranslation } from 
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { funcSortByName, isAccountAll } from '@subwallet/extension-koni-ui/utils';
-import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
+import { funcSortByName, isAccountAll, isAddressAllowedWithAuthType } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Icon, ModalContext, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretDown, Plug, Plugs, PlugsConnected } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { ConnectWebsiteModal } from '../ConnectWebsiteModal';
 
@@ -104,19 +101,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         const allowedMap = currentAuth.isAllowedMap;
 
         const filterType = (address: string) => {
-          if (isEthereumAddress(address) && types.includes('evm')) {
-            return true;
-          }
-
-          if (isSubstrateAddress(address) && types.includes('substrate')) {
-            return true;
-          }
-
-          if (isTonAddress(address) && types.includes('ton')) {
-            return true;
-          }
-
-          return false;
+          return isAddressAllowedWithAuthType(address, types);
         };
 
         let accountToCheck = noAllAccounts;
@@ -125,19 +110,43 @@ function Component ({ className }: Props): React.ReactElement<Props> {
           accountToCheck = [...(currentAccountProxy.accounts)];
         }
 
-        const numberAccounts = accountToCheck.filter(({ address }) => filterType(address)).length;
-        const numberAllowedAccounts = Object.entries(allowedMap)
-          .filter(([address]) => filterType(address) && accountToCheck.some(({ address: accAddress }) => accAddress === address))
-          .filter(([, value]) => value)
-          .length;
+        const idProxiesCanConnect = new Set<string>();
+        const allowedIdProxies = new Set<string>();
 
-        setConnected(numberAllowedAccounts);
-        setCanConnect(numberAccounts);
+        accountToCheck.forEach(({ address, proxyId }) => {
+          if (filterType(address) && proxyId) {
+            idProxiesCanConnect.add(proxyId);
+          }
+        });
+        Object.entries(allowedMap)
+          .forEach(([address, value]) => {
+            if (filterType(address)) {
+              const account = accountToCheck.find(({ address: accAddress }) => accAddress === address);
 
-        if (numberAllowedAccounts === 0) {
+              if (account?.proxyId && value) {
+                allowedIdProxies.add(account.proxyId);
+              }
+            }
+          });
+
+        const numberAllowedAccountProxies = allowedIdProxies.size;
+        const numberAllAccountProxiesCanConnect = idProxiesCanConnect.size;
+
+        if (numberAllAccountProxiesCanConnect === 0) {
+          setCanConnect(0);
+          setConnected(0);
+          setConnectionState(ConnectionStatement.NOT_CONNECTED);
+
+          return;
+        }
+
+        setConnected(numberAllowedAccountProxies);
+        setCanConnect(numberAllAccountProxiesCanConnect);
+
+        if (numberAllowedAccountProxies === 0) {
           setConnectionState(ConnectionStatement.DISCONNECTED);
         } else {
-          if (numberAllowedAccounts > 0 && numberAllowedAccounts < numberAccounts) {
+          if (numberAllowedAccountProxies > 0 && numberAllowedAccountProxies < numberAllAccountProxiesCanConnect) {
             setConnectionState(ConnectionStatement.PARTIAL_CONNECTED);
           } else {
             setConnectionState(ConnectionStatement.CONNECTED);
@@ -195,7 +204,9 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
     return (
       <div
-        className='selected-account'
+        className={CN('selected-account', {
+          'is-no-all-account': !isAccountAll(currentAccountProxy.id)
+        })}
         onClick={onOpenSelectAccountModal}
       >
         <AccountProxyBriefInfo accountProxy={currentAccountProxy} />
@@ -353,6 +364,14 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       paddingLeft: 0,
       gap: 8,
       cursor: 'pointer'
+    },
+
+    '.selected-account.is-no-all-account': {
+      marginLeft: token.marginXXS,
+
+      '.account-name ': {
+        maxWidth: 165
+      }
     },
 
     '.connect-icon': {

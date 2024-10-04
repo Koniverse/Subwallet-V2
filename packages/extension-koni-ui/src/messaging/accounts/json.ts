@@ -9,7 +9,7 @@ export async function parseInfoSingleJson (request: RequestJsonGetAccountInfo): 
   return sendMessage('pri(accounts.json.info)', request);
 }
 
-export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<void> {
+export async function jsonRestoreV2 (request: RequestJsonRestoreV2): Promise<string[]> {
   return sendMessage('pri(accounts.json.restoreV2)', request);
 }
 
@@ -17,6 +17,6 @@ export async function parseBatchSingleJson (request: RequestBatchJsonGetAccountI
   return sendMessage('pri(accounts.json.batchInfo)', request);
 }
 
-export async function batchRestoreV2 (request: RequestBatchRestoreV2): Promise<void> {
+export async function batchRestoreV2 (request: RequestBatchRestoreV2): Promise<string[]> {
   return sendMessage('pri(accounts.json.batchRestoreV2)', request);
 }

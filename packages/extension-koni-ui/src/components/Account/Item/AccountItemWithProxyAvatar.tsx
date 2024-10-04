@@ -56,7 +56,12 @@ function Component (props: Props): React.ReactElement<Props> {
         }
       </div>
       <div className='__item-middle-part'>
-        {accountName || account?.name || ''}
+        <div className={CN('__account-name-item', {
+          '-is-show-fallback': showAccountNameFallback
+        })}
+        >
+          {accountName || account?.name || ''}
+        </div>
         {showAccountNameFallback && account && <div className={'account-item-address-wrapper'}>{toShort(accountAddress || account.address, 4, 4)}</div>}
       </div>
       <div className='__item-right-part'>
@@ -70,15 +75,16 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
   const { token } = theme as Theme;
 
   return {
-    background: token.colorBgSecondary,
+    background: token.colorBgInput,
     padding: token.paddingSM,
+    minHeight: 52,
     paddingRight: token.paddingSM,
     borderRadius: token.borderRadiusLG,
     alignItems: 'center',
-    display: 'flex !important',
+    display: 'flex',
     cursor: 'pointer',
     transition: `background ${token.motionDurationMid} ease-in-out`,
-    gap: token.sizeSM,
+    gap: token.sizeXS,
 
     '.__item-middle-part': {
       flex: 1,
@@ -93,6 +99,17 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
 
       '.account-item-address-wrapper:after': {
         content: "')'"
+      },
+
+      '.__account-name-item': {
+        maxWidth: 250,
+        overflow: 'hidden',
+        textWrap: 'nowrap',
+        textOverflow: 'ellipsis'
+      },
+
+      '.__account-name-item.-is-show-fallback': {
+        maxWidth: 150
       }
     },
 
@@ -110,16 +127,6 @@ const AccountItemWithProxyAvatar = styled(Component)<Props>(({ theme }) => {
     '.account-item-address-wrapper': {
       color: token.colorTextDescription,
       whiteSpace: 'nowrap'
-    },
-
-    '&:hover': {
-      background: token.colorBgInput,
-      '.__item-actions-overlay': {
-        opacity: 0
-      },
-      '.-show-on-hover': {
-        opacity: 1
-      }
     }
   };
 });
