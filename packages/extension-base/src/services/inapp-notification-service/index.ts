@@ -5,9 +5,10 @@ import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_FETCH_NOTIFICATION_INTERVAL, CRON_LISTEN_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
+import EarningService from '@subwallet/extension-base/services/earning-service/service';
+import { EventService } from '@subwallet/extension-base/services/event-service';
+import { NotificationDescriptionMap, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { NotificationActionType, NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import { getWithdrawNotificationDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus } from '@subwallet/extension-base/types';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
@@ -20,12 +21,16 @@ export class InappNotificationService implements CronServiceInterface {
   private refreshListenNotificationTimeout: NodeJS.Timeout | undefined;
   private readonly dbService: DatabaseService;
   private readonly chainService: ChainService;
+  private readonly earningService: EarningService;
+  private readonly eventService: EventService;
   private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({ count: 0 });
 
-  constructor (dbService: DatabaseService, chainService: ChainService) {
+  constructor (dbService: DatabaseService, chainService: ChainService, earningService: EarningService, eventService: EventService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
     this.dbService = dbService;
     this.chainService = chainService;
+    this.earningService = earningService;
+    this.eventService = eventService;
   }
 
   async markAllRead (address: string) {
@@ -39,7 +44,53 @@ export class InappNotificationService implements CronServiceInterface {
   // todo:
   // createSendNotifications
   // createReceiveNotifications
-  // createClaimNotifications
+  async createClaimNotifications () {
+    const notificationActionType = NotificationActionType.CLAIM;
+    const allClaimNotifications: NotificationInfo[] = [];
+    await this.earningService.waitEarningRewardReady();
+    const claimRewardMap = this.earningService.getEarningRewards().data;
+
+    if (!Object.keys(claimRewardMap).length) {
+      return allClaimNotifications;
+    }
+
+    const timestamp = Date.now();
+
+    for (const claimItemInfo of Object.values(claimRewardMap)) {
+      const stakingSlug = claimItemInfo.slug;
+      const stakingType = claimItemInfo.type;
+      const rawClaimAmount = claimItemInfo.unclaimedReward || '0';
+      const yieldPoolInfo = await this.dbService.getYieldPool(stakingSlug);
+
+      if (!yieldPoolInfo || rawClaimAmount === '0') {
+        continue;
+      }
+
+      const tokenSlug = yieldPoolInfo.metadata.inputAsset; // todo: recheck with altInputAsset
+      const tokenInfo = this.chainService.getAssetBySlug(tokenSlug);
+      const decimal = tokenInfo.decimals || 0;
+      const symbol = tokenInfo.symbol;
+
+      const amount = formatNumber(rawClaimAmount, decimal);
+
+      allClaimNotifications.push({
+        id: `${notificationActionType}___${stakingSlug}___${timestamp}`,
+        title: NotificationTitleMap[notificationActionType],
+        description: NotificationDescriptionMap[notificationActionType](amount, symbol, stakingType),
+        address: claimItemInfo.address,
+        time: timestamp,
+        extrinsicType: ExtrinsicType.STAKING_CLAIM_REWARD,
+        isRead: false,
+        actionType: notificationActionType,
+        metadata: {
+          stakingType,
+          stakingSlug
+        }
+      });
+    }
+
+    return allClaimNotifications;
+  }
 
   async createWithdrawNotifications () {
     const notificationActionType = NotificationActionType.WITHDRAW;
@@ -53,20 +104,22 @@ export class InappNotificationService implements CronServiceInterface {
 
       const stakingType = poolPosition.type;
       const stakingSlug = poolPosition.slug;
-      const symbol = poolPosition.slug.split('___')[0];
+
       const timestamp = Date.now();
 
       for (const unstaking of poolPosition.unstakings) {
         const isClaimable = unstaking.status === UnstakingStatus.CLAIMABLE;
-        const claimableAmount = unstaking.claimable;
-        const decimal = this.chainService.getAssetBySlug(poolPosition.balanceToken).decimals || 0;
-        const amount = formatNumber(claimableAmount, decimal);
+        const rawClaimableAmount = unstaking.claimable;
+        const tokenInfo = this.chainService.getAssetBySlug(poolPosition.balanceToken);
+        const decimal = tokenInfo.decimals || 0;
+        const symbol = tokenInfo.symbol;
+        const amount = formatNumber(rawClaimableAmount, decimal);
 
         if (isClaimable) {
           allWithdrawNotifications.push({
             id: `${notificationActionType}___${stakingSlug}___${timestamp}`,
             title: NotificationTitleMap[notificationActionType],
-            description: getWithdrawNotificationDescription(amount, symbol, stakingType),
+            description: NotificationDescriptionMap[notificationActionType](amount, symbol, stakingType),
             address: poolPosition.address,
             time: timestamp,
             extrinsicType: ExtrinsicType.STAKING_WITHDRAW,
@@ -115,6 +168,14 @@ export class InappNotificationService implements CronServiceInterface {
         console.error(e);
       });
 
+    this.createClaimNotifications()
+      .then(async (notifications) => {
+        await this.dbService.upsertNotifications(notifications);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
+
     this.refreshGetNotificationTimeout = setTimeout(this.cronCreateLatestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
   }
 
@@ -142,6 +203,8 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   async startCron (): Promise<void> {
+    await this.eventService.waitChainReady;
+    await this.eventService.waitEarningReady;
     this.cronListenLatestNotifications();
     this.cronCreateLatestNotifications();
 
