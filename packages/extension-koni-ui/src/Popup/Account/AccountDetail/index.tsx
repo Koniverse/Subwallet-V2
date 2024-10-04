@@ -175,12 +175,12 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [notify, t]);
 
   const parentDerivedAccountProxy = useMemo(() => {
-    if (requestViewDerivedAccountDetails) {
+    if (showDerivationInfoTab) {
       return accountProxies.find((acc) => acc.id === accountProxy.parentId);
     }
 
     return null;
-  }, [accountProxies, accountProxy.parentId, requestViewDerivedAccountDetails]);
+  }, [accountProxies, accountProxy.parentId, showDerivationInfoTab]);
 
   const accountNameValidator = useCallback(async (validate: RuleObject, value: string) => {
     const accountProxyId = accountProxy.id;
@@ -354,7 +354,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
               placeholder={t('Derivation path')}
             />
           </Form.Item>
-          <Form.Item
+          {!!parentDerivedAccountProxy && <Form.Item
             name={'derived-name'}
             statusHelpAsTooltip={true}
           >
@@ -363,7 +363,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
               label={t('Parent account')}
               placeholder={t('Parent account')}
             />
-          </Form.Item>
+          </Form.Item>}
         </Form>
       </>
     );
