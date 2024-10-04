@@ -147,7 +147,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
                     </div>
                     <br />
                     <div>
-                      {t('Note that you can’t import this seed phrase into TON-native wallets, as SubWallet is incompatible with TON-native wallets.')}
+                      {t('Note that you can’t import this seed phrase into TON-native wallets as this seed phrase is incompatible with TON-native wallets.')}
                     </div>
                   </>
                 ),
