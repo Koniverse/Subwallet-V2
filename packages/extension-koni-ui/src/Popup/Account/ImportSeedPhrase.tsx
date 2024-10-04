@@ -138,16 +138,16 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             if (response.mnemonicTypes === 'general') {
               alertModal.open({
                 closable: false,
-                title: t('Seed phrase incompatibility'),
+                title: t('Incompatible seed phrase'),
                 type: NotificationType.WARNING,
                 content: (
                   <>
                     <div>
-                      {t('Importing this seed phrase will generate a unified account that can be used on multiple ecosystems including Polkadot, Ethereum, Bitcoin, and TON.')}
+                      {t('This seed phrase generates a unified account that can be used on multiple ecosystems in SubWallet including TON.')}
                     </div>
                     <br />
                     <div>
-                      {t('However, SubWallet is not compatible with TON-native wallets. This means that with the same seed phrase, SubWallet and TON-native wallets will generate two different TON addresses.')}
+                      {t('Note that importing this seed phrase into TON-native wallets will generate a different TON address, as SubWallet is incompatible with TON-native wallets.')}
                     </div>
                   </>
                 ),
@@ -177,7 +177,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
             }
           })
             .catch((error: Error): void => {
-              const message =  error.message;
+              const message = error.message;
 
               setSeedValidationResponse(undefined);
               setSubmitting(false);

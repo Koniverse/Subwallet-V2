@@ -36,6 +36,7 @@ type ComponentProps = {
   accountProxy: AccountProxy;
   onBack: VoidFunction;
   requestViewDerivedAccountDetails?: boolean;
+  requestViewDerivedAccounts?: boolean;
 };
 
 enum FormFieldName {
@@ -55,8 +56,9 @@ interface DetailFormState {
   [FormFieldName.NAME]: string;
 }
 
-const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccountDetails }: ComponentProps) => {
+const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccountDetails, requestViewDerivedAccounts }: ComponentProps) => {
   const showDerivedAccounts = !!accountProxy.children?.length;
+  const showDerivationInfoTab = !!accountProxy.parentId;
 
   const { t } = useTranslation();
 
@@ -68,7 +70,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
 
   const getDefaultFilterTab = () => {
-    if (requestViewDerivedAccountDetails && showDerivedAccounts) {
+    if (requestViewDerivedAccounts && showDerivedAccounts) {
       return FilterTabType.DERIVED_ACCOUNT;
     } else if (requestViewDerivedAccountDetails) {
       return FilterTabType.DERIVATION_INFO;
@@ -104,7 +106,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       });
     }
 
-    if (!showDerivedAccounts && requestViewDerivedAccountDetails) {
+    if (showDerivationInfoTab) {
       result.push({
         label: t('Derivation info'),
         value: FilterTabType.DERIVATION_INFO
@@ -112,7 +114,7 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
     }
 
     return result;
-  }, [requestViewDerivedAccountDetails, showDerivedAccounts, t]);
+  }, [showDerivationInfoTab, showDerivedAccounts, t]);
 
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value);
@@ -320,14 +322,14 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   }, [accountProxy, form]);
 
   useEffect(() => {
-    if (requestViewDerivedAccountDetails && showDerivedAccounts) {
+    if (requestViewDerivedAccounts && showDerivedAccounts) {
       setSelectedFilterTab(FilterTabType.DERIVED_ACCOUNT);
     } else if (requestViewDerivedAccountDetails) {
       setSelectedFilterTab(FilterTabType.DERIVATION_INFO);
     } else {
       setSelectedFilterTab(FilterTabType.ACCOUNT_ADDRESS);
     }
-  }, [requestViewDerivedAccountDetails, requestViewDerivedAccountDetails, showDerivedAccounts]);
+  }, [requestViewDerivedAccountDetails, requestViewDerivedAccounts, showDerivedAccounts]);
 
   const renderDetailDerivedAccount = () => {
     return (
@@ -487,6 +489,7 @@ const Wrapper = ({ className }: Props) => {
         accountProxy={accountProxy}
         onBack={goHome}
         requestViewDerivedAccountDetails={locationState?.requestViewDerivedAccountDetails}
+        requestViewDerivedAccounts={locationState?.requestViewDerivedAccounts}
       />
     </PageWrapper>
   );
