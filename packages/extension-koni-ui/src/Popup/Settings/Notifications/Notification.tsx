@@ -58,8 +58,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         isRead: item.isRead,
         actionType: item.actionType,
         backgroundColor: token['red-10'],
-        leftIcon: DownloadSimple
-      } as unknown as NotificationInfoItem;
+        leftIcon: DownloadSimple,
+        metadata: item.metadata
+      };
     });
   }, [notifications, token]);
 

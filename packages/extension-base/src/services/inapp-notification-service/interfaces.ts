@@ -23,7 +23,7 @@ export interface ActionTypeToMetadataMap {
   [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
 }
 
-interface SendReceiveNotificationMetadata {
+export interface SendReceiveNotificationMetadata {
   chain: string,
   from: string,
   to: string,
@@ -32,7 +32,7 @@ interface SendReceiveNotificationMetadata {
   tokenSlug: string
 }
 
-interface WithdrawClaimNotificationMetadata {
+export interface WithdrawClaimNotificationMetadata {
   stakingType: YieldPoolType,
   stakingSlug: string
 }
