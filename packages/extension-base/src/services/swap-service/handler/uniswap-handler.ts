@@ -81,7 +81,7 @@ export class UniswapHandler implements SwapBaseInterface {
     const toToken = this.swapBaseHandler.chainService.getAssetBySlug(to);
     const fromChain = this.swapBaseHandler.chainService.getChainInfoByKey(fromToken.originChain);
 
-    const [availQuote] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService, this.isTestnet);
+    const [availQuote] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService);
     const result: SwapQuote = {
       pair: request.pair,
       fromAmount: request.fromAmount,
@@ -139,7 +139,7 @@ export class UniswapHandler implements SwapBaseInterface {
     const toAddress = CHAIN_TO_ADDRESSES_MAP[chainId].swapRouter02Address;
 
     const evmApi = this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain);
-    const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService, this.isTestnet);
+    const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService);
 
     const owner = getEthereumSmartAccountOwner(request.address);
     let tx: UserOpBundle | QuoteResponse;

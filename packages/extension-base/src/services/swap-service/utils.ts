@@ -122,7 +122,7 @@ export interface UniSwapPoolInfo {
   tick: number
 }
 
-export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi, chainService: ChainService, isTestnet: boolean): Promise<[string, string]> {
+export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi, chainService: ChainService): Promise<[string, string]> {
   const { from, to: _to } = request.pair;
   let to = _to;
   let chainId: number = ChainId.SEPOLIA;
