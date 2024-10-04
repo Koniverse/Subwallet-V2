@@ -3,7 +3,7 @@
 
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { formatConditionalDuration } from '@subwallet/extension-koni-ui/utils';
+import { convertHexColorToRGBA, formatConditionalDuration } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { DotsThree } from 'phosphor-react';
@@ -29,9 +29,10 @@ const Component: React.FC<Props> = (props: Props) => {
     >
       <div className={'__left-part'}>
         <BackgroundIcon
-          backgroundColor={backgroundColor}
+          backgroundColor={convertHexColorToRGBA(backgroundColor, 0.1)}
+          iconColor={backgroundColor}
           phosphorIcon={leftIcon}
-          size='sm'
+          size={'large'}
           weight='fill'
         />
         <div className={'__time-info'}>{formatConditionalDuration(time)}</div>
@@ -108,6 +109,10 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
       color: token.colorTextDescription,
       'white-space': 'nowrap',
       textAlign: 'center'
+    },
+    '.ant-background-icon': {
+      width: '40px !important',
+      height: '40px !important'
     }
   };
 });

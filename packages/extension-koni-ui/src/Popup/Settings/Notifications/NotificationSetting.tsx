@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { NotificationSetup, NotificationTimePeriod, NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationActionType, NotificationSetup, NotificationTimePeriod } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { PageWrapper, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { useDefaultNavigate } from '@subwallet/extension-koni-ui/hooks';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
@@ -61,9 +61,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         .catch(console.error)
         .finally(() => {
           setLoadingNotification(false);
+          goBack();
         });
     };
-  }, []);
+  }, [goBack]);
 
   const onSwitchNotification = useCallback((currentValue: boolean) => {
     return () => {
@@ -206,7 +207,8 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
       fontWeight: token.bodyFontWeight,
-      color: token.colorWhite
+      color: token.colorWhite,
+      marginLeft: token.marginSM
     },
     '.ant-radio-group': {
       backgroundColor: 'transparent'
@@ -230,10 +232,14 @@ const NotificationSetting = styled(Component)<Props>(({ theme: { token } }: Prop
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
       fontWeight: token.bodyFontWeight,
-      color: token.colorWhite
+      color: token.colorWhite,
+      marginLeft: token.marginSM
     },
     '.security-item': {
-      marginBottom: token.margin
+      marginBottom: token.margin,
+      '.ant-web3-block-right-item': {
+        marginRight: 0
+      }
     }
   });
 });

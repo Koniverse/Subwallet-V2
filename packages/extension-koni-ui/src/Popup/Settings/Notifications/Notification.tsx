@@ -13,10 +13,10 @@ import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { MissionInfo, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
-import { BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, ListBullets } from 'phosphor-react';
+import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -30,8 +30,22 @@ export interface NotificationInfoItem extends NotificationInfo {
   disabled?: boolean;
 }
 
+export enum NotificationIconBackgroundColorMap {
+  SEND = 'colorSuccess',
+  RECEIVE = 'lime-7',
+  WITHDRAW = 'blue-8',
+  CLAIM = 'yellow-7'
+}
+
+export const NotificationIconMap = {
+  SEND: ArrowSquareUpRight,
+  RECEIVE: ArrowSquareDownLeft,
+  WITHDRAW: DownloadSimple,
+  CLAIM: Gift
+};
+
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
-  const { activeModal } = useContext(ModalContext);
+  const { activeModal, checkActive } = useContext(ModalContext);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const goBack = useDefaultNavigate().goBack;
@@ -45,8 +59,23 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [currentAddress] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
+  const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
+    const filterTabFunction = (item: NotificationInfoItem) => {
+      if (selectedFilterTab === NotificationTab.ALL) {
+        return true;
+      } else if (selectedFilterTab === NotificationTab.UNREAD) {
+        return !item.isRead;
+      } else {
+        return item.isRead;
+      }
+    };
+
+    const sortByTimeFunc = (itemA: NotificationInfoItem, itemB: NotificationInfoItem) => {
+      return itemB.time - itemA.time;
+    };
+
     return notifications.map((item) => {
       return {
         id: item.id,
@@ -57,12 +86,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         extrinsicType: item.extrinsicType,
         isRead: item.isRead,
         actionType: item.actionType,
-        backgroundColor: token['red-10'],
-        leftIcon: DownloadSimple,
+        backgroundColor: token[NotificationIconBackgroundColorMap[item.actionType]],
+        leftIcon: NotificationIconMap[item.actionType],
         metadata: item.metadata
       };
-    });
-  }, [notifications, token]);
+    }).filter(filterTabFunction).sort(sortByTimeFunc);
+  }, [notifications, selectedFilterTab, token]);
 
   const onEnableNotification = useCallback(() => {
     const newNotificationSetup = {
@@ -112,12 +141,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       .catch(console.error);
   }, [currentAddress, isAllAccount]);
 
-  const onClickItem = useCallback((item: NotificationInfoItem) => {
-    return () => {
-      alert('clicked item');
-    };
-  }, []);
-
   const onClickMore = useCallback((item: NotificationInfoItem) => {
     return (e: SyntheticEvent) => {
       e.stopPropagation();
@@ -139,13 +162,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         isRead={item.isRead}
         leftIcon={item.leftIcon}
         metadata={item.metadata}
-        onClick={onClickItem(item)}
         onClickMoreBtn={onClickMore(item)}
         time={item.time}
         title={item.title}
       />
     );
-  }, [onClickItem, onClickMore]);
+  }, [onClickMore]);
 
   const renderEmptyList = useCallback(() => {
     return (
@@ -272,8 +294,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               searchMinCharactersCount={2}
               searchPlaceholder={t<string>('Enter network name')}
             />
-            {viewDetailItem && (
-              <NotificationDetailModal notificationItem={viewDetailItem} />
+            {viewDetailItem && isNotificationDetailModalVisible && (
+              <NotificationDetailModal
+                notificationItem={viewDetailItem}
+                selectedFilterTab={selectedFilterTab}
+              />
             )}
           </>
         )

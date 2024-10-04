@@ -4,9 +4,11 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { NotificationActionType, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
-import { changeReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { changeReadNotificationStatus, getInappNotifications } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
@@ -33,7 +35,6 @@ export interface ActionInfo {
 function Component (props: Props): React.ReactElement<Props> {
   const { className, notificationItem, onCancel } = props;
   const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead);
-
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
   const { inactiveModal } = useContext(ModalContext);
@@ -98,8 +99,6 @@ function Component (props: Props): React.ReactElement<Props> {
         break;
       }
     }
-
-    alert('clicked item');
   }, [navigate, notificationItem.actionType, notificationItem.address, notificationItem.metadata, setClaimRewardStorage, setWithdrawStorage]);
 
   const handleActionNotification = useCallback(() => {
@@ -117,8 +116,9 @@ function Component (props: Props): React.ReactElement<Props> {
   const onClickReadButton = useCallback(() => {
     setReadNotification(!readNotification);
     changeReadNotificationStatus(notificationItem)
-      .catch(console.error);
-  }, [notificationItem, readNotification]);
+      .catch(console.error)
+      .finally(_onCancel);
+  }, [_onCancel, notificationItem, readNotification]);
 
   return (
     <SwModal
@@ -128,11 +128,11 @@ function Component (props: Props): React.ReactElement<Props> {
       title={t('Actions')}
     >
       <div className={'__button-container'}>
-        <div className={'__mark-action-details'}>
-          <div
-            className={'__left-part'}
-            onClick={onClickAction}
-          >
+        <div
+          className={'__mark-action-details'}
+          onClick={onClickAction}
+        >
+          <div className={'__left-part'}>
             <BackgroundIcon
               backgroundColor={handleActionNotification().backgroundColor}
               phosphorIcon={handleActionNotification().leftIcon}
@@ -142,11 +142,11 @@ function Component (props: Props): React.ReactElement<Props> {
           </div>
           <div className={'__right-part'}>{handleActionNotification().title}</div>
         </div>
-        <div className={'__mark-read-button'}>
-          <div
-            className={'__left-part'}
-            onClick={onClickReadButton}
-          >
+        <div
+          className={'__mark-read-button'}
+          onClick={onClickReadButton}
+        >
+          <div className={'__left-part'}>
             <BackgroundIcon
               backgroundColor={readNotification ? token['gray-3'] : token['green-6']}
               phosphorIcon={readNotification ? Checks : X}
@@ -172,7 +172,8 @@ const NotificationDetailModal = styled(Component)<Props>(({ theme: { token } }: 
       paddingRight: 12,
       paddingLeft: 12,
       borderRadius: 8,
-      backgroundColor: token.colorBgSecondary
+      backgroundColor: token.colorBgSecondary,
+      cursor: 'pointer'
     },
     '.__button-container': {
       display: 'flex',

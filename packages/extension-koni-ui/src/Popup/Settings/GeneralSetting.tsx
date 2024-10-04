@@ -13,7 +13,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { PhosphorIcon, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { noop } from '@subwallet/extension-koni-ui/utils';
 import { getCurrencySymbol } from '@subwallet/extension-koni-ui/utils/currency';
-import { BackgroundIcon, Icon, Image, SelectModal, SettingItem, SwIconProps, Switch } from '@subwallet/react-ui';
+import { BackgroundIcon, Icon, Image, SelectModal, SettingItem, SwIconProps } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowSquareUpRight, BellSimpleRinging, CaretRight, CheckCircle, CornersOut, CurrencyCircleDollar, GlobeHemisphereEast, Layout as LayoutIcon, MoonStars, Sun } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
@@ -144,7 +144,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const theme = useSelector((state: RootState) => state.settings.theme);
   const _language = useSelector((state: RootState) => state.settings.language);
   const _browserConfirmationType = useSelector((state: RootState) => state.settings.browserConfirmationType);
-  const enableNotification = useSelector((state: RootState) => state.settings.notificationSetup.isEnabled);
   const { currency } = useSelector((state: RootState) => state.price);
   const [loadingMap, setLoadingMap] = useState<LoadingMap>({
     browserConfirmationType: false,
@@ -283,7 +282,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     saveTheme(value as ThemeNames).finally(noop);
   }, []);
 
-  const handleSwitchClick = useCallback(() => {
+  const onClickEnableNotification = useCallback(() => {
+    console.log('123123123123');
     navigate('/settings/notification-config');
   }, [navigate]);
 
@@ -392,6 +392,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
           <SettingItem
             className={CN('security-item', 'notification-item')}
+            onPressItem={onClickEnableNotification}
             leftItemIcon={(
               <BackgroundIcon
                 backgroundColor={token['magenta-7']}
@@ -403,10 +404,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             )}
             name={t('Enable notifications')}
             rightItem={(
-              <Switch
-                checked={enableNotification}
-                onClick={handleSwitchClick}
-              />
+              <div className={'__trigger-right-item'}>
+                <Icon
+                  className='__right-icon'
+                  customSize={'20px'}
+                  phosphorIcon={CaretRight}
+                  type='phosphor'
+                />
+              </div>
             )}
           />
         </div>
