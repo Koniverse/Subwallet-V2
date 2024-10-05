@@ -1,8 +1,9 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AccountJson, AccountWithChildren } from '@subwallet/extension-base/background/types';
+import type { AccountWithChildren } from '@subwallet/extension-base/background/types';
 
+import { AccountJson } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils/account/accountAll';
 
 import getNetworkMap from '../chain/getNetworkMap';

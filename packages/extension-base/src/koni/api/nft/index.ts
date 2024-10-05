@@ -24,7 +24,7 @@ import { categoryAddresses, targetIsWeb } from '@subwallet/extension-base/utils'
 import AssetHubNftsPalletApi from './assethub_nft';
 
 function createSubstrateNftApi (chain: string, substrateApi: _SubstrateApi | null, addresses: string[]): BaseNftApi[] | null {
-  const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+  const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
 
   if (_NFT_CHAIN_GROUP.acala.includes(chain)) {
     return [new AcalaNftApi(substrateApi, substrateAddresses, chain)];
@@ -52,13 +52,13 @@ function createSubstrateNftApi (chain: string, substrateApi: _SubstrateApi | nul
 }
 
 function createWasmNftApi (chain: string, apiProps: _SubstrateApi | null, addresses: string[]): BaseNftApi | null {
-  const [substrateAddresses] = categoryAddresses(addresses);
+  const substrateAddresses = categoryAddresses(addresses).substrate;
 
   return new WasmNftApi(apiProps, substrateAddresses, chain);
 }
 
 function createWeb3NftApi (chain: string, evmApi: _EvmApi | null, addresses: string[]): BaseNftApi | null {
-  const [, evmAddresses] = categoryAddresses(addresses);
+  const evmAddresses = categoryAddresses(addresses).evm;
 
   return new EvmNftApi(evmApi, evmAddresses, chain);
 }
@@ -100,7 +100,7 @@ export class NftHandler {
   setAddresses (addresses: string[]) {
     this.addresses = addresses;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
 
     for (const handler of this.handlers) {
       const useAddresses = handler.isEthereum ? evmAddresses : substrateAddresses;
@@ -131,7 +131,7 @@ export class NftHandler {
     try {
       if (this.needSetupApi) { // setup connections for first time use
         this.handlers = [];
-        const [substrateAddresses, evmAddresses] = categoryAddresses(this.addresses);
+        const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(this.addresses);
 
         Object.entries(this.chainInfoMap).forEach(([chain, chainInfo]) => {
           if (_isChainSupportNativeNft(chainInfo)) {

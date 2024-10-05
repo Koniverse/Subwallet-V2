@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
 import { BasicInputWrapper } from '@subwallet/extension-web-ui/components/Field/Base';
 import { BaseSelectModal } from '@subwallet/extension-web-ui/components/Modal/BaseSelectModal';

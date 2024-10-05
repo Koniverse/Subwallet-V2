@@ -143,7 +143,7 @@ const Component: React.FC<Props> = (props: Props) => {
         (await getAllAddress(start, end)).forEach(({ address }, index) => {
           rs[start + index] = {
             accountIndex: start + index,
-            name: `Ledger ${accountMigrateNetworkName} ${accountMigrateNetworkName ? `(${accountName})` : accountName} ${start + index + 1}`,
+            name: `Ledger ${accountMigrateNetworkName} ${accountMigrateNetworkName ? `(${accountName})` : accountName} ${start + index + 1} - ${address.slice(-4)}`,
             address: address
           };
         });
@@ -212,20 +212,18 @@ const Component: React.FC<Props> = (props: Props) => {
 
       const selected = !!selectedAccounts.find((it) => it.address === item.address);
       const originAddress = reformatAddress(item.address, 42);
-
-      const existedAccount = accounts.find((acc) => acc.address === originAddress && acc.genesisHash === selectedChain?.genesisHash);
-      const disabled = !!existedAccount;
+      const existedAccount = accounts.some((acc) => acc.address === originAddress);
 
       return (
         <AccountItemWithName
           accountName={item.name}
           address={item.address}
-          className={CN({ disabled: disabled })}
+          className={CN({ disabled: existedAccount })}
           direction='vertical'
           genesisHash={selectedChain?.genesisHash}
-          isSelected={selected || disabled}
+          isSelected={selected || existedAccount}
           key={key}
-          onClick={disabled ? undefined : onClickItem(selectedAccounts, item)}
+          onClick={existedAccount ? undefined : onClickItem(selectedAccounts, item)}
           showUnselectIcon={true}
         />
       );
@@ -307,6 +305,7 @@ const Component: React.FC<Props> = (props: Props) => {
               <>
                 <div className='logo'>
                   <DualLogo
+                    innerSize={52}
                     leftLogo={(
                       <Image
                         height={52}
@@ -323,18 +322,17 @@ const Component: React.FC<Props> = (props: Props) => {
                         width={52}
                       />
                     )}
-                    innerSize={52}
                     sizeLinkIcon={36}
                     sizeSquircleBorder={108}
                   />
                 </div>
                 <ChainSelector
+                  className={'select-ledger-app'}
                   items={networks}
                   label={t('Select Ledger app')}
                   onChange={onChainChange}
                   placeholder={t('Select Ledger app')}
                   value={chain}
-                  className={'select-ledger-app'}
                 />
                 {
                   !!chainMigrateMode && <ChainSelector

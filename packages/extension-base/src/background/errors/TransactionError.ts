@@ -1,12 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { SWError } from '@subwallet/extension-base/background/errors/SWError';
-import { BasicTxErrorType, StakingTxErrorType, TransactionErrorType, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
-import { YieldValidationStatus } from '@subwallet/extension-base/types';
-import { SwapErrorType } from '@subwallet/extension-base/types/swap';
+import { BasicTxErrorType, StakingTxErrorType, SwapErrorType, TransactionErrorType, TransferTxErrorType, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { t } from 'i18next';
+
+import { SWError } from './SWError';
 
 // Todo: finish this map in the future
 const defaultErrorMap = {

@@ -70,6 +70,7 @@ export const ALL_STAKING_ACTIONS: ExtrinsicType[] = [
 ];
 
 export const DEFAULT_TRANSACTION_PARAMS: TransactionFormBaseProps = {
+  fromAccountProxy: '',
   asset: '',
   chain: '',
   from: ''
