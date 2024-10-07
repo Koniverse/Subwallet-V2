@@ -762,7 +762,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                       :
                   </div>
                 </Tooltip>
-                  &nbsp;<span>2%</span>
+                  &nbsp;<span>{(CHAINFLIP_SLIPPAGE * 100).toString()}%</span>
               </>
               )
               : (
