@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
@@ -24,7 +24,7 @@ import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
 
-export interface NotificationInfoItem extends NotificationInfo {
+export interface NotificationInfoItem extends _NotificationInfo {
   backgroundColor: string;
   leftIcon?: SwIconProps['phosphorIcon'];
   disabled?: boolean;
@@ -55,7 +55,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
   const { notificationSetup } = useSelector((state: RootState) => state.settings);
   const enableNotification = notificationSetup.isEnabled;
-  const [notifications, setNotifications] = useState<NotificationInfo[]>([]);
+  const [notifications, setNotifications] = useState<_NotificationInfo[]>([]);
   const { currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [currentAddress] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);

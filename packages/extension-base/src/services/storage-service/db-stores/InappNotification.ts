@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { getIsTabRead } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
-import {getIsTabRead} from "@subwallet/extension-base/services/inapp-notification-service/utils";
 
-export default class InappNotificationStore extends BaseStore<NotificationInfo> {
+export default class InappNotificationStore extends BaseStore<_NotificationInfo> {
   async getNotificationInfo (id: string) {
     return this.table.get(id);
   }
@@ -77,7 +77,7 @@ export default class InappNotificationStore extends BaseStore<NotificationInfo> 
       .modify({ isRead: true });
   }
 
-  changeReadStatus (notification: NotificationInfo) {
+  changeReadStatus (notification: _NotificationInfo) {
     const id = notification.id;
     const address = notification.address;
 

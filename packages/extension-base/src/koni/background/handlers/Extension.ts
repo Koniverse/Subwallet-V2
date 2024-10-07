@@ -34,7 +34,7 @@ import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
-import { NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
@@ -3736,7 +3736,7 @@ export default class KoniExtension {
     return this.#koniState.inappNotificationService.markAllRead(address);
   }
 
-  private changeReadNotificationStatus (notification: NotificationInfo) {
+  private changeReadNotificationStatus (notification: _NotificationInfo) {
     return this.#koniState.inappNotificationService.changeReadStatus(notification);
   }
 
@@ -4342,7 +4342,7 @@ export default class KoniExtension {
       case 'pri(inappNotification.markAllReadNotification)':
         return this.markAllReadNotification(request as string);
       case 'pri(inappNotification.changeReadNotificationStatus)':
-        return this.changeReadNotificationStatus(request as NotificationInfo);
+        return this.changeReadNotificationStatus(request as _NotificationInfo);
       case 'pri(inappNotification.getInappNotifications)':
         return await this.getInappNotifications(request as GetNotificationParams);
         /* Notification service */

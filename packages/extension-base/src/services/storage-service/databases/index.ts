@@ -3,7 +3,7 @@
 
 import { _AssetRef, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { CampaignData, ChainStakingMetadata, CrowdloanItem, MetadataItem, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { BalanceItem, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
 import Dexie, { Table, Transaction } from 'dexie';
 
@@ -76,7 +76,7 @@ export default class KoniDatabase extends Dexie {
 
   public keyValue!: Table<IKeyValue, object>;
 
-  public inappNotification!: Table<NotificationInfo, object>;
+  public inappNotification!: Table<_NotificationInfo, object>;
 
   private schemaVersion: number;
 

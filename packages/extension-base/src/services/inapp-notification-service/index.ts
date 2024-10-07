@@ -8,7 +8,7 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import EarningService from '@subwallet/extension-base/services/earning-service/service';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { NotificationDescriptionMap, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { NotificationActionType, NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { UnstakingStatus } from '@subwallet/extension-base/types';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
@@ -37,7 +37,7 @@ export class InappNotificationService implements CronServiceInterface {
     await this.dbService.markAllRead(address);
   }
 
-  async changeReadStatus (notification: NotificationInfo) {
+  async changeReadStatus (notification: _NotificationInfo) {
     await this.dbService.changeReadStatus(notification);
   }
 
@@ -46,7 +46,7 @@ export class InappNotificationService implements CronServiceInterface {
   // createReceiveNotifications
   async createClaimNotifications () {
     const notificationActionType = NotificationActionType.CLAIM;
-    const allClaimNotifications: NotificationInfo[] = [];
+    const allClaimNotifications: _NotificationInfo[] = [];
 
     await this.earningService.waitEarningRewardReady();
     const claimRewardMap = this.earningService.getEarningRewards().data;
@@ -95,7 +95,7 @@ export class InappNotificationService implements CronServiceInterface {
 
   async createWithdrawNotifications () {
     const notificationActionType = NotificationActionType.WITHDRAW;
-    const allWithdrawNotifications: NotificationInfo[] = [];
+    const allWithdrawNotifications: _NotificationInfo[] = [];
     const poolPositions = await this.dbService.getYieldPositions();
 
     for (const poolPosition of poolPositions) {

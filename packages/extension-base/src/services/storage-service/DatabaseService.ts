@@ -4,7 +4,7 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { APIItemState, ChainStakingMetadata, CrowdloanItem, MantaPayConfig, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, StakingType, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { EventService } from '@subwallet/extension-base/services/event-service';
-import { NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import KoniDatabase, { IBalance, ICampaign, IChain, ICrowdloanItem, INft } from '@subwallet/extension-base/services/storage-service/databases';
 import { AssetStore, BalanceStore, ChainStore, CrowdloanStore, MetadataStore, MigrationStore, NftCollectionStore, NftStore, PriceStore, StakingStore, TransactionStore } from '@subwallet/extension-base/services/storage-service/db-stores';
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
@@ -607,7 +607,7 @@ export default class DatabaseService {
     return this.stores.inappNotification.getNotificationInfo(id);
   }
 
-  public updateNotification (notification: NotificationInfo) {
+  public updateNotification (notification: _NotificationInfo) {
     return this.stores.inappNotification.upsert(notification);
   }
 
@@ -619,7 +619,7 @@ export default class DatabaseService {
     return this.stores.inappNotification.getAllUnreadNotifications();
   }
 
-  public upsertNotifications (notifications: NotificationInfo[]) {
+  public upsertNotifications (notifications: _NotificationInfo[]) {
     return this.stores.inappNotification.bulkUpsert(notifications);
   }
 
@@ -627,7 +627,7 @@ export default class DatabaseService {
     return this.stores.inappNotification.markAllRead(address);
   }
 
-  public changeReadStatus (notification: NotificationInfo) {
+  public changeReadStatus (notification: _NotificationInfo) {
     return this.stores.inappNotification.changeReadStatus(notification);
   }
 

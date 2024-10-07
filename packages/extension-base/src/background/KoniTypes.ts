@@ -9,7 +9,7 @@ import { RequestOptimalTransferProcess } from '@subwallet/extension-base/service
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { CrowdloanContributionsResponse } from '@subwallet/extension-base/services/subscan-service/types';
@@ -2251,8 +2251,8 @@ export interface KoniRequestSignatures {
   /* Notification Service */
   'pri(inappNotification.subscribeUnreadNotificationCount)': [null, GetNotificationCountResult, GetNotificationCountResult];
   'pri(inappNotification.markAllReadNotification)': [string, null];
-  'pri(inappNotification.changeReadNotificationStatus)': [NotificationInfo, null];
-  'pri(inappNotification.getInappNotifications)': [GetNotificationParams, NotificationInfo[]];
+  'pri(inappNotification.changeReadNotificationStatus)': [_NotificationInfo, null];
+  'pri(inappNotification.getInappNotifications)': [GetNotificationParams, _NotificationInfo[]];
   /* Notification Service */
 
   /* Ledger */
