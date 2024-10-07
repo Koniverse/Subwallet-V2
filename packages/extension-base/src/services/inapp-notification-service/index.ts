@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { CRON_FETCH_NOTIFICATION_INTERVAL, CRON_LISTEN_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
+import { CRON_FETCH_NOTIFICATION_INTERVAL } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import EarningService from '@subwallet/extension-base/services/earning-service/service';
@@ -13,7 +13,6 @@ import DatabaseService from '@subwallet/extension-base/services/storage-service/
 import { UnstakingStatus } from '@subwallet/extension-base/types';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { formatNumber } from '@subwallet/extension-base/utils';
-import { BehaviorSubject } from 'rxjs';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
@@ -23,7 +22,6 @@ export class InappNotificationService implements CronServiceInterface {
   private readonly chainService: ChainService;
   private readonly earningService: EarningService;
   private readonly eventService: EventService;
-  private unreadNotificationCountSubject = new BehaviorSubject<GetNotificationCountResult>({ count: 0 });
 
   constructor (dbService: DatabaseService, chainService: ChainService, earningService: EarningService, eventService: EventService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
@@ -41,9 +39,6 @@ export class InappNotificationService implements CronServiceInterface {
     await this.dbService.changeReadStatus(notification);
   }
 
-  // todo:
-  // createSendNotifications
-  // createReceiveNotifications
   async createClaimNotifications () {
     const notificationActionType = NotificationActionType.CLAIM;
     const allClaimNotifications: _NotificationInfo[] = [];
@@ -138,20 +133,18 @@ export class InappNotificationService implements CronServiceInterface {
     return allWithdrawNotifications;
   }
 
-  private async updateUnreadNotificationCountSubject () {
-    const unreadNotificationCount = await this.dbService.getAllUnreadNotifications();
-
-    this.unreadNotificationCountSubject.next({ count: unreadNotificationCount });
+  public subscribeUnreadNotificationsCount (callback: (data: number) => void) {
+    return this.dbService.subscribeUnreadNotificationsCount().subscribe(
+      {
+        next: callback
+      }
+    );
   }
 
-  public subscribeUnreadNotificationCount (callback: (data: GetNotificationCountResult) => void) {
-    return this.unreadNotificationCountSubject.subscribe({
-      next: callback
-    });
-  }
+  public async getUnreadNotificationsCount () {
+    const unreadNotificationsCount = await this.dbService.getUnreadNotificationsCount();
 
-  public getUnreadNotificationCount () {
-    return this.unreadNotificationCountSubject.getValue();
+    return { count: unreadNotificationsCount } as GetNotificationCountResult;
   }
 
   public async getNotificationsByParams (params: GetNotificationParams) {
@@ -180,15 +173,6 @@ export class InappNotificationService implements CronServiceInterface {
     this.refreshGetNotificationTimeout = setTimeout(this.cronCreateLatestNotifications.bind(this), CRON_FETCH_NOTIFICATION_INTERVAL);
   }
 
-  cronListenLatestNotifications () {
-    clearTimeout(this.refreshListenNotificationTimeout);
-
-    this.updateUnreadNotificationCountSubject()
-      .then().catch((e) => console.error(e));
-
-    this.refreshListenNotificationTimeout = setTimeout(this.cronListenLatestNotifications.bind(this), CRON_LISTEN_NOTIFICATION_INTERVAL);
-  }
-
   async start (): Promise<void> {
     if (this.status === ServiceStatus.STARTED) {
       return;
@@ -206,7 +190,6 @@ export class InappNotificationService implements CronServiceInterface {
   async startCron (): Promise<void> {
     await this.eventService.waitChainReady;
     await this.eventService.waitEarningReady;
-    this.cronListenLatestNotifications();
     this.cronCreateLatestNotifications();
 
     return Promise.resolve();

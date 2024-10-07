@@ -3709,17 +3709,17 @@ export default class KoniExtension {
   /* Swap service */
 
   /* Notification service */
-  private subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): GetNotificationCountResult {
+  private async subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): Promise<GetNotificationCountResult> {
     const cb = createSubscription<'pri(inappNotification.subscribeUnreadNotificationCount)'>(id, port);
     let ready = false;
 
-    const callback = (rs: GetNotificationCountResult) => {
+    const callback = (rs: number) => {
       if (ready) {
-        cb(rs);
+        cb({ count: rs } as GetNotificationCountResult);
       }
     };
 
-    const subscription = this.#koniState.inappNotificationService.subscribeUnreadNotificationCount(callback);
+    const subscription = this.#koniState.inappNotificationService.subscribeUnreadNotificationsCount(callback);
 
     this.createUnsubscriptionHandle(id, subscription.unsubscribe);
 
@@ -3729,7 +3729,7 @@ export default class KoniExtension {
 
     ready = true;
 
-    return this.#koniState.inappNotificationService.getUnreadNotificationCount();
+    return await this.#koniState.inappNotificationService.getUnreadNotificationsCount();
   }
 
   private markAllReadNotification (address: string) {
@@ -4338,7 +4338,7 @@ export default class KoniExtension {
 
         /* Notification service */
       case 'pri(inappNotification.subscribeUnreadNotificationCount)':
-        return this.subscribeUnreadNotificationCount(id, port);
+        return await this.subscribeUnreadNotificationCount(id, port);
       case 'pri(inappNotification.markAllReadNotification)':
         return this.markAllReadNotification(request as string);
       case 'pri(inappNotification.changeReadNotificationStatus)':

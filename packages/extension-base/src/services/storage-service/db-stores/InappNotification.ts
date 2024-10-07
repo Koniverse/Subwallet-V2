@@ -6,6 +6,7 @@ import { _NotificationInfo, NotificationTab } from '@subwallet/extension-base/se
 import { getIsTabRead } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { liveQuery } from 'dexie';
 
 export default class InappNotificationStore extends BaseStore<_NotificationInfo> {
   async getNotificationInfo (id: string) {
@@ -63,7 +64,13 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     }
   }
 
-  getAllUnreadNotifications () {
+  subscribeUnreadNotificationsCount () {
+    return liveQuery(
+      async () => (await this.table.filter((item) => !item.isRead).count())
+    );
+  }
+
+  getUnreadNotificationsCount () {
     return this.table.filter((item) => !item.isRead).count();
   }
 
