@@ -17,3 +17,5 @@ export const NotificationDescriptionMap = {
   [NotificationActionType.SEND]: getSendDescription,
   [NotificationActionType.RECEIVE]: getReceiveDescription
 };
+
+export const ONE_DAY_MILLISECOND = 86400000;

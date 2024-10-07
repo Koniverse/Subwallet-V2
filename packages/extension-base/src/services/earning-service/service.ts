@@ -696,7 +696,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
   }
 
   earningsRewardInterval: NodeJS.Timer | undefined;
-  earningRewardReady: PromiseHandler<void> = createPromiseHandler<void>()
+  earningRewardReady: PromiseHandler<void> = createPromiseHandler<void>();
 
   waitEarningRewardReady () {
     return this.earningRewardReady.promise;

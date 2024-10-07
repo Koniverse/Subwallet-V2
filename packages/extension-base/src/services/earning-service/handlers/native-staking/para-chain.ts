@@ -9,7 +9,7 @@ import { _EXPECTED_BLOCK_TIME, _STAKING_ERA_LENGTH_MAP } from '@subwallet/extens
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _STAKING_CHAIN_GROUP, MANTA_MIN_DELEGATION, MANTA_VALIDATOR_POINTS_PER_BLOCK } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { BaseYieldPositionInfo, BasicTxErrorType, CollatorExtraInfo, EarningStatus, NativeYieldPoolInfo, PalletParachainStakingDelegationRequestsScheduledRequest, PalletParachainStakingDelegator, ParachainStakingCandidateMetadata, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, CollatorExtraInfo, EarningStatus, NativeYieldPoolInfo, PalletParachainStakingDelegationRequestsScheduledRequest, PalletParachainStakingDelegator, ParachainStakingCandidateMetadata, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPoolType, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, parseRawNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
@@ -264,6 +264,11 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       bnTotalActiveStake = bnTotalActiveStake.add(bnActiveStake);
       bnTotalStake = bnTotalStake.add(bnStake);
       bnTotalUnstaking = bnTotalUnstaking.add(bnUnstakeBalance);
+
+      const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
+
+      // todo: optimize performance by only create notification in case claimable
+      await this.createWithdrawNotifications([unstakingMap[delegation.owner]], tokenInfo, address, this.baseInfo.slug, YieldPoolType.NATIVE_STAKING);
 
       nominationList.push({
         chain: chainInfo.slug,

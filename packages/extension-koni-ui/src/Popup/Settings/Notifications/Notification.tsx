@@ -13,7 +13,7 @@ import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { MissionInfo, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
@@ -132,7 +132,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value as NotificationTab);
     getInappNotifications({
-      address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
+      address: ALL_ACCOUNT_KEY,
       notificationTab: value
     } as GetNotificationParams)
       .then((rs) => {
@@ -214,7 +214,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       .catch(console.error);
 
     getInappNotifications({
-      address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
+      address: ALL_ACCOUNT_KEY,
       notificationTab: selectedFilterTab
     } as GetNotificationParams)
       .then((rs) => {
@@ -225,7 +225,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   useEffect(() => {
     getInappNotifications({
-      address: isAllAccount ? ALL_ACCOUNT_KEY : currentAddress,
+      address: ALL_ACCOUNT_KEY,
       notificationTab: NotificationTab.ALL
     } as GetNotificationParams)
       .then((rs) => {
