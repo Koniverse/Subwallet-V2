@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import AccountItemWithName from '@subwallet/extension-web-ui/components/Account/Item/AccountItemWithName';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';

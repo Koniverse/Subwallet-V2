@@ -94,6 +94,8 @@ export interface AppPopupData extends AppCommonData {
   media: string;
   buttons: AppContentButton[];
   repeat_every_x_days: number | null;
+  ios_version_range: string;
+  app_version_range: string;
 }
 
 export interface AppBannerData extends AppCommonData {
@@ -101,6 +103,8 @@ export interface AppBannerData extends AppCommonData {
   media: string;
   action: AppContentButtonAction;
   instruction: AppContentButtonInstruction | null;
+  ios_version_range: string;
+  app_version_range: string;
 }
 
 export interface AppConfirmationData extends AppCommonData {

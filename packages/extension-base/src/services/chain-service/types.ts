@@ -6,7 +6,11 @@
 import type { ApiInterfaceRx } from '@polkadot/api/types';
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
+import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
+import { TonWalletContract } from '@subwallet/keyring/types';
+import { Cell } from '@ton/core';
+import { Address, Contract, OpenedContract } from '@ton/ton';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import Web3 from 'web3';
 
@@ -126,6 +130,29 @@ export interface _EvmApi extends _ChainBaseApi {
   api: Web3;
 
   isReady: Promise<_EvmApi>;
+}
+
+export interface _TonApi extends _ChainBaseApi, _TonUtilsApi {
+  isReady: Promise<_TonApi>;
+}
+
+export interface _TonUtilsApi {
+  getBalance (address: Address): Promise<bigint>;
+  open<T extends Contract>(src: T): OpenedContract<T>;
+  estimateExternalMessageFee (walletContract: TonWalletContract, body: Cell, isInit: boolean, ignoreSignature?: boolean): Promise<EstimateExternalMessageFee>;
+  sendTonTransaction (boc: string): Promise<string>;
+  getTxByInMsg (extMsgHash: string): Promise<TxByMsgResponse>;
+  getStatusByExtMsgHash (extMsgHash: string): Promise<[boolean, string]>;
+  getAccountState (address: string): Promise<AccountState>;
+}
+
+export interface EstimateExternalMessageFee {
+  source_fees: {
+    in_fwd_fee: number,
+    storage_fee: number,
+    gas_fee: number,
+    fwd_fee: number
+  }
 }
 
 export type _NetworkUpsertParams = {

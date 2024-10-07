@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { isAccountAll } from '@subwallet/extension-base/utils';
 import { AlertModal, EmptyList, FilterModal, Layout } from '@subwallet/extension-koni-ui/components';
 import { EarningPositionItem } from '@subwallet/extension-koni-ui/components/Earning';
+import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { ASTAR_PORTAL_URL, BN_TEN, EARNING_WARNING_ANNOUNCEMENT } from '@subwallet/extension-koni-ui/constants';
-import { useAlert, useFilterModal, useGetYieldPositionForSpecificAccount, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useFilterModal, useGetBannerByScreen, useGetYieldPositionForSpecificAccount, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { reloadCron } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { EarningEntryView, EarningPositionDetailParam, ExtraYieldPositionInfo, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -27,7 +28,6 @@ type Props = ThemeProps & {
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-let cacheData: Record<string, boolean> = {};
 const FILTER_MODAL_ID = 'earning-positions-filter-modal';
 const alertModalId = 'earning-positions-alert-modal';
 
@@ -41,11 +41,12 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   const { currencyData, priceMap } = useSelector((state) => state.price);
   const { assetRegistry: assetInfoMap } = useSelector((state) => state.assetRegistry);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const currentAccountProxy = useSelector((state) => state.accountState.currentAccountProxy);
   const accounts = useSelector((root: RootState) => root.accountState.accounts);
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
-  const specificList = useGetYieldPositionForSpecificAccount(currentAccount?.address);
+  const specificList = useGetYieldPositionForSpecificAccount();
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
   const [announcement, setAnnouncement] = useLocalStorage(EARNING_WARNING_ANNOUNCEMENT, 'nonConfirmed');
 
   const items: ExtraYieldPositionInfo[] = useMemo(() => {
@@ -78,6 +79,10 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
   }, [assetInfoMap, currencyData, earningPositions, priceMap]);
 
   const chainStakingBoth = useMemo(() => {
+    if (!currentAccountProxy) {
+      return null;
+    }
+
     const chains = ['polkadot', 'kusama'];
 
     const findChainWithStaking = (list: YieldPositionInfo[]) => {
@@ -93,23 +98,25 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
       return null;
     };
 
-    if (currentAccount?.address !== ALL_ACCOUNT_KEY) {
+    if (isAccountAll(currentAccountProxy.id)) {
       return findChainWithStaking(specificList);
     }
 
     for (const acc of accounts) {
-      if (acc.address !== ALL_ACCOUNT_KEY) {
-        const listStaking = specificList.filter((item) => item.address === acc.address);
-        const chain = findChainWithStaking(listStaking);
+      if (isAccountAll(acc.address)) {
+        continue;
+      }
 
-        if (chain) {
-          return chain;
-        }
+      const listStaking = specificList.filter((item) => item.address === acc.address);
+      const chain = findChainWithStaking(listStaking);
+
+      if (chain) {
+        return chain;
       }
     }
 
     return null;
-  }, [accounts, currentAccount?.address, specificList]);
+  }, [accounts, currentAccountProxy, specificList]);
 
   const learnMore = useCallback(() => {
     window.open('https://support.polkadot.network/support/solutions/articles/65000188140-changes-for-nomination-pool-members-and-opengov-participation');
@@ -342,14 +349,6 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
     ];
   }, [setEntryView, setLoading]);
 
-  useEffect(() => {
-    const address = currentAccount?.address || '';
-
-    if (cacheData[address] === undefined) {
-      cacheData = { [address]: !items.length };
-    }
-  }, [items.length, currentAccount]);
-
   const onClickFilterButton = useCallback(
     (e?: SyntheticEvent) => {
       e && e.stopPropagation();
@@ -369,6 +368,15 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
         subHeaderPaddingVertical={true}
         title={t<string>('Your earning positions')}
       >
+        {!!banners.length && (
+          <div className={'earning-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         <SwList.Section
           actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
           className={'__section-list-container'}
@@ -434,6 +442,12 @@ const EarningPositions = styled(Component)<Props>(({ theme: { token } }: Props) 
     '+ .earning-position-item': {
       marginTop: token.marginXS
     }
+  },
+
+  '.earning-banner-wrapper': {
+    paddingLeft: token.padding,
+    paddingRight: token.padding,
+    marginBottom: token.sizeXS
   }
 }));
 

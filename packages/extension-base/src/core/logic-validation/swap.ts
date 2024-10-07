@@ -4,8 +4,8 @@
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getAssetDecimals, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { BasicTxErrorType } from '@subwallet/extension-base/types';
 import { AssetHubPreValidationMetadata, ChainflipPreValidationMetadata, HydradxPreValidationMetadata, SwapErrorType } from '@subwallet/extension-base/types/swap';
 import { formatNumber } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';

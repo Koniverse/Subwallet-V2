@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Web3Transaction } from '@subwallet/extension-base/signers/types';
+import { Web3Transaction } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 import { addHexPrefix } from 'ethereumjs-util';

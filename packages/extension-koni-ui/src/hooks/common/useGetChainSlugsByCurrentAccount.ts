@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { KeypairType } from '@polkadot/util-crypto/types';
+import type { KeypairType } from '@subwallet/keyring/types';
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountType } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
