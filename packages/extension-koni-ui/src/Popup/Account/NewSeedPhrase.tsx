@@ -1,13 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { CloseIcon, Layout, PageWrapper, WordPhrase } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountNameModal, CloseIcon, Layout, PageWrapper, WordPhrase } from '@subwallet/extension-koni-ui/components';
 import { SeedPhraseTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/SeedPhraseTermModal';
-import { CONFIRM_TERM_SEED_PHRASE, DEFAULT_ACCOUNT_TYPES, DEFAULT_ROUTER_PATH, NEW_SEED_MODAL, SEED_PREVENT_MODAL, SELECTED_ACCOUNT_TYPE, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useGetDefaultAccountName, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { ACCOUNT_NAME_MODAL, CONFIRM_TERM_SEED_PHRASE, CREATE_ACCOUNT_MODAL, DEFAULT_MNEMONIC_TYPE, DEFAULT_ROUTER_PATH, SEED_PREVENT_MODAL, SELECTED_MNEMONIC_TYPE, TERM_AND_CONDITION_SEED_PHRASE_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useDefaultNavigate, useIsPopup, useNotification, useTranslation, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountSuriV2, createSeedV2, windowOpen } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { SeedPhraseTermStorage, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isFirefox, isNoAccount } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -27,29 +28,29 @@ const FooterIcon = (
   />
 );
 
+const accountNameModalId = ACCOUNT_NAME_MODAL;
+const GeneralTermLocalDefault: SeedPhraseTermStorage = { state: 'nonConfirmed', useDefaultContent: false };
+
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();
   const { t } = useTranslation();
   const notify = useNotification();
   const navigate = useNavigate();
-  const [_isConfirmedTermSeedPhrase] = useLocalStorage(CONFIRM_TERM_SEED_PHRASE, 'nonConfirmed');
+  const [confirmedTermSeedPhrase, setConfirmedTermSeedPhrase] = useLocalStorage<SeedPhraseTermStorage>(CONFIRM_TERM_SEED_PHRASE, GeneralTermLocalDefault);
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const checkUnlock = useUnlockChecker();
 
   const onComplete = useCompleteCreateAccount();
-  const accountName = useGetDefaultAccountName();
   const isPopup = useIsPopup();
 
   const { accounts, hasMasterPassword } = useSelector((state: RootState) => state.accountState);
 
   const isOpenWindowRef = useRef(false);
 
-  const [typesStorage] = useLocalStorage(SELECTED_ACCOUNT_TYPE, DEFAULT_ACCOUNT_TYPES);
+  const [selectedMnemonicType] = useLocalStorage(SELECTED_MNEMONIC_TYPE, DEFAULT_MNEMONIC_TYPE);
   const [preventModalStorage] = useLocalStorage(SEED_PREVENT_MODAL, false);
   const [preventModal] = useState(preventModalStorage);
-
-  const [accountTypes] = useState(typesStorage);
 
   const [seedPhrase, setSeedPhrase] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,64 +62,76 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     if (!preventModal) {
       if (!noAccount) {
-        activeModal(NEW_SEED_MODAL);
+        activeModal(CREATE_ACCOUNT_MODAL);
       }
     }
   }, [preventModal, navigate, noAccount, activeModal]);
 
-  const _onCreate = useCallback((): void => {
+  const onConfirmSeedPhrase = useCallback(() => {
     if (!seedPhrase) {
       return;
     }
 
     checkUnlock().then(() => {
-      setLoading(true);
-      setTimeout(() => {
-        createAccountSuriV2({
-          name: accountName,
-          suri: seedPhrase,
-          types: accountTypes,
-          isAllowed: true
-        })
-          .then(() => {
-            onComplete();
-          })
-          .catch((error: Error): void => {
-            notify({
-              message: error.message,
-              type: 'error'
-            });
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }, 500);
+      activeModal(accountNameModalId);
     }).catch(() => {
       // User cancel unlock
     });
-  }, [seedPhrase, checkUnlock, accountName, accountTypes, onComplete, notify]);
+  }, [activeModal, checkUnlock, seedPhrase]);
 
-  const onConfirmTerms = useCallback(() => {
-    _onCreate();
-  }, [_onCreate]);
+  const onSubmit = useCallback((accountName: string) => {
+    setLoading(true);
+    createAccountSuriV2({
+      name: accountName,
+      suri: seedPhrase,
+      type: selectedMnemonicType === 'ton' ? 'ton-native' : undefined,
+      isAllowed: true
+    })
+      .then(() => {
+        onComplete();
+      })
+      .catch((error: Error): void => {
+        notify({
+          message: error.message,
+          type: 'error'
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+        inactiveModal(accountNameModalId);
+      });
+  }, [inactiveModal, notify, onComplete, seedPhrase, selectedMnemonicType]);
 
   useEffect(() => {
-    if (_isConfirmedTermSeedPhrase === 'nonConfirmed') {
+    // Note: This useEffect checks if the data in localStorage has already been migrated from the old "string" structure to the new structure in "SeedPhraseTermStorage".
+    const item = localStorage.getItem(CONFIRM_TERM_SEED_PHRASE);
+
+    if (item) {
+      const confirmedTermSeedPhrase_ = JSON.parse(item) as string | SeedPhraseTermStorage;
+
+      if (typeof confirmedTermSeedPhrase_ === 'string') {
+        setConfirmedTermSeedPhrase({ ...GeneralTermLocalDefault, state: confirmedTermSeedPhrase_ });
+      }
+    }
+  }, [setConfirmedTermSeedPhrase]);
+
+  useEffect(() => {
+    if (confirmedTermSeedPhrase.state === 'nonConfirmed') {
       activeModal(TERM_AND_CONDITION_SEED_PHRASE_MODAL);
     }
-  }, [_isConfirmedTermSeedPhrase, activeModal, inactiveModal]);
+  }, [confirmedTermSeedPhrase.state, activeModal, inactiveModal, setConfirmedTermSeedPhrase]);
 
   useEffect(() => {
-    createSeedV2(undefined, undefined, DEFAULT_ACCOUNT_TYPES)
+    createSeedV2(undefined, undefined, selectedMnemonicType)
       .then((response): void => {
-        const phrase = response.seed;
+        const phrase = response.mnemonic;
 
         setSeedPhrase(phrase);
       })
       .catch((e: Error) => {
         console.error(e);
       });
-  }, []);
+  }, [selectedMnemonicType]);
 
   useEffect(() => {
     if (isPopup && isFirefox() && hasMasterPassword && !isOpenWindowRef.current) {
@@ -141,20 +154,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       resolve={waitReady}
     >
       <Layout.WithSubHeaderOnly
-        onBack={onBack}
+        onBack={preventModal ? goHome : onBack}
         rightFooterButton={{
           children: t('I have kept it somewhere safe'),
           icon: FooterIcon,
-          onClick: onConfirmTerms,
-          disabled: !seedPhrase,
-          loading: loading
+          onClick: onConfirmSeedPhrase,
+          disabled: !seedPhrase
         }}
-        subHeaderIcons={[
-          {
-            icon: <CloseIcon />,
-            onClick: goHome
-          }
-        ]}
+        subHeaderIcons={preventModal
+          ? undefined
+          : [
+            {
+              icon: <CloseIcon />,
+              onClick: goHome
+            }
+          ]}
+        subHeaderLeft={preventModal ? <CloseIcon /> : undefined }
         title={t('Your seed phrase')}
       >
         <div className={'container'}>
@@ -167,7 +182,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           />
         </div>
       </Layout.WithSubHeaderOnly>
-      <SeedPhraseTermModal onOk={_onCreate} />
+      <SeedPhraseTermModal />
+      <AccountNameModal
+        accountType={selectedMnemonicType === 'general' ? AccountProxyType.UNIFIED : AccountProxyType.SOLO}
+        isLoading={loading}
+        onSubmit={onSubmit}
+      />
     </PageWrapper>
   );
 };

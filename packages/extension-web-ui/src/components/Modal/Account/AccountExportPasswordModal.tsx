@@ -77,7 +77,7 @@ function Component ({ addresses, className = '' }: Props): React.ReactElement<Pr
     setTimeout(() => {
       exportAccountsV2({
         password: values[FormFieldName.PASSWORD],
-        addresses: addresses
+        proxyIds: addresses
       })
         .then((data) => {
           closeModal();

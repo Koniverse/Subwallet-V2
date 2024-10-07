@@ -558,13 +558,13 @@ textarea {
   }
 }
 
-div#popup-container {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-}
+/*div#popup-container {*/
+/*  position: absolute;*/
+/*  width: 100%;*/
+/*  height: 100%;*/
+/*  top: 0;*/
+/*  left: 0;*/
+/*}*/
 
 .ant-sw-modal-root .ant-sw-modal-mask, .ant-sw-modal-root .ant-sw-modal-wrap, .ant-sw-qr-scanner-root .ant-sw-qr-scanner-wrap {
   position: absolute;

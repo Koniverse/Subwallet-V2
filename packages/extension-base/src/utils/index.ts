@@ -1,14 +1,18 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { CrowdloanParaState, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountAuthType, AccountJson } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { getRandomIpfsGateway, SUBWALLET_IPFS } from '@subwallet/extension-base/koni/api/nft/config';
+import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
+import { reformatAddress } from '@subwallet/extension-base/utils/account';
+import { decodeAddress, encodeAddress, isTonAddress } from '@subwallet/keyring';
 import { t } from 'i18next';
 
 import { assert, BN, hexToU8a, isHex } from '@polkadot/util';
-import { decodeAddress, encodeAddress, ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
+import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
 
 export { canDerive } from './canDerive';
 export * from './mv3';
@@ -19,42 +23,9 @@ export const isDef = (x: any) => !notDef(x);
 export const nonEmptyArr = (x: any) => Array.isArray(x) && x.length > 0;
 export const isEmptyArray = (x: any) => !Array.isArray(x) || (Array.isArray(x) && x.length === 0);
 
-export function isAccountAll (address?: string): boolean {
-  return address === ALL_ACCOUNT_KEY;
-}
-
-export function reformatAddress (address: string, networkPrefix = 42, isEthereum = false): string {
-  try {
-    if (!address || address === '') {
-      return '';
-    }
-
-    if (isEthereumAddress(address)) {
-      return address;
-    }
-
-    if (isAccountAll(address)) {
-      return address;
-    }
-
-    const publicKey = decodeAddress(address);
-
-    if (isEthereum) {
-      return ethereumEncode(publicKey);
-    }
-
-    if (networkPrefix < 0) {
-      return address;
-    }
-
-    return encodeAddress(publicKey, networkPrefix);
-  } catch (e) {
-    console.warn('Get error while reformat address', address, e);
-
-    return address;
-  }
-}
-
+/**
+ * @deprecated
+ * */
 export function filterAddressByNetworkKey (addresses: string[], networkKey: string, isEthereum?: boolean) {
   if (isEthereum) {
     return addresses.filter((address) => {
@@ -67,28 +38,9 @@ export function filterAddressByNetworkKey (addresses: string[], networkKey: stri
   }
 }
 
-export function categoryAddresses (addresses: string[]) {
-  const substrateAddresses: string[] = [];
-  const evmAddresses: string[] = [];
-
-  addresses.forEach((address) => {
-    if (isEthereumAddress(address)) {
-      evmAddresses.push(address);
-    } else {
-      substrateAddresses.push(address);
-    }
-  });
-
-  return [substrateAddresses, evmAddresses];
-}
-
-export function categoryNetworks (networks: NetworkJson[]) {
-  const substrateAddresses: string[] = [];
-  const evmAddresses: string[] = [];
-
-  return [substrateAddresses, evmAddresses];
-}
-
+/**
+ * @deprecated
+ * */
 export function convertToEvmAddress (substrateAddress: string): string {
   const addressBytes = decodeAddress(substrateAddress);
 
@@ -340,6 +292,22 @@ export function isSameAddress (address1: string, address2: string) {
   return reformatAddress(address1, 0) === reformatAddress(address2, 0); // TODO: maybe there's a better way
 }
 
+export function isSameAddressType (address1: string, address2: string) {
+  const isSameEvmAddress = isEthereumAddress(address1) && isEthereumAddress(address2);
+  const isSameTonAddress = isTonAddress(address1) && isTonAddress(address2);
+  const isSameSubstrateAddress = !isEthereumAddress(address1) && !isTonAddress(address1) && !isEthereumAddress(address2) && !isTonAddress(address2); // todo: need isSubstrateAddress util function to check exactly
+
+  return isSameEvmAddress || isSameTonAddress || isSameSubstrateAddress;
+}
+
+export function isAddressAndChainCompatible (address: string, chain: _ChainInfo) {
+  const isEvmCompatible = isEthereumAddress(address) && _isChainEvmCompatible(chain);
+  const isTonCompatible = isTonAddress(address) && _isChainTonCompatible(chain);
+  const isSubstrateCompatible = !isEthereumAddress(address) && !isTonAddress(address) && _isChainSubstrateCompatible(chain); // todo: need isSubstrateAddress util function to check exactly
+
+  return isEvmCompatible || isSubstrateCompatible || isTonCompatible;
+}
+
 export function getDomainFromUrl (url: string): string {
   return url.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
 }
@@ -425,6 +393,7 @@ export function wait (milliseconds: number) {
 export * from './account';
 export * from './array';
 export * from './asset';
+export * from './auth';
 export * from './environment';
 export * from './eth';
 export * from './fetchEvmChainInfo';

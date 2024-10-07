@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 1.2.32
+Build date: Oct 01, 2024.
+
+Features & Update:
+- Improve marketing campaign (#3461, #2807)
+
+Bugs fixed:
+- Hot fix handle API status (#3711)
+
 ## 1.2.31
 Build date: Sep 28, 2024.
 
