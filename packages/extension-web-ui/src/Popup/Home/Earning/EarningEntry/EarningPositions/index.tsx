@@ -231,7 +231,7 @@ function Component ({ className, earningPositions, setEntryView, setLoading }: P
                 target={'_blank'}
               >{(`unstake your ${symbol}`)}
               </a>
-              <span>{t('from one of the methods to avoid issues')}</span>
+              <span>&nbsp;{t('from one of the methods to avoid issues')}</span>
             </div>
 
           </>),
@@ -884,6 +884,7 @@ const EarningPositions = styled(Component)<Props>(({ theme: { token } }: Props) 
   // desktop
 
   '&.earning-alert-content': {
+    display: 'contents',
     '.__info-highlight': {
       fontWeight: token.fontWeightStrong
     }
