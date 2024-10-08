@@ -60,6 +60,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
   const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
+  const notificationCountMap = useSelector((state: RootState) => state.notification.unreadNotificationCountMap);
+  console.log('notificationCountMap', notificationCountMap);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
@@ -140,7 +142,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         setNotifications(rs);
       })
       .catch(console.error);
-  }, []);
+  }, [currentProxyId]);
 
   const onClickMore = useCallback((item: NotificationInfoItem) => {
     return (e: SyntheticEvent) => {
@@ -223,7 +225,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         setNotifications(rs);
       })
       .catch(console.error);
-  }, [currentProxyId, isAllAccount, selectedFilterTab]);
+  }, [currentProxyId, selectedFilterTab]);
 
   useEffect(() => {
     getInappNotifications({

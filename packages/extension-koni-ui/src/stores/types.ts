@@ -214,5 +214,5 @@ export interface SwapStore extends BaseReduxStore {
 }
 
 export interface NotificationStore extends BaseReduxStore {
-  unreadNotificationCount: number
+  unreadNotificationCountMap: Record<string, number>;
 }

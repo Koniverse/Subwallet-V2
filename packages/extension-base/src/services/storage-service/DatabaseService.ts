@@ -615,12 +615,12 @@ export default class DatabaseService {
     return this.stores.inappNotification.getNotificationsByParams(params);
   }
 
-  public subscribeUnreadNotificationsCount () {
+  public subscribeUnreadNotificationsCountMap () {
     return this.stores.inappNotification.subscribeUnreadNotificationsCount();
   }
 
-  public getUnreadNotificationsCount () {
-    return this.stores.inappNotification.getUnreadNotificationsCount();
+  public getUnreadNotificationsCountMap () {
+    return this.stores.inappNotification.getUnreadNotificationsCountMap();
   }
 
   public upsertNotifications (notifications: _NotificationInfo[]) {

@@ -47,7 +47,7 @@ import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import { AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BasicTxErrorType, BasicTxWarningCode, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StakingTxErrorType, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
-import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
@@ -3709,17 +3709,18 @@ export default class KoniExtension {
   /* Swap service */
 
   /* Notification service */
-  private async subscribeUnreadNotificationCount (id: string, port: chrome.runtime.Port): Promise<GetNotificationCountResult> {
-    const cb = createSubscription<'pri(inappNotification.subscribeUnreadNotificationCount)'>(id, port);
+  private async subscribeUnreadNotificationCountMap (id: string, port: chrome.runtime.Port): Promise<Record<string, number>> {
+    const cb = createSubscription<'pri(inappNotification.subscribeUnreadNotificationCountMap)'>(id, port);
     let ready = false;
 
-    const callback = (rs: number) => {
+    const callback = (rs: Record<string, number>) => {
       if (ready) {
-        cb({ count: rs } as GetNotificationCountResult);
+        console.log('rs', rs);
+        cb(rs);
       }
     };
 
-    const subscription = this.#koniState.inappNotificationService.subscribeUnreadNotificationsCount(callback);
+    const subscription = this.#koniState.inappNotificationService.subscribeUnreadNotificationsCountMap(callback);
 
     this.createUnsubscriptionHandle(id, subscription.unsubscribe);
 
@@ -3729,7 +3730,9 @@ export default class KoniExtension {
 
     ready = true;
 
-    return await this.#koniState.inappNotificationService.getUnreadNotificationsCount();
+    console.log('abc', await this.#koniState.inappNotificationService.getUnreadNotificationsCountMap())
+
+    return await this.#koniState.inappNotificationService.getUnreadNotificationsCountMap();
   }
 
   private markAllReadNotification (proxyId: string) {
@@ -4337,8 +4340,8 @@ export default class KoniExtension {
         /* Swap service */
 
         /* Notification service */
-      case 'pri(inappNotification.subscribeUnreadNotificationCount)':
-        return await this.subscribeUnreadNotificationCount(id, port);
+      case 'pri(inappNotification.subscribeUnreadNotificationCountMap)':
+        return await this.subscribeUnreadNotificationCountMap(id, port);
       case 'pri(inappNotification.markAllReadNotification)':
         return this.markAllReadNotification(request as string);
       case 'pri(inappNotification.changeReadNotificationStatus)':
