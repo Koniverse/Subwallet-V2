@@ -163,7 +163,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
   );
 
   const currentPoolAddress = computePoolAddress({
-    fee: FeeAmount.HIGH,
+    fee: to === 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1' ? FeeAmount.LOW : FeeAmount.HIGH,
     tokenA: fromTokenStruct,
     tokenB: toTokenStruct,
     factoryAddress: V3_CORE_FACTORY_ADDRESSES[chainId]
