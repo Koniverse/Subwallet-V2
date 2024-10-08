@@ -1,8 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { assert, isHex } from '@polkadot/util';
-import { keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
 import { CommonAccountErrorType, MnemonicType, RequestAccountCreateSuriV2, RequestExportAccountProxyMnemonic, RequestMnemonicCreateV2, RequestMnemonicValidateV2, ResponseAccountCreateSuriV2, ResponseExportAccountProxyMnemonic, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, SWCommonAccountError } from '@subwallet/extension-base/types';
 import { createAccountProxyId, getSuri } from '@subwallet/extension-base/utils';
 import { tonMnemonicGenerate } from '@subwallet/keyring';
@@ -10,6 +8,9 @@ import { KeypairType, KeyringPair } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { keyring } from '@subwallet/ui-keyring';
 import { t } from 'i18next';
+
+import { assert, isHex } from '@polkadot/util';
+import { keyExtractSuri, mnemonicGenerate, mnemonicValidate } from '@polkadot/util-crypto';
 
 import { AccountBaseHandler } from './Base';
 
