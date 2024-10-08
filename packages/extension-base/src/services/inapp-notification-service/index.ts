@@ -3,17 +3,20 @@
 
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { _NotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { GetNotificationCountResult, GetNotificationParams } from '@subwallet/extension-base/types/notification';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
   private readonly dbService: DatabaseService;
+  private readonly keyringService: KeyringService;
 
-  constructor (dbService: DatabaseService) {
+  constructor (dbService: DatabaseService, keyringService: KeyringService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
     this.dbService = dbService;
+    this.keyringService = keyringService;
   }
 
   async markAllRead (address: string) {
@@ -39,10 +42,10 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   public async getNotificationsByParams (params: GetNotificationParams) {
-    return await this.dbService.getNotificationsByParams(params);
+    return this.dbService.getNotificationsByParams(params);
   }
 
-  passValidateNotification (candidateNotification: _NotificationInfo, notificationFromDB: _NotificationInfo[]) {
+  passValidateNotification (candidateNotification: _BaseNotificationInfo, notificationFromDB: _NotificationInfo[]) {
     if ([NotificationActionType.WITHDRAW, NotificationActionType.CLAIM].includes(candidateNotification.actionType)) {
       const { actionType, address, metadata, time } = candidateNotification;
 
@@ -59,7 +62,8 @@ export class InappNotificationService implements CronServiceInterface {
     return true;
   }
 
-  async validateAndWriteNotificationsToDB (notifications: _NotificationInfo[], address: string) {
+  async validateAndWriteNotificationsToDB (notifications: _BaseNotificationInfo[], address: string) {
+    const proxyId = this.keyringService.context.belongUnifiedAccount(address) || address;
     const newNotifications: _NotificationInfo[] = [];
     const unreadNotifications = await this.getNotificationsByParams({
       notificationTab: NotificationTab.UNREAD,
@@ -68,7 +72,10 @@ export class InappNotificationService implements CronServiceInterface {
 
     for (const notification of notifications) {
       if (this.passValidateNotification(notification, unreadNotifications)) {
-        newNotifications.push(notification);
+        newNotifications.push({
+          ...notification,
+          proxyId
+        });
       }
     }
 

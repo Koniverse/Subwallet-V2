@@ -88,7 +88,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         actionType: item.actionType,
         backgroundColor: token[NotificationIconBackgroundColorMap[item.actionType]],
         leftIcon: NotificationIconMap[item.actionType],
-        metadata: item.metadata
+        metadata: item.metadata,
+        proxyId: item.proxyId
       };
     }).filter(filterTabFunction).sort(sortByTimeFunc);
   }, [notifications, selectedFilterTab, token]);
@@ -163,6 +164,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         leftIcon={item.leftIcon}
         metadata={item.metadata}
         onClickMoreBtn={onClickMore(item)}
+        proxyId={item.proxyId}
         time={item.time}
         title={item.title}
       />

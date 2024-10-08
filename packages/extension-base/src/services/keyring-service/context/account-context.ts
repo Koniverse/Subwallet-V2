@@ -73,6 +73,10 @@ export class AccountContext {
     return this.state.isUnifiedAccount(proxyId);
   }
 
+  public belongUnifiedAccount (address: string) {
+    return this.state.belongUnifiedAccount(address);
+  }
+
   public addressesByProxyId (proxyId: string) {
     return this.state.addressesByProxyId(proxyId);
   }

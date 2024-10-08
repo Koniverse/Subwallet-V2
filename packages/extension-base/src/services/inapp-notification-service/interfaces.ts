@@ -4,7 +4,7 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { YieldPoolType } from '@subwallet/extension-base/types';
 
-export interface _NotificationInfo {
+export interface _BaseNotificationInfo {
   id: string,
   title: string,
   description: string,
@@ -14,6 +14,10 @@ export interface _NotificationInfo {
   isRead: boolean,
   actionType: NotificationActionType,
   metadata: ActionTypeToMetadataMap[NotificationActionType]
+}
+
+export interface _NotificationInfo extends _BaseNotificationInfo {
+  proxyId: string
 }
 
 export interface ActionTypeToMetadataMap {

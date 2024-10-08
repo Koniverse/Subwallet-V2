@@ -3741,7 +3741,7 @@ export default class KoniExtension {
   }
 
   private async getInappNotifications (params: GetNotificationParams) {
-    return await this.#koniState.inappNotificationService.getNotificationsByParams(params);
+    return this.#koniState.inappNotificationService.getNotificationsByParams(params);
   }
   /* Notification service */
 
@@ -4344,7 +4344,7 @@ export default class KoniExtension {
       case 'pri(inappNotification.changeReadNotificationStatus)':
         return this.changeReadNotificationStatus(request as _NotificationInfo);
       case 'pri(inappNotification.getInappNotifications)':
-        return await this.getInappNotifications(request as GetNotificationParams);
+        return this.getInappNotifications(request as GetNotificationParams);
         /* Notification service */
 
         /* Ledger */

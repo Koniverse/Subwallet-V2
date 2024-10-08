@@ -5,7 +5,7 @@ import { _ChainAsset } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getAssetDecimals, _getAssetSymbol } from '@subwallet/extension-base/services/chain-service/utils';
 import { NotificationDescriptionMap, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { _NotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _BaseNotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { EarningRewardItem, UnstakingInfo, UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
 import { formatNumber } from '@subwallet/extension-base/utils';
 
@@ -37,7 +37,7 @@ export const getIsTabRead = (notificationTab: NotificationTab) => {
   return undefined;
 };
 
-function createWithdrawNotification (amount: string, address: string, symbol: string, stakingSlug: string, stakingType: YieldPoolType): _NotificationInfo {
+function createWithdrawNotification (amount: string, address: string, symbol: string, stakingSlug: string, stakingType: YieldPoolType): _BaseNotificationInfo {
   const actionType = NotificationActionType.WITHDRAW;
   const extrinsicType = ExtrinsicType.STAKING_WITHDRAW;
   const time = Date.now();
@@ -59,7 +59,7 @@ function createWithdrawNotification (amount: string, address: string, symbol: st
 }
 
 export function createWithdrawNotifications (unstakingInfos: UnstakingInfo[], tokenInfo: _ChainAsset, address: string, stakingSlug: string, stakingType: YieldPoolType) {
-  const allWithdrawNotifications: _NotificationInfo[] = [];
+  const allWithdrawNotifications: _BaseNotificationInfo[] = [];
 
   for (const unstaking of unstakingInfos) {
     if (unstaking.status !== UnstakingStatus.CLAIMABLE) {
@@ -77,7 +77,7 @@ export function createWithdrawNotifications (unstakingInfos: UnstakingInfo[], to
   return allWithdrawNotifications;
 }
 
-export function createClaimNotification (claimItemInfo: EarningRewardItem, tokenInfo: _ChainAsset): _NotificationInfo {
+export function createClaimNotification (claimItemInfo: EarningRewardItem, tokenInfo: _ChainAsset): _BaseNotificationInfo {
   const { address, slug, type, unclaimedReward = '0' } = claimItemInfo;
   const decimals = _getAssetDecimals(tokenInfo);
   const symbol = _getAssetSymbol(tokenInfo);
