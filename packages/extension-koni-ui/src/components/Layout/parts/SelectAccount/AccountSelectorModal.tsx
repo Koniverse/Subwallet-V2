@@ -114,7 +114,9 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
     accountProxies.forEach((ap) => {
       if (searchValue) {
-        if (!ap.name.toLowerCase().includes(searchValue.toLowerCase())) {
+        const isValidSearchByAddress = ap.accounts.some((acc) => acc.address.toLowerCase().includes(searchValue.toLowerCase()));
+
+        if (!ap.name.toLowerCase().includes(searchValue.toLowerCase()) && !isValidSearchByAddress) {
           return;
         }
       } else if (isAccountAll(ap.id) || ap.accountType === AccountProxyType.ALL_ACCOUNT) {
