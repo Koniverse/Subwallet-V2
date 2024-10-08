@@ -23,6 +23,7 @@ type Props = ThemeProps & {
   accountProxyName?: string;
 };
 
+// Todo: Recheck this component's style
 function Component (props: Props): React.ReactElement<Props> {
   const { accountProxy, accountProxyName, className, isSelected, leftPartNode, onClick, renderRightPart, rightPartNode, showUnselectIcon } = props;
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
@@ -74,8 +75,9 @@ const AccountProxyItem = styled(Component)<Props>(({ theme }) => {
     alignItems: 'center',
     display: 'flex',
     cursor: 'pointer',
+    height: 52,
     transition: `background ${token.motionDurationMid} ease-in-out`,
-    gap: token.sizeSM,
+    gap: token.sizeXS,
 
     '.__item-middle-part': {
       flex: 1,

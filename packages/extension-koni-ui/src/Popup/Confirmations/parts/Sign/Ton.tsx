@@ -5,7 +5,7 @@ import { ConfirmationDefinitionsTon, ConfirmationResult, ExtrinsicType } from '@
 import { useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnlockChecker';
 import { completeConfirmationTon } from '@subwallet/extension-koni-ui/messaging';
-import { PhosphorIcon, SigData, ThemeProps, TonSignatureSupportType } from '@subwallet/extension-koni-ui/types';
+import { PhosphorIcon, ThemeProps, TonSignatureSupportType } from '@subwallet/extension-koni-ui/types';
 import { removeTransactionPersist } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -39,16 +39,16 @@ const handleCancel = async (type: TonSignatureSupportType, id: string) => {
   } as ConfirmationResult<string>);
 };
 
-const handleSignature = async (type: TonSignatureSupportType, id: string, signature: string) => {
-  return await completeConfirmationTon(type, {
-    id,
-    isApproved: true,
-    payload: signature
-  } as ConfirmationResult<string>);
-};
+// const handleSignature = async (type: TonSignatureSupportType, id: string, signature: string) => {
+//   return await completeConfirmationTon(type, {
+//     id,
+//     isApproved: true,
+//     payload: signature
+//   } as ConfirmationResult<string>);
+// };
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { className, extrinsicType, id, payload, txExpirationTime, type } = props;
+  const { className, extrinsicType, id, txExpirationTime, type } = props;
 
   const { t } = useTranslation();
   const notify = useNotification();
@@ -81,19 +81,19 @@ const Component: React.FC<Props> = (props: Props) => {
   }, [id, type]);
 
   // todo: implement later
-  const onApproveSignature = useCallback((signature: SigData) => {
-    setLoading(true);
-
-    setTimeout(() => {
-      handleSignature(type, id, signature.signature)
-        .catch((e) => {
-          console.log(e);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }, 300);
-  }, [id, type]);
+  // const onApproveSignature = useCallback((signature: SigData) => {
+  //   setLoading(true);
+  //
+  //   setTimeout(() => {
+  //     handleSignature(type, id, signature.signature)
+  //       .catch((e) => {
+  //         console.log(e);
+  //       })
+  //       .finally(() => {
+  //         setLoading(false);
+  //       });
+  //   }, 300);
+  // }, [id, type]);
 
   const onConfirm = useCallback(() => {
     removeTransactionPersist(extrinsicType);

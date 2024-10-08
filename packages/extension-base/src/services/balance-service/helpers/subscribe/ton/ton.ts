@@ -70,7 +70,7 @@ async function getTonBalance (addresses: string[], tonApi: _TonApi): Promise<big
 
       return await tonApi.getBalance(tonAddress);
     } catch (e) {
-      return BigInt(0n);
+      return BigInt(0);
     }
   }));
 }

@@ -221,7 +221,7 @@ function Component ({ className, currentAccountProxy }: ComponentProps) {
   }, [accountProxies, chainInfoMap, currentAccountProxy, selectedTokenSlug]);
 
   const isSupportBuyTokens = useMemo(() => {
-    if (selectedService && selectedTokenSlug) {
+    if (selectedService && selectedTokenSlug && selectedAddress) {
       const buyInfo = tokens[selectedTokenSlug];
 
       return buyInfo &&
@@ -230,7 +230,7 @@ function Component ({ className, currentAccountProxy }: ComponentProps) {
     }
 
     return false;
-  }, [selectedService, selectedTokenSlug, tokens, tokenItems]);
+  }, [selectedAddress, selectedService, selectedTokenSlug, tokens, tokenItems]);
 
   const onClickNext = useCallback(() => {
     setLoading(true);

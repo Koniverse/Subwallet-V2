@@ -253,7 +253,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       setTimeout(() => {
         navigate(`/accounts/detail/${accountProxy.id}`, {
           state: {
-            requestViewDerivedAccounts
+            requestViewDerivedAccounts: requestViewDerivedAccounts,
+            requestViewDerivedAccountDetails: false
           } as AccountDetailParam
         });
       }, 100);

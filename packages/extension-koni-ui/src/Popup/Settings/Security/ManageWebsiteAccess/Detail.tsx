@@ -156,6 +156,7 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
     return (
       <AccountProxyItem
         accountProxy={item}
+        className={'__account-proxy-connect-item'}
         key={item.id}
         rightPartNode={(
           <Switch
@@ -173,10 +174,9 @@ function Component ({ accountAuthTypes, authInfo, className = '', goBack, origin
     const searchTextLowerCase = searchText.toLowerCase();
 
     return (
-      item.address.toLowerCase().includes(searchTextLowerCase) ||
-      (item.name
+      item.name
         ? item.name.toLowerCase().includes(searchTextLowerCase)
-        : false)
+        : false
     );
   }, []);
 
@@ -279,6 +279,14 @@ const ManageWebsiteAccessDetail = styled(WrapperComponent)<Props>(({ theme: { to
       backgroundColor: token.colorBgDefault
     },
 
+    '.__account-proxy-connect-item .__item-middle-part': {
+      textWrap: 'nowrap',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      fontWeight: 600,
+      fontSize: token.fontSizeHeading6,
+      lineHeight: token.lineHeightHeading6
+    },
     '.ant-sw-screen-layout-body': {
       paddingTop: token.paddingSM
     },

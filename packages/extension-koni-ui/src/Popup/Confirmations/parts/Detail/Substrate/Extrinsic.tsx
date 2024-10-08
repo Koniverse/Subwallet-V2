@@ -136,6 +136,7 @@ const Component: React.FC<Props> = ({ accountName, address, className, payload: 
       }
       <MetaInfo.Account
         address={address}
+        className={'account-info-item'}
         label={t('From')}
         name={accountName}
         networkPrefix={chain?.ss58Format ?? chainInfo?.substrateInfo?.addressPrefix}
@@ -194,6 +195,12 @@ const SubstrateExtrinsic = styled(Component)<Props>(({ theme: { token } }: Props
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-all'
         }
+      }
+    },
+
+    '.account-info-item': {
+      '.__account-item-address': {
+        textAlign: 'right'
       }
     }
   };

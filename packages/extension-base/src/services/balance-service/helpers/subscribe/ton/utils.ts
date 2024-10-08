@@ -7,7 +7,7 @@ import { TonTransactionConfig } from '@subwallet/extension-base/services/balance
 import { TonApi } from '@subwallet/extension-base/services/chain-service/handler/TonApi';
 import { _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { TonWalletContract } from '@subwallet/keyring/types';
-import { Address, beginCell, Cell, MessageRelaxed, storeMessage, storeMessageRelaxed } from '@ton/core';
+import { Address, beginCell, Cell, MessageRelaxed, SendMode as TonSendMode, storeMessage, storeMessageRelaxed } from '@ton/core';
 import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV3R1, WalletContractV3R2, WalletContractV4, WalletContractV5R1 } from '@ton/ton';
 import { Maybe } from '@ton/ton/dist/utils/maybe';
 import { Buffer } from 'buffer';
@@ -190,7 +190,10 @@ export function getTransferCellPromise (walletContract: TonWalletContract, signe
   } else if (isVersionv4(walletContract)) {
     promise = walletContract.createTransfer(params);
   } else if (isVersionv5r1(walletContract)) {
-    promise = walletContract.createTransfer(params);
+    promise = walletContract.createTransfer({
+      ...params,
+      sendMode: params.sendMode as TonSendMode
+    });
   } else {
     throw new Error('Unknown wallet contract address');
   }
@@ -213,7 +216,10 @@ export function getTransferCell (walletContract: TonWalletContract, secretKey: B
   } else if (isVersionv4(walletContract)) {
     cell = walletContract.createTransfer(params);
   } else if (isVersionv5r1(walletContract)) {
-    cell = walletContract.createTransfer(params);
+    cell = walletContract.createTransfer({
+      ...params,
+      sendMode: params.sendMode as TonSendMode
+    });
   } else {
     throw new Error('Unknown wallet contract address');
   }
