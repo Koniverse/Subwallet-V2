@@ -76,22 +76,24 @@ const renderEmpty = () => <GeneralEmptyList />;
 const multiExportAccountModalId = 'multi-export-account-selector';
 const modalId = SELECT_ACCOUNT_MODAL;
 const accountChainAddressesModalId = ACCOUNT_CHAIN_ADDRESSES_MODAL;
+const defaultSearchInputRenderKey = 'search-input-render-key';
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { activeModal, inactiveModal } = useContext(ModalContext);
+  const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
   const [searchValue, setSearchValue] = useState<string>('');
   const { token } = useTheme() as Theme;
   const { goHome } = useDefaultNavigate();
   const navigate = useNavigate();
   const { setStateSelectAccount } = useSetSessionLatest();
+  const isModalVisible = useMemo(() => checkActive(modalId), [checkActive]);
 
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
 
   const [selectedAccountProxy, setSelectedAccountProxy] = useState<{ name?: string; proxyId?: string } | undefined>();
-
+  const [searchInputRenderKey, setSearchInputRenderKey] = useState<string>(defaultSearchInputRenderKey);
   const accountProxyToGetAddresses = useMemo(() => {
     if (!selectedAccountProxy) {
       return undefined;
@@ -328,6 +330,12 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
   }, [accountProxies, selectedAccountProxy?.name]);
 
+  useEffect(() => {
+    if (isModalVisible) {
+      setSearchInputRenderKey(`${defaultSearchInputRenderKey}-${Date.now()}`);
+    }
+  }, [isModalVisible]);
+
   const rightIconProps = useMemo((): ButtonProps | undefined => {
     if (!enableExtraction) {
       return;
@@ -344,7 +352,6 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       children: (
         <Tooltip
           className={'__icon-export-remind'}
-          open={true}
           overlayClassName={CN('__tooltip-overlay-remind')}
           placement={'bottomLeft'}
           title={t('Export and back up accounts')}
@@ -393,6 +400,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         <Search
           autoFocus={true}
           className={'__search-box'}
+          key={searchInputRenderKey}
           onSearch={handleSearch}
           placeholder={t<string>('Account name')}
           searchValue={searchValue}
