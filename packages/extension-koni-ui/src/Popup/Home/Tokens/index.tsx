@@ -161,13 +161,13 @@ const Component = (): React.ReactElement => {
     return Object.values(buyTokenInfos).some((item) => allowedChains.includes(item.network));
   }, [allowedChains, buyTokenInfos]);
 
-  const isIncludeTonSoloAcc = useMemo(() => {
+  const isHaveOnlyTonSoloAcc = useMemo(() => {
     const checkValidAcc = (currentAcc: AccountProxy) => {
       return currentAcc?.accountType === AccountProxyType.SOLO && currentAcc?.chainTypes.includes(AccountChainType.TON);
     };
 
     if (isAllAccount) {
-      return accountProxies.some((acc) => checkValidAcc(acc));
+      return accountProxies.filter((a) => a.accountType !== AccountProxyType.ALL_ACCOUNT).every((acc) => checkValidAcc(acc));
     } else {
       return currentAccountProxy && checkValidAcc(currentAccountProxy);
     }
@@ -346,7 +346,7 @@ const Component = (): React.ReactElement => {
           )
         }
         {
-          isIncludeTonSoloAcc && isShowTonWarning && (
+          isHaveOnlyTonSoloAcc && isShowTonWarning && (
             <>
               <AlertBox
                 className={classNames('ton-solo-acc-alert-area')}

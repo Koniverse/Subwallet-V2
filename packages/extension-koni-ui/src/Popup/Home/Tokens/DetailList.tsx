@@ -3,7 +3,7 @@
 
 import { _getAssetOriginChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
-import { AccountChainType, AccountProxyType, BuyTokenInfo } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, BuyTokenInfo } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { AccountSelectorModal, AlertBox, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import PageWrapper from '@subwallet/extension-koni-ui/components/Layout/PageWrapper';
@@ -84,8 +84,12 @@ function Component (): React.ReactElement {
   }, [currentAccountProxy]);
   const [currentTonAddress, setCurrentTonAddress] = useState(isAllAccount ? undefined : tonAddress);
 
-  const unifiedAccountList: AccountAddressItemType[] = useMemo(() => {
-    return accountProxies.filter((acc) => acc.accountType === AccountProxyType.UNIFIED).map((item) => {
+  const filteredAccountList: AccountAddressItemType[] = useMemo(() => {
+    return accountProxies.filter((acc) => {
+      const isTonSoloAcc = acc.accountType === AccountProxyType.SOLO && acc.chainTypes.includes(AccountChainType.TON);
+
+      return acc.accountType === AccountProxyType.UNIFIED || isTonSoloAcc;
+    }).map((item) => {
       const tonAcc = item.accounts.find((a) => isTonAddress(a.address));
 
       return {
@@ -198,9 +202,17 @@ function Component (): React.ReactElement {
     return [] as TokenBalanceItemType[];
   }, [tokenGroupSlug, tokenGroupMap, tokenBalanceMap]);
 
-  const isTonSoloAccount = useMemo(() => {
-    return currentAccountProxy?.accountType === AccountProxyType.SOLO && currentAccountProxy?.chainTypes.includes(AccountChainType.TON);
-  }, [currentAccountProxy]);
+  const isHaveOnlyTonSoloAcc = useMemo(() => {
+    const checkValidAcc = (currentAcc: AccountProxy) => {
+      return currentAcc?.accountType === AccountProxyType.SOLO && currentAcc?.chainTypes.includes(AccountChainType.TON);
+    };
+
+    if (isAllAccount) {
+      return accountProxies.filter((a) => a.accountType !== AccountProxyType.ALL_ACCOUNT).every((acc) => checkValidAcc(acc));
+    } else {
+      return currentAccountProxy && checkValidAcc(currentAccountProxy);
+    }
+  }, [accountProxies, currentAccountProxy, isAllAccount]);
 
   const isIncludesTonToken = useMemo(() => {
     return !!TON_CHAINS.length && tokenBalanceItems.some((item) => item.chain && TON_CHAINS.includes(item.chain));
@@ -472,7 +484,7 @@ function Component (): React.ReactElement {
           ))
         }
         {
-          !isTonSoloAccount && isIncludesTonToken && isShowTonWarning && (
+          !isHaveOnlyTonSoloAcc && isIncludesTonToken && isShowTonWarning && (
             <>
               <AlertBox
                 className={classNames('ton-solo-acc-alert-area')}
@@ -490,9 +502,9 @@ function Component (): React.ReactElement {
                 title={t('Change wallet address & version')}
                 type={'warning'}
               />
-              {!!unifiedAccountList.length && (
+              {!!filteredAccountList.length && (
                 <AccountSelectorModal
-                  items={unifiedAccountList}
+                  items={filteredAccountList}
                   modalId={tonAccountSelectorModalId}
                   onCancel={onCloseAccountSelector}
                   onSelectItem={onSelectAccountSelector}
