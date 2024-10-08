@@ -265,11 +265,6 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       bnTotalStake = bnTotalStake.add(bnStake);
       bnTotalUnstaking = bnTotalUnstaking.add(bnUnstakeBalance);
 
-      const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
-
-      // todo: optimize performance by only create notification in case claimable
-      await this.createWithdrawNotifications([unstakingMap[delegation.owner]], tokenInfo, address, this.baseInfo.slug, YieldPoolType.NATIVE_STAKING);
-
       nominationList.push({
         chain: chainInfo.slug,
         status: delegationStatus,
@@ -293,6 +288,9 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     const totalStake = bnTotalStake.toString();
     const activeStake = bnTotalActiveStake.toString();
     const unstakingBalance = bnTotalUnstaking.toString();
+    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
+
+    await this.createWithdrawNotifications(Object.values(unstakingMap), tokenInfo, address, this.baseInfo.slug, YieldPoolType.NATIVE_STAKING);
 
     return {
       status: stakingStatus,

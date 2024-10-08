@@ -18,7 +18,7 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
   }
 
   async getNotificationsByParams (params: GetNotificationParams) {
-    const { proxyId, notificationTab } = params;
+    const { notificationTab, proxyId } = params;
     const isAllAccount = proxyId === ALL_ACCOUNT_KEY;
     const isTabAll = notificationTab === NotificationTab.ALL;
 
@@ -46,7 +46,26 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
 
   subscribeUnreadNotificationsCount () {
     return liveQuery(
-      async () => (await this.table.filter((item) => !item.isRead).count())
+      // async () => (await this.table.filter((item) => !item.isRead).count())
+      // async () => {
+      //   (await this.table.orderBy('proxyId').eachKey(noti => {
+      //     noti
+      //   }));
+      // }
+
+      () => {
+        return this.table.toArray().then((data) => {
+          const groupedData = data.reduce((acc, item) => {
+            if (!acc[item.proxyId]) {
+              acc[item.proxyId] = [];
+            }
+
+            acc[item.proxyId].push(item);
+
+            return acc;
+          }, {} as Record<string, _NotificationInfo>);
+        });
+      }
     );
   }
 
