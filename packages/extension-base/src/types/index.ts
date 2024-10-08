@@ -19,5 +19,7 @@ export * from './common';
 export * from './fee';
 export * from './metadata';
 export * from './ordinal';
+export * from './service-base';
+export * from './swap';
 export * from './transaction';
 export * from './yield';

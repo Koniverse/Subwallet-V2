@@ -19,7 +19,7 @@ import { calculateSwapRate, handleUniswapQuote, SWAP_QUOTE_TIMEOUT_MAP } from '@
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
 import { OptimalSwapPathParams, SwapEarlyValidation, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { getEthereumSmartAccountOwner } from '@subwallet/extension-base/utils';
-import { CHAIN_TO_ADDRESSES_MAP, ChainId } from '@uniswap/sdk-core';
+import { SWAP_ROUTER_02_ADDRESSES } from '@uniswap/sdk-core';
 import { batchTx, encodeApproveTx, QuoteResponse, rawTx } from 'klaster-sdk';
 import { TransactionConfig } from 'web3-core';
 
@@ -75,6 +75,8 @@ export class UniswapHandler implements SwapBaseInterface {
       to = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
     } else if (to === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
       to = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+    } else if (to === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
+      to = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
     }
 
     const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(from);
@@ -121,14 +123,15 @@ export class UniswapHandler implements SwapBaseInterface {
     const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(fromTokenSlug);
     const toToken = this.swapBaseHandler.chainService.getAssetBySlug(toTokenSlug);
     let bridgeTokenSlug = '0x';
-    let chainId: ChainId = ChainId.SEPOLIA;
+    const fromChain = this.swapBaseHandler.chainService.getChainInfoByKey(fromToken.originChain);
+    const chainId = _getEvmChainId(fromChain) || 0;
 
     if (toTokenSlug === 'base_sepolia-ERC20-WETH-0x4200000000000000000000000000000000000006') {
       bridgeTokenSlug = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
-      chainId = ChainId.SEPOLIA;
     } else if (toTokenSlug === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
       bridgeTokenSlug = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-      chainId = ChainId.BASE;
+    } else if (toTokenSlug === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
+      bridgeTokenSlug = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
     }
 
     const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug(bridgeTokenSlug);
@@ -136,7 +139,7 @@ export class UniswapHandler implements SwapBaseInterface {
     const bridgeOriginChain = this.swapBaseHandler.chainService.getChainInfoByKey(bridgeOriginToken.originChain);
     const bridgeDestChain = this.swapBaseHandler.chainService.getChainInfoByKey(toToken.originChain);
 
-    const toAddress = CHAIN_TO_ADDRESSES_MAP[chainId].swapRouter02Address;
+    const toAddress = SWAP_ROUTER_02_ADDRESSES(chainId);
 
     const evmApi = this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain);
     const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService);
@@ -156,7 +159,7 @@ export class UniswapHandler implements SwapBaseInterface {
         data: calldata as `0x${string}`,
         gasLimit: BigInt(250_000)
       });
-      const txBatch = batchTx(chainId as number, [approveSwapTx, swapTx]);
+      const txBatch = batchTx(chainId, [approveSwapTx, swapTx]);
 
       const klasterService = new KlasterService();
 
@@ -164,7 +167,7 @@ export class UniswapHandler implements SwapBaseInterface {
 
       tx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
     } else {
-      const spendingApprovalTxConfig = await getERC20SpendingApprovalTx(toAddress as string, params.address, _getContractAddressOfToken(fromToken), evmApi);
+      const spendingApprovalTxConfig = await getERC20SpendingApprovalTx(toAddress, params.address, _getContractAddressOfToken(fromToken), evmApi);
 
       const swapTxConfig: TransactionConfig = {
         ...spendingApprovalTxConfig,
