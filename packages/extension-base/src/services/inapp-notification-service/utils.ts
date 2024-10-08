@@ -3,6 +3,7 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { _getAssetDecimals, _getAssetSymbol } from '@subwallet/extension-base/services/chain-service/utils';
 import { NotificationDescriptionMap, NotificationTitleMap } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { _NotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { EarningRewardItem, UnstakingInfo, UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
@@ -66,9 +67,9 @@ export function createWithdrawNotifications (unstakingInfos: UnstakingInfo[], to
     }
 
     const rawClaimableAmount = unstaking.claimable;
-    const decimal = tokenInfo.decimals || 0;
-    const symbol = tokenInfo.symbol;
-    const amount = formatNumber(rawClaimableAmount, decimal);
+    const decimals = _getAssetDecimals(tokenInfo);
+    const symbol = _getAssetSymbol(tokenInfo);
+    const amount = formatNumber(rawClaimableAmount, decimals);
 
     allWithdrawNotifications.push(createWithdrawNotification(amount, address, symbol, stakingSlug, stakingType));
   }
@@ -78,9 +79,10 @@ export function createWithdrawNotifications (unstakingInfos: UnstakingInfo[], to
 
 export function createClaimNotification (claimItemInfo: EarningRewardItem, tokenInfo: _ChainAsset): _NotificationInfo {
   const { address, slug, type, unclaimedReward = '0' } = claimItemInfo;
-  const { decimals, symbol } = tokenInfo;
+  const decimals = _getAssetDecimals(tokenInfo);
+  const symbol = _getAssetSymbol(tokenInfo);
 
-  const amount = formatNumber(unclaimedReward, decimals || 0);
+  const amount = formatNumber(unclaimedReward, decimals);
 
   const actionType = NotificationActionType.CLAIM;
   const extrinsicType = ExtrinsicType.STAKING_CLAIM_REWARD;

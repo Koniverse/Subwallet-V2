@@ -124,7 +124,7 @@ export default class KoniDatabase extends Dexie {
     });
 
     this.conditionalVersion(7, {
-      inappNotification: 'id, address, [address+isRead], extrinsicType, isRead, actionType'
+      inappNotification: 'id, address, [address+actionType], actionType'
     });
   }
 

@@ -48,7 +48,7 @@ export class InappNotificationService implements CronServiceInterface {
 
       for (const notification of notificationFromDB) {
         const sameNotification = notification.address === address && notification.actionType === actionType && JSON.stringify(notification.metadata) === JSON.stringify(metadata); // todo: improve compare object
-        const overdue = time - notification.time >= ONE_DAY_MILLISECOND; // one day.
+        const overdue = time - notification.time >= ONE_DAY_MILLISECOND;
 
         if (sameNotification && !overdue) {
           return false;

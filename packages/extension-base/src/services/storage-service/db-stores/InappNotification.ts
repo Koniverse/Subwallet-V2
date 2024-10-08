@@ -44,26 +44,6 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     return filteredTable.toArray();
   }
 
-  async getNotificationsByParams2 (params: GetNotificationParams) {
-    const { address, notificationTab } = params;
-    const isAllAccount = address === ALL_ACCOUNT_KEY;
-    const isTabAll = notificationTab === NotificationTab.ALL;
-
-    if (isAllAccount) {
-      if (isTabAll) {
-        return this.getAll();
-      }
-
-      return this.table.filter((item) => item.isRead === getIsTabRead(notificationTab)).toArray();
-    } else {
-      if (isTabAll) {
-        return this.table.filter((item) => item.address === address).toArray();
-      }
-
-      return this.table.filter((item) => item.address === address && item.isRead === getIsTabRead(notificationTab)).toArray();
-    }
-  }
-
   subscribeUnreadNotificationsCount () {
     return liveQuery(
       async () => (await this.table.filter((item) => !item.isRead).count())
