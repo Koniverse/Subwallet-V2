@@ -18,8 +18,8 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
   }
 
   async getNotificationsByParams (params: GetNotificationParams) {
-    const { address, notificationTab } = params;
-    const isAllAccount = address === ALL_ACCOUNT_KEY;
+    const { proxyId, notificationTab } = params;
+    const isAllAccount = proxyId === ALL_ACCOUNT_KEY;
     const isTabAll = notificationTab === NotificationTab.ALL;
 
     if (isTabAll && isAllAccount) {
@@ -27,18 +27,18 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     }
 
     const filteredTable = this.table.filter((item) => {
-      const matchesAddress = item.address === address;
+      const matchesProxyId = item.proxyId === proxyId;
       const matchesReadStatus = item.isRead === getIsTabRead(notificationTab);
 
       if (isTabAll) {
-        return matchesAddress;
+        return matchesProxyId;
       }
 
       if (isAllAccount) {
         return matchesReadStatus;
       }
 
-      return matchesAddress && matchesReadStatus;
+      return matchesProxyId && matchesReadStatus;
     });
 
     return filteredTable.toArray();
@@ -54,13 +54,13 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     return this.table.filter((item) => !item.isRead).count();
   }
 
-  markAllRead (address: string) {
-    if (address === ALL_ACCOUNT_KEY) {
+  markAllRead (proxyId: string) {
+    if (proxyId === ALL_ACCOUNT_KEY) {
       return this.table.toCollection().modify({ isRead: true });
     }
 
-    return this.table.where('address')
-      .equalsIgnoreCase(address)
+    return this.table.where('proxyId')
+      .equalsIgnoreCase(proxyId)
       .modify({ isRead: true });
   }
 

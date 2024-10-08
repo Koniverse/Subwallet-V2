@@ -627,8 +627,8 @@ export default class DatabaseService {
     return this.stores.inappNotification.bulkUpsert(notifications);
   }
 
-  public markAllRead (address: string) {
-    return this.stores.inappNotification.markAllRead(address);
+  public markAllRead (proxyId: string) {
+    return this.stores.inappNotification.markAllRead(proxyId);
   }
 
   public changeReadStatus (notification: _NotificationInfo) {

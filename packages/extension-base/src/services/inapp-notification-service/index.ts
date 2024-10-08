@@ -19,8 +19,8 @@ export class InappNotificationService implements CronServiceInterface {
     this.keyringService = keyringService;
   }
 
-  async markAllRead (address: string) {
-    await this.dbService.markAllRead(address);
+  async markAllRead (proxyId: string) {
+    await this.dbService.markAllRead(proxyId);
   }
 
   async changeReadStatus (notification: _NotificationInfo) {
@@ -67,7 +67,7 @@ export class InappNotificationService implements CronServiceInterface {
     const newNotifications: _NotificationInfo[] = [];
     const unreadNotifications = await this.getNotificationsByParams({
       notificationTab: NotificationTab.UNREAD,
-      address
+      proxyId
     });
 
     for (const notification of notifications) {

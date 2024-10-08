@@ -57,7 +57,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const enableNotification = notificationSetup.isEnabled;
   const [notifications, setNotifications] = useState<_NotificationInfo[]>([]);
   const { currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
-  const [currentAddress] = useState<string | undefined>(currentAccountProxy?.id);
+  const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
   const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
 
@@ -133,14 +133,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value as NotificationTab);
     getInappNotifications({
-      address: ALL_ACCOUNT_KEY,
+      proxyId: currentProxyId,
       notificationTab: value
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
       })
       .catch(console.error);
-  }, [currentAddress, isAllAccount]);
+  }, []);
 
   const onClickMore = useCallback((item: NotificationInfoItem) => {
     return (e: SyntheticEvent) => {
@@ -212,29 +212,29 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, []);
 
   const handleSwitchClick = useCallback(() => {
-    markAllReadNotification(currentAddress || ALL_ACCOUNT_KEY)
+    markAllReadNotification(currentProxyId || ALL_ACCOUNT_KEY)
       .catch(console.error);
 
     getInappNotifications({
-      address: ALL_ACCOUNT_KEY,
+      proxyId: currentProxyId,
       notificationTab: selectedFilterTab
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
       })
       .catch(console.error);
-  }, [currentAddress, isAllAccount, selectedFilterTab]);
+  }, [currentProxyId, isAllAccount, selectedFilterTab]);
 
   useEffect(() => {
     getInappNotifications({
-      address: ALL_ACCOUNT_KEY,
+      proxyId: currentProxyId,
       notificationTab: NotificationTab.ALL
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
       })
       .catch(console.error);
-  }, [currentAddress, isAllAccount]);
+  }, [currentProxyId, isAllAccount]);
 
   return (
     <PageWrapper className={`manage-website-access ${className}`}>

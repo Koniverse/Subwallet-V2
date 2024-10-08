@@ -4,7 +4,7 @@
 import { NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
 export interface GetNotificationParams {
-  address: string,
+  proxyId: string,
   notificationTab: NotificationTab
   // todo: filter by time period
 }

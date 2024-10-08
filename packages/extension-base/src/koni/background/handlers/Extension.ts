@@ -3732,8 +3732,8 @@ export default class KoniExtension {
     return await this.#koniState.inappNotificationService.getUnreadNotificationsCount();
   }
 
-  private markAllReadNotification (address: string) {
-    return this.#koniState.inappNotificationService.markAllRead(address);
+  private markAllReadNotification (proxyId: string) {
+    return this.#koniState.inappNotificationService.markAllRead(proxyId);
   }
 
   private changeReadNotificationStatus (notification: _NotificationInfo) {
