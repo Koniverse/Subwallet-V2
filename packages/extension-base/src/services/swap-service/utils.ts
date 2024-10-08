@@ -132,6 +132,8 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
     to = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
   } else if (to === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
     to = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+  } else if (to === 'optimism-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1') {
+    to = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
   }
 
   const fromToken = chainService.getAssetBySlug(from);

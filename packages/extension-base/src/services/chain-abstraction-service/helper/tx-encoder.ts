@@ -47,7 +47,9 @@ export async function getAcrossSuggestedFee (data: BridgeParams): Promise<Across
     destinationChainId: data.destinationChainId.toString(),
     inputToken: data.sourceTokenContract,
     outputToken: data.destinationTokenContract,
-    amount: '1000000000'
+    amount: data.destinationTokenContract === '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1'
+      ? '10000000000000000000000'
+      : '1000000000'
   }).toString();
 
   console.log('url', url);
