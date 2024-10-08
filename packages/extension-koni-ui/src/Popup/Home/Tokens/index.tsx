@@ -4,7 +4,7 @@
 import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { AccountSelectorModal, EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
+import { AccountSelectorModal, AlertBox, EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, IS_SHOW_TON_CONTRACT_VERSION_WARNING, SWAP_TRANSACTION, TON_ACCOUNT_SELECTOR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
@@ -348,7 +348,7 @@ const Component = (): React.ReactElement => {
         {
           isIncludeTonSoloAcc && isShowTonWarning && (
             <>
-              <SwAlert
+              <AlertBox
                 className={classNames('ton-solo-acc-alert-area')}
                 description={<Trans
                   components={{

@@ -5,7 +5,7 @@ import { _getAssetOriginChain } from '@subwallet/extension-base/services/chain-s
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { AccountChainType, AccountProxyType, BuyTokenInfo } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { AccountSelectorModal, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
+import { AccountSelectorModal, AlertBox, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import PageWrapper from '@subwallet/extension-koni-ui/components/Layout/PageWrapper';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenBalanceDetailItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenBalanceDetailItem';
@@ -20,7 +20,8 @@ import { AccountAddressItemType, ThemeProps } from '@subwallet/extension-koni-ui
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
 import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
 import { isTonAddress } from '@subwallet/keyring';
-import { ModalContext, SwAlert } from '@subwallet/react-ui';
+import { KeypairType } from '@subwallet/keyring/types';
+import { ModalContext } from '@subwallet/react-ui';
 import { SwNumberProps } from '@subwallet/react-ui/es/number';
 import classNames from 'classnames';
 import { X } from 'phosphor-react';
@@ -91,8 +92,8 @@ function Component (): React.ReactElement {
         accountName: item.name,
         accountProxyId: item.id,
         accountProxyType: item.accountType,
-        accountType: tonAcc?.type || '',
-        address: tonAcc?.address,
+        accountType: tonAcc?.type as KeypairType,
+        address: tonAcc?.address || '',
         accountActions: item.accountActions
       };
     });
@@ -473,7 +474,7 @@ function Component (): React.ReactElement {
         {
           !isTonSoloAccount && isIncludesTonToken && isShowTonWarning && (
             <>
-              <SwAlert
+              <AlertBox
                 className={classNames('ton-solo-acc-alert-area')}
                 description={<Trans
                   components={{
@@ -489,12 +490,14 @@ function Component (): React.ReactElement {
                 title={t('Change wallet address & version')}
                 type={'warning'}
               />
-              <AccountSelectorModal
-                items={unifiedAccountList}
-                modalId={tonAccountSelectorModalId}
-                onCancel={onCloseAccountSelector}
-                onSelectItem={onSelectAccountSelector}
-              />
+              {!!unifiedAccountList.length && (
+                <AccountSelectorModal
+                  items={unifiedAccountList}
+                  modalId={tonAccountSelectorModalId}
+                  onCancel={onCloseAccountSelector}
+                  onSelectItem={onSelectAccountSelector}
+                />
+              )}
               {currentTonAddress && isTonWalletContactSelectorModalActive &&
                 <TonWalletContractSelectorModal
                   address={currentTonAddress}
