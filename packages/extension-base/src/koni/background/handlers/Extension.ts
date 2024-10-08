@@ -1826,6 +1826,7 @@ export default class KoniExtension {
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
       let senderTransferTokenTransferable: string | undefined;
       let receiverNativeTotal: string | undefined;
+      let isReceiverActive: unknown;
 
       // Check ed for sender
       if (!isTransferNativeToken) {
@@ -1836,11 +1837,12 @@ export default class KoniExtension {
 
         senderTransferTokenTransferable = _senderTransferTokenTransferable.value;
         receiverNativeTotal = _receiverNativeTotal.value;
+        isReceiverActive = _receiverNativeTotal.metadata;
       }
 
       const { value: receiverTransferTokenTransferable } = await this.getAddressTotalBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
 
-      const [warnings, errors] = additionalValidateTransfer(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverTransferTokenTransferable, transferAmount.value, senderTransferTokenTransferable, receiverNativeTotal);
+      const [warnings, errors] = additionalValidateTransfer(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverTransferTokenTransferable, transferAmount.value, senderTransferTokenTransferable, receiverNativeTotal, isReceiverActive);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);

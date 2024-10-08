@@ -6,7 +6,7 @@ import { TransactionError } from '@subwallet/extension-base/background/errors/Tr
 import { _Address, AmountData, BasicTxErrorType, BasicTxWarningCode, ExtrinsicDataTypeMap, ExtrinsicType, FeeData, TransferTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
-import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/system-pallet';
+import { _canAccountBeReaped, _isAccountActive } from '@subwallet/extension-base/core/substrate/system-pallet';
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
@@ -49,7 +49,7 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
   return [errors, keypair, transferValue];
 }
 
-export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverTransferTokenTotalBalance: string, transferAmount: string, senderTransferTokenTransferable?: string, _receiverNativeTotal?: string): [TransactionWarning[], TransactionError[]] {
+export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverTransferTokenTotalBalance: string, transferAmount: string, senderTransferTokenTransferable?: string, _receiverNativeTotal?: string, isReceiverActive?: unknown): [TransactionWarning[], TransactionError[]] {
   const minAmount = _getTokenMinAmount(tokenInfo);
   const nativeMinAmount = _getTokenMinAmount(nativeTokenInfo);
   const warnings: TransactionWarning[] = [];
@@ -71,6 +71,13 @@ export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenI
 
       errors.push(error);
     }
+  }
+
+  // Check if receiver's account is active
+  if (isReceiverActive && _isAccountActive(isReceiverActive as FrameSystemAccountInfo)) {
+    const error = new TransactionError(TransferTxErrorType.RECEIVER_ACCOUNT_INACTIVE, t('The recipient account may be inactive. Change recipient account and try again'));
+
+    errors.push(error);
   }
 
   // Check ed for receiver after sending
