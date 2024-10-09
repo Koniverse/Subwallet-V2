@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationResult } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, ConfirmationRequestBase } from '@subwallet/extension-base/background/types';
+import { ConfirmationRequestBase } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { AccountItemWithName, ConfirmationGeneralInfo } from '@subwallet/extension-web-ui/components';
 import { NEED_SIGN_CONFIRMATION } from '@subwallet/extension-web-ui/constants';

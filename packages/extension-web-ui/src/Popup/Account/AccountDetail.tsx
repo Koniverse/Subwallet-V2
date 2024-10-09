@@ -158,7 +158,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
       setTimeout(() => {
         deriveAccountV3({
-          address: account.address
+          proxyId: account.address
         }).then(() => {
           goHome();
         }).catch((e: Error) => {

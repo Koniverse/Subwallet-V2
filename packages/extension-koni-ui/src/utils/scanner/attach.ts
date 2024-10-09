@@ -1,11 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { reformatAddress } from '@subwallet/extension-base/utils';
 import { ETHEREUM_PREFIX, SCAN_TYPE, SECRET_PREFIX, SUBSTRATE_PREFIX } from '@subwallet/extension-koni-ui/constants';
 import { QrAccount } from '@subwallet/extension-koni-ui/types';
 
 import { isHex } from '@polkadot/util';
-import { decodeAddress, encodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 export const qrSignerScan = (data: string): QrAccount | null => {
   const arr: string[] = data.split(':');
@@ -83,7 +84,7 @@ export const readOnlyScan = (data: string): QrAccount | null => {
       return null;
     }
 
-    const address = encodeAddress(decodeAddress(data));
+    const address = reformatAddress(data);
 
     return {
       content: address,

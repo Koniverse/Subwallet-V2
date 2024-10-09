@@ -20,6 +20,10 @@ export async function migrateLocalStorage (request: string): Promise<boolean> {
   return sendMessage('pri(database.migrateLocalStorage)', request);
 }
 
-export async function setValueLocalStorage (request: StorageDataInterface): Promise<boolean> {
+export async function setValueLocalStorageWS (request: StorageDataInterface): Promise<boolean> {
   return sendMessage('pri(database.setLocalStorage)', request);
+}
+
+export async function getValueLocalStorageWS (request: string): Promise<string | null> {
+  return sendMessage('pri(database.getLocalStorage)', request);
 }

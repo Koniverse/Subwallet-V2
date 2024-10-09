@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, RequestSign } from '@subwallet/extension-base/background/types';
+import { RequestSign } from '@subwallet/extension-base/background/types';
 import { _isRuntimeUpdated, detectTranslate } from '@subwallet/extension-base/utils';
 import { AlertBox, AlertModal } from '@subwallet/extension-koni-ui/components';
 import { CONFIRMATION_QR_MODAL, NotNeedMigrationGens, SUBSTRATE_GENERIC_KEY, SUBSTRATE_MIGRATION_KEY } from '@subwallet/extension-koni-ui/constants';
 import { InjectContext } from '@subwallet/extension-koni-ui/contexts/InjectContext';
-import { useAlert, useGetChainInfoByGenesisHash, useLedger, useMetadata, useNotification, useParseSubstrateRequestPayload, useSelector, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useGetAccountByAddress, useGetChainInfoByGenesisHash, useLedger, useMetadata, useNotification, useParseSubstrateRequestPayload, useSelector, useUnlockChecker } from '@subwallet/extension-koni-ui/hooks';
 import { approveSignPasswordV2, approveSignSignature, cancelSignRequest, shortenMetadata } from '@subwallet/extension-koni-ui/messaging';
 import { AccountSignMode, PhosphorIcon, SubstrateSigData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { getSignMode, isRawPayload, isSubstrateMessage, removeTransactionPersist, toShort } from '@subwallet/extension-koni-ui/utils';
@@ -24,7 +24,6 @@ import { hexToU8a, u8aToHex, u8aToU8a } from '@polkadot/util';
 import { DisplayPayloadModal, ScanSignature, SubstrateQr } from '../Qr';
 
 interface Props extends ThemeProps {
-  account: AccountJson;
   id: string;
   request: RequestSign;
   extrinsicType?: ExtrinsicType;
@@ -52,8 +51,10 @@ const migrationFAQUrl = 'https://docs.subwallet.app/main/extension-user-guide/fa
 const modeCanSignMessage: AccountSignMode[] = [AccountSignMode.QR, AccountSignMode.PASSWORD, AccountSignMode.INJECTED, AccountSignMode.LEGACY_LEDGER, AccountSignMode.GENERIC_LEDGER];
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { account, className, extrinsicType, id, isInternal, request, txExpirationTime } = props;
+  const { className, extrinsicType, id, isInternal, request, txExpirationTime } = props;
+  const { address } = request.payload;
 
+  const account = useGetAccountByAddress(address);
   const { t } = useTranslation();
   const notify = useNotification();
   const checkUnlock = useUnlockChecker();
@@ -68,15 +69,15 @@ const Component: React.FC<Props> = (props: Props) => {
     const _payload = request.payload;
 
     return isRawPayload(_payload)
-      ? (account.genesisHash || chainInfoMap.polkadot.substrateInfo?.genesisHash || '')
+      ? (account?.genesisHash || chainInfoMap.polkadot.substrateInfo?.genesisHash || '')
       : _payload.genesisHash;
-  }, [account.genesisHash, chainInfoMap.polkadot.substrateInfo?.genesisHash, request.payload]);
+  }, [account?.genesisHash, chainInfoMap.polkadot.substrateInfo?.genesisHash, request.payload]);
   const signMode = useMemo(() => getSignMode(account), [account]);
   const isLedger = useMemo(() => signMode === AccountSignMode.LEGACY_LEDGER || signMode === AccountSignMode.GENERIC_LEDGER, [signMode]);
 
   const { chain, loadingChain } = useMetadata(genesisHash);
   const chainInfo = useGetChainInfoByGenesisHash(genesisHash);
-  const accountChainInfo = useGetChainInfoByGenesisHash(account.genesisHash || '');
+  const accountChainInfo = useGetChainInfoByGenesisHash(account?.genesisHash || '');
   const { addExtraData, hashLoading, isMissingData, payload } = useParseSubstrateRequestPayload(chain, request, isLedger);
 
   const isMessage = isSubstrateMessage(payload);
@@ -94,7 +95,7 @@ const Component: React.FC<Props> = (props: Props) => {
         return CheckCircle;
     }
   }, [signMode]);
-  const chainSlug = useMemo(() => signMode === AccountSignMode.GENERIC_LEDGER ? account.originGenesisHash ? SUBSTRATE_MIGRATION_KEY : SUBSTRATE_GENERIC_KEY : (accountChainInfo?.slug || ''), [account.originGenesisHash, accountChainInfo?.slug, signMode]);
+  const chainSlug = useMemo(() => signMode === AccountSignMode.GENERIC_LEDGER ? account?.originGenesisHash ? SUBSTRATE_MIGRATION_KEY : SUBSTRATE_GENERIC_KEY : (accountChainInfo?.slug || ''), [account?.originGenesisHash, accountChainInfo?.slug, signMode]);
   const networkName = useMemo(() => chainInfo?.name || chain?.name || toShort(genesisHash), [chainInfo, genesisHash, chain]);
   const isRuntimeUpdated = useMemo(() => {
     const _payload = request.payload;
@@ -256,7 +257,7 @@ const Component: React.FC<Props> = (props: Props) => {
     refresh: refreshLedger,
     signMessage: ledgerSignMessage,
     signTransaction: ledgerSignTransaction,
-    warning: ledgerWarning } = useLedger(chainSlug, activeLedger, true, forceUseMigrationApp, account.originGenesisHash);
+    warning: ledgerWarning } = useLedger(chainSlug, activeLedger, true, forceUseMigrationApp, account?.originGenesisHash);
 
   const isLedgerConnected = useMemo(() => !isLocked && !isLedgerLoading && !!ledger, [isLedgerLoading, isLocked, ledger]);
 
@@ -320,7 +321,7 @@ const Component: React.FC<Props> = (props: Props) => {
     setTimeout(async () => {
       if (typeof payload === 'string') {
         try {
-          const { signature } = await ledgerSignMessage(u8aToU8a(payload), account.accountIndex, account.addressOffset, account.address);
+          const { signature } = await ledgerSignMessage(u8aToU8a(payload), account?.accountIndex, account?.addressOffset, account?.address);
 
           onApproveSignature({ signature });
         } catch (e) {
@@ -353,7 +354,7 @@ const Component: React.FC<Props> = (props: Props) => {
         }
 
         try {
-          const { signature } = await ledgerSignTransaction(payloadU8a, metadata, account.accountIndex, account.addressOffset, account.address);
+          const { signature } = await ledgerSignTransaction(payloadU8a, metadata, account?.accountIndex, account?.addressOffset, account?.address);
 
           if (addExtraData) {
             const extrinsic = payload.registry.createType(
@@ -362,7 +363,7 @@ const Component: React.FC<Props> = (props: Props) => {
               { version: 4 }
             );
 
-            extrinsic.addSignature(account.address, signature, payload.toHex());
+            extrinsic.addSignature(account?.address || address, signature, payload.toHex());
 
             onApproveSignature({ signature, signedTransaction: extrinsic.toHex() });
           } else {
@@ -375,7 +376,7 @@ const Component: React.FC<Props> = (props: Props) => {
         setLoading(false);
       }
     }, 100);
-  }, [account, chainInfo, isLedgerConnected, isRuntimeUpdated, ledger, ledgerSignMessage, ledgerSignTransaction, addExtraData, notify, onApproveSignature, payload, refreshLedger]);
+  }, [payload, isLedgerConnected, ledger, refreshLedger, ledgerSignMessage, account?.accountIndex, account?.addressOffset, account?.address, onApproveSignature, isRuntimeUpdated, chainInfo?.slug, notify, ledgerSignTransaction, addExtraData, address]);
 
   const onConfirmInject = useCallback(() => {
     if (substrateWallet) {
@@ -383,7 +384,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
       if (isMessage) {
         if (substrateWallet.signer.signRaw) {
-          promise = substrateWallet.signer.signRaw({ address: account.address, type: 'bytes', data: payload });
+          promise = substrateWallet.signer.signRaw({ address: account?.address || address, type: 'bytes', data: payload });
         } else {
           return;
         }
@@ -413,7 +414,7 @@ const Component: React.FC<Props> = (props: Props) => {
           setLoading(false);
         });
     }
-  }, [account.address, isMessage, onApproveSignature, payload, request.payload, substrateWallet]);
+  }, [account?.address, address, isMessage, onApproveSignature, payload, request.payload, substrateWallet]);
 
   const onConfirm = useCallback(() => {
     removeTransactionPersist(extrinsicType);
@@ -538,7 +539,7 @@ const Component: React.FC<Props> = (props: Props) => {
           signMode === AccountSignMode.QR && (
             <DisplayPayloadModal>
               <SubstrateQr
-                address={account.address}
+                address={account?.address || address}
                 genesisHash={genesisHash}
                 payload={payload || ''}
               />

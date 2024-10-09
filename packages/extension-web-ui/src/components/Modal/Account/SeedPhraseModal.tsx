@@ -45,7 +45,7 @@ const Component: React.FC<Props> = ({ className, modalId, onBack, onSubmitSucces
   useEffect(() => {
     createSeedV2(undefined, undefined, [SUBSTRATE_ACCOUNT_TYPE, EVM_ACCOUNT_TYPE])
       .then((response): void => {
-        const phrase = response.seed;
+        const phrase = response.mnemonic;
 
         setSeedPhrase(phrase);
       })
