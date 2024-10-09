@@ -3,6 +3,7 @@
 
 import type { ThemeProps } from '../types';
 
+import { GLOBAL_ALERT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import applyPreloadStyle from '@subwallet/extension-koni-ui/preloadStyle';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -74,6 +75,14 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         }
       }
     },
+
+    // make sure alert modal is above autocomplete dropdown
+    [`.modal-id-${GLOBAL_ALERT_MODAL}`]: {
+      '.ant-sw-modal-wrap': {
+        zIndex: 11000
+      }
+    },
+
     '.__currency-value-detail-tooltip': {
       paddingBottom: 0,
 
@@ -224,6 +233,10 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
       }
     },
 
+    '.ant-input': {
+      minWidth: 0 // fix issue related to input overflow width
+    },
+
     '.ant-input-affix-wrapper': {
       overflow: 'hidden',
 
@@ -248,6 +261,63 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         overflow: 'hidden',
         display: 'block',
         'white-space': 'nowrap'
+      }
+    },
+
+    // field
+    '.ant-select-modal-input-suffix.ant-select-modal-input-suffix, .ant-field-suffix.ant-field-suffix': {
+      color: token.colorTextLight3
+    },
+
+    '.ant-field-container.-label-horizontal': {
+      flexDirection: 'row',
+      gap: token.sizeXXS,
+      alignItems: 'center',
+
+      '.ant-field-label': {
+        paddingRight: 0,
+        top: 0,
+        paddingTop: 0,
+        minWidth: 46
+      },
+
+      '.ant-field-wrapper': {
+        flex: 1,
+        gap: token.sizeXXS,
+        paddingLeft: 0,
+        paddingBottom: token.paddingXS
+      }
+    },
+
+    '.ant-field-container.is-selectable': {
+      cursor: 'pointer',
+
+      '&:not(.-status-success):not(.-status-warning):not(.-status-error):hover': {
+        '&:before': {
+          borderColor: token['geekblue-4']
+        }
+      }
+    },
+
+    '.ant-field-container.is-readonly': {
+      cursor: 'default'
+    },
+
+    '.ant-field-container.is-disabled': {
+      cursor: 'not-allowed'
+    },
+
+    '.ledger-warning-modal': {
+      '.ant-sw-modal-confirm-btns': {
+        flexDirection: 'row',
+
+        button: {
+          flex: 1,
+
+          '.anticon': {
+            display: 'none'
+          }
+        }
       }
     }
   });

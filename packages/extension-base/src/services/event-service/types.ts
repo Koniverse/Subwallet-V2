@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { CurrentAccountInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
+import { CurrentAccountInfo } from '@subwallet/extension-base/types';
 
 export interface EventRegistry {
   'general.sleep': [boolean];
@@ -25,6 +25,8 @@ export interface EventRegistry {
   'account.remove': [string]; // address
   /** Inject account done  */
   'inject.ready': [boolean];
+  /** Remove an account proxy */
+  'accountProxy.remove': [string]; // proxy id
   /* Keyring */
 
   'chain.ready': [boolean]; // chain is ready and migration done
@@ -56,6 +58,9 @@ export interface EventRegistry {
 
   // Swap
   'swap.ready': [boolean];
+
+  // Ledger
+  'ledger.ready': [boolean];
 }
 
 export type EventType = keyof EventRegistry;

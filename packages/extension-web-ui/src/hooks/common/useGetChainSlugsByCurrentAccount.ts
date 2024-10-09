@@ -4,8 +4,8 @@
 import type { KeypairType } from '@polkadot/util-crypto/types';
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { AccountType } from '@subwallet/extension-web-ui/types';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils';

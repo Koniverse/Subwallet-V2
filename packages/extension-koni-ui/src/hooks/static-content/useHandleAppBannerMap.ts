@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AppBannerData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
+import { EXTENSION_VERSION } from '@subwallet/extension-koni-ui/constants';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updateBannerHistoryData } from '@subwallet/extension-koni-ui/stores/base/StaticContent';
 import { MktCampaignHistoryData } from '@subwallet/extension-koni-ui/types/staticContent';
+import { satisfies } from 'compare-versions';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -58,10 +60,20 @@ export const useHandleAppBannerMap = (): AppBannerHookType => {
     [bannerHistoryMap, dispatch]
   );
 
+  const filteredData = useMemo(() => {
+    return appBannerData.filter(({ app_version_range: appVersionRange, info }) => {
+      if (appVersionRange) {
+        return info?.platforms.includes('extension') && satisfies(EXTENSION_VERSION, appVersionRange);
+      } else {
+        return info?.platforms.includes('extension');
+      }
+    });
+  }, [appBannerData]);
+
   const appBannerMap = useMemo(() => {
-    if (appBannerData) {
+    if (filteredData) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result: Record<string, AppBannerData[]> = appBannerData.reduce((r, a) => {
+      const result: Record<string, AppBannerData[]> = filteredData.reduce((r, a) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         r[a.position] = r[a.position] || [];
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
@@ -75,7 +87,7 @@ export const useHandleAppBannerMap = (): AppBannerHookType => {
     } else {
       return {};
     }
-  }, [appBannerData]);
+  }, [filteredData]);
 
   return {
     updateBannerHistoryMap,

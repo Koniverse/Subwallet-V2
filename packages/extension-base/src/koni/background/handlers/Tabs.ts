@@ -6,26 +6,24 @@ import type { InjectedAccount } from '@subwallet/extension-inject/types';
 import { _AssetType } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
 import { createSubscription, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
 import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import RequestBytesSign from '@subwallet/extension-base/background/RequestBytesSign';
 import RequestExtrinsicSign from '@subwallet/extension-base/background/RequestExtrinsicSign';
 import { AccountAuthType, MessageTypes, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestTypes, ResponseRpcListProviders, ResponseSigning, ResponseTypes, SubscriptionMessageTypes } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY, CRON_GET_API_MAP_STATUS } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, CRON_GET_API_MAP_STATUS, PERMISSIONS_TO_REVOKE } from '@subwallet/extension-base/constants';
+import { generateValidationProcess, PayloadValidated, validationAuthMiddleware } from '@subwallet/extension-base/core/logic-validation';
 import { PHISHING_PAGE_REDIRECT } from '@subwallet/extension-base/defaults';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
-import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { AuthUrlInfo, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { KeyringPair } from '@subwallet/keyring/types';
-import keyring from '@subwallet/ui-keyring';
+import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { t } from 'i18next';
 import { Subscription } from 'rxjs';
 import Web3 from 'web3';
 import { HttpProvider, RequestArguments, WebsocketProvider } from 'web3-core';
@@ -34,14 +32,15 @@ import { JsonRpcPayload } from 'web3-core-helpers';
 import { checkIfDenied } from '@polkadot/phishing';
 import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
 import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
-import { assert, isNumber } from '@polkadot/util';
+import { isArray, isNumber } from '@polkadot/util';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface AccountSub {
   subscription: Subscription;
   url: string;
 }
 
-function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthType?: AccountAuthType): InjectedAccount[] {
+function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthTypes?: AccountAuthType[]): InjectedAccount[] {
   const accountSelected = authInfo
     ? (
       authInfo.isAllowed
@@ -53,13 +52,23 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
     )
     : [];
 
-  let authTypeFilter = ({ type }: SingleAddress) => true;
+  const authTypeFilter = ({ type }: SingleAddress) => {
+    if (accountAuthTypes) {
+      if (!type) {
+        return false;
+      }
 
-  if (accountAuthType === 'substrate') {
-    authTypeFilter = ({ type }: SingleAddress) => (type !== 'ethereum');
-  } else if (accountAuthType === 'evm') {
-    authTypeFilter = ({ type }: SingleAddress) => (type === 'ethereum');
-  }
+      const validTypes = {
+        evm: EthereumKeypairTypes,
+        substrate: SubstrateKeypairTypes,
+        ton: TonKeypairTypes
+      };
+
+      return accountAuthTypes.some((authType) => validTypes[authType]?.includes(type));
+    } else {
+      return true;
+    }
+  };
 
   return Object
     .values(accounts)
@@ -132,36 +141,40 @@ export default class KoniTabs {
   }
 
   /// Clone from Polkadot.js
-  private getSigningPair (address: string): KeyringPair {
-    const pair = keyring.getPair(address);
-
-    assert(pair, t('Unable to find account'));
-
-    return pair;
-  }
-
   private async bytesSign (url: string, request: SignerPayloadRaw): Promise<ResponseSigning> {
     const address = request.address;
-    const pair = this.getSigningPair(address);
-    const authInfo = await this.getAuthInfo(url);
+    const payloadValidate: PayloadValidated = {
+      address,
+      networkKey: '',
+      errors: [],
+      payloadAfterValidated: request
+    };
 
-    if (!authInfo || !authInfo.isAllowed || !authInfo.isAllowedMap[pair.address]) {
-      throw new Error('Account {{address}} not in allowed list'.replace('{{address}}', address));
+    const { errors } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+
+    if (errors.length === 0) {
+      return this.#koniState.sign(url, new RequestBytesSign(request));
+    } else {
+      throw errors[0];
     }
-
-    return this.#koniState.sign(url, new RequestBytesSign(request), { address, ...pair.meta });
   }
 
   private async extrinsicSign (url: string, request: SignerPayloadJSON): Promise<ResponseSigning> {
     const address = request.address;
-    const pair = this.getSigningPair(address);
-    const authInfo = await this.getAuthInfo(url);
+    const payloadValidate: PayloadValidated = {
+      address,
+      networkKey: '',
+      errors: [],
+      payloadAfterValidated: request
+    };
 
-    if (!authInfo || !authInfo.isAllowed || !authInfo.isAllowedMap[pair.address]) {
-      throw new Error('Account {{address}} not in allowed list'.replace('{{address}}', address));
+    const { errors, pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+
+    if (pair && errors.length === 0) {
+      return this.#koniState.sign(url, new RequestExtrinsicSign(request));
+    } else {
+      throw errors[0];
     }
-
-    return this.#koniState.sign(url, new RequestExtrinsicSign(request), { address, ...pair.meta });
   }
 
   private metadataProvide (url: string, request: MetadataDef): Promise<boolean> {
@@ -286,32 +299,59 @@ export default class KoniTabs {
     return authList[shortenUrl];
   }
 
-  private async accountsListV2 (url: string, { accountAuthType,
-    anyType }: RequestAccountList): Promise<InjectedAccount[]> {
+  private async accountsListV2 (url: string, { accountAuthType, anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.accounts, anyType, authInfo, authInfo?.accountAuthType || accountAuthType);
+    const accountAuthTypes: AccountAuthType[] = [];
+
+    if (accountAuthType) {
+      accountAuthTypes.push(accountAuthType);
+    } else if (authInfo) {
+      if (authInfo.accountAuthTypes.includes('substrate')) {
+        accountAuthTypes.push('substrate');
+      }
+
+      if (authInfo.accountAuthTypes.includes('evm')) {
+        accountAuthTypes.push('evm');
+      }
+    }
+
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, accountAuthTypes);
   }
 
-  private accountsSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
+  // TODO: Update logic
+  private accountsSubstrateSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
     const cb = createSubscription<'pub(accounts.subscribeV2)'>(id, port);
     const authInfoSubject = this.#koniState.requestService.subscribeAuthorizeUrlSubject;
 
-    // Update unsubscribe from @polkadot/extension-base
     this.#accountSubs[id] = {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
-            const accountAuthType_ = authInfo?.accountAuthType || accountAuthType;
-            const accounts = this.#koniState.keyringService.accounts;
+            const accountAuthTypes: AccountAuthType[] = [];
 
-            return cb(transformAccountsV2(accounts, false, authInfo, accountAuthType_));
+            if (accountAuthType) {
+              accountAuthTypes.push(accountAuthType);
+            } else if (authInfo) {
+              if (authInfo.accountAuthTypes.includes('substrate')) {
+                accountAuthTypes.push('substrate');
+              }
+
+              if (authInfo.accountAuthTypes.includes('evm')) {
+                accountAuthTypes.push('evm');
+              }
+            }
+
+            const accounts = this.#koniState.keyringService.context.pairs;
+
+            return cb(transformAccountsV2(accounts, false, authInfo, accountAuthTypes));
           })
           .catch(console.error);
       }),
       url
     };
 
+    // Update unsubscribe from @polkadot/extension-base
     port.onDisconnect.addListener((): void => {
       this.accountsUnsubscribe(url, { id });
     });
@@ -335,7 +375,9 @@ export default class KoniTabs {
   }
 
   private authorizeV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
-    if (request.accountAuthType === 'evm') {
+    const isConnectOnlyEvmAccountType = request.accountAuthTypes?.length === 1 && request.accountAuthTypes?.includes('evm');
+
+    if (isConnectOnlyEvmAccountType) {
       return new Promise((resolve, reject) => {
         this.#koniState.authorizeUrlV2(url, request).then(resolve).catch((e: Error) => {
           reject(new EvmProviderError(EvmProviderErrorType.USER_REJECTED_REQUEST));
@@ -346,26 +388,34 @@ export default class KoniTabs {
     }
   }
 
+  // TODO: Update logic
   private async getEvmCurrentAccount (url: string): Promise<string[]> {
     return await new Promise((resolve) => {
       this.getAuthInfo(url).then((authInfo) => {
-        const allAccounts = this.#koniState.keyringService.accounts;
-        const accountList = transformAccountsV2(allAccounts, false, authInfo, 'evm').map((a) => a.address);
+        const allAccounts = this.#koniState.keyringService.context.pairs;
+        const accountList = transformAccountsV2(allAccounts, false, authInfo, ['evm']).map((a) => a.address);
         let accounts: string[] = [];
 
-        const address = this.#koniState.keyringService.currentAccount.address;
+        const proxyId = this.#koniState.keyringService.context.currentAccount.proxyId;
 
-        if (address === ALL_ACCOUNT_KEY || !address) {
+        if (proxyId === ALL_ACCOUNT_KEY || !proxyId) {
           accounts = accountList;
         } else {
-          if (accountList.includes(address)) {
-            const result = accountList.filter((adr) => adr !== address);
+          const addresses = this.#koniState.keyringService.context.addressesByProxyId(proxyId);
 
-            result.unshift(address);
-            accounts = result;
-          } else {
-            accounts = accountList;
+          const result: string[] = [];
+          const inList: string[] = [];
+
+          for (const account of accountList) {
+            if (!addresses.includes(account)) {
+              result.push(account);
+            } else {
+              inList.push(account);
+            }
           }
+
+          result.unshift(...inList);
+          accounts = result;
         }
 
         resolve(accounts);
@@ -449,6 +499,73 @@ export default class KoniTabs {
       caveats: [{ type: 'restrictReturnedAccounts', value: accounts }],
       date: new Date().getTime()
     }];
+  }
+
+  private async revokePermissions (url: string, id: string, { params }: RequestArguments) {
+    if (!params || !isArray(params) || params.length === 0) {
+      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, 'No list of permissions found to revoke in the parameters.');
+    }
+
+    // Example of a request in MetaMask wallet
+    // await window.ethereum.request({
+    //   "method": "wallet_revokePermissions",
+    //   "params": [
+    //     {
+    //       "eth_accounts": {}
+    //     }
+    //   ]
+    // });
+    // Doc: https://docs.metamask.io/wallet/reference/wallet_revokepermissions/
+
+    const permissions = new Set(Object.keys(params[0] as Record<string, any>).filter((permission) => PERMISSIONS_TO_REVOKE.includes(permission)));
+
+    const permissionPromise = async (permission: string): Promise<void> => {
+      if (permission === 'eth_accounts') {
+        return new Promise((resolve) => {
+          this.#koniState.getAuthorize((value) => {
+            const urlStripped = stripUrl(url);
+
+            if (value && value[urlStripped]) {
+              const { accountAuthTypes, isAllowedMap } = { ...value[urlStripped] };
+
+              if (!accountAuthTypes) {
+                resolve();
+              }
+
+              if (accountAuthTypes?.includes('evm')) {
+                if (accountAuthTypes.length === 1) {
+                  delete value[urlStripped];
+                } else {
+                  value[urlStripped].isAllowedMap = Object.entries(isAllowedMap).reduce<Record<string, boolean>>((allowedMap, [address, value]) => {
+                    if (isEthereumAddress(address)) {
+                      allowedMap[address] = false;
+                    } else {
+                      allowedMap[address] = value;
+                    }
+
+                    return allowedMap;
+                  }, {});
+
+                  value[urlStripped].accountAuthTypes = accountAuthTypes?.filter((type) => type !== 'evm');
+                }
+              } else {
+                resolve();
+              }
+
+              this.#koniState.setAuthorize(value, () => {
+                resolve();
+              });
+            } else {
+              resolve();
+            }
+          });
+        });
+      }
+    };
+
+    await Promise.all(Array.from(permissions).map(permissionPromise));
+
+    return null;
   }
 
   private async switchEvmChain (id: string, url: string, { params }: RequestArguments) {
@@ -692,6 +809,7 @@ export default class KoniTabs {
     return evmState.chainId || '0x0';
   }
 
+  // TODO: Update logic
   private async evmSubscribeEvents (url: string, id: string, port: chrome.runtime.Port) {
     // This method will be called after DApp request connect to extension
     const cb = createSubscription<'evm(events.subscribe)'>(id, port);
@@ -716,7 +834,7 @@ export default class KoniTabs {
       }
     };
 
-    const accountListSubscription = this.#koniState.keyringService.currentAccountSubject
+    const accountListSubscription = this.#koniState.keyringService.context.observable.currentAccount
       .subscribe(() => {
         onCurrentAccountChanged().catch(console.error);
       });
@@ -853,9 +971,21 @@ export default class KoniTabs {
         params: params as any[],
         id
       }, (error, result) => {
-        const err = result?.error || error;
+        let err = result?.error || error;
 
         if (err) {
+          let message = err.message.toLowerCase();
+
+          if (message.includes('method not found') || message.includes('not supported') || message.includes('is not available')) {
+            message = 'This method is not supported by SubWallet. Try again or contact support at agent@subwallet.app';
+          }
+
+          if (message.includes('network is disconnected')) {
+            message = 'Re-enable the network or change RPC on the extension and try again';
+          }
+
+          err = { ...err, message };
+
           reject(err);
         } else {
           const rs = result?.result as unknown;
@@ -874,8 +1004,7 @@ export default class KoniTabs {
   }
 
   private async evmSign (id: string, url: string, { method, params }: RequestArguments) {
-    const allowedAccounts = (await this.getEvmCurrentAccount(url));
-    const signResult = await this.#koniState.evmSign(id, url, method, params, allowedAccounts);
+    const signResult = await this.#koniState.evmSign(id, url, method, params);
 
     if (signResult) {
       return signResult;
@@ -884,22 +1013,11 @@ export default class KoniTabs {
     }
   }
 
+  // TODO: Update logic
   public async evmSendTransaction (id: string, url: string, { params }: RequestArguments) {
     const transactionParams = (params as EvmSendTransactionParams[])[0];
-    const canUseAccount = transactionParams.from && this.canUseAccount(transactionParams.from, url);
-    const evmState = await this.getEvmState(url);
-    const networkKey = evmState.networkKey;
 
-    if (!canUseAccount) {
-      throw new Error(t('You have rescinded allowance for this account in wallet'));
-    }
-
-    if (!networkKey) {
-      throw new Error('Network unavailable. Please switch network or manually add network to wallet');
-    }
-
-    const allowedAccounts = await this.getEvmCurrentAccount(url);
-    const transactionHash = await this.#koniState.evmSendTransaction(id, url, networkKey, allowedAccounts, transactionParams);
+    const transactionHash = await this.#koniState.evmSendTransaction(id, url, transactionParams);
 
     if (!transactionHash) {
       throw new EvmProviderError(EvmProviderErrorType.USER_REJECTED_REQUEST);
@@ -934,11 +1052,13 @@ export default class KoniTabs {
         case 'eth_signTypedData_v4':
           return await this.evmSign(id, url, request);
         case 'wallet_requestPermissions':
-          await this.authorizeV2(url, { origin: '', accountAuthType: 'evm', reConfirm: true });
+          await this.authorizeV2(url, { origin: '', accountAuthTypes: ['evm'], reConfirm: true });
 
           return await this.getEvmPermission(url, id);
         case 'wallet_getPermissions':
           return await this.getEvmPermission(url, id);
+        case 'wallet_revokePermissions':
+          return await this.revokePermissions(url, id, request);
         case 'wallet_addEthereumChain':
           return await this.addEvmChain(id, url, request);
         case 'wallet_switchEthereumChain':
@@ -982,11 +1102,13 @@ export default class KoniTabs {
   }
 
   public isEvmPublicRequest (type: string, request: RequestArguments) {
-    return type === 'evm(request)' &&
+    return (type === 'evm(request)' &&
       [
         'eth_chainId',
-        'net_version'
-      ].includes(request?.method);
+        'net_version',
+        'wallet_requestPermissions',
+        'wallet_getPermissions'
+      ].includes(request?.method)) || type === 'evm(events.subscribe)';
   }
 
   public async addPspToken (id: string, url: string, { genesisHash, tokenInfo: input }: RequestAddPspToken) {
@@ -1068,7 +1190,7 @@ export default class KoniTabs {
     // Wait for account ready and chain ready
     await Promise.all([this.#koniState.eventService.waitAccountReady, this.#koniState.eventService.waitChainReady]);
 
-    if (type !== 'pub(authorize.tabV2)' && !this.isEvmPublicRequest(type, request as RequestArguments)) {
+    if (!['pub(authorize.tabV2)', 'pub(accounts.subscribeV2)'].includes(type) && !this.isEvmPublicRequest(type, request as RequestArguments)) {
       await this.#koniState.ensureUrlAuthorizedV2(url)
         .catch((e: Error) => {
           if (type.startsWith('evm')) {
@@ -1120,7 +1242,7 @@ export default class KoniTabs {
       case 'pub(accounts.listV2)':
         return this.accountsListV2(url, request as RequestAccountList);
       case 'pub(accounts.subscribeV2)':
-        return this.accountsSubscribeV2(url, request as RequestAccountSubscribe, id, port);
+        return this.accountsSubstrateSubscribeV2(url, request as RequestAccountSubscribe, id, port);
       case 'pub(accounts.unsubscribe)':
         return this.accountsUnsubscribe(url, request as RequestAccountUnsubscribe);
       case 'evm(events.subscribe)':

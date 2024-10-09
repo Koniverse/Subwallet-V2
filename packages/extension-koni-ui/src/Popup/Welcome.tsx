@@ -3,8 +3,8 @@
 
 import { Layout } from '@subwallet/extension-koni-ui/components';
 import { GeneralTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/GeneralTermModal';
-import { ATTACH_ACCOUNT_MODAL, CONFIRM_GENERAL_TERM, CREATE_ACCOUNT_MODAL, DEFAULT_ACCOUNT_TYPES, GENERAL_TERM_AND_CONDITION_MODAL, IMPORT_ACCOUNT_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useSetSelectedAccountTypes, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { ATTACH_ACCOUNT_MODAL, CONFIRM_GENERAL_TERM, CREATE_ACCOUNT_MODAL, DEFAULT_MNEMONIC_TYPE, GENERAL_TERM_AND_CONDITION_MODAL, IMPORT_ACCOUNT_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useSetSelectedMnemonicType, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, ButtonProps, Icon, Image, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -28,7 +28,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const navigate = useNavigate();
-  const setSelectedAccountTypes = useSetSelectedAccountTypes(false);
+  const setSelectedMnemonicType = useSetSelectedMnemonicType(false);
   const [modalIdAfterConfirm, setModalIdAfterConfirm] = useState('');
   const [_isConfirmedTermGeneral, setIsConfirmedTermGeneral] = useLocalStorage(CONFIRM_GENERAL_TERM, 'nonConfirmed');
   const items = useMemo((): WelcomeButtonItem[] => [
@@ -58,7 +58,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const openModal = useCallback((id: string) => {
     return () => {
       if (id === CREATE_ACCOUNT_MODAL) {
-        setSelectedAccountTypes(DEFAULT_ACCOUNT_TYPES);
+        setSelectedMnemonicType(DEFAULT_MNEMONIC_TYPE);
         navigate('/accounts/new-seed-phrase');
       } else {
         inactiveModal(SELECT_ACCOUNT_MODAL);
@@ -67,7 +67,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
 
       setIsConfirmedTermGeneral('confirmed');
     };
-  }, [activeModal, inactiveModal, navigate, setIsConfirmedTermGeneral, setSelectedAccountTypes]);
+  }, [setSelectedMnemonicType, activeModal, inactiveModal, navigate, setIsConfirmedTermGeneral]);
 
   const onClickToSelectTypeConnect = useCallback((idModal: string) => {
     return () => {

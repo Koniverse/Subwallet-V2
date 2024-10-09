@@ -3,13 +3,14 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AmountData, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { getAstarWithdrawable } from '@subwallet/extension-base/services/earning-service/handlers/native-staking/astar';
-import { RequestYieldWithdrawal, UnstakingInfo, UnstakingStatus, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, RequestYieldWithdrawal, UnstakingInfo, UnstakingStatus, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountSelector, HiddenInput, MetaInfo } from '@subwallet/extension-koni-ui/components';
+import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useGetChainAssetInfo, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-koni-ui/hooks';
+import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { yieldSubmitStakingWithdrawal } from '@subwallet/extension-koni-ui/messaging';
 import { accountFilterFunc } from '@subwallet/extension-koni-ui/Popup/Transaction/helper';
 import { FormCallbacks, FormFieldData, ThemeProps, WithdrawParams } from '@subwallet/extension-koni-ui/types';
@@ -17,7 +18,7 @@ import { convertFieldToObject, isAccountAll, simpleCheckForm } from '@subwallet/
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowCircleRight, XCircle } from 'phosphor-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -49,13 +50,13 @@ const filterAccount = (
 const Component = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
   const { defaultData, persistData } = useTransactionContext<WithdrawParams>();
   const { slug } = defaultData;
 
   const [form] = Form.useForm<WithdrawParams>();
   const formDefault = useMemo((): WithdrawParams => ({ ...defaultData }), [defaultData]);
-
+  const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('withdraw');
   const { accounts, isAllAccount } = useSelector((state) => state.accountState);
   const { chainInfoMap } = useSelector((state) => state.chainStore);
   const { poolInfoMap } = useSelector((state) => state.earning);
@@ -78,6 +79,16 @@ const Component = () => {
   const inputAsset = useGetChainAssetInfo(poolInfo.metadata.inputAsset);
   const decimals = inputAsset?.decimals || 0;
   const symbol = inputAsset?.symbol || '';
+  const poolChain = poolInfo?.chain || '';
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
+
+  const currentConfirmation = useMemo(() => {
+    if (slug) {
+      return getCurrentConfirmation([slug]);
+    } else {
+      return undefined;
+    }
+  }, [getCurrentConfirmation, slug]);
 
   const goHome = useCallback(() => {
     navigate('/home/earning');
@@ -142,6 +153,22 @@ const Component = () => {
     }, 300);
   }, [onError, onSuccess, unstakingInfo]);
 
+  const onClickSubmit = useCallback((values: WithdrawParams) => {
+    if (currentConfirmation) {
+      mktCampaignModalContext.openModal({
+        type: 'confirmation',
+        title: currentConfirmation.name,
+        message: currentConfirmation.content,
+        externalButtons: renderConfirmationButtons(mktCampaignModalContext.hideModal, () => {
+          onSubmit(values);
+          mktCampaignModalContext.hideModal();
+        })
+      });
+    } else {
+      onSubmit(values);
+    }
+  }, [currentConfirmation, mktCampaignModalContext, onSubmit, renderConfirmationButtons]);
+
   const onPreCheck = usePreCheckAction(fromValue);
 
   useRestoreTransaction(form);
@@ -185,7 +212,7 @@ const Component = () => {
           form={form}
           initialValues={formDefault}
           onFieldsChange={onFieldsChange}
-          onFinish={onSubmit}
+          onFinish={onClickSubmit}
         >
 
           <HiddenInput fields={hideFields} />
@@ -193,6 +220,7 @@ const Component = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}

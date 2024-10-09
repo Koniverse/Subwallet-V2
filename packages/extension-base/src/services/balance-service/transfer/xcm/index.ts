@@ -158,9 +158,6 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
   const metadata = getInjectorMetadata(apiAvailSdk);
   const chainApi = await substrateApi.isReady;
   const api = chainApi.api;
-
-  let extrinsic;
-
   const fromAmountAtomic = new BigNumber(1)
     .multipliedBy(new BigNumber(10).pow(18))
     .toString(10);
@@ -176,6 +173,7 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
     to: `${recipient.padEnd(66, '0')}`,
     domain: 2
   };
+
 
   // Note: This config for claim token
   // const proofs = {
@@ -234,6 +232,8 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
   //   accountProof: proofs.accountProof,
   //   storageProof: proofs.storageProof
   // };
+  let extrinsic;
+  const polkadotXcmSpecialCases = _XCM_CHAIN_GROUP.polkadotXcmSpecialCases.includes(originChainInfo.slug) && _isNativeToken(originTokenInfo);
 
   if (originChainInfo.slug === 'polkadot') {
     try {
@@ -249,19 +249,17 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
       console.error('Error while sending message via vector avail -> eth:', e);
       extrinsic = getExtrinsicByXcmPalletPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
     }
-  } else if (_XCM_CHAIN_GROUP.polkadotXcm.includes(originTokenInfo.originChain)) {
-    if (['astar', 'shiden'].includes(originChainInfo.slug) && !_isNativeToken(originTokenInfo)) {
-      extrinsic = getExtrinsicByXtokensPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
-    } else {
-      extrinsic = getExtrinsicByPolkadotXcmPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
-    }
-  } else if (_XCM_CHAIN_GROUP.xcmPallet.includes(originTokenInfo.originChain)) {
-    extrinsic = getExtrinsicByXcmPalletPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
-  } else {
-    extrinsic = getExtrinsicByXtokensPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
+  } else if (_XCM_CHAIN_GROUP.polkadotXcm.includes(originTokenInfo.originChain) || polkadotXcmSpecialCases) {
+    extrinsic = getExtrinsicByPolkadotXcmPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
   }
 
-  return extrinsic;
+  if (_XCM_CHAIN_GROUP.xcmPallet.includes(originTokenInfo.originChain)) {
+    extrinsic = getExtrinsicByXcmPalletPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
+  } else {
+
+    extrinsic = getExtrinsicByXtokensPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
+  }
+  return extrinsic
 };
 
 type TransactionQueryParams = {
@@ -366,7 +364,7 @@ export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap:
   try {
     const destChainInfo = chainInfoMap[destinationTokenInfo.originChain];
     const originChainInfo = chainInfoMap[originTokenInfo.originChain];
-    const address = '5DRewsYzhJqZXU3SRaWy1FSt5iDr875ao91aw5fjrJmDG4Ap';
+    const address = '5DRewsYzhJqZXU3SRaWy1FSt5iDr875ao91aw5fjrJmDG4Ap'; // todo: move this
 
     // mock receiving account from sender
     const recipient = !isEthereumAddress(address) && _isChainEvmCompatible(destChainInfo) && !_isChainEvmCompatible(originChainInfo)

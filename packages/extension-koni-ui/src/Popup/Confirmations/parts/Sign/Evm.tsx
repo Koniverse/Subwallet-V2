@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationDefinitions, ConfirmationResult, EvmSendTransactionRequest, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { AlertBox } from '@subwallet/extension-koni-ui/components';
 import { CONFIRMATION_QR_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import { InjectContext } from '@subwallet/extension-koni-ui/contexts/InjectContext';
-import { useGetChainInfoByChainId, useLedger, useNotification } from '@subwallet/extension-koni-ui/hooks';
+import { useGetAccountByAddress, useGetChainInfoByChainId, useLedger, useNotification } from '@subwallet/extension-koni-ui/hooks';
 import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnlockChecker';
 import { completeConfirmation } from '@subwallet/extension-koni-ui/messaging';
 import { PhosphorIcon, SigData, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -55,9 +56,8 @@ const handleSignature = async (type: EvmSignatureSupportType, id: string, signat
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, extrinsicType, id, payload, txExpirationTime, type } = props;
-  const { payload: { account, canSign, hashPayload } } = payload;
+  const { payload: { address, canSign, errors, hashPayload } } = payload;
   const chainId = (payload.payload as EvmSendTransactionRequest)?.chainId || 1;
-
   const { t } = useTranslation();
   const notify = useNotification();
 
@@ -66,12 +66,12 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const chain = useGetChainInfoByChainId(chainId);
   const checkUnlock = useUnlockChecker();
-
+  const account = useGetAccountByAddress(address);
   const signMode = useMemo(() => getSignMode(account), [account]);
   const isLedger = useMemo(() => signMode === AccountSignMode.LEGACY_LEDGER || signMode === AccountSignMode.GENERIC_LEDGER, [signMode]);
   const [showQuoteExpired, setShowQuoteExpired] = useState<boolean>(false);
   const isMessage = isEvmMessage(payload);
-
+  const isErrorTransaction = useMemo(() => errors && errors.length > 0, [errors]);
   const [loading, setLoading] = useState(false);
 
   const { error: ledgerError,
@@ -81,7 +81,7 @@ const Component: React.FC<Props> = (props: Props) => {
     refresh: refreshLedger,
     signMessage: ledgerSignMessage,
     signTransaction: ledgerSignTransaction,
-    warning: ledgerWarning } = useLedger(chain?.slug, isLedger, true);
+    warning: ledgerWarning } = useLedger(chain?.slug, isLedger && !isErrorTransaction, true);
 
   const isLedgerConnected = useMemo(() => !isLocked && !isLedgerLoading && !!ledger, [
     isLedgerLoading,
@@ -153,8 +153,8 @@ const Component: React.FC<Props> = (props: Props) => {
 
     setTimeout(() => {
       const signPromise = isMessage
-        ? ledgerSignMessage(u8aToU8a(hashPayload), account.accountIndex, account.addressOffset, account.address)
-        : ledgerSignTransaction(hexToU8a(hashPayload), new Uint8Array(0), account.accountIndex, account.addressOffset, account.address);
+        ? ledgerSignMessage(u8aToU8a(hashPayload), account?.accountIndex, account?.addressOffset, account?.address)
+        : ledgerSignTransaction(hexToU8a(hashPayload), new Uint8Array(0), account?.accountIndex, account?.addressOffset, account?.address);
 
       signPromise
         .then(({ signature }) => {
@@ -165,17 +165,17 @@ const Component: React.FC<Props> = (props: Props) => {
           setLoading(false);
         });
     });
-  }, [account.accountIndex, account.address, account.addressOffset, hashPayload, isLedgerConnected, isMessage, ledger, ledgerSignMessage, ledgerSignTransaction, onApproveSignature, refreshLedger]);
+  }, [account?.accountIndex, account?.address, account?.addressOffset, hashPayload, isLedgerConnected, isMessage, ledger, ledgerSignMessage, ledgerSignTransaction, onApproveSignature, refreshLedger]);
 
   const onConfirmInject = useCallback(() => {
     if (evmWallet) {
       let promise: Promise<`0x${string}`>;
 
       if (isMessage) {
-        promise = evmWallet.request<`0x${string}`>({ method: payload.payload.type, params: [account.address, payload.payload.payload] });
+        promise = evmWallet.request<`0x${string}`>({ method: payload.payload.type, params: [account?.address || address, payload.payload.payload] });
       } else {
         promise = new Promise<`0x${string}`>((resolve, reject) => {
-          const { account, canSign, estimateGas, hashPayload, isToContract, parseData, ...transactionConfig } = payload.payload;
+          const { address, canSign, estimateGas, hashPayload, isToContract, parseData, ...transactionConfig } = payload.payload;
 
           evmWallet.request({
             method: 'wallet_switchEthereumChain',
@@ -204,7 +204,7 @@ const Component: React.FC<Props> = (props: Props) => {
           setLoading(false);
         });
     }
-  }, [account.address, chainId, evmWallet, isMessage, onApproveSignature, payload.payload]);
+  }, [account?.address, address, chainId, evmWallet, isMessage, onApproveSignature, payload.payload]);
 
   const onConfirm = useCallback(() => {
     removeTransactionPersist(extrinsicType);
@@ -273,20 +273,41 @@ const Component: React.FC<Props> = (props: Props) => {
 
   return (
     <div className={CN(className, 'confirmation-footer')}>
-      <Button
-        disabled={loading}
-        icon={(
-          <Icon
-            phosphorIcon={XCircle}
-            weight='fill'
+      {
+        isErrorTransaction && errors && (
+          <AlertBox
+            className={CN(className, 'alert-box')}
+            description={errors[0].message}
+            title={errors[0].name}
+            type={'error'}
           />
-        )}
-        onClick={onCancel}
-        schema={'secondary'}
-      >
-        {t('Cancel')}
-      </Button>
-      <Button
+        )
+      }
+      {
+        isErrorTransaction
+          ? <Button
+            disabled={loading}
+            onClick={onCancel}
+            schema={'primary'}
+          >
+            {t('I understand')}
+          </Button>
+          : <Button
+            disabled={loading}
+            icon={(
+              <Icon
+                phosphorIcon={XCircle}
+                weight='fill'
+              />
+            )}
+            onClick={onCancel}
+            schema={'secondary'}
+          >
+            {t('Cancel')}
+          </Button>
+      }
+
+      {!isErrorTransaction && <Button
         disabled={showQuoteExpired || !canSign}
         icon={(
           <Icon
@@ -304,25 +325,31 @@ const Component: React.FC<Props> = (props: Props) => {
               ? t('Refresh')
               : t('Approve')
         }
-      </Button>
+      </Button>}
       {
-        signMode === AccountSignMode.QR && (
+        !isErrorTransaction && signMode === AccountSignMode.QR && (
           <DisplayPayloadModal>
             <EvmQr
-              address={account.address}
+              address={account?.address || address}
               hashPayload={hashPayload}
               isMessage={isEvmMessage(payload)}
             />
           </DisplayPayloadModal>
         )
       }
-      {signMode === AccountSignMode.QR && <ScanSignature onSignature={onApproveSignature} />}
+      {!isErrorTransaction && signMode === AccountSignMode.QR && <ScanSignature onSignature={onApproveSignature} />}
     </div>
   );
 };
 
 const EvmSignArea = styled(Component)<Props>(({ theme: { token } }: Props) => {
-  return {};
+  return {
+    '&.confirmation-footer': {
+      '.alert-box': {
+        width: '100%'
+      }
+    }
+  };
 });
 
 export default EvmSignArea;

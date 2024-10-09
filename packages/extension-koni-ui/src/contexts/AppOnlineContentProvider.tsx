@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
-import { AppPopupModalContext, AppPopupModalInfo } from '@subwallet/extension-koni-ui/contexts/AppPopupModalContext';
+import { MktCampaignModalContext, MktCampaignModalInfo } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useGetAppInstructionData } from '@subwallet/extension-koni-ui/hooks/static-content/useGetAppInstructionData';
 import { useHandleAppBannerMap } from '@subwallet/extension-koni-ui/hooks/static-content/useHandleAppBannerMap';
 import { useHandleAppConfirmationMap } from '@subwallet/extension-koni-ui/hooks/static-content/useHandleAppConfirmationMap';
@@ -38,7 +38,7 @@ interface AppOnlineContentContextType {
   ) => boolean;
   handleButtonClick: (id: string) => (type: OnlineContentDataType, url?: string) => void;
   checkBannerVisible: (showTimes: number) => boolean;
-  checkPositionParam: (screen: string, positionParams: { property: string; value: string }[], value: string) => boolean;
+  checkPositionParam: (screen: string, positionParams: { property: string; value: string }[], value: string[]) => boolean;
   showAppPopup: (currentRoute: string | undefined) => void;
 }
 
@@ -62,6 +62,10 @@ const getPositionByRouteName = (currentRoute?: string) => {
       return 'earning';
     case '/home/crowdloans':
       return 'crowdloan';
+    case '/home/mission-pools':
+      return 'mission_pool';
+    case '/home/history':
+      return 'history';
     case '/':
     default:
       return 'token';
@@ -69,7 +73,7 @@ const getPositionByRouteName = (currentRoute?: string) => {
 };
 
 export const AppOnlineContentContextProvider = ({ children }: AppOnlineContentContextProviderProps) => {
-  const appPopupModalContext = useContext(AppPopupModalContext);
+  const mktCampaignModalContext = useContext(MktCampaignModalContext);
   const language = useSelector((state: RootState) => state.settings.language);
   const { getAppInstructionData } = useGetAppInstructionData(language);
   const navigate = useNavigate();
@@ -111,20 +115,50 @@ export const AppOnlineContentContextProvider = ({ children }: AppOnlineContentCo
   }, []);
 
   const checkPositionParam = useCallback(
-    (screen: string, positionParams: { property: string; value: string }[], value: string) => {
+    (screen: string, positionParams: { property: string; value: string }[], value: string[]) => {
       if (positionParams && positionParams.length) {
-        if (screen === 'token_detail') {
-          const allowTokenSlugs = positionParams
-            .filter((item) => item.property === 'tokenSlug')
-            .map((param) => param.value);
+        switch (screen) {
+          case 'token_detail': {
+            const allowTokenSlugs = positionParams
+              .filter((item) => item.property === 'tokenSlug')
+              .map((param) => param.value);
 
-          return allowTokenSlugs.some((slug) => value.toLowerCase().includes(slug.toLowerCase()));
-        } else if (screen === 'earning') {
-          const allowPoolSlugs = positionParams.filter((item) => item.property === 'poolSlug').map((param) => param.value);
+            return allowTokenSlugs.some((slug) => value[0].toLowerCase().includes(slug.toLowerCase()));
+          }
 
-          return allowPoolSlugs.some((slug) => value.toLowerCase().includes(slug.toLowerCase()));
-        } else {
-          return true;
+          case 'earning': {
+            const allowPoolSlugs = positionParams.filter((item) => item.property === 'poolSlug').map((param) => param.value);
+
+            return allowPoolSlugs.some((slug) => value[0].toLowerCase().includes(slug.toLowerCase()));
+          }
+
+          case 'missionPools': {
+            const selectedIds = positionParams.filter((item) => item.property === 'id').map((param) => param.value);
+
+            return selectedIds.some((id) => value[0].toLowerCase().includes(id.toLowerCase()));
+          }
+
+          case 'send-fund': {
+            const currentChain = value[0];
+            const currentDestChain = value[1];
+            let isValidChain = true;
+            let isValidDestChain = true;
+
+            positionParams.forEach((item) => {
+              if (item.property === 'chainValue') {
+                isValidChain = item.value === currentChain;
+              }
+
+              if (item.property === 'destChainValue') {
+                isValidDestChain = item.value === currentDestChain;
+              }
+            });
+
+            return isValidChain && isValidDestChain;
+          }
+
+          default:
+            return true;
         }
       } else {
         return true;
@@ -187,6 +221,10 @@ export const AppOnlineContentContextProvider = ({ children }: AppOnlineContentCo
                 symbol: urlQueryMap.symbol
               } as EarningPoolsParam });
             }
+
+            if (parseUrl.pathname.startsWith('/main/tokens/tokens/token-groups-detail')) {
+              navigate(`home/tokens/detail/${urlQueryMap.slug}`);
+            }
           } else {
             openInNewTab(url)();
           }
@@ -218,18 +256,18 @@ export const AppOnlineContentContextProvider = ({ children }: AppOnlineContentCo
         }).sort((a, b) => a.priority - b.priority);
 
         if (filteredPopupList && filteredPopupList.length) {
-          const result: AppPopupModalInfo[] = filteredPopupList.map((item) => ({
+          const result: MktCampaignModalInfo[] = filteredPopupList.map((item) => ({
             type: 'popup',
             repeat: item.repeat,
             title: item.info?.name,
             message: item.content || '',
             buttons: item.buttons,
-            onPressBtn: (url?: string) => {
+            onClickBtn: (url?: string) => {
               handleButtonClick(`${item.position}-${item.id}`)('popup', url);
             }
           }));
 
-          appPopupModalContext.openAppPopupModal(result[0]);
+          mktCampaignModalContext.openModal(result[0]);
         }
       }
     },

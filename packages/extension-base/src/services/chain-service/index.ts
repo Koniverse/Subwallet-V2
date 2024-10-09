@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
-import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
+import { TonChainHandler } from '@subwallet/extension-base/services/chain-service/handler/TonChainHandler';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
 import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, fetchPatchData, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
@@ -46,8 +47,7 @@ const ignoredList = [
   'core',
   'satoshivm',
   'satoshivm_testnet',
-  'ton',
-  'ton_testnet'
+  'storyPartner_testnet'
 ];
 
 const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
@@ -88,6 +88,7 @@ export class ChainService {
 
   private substrateChainHandler: SubstrateChainHandler;
   private evmChainHandler: EvmChainHandler;
+  private tonChainHandler: TonChainHandler;
   private mantaChainHandler: MantaPrivateHandler | undefined;
 
   refreshLatestChainDataTimeOut: NodeJS.Timer | undefined;
@@ -106,6 +107,7 @@ export class ChainService {
   private swapRefMapSubject = new Subject<Record<string, _AssetRef>>();
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
+  private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
   private assetMapPatch: string = JSON.stringify({});
   private assetLogoPatch: string = JSON.stringify({});
 
@@ -132,8 +134,29 @@ export class ChainService {
 
     this.substrateChainHandler = new SubstrateChainHandler(this);
     this.evmChainHandler = new EvmChainHandler(this);
+    this.tonChainHandler = new TonChainHandler(this);
 
     this.logger = createLogger('chain-service');
+  }
+
+  public get value () {
+    const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+
+    return {
+      get ledgerGenericAllowChains () {
+        return ledgerGenericAllowChains.value;
+      }
+    };
+  }
+
+  public get observable () {
+    const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+
+    return {
+      get ledgerGenericAllowChains () {
+        return ledgerGenericAllowChains.asObservable();
+      }
+    };
   }
 
   public subscribeSwapRefMap () {
@@ -173,12 +196,20 @@ export class ChainService {
     return this.evmChainHandler.getEvmApiMap();
   }
 
+  public getSubstrateApi (slug: string) {
+    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  }
+
   public getSubstrateApiMap () {
     return this.substrateChainHandler.getSubstrateApiMap();
   }
 
-  public getSubstrateApi (slug: string) {
-    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  public getTonApi (slug: string) {
+    return this.tonChainHandler.getTonApiByChain(slug);
+  }
+
+  public getTonApiMap () {
+    return this.tonChainHandler.getTonApiMap();
   }
 
   public getChainCurrentProviderByKey (slug: string) {
@@ -786,6 +817,12 @@ export class ChainService {
     }
   }
 
+  handleLatestLedgerGenericAllowChains (latestledgerGenericAllowChains: string[]) {
+    this.ledgerGenericAllowChainsSubject.next(latestledgerGenericAllowChains);
+    this.eventService.emit('ledger.ready', true);
+    this.logger.log('Finished updating latest ledger generic allow chains');
+  }
+
   handleLatestData () {
     this.fetchLatestAssetData().then(([latestAssetInfo, latestAssetLogoMap]) => {
       this.eventService.waitAssetReady
@@ -806,6 +843,12 @@ export class ChainService {
     this.fetchLatestPriceIdsData().then((latestPriceIds) => {
       this.handleLatestPriceId(latestPriceIds);
     }).catch(console.error);
+
+    this.fetchLatestLedgerGenericAllowChains()
+      .then((latestledgerGenericAllowChains) => {
+        this.handleLatestLedgerGenericAllowChains(latestledgerGenericAllowChains);
+      })
+      .catch(console.error);
   }
 
   private async initApis () {
@@ -909,6 +952,12 @@ export class ChainService {
 
       this.evmChainHandler.setEvmApi(chainInfo.slug, chainApi);
     }
+
+    if (chainInfo.tonInfo !== null && chainInfo.tonInfo !== undefined) {
+      const chainApi = await this.tonChainHandler.initApi(chainInfo.slug, endpoint, { providerName, onUpdateStatus });
+
+      this.tonChainHandler.setTonApi(chainInfo.slug, chainApi);
+    }
   }
 
   private destroyApiForChain (chainInfo: _ChainInfo) {
@@ -918,6 +967,10 @@ export class ChainService {
 
     if (chainInfo.evmInfo !== null) {
       this.evmChainHandler.destroyEvmApi(chainInfo.slug);
+    }
+
+    if (chainInfo.tonInfo !== null) {
+      this.tonChainHandler.destroyTonApi(chainInfo.slug);
     }
   }
 
@@ -1102,6 +1155,10 @@ export class ChainService {
     return await Promise.all([fetchStaticData<string[]>('chain-assets/disabled-xcm-channels'), fetchPatchData<Record<string, _AssetRef>>('AssetRef.json')]);
   }
 
+  private async fetchLatestLedgerGenericAllowChains () {
+    return await fetchStaticData<string[]>('chains/ledger-generic-allow-chains') || [];
+  }
+
   private async initChains () {
     const storedChainSettings = await this.dbService.getAllChainStore();
     const defaultChainInfoMap = filterChainInfoMap(ChainInfoMap, ignoredList);
@@ -1230,7 +1287,7 @@ export class ChainService {
               evmInfo: storedChainInfo.evmInfo,
               substrateInfo: storedChainInfo.substrateInfo,
               bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
-              tonInfo: storedChainInfo.tonInfo ?? null,
+              tonInfo: storedChainInfo.tonInfo,
               isTestnet: storedChainInfo.isTestnet,
               chainStatus: storedChainInfo.chainStatus,
               icon: storedChainInfo.icon,
@@ -1438,6 +1495,7 @@ export class ChainService {
 
     let substrateInfo: _SubstrateInfo | null = null;
     let evmInfo: _EvmInfo | null = null;
+    const tonInfo: _TonInfo | null = null;
 
     if (params.chainSpec.genesisHash !== '') {
       substrateInfo = {
@@ -1476,7 +1534,7 @@ export class ChainService {
       substrateInfo,
       evmInfo,
       bitcoinInfo: null,
-      tonInfo: null,
+      tonInfo,
       isTestnet: false,
       chainStatus: _ChainStatus.ACTIVE,
       icon: '', // Todo: Allow update with custom chain,
@@ -1597,6 +1655,8 @@ export class ChainService {
 
         // TODO: EVM chain might have WS provider
         if (provider.startsWith('http')) {
+          // todo: handle validate ton provider
+
           // HTTP provider is EVM by default
           api = await this.evmChainHandler.initApi('custom', provider);
         } else {
@@ -1803,10 +1863,15 @@ export class ChainService {
     this.evmChainHandler.recoverApi(slug).catch(console.error);
   }
 
+  public refreshTonApi (slug: string) {
+    this.tonChainHandler.recoverApi(slug).catch(console.error);
+  }
+
   public async stopAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.sleep(),
-      this.evmChainHandler.sleep()
+      this.evmChainHandler.sleep(),
+      this.tonChainHandler.sleep()
     ]);
 
     this.stopCheckLatestChainData();
@@ -1815,7 +1880,8 @@ export class ChainService {
   public async resumeAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.wakeUp(),
-      this.evmChainHandler.wakeUp()
+      this.evmChainHandler.wakeUp(),
+      this.tonChainHandler.wakeUp()
     ]);
 
     this.checkLatestData();

@@ -64,6 +64,12 @@ export const IPFS_IO = 'https://ipfs.io/ipfs/';
 // XOrigin
 export const DWEB_LINK = 'https://dweb.link/ipfs/';
 
+// XOrigin
+export const TERNOA_MAINNET_CLIENT_NFT = 'https://indexer-mainnet.ternoa.dev';
+export const TERNOA_ALPHANET_CLIENT_NFT = 'https://indexer-alphanet.ternoa.dev';
+export const TERNOA_MAINNET_GATEWAY = 'https://ipfs-mainnet.trnnfr.com/ipfs/';
+export const TERNOA_ALPHANET_GATEWAY = 'https://ipfs-dev.trnnfr.com/ipfs/';
+
 export const IPFS_GATEWAY_4EVERLAND = 'https://4everland.io/ipfs/';
 
 export const IPFS_FLEEK = 'https://ipfs.fleek.co/ipfs/';

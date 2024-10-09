@@ -3,11 +3,13 @@
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
+import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { isSubscriptionRunning, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AccountRefMap, AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, BasicTxErrorType, ChainStakingMetadata, ChainType, ConfirmationsQueue, CrowdloanItem, CrowdloanJson, CurrencyType, CurrentAccountInfo, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestCheckPublicAndSecretKey, RequestConfirmationComplete, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ResponseCheckPublicAndSecretKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY, ALL_GENESIS_HASH, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
+import { AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, ChainStakingMetadata, ChainType, ConfirmationsQueue, ConfirmationsQueueTon, CrowdloanItem, CrowdloanJson, CurrencyType, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestConfirmationComplete, RequestConfirmationCompleteTon, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
+import { MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
+import { convertErrorFormat, generateValidationProcess, PayloadValidated, ValidateStepFunction, validationAuthMiddleware, validationAuthWCMiddleware, validationConnectMiddleware, validationEvmDataTransactionMiddleware, validationEvmSignMessageMiddleware } from '@subwallet/extension-base/core/logic-validation';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import BuyService from '@subwallet/extension-base/services/buy-service';
@@ -38,27 +40,20 @@ import TransactionService from '@subwallet/extension-base/services/transaction-s
 import { TransactionEventResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
-import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
-import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
-import { isAccountAll, stripUrl, targetIsWeb, wait } from '@subwallet/extension-base/utils';
-import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { BalanceItem, BasicTxErrorType, CurrentAccountInfo, EvmFeeInfo, RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey, StorageDataInterface } from '@subwallet/extension-base/types';
+import { isManifestV3, stripUrl, targetIsWeb } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
-import { decodePair } from '@subwallet/keyring/pair/decode';
 import { keyring } from '@subwallet/ui-keyring';
-import BigN from 'bignumber.js';
 import BN from 'bn.js';
-import SimpleKeyring from 'eth-simple-keyring';
 import { t } from 'i18next';
 import { interfaces } from 'manta-extension-sdk';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { TransactionConfig } from 'web3-core';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
-import { assert, hexStripPrefix, hexToU8a, isHex, logger as createLogger, noop, u8aToHex } from '@polkadot/util';
+import { assert, logger as createLogger, noop } from '@polkadot/util';
 import { Logger } from '@polkadot/util/types';
-import { base64Decode, isEthereumAddress, keyExtractSuri } from '@polkadot/util-crypto';
-import { KeypairType } from '@polkadot/util-crypto/types';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { KoniCron } from '../cron';
 import { KoniSubscription } from '../subscription';
@@ -66,7 +61,7 @@ import { KoniSubscription } from '../subscription';
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 const passworder = require('browser-passworder');
 
-const ETH_DERIVE_DEFAULT = '/m/44\'/60\'/0\'/0/0';
+const ERROR_CONFIRMATION_TYPE = ['errorConnectNetwork'];
 
 // List of providers passed into constructor. This is the list of providers
 // exposed by the extension.
@@ -76,12 +71,6 @@ type Providers = Record<string, {
   // provider.
   start: () => ProviderInterface;
 }>
-
-const getSuri = (seed: string, type?: KeypairType): string => {
-  return type === 'ethereum'
-    ? `${seed}${ETH_DERIVE_DEFAULT}`
-    : seed;
-};
 
 const generateDefaultCrowdloanMap = (): Record<string, CrowdloanItem> => {
   const crowdloanMap: Record<string, CrowdloanItem> = {};
@@ -95,7 +84,6 @@ export default class KoniState {
   private injectedProviders = new Map<chrome.runtime.Port, ProviderInterface>();
   private readonly providers: Providers;
   private readonly unsubscriptionMap: Record<string, () => void> = {};
-  private readonly accountRefStore = new AccountRefStore();
   private externalRequest: Record<string, ExternalRequestPromise> = {};
 
   private crowdloanMap: Record<string, CrowdloanItem> = generateDefaultCrowdloanMap();
@@ -153,7 +141,7 @@ export default class KoniState {
 
     this.eventService = new EventService();
     this.dbService = new DatabaseService(this.eventService);
-    this.keyringService = new KeyringService(this.eventService);
+    this.keyringService = new KeyringService(this);
 
     this.notificationService = new NotificationService();
     this.chainService = new ChainService(this.dbService, this.eventService);
@@ -276,42 +264,12 @@ export default class KoniState {
     this.requestService.saveMetadata(meta);
   }
 
-  public sign (url: string, request: RequestSign, account: AccountJson): Promise<ResponseSigning> {
-    return this.requestService.sign(url, request, account);
+  public sign (url: string, request: RequestSign): Promise<ResponseSigning> {
+    return this.requestService.sign(url, request);
   }
 
   public get authSubjectV2 () {
     return this.requestService.authSubjectV2;
-  }
-
-  public generateDefaultBalanceMap (_addresses?: string[]): BalanceMap {
-    const balanceMap: BalanceMap = {};
-    const activeChains = this.chainService.getActiveChainInfoMap();
-    const isAllAccount = isAccountAll(this.keyringService.currentAccount.address);
-
-    const addresses = _addresses || (isAllAccount ? Object.keys(this.keyringService.accounts) : [this.keyringService.currentAccount.address]);
-
-    addresses.forEach((address) => {
-      const temp: Record<string, BalanceItem> = {};
-
-      Object.values(activeChains).forEach((chainInfo) => {
-        const chainAssetMap = this.chainService.getFungibleTokensByChain(chainInfo.slug);
-
-        Object.keys(chainAssetMap).forEach((assetSlug) => {
-          temp[assetSlug] = {
-            address,
-            tokenSlug: assetSlug,
-            free: '',
-            locked: '',
-            state: APIItemState.PENDING
-          };
-        });
-      });
-
-      balanceMap[address] = temp;
-    });
-
-    return balanceMap;
   }
 
   private afterChainServiceInit () {
@@ -418,12 +376,6 @@ export default class KoniState {
     return this.requestService.getAuthList();
   }
 
-  getAddressList (value = false): Record<string, boolean> {
-    const addressList = Object.keys(this.keyringService.accounts);
-
-    return addressList.reduce((addressList, v) => ({ ...addressList, [v]: value }), {});
-  }
-
   public async authorizeUrlV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
     return this.requestService.authorizeUrlV2(url, request);
   }
@@ -454,7 +406,7 @@ export default class KoniState {
   }
 
   public async getStaking (): Promise<StakingJson> {
-    const addresses = this.getDecodedAddresses();
+    const addresses = this.keyringService.context.getDecodedAddresses();
 
     const stakings = await this.dbService.getStakings(addresses, this.activeChainSlugs);
 
@@ -531,7 +483,7 @@ export default class KoniState {
       total: 0
     })).catch((e) => this.logger.warn(e));
 
-    const addresses = this.getDecodedAddresses(newAddress);
+    const addresses = this.keyringService.context.getDecodedAddresses(newAddress);
 
     this.dbService.subscribeNft(addresses, this.activeChainSlugs, (nfts) => {
       this.nftSubject.next({
@@ -556,7 +508,7 @@ export default class KoniState {
   }
 
   public async getNft (): Promise<NftJson | undefined> {
-    const addresses = this.getDecodedAddresses();
+    const addresses = this.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;
@@ -598,107 +550,12 @@ export default class KoniState {
     this.stakingRewardSubject.next(this.stakingRewardState);
   }
 
-  public getAccountRefMap (callback: (refMap: Record<string, Array<string>>) => void) {
-    const refMap: AccountRefMap = {};
-
-    this.accountRefStore.get('refList', (refList) => {
-      if (refList) {
-        refList.forEach((accRef) => {
-          accRef.forEach((acc) => {
-            refMap[acc] = [...accRef].filter((r) => !(r === acc));
-          });
-        });
-      }
-
-      callback(refMap);
-    });
-  }
-
-  public addAccountRef (addresses: string[], callback: () => void) {
-    this.accountRefStore.get('refList', (refList) => {
-      const newList = refList ? [...refList] : [];
-
-      newList.push(addresses);
-
-      this.accountRefStore.set('refList', newList, callback);
-    });
-  }
-
-  public removeAccountRef (address: string, callback: () => void) {
-    this.accountRefStore.get('refList', (refList) => {
-      if (refList) {
-        refList.forEach((accRef) => {
-          if (accRef.indexOf(address) > -1) {
-            accRef.splice(accRef.indexOf(address), 1);
-          }
-
-          if (accRef.length < 2) {
-            refList.splice(refList.indexOf(accRef), 1);
-          }
-        });
-
-        this.accountRefStore.set('refList', refList, () => {
-          callback();
-        });
-      } else {
-        callback();
-      }
-    });
-  }
-
   public getStakingReward (update: (value: StakingRewardJson) => void): void {
     update(this.stakingRewardState);
   }
 
   public subscribeStakingReward () {
     return this.stakingRewardSubject;
-  }
-
-  public setCurrentAccount (data: CurrentAccountInfo, callback?: () => void, preventOneAccount?: boolean): void {
-    const { address, currentGenesisHash } = data;
-
-    const result: CurrentAccountInfo = { ...data };
-
-    if (address === ALL_ACCOUNT_KEY) {
-      const pairs = keyring.getAccounts();
-      const pair = pairs[0];
-      const pairGenesisHash = pair?.meta.genesisHash as string || '';
-
-      if (pairs.length > 1 || !pair) {
-        result.allGenesisHash = currentGenesisHash || undefined;
-      } else {
-        if (!preventOneAccount) {
-          result.address = pair.address;
-          result.currentGenesisHash = pairGenesisHash || '';
-          result.allGenesisHash = pairGenesisHash || undefined;
-        } else {
-          result.allGenesisHash = currentGenesisHash || undefined;
-        }
-      }
-    }
-
-    this.keyringService.setCurrentAccount(result);
-    callback && callback();
-  }
-
-  public setAccountTie (address: string, genesisHash: string | null): boolean {
-    if (address !== ALL_ACCOUNT_KEY) {
-      const pair = keyring.getPair(address);
-
-      assert(pair, t('Unable to find account'));
-
-      keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash });
-    }
-
-    const accountInfo = this.keyringService.currentAccount;
-
-    if (address === accountInfo.address) {
-      accountInfo.currentGenesisHash = genesisHash as string || ALL_GENESIS_HASH;
-
-      this.setCurrentAccount(accountInfo);
-    }
-
-    return true;
   }
 
   public async switchEvmNetworkByUrl (shortenUrl: string, networkKey: string): Promise<void> {
@@ -716,43 +573,6 @@ export default class KoniState {
     } else {
       throw new EvmProviderError(EvmProviderErrorType.INTERNAL_ERROR, t('Not found {{shortenUrl}} in auth list', { replace: { shortenUrl } }));
     }
-  }
-
-  public async switchNetworkAccount (id: string, url: string, networkKey: string, changeAddress?: string): Promise<boolean> {
-    const chainInfo = this.chainService.getChainInfoByKey(networkKey);
-    const chainState = this.chainService.getChainStateByKey(networkKey);
-    const { address, currentGenesisHash } = this.keyringService.currentAccount;
-
-    return this.requestService.addConfirmation(id, url, 'switchNetworkRequest', {
-      networkKey,
-      address: changeAddress
-    }, { address: changeAddress })
-      .then(({ isApproved }) => {
-        if (isApproved) {
-          const useAddress = changeAddress || address;
-
-          if (chainInfo && !_isChainEnabled(chainState)) {
-            this.enableChain(networkKey).catch(console.error);
-          }
-
-          if (useAddress !== ALL_ACCOUNT_KEY) {
-            const pair = keyring.getPair(useAddress);
-
-            assert(pair, t('Unable to find account'));
-
-            keyring.saveAccountMeta(pair, { ...pair.meta, genesisHash: _getSubstrateGenesisHash(chainInfo) });
-          }
-
-          if (address !== changeAddress || _getSubstrateGenesisHash(chainInfo) !== currentGenesisHash || isApproved) {
-            this.setCurrentAccount({
-              address: useAddress,
-              currentGenesisHash: _getSubstrateGenesisHash(chainInfo)
-            });
-          }
-        }
-
-        return isApproved;
-      });
   }
 
   public async addNetworkConfirm (id: string, url: string, networkData: _NetworkUpsertParams) {
@@ -840,38 +660,6 @@ export default class KoniState {
     return this.settingService.getSubject();
   }
 
-  public getAccountAddress (): string | null {
-    const address = this.keyringService.currentAccount.address;
-
-    if (address === '') {
-      return null;
-    }
-
-    return address;
-  }
-
-  public getDecodedAddresses (address?: string): string[] {
-    let checkingAddress: string | null | undefined = address;
-
-    if (!address) {
-      checkingAddress = this.getAccountAddress();
-    }
-
-    if (!checkingAddress) {
-      return [];
-    }
-
-    if (checkingAddress === ALL_ACCOUNT_KEY) {
-      return this.getAllAddresses();
-    }
-
-    return [checkingAddress];
-  }
-
-  public getAllAddresses (): string[] {
-    return keyring.getAccounts().map((account) => account.address);
-  }
-
   public async resetCrowdloanMap (newAddress: string) {
     const defaultData = generateDefaultCrowdloanMap();
     const storedData = await this.getStoredCrowdloan(newAddress);
@@ -887,7 +675,7 @@ export default class KoniState {
       })
       .catch((e) => this.logger.warn(e));
 
-    const addresses = this.getDecodedAddresses(newAddress);
+    const addresses = this.keyringService.context.getDecodedAddresses(newAddress);
 
     this.dbService.subscribeStaking(addresses, this.activeChainSlugs, (stakings) => {
       this.stakingSubject.next({
@@ -920,9 +708,9 @@ export default class KoniState {
   }
 
   private updateCrowdloanStore (networkKey: string, item: CrowdloanItem) {
-    const currentAccountInfo = this.keyringService.currentAccount;
+    const currentAccountInfo = this.keyringService.context.currentAccount;
 
-    this.dbService.updateCrowdloanStore(networkKey, currentAccountInfo.address, item).catch((e) => this.logger.warn(e));
+    this.dbService.updateCrowdloanStore(networkKey, currentAccountInfo.proxyId, item).catch((e) => this.logger.warn(e));
   }
 
   public subscribeCrowdloan () {
@@ -1120,6 +908,14 @@ export default class KoniState {
     return this.chainService.getEvmApi(networkKey);
   }
 
+  public getTonApiMap () {
+    return this.chainService.getTonApiMap();
+  }
+
+  public getTonApi (networkKey: string) {
+    return this.chainService.getTonApi(networkKey);
+  }
+
   public getApiMap () {
     return {
       substrate: this.chainService.getSubstrateApiMap(),
@@ -1141,7 +937,7 @@ export default class KoniState {
     return {
       chainInfoMap: this.chainService.getChainInfoMap(),
       chainApiMap: this.getApiMap(),
-      currentAccountInfo: this.keyringService.currentAccount,
+      currentAccountInfo: this.keyringService.context.currentAccount,
       assetRegistry: this.chainService.getAssetRegistry(),
       chainStateMap: this.chainService.getChainStateMap()
     };
@@ -1269,76 +1065,17 @@ export default class KoniState {
     return (Object.values(_PREDEFINED_SINGLE_MODES)).find((item) => (item.networkKeys.includes(networkKey)));
   }
 
-  public accountExportPrivateKey ({ address,
-    password }: RequestAccountExportPrivateKey): ResponseAccountExportPrivateKey {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const exportedJson = keyring.backupAccount(keyring.getPair(address), password);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const decoded = decodePair(password, base64Decode(exportedJson.encoded), exportedJson.encoding.type);
-
-    return {
-      privateKey: u8aToHex(decoded.secretKey),
-      publicKey: u8aToHex(decoded.publicKey)
-    };
+  public accountExportPrivateKey (request: RequestAccountExportPrivateKey): ResponseAccountExportPrivateKey {
+    return this.keyringService.context.accountExportPrivateKey(request);
   }
 
-  public checkPublicAndSecretKey ({ publicKey,
-    secretKey }: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
-    try {
-      const _secret = hexStripPrefix(secretKey);
-
-      if (_secret.length === 64) {
-        const suri = `0x${_secret}`;
-        const { phrase } = keyExtractSuri(suri);
-
-        if (isHex(phrase) && isHex(phrase, 256)) {
-          const type: KeypairType = 'ethereum';
-          const address = keyring.createFromUri(getSuri(suri, type), {}, type).address;
-
-          return {
-            address: address,
-            isValid: true,
-            isEthereum: true
-          };
-        } else {
-          return {
-            address: '',
-            isValid: false,
-            isEthereum: true
-          };
-        }
-      }
-
-      const keyPair = keyring.keyring.addFromPair({ publicKey: hexToU8a(publicKey), secretKey: hexToU8a(secretKey) });
-
-      return {
-        address: keyPair.address,
-        isValid: true,
-        isEthereum: false
-      };
-    } catch (e) {
-      console.error(e);
-
-      return {
-        address: '',
-        isValid: false,
-        isEthereum: false
-      };
-    }
+  public checkPublicAndSecretKey (request: RequestCheckPublicAndSecretKey): ResponseCheckPublicAndSecretKey {
+    return this.keyringService.context.checkPublicAndSecretKey(request);
   }
 
-  public getEthKeyring (address: string, password: string): Promise<SimpleKeyring> {
-    return new Promise<SimpleKeyring>((resolve) => {
-      const { privateKey } = this.accountExportPrivateKey({ address, password: password });
-      const ethKeyring = new SimpleKeyring([privateKey]);
-
-      resolve(ethKeyring);
-    });
-  }
-
-  public async evmSign (id: string, url: string, method: string, params: any, allowedAccounts: string[]): Promise<string | undefined> {
+  public async evmSign (id: string, url: string, method: string, params: any, topic?: string): Promise<string | undefined> {
     let address = '';
-    let payload: any;
+    let payload: unknown;
     const [p1, p2] = params as [string, string];
 
     if (typeof p1 === 'string' && isEthereumAddress(p1)) {
@@ -1349,67 +1086,29 @@ export default class KoniState {
       payload = p1;
     }
 
-    if (address === '' || !payload) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Not found address or payload to sign'));
-    }
+    const payloadValidation: PayloadValidated = {
+      address,
+      payloadAfterValidated: payload,
+      method,
+      errors: [],
+      networkKey: ''
+    };
 
-    if (['eth_sign', 'personal_sign', 'eth_signTypedData', 'eth_signTypedData_v1', 'eth_signTypedData_v3', 'eth_signTypedData_v4'].indexOf(method) < 0) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unsupported action'));
-    }
+    const validationSteps: ValidateStepFunction[] =
+      [
+        topic ? validationAuthWCMiddleware : validationAuthMiddleware,
+        validationEvmSignMessageMiddleware
+      ];
 
-    if (['eth_signTypedData_v3', 'eth_signTypedData_v4'].indexOf(method) > -1) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-assignment
-      payload = JSON.parse(payload);
-    }
-
-    // Check sign abiblity
-    if (!allowedAccounts.find((acc) => (acc.toLowerCase() === address.toLowerCase()))) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('You have rescinded allowance for this account in wallet'));
-    }
-
-    const pair = keyring.getPair(address);
-
-    if (!pair) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unable to find account'));
-    }
-
-    const account: AccountJson = { address: pair.address, ...pair.meta };
-
-    let hashPayload = '';
-    let canSign = false;
-
-    switch (method) {
-      case 'personal_sign':
-        canSign = true;
-        hashPayload = payload as string;
-        break;
-      case 'eth_sign':
-      case 'eth_signTypedData':
-      case 'eth_signTypedData_v1':
-      case 'eth_signTypedData_v3':
-      case 'eth_signTypedData_v4':
-        if (!account.isExternal) {
-          canSign = true;
-        }
-
-        break;
-      default:
-        throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unsupported action'));
-    }
-
-    const signPayload: EvmSignatureRequest = {
-      account: account,
-      type: method,
-      payload: payload as unknown,
-      hashPayload: hashPayload,
-      canSign: canSign,
+    const result = await generateValidationProcess(this, url, payloadValidation, validationSteps, topic);
+    const errorsFormated = convertErrorFormat(result.errors);
+    const payloadAfterValidated: EvmSignatureRequest = {
+      ...result.payloadAfterValidated as EvmSignatureRequest,
+      errors: errorsFormated,
       id
     };
 
-    return this.requestService.addConfirmation(id, url, 'evmSignatureRequest', signPayload, {
-      requiredPassword: false,
-      address
-    })
+    return this.requestService.addConfirmation(id, url, 'evmSignatureRequest', payloadAfterValidated, {})
       .then(({ isApproved, payload }) => {
         if (isApproved) {
           if (payload) {
@@ -1460,139 +1159,44 @@ export default class KoniState {
     return Object.fromEntries(await Promise.all(promiseList));
   }
 
-  public async evmSendTransaction (id: string, url: string, networkKey: string, allowedAccounts: string[], transactionParams: EvmSendTransactionParams): Promise<string | undefined> {
-    const evmApi = this.getEvmApi(networkKey);
-    const evmNetwork = this.getChainInfo(networkKey);
-    const web3 = evmApi.api;
-
-    const autoFormatNumber = (val?: string | number): string | undefined => {
-      if (typeof val === 'string' && val.startsWith('0x')) {
-        return new BN(val.replace('0x', ''), 16).toString();
-      } else if (typeof val === 'number') {
-        return val.toString();
-      }
-
-      return val;
+  public async evmSendTransaction (id: string, url: string, transactionParams: EvmSendTransactionParams, networkKeyInit?: string, topic?: string): Promise<string | undefined> {
+    const payloadValidation: PayloadValidated = {
+      errors: [],
+      networkKey: networkKeyInit || '',
+      payloadAfterValidated: transactionParams,
+      address: transactionParams.from
     };
+    const validationSteps: ValidateStepFunction[] =
+      [
+        topic ? validationAuthWCMiddleware : validationAuthMiddleware,
+        validationConnectMiddleware,
+        validationEvmDataTransactionMiddleware
+      ];
 
-    if (transactionParams.from === transactionParams.to) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Receiving address must be different from sending address'));
-    }
+    const result = await generateValidationProcess(this, url, payloadValidation, validationSteps, topic);
+    const { confirmationType, errors, networkKey: networkKey_ } = result;
+    const errorsFormated = convertErrorFormat(errors);
 
-    const transaction: TransactionConfig = {
-      from: transactionParams.from,
-      to: transactionParams.to,
-      value: autoFormatNumber(transactionParams.value),
-      gas: autoFormatNumber(transactionParams.gas),
-      gasPrice: autoFormatNumber(transactionParams.gasPrice || transactionParams.gasLimit),
-      maxPriorityFeePerGas: autoFormatNumber(transactionParams.maxPriorityFeePerGas),
-      maxFeePerGas: autoFormatNumber(transactionParams.maxFeePerGas),
-      data: transactionParams.data
-    };
-
-    if (!transactionParams.gas) {
-      const getTransactionGas = async () => {
-        try {
-          transaction.gas = await web3.eth.estimateGas({ ...transaction });
-        } catch (e) {
-          // @ts-ignore
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-          throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, e?.message);
-        }
-      };
-
-      // Calculate transaction data
-      try {
-        await Promise.race([
-          getTransactionGas(),
-          wait(3000).then(async () => {
-            if (!transaction.gas) {
-              await this.chainService.initSingleApi(networkKey);
-              await getTransactionGas();
-            }
-          })
-        ]);
-      } catch (e) {
-        // @ts-ignore
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, e?.message);
+    if (errorsFormated && errorsFormated.length > 0 && confirmationType) {
+      if (ERROR_CONFIRMATION_TYPE.includes(confirmationType)) {
+        return this.requestService.addConfirmation(id, url, confirmationType, { ...result, errors: errorsFormated }, {})
+          .then(() => {
+            throw new EvmProviderError(EvmProviderErrorType.USER_REJECTED_REQUEST);
+          });
       }
     }
 
-    if (!transaction.gas) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS);
-    }
-
-    let estimateGas: string;
-
-    // TODO: Review, If not override, transaction maybe fail because fee too low
-    if (transactionParams.maxPriorityFeePerGas && transactionParams.maxFeePerGas) {
-      const maxFee = new BigN(transactionParams.maxFeePerGas);
-
-      estimateGas = maxFee.multipliedBy(transaction.gas).toFixed(0);
-    } else if (transactionParams.gasPrice) {
-      estimateGas = new BigN(transactionParams.gasPrice).multipliedBy(transaction.gas).toFixed(0);
-    } else {
-      const priority = await calculateGasFeeParams(evmApi, networkKey);
-
-      if (priority.baseGasFee) {
-        transaction.maxPriorityFeePerGas = priority.maxPriorityFeePerGas.toString();
-        transaction.maxFeePerGas = priority.maxFeePerGas.toString();
-
-        const maxFee = priority.maxFeePerGas;
-
-        estimateGas = maxFee.multipliedBy(transaction.gas).toFixed(0);
-      } else {
-        transaction.gasPrice = priority.gasPrice;
-        estimateGas = new BigN(priority.gasPrice).multipliedBy(transaction.gas).toFixed(0);
-      }
-    }
-
-    // Address is validated in before step
-    const fromAddress = allowedAccounts.find((account) => (account.toLowerCase() === (transaction.from as string).toLowerCase()));
-
-    if (!fromAddress) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('You have rescinded allowance for this account in wallet'));
-    }
-
-    const pair = keyring.getPair(fromAddress);
-
-    if (!pair) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unable to find account'));
-    }
-
-    const account: AccountJson = { address: pair.address, ...pair.meta };
-
-    // Validate balance
-    const balance = new BN(await web3.eth.getBalance(fromAddress) || 0);
-
-    if (balance.lt(new BN(estimateGas).add(new BN(autoFormatNumber(transactionParams.value) || '0')))) {
-      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Insufficient balance'));
-    }
-
-    transaction.nonce = await web3.eth.getTransactionCount(fromAddress);
-
-    const hashPayload = this.transactionService.generateHashPayload(networkKey, transaction);
-    const isToContract = await isContractAddress(transaction.to || '', evmApi);
-    const parseData = isToContract
-      ? transaction.data
-        ? (await parseContractInput(transaction.data, transaction.to || '', evmNetwork)).result
-        : ''
-      : transaction.data || '';
+    const transactionValidated = result.payloadAfterValidated as EvmSendTransactionRequest;
+    const networkKey = networkKey_ || '';
 
     const requestPayload: EvmSendTransactionRequest = {
-      ...transaction,
-      estimateGas,
-      hashPayload,
-      isToContract,
-      parseData: parseData,
-      account: account,
-      canSign: true
+      ...transactionValidated,
+      errors: errorsFormated
     };
 
-    const eType = transaction.value ? ExtrinsicType.TRANSFER_BALANCE : ExtrinsicType.EVM_EXECUTE;
+    const eType = transactionValidated.value ? ExtrinsicType.TRANSFER_BALANCE : ExtrinsicType.EVM_EXECUTE;
 
-    const transactionData = { ...transaction };
+    const transactionData = { ...transactionValidated };
     const token = this.chainService.getNativeTokenInfo(networkKey);
 
     if (eType === ExtrinsicType.TRANSFER_BALANCE) {
@@ -1607,10 +1211,11 @@ export default class KoniState {
       chain: networkKey,
       url,
       data: transactionData,
+      errors: errors as TransactionError[],
       extrinsicType: eType,
       chainType: ChainType.EVM,
       estimateFee: {
-        value: estimateGas,
+        value: transactionValidated.estimateGas,
         symbol: token.symbol,
         decimals: token.decimals || 18
       },
@@ -1644,20 +1249,48 @@ export default class KoniState {
     return this.requestService.confirmationsQueueSubject;
   }
 
+  public getConfirmationsQueueSubjectTon (): BehaviorSubject<ConfirmationsQueueTon> {
+    return this.requestService.confirmationsQueueSubjectTon;
+  }
+
   public async completeConfirmation (request: RequestConfirmationComplete) {
     return await this.requestService.completeConfirmation(request);
+  }
+
+  public async completeConfirmationTon (request: RequestConfirmationCompleteTon) {
+    return await this.requestService.completeConfirmationTon(request);
   }
 
   private async onMV3Update () {
     const migrationStatus = await SWStorage.instance.getItem('mv3_migration');
 
     if (!migrationStatus || migrationStatus !== 'done') {
-      // Open migration tab
-      const url = `${chrome.runtime.getURL('index.html')}#/mv3-migration`;
+      if (isManifestV3) {
+        // Open migration tab
+        const url = `${chrome.runtime.getURL('index.html')}#/mv3-migration`;
 
-      await openPopup(url);
+        await openPopup(url);
 
-      // migrateMV3LocalStorage will be called when user open migration tab with data from localStorage on frontend
+        // migrateMV3LocalStorage will be called when user open migration tab with data from localStorage on frontend
+      } else {
+        this.migrateMV3LocalStorage(JSON.stringify(self.localStorage)).catch(console.error);
+      }
+    }
+  }
+
+  private async storePreviousVersionData (details: chrome.runtime.InstalledDetails) {
+    if (details.reason === 'update') {
+      const previousVersion = details.previousVersion;
+
+      if (!previousVersion) {
+        return;
+      }
+
+      const storedData = await SWStorage.instance.getItem('previous_version');
+
+      if (!storedData || !storedData.includes(previousVersion)) {
+        await SWStorage.instance.setItem('previous_version', previousVersion);
+      }
     }
   }
 
@@ -1696,6 +1329,7 @@ export default class KoniState {
       this.onMV3Install().catch(console.error);
     } else if (details.reason === 'update') {
       this.onMV3Update().catch(console.error);
+      this.storePreviousVersionData(details).catch(console.error);
     }
   }
 
@@ -1704,7 +1338,7 @@ export default class KoniState {
 
     if (!remindStatus || !remindStatus.includes('done')) {
       const handleRemind = (account: CurrentAccountInfo) => {
-        if (account.address !== '') {
+        if (account.proxyId !== '') {
           // Open remind tab
           const url = `${chrome.runtime.getURL('index.html')}#/remind-export-account`;
 
@@ -1719,7 +1353,7 @@ export default class KoniState {
         }
       };
 
-      const subscription = this.keyringService.currentAccountSubject.subscribe(handleRemind);
+      const subscription = this.keyringService.context.observable.currentAccount.subscribe(handleRemind);
     }
   }
 
@@ -1734,6 +1368,16 @@ export default class KoniState {
       console.error(e);
 
       return false;
+    }
+  }
+
+  public async getStorageFromWS (key: string) {
+    try {
+      return await SWStorage.instance.getItem(key);
+    } catch (e) {
+      console.error(e);
+
+      return null;
     }
   }
 
@@ -1929,7 +1573,7 @@ export default class KoniState {
   }
 
   public async reloadNft () {
-    const currentAddress = this.keyringService.currentAccount.address;
+    const currentAddress = this.keyringService.context.currentAccount.proxyId;
 
     await this.dbService.removeNftsByAddress(currentAddress);
 
@@ -1978,7 +1622,6 @@ export default class KoniState {
     // await this.handleResetBalance(ALL_ACCOUNT_KEY, true);
     await this.earningService.resetWallet();
     await this.dbService.resetWallet(resetAll);
-    this.accountRefStore.set('refList', []);
 
     if (resetAll) {
       await this.priceService.setPriceCurrency(DEFAULT_CURRENCY);
@@ -2125,7 +1768,7 @@ export default class KoniState {
   public subscribeMantaPayBalance () {
     let interval: NodeJS.Timer | undefined;
 
-    this.chainService?.mantaPay?.getMantaPayConfig(this.keyringService.currentAccount.address, _DEFAULT_MANTA_ZK_CHAIN)
+    this.chainService?.mantaPay?.getMantaPayConfig(this.keyringService.context.currentAccount.proxyId, _DEFAULT_MANTA_ZK_CHAIN)
       .then((config: MantaPayConfig) => {
         if (config && config.enabled && config.isInitialSync) {
           this.getMantaZkBalance();

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
 import { BalanceItem } from '@subwallet/extension-base/types';
 import { Avatar } from '@subwallet/extension-koni-ui/components';
@@ -22,6 +23,7 @@ interface Props extends ThemeProps {
   item: BalanceItem;
 }
 
+// todo: logic in this file may not be correct in some case, need to recheck
 const Component: React.FC<Props> = (props: Props) => {
   const { className, item } = props;
 
@@ -45,7 +47,13 @@ const Component: React.FC<Props> = (props: Props) => {
   const total = useMemo(() => new BigN(free).plus(locked).toString(), [free, locked]);
   const addressPrefix = useGetChainPrefixBySlug(tokenInfo?.originChain);
 
-  const reformatedAddress = useMemo(() => reformatAddress(address, addressPrefix), [address, addressPrefix]);
+  const reformatedAddress = useMemo(() => {
+    if (chainInfo && _isChainTonCompatible(chainInfo)) {
+      return reformatAddress(address, chainInfo.isTestnet ? 0 : 1);
+    }
+
+    return reformatAddress(address, addressPrefix);
+  }, [address, addressPrefix, chainInfo]);
 
   const name = useMemo(() => {
     return account?.name;
@@ -76,6 +84,7 @@ const Component: React.FC<Props> = (props: Props) => {
         label={(
           <div className='account-info'>
             <Avatar
+              identPrefix={addressPrefix}
               size={24}
               value={address}
             />

@@ -7,3 +7,8 @@ export interface SessionStorage {
   timeBackup: number;
   isFinished: boolean;
 }
+
+export interface SeedPhraseTermStorage {
+  state: string;
+  useDefaultContent?: boolean;
+}

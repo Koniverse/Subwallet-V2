@@ -2,12 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import RequestExtrinsicSign from '@subwallet/extension-base/background/RequestExtrinsicSign';
-import { AccountJson, RequestSign, Resolver, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
+import { RequestSign, Resolver, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { SignRequest } from '@subwallet/extension-base/services/request-service/types';
 import { getId } from '@subwallet/extension-base/utils/getId';
 import { isInternalRequest } from '@subwallet/extension-base/utils/request';
-import keyring from '@subwallet/ui-keyring';
 import { BehaviorSubject } from 'rxjs';
 
 import { SignerPayloadJSON } from '@polkadot/types/types/extrinsic';
@@ -32,7 +31,7 @@ export default class SubstrateRequestHandler {
   public get allSubstrateRequests (): SigningRequest[] {
     return Object
       .values(this.#substrateRequests)
-      .map(({ account, id, request, url }) => ({ account, id, request, url, isInternal: isInternalRequest(url) }));
+      .map(({ address, id, request, url }) => ({ address, id, request, url, isInternal: isInternalRequest(url) }));
   }
 
   private updateIconSign (shouldClose?: boolean): void {
@@ -63,7 +62,7 @@ export default class SubstrateRequestHandler {
     return Object.keys(this.#substrateRequests).length;
   }
 
-  public async sign (url: string, request: RequestSign, account: AccountJson, _id?: string): Promise<ResponseSigning> {
+  public async sign (url: string, request: RequestSign, _id?: string): Promise<ResponseSigning> {
     const id = _id || getId();
     const isAlwaysRequired = await this.#requestService.settingService.isAlwaysRequired;
 
@@ -74,7 +73,7 @@ export default class SubstrateRequestHandler {
     return new Promise((resolve, reject): void => {
       this.#substrateRequests[id] = {
         ...this.signComplete(id, resolve, reject),
-        account,
+        address: request.payload.address,
         id,
         request,
         url
@@ -93,12 +92,9 @@ export default class SubstrateRequestHandler {
     }
 
     return new Promise((resolve, reject): void => {
-      const pair = keyring.getPair(address);
-      const account: AccountJson = { address: pair.address, ...pair.meta };
-
       this.#substrateRequests[id] = {
         ...this.signComplete(id, resolve, reject),
-        account,
+        address,
         id,
         request: new RequestExtrinsicSign(payload),
         url: url

@@ -39,13 +39,15 @@ const Component: React.FC<Props> = (props: Props) => {
     closable,
     content,
     modalId,
+    subtitle,
     okButton,
     title,
+    onCancel,
     type = NotificationType.INFO } = props;
 
   const { inactiveModal } = useContext(ModalContext);
 
-  const onCancel = useCallback(() => {
+  const onDefaultCancel = useCallback(() => {
     inactiveModal(modalId);
   }, [inactiveModal, modalId]);
 
@@ -90,7 +92,7 @@ const Component: React.FC<Props> = (props: Props) => {
           </>
         }
         id={modalId}
-        onCancel={onCancel}
+        onCancel={closable === false ? undefined : (onCancel || onDefaultCancel)}
         title={title}
       >
         <div className='__modal-content'>
@@ -110,6 +112,12 @@ const Component: React.FC<Props> = (props: Props) => {
             />
           </div>
 
+          {
+            !!subtitle && (
+              <div className={'__subtitle'}>{subtitle}</div>
+            )
+          }
+
           {content}
         </div>
       </SwModal>
@@ -127,6 +135,11 @@ const AlertModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
       display: 'flex',
       borderTop: 0,
       gap: token.sizeXXS
+    },
+
+    '.ant-sw-header-center-part': {
+      width: '100%',
+      maxWidth: 292
     },
 
     '.__modal-content': {
@@ -156,6 +169,13 @@ const AlertModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
       '&.-error': {
         '--page-icon-color': token.colorError
       }
+    },
+
+    '.__subtitle': {
+      color: token.colorTextLight1,
+      fontSize: token.fontSizeLG,
+      lineHeight: token.lineHeightLG,
+      marginBottom: 20
     }
   };
 });

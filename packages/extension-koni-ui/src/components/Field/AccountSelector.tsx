@@ -1,12 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
 import { BasicInputWrapper } from '@subwallet/extension-koni-ui/components/Field/Base';
 import { useFormatAddress, useSelectModalInputHelper, useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { funcSortByName, toShort } from '@subwallet/extension-koni-ui/utils';
+import { funcSortByName, reformatAddress, toShort } from '@subwallet/extension-koni-ui/utils';
 import { InputRef, SelectModal } from '@subwallet/react-ui';
 import React, { ForwardedRef, forwardRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
@@ -30,6 +30,7 @@ function defaultFiler (account: AccountJson): boolean {
   return !isAccountAll(account.address);
 }
 
+// todo: deprecated, may remove after migrating all usages
 const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElement<Props> => {
   const { addressPrefix, className = '', disabled, doFilter = true, externalAccounts, filter, id = 'account-selector', label, placeholder, readOnly, statusHelp, value } = props;
   const accounts = useSelector((state) => state.accountState.accounts);
@@ -67,14 +68,15 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
 
   const searchFunction = useCallback((item: AccountJson, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
+    const formatAddress = reformatAddress(item.address, addressPrefix);
 
     return (
-      item.address.toLowerCase().includes(searchTextLowerCase) ||
+      formatAddress.toLowerCase().includes(searchTextLowerCase) ||
       (item.name
         ? item.name.toLowerCase().includes(searchTextLowerCase)
         : false)
     );
-  }, []);
+  }, [addressPrefix]);
 
   const renderItem = useCallback((item: AccountJson, selected: boolean) => {
     const address = formatAddress(item);
@@ -84,10 +86,11 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
         accountName={item.name}
         address={address}
         avatarSize={24}
+        identPrefix={addressPrefix}
         isSelected={selected}
       />
     );
-  }, [formatAddress]);
+  }, [addressPrefix, formatAddress]);
 
   return (
     <>
@@ -103,6 +106,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>): React.ReactElemen
         placeholder={placeholder || t('Select account')}
         prefix={
           <Avatar
+            identPrefix={addressPrefix}
             size={20}
             theme={value ? isEthereumAddress(value) ? 'ethereum' : 'polkadot' : undefined}
             value={value}
