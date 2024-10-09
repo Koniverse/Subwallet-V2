@@ -1608,7 +1608,7 @@ export default class KoniExtension {
     }
   }
 
-  private async validateERC721Token (data: _ChainAsset): Promise<ResponseNftImport> {
+  private async validateERC721Token (data: _ChainAsset): Promise<boolean> {
     const evmApi = this.#koniState.getEvmApi(data.originChain);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -1618,23 +1618,14 @@ export default class KoniExtension {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       await tokenContract.methods.tokenOfOwnerByIndex('0xB7fdD27a8Df011816205a6e3cAA097DC4D8C2C5d', 1).call();
 
-      return {
-        success: true,
-        error: ''
-      };
+      return true;
     } catch (err) {
       const error = err as Error;
 
       if (error.message.includes('ERC721Enumerable: owner index out of bounds')) {
-        return {
-          success: true,
-          error: ''
-        };
+        return true;
       } else {
-        return {
-          success: false,
-          error: 'incompatibleNFT'
-        };
+        return false;
       }
     }
   }
@@ -1642,7 +1633,14 @@ export default class KoniExtension {
   private async upsertCustomToken (data: _ChainAsset): Promise<ResponseNftImport> {
     try {
       if (data.assetType === _AssetType.ERC721) {
-        return await this.validateERC721Token(data);
+        const isCompatible = await this.validateERC721Token(data);
+
+        if (!isCompatible) {
+          return {
+            success: false,
+            error: 'incompatibleNFT'
+          };
+        }
       }
 
       await this.#koniState.upsertCustomToken(data);
