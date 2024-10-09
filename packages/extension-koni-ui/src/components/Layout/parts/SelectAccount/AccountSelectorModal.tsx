@@ -354,6 +354,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       children: (
         <Tooltip
           className={'__icon-export-remind'}
+          destroyTooltipOnHide={true}
           overlayClassName={CN('__tooltip-overlay-remind')}
           placement={'bottomLeft'}
           title={t('Export and back up accounts')}
