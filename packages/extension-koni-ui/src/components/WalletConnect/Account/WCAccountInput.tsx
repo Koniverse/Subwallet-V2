@@ -1,8 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
+import { AccountItemBase } from '@subwallet/extension-koni-ui/components/Account';
+import { AccountProxyAvatarGroup } from '@subwallet/extension-koni-ui/components/AccountProxy';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Icon } from '@subwallet/react-ui';
@@ -10,8 +12,6 @@ import CN from 'classnames';
 import { DotsThree } from 'phosphor-react';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
-
-import { AccountItemBase, AvatarGroup } from '../../Account';
 
 interface Props extends ThemeProps {
   accounts: AccountJson[];
@@ -25,7 +25,14 @@ const Component: React.FC<Props> = (props: Props) => {
   const { t } = useTranslation();
 
   const selectedAccounts = useMemo(() => accounts.filter((account) => selected.some((address) => isSameAddress(address, account.address))), [accounts, selected]);
-
+  const basicAccountProxiesInfo = useMemo(() => {
+    return selectedAccounts.map((account) => {
+      return {
+        id: account.proxyId || '',
+        name: account.name
+      };
+    });
+  }, [selectedAccounts]);
   const countSelected = selectedAccounts.length;
 
   return (
@@ -33,7 +40,7 @@ const Component: React.FC<Props> = (props: Props) => {
       {...props}
       address=''
       className={CN('wallet-connect-account-input', props.className)}
-      leftItem={<AvatarGroup accounts={selectedAccounts} />}
+      leftItem={<AccountProxyAvatarGroup accountProxies={basicAccountProxiesInfo} />}
       middleItem={(
         <div className={CN('wallet-connect-account-input-content')}>
           { countSelected ? t('{{number}} accounts connected', { replace: { number: countSelected } }) : t('Select account')}

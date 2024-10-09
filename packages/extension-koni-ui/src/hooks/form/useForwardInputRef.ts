@@ -4,6 +4,7 @@
 import { InputRef } from '@subwallet/react-ui';
 import { ForwardedRef, RefObject, useEffect, useRef } from 'react';
 
+// todo: deprecated, need to migrated all usages to useForwardFieldRef, then remove
 export function useForwardInputRef (ref: ForwardedRef<InputRef>): RefObject<InputRef> {
   const inputRef = useRef<InputRef>(null);
 

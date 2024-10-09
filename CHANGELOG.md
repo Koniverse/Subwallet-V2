@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## 1.2.32
+Build date: Oct 01, 2024.
+
+Features & Update:
+- Improve marketing campaign (#3461, #2807)
+
+Bugs fixed:
+- Hot fix handle API status (#3711)
+
+## 1.2.31
+Build date: Sep 28, 2024.
+
+Features & Update:
+- Block action online (#3635)
+- Update chain-list (#3680)
+  - Add XCM support for KSM between Bifrost KSM <> Kusama
+  - Update RPC for Cess Network
+- Add swap pairs for Hydration and ChainFlip (#3633, #3651)
+
+Bugs fixed:
+- Fix bug Do not show earning position for StellaSwap (#3647)
+- Fix bug Can't import JSON file containing Unified account (#3643)
+
 ## 1.2.30
 Build date: Sep 20, 2024.
 

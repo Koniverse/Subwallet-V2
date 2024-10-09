@@ -1,23 +1,19 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainAsset } from '@subwallet/chain-list/types';
 import { APIItemState } from '@subwallet/extension-base/background/KoniTypes';
-import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
 import { BalanceItem } from '@subwallet/extension-base/types';
-import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountTokenBalanceItem, EmptyList, RadioGroup } from '@subwallet/extension-koni-ui/components';
-import { useGetChainPrefixBySlug, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
-import { Button, Form, Icon, ModalContext, Number, SwModal } from '@subwallet/react-ui';
+import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { Form, Icon, ModalContext, Number, SwModal } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
-import { ArrowCircleLeft, ArrowSquareOut, Coins } from 'phosphor-react';
-import React, { useCallback, useContext, useEffect, useMemo } from 'react';
+import { ArrowCircleLeft, Coins } from 'phosphor-react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -51,6 +47,7 @@ interface FormState {
   view: ViewValue
 }
 
+// todo: need to recheck account balance logic again
 function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalanceMap }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
 
@@ -58,35 +55,12 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
 
   const isActive = checkActive(id);
 
-  const { currentAccount, isAllAccount } = useSelector((state) => state.accountState);
-  const { assetRegistry } = useSelector((state) => state.assetRegistry);
+  const { accounts, currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
   const { balanceMap } = useSelector((state) => state.balance);
-  const chainInfoMap = useSelector((state: RootState) => state.chainStore.chainInfoMap);
 
   const [form] = Form.useForm<FormState>();
 
   const view = Form.useWatch('view', form);
-
-  const tokenInfo = useMemo((): _ChainAsset|undefined => currentTokenInfo && assetRegistry[currentTokenInfo?.slug], [assetRegistry, currentTokenInfo]);
-  const addressPrefix = useGetChainPrefixBySlug(tokenInfo?.originChain);
-  const reformatedAddress = useMemo(() => currentAccount?.address && reformatAddress(currentAccount?.address, addressPrefix), [currentAccount?.address, addressPrefix]);
-
-  const chainInfo = useMemo(() => {
-    if (tokenInfo?.originChain === undefined) {
-      return undefined;
-    }
-
-    return chainInfoMap[tokenInfo.originChain];
-  }, [chainInfoMap, tokenInfo?.originChain]);
-
-  const openBlockExplorer = useCallback(
-    (link: string) => {
-      return () => {
-        window.open(link, '_blank');
-      };
-    },
-    []
-  );
 
   const defaultValues = useMemo((): FormState => ({
     view: ViewValue.OVERVIEW
@@ -129,22 +103,22 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
   }, [currentTokenInfo, t, tokenBalanceMap]);
 
   const accountItems = useMemo((): BalanceItem[] => {
-    if (!currentTokenInfo?.slug) {
+    if (!currentAccountProxy || !currentTokenInfo?.slug) {
       return [];
     }
 
     const result: BalanceItem[] = [];
 
-    const filterAddress = (address: string) => {
+    const filterAccountId = (accountId: string) => {
       if (isAllAccount) {
-        return !isAccountAll(address);
+        return !isAccountAll(accountId) && accounts.some((a) => a.address === accountId);
       } else {
-        return isSameAddress(address, currentAccount?.address || '');
+        return currentAccountProxy.accounts.some((a) => a.address === accountId);
       }
     };
 
-    for (const [address, info] of Object.entries(balanceMap)) {
-      if (filterAddress(address)) {
+    for (const [accountId, info] of Object.entries(balanceMap)) {
+      if (filterAccountId(accountId)) {
         const item = info[currentTokenInfo.slug];
 
         if (item && item.state === APIItemState.READY) {
@@ -159,7 +133,7 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
 
       return bTotal.minus(aTotal).toNumber();
     });
-  }, [balanceMap, currentAccount?.address, currentTokenInfo?.slug, isAllAccount]);
+  }, [accounts, balanceMap, currentAccountProxy, currentTokenInfo?.slug, isAllAccount]);
 
   const symbol = currentTokenInfo?.symbol || '';
 
@@ -168,8 +142,6 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
       return new BigN(item.free).plus(item.locked).gt(0);
     });
   }, [accountItems]);
-
-  const link = (chainInfo !== undefined && reformatedAddress) && getExplorerLink(chainInfo, reformatedAddress, 'account');
 
   useEffect(() => {
     if (!isActive) {
@@ -224,22 +196,6 @@ function Component ({ className = '', currentTokenInfo, id, onCancel, tokenBalan
                   </div>
                 ))}
               </div>
-              {!isAllAccount && <div className={'__explorer-link'}>
-                {!!link && (
-                  <Button
-                    block
-                    disabled={!link}
-                    icon={
-                      <Icon
-                        phosphorIcon={ArrowSquareOut}
-                      />
-                    }
-                    onClick={openBlockExplorer(link)}
-                  >
-                    {t('View on explorer')}
-                  </Button>
-                )}
-              </div>}
             </>
           )
         }

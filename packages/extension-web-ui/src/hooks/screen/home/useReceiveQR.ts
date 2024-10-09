@@ -3,9 +3,9 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { MantaPayConfig } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _getMultiChainAsset, _isAssetFungibleToken, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountSelectorModalId } from '@subwallet/extension-web-ui/components/Modal/AccountSelectorModal';
 import { RECEIVE_QR_MODAL, RECEIVE_TOKEN_SELECTOR_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { useChainAssets } from '@subwallet/extension-web-ui/hooks/assets';

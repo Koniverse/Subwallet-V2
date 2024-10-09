@@ -1,13 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Avatar } from '@subwallet/extension-koni-ui/components/Avatar';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import ChainItem from '@subwallet/extension-koni-ui/components/MetaInfo/parts/ChainItem';
+import { useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainInfo } from '@subwallet/extension-koni-ui/types/chain';
-import { toShort } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Logo } from '@subwallet/react-ui';
 import CN from 'classnames';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
@@ -38,17 +40,49 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
     valueColorSchema = 'default' } = props;
 
   const { t } = useTranslation();
+  const accounts = useSelector((state: RootState) => state.accountState.accounts);
+
+  const nameClassModifier = useMemo(() => {
+    if (!!senderName && recipientName === undefined) {
+      return '__recipient';
+    } else if (recipientName && senderName === undefined) {
+      return '__sender';
+    }
+
+    return '';
+  }, [recipientName, senderName]);
 
   const genAccountBlock = (address: string, name?: string) => {
+    const account = findAccountByAddress(accounts, address);
+    const shortAddress = toShort(address);
+
+    if (name) {
+      return (
+        <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
+          <div className={'__account-item-wrapper'}>
+            <div className={'__account-item-name-wrapper'}>
+              <AccountProxyAvatar
+                className={'__account-avatar'}
+                size={24}
+                value={account?.proxyId || address}
+              />
+              <div className={'__account-item-name'}>{name}</div>
+            </div>
+            <div className={'__account-item-address'}>{shortAddress}</div>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema}`}>
-        <Avatar
+      <div className={`__account-item __value -is-wrapper -schema-${valueColorSchema} ${nameClassModifier}`}>
+        <AccountProxyAvatar
           className={'__account-avatar'}
           size={24}
-          value={address}
+          value={account?.proxyId || address}
         />
         <div className={'__account-name ml-xs'}>
-          {name || toShort(address)}
+          <div className={'__account-item-address'}>{shortAddress}</div>
         </div>
       </div>
     );
@@ -75,6 +109,7 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
       <>
         <AccountItem
           address={senderAddress}
+          chainSlug={originChain?.slug}
           label={senderLabel || t('Sender')}
           name={senderName}
         />
@@ -114,20 +149,58 @@ const Component: React.FC<TransferInfoItem> = (props: TransferInfoItem) => {
         <div className={'__label'}>{senderLabel || t('Sender')}</div>
 
         {genAccountBlock(senderAddress, senderName)}
-        {!!originChain && genChainBlock(originChain)}
+        {!!originChain && originChain.slug !== destinationChain?.slug && genChainBlock(originChain)}
       </div>
       <div className={'__col __value-col'}>
         <div className={'__label'}>{recipientLabel || t('Recipient')}</div>
 
         {genAccountBlock(recipientAddress, recipientName)}
-        {!!destinationChain && genChainBlock(destinationChain)}
+        {!!destinationChain && destinationChain.slug !== originChain?.slug && genChainBlock(destinationChain)}
       </div>
     </div>
   );
 };
 
 const TransferItem = styled(Component)<TransferInfoItem>(({ theme: { token } }: TransferInfoItem) => {
-  return {};
+  return {
+    display: 'flex',
+    gap: 4,
+    '.__sender, .__recipient': {
+      minHeight: 44
+    },
+    '.__sender.__sender.__value': {
+      alignItems: 'flex-start'
+    },
+    '.__recipient.__recipient.__value': {
+      alignItems: 'flex-start'
+    },
+    '.__chain-name': {
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
+    },
+    '.__account-item-wrapper': {
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      '.__account-item-name-wrapper': {
+        display: 'flex',
+        gap: 8,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap'
+      },
+      '.__account-item-name': {
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      },
+      '.__account-item-address': {
+        paddingLeft: 32,
+        fontSize: token.fontSizeSM,
+        lineHeight: token.lineHeightSM
+      }
+    }
+  };
 });
 
 export default TransferItem;

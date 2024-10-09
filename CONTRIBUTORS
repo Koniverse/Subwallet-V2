@@ -1,14 +1,14 @@
-    2831	AnhMTV                        	Release version 1.2.30
-    2533	Nam Phạm                      	[Issue 3467] fix: refactor staking pallet handling logic
-    2186	S2kael                        	[Issue-3637] Update stable version for chain-list
+    2842	AnhMTV                        	Release version 1.2.32
+    2541	Nam Phạm                      	[Issue 3680] chore: update chainlist
+    2192	S2kael                        	[Issue-3711] Rollback handle pending state for balance item
      848	lw-cdm                        	[Issue-3407] WebApp - Support Avail Ledger app
      565	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
      465	Jaco                          	0.42.5 (#969)
-     314	bluezdot                      	[Issue-3635] fix: fix do not show balance
-     232	Thiendekaco                   	[Issue 3458] [fix]  Extension - Support XCM for Ledger Polkadot generic app #3
+     327	bluezdot                      	[Issue-3635] feat: update content
+     241	Thiendekaco                   	
      185	quangdo                       	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
-     146	dominhquang                   	[Issue-3468] Improve condition for Marketing campaign
+     157	dominhquang                   	
      118	lw-cdm                        	
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
       83	Hieu Dao                      	Update README.md
@@ -18,8 +18,8 @@
       66	Frenkie Nguyen                	[Issue 2352] fix eslint
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
+      28	PDTnhah                       	[Issue-3680] Update chainlist
       24	S2kael                        	
-      24	Thanh                         	[Issue-3637] Update chainlist
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
@@ -60,5 +60,6 @@
        1	Stéphane P                    	README Fix typo (#700)
        1	Tore19                        	Add Stafi network (#454)
        1	trieunhu                      	Load transfer history polkadot and kusama by subquid
+       1	tunghp2002                    	[Fixed] Extension - Fix do not show earning position for StellaSwap
        1	Vlad Proshchavaiev            	Update extension with Subsocial SS58 included (#416)
        1	雪霁                            	Batch export (#666)

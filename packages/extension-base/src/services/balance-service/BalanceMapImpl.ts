@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { BalanceInfo, BalanceItem, BalanceMap } from '@subwallet/extension-base/types';
+import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
+import { AccountProxyType, BalanceInfo, BalanceItem, BalanceMap } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
 
@@ -11,7 +12,7 @@ import { groupBalance } from './helpers';
 export class BalanceMapImpl {
   private _mapSubject: BehaviorSubject<BalanceMap>;
 
-  constructor (private _map: BalanceMap = {}) {
+  constructor (private state: KoniState, private _map: BalanceMap = {}) {
     this._mapSubject = new BehaviorSubject<BalanceMap>(_map);
   }
 
@@ -33,9 +34,9 @@ export class BalanceMapImpl {
     this.triggerChange();
   }
 
-  public triggerChange (computeAll?: boolean): void {
-    if (computeAll) {
-      this.computeAllAccountBalance();
+  public triggerChange (proxyId?: string): void {
+    if (proxyId) {
+      this.computeBalance(proxyId);
     }
 
     this._mapSubject.next(this._map);
@@ -53,12 +54,12 @@ export class BalanceMapImpl {
     trigger && this.triggerChange();
   }
 
-  public updateBalanceItems (balanceItems: BalanceItem[], computeAll?: boolean): void {
+  public updateBalanceItems (balanceItems: BalanceItem[], proxyId?: string): void {
     balanceItems.forEach((balanceItem) => {
       this.updateBalanceItem(balanceItem);
     });
 
-    this.triggerChange(computeAll);
+    this.triggerChange(proxyId);
   }
 
   public removeBalanceItemByFilter (filter: (balanceItem: BalanceItem) => boolean): void {
@@ -73,27 +74,62 @@ export class BalanceMapImpl {
     this.triggerChange();
   }
 
-  public computeAllAccountBalance () {
-    const allAccountBalanceInfo: BalanceInfo = {};
-    const allAccountBalance: Record<string, BalanceItem[]> = {};
+  public computeBalance (_proxyId: string): void {
+    const isAll = isAccountAll(_proxyId);
+    const compoundMap: Record<string, Record<string, BalanceItem[]>> = {};
+    const accountProxies = this.state.keyringService.context.accounts;
+    const unifiedAccountsMap = Object.values(accountProxies)
+      .filter((value) => value.accountType === AccountProxyType.UNIFIED)
+      .reduce<Record<string, string[]>>((rs, value) => {
+      rs[value.id] = value.accounts.map((account) => account.address);
+
+      return rs;
+    }, {});
+    const revertUnifiedAccountsMap = Object.entries(unifiedAccountsMap)
+      .reduce<Record<string, string>>((rs, [proxyId, accounts]) => {
+      if (isAll || proxyId === _proxyId) {
+        for (const account of accounts) {
+          rs[account] = proxyId;
+        }
+      }
+
+      return rs;
+    }, {});
+
+    const proxyIds = Object.keys(unifiedAccountsMap);
 
     Object.keys(this._map)
-      .filter((a) => !isAccountAll(a))
+      .filter((a) => !isAccountAll(a) && !proxyIds.includes(a))
       .forEach((address) => {
-        Object.keys(this._map[address]).forEach((tokenSlug) => {
-          if (!allAccountBalance[tokenSlug]) {
-            allAccountBalance[tokenSlug] = [];
-          }
+        const addItemToMap = (key: string) => {
+          const unifiedAccountBalance = compoundMap[key] || {};
 
-          allAccountBalance[tokenSlug].push(this._map[address][tokenSlug]);
-        });
+          Object.keys(this._map[address]).forEach((tokenSlug) => {
+            if (!unifiedAccountBalance[tokenSlug]) {
+              unifiedAccountBalance[tokenSlug] = [];
+            }
+
+            unifiedAccountBalance[tokenSlug].push(this._map[address][tokenSlug]);
+          });
+
+          compoundMap[key] = unifiedAccountBalance;
+        };
+
+        const proxyId = revertUnifiedAccountsMap[address];
+
+        isAll && addItemToMap(ALL_ACCOUNT_KEY);
+        proxyId && addItemToMap(proxyId);
       });
 
-    Object.entries(allAccountBalance).forEach(([tokenSlug, balanceItems]) => {
-      allAccountBalanceInfo[tokenSlug] = groupBalance(balanceItems, ALL_ACCOUNT_KEY, tokenSlug);
-    });
+    Object.entries(compoundMap).forEach(([compoundKey, balanceMap]) => {
+      const rs: BalanceInfo = {};
 
-    this._map[ALL_ACCOUNT_KEY] = allAccountBalanceInfo;
+      Object.entries(balanceMap).forEach(([tokenSlug, balanceItems]) => {
+        rs[tokenSlug] = groupBalance(balanceItems, compoundKey, tokenSlug);
+      });
+
+      this._map[compoundKey] = rs;
+    });
   }
 
   // Remove balance items buy address or tokenSlug

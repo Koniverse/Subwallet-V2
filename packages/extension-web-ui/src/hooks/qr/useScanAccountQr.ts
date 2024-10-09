@@ -23,7 +23,7 @@ const useScanAccountQr = (
     if (result) {
       if (isProductionMode && result.isEthereum) {
         setValidateState({
-          message: t('Invalid QR code. EVM networks are not supported'),
+          message: t('EVM QR-singer account is not supported'),
           status: 'error'
         });
 
