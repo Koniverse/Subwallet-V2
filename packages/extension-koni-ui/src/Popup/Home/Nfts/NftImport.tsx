@@ -141,7 +141,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         icon: ''
       })
         .then((result) => {
-          if (result) {
+          if (result.error === 'incompatibleNFT') {
+            showNotification({
+              message: t('Failed to import. Incompatible NFT')
+            });
+          } else if (result.success) {
             showNotification({
               message: t('Imported NFT successfully')
             });
@@ -200,10 +204,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
               if (validationResult.contractError) {
                 reject(t('Invalid contract for the selected chain'));
-              }
-
-              if (!validationResult.isCompatible) {
-                reject(t('Failed to import. Incompatible NFT'));
               }
 
               if (!validationResult.isExist && !validationResult.contractError) {

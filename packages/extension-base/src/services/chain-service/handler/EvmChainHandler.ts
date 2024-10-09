@@ -139,7 +139,6 @@ export class EvmChainHandler extends AbstractChainHandler {
     let decimals: number | undefined = -1;
     let symbol = '';
     let contractError = false;
-    let isCompatible = true;
 
     const evmApi = this.getEvmApiByChain(originChain);
 
@@ -147,19 +146,6 @@ export class EvmChainHandler extends AbstractChainHandler {
       if (tokenType === _AssetType.ERC721) {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-member-access
         tokenContract = new evmApi.api.eth.Contract(_ERC721_ABI, contractAddress);
-
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          await tokenContract.methods.tokenOfOwnerByIndex('0xB7fdD27a8Df011816205a6e3cAA097DC4D8C2C5d', 1).call();
-        } catch (err) {
-          const error = err as Error;
-
-          if (error.message.includes('ERC721Enumerable: owner index out of bounds')) {
-            isCompatible = true;
-          } else {
-            isCompatible = false;
-          }
-        }
 
         const [_name, _symbol] = await Promise.all([
           // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
@@ -196,8 +182,7 @@ export class EvmChainHandler extends AbstractChainHandler {
         name,
         decimals,
         symbol,
-        contractError,
-        isCompatible
+        contractError
       };
     } catch (e) {
       this.logger.error(e);
@@ -206,8 +191,7 @@ export class EvmChainHandler extends AbstractChainHandler {
         name,
         decimals,
         symbol,
-        contractError: true,
-        isCompatible: true
+        contractError: true
       };
     }
   }

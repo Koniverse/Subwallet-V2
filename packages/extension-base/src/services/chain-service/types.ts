@@ -181,8 +181,7 @@ export interface _SmartContractTokenInfo {
   name: string,
   symbol: string,
   decimals: number,
-  contractError: boolean,
-  isCompatible: boolean
+  contractError: boolean
 }
 
 export interface _ValidateCustomAssetResponse extends _SmartContractTokenInfo {
