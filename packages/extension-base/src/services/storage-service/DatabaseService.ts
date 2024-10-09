@@ -615,6 +615,10 @@ export default class DatabaseService {
     return this.stores.inappNotification.getNotificationsByParams(params);
   }
 
+  public cleanUpOldNotifications (overdueTime: number) {
+    return this.stores.inappNotification.cleanUpOldNotifications(overdueTime);
+  }
+
   public subscribeUnreadNotificationsCountMap () {
     return this.stores.inappNotification.subscribeUnreadNotificationsCount();
   }

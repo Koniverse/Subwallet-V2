@@ -44,6 +44,14 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     return filteredTable.toArray();
   }
 
+  async cleanUpOldNotifications (overdueTime: number) {
+    const currentTimestamp = Date.now();
+
+    return this.table
+      .filter((item) => item.time <= currentTimestamp - overdueTime)
+      .delete();
+  }
+
   subscribeUnreadNotificationsCount () {
     return liveQuery(
       async () => {
