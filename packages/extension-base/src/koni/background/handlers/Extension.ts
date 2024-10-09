@@ -14,11 +14,7 @@ import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/exten
 import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
-import {
-  getERC20BridgeContract,
-  getERC20Contract,
-  getERC20SpendingApprovalTx
-} from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
+import { getERC20BridgeContract, getERC20Contract, getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { parseSubstrateTransaction } from '@subwallet/extension-base/koni/api/dotsama/parseTransaction';
@@ -1300,12 +1296,8 @@ export default class KoniExtension {
 
   private async makeTransfer (inputData: RequestTransfer): Promise<SWTransactionResponse> {
     const { from, networkKey, to, tokenSlug, transferAll, transferBounceable, value } = inputData;
-    // const transferTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
     const transferTokenInfo = this.#koniState.chainService.getAssetBySlug('sepolia_ethereum-NATIVE-ETH');
 
-    console.log('tokenSlug', tokenSlug);
-    console.log('transferTokenInfo', transferTokenInfo);
-    console.log('0x967F7DdC4ec508462231849AE81eeaa68Ad01389');
     const [errors, ,] = validateTransferRequest(transferTokenInfo, from, to, value, transferAll);
 
     const warnings: TransactionWarning[] = [];
@@ -1486,8 +1478,8 @@ export default class KoniExtension {
           const evmApi = evmApiMap.sepolia_ethereum;
           let transaction: ValidateTransactionResponseInput['transaction'];
           const chainInfo = this.#koniState.getChainInfo(SEPOLIA_NETWORK_SLUG);
-          try {
 
+          try {
             const erc20TokenContract = getERC20Contract(CONTRACT_AVAIL_TOKEN_ADDRESS, evmApi);
             const balance = (await erc20TokenContract.methods.balanceOf(ACC_EVM_B19).call()) as unknown as number;
             const allowanceCall = erc20TokenContract.methods.allowance(ACC_EVM_B19, CONTRACT_AVAIL_BRIDGE_ADDRESS);
@@ -1498,7 +1490,6 @@ export default class KoniExtension {
             ]);
             const erc20BridgeContract = getERC20BridgeContract(CONTRACT_AVAIL_BRIDGE_ADDRESS, evmApi);
             const transferData = erc20BridgeContract.methods.sendAVAIL(RECEIVER_BYTES32, ATOMIC_AMOUNT).encodeABI() as string;
-
 
             const [gasLimit, priority] = await Promise.all([
               // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
@@ -1606,10 +1597,8 @@ export default class KoniExtension {
     //   eventsHandler: eventsHandler
     // });
 
-
     // ====== Usage: SendFund from DOT -> MOONBEAM
     // ==============This config for Bridge Avail -> ETH:
-
 
     const ignoreWarnings: BasicTxWarningCode[] = [];
 
