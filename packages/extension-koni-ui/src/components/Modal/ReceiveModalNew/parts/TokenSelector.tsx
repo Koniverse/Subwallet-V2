@@ -5,12 +5,13 @@ import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _getChainName } from '@subwallet/extension-base/services/chain-service/utils';
 import { TokenSelectorItem } from '@subwallet/extension-koni-ui/components';
 import TokenEmptyList from '@subwallet/extension-koni-ui/components/EmptyList/TokenEmptyList';
+import Search from '@subwallet/extension-koni-ui/components/Search';
 import { RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
-import React, { useCallback, useContext, useEffect, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 interface Props extends ThemeProps {
@@ -27,16 +28,32 @@ const renderEmpty = () => <TokenEmptyList modalId={modalId} />;
 function Component ({ className = '', items, onCancel, onSelectItem }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { checkActive } = useContext(ModalContext);
-
+  const [currentSearchText, setCurrentSearchText] = useState<string>('');
   // @ts-ignore
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+
+  const listItems = useMemo(() => {
+    const filteredList = items.filter((item) => {
+      const chainName = _getChainName(chainInfoMap[item.originChain]);
+
+      return item.symbol.toLowerCase().includes(currentSearchText.toLowerCase()) || item.name.toLowerCase().includes(currentSearchText.toLowerCase()) || chainName.toLowerCase().includes(currentSearchText.toLowerCase());
+    });
+
+    if (currentSearchText.toLowerCase() === 'ton') {
+      return filteredList.sort((a, b) => {
+        return a.slug === 'ton-NATIVE-TON' ? -1 : b.slug === 'ton-NATIVE-TON' ? 1 : 0;
+      });
+    } else {
+      return filteredList;
+    }
+  }, [chainInfoMap, currentSearchText, items]);
 
   const isActive = checkActive(modalId);
 
   const sectionRef = useRef<SwListSectionRef>(null);
 
-  const searchFunction = useCallback((item: _ChainAsset, searchText: string) => {
-    return item.symbol.toLowerCase().includes(searchText.toLowerCase());
+  const handleSearch = useCallback((value: string) => {
+    setCurrentSearchText(value);
   }, []);
 
   const onSelect = useCallback((item: _ChainAsset) => {
@@ -75,15 +92,19 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
       onCancel={onCancel}
       title={t('Select token')}
     >
-      <SwList.Section
-        enableSearchInput={true}
-        list={items}
-        ref={sectionRef}
+      <Search
+        autoFocus={true}
+        className={'__search-box'}
+        onSearch={handleSearch}
+        placeholder={t<string>('Token name')}
+        searchValue={currentSearchText}
+      />
+      <SwList
+        className={'__list-container'}
+        list={listItems}
         renderItem={renderItem}
         renderWhenEmpty={renderEmpty}
-        searchFunction={searchFunction}
-        searchMinCharactersCount={2}
-        searchPlaceholder={t<string>('Token name')}
+        searchableMinCharactersCount={2}
       />
     </SwModal>
   );
@@ -96,10 +117,11 @@ export const TokenSelectorModal = styled(Component)<Props>(({ theme: { token } }
     },
 
     '.ant-sw-modal-body': {
-      paddingLeft: 0,
-      paddingRight: 0,
+      overflow: 'auto',
       display: 'flex',
-      flexDirection: 'column'
+      flex: 1,
+      flexDirection: 'column',
+      paddingBottom: 0
     },
 
     '.ant-sw-list-section': {
@@ -108,6 +130,14 @@ export const TokenSelectorModal = styled(Component)<Props>(({ theme: { token } }
 
     '.ant-sw-list': {
       paddingBottom: 0
+    },
+
+    '.__search-box': {
+      marginBottom: token.marginXS
+    },
+
+    '.ant-sw-modal-footer.ant-sw-modal-footer': {
+      borderTop: 0
     },
 
     '.token-selector-item + .token-selector-item': {
