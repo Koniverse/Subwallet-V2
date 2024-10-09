@@ -4,7 +4,7 @@
 import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { AccountSelectorModal, AlertBox, EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
+import { AccountSelectorModal, AlertBox, CloseIcon, EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, IS_SHOW_TON_CONTRACT_VERSION_WARNING, SWAP_TRANSACTION, TON_ACCOUNT_SELECTOR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
@@ -21,7 +21,7 @@ import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } f
 import { isTonAddress } from '@subwallet/keyring';
 import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
 import classNames from 'classnames';
-import { Coins, FadersHorizontal, X } from 'phosphor-react';
+import { Coins, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -191,12 +191,16 @@ const Component = (): React.ReactElement => {
 
   const onSelectAccountSelector = useCallback((item: AccountAddressItemType) => {
     setCurrentTonAddress(item.address);
-    inactiveModal(tonAccountSelectorModalId);
     activeModal(tonWalletContractSelectorModalId);
-  }, [activeModal, inactiveModal]);
+  }, [activeModal]);
+
+  const onBackTonWalletContactModal = useCallback(() => {
+    inactiveModal(tonWalletContractSelectorModalId);
+  }, [inactiveModal]);
 
   const onCloseTonWalletContactModal = useCallback(() => {
     setIsShowTonWarning(false);
+    inactiveModal(tonAccountSelectorModalId);
     inactiveModal(tonWalletContractSelectorModalId);
   }, [inactiveModal, setIsShowTonWarning]);
 
@@ -374,9 +378,12 @@ const Component = (): React.ReactElement => {
                 <TonWalletContractSelectorModal
                   address={currentTonAddress}
                   chainSlug={'ton'}
-                  closeIcon={X}
                   id={tonWalletContractSelectorModalId}
-                  onCancel={onCloseTonWalletContactModal}
+                  onCancel={isAllAccount ? onBackTonWalletContactModal : undefined}
+                  rightIconProps={{
+                    icon: <CloseIcon />,
+                    onClick: onCloseTonWalletContactModal
+                  }}
                 />
               }
             </>

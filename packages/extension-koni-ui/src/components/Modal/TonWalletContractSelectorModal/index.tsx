@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 import type { IconProps } from 'phosphor-react';
 
 import { AccountActions, AccountProxyType, ResponseGetAllTonWalletContractVersion } from '@subwallet/extension-base/types';
@@ -26,13 +27,14 @@ type Props = ThemeProps & {
   id: string;
   chainSlug: string;
   address: string;
-  closeIcon?: React.ForwardRefExoticComponent<IconProps & React.RefAttributes<SVGSVGElement>>
+  closeIcon?: React.ForwardRefExoticComponent<IconProps & React.RefAttributes<SVGSVGElement>>;
+  rightIconProps?: ButtonProps;
 };
 
 const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 const TON_WALLET_CONTRACT_TYPES_URL = 'https://docs.ton.org/participate/wallets/contracts#how-can-wallets-be-different';
 
-const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel, closeIcon = CaretLeft }: Props) => {
+const Component: React.FC<Props> = ({ address, chainSlug, className, closeIcon = CaretLeft, onCancel, rightIconProps }: Props) => {
   const { t } = useTranslation();
   const notification = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
@@ -147,6 +149,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel, c
   return (
     <SwModal
       className={CN(className, 'wallet-version-modal')}
+      closable={!!onCancel}
       closeIcon={
         <Icon
           phosphorIcon={closeIcon}
@@ -171,7 +174,9 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onCancel, c
         </Button>
       }
       id={tonWalletContractSelectorModalId}
+      maskClosable={!!onCancel}
       onCancel={onCancel}
+      rightIconProps={rightIconProps}
       title={t<string>('Wallet address & version')}
     >
       <div>
