@@ -30,7 +30,7 @@ export const CONFIRM_TERM_SEED_PHRASE = 'seed-phrase.term-and-condition';
 
 export const DAPPS_FAVORITE = 'dapps.favorite';
 export const APP_INSTRUCTION_DATA = 'static.instruction-data';
-
+export const EARNING_WARNING_ANNOUNCEMENT = 'announcement.earning-position';
 export const CREATE_RETURN = 'account.create-return';
 
 export const CROWDLOAN_UNLOCK_TIME = 'event.crowdloan-unlock-time';
