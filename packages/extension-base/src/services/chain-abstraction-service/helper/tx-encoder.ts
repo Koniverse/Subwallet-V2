@@ -41,15 +41,20 @@ export interface BridgeParams {
   isTestnet?: boolean;
 }
 
+const amountMap: Record<string | 'default', string> = {
+  default: '1000000000',
+  '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1': '10000000000000000000000',
+  '0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14': '100000000000000000',
+  '0x4200000000000000000000000000000000000006': '100000000000000000'
+};
+
 export async function getAcrossSuggestedFee (data: BridgeParams): Promise<AcrossSuggestedFeeResp> {
   const url = (data.isTestnet ? 'https://testnet.across.to/api/suggested-fees?' : 'https://across.to/api/suggested-fees?') + new URLSearchParams({
     originChainId: data.sourceChainId.toString(),
     destinationChainId: data.destinationChainId.toString(),
     inputToken: data.sourceTokenContract,
     outputToken: data.destinationTokenContract,
-    amount: data.destinationTokenContract === '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1'
-      ? '10000000000000000000000'
-      : '1000000000'
+    amount: amountMap[data.destinationTokenContract] || amountMap.default
   }).toString();
 
   console.log('url', url);

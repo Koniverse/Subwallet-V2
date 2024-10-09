@@ -78,7 +78,11 @@ export class UniswapHandler implements SwapBaseInterface {
     } else if (to === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
       to = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
     } else if (to === 'optimism-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1') {
-      to = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
+      if (from === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
+        to = 'base_mainnet-ERC20-DAI-0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb';
+      } else {
+        to = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
+      }
     }
 
     const fromToken = this.swapBaseHandler.chainService.getAssetBySlug(from);
@@ -135,7 +139,11 @@ export class UniswapHandler implements SwapBaseInterface {
     } else if (toTokenSlug === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
       bridgeTokenSlug = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
     } else if (toTokenSlug === 'optimism-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1') {
-      bridgeTokenSlug = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
+      if (fromTokenSlug === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
+        bridgeTokenSlug = 'base_mainnet-ERC20-DAI-0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb';
+      } else {
+        bridgeTokenSlug = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
+      }
     }
 
     const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug(bridgeTokenSlug);
@@ -169,28 +177,37 @@ export class UniswapHandler implements SwapBaseInterface {
 
       await klasterService.init(owner?.owner as string);
 
-      tx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
+      if (bridgeTokenSlug === '0x') {
+        tx = await klasterService.buildTx(bridgeOriginChain, [txBatch]);
+      } else {
+        tx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
+      }
     } else {
-      const spendingApprovalTxConfig = await getERC20SpendingApprovalTx(toAddress, params.address, _getContractAddressOfToken(fromToken), evmApi);
+      const swapApprovalTxConfig = await getERC20SpendingApprovalTx(toAddress, params.address, _getContractAddressOfToken(fromToken), evmApi);
 
       const swapTxConfig: TransactionConfig = {
-        ...spendingApprovalTxConfig,
+        ...swapApprovalTxConfig,
         data: calldata as `0x${string}`,
         to: toAddress as `0x${string}`
       };
 
-      const [, bridgeTxConfig] = await getAcrossBridgeData({
-        amount: BigInt(params.quote.fromAmount),
-        destAccount: request.address,
-        destinationChainId: _getEvmChainId(bridgeDestChain) as number,
-        destinationTokenContract: _getContractAddressOfToken(toToken),
-        sourceChainId: _getEvmChainId(bridgeOriginChain) as number,
-        sourceTokenContract: _getContractAddressOfToken(bridgeOriginToken),
-        srcAccount: owner?.owner as string,
-        isTestnet: this.isTestnet
-      });
+      if (bridgeTokenSlug === '0x') {
+        tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [swapApprovalTxConfig, swapTxConfig]);
+      } else {
+        const [feeResp, bridgeTxConfig] = await getAcrossBridgeData({
+          amount: BigInt(params.quote.fromAmount),
+          destAccount: request.address,
+          destinationChainId: _getEvmChainId(bridgeDestChain) as number,
+          destinationTokenContract: _getContractAddressOfToken(toToken),
+          sourceChainId: _getEvmChainId(bridgeOriginChain) as number,
+          sourceTokenContract: _getContractAddressOfToken(bridgeOriginToken),
+          srcAccount: owner?.owner as string,
+          isTestnet: this.isTestnet
+        });
+        const bridgeApprovalTxConfig = await getERC20SpendingApprovalTx(feeResp.spokePoolAddress, params.address, _getContractAddressOfToken(bridgeOriginToken), evmApi);
 
-      tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [spendingApprovalTxConfig, swapTxConfig, bridgeTxConfig]);
+        tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [swapApprovalTxConfig, swapTxConfig, bridgeApprovalTxConfig, bridgeTxConfig]);
+      }
     }
 
     return Promise.resolve({

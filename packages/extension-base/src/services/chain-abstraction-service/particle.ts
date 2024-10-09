@@ -25,7 +25,7 @@ const config: SmartAccountConfig = {
         },
         {
           version: '2.0.0',
-          chainIds: [1, 11155111, 8453, 42161]
+          chainIds: [1, 11155111, 8453, 84532, 42161]
         }
       ],
       CYBERCONNECT: [
@@ -79,7 +79,7 @@ export class ParticleAAHandler {
       txList.push(tx);
     }
 
-    // console.debug('quote', await smartAccount.getFeeQuotes(txList));
+    console.debug('quote', await smartAccount.getFeeQuotes(txList));
 
     return await smartAccount.buildUserOperation({ tx: txList });
   };

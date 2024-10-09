@@ -3,8 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
-import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, QuoteResponse, rawTx, singleTx, TransactionBatch } from 'klaster-sdk';
-import { TransactionConfig } from 'web3-core';
+import { batchTx, BiconomyV2AccountInitData, BridgePlugin, BridgePluginParams, buildItx, encodeApproveTx, initKlaster, klasterNodeHost, KlasterSDK, loadBicoV2Account, QuoteResponse, rawTx, TransactionBatch } from 'klaster-sdk';
 
 import { getAcrossBridgeData } from './helper/tx-encoder';
 
@@ -83,7 +82,7 @@ export class KlasterService {
     KlasterService.chainTestnetMap[chainId] = chainInfo.isTestnet;
   }
 
-  async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string, otherTx?: TransactionBatch): Promise<QuoteResponse> {
+  async getBridgeTx (srcToken: _ChainAsset, destToken: _ChainAsset, srcChain: _ChainInfo, destChain: _ChainInfo, value: string, previousTx?: TransactionBatch): Promise<QuoteResponse> {
     KlasterService.updateChainMap(srcChain);
     KlasterService.updateChainMap(destChain);
 
@@ -95,12 +94,12 @@ export class KlasterService {
       sourceChainId: sourceChainId,
       destinationChainId: _getEvmChainId(destChain) as number,
       sourceToken: _getContractAddressOfToken(srcToken) as `0x${string}`,
-      destinationToken: _getContractAddressOfToken(destToken) as `0x${string}`,
+      destinationToken: _getContractAddressOfToken(destToken) as `0x${string}`
     });
 
     const steps = [res.txBatch];
 
-    otherTx && steps.push(otherTx);
+    previousTx && steps.unshift(previousTx);
 
     const iTx = buildItx({
       steps,
@@ -109,7 +108,23 @@ export class KlasterService {
 
     const quote = await this.sdk.getQuote(iTx);
 
-    console.log(quote);
+    console.debug(quote);
+
+    return quote;
+  }
+
+  async buildTx (srcChain: _ChainInfo, txs: TransactionBatch[]): Promise<QuoteResponse> {
+    KlasterService.updateChainMap(srcChain);
+    const sourceChainId = _getEvmChainId(srcChain) as number;
+
+    const iTx = buildItx({
+      steps: txs,
+      feeTx: this.sdk.encodePaymentFee(sourceChainId, 'USDC')
+    });
+
+    const quote = await this.sdk.getQuote(iTx);
+
+    console.debug(quote);
 
     return quote;
   }

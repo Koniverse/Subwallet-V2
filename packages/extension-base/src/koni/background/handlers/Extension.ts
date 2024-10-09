@@ -1915,7 +1915,7 @@ export default class KoniExtension {
 
         const spendingApprovalTxConfig = await getERC20SpendingApprovalTx(feeResp.spokePoolAddress, from, _getContractAddressOfToken(originTokenInfo), evmApi);
 
-        res = await ParticleAAHandler.createUserOperation(_getEvmChainId(originChainInfo) as number, smartAccountOwner, [bridgeTxConfig, spendingApprovalTxConfig]);
+        res = await ParticleAAHandler.createUserOperation(_getEvmChainId(originChainInfo) as number, smartAccountOwner, [spendingApprovalTxConfig, bridgeTxConfig]);
       }
 
       return this.#koniState.transactionService.handleAATransaction({
