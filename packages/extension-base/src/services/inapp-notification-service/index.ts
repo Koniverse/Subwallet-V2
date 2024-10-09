@@ -43,6 +43,10 @@ export class InappNotificationService implements CronServiceInterface {
     return this.dbService.getNotificationsByParams(params);
   }
 
+  cleanUpOldNotifications (overdueTime = ONE_DAY_MILLISECOND * 60) {
+    return this.dbService.cleanUpOldNotifications(overdueTime);
+  }
+
   passValidateNotification (candidateNotification: _BaseNotificationInfo, notificationFromDB: _NotificationInfo[]) {
     if ([NotificationActionType.WITHDRAW, NotificationActionType.CLAIM].includes(candidateNotification.actionType)) {
       const { actionType, address, metadata, time } = candidateNotification;
@@ -95,6 +99,9 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   async startCron (): Promise<void> {
+    this.cleanUpOldNotifications()
+      .catch(console.error);
+
     return Promise.resolve();
   }
 
