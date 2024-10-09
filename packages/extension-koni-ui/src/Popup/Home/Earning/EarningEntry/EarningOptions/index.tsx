@@ -8,13 +8,14 @@ import { YieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { EmptyList, FilterModal, Layout } from '@subwallet/extension-koni-ui/components';
 import { EarningOptionItem } from '@subwallet/extension-koni-ui/components/Earning';
+import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { ASTAR_PORTAL_URL, DEFAULT_EARN_PARAMS, EARN_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useFilterModal, useGroupYieldPosition, useHandleChainConnection, useSelector, useTranslation, useYieldGroupInfo } from '@subwallet/extension-koni-ui/hooks';
+import { useFilterModal, useGetBannerByScreen, useGroupYieldPosition, useHandleChainConnection, useSelector, useTranslation, useYieldGroupInfo } from '@subwallet/extension-koni-ui/hooks';
 import { getBalanceValue } from '@subwallet/extension-koni-ui/hooks/screen/home/useAccountBalance';
 import { ChainConnectionWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { EarningEntryView, EarningPoolsParam, ThemeProps, YieldGroupInfo } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll, isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isRelatedToAstar, openInNewTab } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { FadersHorizontal, Vault } from 'phosphor-react';
@@ -69,9 +70,9 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
   const { poolInfoMap } = useSelector((state) => state.earning);
   const assetRegistry = useSelector((state) => state.assetRegistry.assetRegistry);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy } = useSelector((state) => state.accountState);
   const { accountBalance: { tokenBalanceMap } } = useContext(HomeContext);
-
+  const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('earning');
   const isShowBalance = useSelector((state) => state.settings.isShowBalance);
 
   const [, setEarnStorage] = useLocalStorage(EARN_TRANSACTION, DEFAULT_EARN_PARAMS);
@@ -129,11 +130,11 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
         ...DEFAULT_EARN_PARAMS,
         slug,
         chain,
-        from: currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : ''
+        fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
       });
       navigate('/transaction/earn');
     },
-    [currentAccount?.address, navigate, setEarnStorage]
+    [currentAccountProxy, navigate, setEarnStorage]
   );
 
   const onConnectChainSuccess = useCallback(() => {
@@ -360,6 +361,15 @@ function Component ({ className, hasEarningPositions, setEntryView }: Props) {
         subHeaderPaddingVertical={true}
         title={t<string>('Earning options')}
       >
+        {!!banners.length && (
+          <div className={'earning-banner-wrapper'}>
+            <BannerGenerator
+              banners={banners}
+              dismissBanner={dismissBanner}
+              onClickBanner={onClickBanner}
+            />
+          </div>
+        )}
         <SwList.Section
           actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
           className={'__section-list-container'}
@@ -403,6 +413,12 @@ const EarningOptions = styled(Component)<Props>(({ theme: { token } }: Props) =>
     '+ .earning-option-item': {
       marginTop: token.marginXS
     }
+  },
+
+  '.earning-banner-wrapper': {
+    paddingLeft: token.padding,
+    paddingRight: token.padding,
+    marginBottom: token.sizeXS
   }
 }));
 

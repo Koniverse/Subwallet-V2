@@ -3,10 +3,9 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AmountData, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _getSubstrateGenesisHash, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
-import { EarningRewardItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, EarningRewardItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountSelector, HiddenInput, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { BN_ZERO } from '@subwallet/extension-koni-ui/constants';
@@ -198,10 +197,10 @@ const Component = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}
-              addressPrefix={networkPrefix}
             />
           </Form.Item>
           <FreeBalance

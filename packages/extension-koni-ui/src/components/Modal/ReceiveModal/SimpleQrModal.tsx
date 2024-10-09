@@ -22,6 +22,8 @@ interface Props extends ThemeProps {
   onBack?: () => void;
 }
 
+// @deprecated
+
 const Component: React.FC<Props> = ({ address, className, id: modalId, onBack }: Props) => {
   const { t } = useTranslation();
   const notify = useNotification();

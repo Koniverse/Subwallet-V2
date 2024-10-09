@@ -3,7 +3,8 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AddressBookInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, AccountsContext } from '@subwallet/extension-base/background/types';
+import { AccountsContext } from '@subwallet/extension-base/background/types';
+import { AccountJson, AccountProxy } from '@subwallet/extension-base/types';
 import { AccountState, ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
 
@@ -11,6 +12,9 @@ const initialState: AccountState = {
   // CurrentAccount
   currentAccount: null,
   isAllAccount: false,
+
+  currentAccountProxy: null,
+  accountProxies: [],
 
   // KeyringState
   isReady: false,
@@ -40,6 +44,7 @@ const accountStateSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
+    // deprecated
     updateAccountsContext (state, action: PayloadAction<AccountsContext>) {
       const payload = action.payload;
 
@@ -49,6 +54,7 @@ const accountStateSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
+    // deprecated
     updateCurrentAccount (state, action: PayloadAction<AccountJson>) {
       const payload = action.payload;
 
@@ -56,6 +62,26 @@ const accountStateSlice = createSlice({
         ...state,
         currentAccount: payload,
         isAllAccount: isAccountAll(payload?.address),
+        reduxStatus: ReduxStatus.READY
+      };
+    },
+    updateCurrentAccountProxy (state, action: PayloadAction<AccountProxy>) {
+      const payload = action.payload;
+
+      return {
+        ...state,
+        currentAccountProxy: payload,
+        isAllAccount: isAccountAll(payload?.id),
+        reduxStatus: ReduxStatus.READY
+      };
+    },
+    updateAccountProxies (state, action: PayloadAction<AccountProxy[]>) {
+      const payload = action.payload;
+
+      return {
+        ...state,
+        accounts: payload.reduce((accounts, ap) => [...accounts, ...ap.accounts], [] as AccountJson[]),
+        accountProxies: payload,
         reduxStatus: ReduxStatus.READY
       };
     },

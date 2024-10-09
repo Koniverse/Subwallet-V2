@@ -6,7 +6,7 @@ export * from './banner';
 export * from './buy';
 export * from './common';
 export * from './earning';
-export * from './enviroment';
+export * from './environment';
 export * from './error';
 export * from './history';
 export * from './ledger';

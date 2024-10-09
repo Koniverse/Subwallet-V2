@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { IMPORT_ACCOUNT_MODAL, IMPORT_SEED_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useClickOutSide, useGoBackSelectAccount, useIsPopup, useSetSessionLatest, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { windowOpen } from '@subwallet/extension-koni-ui/messaging';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
@@ -34,7 +34,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
   const { setStateSelectAccount } = useSetSessionLatest();
-  const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
+  const { checkActive, inactiveModal } = useContext(ModalContext);
   const isActive = checkActive(modalId);
 
   const isPopup = useIsPopup();
@@ -66,8 +66,8 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   const onClickSeed = useCallback(() => {
     inactiveModal(modalId);
-    activeModal(IMPORT_SEED_MODAL);
-  }, [activeModal, inactiveModal]);
+    navigate('/accounts/import-seed-phrase');
+  }, [inactiveModal, navigate]);
 
   const items = useMemo((): ImportAccountItem[] => [
     {
@@ -81,14 +81,14 @@ const Component: React.FC<Props> = ({ className }: Props) => {
       backgroundColor: token['orange-7'],
       icon: FileJs,
       key: 'restore-json',
-      label: t('Import from Polkadot.{js}'),
+      label: t('Import from JSON file'),
       onClick: onClickJson
     },
     {
       backgroundColor: token['gray-3'],
       icon: Wallet,
       key: 'import-private-key',
-      label: t('Import by MetaMask private key'),
+      label: t('Import from private key'),
       onClick: onClickItem('/accounts/import-private-key')
     },
     {

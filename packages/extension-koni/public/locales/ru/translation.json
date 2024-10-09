@@ -1300,5 +1300,15 @@
   "from one of the methods to avoid issues": "",
   "Read update": "",
   "Continue staking?": "",
-  "High fee alert!": ""
+  "High fee alert!": "",
+  "Feature under maintenance. Try again later": "",
+  "1 account imported": "",
+  "{{number}} accounts imported": "",
+  "{{number}} account found": "",
+  "{{number}} accounts found": "",
+  "One or more accounts found in this file are invalid. Only {{x}} account can be imported as listed below": "",
+  "One or more accounts found in this file are invalid. Only {{x}} accounts can be imported as listed below": "",
+  "All accounts found in this file are invalid. Import another JSON file and try again": "",
+  "Unable to import": "",
+  "Some accounts can’t be imported": ""
 }

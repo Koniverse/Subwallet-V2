@@ -4,6 +4,7 @@
 import { ClaimDAppStakingRewardsState } from '@subwallet/extension-koni-ui/types';
 
 export const EXTENSION_VERSION = chrome.runtime.getManifest().version;
+export const VERSION_BEFORE_UNIFIED_ACCOUNT_SUPPORT = '1.2.27';
 export const WIKI_URL = 'https://docs.subwallet.app/';
 export const PRIVACY_AND_POLICY_URL = 'https://docs.subwallet.app/privacy-and-security/privacy-policy';
 export const TERMS_OF_SERVICE_URL = 'https://docs.subwallet.app/privacy-and-security/terms-of-service';

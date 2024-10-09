@@ -204,3 +204,5 @@ export interface SlippageType {
   slippage: BigN,
   isCustomType: boolean
 }
+
+export const CHAINFLIP_SLIPPAGE = 0.02; // Example: 0.01 for 1%
