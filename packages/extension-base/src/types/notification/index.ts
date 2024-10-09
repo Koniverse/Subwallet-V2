@@ -8,7 +8,3 @@ export interface GetNotificationParams {
   notificationTab: NotificationTab
   // todo: filter by time period
 }
-
-export interface GetNotificationCountResult {
-  count: number
-}

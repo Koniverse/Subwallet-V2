@@ -46,31 +46,24 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
 
   subscribeUnreadNotificationsCount () {
     return liveQuery(
-      // async () => (await this.table.filter((item) => !item.isRead).count())
-      // async () => {
-      //   (await this.table.orderBy('proxyId').eachKey(noti => {
-      //     noti
-      //   }));
-      // }
-
-      () => {
-        return this.table.toArray().then((data) => {
-          const groupedData = data.reduce((acc, item) => {
-            if (!acc[item.proxyId]) {
-              acc[item.proxyId] = [];
-            }
-
-            acc[item.proxyId].push(item);
-
-            return acc;
-          }, {} as Record<string, _NotificationInfo>);
-        });
+      async () => {
+        return await this.getUnreadNotificationsCountMap();
       }
     );
   }
 
-  getUnreadNotificationsCount () {
-    return this.table.filter((item) => !item.isRead).count();
+  async getUnreadNotificationsCountMap () {
+    const data = await this.table.filter((item) => !item.isRead).toArray();
+
+    return data.reduce((acc, item) => {
+      if (!acc[item.proxyId]) {
+        acc[item.proxyId] = 1;
+      } else {
+        acc[item.proxyId] = acc[item.proxyId] + 1;
+      }
+
+      return acc;
+    }, {} as Record<string, number>);
   }
 
   markAllRead (proxyId: string) {

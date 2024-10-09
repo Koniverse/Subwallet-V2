@@ -2,27 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { GetNotificationCountResult } from '@subwallet/extension-base/types/notification';
 import { NotificationStore, ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 
 const initialState: NotificationStore = {
   reduxStatus: ReduxStatus.INIT,
-  unreadNotificationCount: 0
+  unreadNotificationCountMap: {}
 };
 
 const notificationSlice = createSlice({
   initialState,
   name: 'notification',
   reducers: {
-    updateUnreadNotificationCount (state, action: PayloadAction<GetNotificationCountResult>): NotificationStore {
+    updateUnreadNotificationCountMap (state, action: PayloadAction<Record<string, number>>): NotificationStore {
       return {
         ...state,
-        unreadNotificationCount: action.payload.count,
+        unreadNotificationCountMap: action.payload,
         reduxStatus: ReduxStatus.READY
       };
     }
   }
 });
 
-export const { updateUnreadNotificationCount } = notificationSlice.actions;
+export const { updateUnreadNotificationCountMap } = notificationSlice.actions;
 export default notificationSlice.reducer;

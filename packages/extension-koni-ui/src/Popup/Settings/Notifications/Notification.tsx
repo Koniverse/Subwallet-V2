@@ -60,8 +60,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
   const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
-  const notificationCount = useSelector((state: RootState) => state.notification.unreadNotificationCount);
-  console.log('notificationCount', notificationCount);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
