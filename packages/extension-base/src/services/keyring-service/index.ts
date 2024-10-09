@@ -33,7 +33,7 @@ export class KeyringService {
     this.state.eventService.emit('inject.ready', true);
   }
 
-  public eventRemoveAccount (proxyId: string) {
+  public eventRemoveAccountProxy (proxyId: string) {
     this.state.eventService.emit('accountProxy.remove', proxyId);
   }
 
