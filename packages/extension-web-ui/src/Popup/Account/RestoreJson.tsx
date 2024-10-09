@@ -1,15 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
-import { Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
+import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/types';
+import { AlertBox, Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import AvatarGroup from '@subwallet/extension-web-ui/components/Account/Info/AvatarGroup';
 import CloseIcon from '@subwallet/extension-web-ui/components/Icon/CloseIcon';
 import InstructionContainer, { InstructionContentType } from '@subwallet/extension-web-ui/components/InstructionContainer';
 import { BaseModal } from '@subwallet/extension-web-ui/components/Modal/BaseModal';
 import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { useSelector } from '@subwallet/extension-web-ui/hooks';
+import { useNotification, useSelector } from '@subwallet/extension-web-ui/hooks';
 import useCompleteCreateAccount from '@subwallet/extension-web-ui/hooks/account/useCompleteCreateAccount';
 import useGoBackFromCreateAccount from '@subwallet/extension-web-ui/hooks/account/useGoBackFromCreateAccount';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
@@ -17,7 +17,7 @@ import useUnlockChecker from '@subwallet/extension-web-ui/hooks/common/useUnlock
 import useAutoNavigateToCreatePassword from '@subwallet/extension-web-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-web-ui/hooks/router/useDefaultNavigate';
 import { batchRestoreV2, jsonGetAccountInfo, jsonRestoreV2 } from '@subwallet/extension-web-ui/messaging';
-import { ThemeProps, ValidateState } from '@subwallet/extension-web-ui/types';
+import { Theme, ThemeProps, ValidateState } from '@subwallet/extension-web-ui/types';
 import { findNetworkJsonByGenesisHash, reformatAddress } from '@subwallet/extension-web-ui/utils';
 import { isKeyringPairs$Json } from '@subwallet/extension-web-ui/utils/account/typeGuards';
 import { KeyringPair$Json } from '@subwallet/keyring/types';
@@ -26,10 +26,10 @@ import { UploadChangeParam, UploadFile } from '@subwallet/react-ui/es/upload/int
 import AccountCard from '@subwallet/react-ui/es/web3-block/account-card';
 import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import CN from 'classnames';
-import { DotsThree, FileArrowDown } from 'phosphor-react';
-import React, { ChangeEventHandler, useCallback, useContext, useEffect, useState } from 'react';
+import { DotsThree, FileArrowDown, Info } from 'phosphor-react';
+import React, { ChangeEventHandler, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 
 import { hexToU8a, isHex, u8aToHex, u8aToString } from '@polkadot/util';
 import { ethereumEncode, keccakAsU8a, secp256k1Expand } from '@polkadot/util-crypto';
@@ -97,6 +97,8 @@ function Component ({ className }: Props): JSX.Element {
   const { goHome } = useDefaultNavigate();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+  const { token } = useTheme() as Theme;
+  const notify = useNotification();
   const { isWebUI } = useContext(ScreenContext);
 
   const [form] = Form.useForm();
@@ -109,6 +111,8 @@ function Component ({ className }: Props): JSX.Element {
   const [password, setPassword] = useState('');
   const [jsonFile, setJsonFile] = useState<KeyringPair$Json | KeyringPairs$Json | undefined>(undefined);
   const [accountsInfo, setAccountsInfo] = useState<ResponseJsonGetAccountInfo[]>([]);
+  const [countAccountInvalid, setCountAccountInvalid] = useState(0);
+
   const checkUnlock = useUnlockChecker();
 
   const closeModal = useCallback(() => {
@@ -156,11 +160,15 @@ function Component ({ className }: Props): JSX.Element {
           return;
         }
 
+        setCountAccountInvalid(0);
+
         try {
           setSubmitValidateState({});
 
           if (isKeyringPairs$Json(json)) {
-            const accounts: ResponseJsonGetAccountInfo[] = json.accounts.map((account) => {
+            const accounts: ResponseJsonGetAccountInfo[] = [];
+
+            json.accounts.forEach((account) => {
               const genesisHash: string = account.meta.originGenesisHash as string;
 
               let addressPrefix: number | undefined;
@@ -176,14 +184,20 @@ function Component ({ className }: Props): JSX.Element {
               }
 
               if (isHex(account.address) && hexToU8a(account.address).length !== 20) {
-                address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
+                try {
+                  address = ethereumEncode(keccakAsU8a(secp256k1Expand(hexToU8a(account.address))));
+                } catch (e) {
+                  setCountAccountInvalid((pre) => pre + 1);
+
+                  return;
+                }
               }
 
-              return {
+              accounts.push({
                 address: address,
                 genesisHash: account.meta.genesisHash,
                 name: account.meta.name
-              } as ResponseJsonGetAccountInfo;
+              } as ResponseJsonGetAccountInfo);
             });
 
             setRequirePassword(true);
@@ -207,11 +221,13 @@ function Component ({ className }: Props): JSX.Element {
               })
               .catch((e: Error) => {
                 setRequirePassword(false);
+                console.error(e);
                 setFileValidateState({
                   status: 'error',
-                  message: e.message
+                  message: t<string>('Invalid JSON file')
                 });
                 setValidating(false);
+                setCountAccountInvalid((pre) => pre + 1);
               });
           }
         } catch (e) {
@@ -256,8 +272,20 @@ function Component ({ className }: Props): JSX.Element {
             isAllowed: true,
             withMasterPassword: true
           }))
-          .then(() => {
+          .then((addressList) => {
             setTimeout(() => {
+              if (addressList.length === 1) {
+                notify({
+                  message: t('1 account imported'),
+                  type: 'success'
+                });
+              } else if (addressList.length > 1) {
+                notify({
+                  message: t('{{number}} accounts imported', { replace: { number: addressList.length } }),
+                  type: 'success'
+                });
+              }
+
               if (isMultiple) {
                 navigate('/keyring/migrate-password');
               } else {
@@ -279,7 +307,7 @@ function Component ({ className }: Props): JSX.Element {
     }).catch(() => {
       // User cancel unlock
     });
-  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, navigate, onComplete]);
+  }, [jsonFile, requirePassword, password, checkUnlock, accountsInfo, notify, t, navigate, onComplete]);
 
   const renderItem = useCallback((account: ResponseJsonGetAccountInfo): React.ReactNode => {
     return (
@@ -323,6 +351,30 @@ function Component ({ className }: Props): JSX.Element {
     disabled: !!fileValidateState.status || !!submitValidateState.status || !password,
     loading: validating || loading
   };
+
+  const nameImportAccountItem = useMemo(() => {
+    const countAccount = String(accountsInfo.length).padStart(2, '0');
+
+    if (countAccountInvalid > 0) {
+      if (accountsInfo.length === 1) {
+        return t('{{number}} account found', { replace: { number: countAccount } });
+      }
+
+      return t('{{number}} accounts found', { replace: { number: countAccount } });
+    }
+
+    return t('Import {{number}} accounts', { replace: { number: countAccount } });
+  }, [accountsInfo.length, countAccountInvalid, t]);
+
+  const descriptionAlertWarningBox = useMemo(() => {
+    const countAccount = String(accountsInfo.length).padStart(2, '0');
+
+    if (accountsInfo.length === 1) {
+      return t('One or more accounts found in this file are invalid. Only {{x}} account can be imported as listed below', { replace: { x: countAccount } });
+    }
+
+    return t('One or more accounts found in this file are invalid. Only {{x}} accounts can be imported as listed below', { replace: { x: countAccount } });
+  }, [accountsInfo.length, t]);
 
   return (
     <PageWrapper className={CN(className)}>
@@ -373,37 +425,58 @@ function Component ({ className }: Props): JSX.Element {
                 />
               </Form.Item>
               {
-                !!accountsInfo.length && (
-                  <Form.Item>
-                    {
-                      accountsInfo.length > 1
-                        ? (
-                          <SettingItem
-                            className='account-list-item'
-                            leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                            name={t('Import {{number}} accounts', { replace: { number: String(accountsInfo.length).padStart(2, '0') } })}
-                            onPressItem={openModal}
-                            rightItem={(
-                              <Icon
-                                phosphorIcon={DotsThree}
-                                size='sm'
-                              />
-                            )}
-                          />
-                        )
-                        : (
-                          <SettingItem
-                            className='account-list-item'
-                            leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
-                            name={accountsInfo[0].name}
-                          />
-                        )
-                    }
-                  </Form.Item>
-                )
+                accountsInfo.length > 0
+                  ? (
+                    <Form.Item>
+                      {
+                        accountsInfo.length > 1 || (accountsInfo.length === 1 && countAccountInvalid > 0)
+                          ? (
+                            <SettingItem
+                              className='account-list-item'
+                              leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
+                              name={nameImportAccountItem}
+                              onPressItem={openModal}
+                              rightItem={(
+                                <>
+                                  {!!countAccountInvalid && <div className={'__check-icon'}>
+                                    <Icon
+                                      iconColor={token.colorWarning}
+                                      phosphorIcon={Info}
+                                      size='sm'
+                                      type='phosphor'
+                                      weight='fill'
+                                    />
+                                  </div>}
+                                  <Icon
+                                    phosphorIcon={DotsThree}
+                                    size='sm'
+                                  />
+                                </>
+
+                              )}
+                            />
+                          )
+                          : (
+                            <SettingItem
+                              className='account-list-item'
+                              leftItemIcon={<AvatarGroup accounts={accountsInfo} />}
+                              name={accountsInfo[0].name}
+                            />
+                          )
+                      }
+                    </Form.Item>
+                  )
+                  : countAccountInvalid
+                    ? (<AlertBox
+                      className={'alert-warning-name-duplicate'}
+                      description={t('All accounts found in this file are invalid. Import another JSON file and try again')}
+                      title={t('Unable to import')}
+                      type='error'
+                    />)
+                    : <></>
               }
               {
-                requirePassword && (
+                requirePassword && accountsInfo.length > 0 && (
                   <Form.Item
                     validateStatus={submitValidateState.status}
                   >
@@ -428,19 +501,26 @@ function Component ({ className }: Props): JSX.Element {
                 />
               )}
             </Form>
-            <BaseModal
+            {accountsInfo.length > 0 && <BaseModal
               className={className}
               id={modalId}
               onCancel={closeModal}
               title={t('Import list')}
             >
+              {countAccountInvalid > 0 && <AlertBox
+                className={'alert-warning-name-duplicate -item'}
+                description={descriptionAlertWarningBox}
+                title={t('Some accounts can’t be imported')}
+                type='warning'
+              />}
               <SwList.Section
                 displayRow={true}
                 list={accountsInfo}
                 renderItem={renderItem}
                 rowGap='var(--row-gap)'
               />
-            </BaseModal>
+            </BaseModal>}
+
           </div>
 
           {isWebUI && (
@@ -536,6 +616,20 @@ const ImportJson = styled(Component)<Props>(({ theme: { extendToken, token } }: 
       '.ant-upload-drag-single': {
         height: 168
       }
+    },
+
+    '.alert-warning-name-duplicate.-item': {
+      margin: `0px ${token.margin}px ${token.marginXS}px ${token.margin}px`
+    },
+
+    '.alert-warning-name-duplicate': {
+      margin: `-${token.marginXS}px 0px ${token.margin}px 0px`
+    },
+
+    '.__check-icon': {
+      display: 'flex',
+      width: 40,
+      justifyContent: 'center'
     }
   };
 });

@@ -17,6 +17,8 @@ type Props = ThemeProps & {
   totalChangePercent: SwNumberProps['value'];
   isPriceDecrease: boolean;
   isShrink: boolean;
+  isSupportBuyTokens: boolean;
+  isSupportSwap: boolean;
   onOpenSendFund: () => void;
   onOpenBuyTokens: () => void;
   onOpenReceive: () => void;
@@ -27,6 +29,8 @@ function Component (
   { className = '',
     isPriceDecrease,
     isShrink,
+    isSupportBuyTokens,
+    isSupportSwap,
     onOpenBuyTokens,
     onOpenReceive,
     onOpenSendFund,
@@ -162,6 +166,7 @@ function Component (
         />
         <div className={'__button-space'} />
         <Button
+          disabled={!isSupportSwap}
           icon={(
             <Icon
               phosphorIcon={ArrowsLeftRight}
@@ -177,6 +182,7 @@ function Component (
         <div className={CN('__button-space', { hidden: isShrink })} />
         <Button
           className={CN({ hidden: isShrink })}
+          disabled={!isSupportBuyTokens}
           icon={
             <Icon
               phosphorIcon={ShoppingCartSimple}

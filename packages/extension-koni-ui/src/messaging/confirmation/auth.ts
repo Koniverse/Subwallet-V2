@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrls } from '@subwallet/extension-base/background/handlers/State';
 import { AuthorizeRequest } from '@subwallet/extension-base/background/types';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 
 import { sendMessage } from '../base';
 

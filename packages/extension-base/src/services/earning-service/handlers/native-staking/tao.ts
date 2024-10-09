@@ -24,13 +24,13 @@ interface Hotkey {
   ss58: string;
 }
 
-interface RawDelegateState {
-  data: {
-    delegateBalances: {
-      nodes:
-      Array<Record<string, string>>
-    }
-  }
+export interface RawDelegateState {
+  items: Array<{
+    balance: string;
+    delegate_address: {
+      ss58: string;
+    };
+  }>;
 }
 
 interface ValidatorResponse {
@@ -50,12 +50,12 @@ interface Validator {
   system_total_stake: string;
 }
 
-interface ValidatorName {
-  count: number;
-  delegates: {
-    name: string;
-  }[];
-}
+// interface ValidatorName {
+//   count: number;
+//   delegates: {
+//     name: string;
+//   }[];
+// }
 export const BITTENSOR_API_KEY_1 = process.env.BITTENSOR_API_KEY_1 || '';
 export const BITTENSOR_API_KEY_2 = process.env.BITTENSOR_API_KEY_2 || '';
 
@@ -66,7 +66,45 @@ function random (...keys: string[]) {
   return validKeys[randomIndex];
 }
 
-export const BITTENSOR_API_KEY = random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
+export const bittensorApiKey = (): string => {
+  return random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
+};
+
+/* Fetch data */
+
+export async function fetchDelegates (): Promise<ValidatorResponse> {
+  const apiKey = bittensorApiKey();
+
+  return new Promise(function (resolve) {
+    fetch('https://api.taostats.io/api/v1/validator?order=amount%3Adesc&limit=100', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `${apiKey}`
+      }
+    }).then((resp) => {
+      resolve(resp.json());
+    }).catch(console.error);
+  });
+}
+
+export async function fetchTaoDelegateState (address: string): Promise<RawDelegateState> {
+  const apiKey = bittensorApiKey();
+
+  return new Promise(function (resolve) {
+    fetch(`https://api.taostats.io/api/v1/delegate/balance?nominator_address=${address}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `${apiKey}`
+      }
+    }).then((resp) => {
+      resolve(resp.json());
+    }).catch(console.error);
+  });
+}
+
+/* Fetch data */
 
 const testnetDelegate = {
   '5G6wdAdS7hpBuH1tjuZDhpzrGw9Wf71WEVakDCxHDm1cxEQ2': {
@@ -82,80 +120,29 @@ const testnetDelegate = {
 export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHandler {
   /* Unimplemented function  */
   public override handleYieldWithdraw (address: string, unstakingInfo: UnstakingInfo): Promise<TransactionData> {
-    throw new Error('Method not implemented.');
+    return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
   }
 
   public override handleYieldCancelUnstake (params: StakeCancelWithdrawalParams): Promise<TransactionData> {
-    throw new Error('Method not implemented.');
+    return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
   }
   /* Unimplemented function  */
 
-  private static parseDelegateState (address: string) {
-    return {
-      query: 'query ($first: Int!, $after: Cursor, $filter: DelegateBalanceFilter, $order: [DelegateBalancesOrderBy!]!) {  delegateBalances(first: $first, after: $after, filter: $filter, orderBy: $order) { nodes { id account delegate amount updatedAt delegateFrom } pageInfo { endCursor hasNextPage hasPreviousPage } totalCount } }',
-      variables: {
-        first: 10,
-        filter: {
-          account: {
-            equalTo: address
-          },
-          amount: {
-            greaterThan: 1000000
-          },
-          updatedAt: {
-            greaterThan: 0
-          }
-        },
-        order: 'AMOUNT_DESC'
-      }
-    };
-  }
+  // async fetchDelegatesInfo (address: string): Promise<ValidatorName> {
+  //   const apiKey = this.bittensorApiKey;
 
-  /* Fetch data */
-
-  async fetchDelegates (): Promise<ValidatorResponse> {
-    return new Promise(function (resolve) {
-      fetch('https://api.taostats.io/api/v1/validator?order=amount%3Adesc&limit=29', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `${BITTENSOR_API_KEY}`
-        }
-      }).then((resp) => {
-        resolve(resp.json());
-      }).catch(console.error);
-    });
-  }
-
-  async fetchDelegatesInfo (address: string): Promise<ValidatorName> {
-    return new Promise(function (resolve) {
-      fetch(`https://api.taostats.io/api/v1/delegate/info?address=${address}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `${BITTENSOR_API_KEY}`
-        }
-      }).then((resp) => {
-        resolve(resp.json());
-      }).catch(console.error);
-    });
-  }
-
-  async fetchDelegateState (address: string): Promise<RawDelegateState> {
-    return new Promise(function (resolve) {
-      fetch('https://api.subquery.network/sq/TaoStats/bittensor-indexer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(TaoNativeStakingPoolHandler.parseDelegateState(address))
-      }).then((resp) => {
-        resolve(resp.json());
-      }).catch(console.error);
-    });
-  }
-
-  /* Fetch data */
+  //   return new Promise(function (resolve) {
+  //     fetch(`https://api.taostats.io/api/v1/delegate/info?address=${address}`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `${apiKey}`
+  //       }
+  //     }).then((resp) => {
+  //       resolve(resp.json());
+  //     }).catch(console.error);
+  //   });
+  // }
 
   /* Subscribe pool info */
 
@@ -172,7 +159,6 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
         const minDelegatorStake = await substrateApi.api.query.subtensorModule.nominatorMinRequiredStake();
 
         const BNminDelegatorStake = new BigN(minDelegatorStake.toString());
-        const expectedReturn = 0;
 
         const data: NativeYieldPoolInfo = {
           ...this.baseInfo,
@@ -184,8 +170,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           statistic: {
             assetEarning: [
               {
-                slug: this.nativeToken.slug,
-                apy: expectedReturn
+                slug: this.nativeToken.slug
               }
             ],
             maxCandidatePerFarmer: 16,
@@ -195,11 +180,8 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
               defaultUnstake: '0',
               fastUnstake: '0'
             },
-            farmerCount: 0,
+            eraTime: 1.2,
             era: 0,
-            eraTime: 0,
-            tvl: '',
-            totalApy: expectedReturn,
             unstakingPeriod: 1.2
           }
         };
@@ -313,7 +295,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
 
     const getMainnetPoolPosition = async () => {
       const rawDelegateStateInfos = await Promise.all(
-        useAddresses.map((address) => this.fetchDelegateState(address))
+        useAddresses.map((address) => fetchTaoDelegateState(address))
       );
 
       if (rawDelegateStateInfos.length > 0) {
@@ -321,13 +303,13 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           const owner = reformatAddress(useAddresses[i], 42);
           const delegatorState: TaoStakingStakeOption[] = [];
           let bnTotalBalance = BN_ZERO;
-          const delegateStateInfo = rawDelegateStateInfo?.data?.delegateBalances?.nodes;
+          const delegateStateInfo = rawDelegateStateInfo.items;
 
           for (const delegate of delegateStateInfo) {
-            bnTotalBalance = bnTotalBalance.add(new BN(delegate.amount));
+            bnTotalBalance = bnTotalBalance.add(new BN(delegate.balance));
             delegatorState.push({
-              owner: delegate.delegate,
-              amount: delegate.amount.toString()
+              owner: delegate.delegate_address.ss58,
+              amount: delegate.balance.toString()
             });
           }
 
@@ -414,7 +396,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
   }
 
   private async getMainnetPoolTargets (): Promise<ValidatorInfo[]> {
-    const _topValidator = await this.fetchDelegates();
+    const _topValidator = await fetchDelegates();
     const topValidator = _topValidator as unknown as Record<string, Record<string, Record<string, string>>>;
     const getNominatorMinRequiredStake = this.substrateApi.api.query.subtensorModule.nominatorMinRequiredStake();
     const nominatorMinRequiredStake = (await getNominatorMinRequiredStake).toString();
@@ -423,7 +405,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     const validatorAddresses = Object.keys(validatorList);
 
     const results = await Promise.all(
-      validatorAddresses.map(async (i) => {
+      validatorAddresses.map((i) => {
         const address = (validatorList[i].hot_key as unknown as Hotkey).ss58;
         const bnTotalStake = new BN(validatorList[i].amount);
         const bnOwnStake = new BN(validatorList[i].validator_stake);
@@ -435,10 +417,10 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
         const apr = ((parseFloat(validatorList[i].apr) / 10 ** 9) * 100).toFixed(2);
         const apyCalculate = calculateReward(parseFloat(apr));
 
-        let name = '';
-        const delegateInfo = await this.fetchDelegatesInfo(address);
+        // let name = '';
+        // const delegateInfo = await this.fetchDelegatesInfo(address);
 
-        name = delegateInfo.delegates[0]?.name || address;
+        // name = delegateInfo.delegates[0]?.name || address;
 
         return {
           address: address,
@@ -453,7 +435,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
           isVerified: false,
           chain: this.chain,
           isCrowded: false,
-          identity: name
+          identity: address // name
         } as unknown as ValidatorInfo;
       })
     );

@@ -24,6 +24,7 @@ interface Props extends ThemeProps, Omit<TokenItemProps, 'name' | 'subName' | 's
   onPreCopy?: () => Promise<void>;
 }
 
+// todo: deprecated, will remove
 const Component = (props: Props) => {
   const { address, className, item, onClickCopyBtn, onClickQrBtn, onPreCopy, onPressItem, ...restProps } = props;
   const { name, originChain: chain, slug, symbol } = item;

@@ -3,6 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
@@ -20,6 +21,12 @@ export const getValidationId = (chainType: string, chain: string): string => {
 
 export const isSubstrateTransaction = (tx: SWTransaction['transaction']): tx is SubmittableExtrinsic => {
   return !!(tx as SubmittableExtrinsic).send;
+};
+
+export const isTonTransaction = (tx: SWTransaction['transaction']): tx is TonTransactionConfig => {
+  const tonTransactionConfig = tx as TonTransactionConfig;
+
+  return Boolean(tonTransactionConfig.messagePayload) && tonTransactionConfig.seqno >= 0;
 };
 
 const typeName = (type: SWTransaction['extrinsicType']) => {

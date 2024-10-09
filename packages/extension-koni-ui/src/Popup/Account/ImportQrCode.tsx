@@ -1,15 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { detectTranslate } from '@subwallet/extension-base/utils';
+import { AccountProxyType } from '@subwallet/extension-base/types';
+import { createPromiseHandler, detectTranslate } from '@subwallet/extension-base/utils';
 import DefaultLogosMap, { IconMap } from '@subwallet/extension-koni-ui/assets/logo';
-import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountNameModal, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import DualLogo from '@subwallet/extension-koni-ui/components/Logo/DualLogo';
 import QrScannerErrorNotice from '@subwallet/extension-koni-ui/components/Qr/Scanner/ErrorNotice';
-import { IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { ACCOUNT_NAME_MODAL, IMPORT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
-import useGetDefaultAccountName from '@subwallet/extension-koni-ui/hooks/account/useGetDefaultAccountName';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
 import useUnlockChecker from '@subwallet/extension-koni-ui/hooks/common/useUnlockChecker';
 import useScanAccountQr from '@subwallet/extension-koni-ui/hooks/qr/useScanAccountQr';
@@ -38,11 +38,11 @@ const FooterIcon = (
 const checkAccount = (qrAccount: QrAccount): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     checkPublicAndPrivateKey(qrAccount.genesisHash, qrAccount.content)
-      .then(({ isEthereum, isValid }) => {
+      .then(({ errorMessage, isEthereum, isValid }) => {
         if (isValid) {
           resolve(isEthereum);
         } else {
-          reject(new Error('Invalid QR code'));
+          reject(new Error(errorMessage || 'Invalid QR code'));
         }
       })
       .catch((e: Error) => {
@@ -51,6 +51,7 @@ const checkAccount = (qrAccount: QrAccount): Promise<boolean> => {
   });
 };
 
+const accountNameModalId = ACCOUNT_NAME_MODAL;
 const modalId = 'import-qr-code-scanner-modal';
 
 const Component: React.FC<Props> = (props: Props) => {
@@ -60,64 +61,95 @@ const Component: React.FC<Props> = (props: Props) => {
   const { t } = useTranslation();
   const { goHome } = useDefaultNavigate();
 
-  const accountName = useGetDefaultAccountName();
   const onComplete = useCompleteCreateAccount();
   const onBack = useGoBackFromCreateAccount(IMPORT_ACCOUNT_MODAL);
   const checkUnlock = useUnlockChecker();
 
-  const { inactiveModal } = useContext(ModalContext);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
 
   const [validateState, setValidateState] = useState<ValidateState>({});
+  const [scannedAccount, setScannedAccount] = useState<QrAccount>();
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = useCallback((_account: QrAccount) => {
-    setLoading(true);
+  const accountAddressValidator = useCallback((scannedAccount: QrAccount) => {
+    const { promise, reject, resolve } = createPromiseHandler<void>();
+
+    if (scannedAccount) {
+      setTimeout(() => {
+        checkAccount(scannedAccount)
+          .then((isEthereum) => {
+            setScannedAccount({
+              ...scannedAccount,
+              isEthereum
+            });
+
+            resolve();
+          }).catch((error: Error) => {
+            reject(error);
+          });
+      }, 300);
+    } else {
+      reject(new Error('Invalid QR code'));
+    }
+
+    return promise;
+  }, []);
+
+  const onPreSubmit = useCallback((account: QrAccount) => {
     inactiveModal(modalId);
     setValidateState({
       message: '',
       status: 'success'
     });
+    accountAddressValidator(account)
+      .then(() => {
+        activeModal(accountNameModalId);
+      }).catch((error: Error) => {
+        setValidateState({
+          message: t(error.message),
+          status: 'error'
+        });
+      });
+  }, [inactiveModal, accountAddressValidator, activeModal, t]);
 
-    setTimeout(() => {
-      checkAccount(_account)
-        .then((isEthereum) => {
-          createAccountWithSecret({ name: accountName,
-            isAllow: true,
-            secretKey: _account.content,
-            publicKey: _account.genesisHash,
-            isEthereum: isEthereum })
-            .then(({ errors, success }) => {
-              if (success) {
-                setValidateState({});
-                onComplete();
-              } else {
-                setValidateState({
-                  message: errors[0].message,
-                  status: 'error'
-                });
-              }
-            })
-            .catch((error: Error) => {
+  const onSubmit = useCallback((name: string) => {
+    if (scannedAccount) {
+      setLoading(true);
+      setTimeout(() => {
+        createAccountWithSecret({
+          name,
+          isAllow: true,
+          secretKey: scannedAccount.content,
+          publicKey: scannedAccount.genesisHash,
+          isEthereum: scannedAccount.isEthereum
+        })
+          .then(({ errors, success }) => {
+            if (success) {
+              setValidateState({});
+              onComplete();
+            } else {
               setValidateState({
-                message: error.message,
+                message: t(errors[0].message),
                 status: 'error'
               });
-            })
-            .finally(() => {
-              setLoading(false);
+            }
+          })
+          .catch((error: Error) => {
+            setValidateState({
+              message: t(error.message),
+              status: 'error'
             });
-        })
-        .catch((error: Error) => {
-          setValidateState({
-            message: t(error.message),
-            status: 'error'
-          });
-          setLoading(false);
-        });
-    }, 300);
-  }, [accountName, onComplete, inactiveModal, t]);
+          })
+          .finally(() => {
+            setLoading(false);
 
-  const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, importQrScan, setValidateState, onSubmit);
+            inactiveModal(accountNameModalId);
+          });
+      }, 300);
+    }
+  }, [inactiveModal, onComplete, scannedAccount, t]);
+
+  const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, importQrScan, setValidateState, onPreSubmit);
 
   const onScan = useCallback(() => {
     checkUnlock().then(() => {
@@ -218,6 +250,12 @@ const Component: React.FC<Props> = (props: Props) => {
           />
         </div>
       </Layout.WithSubHeaderOnly>
+
+      <AccountNameModal
+        accountType={AccountProxyType.SOLO}
+        isLoading={loading}
+        onSubmit={onSubmit}
+      />
     </PageWrapper>
   );
 };

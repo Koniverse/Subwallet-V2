@@ -18,6 +18,8 @@ export const _STAKING_CHAIN_GROUP = {
   bittensor: ['bittensor', 'bittensor_devnet']
 };
 
+export const TON_CHAINS = ['ton', 'ton_testnet'];
+
 export const MaxEraRewardPointsEras = 14;
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment

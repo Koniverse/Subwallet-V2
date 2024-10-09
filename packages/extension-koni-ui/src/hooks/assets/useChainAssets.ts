@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset, _ChainStatus } from '@subwallet/chain-list/types';
-import { _isAssetFungibleToken, _isChainEvmCompatible, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetFungibleToken, _isChainEvmCompatible, _isChainSubstrateCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -15,6 +15,7 @@ interface _ChainAssetFilters {
   chainTypes?: 'substrate' | 'evm'
 }
 
+// todo: recheck this hook, refactor if need
 export default function useChainAssets ({ chainTypes, isActive = false, isActiveChain = false, isAvailableChain = true, isFungible = true }: _ChainAssetFilters = {}) {
   const { chainInfoMap, chainStateMap } = useSelector((state: RootState) => state.chainStore);
   const { assetRegistry, assetSettingMap } = useSelector((state: RootState) => state.assetRegistry);
@@ -32,7 +33,7 @@ export default function useChainAssets ({ chainTypes, isActive = false, isActive
   }, [availableChains, chainInfoMap]);
 
   const substrateChains = useMemo(() => {
-    return availableChains.filter((slug) => _isSubstrateChain(chainInfoMap[slug]));
+    return availableChains.filter((slug) => _isChainSubstrateCompatible(chainInfoMap[slug]));
   }, [availableChains, chainInfoMap]);
 
   const activeAssets = useMemo(() => {
