@@ -2,7 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getBlockExplorerFromChain, _getChainNativeTokenBasicInfo, _getChainSubstrateAddressPrefix, _getCrowdloanUrlFromChain, _getEvmChainId, _getSubstrateParaId, _isChainEvmCompatible, _isChainSubstrateCompatible, _isCustomChain, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
+import {
+  _getBlockExplorerFromChain,
+  _getChainNativeTokenBasicInfo,
+  _getChainSubstrateAddressPrefix,
+  _getCrowdloanUrlFromChain,
+  _getEvmChainId,
+  _getSubstrateParaId,
+  _isChainEvmCompatible,
+  _isChainSubstrateCompatible,
+  _isCustomChain,
+  _isPureEvmChain,
+  _isTonChain
+} from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ProviderSelector } from '@subwallet/extension-koni-ui/components/Field/ProviderSelector';
@@ -61,6 +73,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [chainInfo] = useState(_chainInfo);
   const [chainState] = useState(_chainState);
+
+  const isTonNetwork = useMemo(() => {
+    return chainInfo && _isTonChain(chainInfo);
+  }, [chainInfo]);
 
   const isPureEvmChain = useMemo(() => {
     return chainInfo && _isPureEvmChain(chainInfo);
@@ -130,6 +146,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       types.push('EVM');
     }
 
+    if (chainInfo.slug == 'ton'){
+      types.push('TON');
+    }
+
     for (let i = 0; i < types.length; i++) {
       result = result.concat(types[i]);
 
@@ -174,7 +194,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     setLoading(true);
 
     const blockExplorer = form.getFieldValue('blockExplorer') as string;
-    const crowdloanUrl = form.getFieldValue('crowdloanUrl') as string;
+    const crowdloanUrl =  form.getFieldValue('crowdloanUrl') as string;
     const currentProvider = form.getFieldValue('currentProvider') as string;
 
     const params: _NetworkUpsertParams = {
@@ -359,6 +379,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                     tooltipPlacement={'topLeft'}
                   />
                 </Col>
+
+                {
+                !isTonNetwork &&
                 <Col span={12}>
                   {
                     !isPureEvmChain
@@ -380,11 +403,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                       )
                   }
                 </Col>
+              }
               </Row>
 
               <Row gutter={token.paddingSM}>
                 {
-                  !isPureEvmChain &&
+                  (!isPureEvmChain && !isTonNetwork) &&
                   <Col span={12}>
                     <Field
                       content={addressPrefix.toString()}
@@ -418,7 +442,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               </Form.Item>
 
               {
-                !_isPureEvmChain(chainInfo) && <Form.Item
+                (!_isPureEvmChain(chainInfo) && !isTonNetwork) && <Form.Item
                   name={'crowdloanUrl'}
                   rules={[{ validator: crowdloanUrlValidator }]}
                   statusHelpAsTooltip={true}
