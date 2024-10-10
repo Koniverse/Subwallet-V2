@@ -209,6 +209,36 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
       return;
     }
 
+    const handleShowQrModal = (chain: string) => {
+      const chainInfo = chainInfoMap[chain];
+
+      if (!chainInfo) {
+        return;
+      }
+
+      for (const accountJson of currentAccountProxy.accounts) {
+        const reformatedAddress = getReformatedAddressRelatedToChain(accountJson, chainInfo);
+
+        if (reformatedAddress) {
+          const accountAddressItem: AccountAddressItemType = {
+            accountName: accountJson.name || '',
+            accountProxyId: accountJson.proxyId || '',
+            accountProxyType: currentAccountProxy.accountType,
+            accountType: accountJson.type,
+            address: reformatedAddress
+          };
+
+          setSelectedAccountAddressItem(accountAddressItem);
+
+          openAddressQrModal(reformatedAddress, accountJson.type, currentAccountProxy.id, chain, () => {
+            setSelectedAccountAddressItem(undefined);
+          }, false);
+
+          break;
+        }
+      }
+    };
+
     if (specificChain) {
       if (!chainSupported.includes(specificChain)) {
         console.warn('tokenGroupSlug does not work with current account');
@@ -225,33 +255,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
 
       // current account is not All, just do show QR logic
 
-      const specificChainInfo = chainInfoMap[specificChain];
-
-      if (!specificChainInfo) {
-        return;
-      }
-
-      for (const accountJson of currentAccountProxy.accounts) {
-        const reformatedAddress = getReformatedAddressRelatedToChain(accountJson, specificChainInfo);
-
-        if (reformatedAddress) {
-          const accountAddressItem: AccountAddressItemType = {
-            accountName: accountJson.name || '',
-            accountProxyId: accountJson.proxyId || '',
-            accountProxyType: currentAccountProxy.accountType,
-            accountType: accountJson.type,
-            address: reformatedAddress
-          };
-
-          setSelectedAccountAddressItem(accountAddressItem);
-
-          openAddressQrModal(reformatedAddress, accountJson.type, currentAccountProxy.id, specificChain, () => {
-            setSelectedAccountAddressItem(undefined);
-          }, false);
-
-          break;
-        }
-      }
+      handleShowQrModal(specificChain);
 
       return;
     }
@@ -264,30 +268,7 @@ export default function useCoreReceiveModalHelper (tokenGroupSlug?: string): Hoo
         return;
       }
 
-      const uniqueChainInfo = chainInfoMap[tokenSelectorItems[0].originChain];
-
-      if (!uniqueChainInfo) {
-        return;
-      }
-
-      const accountJson = currentAccountProxy.accounts[0];
-      const reformattedAddress = getReformatedAddressRelatedToChain(currentAccountProxy.accounts[0], uniqueChainInfo);
-
-      if (reformattedAddress) {
-        const accountAddressItem: AccountAddressItemType = {
-          accountName: accountJson.name || '',
-          accountProxyId: accountJson.proxyId || '',
-          accountProxyType: currentAccountProxy.accountType,
-          accountType: accountJson.type,
-          address: reformattedAddress
-        };
-
-        setSelectedAccountAddressItem(accountAddressItem);
-
-        openAddressQrModal(reformattedAddress, accountJson.type, currentAccountProxy.id, tokenSelectorItems[0].originChain, () => {
-          setSelectedAccountAddressItem(undefined);
-        }, false);
-      }
+      handleShowQrModal(tokenSelectorItems[0].originChain);
 
       return;
     }
