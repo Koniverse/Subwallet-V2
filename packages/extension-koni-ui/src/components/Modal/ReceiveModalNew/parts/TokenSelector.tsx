@@ -40,9 +40,9 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
     });
 
     if (currentSearchText.toLowerCase() === 'ton') {
-      return filteredList.sort((a, b) => {
-        return a.slug === 'ton-NATIVE-TON' ? -1 : b.slug === 'ton-NATIVE-TON' ? 1 : 0;
-      });
+      filteredList.unshift(filteredList.splice(filteredList.findIndex((item) => item.slug === 'ton-NATIVE-TON'), 1)[0]);
+
+      return filteredList;
     } else {
       return filteredList;
     }
