@@ -31,7 +31,7 @@ export function getDefaultTransferProcess (): CommonOptimalPath {
 
 export async function getSnowbridgeTransferProcessFromEvm (address: string, evmApi: _EvmApi, tokenInfo: _ChainAsset, amount: string): Promise<CommonOptimalPath> {
   if (![COMMON_CHAIN_SLUGS.ETHEREUM as string, COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA as string].includes(tokenInfo.originChain)) {
-    throw new Error('Snowbridge only has support for Ethereum');
+    throw new Error('Snowbridge only has support for Ethereum'); // todo: update content, also for AvailBridge
   }
 
   const result: CommonOptimalPath = {

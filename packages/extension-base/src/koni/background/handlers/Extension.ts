@@ -15,7 +15,7 @@ import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTran
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
 import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
-import { isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { isAvailBridgeGatewayContract, isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { parseSubstrateTransaction } from '@subwallet/extension-base/koni/api/dotsama/parseTransaction';
 import { UNSUPPORTED_TRANSFER_EVM_CHAIN_NAME } from '@subwallet/extension-base/koni/api/nft/config';
@@ -30,7 +30,7 @@ import { isBounceableAddress } from '@subwallet/extension-base/services/balance-
 import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObject, getPSP34TransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
-import { createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
+import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeExtrinsicFromEvm, createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
@@ -1280,7 +1280,7 @@ export default class KoniExtension {
   private async approveSpending (params: TokenSpendingApprovalParams): Promise<SWTransactionResponse> {
     const { amount, chain, contractAddress, owner, spenderAddress } = params;
 
-    if (!isSnowBridgeGatewayContract(spenderAddress)) {
+    if (!isSnowBridgeGatewayContract(spenderAddress) && !isAvailBridgeGatewayContract(spenderAddress)) { // todo: update content for AvailBridge
       throw new Error('Only SnowBridge is supported'); // todo: support all ERC20 spending approval
     }
 
@@ -1437,7 +1437,6 @@ export default class KoniExtension {
 
     const originTokenInfo = this.#koniState.getAssetBySlug(tokenSlug);
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destinationNetworkKey, tokenSlug);
-
     const [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
     let extrinsic: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
 
@@ -1446,7 +1445,9 @@ export default class KoniExtension {
     }
 
     const chainInfoMap = this.#koniState.getChainInfoMap();
-    const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
+    const isAvailBridgeFromEvm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && ['avail_mainnet', 'availTuringTest'].includes(destinationNetworkKey); // todo: create isAvailChain function
+    const isAvailBridgeFromAvail = ['avail_mainnet', 'availTuringTest'].includes(originNetworkKey) && _isPureEvmChain(chainInfoMap[destinationNetworkKey]);
+    const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]) && !isAvailBridgeFromEvm;
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
@@ -1467,14 +1468,37 @@ export default class KoniExtension {
       } else {
         const substrateApi = this.#koniState.getSubstrateApi(originNetworkKey);
 
-        extrinsic = await createXcmExtrinsic({
-          destinationTokenInfo,
-          originTokenInfo,
-          sendingValue: value,
-          recipient: to,
-          chainInfoMap,
-          substrateApi
-        });
+        if (isAvailBridgeFromEvm) {
+          const evmApi = this.#koniState.getEvmApi(originNetworkKey);
+
+          extrinsic = await createAvailBridgeExtrinsicFromEvm({
+            destinationTokenInfo,
+            originTokenInfo,
+            sendingValue: value,
+            sender: from,
+            recipient: to,
+            chainInfoMap,
+            evmApi
+          });
+        } else if (isAvailBridgeFromAvail) {
+          extrinsic = await createAvailBridgeExtrinsicFromAvail({
+            destinationTokenInfo,
+            originTokenInfo,
+            sendingValue: value,
+            recipient: to,
+            chainInfoMap,
+            substrateApi
+          });
+        } else {
+          extrinsic = await createXcmExtrinsic({
+            destinationTokenInfo,
+            originTokenInfo,
+            sendingValue: value,
+            recipient: to,
+            chainInfoMap,
+            substrateApi
+          });
+        }
       }
 
       additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
@@ -1529,7 +1553,7 @@ export default class KoniExtension {
       transaction: extrinsic,
       data: inputData,
       extrinsicType: ExtrinsicType.TRANSFER_XCM,
-      chainType: !isSnowBridgeEvmTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
+      chainType: !isSnowBridgeEvmTransfer && !isAvailBridgeFromEvm ? ChainType.SUBSTRATE : ChainType.EVM,
       transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
       ignoreWarnings,
       isTransferAll: transferAll,
