@@ -201,23 +201,27 @@ export default class TransactionService {
   }
 
   public async handleTransaction (transaction: SWTransactionInput): Promise<SWTransactionResponse> {
+    console.log('transaction123', transaction);
     const validatedTransaction = await this.validateTransaction(transaction);
     const ignoreWarnings: BasicTxWarningCode[] = validatedTransaction.ignoreWarnings || [];
     const stopByErrors = validatedTransaction.errors.length > 0;
     const stopByWarnings = validatedTransaction.warnings.length > 0 && validatedTransaction.warnings.some((warning) => !ignoreWarnings.includes(warning.warningType));
 
-    if (stopByErrors || stopByWarnings) {
-      // @ts-ignore
-      'transaction' in validatedTransaction && delete validatedTransaction.transaction;
-      'additionalValidator' in validatedTransaction && delete validatedTransaction.additionalValidator;
-      'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
-
-      return validatedTransaction;
-    }
+    // if (stopByErrors || stopByWarnings) {
+    //   // @ts-ignore
+    //   'transaction' in validatedTransaction && delete validatedTransaction.transaction;
+    //   'additionalValidator' in validatedTransaction && delete validatedTransaction.additionalValidator;
+    //   'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
+    //
+    //   return validatedTransaction;
+    // }
 
     validatedTransaction.warnings = [];
 
     const emitter = await this.addTransaction(validatedTransaction);
+
+    console.log('emitter', emitter);
+    console.log('validatedTransaction', validatedTransaction);
 
     await new Promise<void>((resolve, reject) => {
       // TODO

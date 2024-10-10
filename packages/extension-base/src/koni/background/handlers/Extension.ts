@@ -14,7 +14,7 @@ import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/exten
 import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
-import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
+import { getERC20BridgeContract, getERC20Contract, getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { parseSubstrateTransaction } from '@subwallet/extension-base/koni/api/dotsama/parseTransaction';
@@ -1296,7 +1296,8 @@ export default class KoniExtension {
 
   private async makeTransfer (inputData: RequestTransfer): Promise<SWTransactionResponse> {
     const { from, networkKey, to, tokenSlug, transferAll, transferBounceable, value } = inputData;
-    const transferTokenInfo = this.#koniState.chainService.getAssetBySlug(tokenSlug);
+    const transferTokenInfo = this.#koniState.chainService.getAssetBySlug('sepolia_ethereum-NATIVE-ETH');
+
     const [errors, ,] = validateTransferRequest(transferTokenInfo, from, to, value, transferAll);
 
     const warnings: TransactionWarning[] = [];
@@ -1318,7 +1319,7 @@ export default class KoniExtension {
       if (isEthereumAddress(from) && isEthereumAddress(to) && _isTokenTransferredByEvm(transferTokenInfo)) {
         chainType = ChainType.EVM;
         const txVal: string = transferAll ? transferTokenAvailable.value : (value || '0');
-        const evmApi = this.#koniState.getEvmApi(networkKey);
+        const evmApi = evmApiMap.sepolia_ethereum;
 
         // todo: refactor: merge getERC20TransactionObject & getEVMTransactionObject
         // Estimate with EVM API
@@ -1430,18 +1431,31 @@ export default class KoniExtension {
     const originTokenInfo = this.#koniState.getAssetBySlug(tokenSlug);
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destinationNetworkKey, tokenSlug);
 
-    const [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
+    let [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
+
+    errors = [];
     let extrinsic: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
 
-    if (errors.length > 0) {
-      return this.#koniState.transactionService.generateBeforeHandleResponseErrors(errors);
-    }
+    // if (errors.length > 0) {
+    //   return this.#koniState.transactionService.generateBeforeHandleResponseErrors(errors);
+    // }
 
     const chainInfoMap = this.#koniState.getChainInfoMap();
     const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
+    let transactionObject;
+    const CONTRACT_AVAIL_TOKEN_ADDRESS = '0xb1C3Cb9b5e598d4E95a85870e7812B99f350982d';
+    const CONTRACT_AVAIL_BRIDGE_ADDRESS = '0x967F7DdC4ec508462231849AE81eeaa68Ad01389';
+    const ACC_EVM_B19 = '0xdd718f9Ecaf8f144a3140b79361b5D713D3A6b19';
+    const ACC_SUBSTRATE_9T = '5CFh4qpiB5PxsQvPEs6dWAhzgAVLHZa8tZKxeE9XsHBg4n9t';
+    const RECEIVER_BYTES32 = '0x08610a2aa207b7554a2a30028f3b99edd3e8607842993545a40a93418ee50766';
+    const ATOMIC_AMOUNT = '1000000000000000000'; // 1 AVAIL
+    const SEPOLIA_NETWORK_SLUG = 'sepolia_ethereum';
+    const SEPOLIA_ASSET_SLUG = 'sepolia_ethereum-NATIVE-ETH';
+    const AVAIL_TURING_NETWORK_SLUG = 'availTuringTest';
+    const AVAIL_TURING_ASSET_SLUG = 'availTuringTest-NATIVE-AVAIL';
 
     if (fromKeyPair && destinationTokenInfo) {
       if (isSnowBridgeEvmTransfer) {
@@ -1459,14 +1473,55 @@ export default class KoniExtension {
       } else {
         const substrateApi = this.#koniState.getSubstrateApi(originNetworkKey);
 
-        extrinsic = await createXcmExtrinsic({
-          destinationTokenInfo,
-          originTokenInfo,
-          sendingValue: value,
-          recipient: to,
-          chainInfoMap,
-          substrateApi
-        });
+        try {
+          const evmApiMap = this.#koniState.getEvmApiMap();
+          const evmApi = evmApiMap.sepolia_ethereum;
+          let transaction: ValidateTransactionResponseInput['transaction'];
+          const chainInfo = this.#koniState.getChainInfo(SEPOLIA_NETWORK_SLUG);
+
+          try {
+            const erc20TokenContract = getERC20Contract(CONTRACT_AVAIL_TOKEN_ADDRESS, evmApi);
+            const balance = (await erc20TokenContract.methods.balanceOf(ACC_EVM_B19).call()) as unknown as number;
+            const allowanceCall = erc20TokenContract.methods.allowance(ACC_EVM_B19, CONTRACT_AVAIL_BRIDGE_ADDRESS);
+            const [allowance, gasPrice] = await Promise.all([
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+              (await allowanceCall.call()) as string,
+              evmApi.api.eth.getGasPrice()
+            ]);
+            const erc20BridgeContract = getERC20BridgeContract(CONTRACT_AVAIL_BRIDGE_ADDRESS, evmApi);
+            const transferData = erc20BridgeContract.methods.sendAVAIL(RECEIVER_BYTES32, ATOMIC_AMOUNT).encodeABI() as string;
+
+            const [gasLimit, priority] = await Promise.all([
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+              erc20BridgeContract.methods.sendAVAIL(RECEIVER_BYTES32, ATOMIC_AMOUNT).estimateGas({ from: ACC_EVM_B19 }) as number,
+              calculateGasFeeParams(evmApi, SEPOLIA_NETWORK_SLUG)
+            ]);
+
+            transactionObject = {
+              gas: gasLimit,
+              from: ACC_EVM_B19,
+              value: '0',
+              to: CONTRACT_AVAIL_BRIDGE_ADDRESS,
+              data: transferData,
+              gasPrice: priority.gasPrice,
+              maxFeePerGas: priority.maxFeePerGas?.toString(),
+              maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+            } as TransactionConfig;
+          } catch (e) {
+            console.error('get contract error', e);
+          }
+
+          extrinsic = await createXcmExtrinsic({
+            destinationTokenInfo,
+            originTokenInfo,
+            sendingValue: value,
+            recipient: to,
+            chainInfoMap,
+            substrateApi
+          });
+        } catch (e) {
+          console.log('error when validating', e);
+        }
       }
 
       additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
@@ -1504,6 +1559,47 @@ export default class KoniExtension {
       };
     }
 
+    const inputDataAvailToETH = {
+      from: ACC_SUBSTRATE_9T,
+      networkKey: AVAIL_TURING_NETWORK_SLUG,
+      to: ACC_EVM_B19,
+      tokenSlug: AVAIL_TURING_ASSET_SLUG,
+      value: ATOMIC_AMOUNT,
+      transferAll: false
+    };
+
+    const inputDataEthToAvail = {
+      from: ACC_EVM_B19,
+      networkKey: SEPOLIA_NETWORK_SLUG,
+      to: ACC_SUBSTRATE_9T,
+      tokenSlug: SEPOLIA_ASSET_SLUG,
+      value: ATOMIC_AMOUNT,
+      transferAll: false
+    };
+
+    const originTokenInfoAvailToEth = this.#koniState.getAssetBySlug(AVAIL_TURING_ASSET_SLUG);
+    const originTokenInfoEthToAvail = this.#koniState.getAssetBySlug(SEPOLIA_ASSET_SLUG);
+
+    // ============== This config handle for Bridge ETH -> Avail
+    // return await this.#koniState.transactionService.handleTransaction({
+    //   url: EXTENSION_REQUEST_URL,
+    //   address: ACC_EVM_B19,
+    //   chain: SEPOLIA_NETWORK_SLUG,
+    //   transaction: transactionObject,
+    //   data: inputDataEthToAvail,
+    //   extrinsicType: ExtrinsicType.TRANSFER_XCM,
+    //   chainType: !isFromSnowBridgeXcm ? ChainType.EVM : ChainType.EVM, // note:  Change changeType to EVM when bridging from Ethereum to AVAIL.
+    //   transferNativeAmount: _isNativeToken(originTokenInfoEthToAvail) ? value : '0',
+    //   ignoreWarnings: inputData.transferAll,
+    //   isTransferAll: inputData.transferAll,
+    //   errors,
+    //   additionalValidator: additionalValidator,
+    //   eventsHandler: eventsHandler
+    // });
+
+    // ====== Usage: SendFund from DOT -> MOONBEAM
+    // ==============This config for Bridge Avail -> ETH:
+
     const ignoreWarnings: BasicTxWarningCode[] = [];
 
     if (transferAll) {
@@ -1516,15 +1612,15 @@ export default class KoniExtension {
 
     return await this.#koniState.transactionService.handleTransaction({
       url: EXTENSION_REQUEST_URL,
-      address: from,
-      chain: originNetworkKey,
+      address: ACC_SUBSTRATE_9T,
+      chain: AVAIL_TURING_NETWORK_SLUG,
       transaction: extrinsic,
-      data: inputData,
+      data: inputDataAvailToETH,
       extrinsicType: ExtrinsicType.TRANSFER_XCM,
-      chainType: !isSnowBridgeEvmTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
-      transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
-      ignoreWarnings,
-      isTransferAll: transferAll,
+      chainType: !isFromSnowBridgeXcm ? ChainType.SUBSTRATE : ChainType.EVM,
+      transferNativeAmount: _isNativeToken(originTokenInfoAvailToEth) ? value : '0',
+      ignoreWarnings: inputDataAvailToETH.transferAll,
+      isTransferAll: inputDataAvailToETH.transferAll,
       errors,
       additionalValidator: additionalValidator,
       eventsHandler: eventsHandler

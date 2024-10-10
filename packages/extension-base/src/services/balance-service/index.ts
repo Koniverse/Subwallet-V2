@@ -527,13 +527,20 @@ export class BalanceService implements StoppableServiceInterface {
 
   // process
   public async getOptimalTransferProcess (params: RequestOptimalTransferProcess): Promise<CommonOptimalPath> {
-    const originChainInfo = this.state.chainService.getChainInfoByKey(params.originChain);
+    const tmpParam = { // This data is for testing the token approval step on the AVAIL bridge
+      amount: '1000000000',
+      address: '0xdd718f9Ecaf8f144a3140b79361b5D713D3A6b19', // Sender's address
+      originChain: 'sepolia_ethereum',
+      tokenSlug: 'sepolia_ethereum-NATIVE-ETH',
+      destChain: 'availTuringTest'
+    };
+    const originChainInfo = this.state.chainService.getChainInfoByKey(tmpParam.originChain);
 
     if (!params.destChain) { // normal transfers
       return getDefaultTransferProcess();
     }
 
-    const destChainInfo = this.state.chainService.getChainInfoByKey(params.destChain);
+    const destChainInfo = this.state.chainService.getChainInfoByKey(tmpParam.destChain);
 
     // xcm
     if (!_isXcmWithinSameConsensus(originChainInfo, destChainInfo) && _isPureEvmChain(originChainInfo)) {

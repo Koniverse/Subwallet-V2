@@ -102,6 +102,16 @@ function getTokenAvailableDestinations (tokenSlug: string, xcmRefMap: Record<str
     slug: originChain.slug
   });
 
+  // if (tokenSlug === 'avail_mainnet-NATIVE-AVAIL') {
+  //   result.push({
+  //     name: originChain1.name,
+  //     slug: originChain1.slug
+  //   });
+  // }
+
+  console.log('result', result);
+  console.log('tokenSlug', tokenSlug);
+
   Object.values(xcmRefMap).forEach((xcmRef) => {
     if (xcmRef.srcAsset === tokenSlug) {
       const destinationChain = chainInfoMap[xcmRef.destChain];
@@ -122,6 +132,7 @@ const substrateAccountSlug = 'polkadot-NATIVE-DOT';
 const evmAccountSlug = 'ethereum-NATIVE-ETH';
 const tonAccountSlug = 'ton-NATIVE-TON';
 const defaultAddressInputRenderKey = 'address-input-render-key';
+const NEXT_PUBLIC_BRIDGE_PROXY_CONTRACT = '0x967F7DdC4ec508462231849AE81eeaa68Ad01389';
 
 const Component = ({ className = '', isAllAccount, targetAccountProxy }: ComponentProps): React.ReactElement<ComponentProps> => {
   useSetCurrentPage('/transaction/send-fund');
@@ -196,6 +207,33 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   const { onError, onSuccess } = useHandleSubmitMultiTransaction(dispatchProcessState, handleWarning);
 
+
+  const originChain1 = chainInfoMap[_getOriginChainOfAsset('ethereum-NATIVE-ETH')];
+  const originChain2 = chainInfoMap[_getOriginChainOfAsset('sepolia_ethereum-NATIVE-ETH')];
+  const srcChain = chainInfoMap[_getOriginChainOfAsset('avail_mainnet-NATIVE-AVAIL')];
+  const srcChain2 = chainInfoMap[_getOriginChainOfAsset('availTuringTest-NATIVE-AVAIL')];
+
+  // const tmpXcmRefMap = { ...xcmRefMap };
+  //
+  // tmpXcmRefMap['avail_mainnet-NATIVE-AVAIL___ethereum-NATIVE-ETH'] =
+  //   {
+  //     destAsset: 'ethereum-NATIVE-ETH',
+  //     destChain: originChain1.slug,
+  //     path: _AssetRefPath.XCM,
+  //     srcAsset: 'avail_mainnet-NATIVE-AVAIL',
+  //     srcChain: srcChain.slug
+  //   };
+  //
+  // tmpXcmRefMap['availTuringTest-NATIVE-AVAIL___sepolia_ethereum-NATIVE-ETH'] =
+  //   {
+  //     destAsset: 'sepolia_ethereum-NATIVE-ETH',
+  //     destChain: originChain2.slug,
+  //     path: _AssetRefPath.XCM,
+  //     srcAsset: 'availTuringTest-NATIVE-AVAIL',
+  //     srcChain: srcChain2.slug
+  //   };
+  //
+  // console.log('tmpXcmRefMap', tmpXcmRefMap);
   const destChainItems = useMemo<ChainItemType[]>(() => {
     return getTokenAvailableDestinations(assetValue, xcmRefMap, chainInfoMap);
   }, [chainInfoMap, assetValue, xcmRefMap]);
@@ -313,6 +351,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [accounts, autoFormatValue, chainInfoMap, form]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
+    return Promise.resolve();
+
     if (!amount) {
       return Promise.reject(t('Amount is required'));
     }
@@ -443,6 +483,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       });
     } else {
       // Make cross chain transfer
+      console.log('123');
       sendPromise = makeCrossChainTransfer({
         destinationNetworkKey: destChain,
         from,
@@ -514,6 +555,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           }
         }
       } catch (e) {
+        console.log('Dung nguyen');
         onError(e as Error);
 
         return false;
@@ -748,6 +790,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         destChain: destChainValue
       })
         .then((balance) => {
+          console.log('balance', balance);
+
           if (!cancel) {
             setMaxTransfer(balance.value);
             setIsFetchingMaxValue(true);
