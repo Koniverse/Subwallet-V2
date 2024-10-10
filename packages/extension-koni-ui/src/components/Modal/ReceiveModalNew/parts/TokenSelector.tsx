@@ -92,12 +92,17 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
     }
   }, [isActive]);
 
+  const onPressCancel = useCallback(() => {
+    setCurrentSearchText('');
+    onCancel && onCancel();
+  }, [onCancel]);
+
   return (
     <SwModal
       className={`${className}`}
       destroyOnClose={true}
       id={modalId}
-      onCancel={onCancel}
+      onCancel={onPressCancel}
       title={t('Select token')}
     >
       <Search
@@ -142,6 +147,15 @@ export const TokenSelectorModal = styled(Component)<Props>(({ theme: { token } }
 
     '.__search-box': {
       marginBottom: token.marginXS
+    },
+
+    '.__list-container': {
+      flex: 1,
+      overflow: 'auto',
+
+      '> div + div': {
+        marginTop: token.marginXS
+      }
     },
 
     '.ant-sw-modal-footer.ant-sw-modal-footer': {
