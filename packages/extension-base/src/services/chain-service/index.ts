@@ -432,7 +432,7 @@ export class ChainService {
     Object.values(this.getAssetRegistry()).forEach((chainAsset) => {
       const _filterActive = !checkActive || assetSettings[chainAsset.slug]?.visible;
 
-      if (chainAsset.originChain === chainSlug && _isAssetFungibleToken(chainAsset) && _filterActive/* && chainAsset.originChain != 'ton'*/) {
+      if (chainAsset.originChain === chainSlug && _isAssetFungibleToken(chainAsset) && _filterActive && chainAsset.originChain != 'ton') {
         result[chainAsset.slug] = chainAsset;
       }
     });
