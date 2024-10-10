@@ -155,7 +155,7 @@ export class AccountModifyHandler extends AccountBaseHandler {
     if (afterDeleteAccounts.length > 1) {
       this.state.saveCurrentAccountProxyId(ALL_ACCOUNT_KEY);
     } else {
-      this.state.saveCurrentAccountProxyId(Object.keys(this.state.accounts)[0]);
+      this.state.saveCurrentAccountProxyId(afterDeleteAccounts[0]);
     }
 
     return addresses;
