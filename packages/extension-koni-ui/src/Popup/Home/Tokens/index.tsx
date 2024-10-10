@@ -200,8 +200,10 @@ const Component = (): React.ReactElement => {
 
   const onCloseTonWalletContactModal = useCallback(() => {
     setIsShowTonWarning(false);
-    inactiveModal(tonAccountSelectorModalId);
-    inactiveModal(tonWalletContractSelectorModalId);
+    setTimeout(() => {
+      inactiveModal(tonAccountSelectorModalId);
+      inactiveModal(tonWalletContractSelectorModalId);
+    }, 200);
   }, [inactiveModal, setIsShowTonWarning]);
 
   const onOpenTonWalletContactModal = useCallback(() => {
@@ -309,6 +311,9 @@ const Component = (): React.ReactElement => {
     };
   }, [handleResize]);
 
+  console.log('isHaveOnlyTonSoloAcc', isHaveOnlyTonSoloAcc);
+  console.log('isShowTonWarning', isShowTonWarning);
+
   return (
     <div
       className={'tokens-screen-container'}
@@ -379,7 +384,9 @@ const Component = (): React.ReactElement => {
                   address={currentTonAddress}
                   chainSlug={'ton'}
                   id={tonWalletContractSelectorModalId}
-                  onCancel={isAllAccount ? onBackTonWalletContactModal : undefined}
+                  isShowBackButton={isAllAccount}
+                  onBack={onBackTonWalletContactModal}
+                  onCancel={onCloseTonWalletContactModal}
                   rightIconProps={{
                     icon: <CloseIcon />,
                     onClick: onCloseTonWalletContactModal

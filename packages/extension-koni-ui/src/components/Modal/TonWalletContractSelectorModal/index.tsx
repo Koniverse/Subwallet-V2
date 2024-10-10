@@ -29,12 +29,14 @@ type Props = ThemeProps & {
   address: string;
   closeIcon?: React.ForwardRefExoticComponent<IconProps & React.RefAttributes<SVGSVGElement>>;
   rightIconProps?: ButtonProps;
+  isShowBackButton?: boolean;
+  onBack?: VoidFunction;
 };
 
 const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 const TON_WALLET_CONTRACT_TYPES_URL = 'https://docs.ton.org/participate/wallets/contracts#how-can-wallets-be-different';
 
-const Component: React.FC<Props> = ({ address, chainSlug, className, closeIcon = CaretLeft, onCancel, rightIconProps }: Props) => {
+const Component: React.FC<Props> = ({ address, chainSlug, className, closeIcon = CaretLeft, isShowBackButton, onBack, onCancel, rightIconProps }: Props) => {
   const { t } = useTranslation();
   const notification = useNotification();
   const chainInfo = useFetchChainInfo(chainSlug);
@@ -149,7 +151,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, closeIcon =
   return (
     <SwModal
       className={CN(className, 'wallet-version-modal')}
-      closable={!!onCancel}
+      closable={isShowBackButton}
       closeIcon={
         <Icon
           phosphorIcon={closeIcon}
@@ -174,8 +176,8 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, closeIcon =
         </Button>
       }
       id={tonWalletContractSelectorModalId}
-      maskClosable={!!onCancel}
-      onCancel={onCancel}
+      maskClosable={isShowBackButton}
+      onCancel={onBack}
       rightIconProps={rightIconProps}
       title={t<string>('Wallet address & version')}
     >

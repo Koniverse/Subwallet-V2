@@ -522,7 +522,9 @@ function Component (): React.ReactElement {
                   address={currentTonAddress}
                   chainSlug={'ton'}
                   id={tonWalletContractSelectorModalId}
-                  onCancel={isAllAccount ? onBackTonWalletContactModal : undefined}
+                  isShowBackButton={isAllAccount}
+                  onBack={onBackTonWalletContactModal}
+                  onCancel={onCloseTonWalletContactModal}
                   rightIconProps={{
                     icon: <CloseIcon />,
                     onClick: onCloseTonWalletContactModal
