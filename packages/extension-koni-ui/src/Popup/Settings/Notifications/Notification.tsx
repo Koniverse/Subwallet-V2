@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { _NotificationInfo, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationSetup, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
@@ -61,6 +61,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
   const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
+  // use this to trigger get date when click read/unread
+  const [isTrigger, setTrigger] = useState<boolean>(false);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
@@ -96,7 +98,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [notifications, selectedFilterTab, token]);
 
   const onEnableNotification = useCallback(() => {
-    const newNotificationSetup = {
+    const newNotificationSetup: NotificationSetup = {
       ...notificationSetup,
       isEnabled: true
     };
@@ -227,6 +229,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [currentProxyId, selectedFilterTab]);
 
   useEffect(() => {
+    console.log('run to this when click');
     getInappNotifications({
       proxyId: currentProxyId,
       notificationTab: NotificationTab.ALL
@@ -235,7 +238,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         setNotifications(rs);
       })
       .catch(console.error);
-  }, [currentProxyId, isAllAccount]);
+  }, [currentProxyId, isAllAccount, isTrigger]);
 
   return (
     <PageWrapper className={`manage-website-access ${className}`}>
@@ -299,8 +302,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             />
             {viewDetailItem && isNotificationDetailModalVisible && (
               <NotificationDetailModal
+                isTrigger={isTrigger}
                 notificationItem={viewDetailItem}
                 selectedFilterTab={selectedFilterTab}
+                setTrigger={setTrigger}
               />
             )}
           </>
