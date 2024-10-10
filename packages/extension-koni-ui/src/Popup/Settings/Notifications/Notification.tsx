@@ -16,6 +16,7 @@ import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
+import CN from 'classnames';
 import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -156,7 +157,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         actionType={item.actionType}
         address={item.address}
         backgroundColor={item.backgroundColor}
-        className={'item'}
+        className={CN('item', { '-read-item': item.isRead })}
         description={item.description}
         extrinsicType={item.extrinsicType}
         id={item.id}
@@ -339,6 +340,10 @@ const Notification = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
     '.item + .item': {
       marginTop: token.marginXS
+    },
+
+    '.-read-item': {
+      opacity: 0.4
     }
   });
 });
