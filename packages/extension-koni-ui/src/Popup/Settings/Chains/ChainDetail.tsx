@@ -403,7 +403,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                       )
                   }
                 </Col>
-              }
+                }
+                {
+                  isTonNetwork &&
+                  <Col span={!isPureEvmChain ? 12 : 24}>
+                    <Field
+                      content={chainTypeString()}
+                      placeholder={t('Network type')}
+                      tooltip={t('Network type')}
+                      tooltipPlacement={'topLeft'}
+                    />
+                  </Col>
+                }
               </Row>
 
               <Row gutter={token.paddingSM}>
@@ -419,14 +430,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   </Col>
                 }
 
-                <Col span={!isPureEvmChain ? 12 : 24}>
-                  <Field
-                    content={chainTypeString()}
-                    placeholder={t('Network type')}
-                    tooltip={t('Network type')}
-                    tooltipPlacement={'topLeft'}
-                  />
-                </Col>
+                {
+                  !isTonNetwork &&
+                  <Col span={!isPureEvmChain ? 12 : 24}>
+                    <Field
+                      content={chainTypeString()}
+                      placeholder={t('Network type')}
+                      tooltip={t('Network type')}
+                      tooltipPlacement={'topLeft'}
+                    />
+                  </Col>
+                }
               </Row>
 
               <Form.Item
