@@ -40,7 +40,15 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
     });
 
     if (currentSearchText.toLowerCase() === 'ton') {
-      filteredList.unshift(filteredList.splice(filteredList.findIndex((item) => item.slug === 'ton-NATIVE-TON'), 1)[0]);
+      const tonItemIndex = filteredList.findIndex((item) => item.slug === 'ton-NATIVE-TON');
+
+      if (tonItemIndex !== -1) {
+        const [tonItem] = filteredList.splice(tonItemIndex, 1);
+
+        if (tonItem) {
+          filteredList.unshift(tonItem);
+        }
+      }
 
       return filteredList;
     } else {
