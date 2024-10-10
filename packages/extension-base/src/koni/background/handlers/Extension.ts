@@ -3,6 +3,7 @@
 
 import { Common } from '@ethereumjs/common';
 import { LegacyTransaction } from '@ethereumjs/tx';
+import { UserOpBundle } from '@particle-network/aa';
 import { _AssetRef, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
@@ -63,6 +64,7 @@ import { SessionTypes } from '@walletconnect/types/dist/types/sign-client/sessio
 import { getSdkError } from '@walletconnect/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
+import { QuoteResponse } from 'klaster-sdk';
 import { Subject } from 'rxjs';
 import { TransactionConfig } from 'web3-core';
 
@@ -4590,11 +4592,12 @@ export default class KoniExtension {
         chain: txChain,
         chainType: ChainType.EVM,
         transferNativeAmount,
-        transaction: extrinsic,
+        transaction: extrinsic as UserOpBundle | QuoteResponse,
         data: inputData,
         extrinsicType: ExtrinsicType.EVM_EXECUTE,
         ignoreWarnings: true,
-        isTransferAll: false
+        isTransferAll: false,
+        provider: caSetting.caProvider
       });
     }
 

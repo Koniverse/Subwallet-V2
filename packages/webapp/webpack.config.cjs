@@ -42,7 +42,7 @@ const packages = [
   'extension-chains',
   'extension-dapp',
   'extension-inject',
-  'extension-koni',
+  // 'extension-koni',
   'extension-web-ui'
 ];
 
