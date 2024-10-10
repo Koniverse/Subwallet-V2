@@ -2,19 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
-import {
-  _getBlockExplorerFromChain,
-  _getChainNativeTokenBasicInfo,
-  _getChainSubstrateAddressPrefix,
-  _getCrowdloanUrlFromChain,
-  _getEvmChainId,
-  _getSubstrateParaId,
-  _isChainEvmCompatible,
-  _isChainSubstrateCompatible,
-  _isCustomChain,
-  _isPureEvmChain,
-  _isTonChain
-} from '@subwallet/extension-base/services/chain-service/utils';
+import { _getBlockExplorerFromChain, _getChainNativeTokenBasicInfo, _getChainSubstrateAddressPrefix, _getCrowdloanUrlFromChain, _getEvmChainId, _getSubstrateParaId, _isChainEvmCompatible, _isChainSubstrateCompatible, _isCustomChain, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ProviderSelector } from '@subwallet/extension-koni-ui/components/Field/ProviderSelector';
@@ -74,8 +62,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [chainInfo] = useState(_chainInfo);
   const [chainState] = useState(_chainState);
 
-  const isTonNetwork = useMemo(() => {
-    return chainInfo && _isTonChain(chainInfo);
+  const isPureTonChain = useMemo(() => {
+    return chainInfo && _isPureTonChain(chainInfo);
   }, [chainInfo]);
 
   const isPureEvmChain = useMemo(() => {
@@ -381,7 +369,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 </Col>
 
                 {
-                !isTonNetwork &&
+                !isPureTonChain &&
                 <Col span={12}>
                   {
                     !isPureEvmChain
@@ -405,7 +393,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 </Col>
                 }
                 {
-                  isTonNetwork &&
+                  isPureTonChain &&
                   <Col span={!isPureEvmChain ? 12 : 24}>
                     <Field
                       content={chainTypeString()}
@@ -419,7 +407,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
               <Row gutter={token.paddingSM}>
                 {
-                  (!isPureEvmChain && !isTonNetwork) &&
+                  (!isPureEvmChain && !isPureTonChain) &&
                   <Col span={12}>
                     <Field
                       content={addressPrefix.toString()}
@@ -431,7 +419,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 }
 
                 {
-                  !isTonNetwork &&
+                  !isPureTonChain &&
                   <Col span={!isPureEvmChain ? 12 : 24}>
                     <Field
                       content={chainTypeString()}
@@ -456,7 +444,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               </Form.Item>
 
               {
-                (!_isPureEvmChain(chainInfo) && !isTonNetwork) && <Form.Item
+                (!_isPureEvmChain(chainInfo) && !isPureTonChain) && <Form.Item
                   name={'crowdloanUrl'}
                   rules={[{ validator: crowdloanUrlValidator }]}
                   statusHelpAsTooltip={true}

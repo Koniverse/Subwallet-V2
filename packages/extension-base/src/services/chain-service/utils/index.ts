@@ -65,14 +65,6 @@ export function _isPureEvmChain (chainInfo: _ChainInfo) {
   return (!!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo);
 }
 
-export function _isTonChain (chainInfo: _ChainInfo) {
-  if (chainInfo.slug == 'ton'){
-    return true;
-  } else {
-    return false;
-  }
-}
-
 export function _isPureSubstrateChain (chainInfo: _ChainInfo) {
   return (!chainInfo.evmInfo && !!chainInfo.substrateInfo && !chainInfo.tonInfo);
 }
