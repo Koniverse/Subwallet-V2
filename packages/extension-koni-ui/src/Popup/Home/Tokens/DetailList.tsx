@@ -213,6 +213,10 @@ function Component (): React.ReactElement {
     }
   }, [accountProxies, currentAccountProxy, isAllAccount]);
 
+  const isReadonlyAccount = useMemo(() => {
+    return currentAccountProxy && currentAccountProxy.accountType === AccountProxyType.READ_ONLY;
+  }, [currentAccountProxy]);
+
   const isIncludesTonToken = useMemo(() => {
     return !!TON_CHAINS.length && tokenBalanceItems.some((item) => item.chain && TON_CHAINS.includes(item.chain));
   }, [tokenBalanceItems]);
@@ -487,7 +491,7 @@ function Component (): React.ReactElement {
           ))
         }
         {
-          !isHaveOnlyTonSoloAcc && isIncludesTonToken && isShowTonWarning && (
+          !isHaveOnlyTonSoloAcc && !isReadonlyAccount && isIncludesTonToken && isShowTonWarning && (
             <>
               <AlertBox
                 className={classNames('ton-solo-acc-alert-area')}
