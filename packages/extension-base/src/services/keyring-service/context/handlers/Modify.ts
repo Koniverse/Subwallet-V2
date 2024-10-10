@@ -125,6 +125,8 @@ export class AccountModifyHandler extends AccountBaseHandler {
   public async accountProxyForget ({ proxyId }: RequestAccountProxyForget): Promise<string[]> {
     const modifyPairs = this.state.modifyPairs;
     const isUnified = this.state.isUnifiedAccount(proxyId);
+    const oldAccounts = Object.keys(this.state.accounts);
+    const afterDeleteAccounts = oldAccounts.filter((id) => id !== proxyId);
 
     let addresses: string[];
 
@@ -132,10 +134,10 @@ export class AccountModifyHandler extends AccountBaseHandler {
       addresses = [proxyId];
     } else {
       addresses = Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
-
-      this.state.deleteAccountProxy(proxyId);
-      this.parentService.eventRemoveAccount(proxyId);
     }
+
+    this.state.deleteAccountProxy(proxyId);
+    this.parentService.eventRemoveAccountProxy(proxyId);
 
     for (const address of addresses) {
       delete modifyPairs[address];
@@ -149,7 +151,12 @@ export class AccountModifyHandler extends AccountBaseHandler {
 
     await Promise.all(addresses.map((address) => new Promise<void>((resolve) => this.state.removeAccountRef(address, resolve))));
 
-    this.state.saveCurrentAccountProxyId(ALL_ACCOUNT_KEY);
+    // Cannot use `this.state.accounts` because it is not completely updated yet
+    if (afterDeleteAccounts.length > 1) {
+      this.state.saveCurrentAccountProxyId(ALL_ACCOUNT_KEY);
+    } else {
+      this.state.saveCurrentAccountProxyId(Object.keys(this.state.accounts)[0]);
+    }
 
     return addresses;
   }

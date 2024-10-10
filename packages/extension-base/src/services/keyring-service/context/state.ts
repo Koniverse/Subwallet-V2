@@ -499,13 +499,12 @@ export class AccountState {
       return allowGetAllAccount ? this.getAllAddresses() : [];
     }
 
-    const accountProxies = this._accountProxy.value;
-    const modifyPairs = this._modifyPair.value;
+    const accountProxies = this.accounts;
 
     if (!accountProxies[proxyId]) {
       return [proxyId];
     } else {
-      return Object.keys(modifyPairs).filter((address) => modifyPairs[address].accountProxyId === proxyId);
+      return accountProxies[proxyId].accounts.map((account) => account.address);
     }
   }
 

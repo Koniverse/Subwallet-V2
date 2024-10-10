@@ -11,11 +11,11 @@ import { useGetAccountProxyById } from '@subwallet/extension-koni-ui/hooks';
 import useCopy from '@subwallet/extension-koni-ui/hooks/common/useCopy';
 import useFocusFormItem from '@subwallet/extension-koni-ui/hooks/form/useFocusFormItem';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
-import { exportAccount, exportAccountMnemonic, exportAccountPrivateKey } from '@subwallet/extension-koni-ui/messaging';
+import { exportAccountBatch, exportAccountMnemonic, exportAccountPrivateKey } from '@subwallet/extension-koni-ui/messaging';
 import { PhosphorIcon, RemindBackUpSeedPhraseParamState, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
-import { KeyringPair$Json } from '@subwallet/keyring/types';
 import { BackgroundIcon, Button, Field, Form, Icon, Input, PageIcon, SettingItem, SwQRCode } from '@subwallet/react-ui';
+import { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import CN from 'classnames';
 import { saveAs } from 'file-saver';
 import { CheckCircle, CopySimple, DownloadSimple, FileJs, Leaf, QrCode, Wallet } from 'phosphor-react';
@@ -51,12 +51,12 @@ interface ExportFormState {
   [FormFieldName.TYPES]: ExportType[];
 }
 
-const onExportJson = (jsonData: KeyringPair$Json, address: string): (() => void) => {
+const onExportJson = (jsonData: KeyringPairs$Json, accountName: string): (() => void) => {
   return () => {
     if (jsonData) {
       const blob = new Blob([JSON.stringify(jsonData)], { type: 'application/json; charset=utf-8' });
 
-      saveAs(blob, `${address}.json`);
+      saveAs(blob, `${accountName}.json`);
     }
   };
 };
@@ -94,7 +94,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const [privateKey, setPrivateKey] = useState<string>('');
   const [publicKey, setPublicKey] = useState<string>('');
-  const [jsonData, setJsonData] = useState<null | KeyringPair$Json>(null);
+  const [jsonData, setJsonData] = useState<null | KeyringPairs$Json>(null);
   const [seedPhrase, setSeedPhrase] = useState<string>('');
 
   const titleMap = useMemo((): Record<ExportType, string> => ({
@@ -191,13 +191,13 @@ const Component: React.FC<Props> = (props: Props) => {
         }
 
         if (exportTypes.includes(ExportType.JSON_FILE) && accountProxy.accountActions.includes(AccountActions.EXPORT_JSON)) {
-          exportAccount(address, password).then((res) => {
+          exportAccountBatch({ proxyIds: [accountProxy.id], password: password }).then((res) => {
             setJsonData(res.exportedJson);
             result.jsonFile = true;
             checkDone();
 
             if (exportSingle) {
-              onExportJson(res.exportedJson, address)();
+              onExportJson(res.exportedJson, accountProxy.name)();
             }
           }).catch((e: Error) => {
             reject(new Error(e.message));
@@ -517,8 +517,7 @@ const Component: React.FC<Props> = (props: Props) => {
                               />
                             )}
                             name={`${accountProxy.id}.json`}
-                            onPressItem={onExportJson(
-                              jsonData, accountProxy.accounts[0].address)}
+                            onPressItem={onExportJson(jsonData, accountProxy.name)}
                             rightItem={(
                               <Icon
                                 className='setting-item-right-icon'
