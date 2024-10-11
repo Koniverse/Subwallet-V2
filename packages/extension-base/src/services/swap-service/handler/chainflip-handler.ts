@@ -396,8 +396,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     const fromAssetId = _getAssetSymbol(fromAsset);
     const toAssetId = _getAssetSymbol(toAsset);
 
-    const toAmount = new BigNumber(quote.toAmount);
-    const minReceive = toAmount.times(1 - slippage).integerValue();
+    const minReceive = new BigNumber(quote.rate).times(1 - slippage).toString();
 
     const depositAddressResponse = await this.swapSdk.requestDepositAddress({
       srcChain: srcChainId,
@@ -407,7 +406,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       destAddress: receiver,
       amount: quote.fromAmount,
       fillOrKillParams: {
-        minPrice: minReceive.toString(), // minimum accepted price for swaps through the channel
+        minPrice: minReceive, // minimum accepted price for swaps through the channel
         refundAddress: address, // address to which assets are refunded
         retryDurationBlocks: 100 // 100 blocks * 6 seconds = 10 minutes before deposits are refunded
       }
