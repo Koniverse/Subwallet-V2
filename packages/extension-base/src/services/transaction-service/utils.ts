@@ -39,6 +39,10 @@ function getBlockExplorerAccountRoute (explorerLink: string) {
     return '#/accounts';
   }
 
+  if (explorerLink.includes('explorer.zkverify.io')) {
+    return 'account';
+  }
+
   return 'address';
 }
 
