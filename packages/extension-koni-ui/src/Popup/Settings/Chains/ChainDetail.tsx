@@ -134,7 +134,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       types.push('EVM');
     }
 
-    if (chainInfo.slug == 'ton'){
+    if (chainInfo.slug === 'ton') {
       types.push('TON');
     }
 
@@ -182,7 +182,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     setLoading(true);
 
     const blockExplorer = form.getFieldValue('blockExplorer') as string;
-    const crowdloanUrl =  form.getFieldValue('crowdloanUrl') as string;
+    const crowdloanUrl = form.getFieldValue('crowdloanUrl') as string;
     const currentProvider = form.getFieldValue('currentProvider') as string;
 
     const params: _NetworkUpsertParams = {
@@ -369,7 +369,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 </Col>
 
                 {
-                !isPureTonChain &&
+                  !isPureTonChain &&
                 <Col span={12}>
                   {
                     !isPureEvmChain
