@@ -343,7 +343,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     form.setFieldValue('toTokenSlug', tokenSlug);
   }, [form]);
 
-  const supportSlippageSelection = useMemo(() => {
+  const notSupportSlippageSelection = useMemo(() => {
     if (currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_TESTNET || currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_MAINNET) {
       return true;
     }
@@ -352,10 +352,10 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
   }, [currentQuote?.provider.id]);
 
   const onOpenSlippageModal = useCallback(() => {
-    if (!supportSlippageSelection) {
+    if (!notSupportSlippageSelection) {
       activeModal(SWAP_SLIPPAGE_MODAL);
     }
-  }, [activeModal, supportSlippageSelection]);
+  }, [activeModal, notSupportSlippageSelection]);
 
   const openAllQuotesModal = useCallback(() => {
     activeModal(SWAP_ALL_QUOTES_MODAL);
@@ -695,9 +695,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
 
   const minimumReceived = useMemo(() => {
     const calcMinimumReceived = (value: string) => {
-      const adjustedValue = supportSlippageSelection
-        ? value
-        : new BigN(value).multipliedBy(new BigN(1).minus(currentSlippage.slippage)).integerValue(BigN.ROUND_DOWN);
+      const adjustedValue = new BigN(value).multipliedBy(new BigN(1).minus(currentSlippage.slippage)).integerValue(BigN.ROUND_DOWN);
 
       return adjustedValue.toString().includes('e')
         ? formatNumberString(adjustedValue.toString())
@@ -705,7 +703,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     };
 
     return calcMinimumReceived(currentQuote?.toAmount || '0');
-  }, [supportSlippageSelection, currentQuote?.toAmount, currentSlippage.slippage]);
+  }, [currentQuote?.toAmount, currentSlippage.slippage]);
 
   const onAfterConfirmTermModal = useCallback(() => {
     return setConfirmedTerm('swap-term-confirmed');
@@ -745,12 +743,9 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
             className='__slippage-action'
             onClick={onOpenSlippageModal}
           >
-            {supportSlippageSelection
-              ? (<>
-                <Tooltip
-                  placement={'topRight'}
-                  title={'Chainflip uses Just In Time AMM to optimize swap quote without setting slippage'}
-                >
+            {notSupportSlippageSelection
+              ? (
+                <>
                   <div className={'__slippage-title-wrapper'}>Slippage
                     <Icon
                       customSize={'16px'}
@@ -759,11 +754,10 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                       size='sm'
                       weight='fill'
                     />
-                      :
+                    :
                   </div>
-                </Tooltip>
                   &nbsp;<span>{(CHAINFLIP_SLIPPAGE * 100).toString()}%</span>
-              </>
+                </>
               )
               : (
                 <>
@@ -781,7 +775,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                 </>
               )}
 
-            {!supportSlippageSelection && (
+            {!notSupportSlippageSelection && (
               <div className='__slippage-editor-button'>
                 <Icon
                   className='__slippage-editor-button-icon'
