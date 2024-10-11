@@ -22,6 +22,7 @@ import { _isChainSupportEvmNft, _isChainSupportNativeNft, _isChainSupportWasmNft
 import { categoryAddresses, targetIsWeb } from '@subwallet/extension-base/utils';
 
 import AssetHubNftsPalletApi from './assethub_nft';
+import { TernoaNftApi } from './ternoa_nft';
 
 function createSubstrateNftApi (chain: string, substrateApi: _SubstrateApi | null, addresses: string[]): BaseNftApi[] | null {
   const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
@@ -46,6 +47,8 @@ function createSubstrateNftApi (chain: string, substrateApi: _SubstrateApi | nul
     return [new VaraNftApi(chain, substrateAddresses)];
   } else if (_NFT_CHAIN_GROUP.avail.includes(chain)) {
     return [new BlobInscriptionApi(chain, substrateAddresses)];
+  } else if (_NFT_CHAIN_GROUP.ternoa.includes(chain)) {
+    return [new TernoaNftApi(substrateApi, substrateAddresses, chain)];
   }
 
   return null;
@@ -156,6 +159,14 @@ export class NftHandler {
 
           if (chain === 'unique_evm') {
             const handlers = createSubstrateNftApi(chain, null, evmAddresses);
+
+            if (handlers && !!handlers.length) {
+              this.handlers.push(...handlers);
+            }
+          }
+
+          if (chain === 'ternoa') {
+            const handlers = createSubstrateNftApi(chain, this.substrateApiMap[chain], substrateAddresses);
 
             if (handlers && !!handlers.length) {
               this.handlers.push(...handlers);

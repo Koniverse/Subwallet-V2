@@ -58,7 +58,6 @@ interface DetailFormState {
 
 const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestViewDerivedAccountDetails, requestViewDerivedAccounts }: ComponentProps) => {
   const showDerivedAccounts = !!accountProxy.children?.length;
-  const showDerivationInfoTab = !!accountProxy.parentId;
 
   const { t } = useTranslation();
 
@@ -68,6 +67,13 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
 
   const { alertModal, deriveModal: { open: openDeriveModal } } = useContext(WalletModalContext);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const showDerivationInfoTab = useMemo((): boolean => {
+    if (accountProxy.parentId) {
+      return !!accountProxies.find((acc) => acc.id === accountProxy.parentId);
+    } else {
+      return false;
+    }
+  }, [accountProxies, accountProxy.parentId]);
 
   const getDefaultFilterTab = () => {
     if (requestViewDerivedAccounts && showDerivedAccounts) {
