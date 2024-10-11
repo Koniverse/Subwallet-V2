@@ -156,7 +156,6 @@ export const GlobalSearchTokenModal = styled(Component)<Props>(({ theme: { token
     },
 
     '.ant-sw-list-section': {
-      maxHeight: 'inherit',
       flex: 1
     },
 
@@ -173,7 +172,6 @@ export const GlobalSearchTokenModal = styled(Component)<Props>(({ theme: { token
     },
 
     '.__list-container': {
-      flex: 1,
       overflow: 'auto'
     }
   });
