@@ -229,7 +229,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [currentProxyId, selectedFilterTab]);
 
   useEffect(() => {
-    console.log('run to this when click');
     getInappNotifications({
       proxyId: currentProxyId,
       notificationTab: NotificationTab.ALL
@@ -304,7 +303,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               <NotificationDetailModal
                 isTrigger={isTrigger}
                 notificationItem={viewDetailItem}
-                selectedFilterTab={selectedFilterTab}
                 setTrigger={setTrigger}
               />
             )}
