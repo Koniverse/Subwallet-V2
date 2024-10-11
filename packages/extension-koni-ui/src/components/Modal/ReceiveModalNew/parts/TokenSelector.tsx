@@ -36,7 +36,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
     const filteredList = items.filter((item) => {
       const chainName = _getChainName(chainInfoMap[item.originChain]);
 
-      return item.symbol.toLowerCase().includes(currentSearchText.toLowerCase()) || item.name.toLowerCase().includes(currentSearchText.toLowerCase()) || chainName.toLowerCase().includes(currentSearchText.toLowerCase());
+      return item.symbol.toLowerCase().includes(currentSearchText.toLowerCase()) || chainName.toLowerCase().includes(currentSearchText.toLowerCase());
     });
 
     if (currentSearchText.toLowerCase() === 'ton') {
@@ -109,7 +109,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
         autoFocus={true}
         className={'__search-box'}
         onSearch={handleSearch}
-        placeholder={t<string>('Token name')}
+        placeholder={t<string>('Enter token name or network name')}
         searchValue={currentSearchText}
       />
       <SwList
