@@ -7,6 +7,7 @@ import { GetNotificationParams } from '@subwallet/extension-base/types/notificat
 import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
+import Search from '@subwallet/extension-koni-ui/components/Search';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
@@ -14,7 +15,7 @@ import { getInappNotifications, markAllReadNotification } from '@subwallet/exten
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
+import { ActivityIndicator, Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import CN from 'classnames';
 import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
@@ -63,6 +64,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
   // use this to trigger get date when click read/unread
   const [isTrigger, setTrigger] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [currentSearchText, setCurrentSearchText] = useState<string>('');
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
@@ -97,6 +100,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     }).filter(filterTabFunction).sort(sortByTimeFunc);
   }, [notifications, selectedFilterTab, token]);
 
+  const filteredNotificationItems = useMemo(() => {
+    return notificationItems.filter((item) => {
+      const searchTextLowerCase = currentSearchText.toLowerCase();
+
+      return item.title?.toLowerCase().includes(searchTextLowerCase);
+    });
+  }, [currentSearchText, notificationItems]);
+
   const onEnableNotification = useCallback(() => {
     const newNotificationSetup: NotificationSetup = {
       ...notificationSetup,
@@ -111,6 +122,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       });
     navigate('/settings/notification-config');
   }, [navigate, notificationSetup]);
+
+  const handleSearch = useCallback((value: string) => {
+    setCurrentSearchText(value);
+  }, []);
 
   const onNotificationConfig = useCallback(() => {
     navigate('/settings/notification-config');
@@ -135,12 +150,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value as NotificationTab);
+    setLoading(true);
     getInappNotifications({
       proxyId: currentProxyId,
       notificationTab: value
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
+        setTimeout(() => setLoading(false), 300);
       })
       .catch(console.error);
   }, [currentProxyId]);
@@ -152,6 +169,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       activeModal(NOTIFICATION_DETAIL_MODAL);
     };
   }, [activeModal]);
+
+  const onClickBack = useCallback(() => {
+    setCurrentSearchText('');
+    goBack();
+  }, [goBack]);
 
   const renderItem = useCallback((item: NotificationInfoItem) => {
     return (
@@ -206,35 +228,31 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     );
   }, [loadingNotification, onEnableNotification, t]);
 
-  const searchFunc = useCallback((item: NotificationInfoItem, searchText: string) => {
-    const searchTextLowerCase = searchText.toLowerCase();
-
-    return (
-      item.title?.toLowerCase().includes(searchTextLowerCase)
-    );
-  }, []);
-
   const handleSwitchClick = useCallback(() => {
     markAllReadNotification(currentProxyId || ALL_ACCOUNT_KEY)
       .catch(console.error);
 
+    setLoading(true);
     getInappNotifications({
       proxyId: currentProxyId,
       notificationTab: selectedFilterTab
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
+        setTimeout(() => setLoading(false), 300);
       })
       .catch(console.error);
   }, [currentProxyId, selectedFilterTab]);
 
   useEffect(() => {
+    setLoading(true);
     getInappNotifications({
       proxyId: currentProxyId,
       notificationTab: NotificationTab.ALL
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
+        setTimeout(() => setLoading(false), 300);
       })
       .catch(console.error);
   }, [currentProxyId, isAllAccount, isTrigger]);
@@ -244,7 +262,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       <SwSubHeader
         background={'transparent'}
         center
-        onBack={goBack}
+        onBack={onClickBack}
         paddingVertical
         rightButtons={[
           {
@@ -289,16 +307,26 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       {enableNotification
         ? (
           <>
-            <SwList.Section
-              actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
-              enableSearchInput
-              list={notificationItems}
-              renderItem={renderItem}
-              renderWhenEmpty={renderEmptyList}
-              searchFunction={searchFunc}
-              searchMinCharactersCount={2}
-              searchPlaceholder={t<string>('Enter network name')}
-            />
+            <div className={'list-container-wrapper'}>
+              <Search
+                actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
+                className={'__search-box'}
+                onSearch={handleSearch}
+                placeholder={t<string>('Enter network name')}
+                searchValue={currentSearchText}
+              />
+              {loading
+                ? <div className={'indicator-wrapper'}><ActivityIndicator size={32} /></div>
+                : (
+                  <SwList
+                    className={'__list-container'}
+                    list={filteredNotificationItems}
+                    renderItem={renderItem}
+                    renderWhenEmpty={renderEmptyList}
+                    searchableMinCharactersCount={2}
+                  />
+                )}
+            </div>
             {viewDetailItem && isNotificationDetailModalVisible && (
               <NotificationDetailModal
                 isTrigger={isTrigger}
@@ -347,6 +375,37 @@ const Notification = styled(Component)<Props>(({ theme: { token } }: Props) => {
 
     '.-read-item': {
       opacity: 0.4
+    },
+
+    '.list-container-wrapper': {
+      paddingLeft: token.padding,
+      paddingRight: token.padding,
+      paddingTop: token.padding,
+      paddingBottom: token.padding,
+      display: 'flex',
+      flexDirection: 'column',
+      flex: 1,
+      overflow: 'auto'
+    },
+
+    '.__list-container': {
+      flex: 1,
+      overflow: 'auto',
+
+      '> div + div': {
+        marginTop: token.marginXS
+      }
+    },
+
+    '.__search-box': {
+      marginBottom: token.marginXS
+    },
+
+    '.indicator-wrapper': {
+      display: 'flex',
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center'
     }
   });
 });
