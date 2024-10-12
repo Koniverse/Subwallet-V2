@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { AvailBridgeSourceChain } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { YieldPoolType } from '@subwallet/extension-base/types';
 
 export interface _BaseNotificationInfo {
@@ -25,6 +26,8 @@ export interface ActionTypeToMetadataMap {
   [NotificationActionType.RECEIVE]: SendReceiveNotificationMetadata
   [NotificationActionType.WITHDRAW]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeOnAvailNotificationMetadata,
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeOnEthNotificationMetadata
 }
 
 export interface SendReceiveNotificationMetadata {
@@ -41,6 +44,28 @@ export interface WithdrawClaimNotificationMetadata {
   stakingSlug: string
 }
 
+export interface ClaimAvailBridgeOnAvailNotificationMetadata {
+  messageId: string,
+  sourceChain: AvailBridgeSourceChain,
+  sourceTransactionHash: string,
+  depositorAddress: string,
+  receiverAddress: string,
+  amount: string,
+  sourceBlockHash: string,
+  sourceTransactionIndex: string,
+}
+
+export interface ClaimAvailBridgeOnEthNotificationMetadata {
+  messageId: string
+  sourceChain: AvailBridgeSourceChain,
+  sourceTransactionHash: string,
+  depositorAddress: string,
+  receiverAddress: string,
+  amount: string,
+  sourceBlockHash: string,
+  sourceTransactionIndex: string,
+}
+
 export enum NotificationTimePeriod {
   TODAY = 'TODAY',
   THIS_WEEK = 'THIS_WEEK',
@@ -51,7 +76,9 @@ export enum NotificationActionType {
   SEND = 'SEND',
   RECEIVE = 'RECEIVE',
   WITHDRAW = 'WITHDRAW',
-  CLAIM = 'CLAIM'
+  CLAIM = 'CLAIM',
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'CLAIM_AVAIL_BRIDGE_ON_AVAIL',
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM'
 }
 
 export enum NotificationTab {

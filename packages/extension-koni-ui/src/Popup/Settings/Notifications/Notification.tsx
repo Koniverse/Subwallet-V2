@@ -36,14 +36,18 @@ export enum NotificationIconBackgroundColorMap {
   SEND = 'colorSuccess',
   RECEIVE = 'lime-7',
   WITHDRAW = 'blue-8',
-  CLAIM = 'yellow-7'
+  CLAIM = 'yellow-7',
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'red-10', // todo: update this
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'red-10'
 }
 
 export const NotificationIconMap = {
   SEND: ArrowSquareUpRight,
   RECEIVE: ArrowSquareDownLeft,
   WITHDRAW: DownloadSimple,
-  CLAIM: Gift
+  CLAIM: Gift,
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL: Gift, // todo: update this
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Gift
 };
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {

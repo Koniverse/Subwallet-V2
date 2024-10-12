@@ -98,14 +98,24 @@ function Component (props: Props): React.ReactElement<Props> {
 
         break;
       }
+
+      case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL: {
+        // todo: update this
+        break;
+      }
+
+      case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: {
+        // todo: update this
+        break;
+      }
     }
   }, [navigate, notificationItem.actionType, notificationItem.address, notificationItem.metadata, setClaimRewardStorage, setWithdrawStorage]);
 
-  const handleActionNotification = useCallback(() => {
+  const handleNotificationInfo = useCallback(() => {
     const { icon, title } = getNotificationAction(notificationItem.extrinsicType);
     const sampleData: ActionInfo = {
       title,
-      extrinsicType: ExtrinsicType.TRANSFER_TOKEN,
+      extrinsicType: ExtrinsicType.TRANSFER_TOKEN, // todo: recheck this
       backgroundColor: token.geekblue,
       leftIcon: icon
     };
@@ -137,13 +147,13 @@ function Component (props: Props): React.ReactElement<Props> {
         >
           <div className={'__left-part'}>
             <BackgroundIcon
-              backgroundColor={handleActionNotification().backgroundColor}
-              phosphorIcon={handleActionNotification().leftIcon}
+              backgroundColor={handleNotificationInfo().backgroundColor}
+              phosphorIcon={handleNotificationInfo().leftIcon}
               size='sm'
               weight='fill'
             />
           </div>
-          <div className={'__right-part'}>{handleActionNotification().title}</div>
+          <div className={'__right-part'}>{handleNotificationInfo().title}</div>
         </div>
         <div
           className={'__mark-read-button'}
