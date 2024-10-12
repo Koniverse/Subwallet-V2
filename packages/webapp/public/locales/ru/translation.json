@@ -1370,5 +1370,8 @@
   "Select the account(s) you'd like to import": "",
   "All accounts found in this file already exist in SubWallet": "",
   "No available TON account": "",
-  "Unsupported address": ""
+  "Unsupported address": "",
+  "Failed to import. Incompatible NFT": "",
+  "TON wallets have multiple versions, each with its own wallet address and balance. <highlight>Change versions</highlight> if you don't see balances": "",
+  "Change wallet address & version": ""
 }
