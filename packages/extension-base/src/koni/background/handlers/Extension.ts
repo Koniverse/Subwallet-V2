@@ -47,7 +47,7 @@ import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectN
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
-import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
+import { BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestEarlyValidateYield, RequestGetYieldPoolTargets, RequestMetadataHash, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseGetYieldPoolTargets, ResponseMetadataHash, ResponseShortenMetadata, StorageDataInterface, TokenSpendingApprovalParams, TransactionData, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { BN_ZERO, convertSubjectInfoToAddresses, createTransactionFromRLP, getEthereumSmartAccountOwner, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, uniqueStringArray } from '@subwallet/extension-base/utils';
@@ -64,7 +64,7 @@ import { SessionTypes } from '@walletconnect/types/dist/types/sign-client/sessio
 import { getSdkError } from '@walletconnect/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
-import { QuoteResponse } from 'klaster-sdk';
+import { batchTx, QuoteResponse, rawTx } from 'klaster-sdk';
 import { Subject } from 'rxjs';
 import { TransactionConfig } from 'web3-core';
 
@@ -1778,28 +1778,45 @@ export default class KoniExtension {
             transferAmount.value
           ] = await getEVMTransactionObject(chainInfo, from, to, txVal, !!transferAll, evmApi);
         }
-        //
-        // const owner = getEthereumSmartAccountOwner(from);
-        //
-        // if (owner) {
-        //   const userOperation = await ParticleAAHandler.createUserOperation(_getEvmChainId(chainInfo) || 1, owner, transaction);
-        //   const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
-        //
-        //   return this.#koniState.transactionService.handleAATransaction({
-        //     errors,
-        //     warnings,
-        //     address: from,
-        //     chain: networkKey,
-        //     chainType,
-        //     transferNativeAmount,
-        //     transaction: userOperation,
-        //     data: inputData,
-        //     extrinsicType,
-        //     ignoreWarnings: transferAll,
-        //     isTransferAll: isTransferNativeToken ? transferAll : false,
-        //     edAsWarning: isTransferNativeToken
-        //   });
-        // }
+        const owner = getEthereumSmartAccountOwner(from);
+        const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
+
+        if (owner) {
+          const provider = await this.#koniState.settingService.getCASettings();
+          let caTransaction: QuoteResponse |  UserOpBundle;
+
+          if (provider.caProvider === CAProvider.KLASTER) {
+            const klasterService = new KlasterService();
+
+            await klasterService.init(owner.owner);
+
+            const transferTx = rawTx({
+              to: transaction.to as `0x${string}`,
+              data: transaction.data as `0x${string}`,
+              gasLimit: BigInt((transaction.gas || 0).toString())
+            });
+            const txBatch = batchTx(_getEvmChainId(chainInfo) as number, [transferTx]);
+            caTransaction = await klasterService.buildTx(chainInfo, [txBatch]);
+          } else {
+            caTransaction = await ParticleAAHandler.createUserOperation(_getEvmChainId(chainInfo) || 1, owner, [transaction]);
+          }
+
+          return this.#koniState.transactionService.handleAATransaction({
+            errors,
+            warnings,
+            address: from,
+            chain: networkKey,
+            chainType,
+            transferNativeAmount,
+            transaction: caTransaction,
+            data: inputData,
+            extrinsicType,
+            ignoreWarnings: transferAll,
+            isTransferAll: isTransferNativeToken ? transferAll : false,
+            edAsWarning: isTransferNativeToken,
+            provider: provider.caProvider
+          });
+        }
       } else if (_isMantaZkAsset(transferTokenInfo)) {
         transaction = undefined;
         transferAmount.value = '0';
@@ -1911,7 +1928,7 @@ export default class KoniExtension {
           destinationTokenContract: _getContractAddressOfToken(destinationTokenInfo),
           sourceChainId: _getEvmChainId(originChainInfo) as number,
           sourceTokenContract: _getContractAddressOfToken(originTokenInfo),
-          srcAccount: smartAccountOwner.owner,
+          srcAccount: from,
           isTestnet: originChainInfo.isTestnet
         });
 
@@ -4604,7 +4621,7 @@ export default class KoniExtension {
     return await this.#koniState.transactionService.handleTransaction({
       address,
       chain: txChain,
-      transaction: extrinsic,
+      transaction: extrinsic as TransactionData,
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: txData,
       extrinsicType, // change this depends on step
