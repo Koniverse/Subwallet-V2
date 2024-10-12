@@ -112,11 +112,15 @@ export function createClaimNotification (claimItemInfo: EarningRewardItem, token
   };
 }
 
-export const AVAIL_BRIDGE_API = {
+export const AVAIL_BRIDGE_INDEXER = {
   AVAIL_MAINNET: 'https://bridge-indexer.avail.so',
   AVAIL_TESTNET: 'https://turing-bridge-indexer.fra.avail.so'
 };
-// 2623615132499969, 2657815957078017, 2661062952353793, 2699691888214017
+
+export const AVAIL_BRIDGE_API = {
+  AVAIL_MAINNET: 'https://bridge-api.avail.so',
+  AVAIL_TESTNET: 'https://turing-bridge-api.fra.avail.so'
+};
 
 interface AvailBridgeTransactionsResponse {
   data: {
@@ -192,7 +196,7 @@ export async function fetchAvailBridgeTransactions (userAddress: string, sourceC
 
   try {
     const rawResponse = await fetch(
-      `${AVAIL_BRIDGE_API.AVAIL_TESTNET}/transactions?${params.toString()}`, // todo: handle mainnet-testnet
+      `${AVAIL_BRIDGE_INDEXER.AVAIL_TESTNET}/transactions?${params.toString()}`, // todo: handle mainnet-testnet
       {
         method: 'GET',
         headers: {
@@ -211,7 +215,7 @@ export async function fetchAvailBridgeTransactions (userAddress: string, sourceC
 
     const b = await rawResponse.json() as AvailBridgeTransactionsResponse;
 
-    console.log(`${AVAIL_BRIDGE_API.AVAIL_TESTNET}/transactions?${params.toString()}`, b);
+    console.log(`${AVAIL_BRIDGE_INDEXER.AVAIL_TESTNET}/transactions?${params.toString()}`, b);
 
     return b;
   } catch (e) {

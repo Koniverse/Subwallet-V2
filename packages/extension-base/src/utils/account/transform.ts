@@ -207,9 +207,14 @@ const EARN_VMANTA_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.UNSTAKE_VMANTA
 ];
 
+const SUBTRATE_ACTIONS: ExtrinsicType[] = [
+  ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_AVAIL
+];
+
 const EVM_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.TOKEN_SPENDING_APPROVAL,
-  ExtrinsicType.EVM_EXECUTE
+  ExtrinsicType.EVM_EXECUTE,
+  ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM
 ];
 
 const OTHER_ACTIONS: ExtrinsicType[] = [
@@ -232,7 +237,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_SDOT_ACTIONS,
           ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
-          ...OTHER_ACTIONS
+          ...OTHER_ACTIONS,
+          ...SUBTRATE_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [
@@ -260,7 +266,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_SDOT_ACTIONS,
           ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
-          ...OTHER_ACTIONS
+          ...OTHER_ACTIONS,
+          ...SUBTRATE_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [
@@ -292,7 +299,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           // ...EARN_LDOT_ACTIONS,
           // ...EARN_SDOT_ACTIONS,
           // ...EARN_QDOT_ACTIONS,
-          ...OTHER_ACTIONS
+          ...OTHER_ACTIONS,
+          ...SUBTRATE_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [

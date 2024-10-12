@@ -31,6 +31,7 @@ import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObjec
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
+import { getClaimTxOnAvail } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
@@ -47,6 +48,7 @@ import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import { AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BasicTxErrorType, BasicTxWarningCode, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StakingTxErrorType, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
+import { RequestClaimAvailBridgeOnAvail, RequestClaimAvailBridgeOnEthereum } from '@subwallet/extension-base/types/avail-bridge';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
@@ -3808,6 +3810,35 @@ export default class KoniExtension {
   }
   /* Notification service */
 
+  private async submitClaimAvailBridgeOnAvail (params: RequestClaimAvailBridgeOnAvail) {
+    const { address, chain, notification } = params;
+    let extrinsic: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
+
+    const substrateApi = this.#koniState.getSubstrateApi(chain);
+
+    extrinsic = await getClaimTxOnAvail(notification, substrateApi);
+
+    return await this.#koniState.transactionService.handleTransaction({
+      address, // from params
+      chain, // from params
+      transaction: extrinsic,
+      data: params, // ?
+      extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_AVAIL,
+      chainType: ChainType.SUBSTRATE
+    });
+  }
+
+  private async submitClaimAvailBridgeOnEthereum (params: RequestClaimAvailBridgeOnEthereum) {
+    return await this.#koniState.transactionService.handleTransaction({
+      address, // from params
+      chain: chain, // from params
+      transaction: extrinsic,
+      data: params, // ?
+      extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM,
+      chainType: ChainType.SUBSTRATE
+    });
+  }
+
   /* Ledger */
 
   private async subscribeLedgerGenericAllowChains (id: string, port: chrome.runtime.Port): Promise<string[]> {
@@ -4409,6 +4440,13 @@ export default class KoniExtension {
       case 'pri(inappNotification.getInappNotifications)':
         return this.getInappNotifications(request as GetNotificationParams);
         /* Notification service */
+
+        /* Avail Bridge */
+      case 'pri(availBridge.submitClaimAvailBridgeOnAvail)':
+        return this.submitClaimAvailBridgeOnAvail(request as RequestClaimAvailBridgeOnAvail);
+      case 'pri(availBridge.submitClaimAvailBridgeOnEthereum)':
+        return this.submitClaimAvailBridgeOnEthereum(request as RequestClaimAvailBridgeOnEthereum);
+        /* Avail Bridge */
 
         /* Ledger */
       case 'pri(ledger.generic.allow)':

@@ -7,6 +7,7 @@ import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-han
 import { _AVAIL_BRIDGE_GATEWAY_ABI, _AVAIL_TEST_BRIDGE_GATEWAY_ABI, getAvailBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
+import { _NotificationInfo, ClaimAvailBridgeOnAvailNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { decodeAddress } from '@subwallet/keyring';
 import { TransactionConfig } from 'web3-core';
 
@@ -14,7 +15,7 @@ import { u8aToHex } from '@polkadot/util';
 
 export const AvailBridgeConfig = {
   ASSET_ID: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  ETH_DOMAIN: 1,
+  ETH_DOMAIN: 1, // todo: check if these config can change later
   AVAIL_DOMAIN: 2
 };
 
@@ -51,9 +52,46 @@ export async function getAvailBridgeExtrinsicFromAvail (recipient: string, sendi
   };
 
   const chainApi = await substrateApi.isReady;
-  const api = chainApi.api;
 
-  return api.tx.vector.sendMessage(data.message, data.to, data.domain);
+  return chainApi.api.tx.vector.sendMessage(data.message, data.to, data.domain);
+}
+
+export async function getClaimTxOnAvail (notification: _NotificationInfo, substrateApi: _SubstrateApi) {
+  const chainApi = await substrateApi.isReady;
+
+  return chainApi.api.tx.vector.execute({
+    slot: getLastestEthHead().slog,
+    addrMessage: getAddressMessage(notification),
+    accountProof: [],
+    storageProof: []
+  });
+}
+
+function getLastestEthHead () {
+
+}
+
+
+export async function getClaimTxOnEth (notification: _NotificationInfo) {
+
+}
+
+function getAddressMessage (notification: _NotificationInfo) {
+  const metadata = notification.metadata as ClaimAvailBridgeOnAvailNotificationMetadata; // todo: recheck interface OnEth side
+
+  return {
+    message: {
+      FungibleToken: {
+        assetId: AvailBridgeConfig.ASSET_ID,
+        amount: metadata.amount
+      }
+    },
+    from: `${metadata.depositorAddress.padEnd(66, '0')}`,
+    to: u8aToHex(decodeAddress(metadata.receiverAddress)),
+    originDomain: AvailBridgeConfig.ETH_DOMAIN,
+    destinationDomain: AvailBridgeConfig.AVAIL_DOMAIN,
+    id: metadata.messageId
+  };
 }
 
 function getAvailBridgeAbi (chainSlug: string) {

@@ -27,7 +27,7 @@ export interface ActionTypeToMetadataMap {
   [NotificationActionType.WITHDRAW]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeOnAvailNotificationMetadata,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeOnEthNotificationMetadata
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeOnEthereumNotificationMetadata
 }
 
 export interface SendReceiveNotificationMetadata {
@@ -55,7 +55,7 @@ export interface ClaimAvailBridgeOnAvailNotificationMetadata {
   sourceTransactionIndex: string,
 }
 
-export interface ClaimAvailBridgeOnEthNotificationMetadata {
+export interface ClaimAvailBridgeOnEthereumNotificationMetadata {
   messageId: string
   sourceChain: AvailBridgeSourceChain,
   sourceTransactionHash: string,

@@ -32,6 +32,10 @@ import { SignerResult } from '@polkadot/types/types/extrinsic';
 import { HexString } from '@polkadot/util/types';
 
 import { TransactionWarning } from './warnings/TransactionWarning';
+import {
+  RequestClaimAvailBridgeOnAvail,
+  RequestClaimAvailBridgeOnEthereum
+} from "@subwallet/extension-base/types/avail-bridge";
 
 export enum RuntimeEnvironment {
   Web = 'Web',
@@ -508,6 +512,9 @@ export enum ExtrinsicType {
 
   SWAP = 'swap',
 
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'avail_bridge.claim_on_avail',
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'avail_bridge.claim_on_eth',
+
   // SET_FEE_TOKEN = 'set_fee-token',
 
   EVM_EXECUTE = 'evm.execute',
@@ -560,6 +567,9 @@ export interface ExtrinsicDataTypeMap {
   [ExtrinsicType.REDEEM_VMANTA]: RequestYieldLeave,
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: TokenSpendingApprovalParams,
+
+  [ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: RequestClaimAvailBridgeOnAvail,
+  [ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: RequestClaimAvailBridgeOnEthereum,
 
   [ExtrinsicType.EVM_EXECUTE]: TransactionConfig,
   [ExtrinsicType.CROWDLOAN]: any,
