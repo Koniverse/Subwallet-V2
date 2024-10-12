@@ -283,7 +283,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, []);
 
   const onClickEnableNotification = useCallback(() => {
-    console.log('123123123123');
     navigate('/settings/notification-config');
   }, [navigate]);
 
