@@ -4,11 +4,9 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { NotificationActionType, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
-import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
-import { changeReadNotificationStatus, getInappNotifications } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { changeReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
-import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
@@ -21,6 +19,8 @@ import styled, { useTheme } from 'styled-components';
 type Props = ThemeProps & {
   onCancel?: () => void;
   notificationItem: NotificationInfoItem;
+  isTrigger: boolean;
+  setTrigger: (value: boolean) => void;
 };
 
 export interface ActionInfo {
@@ -33,7 +33,7 @@ export interface ActionInfo {
 }
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { className, notificationItem, onCancel } = props;
+  const { className, isTrigger, notificationItem, onCancel, setTrigger } = props;
   const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead);
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
@@ -117,8 +117,11 @@ function Component (props: Props): React.ReactElement<Props> {
     setReadNotification(!readNotification);
     changeReadNotificationStatus(notificationItem)
       .catch(console.error)
-      .finally(_onCancel);
-  }, [_onCancel, notificationItem, readNotification]);
+      .finally(() => {
+        _onCancel();
+        setTrigger(!isTrigger);
+      });
+  }, [_onCancel, isTrigger, notificationItem, readNotification, setTrigger]);
 
   return (
     <SwModal
