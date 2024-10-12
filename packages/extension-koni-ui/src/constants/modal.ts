@@ -38,6 +38,7 @@ export const ACCOUNT_CHAIN_ADDRESSES_MODAL = 'account-chain-addresses-modal';
 export const ACCOUNT_NAME_MODAL = 'account-name-modal';
 export const GLOBAL_ALERT_MODAL = 'global-alert-modal';
 export const TON_WALLET_CONTRACT_SELECTOR_MODAL = 'ton-wallet-contract-selector-modal';
+export const TON_ACCOUNT_SELECTOR_MODAL = 'ton-account-selector-modal';
 
 /* Campaign */
 export const HOME_CAMPAIGN_BANNER_MODAL = 'home-campaign-banner-modal';

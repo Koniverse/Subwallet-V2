@@ -17,6 +17,8 @@ import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-
 import { _BALANCE_CHAIN_GROUP, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateAdapterSubscriptionArgs, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _checkSmartContractSupportByChain, _getAssetExistentialDeposit, _getChainExistentialDeposit, _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _getTokenTypesSupportedByChain, _getXcmAssetMultilocation, _isBridgedToken, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { fetchTaoDelegateState } from '@subwallet/extension-base/services/earning-service/handlers/native-staking/tao';
+import { getTaoTotalStake } from '@subwallet/extension-base/services/earning-service/utils';
 import { BalanceItem, SubscribeBasePalletBalance, SubscribeSubstratePalletBalance } from '@subwallet/extension-base/types';
 import { filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
@@ -142,6 +144,16 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
     );
   }
 
+  let bittensorStakingBalances = new Array<bigint>(addresses.length).fill(BigInt(0));
+
+  if (['bittensor'].includes(chainInfo.slug)) {
+    bittensorStakingBalances = await Promise.all(addresses.map(async (address) => {
+      const rawDelegateState = await fetchTaoDelegateState(address);
+
+      return getTaoTotalStake(rawDelegateState);
+    }));
+  }
+
   const subscription = substrateApi.subscribeDataWithMulti(params, (rs) => {
     const balances = rs[systemAccountKey];
     const poolMemberInfos = rs[poolMembersKey];
@@ -160,6 +172,8 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
 
         totalLockedFromTransfer += nominationPoolBalance;
       }
+
+      totalLockedFromTransfer += bittensorStakingBalances[index];
 
       return ({
         address: addresses[index],
