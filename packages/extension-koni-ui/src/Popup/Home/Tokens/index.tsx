@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountProxyType } from '@subwallet/extension-base/types';
-import { EmptyList, PageWrapper, ReceiveModal } from '@subwallet/extension-koni-ui/components';
+import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { detectTranslate } from '@subwallet/extension-base/utils';
+import { AccountSelectorModal, AlertBox, CloseIcon, EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
 import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/TokenItem/TokenGroupBalanceItem';
-import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, IS_SHOW_TON_CONTRACT_VERSION_WARNING, SWAP_TRANSACTION, TON_ACCOUNT_SELECTOR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
 import { useCoreReceiveModalHelper, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
@@ -14,19 +15,23 @@ import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotifi
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
+import { AccountAddressItemType, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
 import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
-import { Button, Icon, SwAlert } from '@subwallet/react-ui';
+import { isTonAddress } from '@subwallet/keyring';
+import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
 import classNames from 'classnames';
 import { Coins, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
+const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
+const tonAccountSelectorModalId = TON_ACCOUNT_SELECTOR_MODAL;
 
 const Component = (): React.ReactElement => {
   useSetCurrentPage('/home/tokens');
@@ -37,6 +42,7 @@ const Component = (): React.ReactElement => {
   const topBlockRef = useRef<HTMLDivElement>(null);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
+  const isAllAccount = useSelector((state: RootState) => state.accountState.isAllAccount);
   const { accountBalance: { tokenGroupBalanceMap,
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
   const notify = useNotification();
@@ -50,7 +56,13 @@ const Component = (): React.ReactElement => {
   const allowedChains = useGetChainSlugsByAccount();
   const buyTokenInfos = useSelector((state: RootState) => state.buyService.tokens);
   const swapPairs = useSelector((state: RootState) => state.swap.swapPairs);
-
+  const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
+  const isTonWalletContactSelectorModalActive = checkActive(tonWalletContractSelectorModalId);
+  const [isShowTonWarning, setIsShowTonWarning] = useLocalStorage(IS_SHOW_TON_CONTRACT_VERSION_WARNING, true);
+  const tonAddress = useMemo(() => {
+    return currentAccountProxy?.accounts.find((acc) => isTonAddress(acc.address))?.address;
+  }, [currentAccountProxy]);
+  const [currentTonAddress, setCurrentTonAddress] = useState(isAllAccount ? undefined : tonAddress);
   const fromAndToTokenMap = useMemo<Record<string, string[]>>(() => {
     const result: Record<string, string[]> = {};
 
@@ -149,6 +161,60 @@ const Component = (): React.ReactElement => {
     return Object.values(buyTokenInfos).some((item) => allowedChains.includes(item.network));
   }, [allowedChains, buyTokenInfos]);
 
+  const isHaveOnlyTonSoloAcc = useMemo(() => {
+    const checkValidAcc = (currentAcc: AccountProxy) => {
+      return currentAcc?.accountType === AccountProxyType.SOLO && currentAcc?.chainTypes.includes(AccountChainType.TON);
+    };
+
+    if (isAllAccount) {
+      return accountProxies.filter((a) => a.accountType !== AccountProxyType.ALL_ACCOUNT).every((acc) => checkValidAcc(acc));
+    } else {
+      return currentAccountProxy && checkValidAcc(currentAccountProxy);
+    }
+  }, [accountProxies, currentAccountProxy, isAllAccount]);
+
+  const tonAccountList: AccountAddressItemType[] = useMemo(() => {
+    return accountProxies.filter((acc) => acc?.accountType === AccountProxyType.SOLO && acc?.chainTypes.includes(AccountChainType.TON)).map((item) => ({
+      accountName: item.name,
+      accountProxyId: item.id,
+      accountProxyType: item.accountType,
+      accountType: item.accounts[0].type,
+      address: item.accounts[0].address,
+      accountActions: item.accountActions
+    }));
+  }, [accountProxies]);
+
+  const onCloseAccountSelector = useCallback(() => {
+    setIsShowTonWarning(false);
+    inactiveModal(tonAccountSelectorModalId);
+  }, [inactiveModal, setIsShowTonWarning]);
+
+  const onSelectAccountSelector = useCallback((item: AccountAddressItemType) => {
+    setCurrentTonAddress(item.address);
+    activeModal(tonWalletContractSelectorModalId);
+  }, [activeModal]);
+
+  const onBackTonWalletContactModal = useCallback(() => {
+    inactiveModal(tonWalletContractSelectorModalId);
+  }, [inactiveModal]);
+
+  const onCloseTonWalletContactModal = useCallback(() => {
+    setIsShowTonWarning(false);
+    setTimeout(() => {
+      inactiveModal(tonAccountSelectorModalId);
+      inactiveModal(tonWalletContractSelectorModalId);
+    }, 200);
+  }, [inactiveModal, setIsShowTonWarning]);
+
+  const onOpenTonWalletContactModal = useCallback(() => {
+    if (isAllAccount) {
+      activeModal(tonAccountSelectorModalId);
+    } else {
+      setCurrentTonAddress(tonAddress);
+      activeModal(tonWalletContractSelectorModalId);
+    }
+  }, [activeModal, isAllAccount, tonAddress]);
+
   const onClickItem = useCallback((item: TokenBalanceItemType) => {
     return () => {
       navigate(`/home/tokens/detail/${item.slug}`);
@@ -245,6 +311,9 @@ const Component = (): React.ReactElement => {
     };
   }, [handleResize]);
 
+  console.log('isHaveOnlyTonSoloAcc', isHaveOnlyTonSoloAcc);
+  console.log('isShowTonWarning', isShowTonWarning);
+
   return (
     <div
       className={'tokens-screen-container'}
@@ -283,6 +352,48 @@ const Component = (): React.ReactElement => {
               title={t('Zk mode is syncing: {{percent}}%', { replace: { percent: zkModeSyncProgress || '0' } })}
               type={'warning'}
             />
+          )
+        }
+        {
+          isHaveOnlyTonSoloAcc && isShowTonWarning && (
+            <>
+              <AlertBox
+                className={classNames('ton-solo-acc-alert-area')}
+                description={<Trans
+                  components={{
+                    highlight: (
+                      <a
+                        className='link'
+                        onClick={onOpenTonWalletContactModal}
+                      />
+                    )
+                  }}
+                  i18nKey={detectTranslate("TON wallets have multiple versions, each with its own wallet address and balance. <highlight>Change versions</highlight> if you don't see balances")}
+                />}
+                title={t('Change wallet address & version')}
+                type={'warning'}
+              />
+              <AccountSelectorModal
+                items={tonAccountList}
+                modalId={tonAccountSelectorModalId}
+                onCancel={onCloseAccountSelector}
+                onSelectItem={onSelectAccountSelector}
+              />
+              {currentTonAddress && isTonWalletContactSelectorModalActive &&
+                <TonWalletContractSelectorModal
+                  address={currentTonAddress}
+                  chainSlug={'ton'}
+                  id={tonWalletContractSelectorModalId}
+                  isShowBackButton={isAllAccount}
+                  onBack={onBackTonWalletContactModal}
+                  onCancel={onCloseTonWalletContactModal}
+                  rightIconProps={{
+                    icon: <CloseIcon />,
+                    onClick: onCloseTonWalletContactModal
+                  }}
+                />
+              }
+            </>
           )
         }
         {!!banners.length && (
@@ -421,7 +532,7 @@ const Tokens = styled(WrapperComponent)<ThemeProps>(({ theme: { extendToken, tok
       }
     },
 
-    '.zk-mode-alert-area': {
+    '.zk-mode-alert-area, .ton-solo-acc-alert-area': {
       marginBottom: token.marginXS
     },
 

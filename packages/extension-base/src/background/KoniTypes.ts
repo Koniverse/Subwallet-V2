@@ -1866,6 +1866,11 @@ export interface ResponseSubscribeHistory {
   items: TransactionHistoryItem[]
 }
 
+export interface ResponseNftImport {
+  success: boolean;
+  error: string;
+}
+
 /* Campaign */
 
 /* Core types */
@@ -1903,7 +1908,7 @@ export interface KoniRequestSignatures {
   'pri(chainService.disableChain)': [string, boolean];
   'pri(chainService.removeChain)': [string, boolean];
   'pri(chainService.deleteCustomAsset)': [string, boolean];
-  'pri(chainService.upsertCustomAsset)': [Record<string, any>, boolean];
+  'pri(chainService.upsertCustomAsset)': [Record<string, any>, ResponseNftImport];
   'pri(chainService.validateCustomAsset)': [_ValidateCustomAssetRequest, _ValidateCustomAssetResponse];
   'pri(chainService.resetDefaultChains)': [null, boolean];
   'pri(chainService.getSupportedContractTypes)': [null, string[]];

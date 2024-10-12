@@ -150,13 +150,20 @@ function Component ({ className = '', modalContent, onSubmitCallback }: Props): 
         icon: ''
       })
         .then((result) => {
-          if (result) {
+          if (result.error === 'incompatibleNFT') {
             showNotification({
+              type: 'error',
+              message: t('Failed to import. Incompatible NFT')
+            });
+          } else if (result.success) {
+            showNotification({
+              type: 'success',
               message: t('Imported NFT successfully')
             });
             goBack();
           } else {
             showNotification({
+              type: 'error',
               message: t('An error occurred, please try again')
             });
           }
