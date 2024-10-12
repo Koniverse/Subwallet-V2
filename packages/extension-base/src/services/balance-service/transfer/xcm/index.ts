@@ -3,7 +3,7 @@
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
-import { getAvailBridgeTxFromEvm } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
+import { getAvailBridgeExtrinsicFromAvail, getAvailBridgeTxFromEth } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { getExtrinsicByPolkadotXcmPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polkadotXcm';
 import { getSnowBridgeEvmTransfer } from '@subwallet/extension-base/services/balance-service/transfer/xcm/snowBridge';
 import { getExtrinsicByXcmPalletPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xcmPallet';
@@ -75,7 +75,7 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
   return getExtrinsicByXtokensPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
 };
 
-export const createAvailBridgeExtrinsicFromEvm = ({ chainInfoMap,
+export const createAvailBridgeTxFromEth = ({ chainInfoMap,
   destinationTokenInfo,
   evmApi,
   originTokenInfo,
@@ -85,26 +85,11 @@ export const createAvailBridgeExtrinsicFromEvm = ({ chainInfoMap,
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
   const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
 
-  return getAvailBridgeTxFromEvm(originTokenInfo, originChainInfo, destinationChainInfo, sender, recipient, sendingValue, evmApi);
+  return getAvailBridgeTxFromEth(originTokenInfo, originChainInfo, destinationChainInfo, sender, recipient, sendingValue, evmApi);
 };
 
 export const createAvailBridgeExtrinsicFromAvail = async ({ recipient, sendingValue, substrateApi }: CreateXcmExtrinsicProps): Promise<SubmittableExtrinsic<'promise'>> => {
-  const data = {
-    message: {
-      FungibleToken: {
-        assetId:
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        amount: BigInt(sendingValue)
-      }
-    },
-    to: `${recipient.padEnd(66, '0')}`,
-    domain: 2
-  };
-
-  const chainApi = await substrateApi.isReady;
-  const api = chainApi.api;
-
-  return api.tx.vector.sendMessage(data.message, data.to, data.domain);
+  return await getAvailBridgeExtrinsicFromAvail(recipient, sendingValue, substrateApi);
 };
 
 export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {

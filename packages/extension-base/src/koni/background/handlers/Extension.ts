@@ -30,7 +30,7 @@ import { isBounceableAddress } from '@subwallet/extension-base/services/balance-
 import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObject, getPSP34TransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
-import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeExtrinsicFromEvm, createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
+import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
@@ -1471,7 +1471,7 @@ export default class KoniExtension {
         if (isAvailBridgeFromEvm) {
           const evmApi = this.#koniState.getEvmApi(originNetworkKey);
 
-          extrinsic = await createAvailBridgeExtrinsicFromEvm({
+          extrinsic = await createAvailBridgeTxFromEth({
             destinationTokenInfo,
             originTokenInfo,
             sendingValue: value,
