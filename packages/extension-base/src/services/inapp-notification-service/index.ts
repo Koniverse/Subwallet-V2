@@ -3,10 +3,10 @@
 
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
@@ -23,8 +23,8 @@ export class InappNotificationService implements CronServiceInterface {
     await this.dbService.markAllRead(proxyId);
   }
 
-  async changeReadStatus (notification: _NotificationInfo) {
-    await this.dbService.changeReadStatus(notification);
+  async switchReadStatus (params: RequestSwitchStatusParams) {
+    await this.dbService.switchReadStatus(params);
   }
 
   public subscribeUnreadNotificationsCountMap (callback: (data: Record<string, number>) => void) {
@@ -50,12 +50,26 @@ export class InappNotificationService implements CronServiceInterface {
   passValidateNotification (candidateNotification: _BaseNotificationInfo, notificationFromDB: _NotificationInfo[]) {
     if ([NotificationActionType.WITHDRAW, NotificationActionType.CLAIM].includes(candidateNotification.actionType)) {
       const { actionType, address, metadata, time } = candidateNotification;
+      const candidateMetadata = metadata as WithdrawClaimNotificationMetadata;
 
       for (const notification of notificationFromDB) {
-        const sameNotification = notification.address === address && notification.actionType === actionType && JSON.stringify(notification.metadata) === JSON.stringify(metadata); // todo: improve compare object
-        const overdue = time - notification.time >= ONE_DAY_MILLISECOND;
+        const comparedMetadata = notification.metadata as WithdrawClaimNotificationMetadata;
 
-        if (sameNotification && !overdue) {
+        if (notification.address !== address) {
+          continue;
+        }
+
+        if (notification.actionType !== actionType) {
+          continue;
+        }
+
+        if (time - notification.time >= ONE_DAY_MILLISECOND) {
+          continue;
+        }
+
+        const sameNotification = candidateMetadata.stakingType === comparedMetadata.stakingType && candidateMetadata.stakingSlug === comparedMetadata.stakingSlug;
+
+        if (sameNotification) {
           return false;
         }
       }

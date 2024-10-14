@@ -5,7 +5,7 @@ import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { NotificationActionType, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
-import { changeReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
@@ -115,7 +115,10 @@ function Component (props: Props): React.ReactElement<Props> {
 
   const onClickReadButton = useCallback(() => {
     setReadNotification(!readNotification);
-    changeReadNotificationStatus(notificationItem)
+    switchReadNotificationStatus({
+      id: notificationItem.id,
+      isRead: notificationItem.isRead
+    })
       .catch(console.error)
       .finally(() => {
         _onCancel();
