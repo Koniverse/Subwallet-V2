@@ -1,25 +1,29 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { _NotificationInfo, NotificationSetup, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, NotificationActionType, NotificationSetup, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
 import { AlertModal, EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import Search from '@subwallet/extension-koni-ui/components/Search';
-import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
-import { useAlert, useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useDefaultNavigate, useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { changeReadNotificationStatus, getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { getTotalWidrawable, getYieldRewardTotal } from '@subwallet/extension-koni-ui/utils/notification';
 import { ActivityIndicator, Button, Icon, ModalContext, SwList, SwSubHeader } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
+import BigN from 'bignumber.js';
 import CN from 'classnames';
-import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
+import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, CheckCircle, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +65,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { notificationSetup } = useSelector((state: RootState) => state.settings);
   const enableNotification = notificationSetup.isEnabled;
   const [notifications, setNotifications] = useState<_NotificationInfo[]>([]);
-  const { currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const { accounts, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
   const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
   const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
@@ -69,6 +73,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const [isTrigger, setTrigger] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentSearchText, setCurrentSearchText] = useState<string>('');
+  const [currentTimestampMs, setCurrentTimestampMs] = useState(Date.now());
+  const { earningRewards, poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
+  const chainsByAccountType = useGetChainSlugsByAccount();
+
+  const [, setClaimRewardStorage] = useLocalStorage(CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS);
+  const [, setWithdrawStorage] = useLocalStorage(WITHDRAW_TRANSACTION, DEFAULT_WITHDRAW_PARAMS);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
@@ -178,8 +188,68 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     goBack();
   }, [goBack]);
 
+  const showWarningModal = useCallback((action: string) => {
+    openAlert({
+      title: t('You’ve {{action}} tokens', { replace: { action: action } }),
+      type: NotificationType.INFO,
+      content: t('You’ve already {{action}} your tokens. Check for unread notifications to stay updated on any important', { replace: { action: action } }),
+      okButton: {
+        text: t('I understand'),
+        onClick: closeAlert,
+        icon: CheckCircle
+      }
+    });
+  }, [closeAlert, openAlert, t]);
+
   const onClickItem = useCallback((item: NotificationInfoItem) => {
     return () => {
+      const slug = (item.metadata as WithdrawClaimNotificationMetadata).stakingSlug;
+      const totalWithdrawable = getTotalWidrawable(slug, poolInfoMap, yieldPositions, currentAccountProxy, isAllAccount, chainsByAccountType, currentTimestampMs);
+
+      switch (item.actionType) {
+        case NotificationActionType.WITHDRAW: {
+          if (totalWithdrawable && BigN(totalWithdrawable).gt(BN_ZERO)) {
+            const metadata = item.metadata as WithdrawClaimNotificationMetadata;
+
+            setWithdrawStorage({
+              ...DEFAULT_UN_STAKE_PARAMS,
+              slug: metadata.stakingSlug,
+              chain: metadata.stakingSlug.split('___')[2],
+              from: item.address
+            });
+            changeReadNotificationStatus(item).then(() => {
+              navigate('/transaction/withdraw');
+            }).catch(console.error);
+          } else {
+            showWarningModal('withdrawn');
+          }
+
+          break;
+        }
+
+        case NotificationActionType.CLAIM: {
+          const unclaimedReward = getYieldRewardTotal(slug, earningRewards, poolInfoMap, accounts, isAllAccount, currentAccountProxy, chainsByAccountType);
+
+          if (unclaimedReward && BigN(unclaimedReward).gt(BN_ZERO)) {
+            const metadata = item.metadata as WithdrawClaimNotificationMetadata;
+
+            setClaimRewardStorage({
+              ...DEFAULT_CLAIM_REWARD_PARAMS,
+              slug: metadata.stakingSlug,
+              chain: metadata.stakingSlug.split('___')[2],
+              from: item.address
+            });
+            changeReadNotificationStatus(item).then(() => {
+              navigate('/transaction/claim-reward');
+            }).catch(console.error);
+          } else {
+            showWarningModal('claimed');
+          }
+
+          break;
+        }
+      }
+
       if (!item.isRead) {
         changeReadNotificationStatus(item)
           .catch(console.error)
@@ -188,7 +258,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           });
       }
     };
-  }, [isTrigger]);
+  }, [accounts, chainsByAccountType, currentAccountProxy, currentTimestampMs, earningRewards, isAllAccount, isTrigger, navigate, poolInfoMap, setClaimRewardStorage, setWithdrawStorage, showWarningModal, yieldPositions]);
 
   const renderItem = useCallback((item: NotificationInfoItem) => {
     return (
@@ -201,6 +271,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         extrinsicType={item.extrinsicType}
         id={item.id}
         isRead={item.isRead}
+        key={item.id}
         leftIcon={item.leftIcon}
         metadata={item.metadata}
         onClick={onClickItem(item)}
@@ -270,6 +341,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       })
       .catch(console.error);
   }, [currentProxyId, isAllAccount, isTrigger]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimestampMs(Date.now());
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   return (
     <PageWrapper className={`manage-website-access ${className}`}>
@@ -343,10 +424,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             </div>
             {viewDetailItem && isNotificationDetailModalVisible && (
               <NotificationDetailModal
-                closeAlert={closeAlert}
                 isTrigger={isTrigger}
                 notificationItem={viewDetailItem}
-                openAlert={openAlert}
+                onClickAction={onClickItem(viewDetailItem)}
                 setTrigger={setTrigger}
               />
             )}
