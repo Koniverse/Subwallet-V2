@@ -4,14 +4,15 @@
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _NotificationInfo, NotificationSetup, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
-import { EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AlertModal, EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
+import { useAlert, useDefaultNavigate, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
-import { getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { changeReadNotificationStatus, getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -46,13 +47,15 @@ export const NotificationIconMap = {
   CLAIM: Gift
 };
 
+const alertModalId = 'notification-alert-modal';
+
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, checkActive } = useContext(ModalContext);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const goBack = useDefaultNavigate().goBack;
   const { token } = useTheme() as Theme;
-
+  const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
   const [selectedFilterTab, setSelectedFilterTab] = useState<NotificationTab>(NotificationTab.ALL);
   const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
   const { notificationSetup } = useSelector((state: RootState) => state.settings);
@@ -175,6 +178,18 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     goBack();
   }, [goBack]);
 
+  const onClickItem = useCallback((item: NotificationInfoItem) => {
+    return () => {
+      if (!item.isRead) {
+        changeReadNotificationStatus(item)
+          .catch(console.error)
+          .finally(() => {
+            setTrigger(!isTrigger);
+          });
+      }
+    };
+  }, [isTrigger]);
+
   const renderItem = useCallback((item: NotificationInfoItem) => {
     return (
       <NotificationItem
@@ -188,13 +203,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         isRead={item.isRead}
         leftIcon={item.leftIcon}
         metadata={item.metadata}
+        onClick={onClickItem(item)}
         onClickMoreBtn={onClickMore(item)}
         proxyId={item.proxyId}
         time={item.time}
         title={item.title}
       />
     );
-  }, [onClickMore]);
+  }, [onClickItem, onClickMore]);
 
   const renderEmptyList = useCallback(() => {
     return (
@@ -245,14 +261,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [currentProxyId, selectedFilterTab]);
 
   useEffect(() => {
-    setLoading(true);
     getInappNotifications({
       proxyId: currentProxyId,
       notificationTab: NotificationTab.ALL
     } as GetNotificationParams)
       .then((rs) => {
         setNotifications(rs);
-        setTimeout(() => setLoading(false), 300);
       })
       .catch(console.error);
   }, [currentProxyId, isAllAccount, isTrigger]);
@@ -329,11 +343,21 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             </div>
             {viewDetailItem && isNotificationDetailModalVisible && (
               <NotificationDetailModal
+                closeAlert={closeAlert}
                 isTrigger={isTrigger}
                 notificationItem={viewDetailItem}
+                openAlert={openAlert}
                 setTrigger={setTrigger}
               />
             )}
+            {
+              !!alertProps && (
+                <AlertModal
+                  modalId={alertModalId}
+                  {...alertProps}
+                />
+              )
+            }
           </>
         )
         : (
@@ -344,7 +368,21 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   );
 }
 
-const Notification = styled(Component)<Props>(({ theme: { token } }: Props) => {
+const Wrapper = (props: Props) => {
+  const dataContext = useContext(DataContext);
+
+  return (
+    <PageWrapper
+      className={CN(props.className)}
+      hideLoading={true}
+      resolve={dataContext.awaitStores(['earning'])}
+    >
+      <Component {...props} />
+    </PageWrapper>
+  );
+};
+
+const Notification = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
   return ({
     height: '100%',
     backgroundColor: token.colorBgDefault,

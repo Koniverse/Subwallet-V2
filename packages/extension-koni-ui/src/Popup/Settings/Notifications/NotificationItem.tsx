@@ -7,25 +7,22 @@ import { convertHexColorToRGBA, formatConditionalDuration } from '@subwallet/ext
 import { BackgroundIcon, Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { DotsThree } from 'phosphor-react';
-import React, { SyntheticEvent, useCallback } from 'react';
+import React, { SyntheticEvent } from 'react';
 import styled from 'styled-components';
 
 type Props = ThemeProps & NotificationInfoItem & {
-  onClick?: (value: string) => void;
+  onClick?: () => void;
   onClickMoreBtn: (e: SyntheticEvent) => void;
   disabled?: boolean;
 }
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { backgroundColor, className, description, disabled, id, leftIcon, onClick, onClickMoreBtn, time, title } = props;
-  const _onSelect = useCallback(() => {
-    onClick && onClick(id);
-  }, [id, onClick]);
+  const { backgroundColor, className, description, disabled, leftIcon, onClick, onClickMoreBtn, time, title } = props;
 
   return (
     <div
       className={CN(className, { disabled: disabled })}
-      onClick={disabled ? undefined : _onSelect}
+      onClick={disabled ? undefined : onClick}
     >
       <div className={'__left-part'}>
         <BackgroundIcon
@@ -68,6 +65,7 @@ const NotificationItem = styled(Component)<Props>(({ theme: { token } }: Props) 
     paddingLeft: token.paddingSM,
     backgroundColor: token.colorBgSecondary,
     borderRadius: token.borderRadiusLG,
+    cursor: 'pointer',
     '.__left-part': {
       minWidth: 40,
       display: 'flex',

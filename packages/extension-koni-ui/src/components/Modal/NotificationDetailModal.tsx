@@ -1,17 +1,20 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { NotificationActionType, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import { CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { UnstakingStatus } from '@subwallet/extension-base/types';
+import { BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { useYieldPositionDetail, useYieldRewardTotal } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
 import { changeReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
-import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AlertDialogProps, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
-import { Checks, DownloadSimple, Eye, Gift, X } from 'phosphor-react';
-import React, { useCallback, useContext, useState } from 'react';
+import BigN from 'bignumber.js';
+import { CheckCircle, Checks, DownloadSimple, Eye, Gift, X } from 'phosphor-react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
@@ -21,6 +24,8 @@ type Props = ThemeProps & {
   notificationItem: NotificationInfoItem;
   isTrigger: boolean;
   setTrigger: (value: boolean) => void;
+  openAlert: (alertProps: AlertDialogProps) => void;
+  closeAlert: VoidFunction;
 };
 
 export interface ActionInfo {
@@ -33,11 +38,34 @@ export interface ActionInfo {
 }
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { className, isTrigger, notificationItem, onCancel, setTrigger } = props;
+  const { className, closeAlert, isTrigger, notificationItem, onCancel, openAlert, setTrigger } = props;
   const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead);
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
   const { inactiveModal } = useContext(ModalContext);
+  const earningData = useYieldPositionDetail((notificationItem.metadata as WithdrawClaimNotificationMetadata).stakingSlug);
+  const unclaimedReward = useYieldRewardTotal((notificationItem.metadata as WithdrawClaimNotificationMetadata).stakingSlug);
+  const [currentTimestampMs, setCurrentTimestampMs] = useState(Date.now());
+
+  const totalWidrawable = useMemo(() => {
+    if (earningData && earningData.compound && earningData.compound.unstakings) {
+      let result = BN_ZERO;
+
+      earningData.compound.unstakings.forEach((value) => {
+        const canClaim = value.targetTimestampMs
+          ? value.targetTimestampMs <= currentTimestampMs
+          : value.status === UnstakingStatus.CLAIMABLE;
+
+        if (canClaim) {
+          result = result.plus(value.claimable);
+        }
+      });
+
+      return result;
+    } else {
+      return '0';
+    }
+  }, [currentTimestampMs, earningData]);
 
   const _onCancel = useCallback(() => {
     inactiveModal(NOTIFICATION_DETAIL_MODAL);
@@ -69,37 +97,62 @@ function Component (props: Props): React.ReactElement<Props> {
   const [, setWithdrawStorage] = useLocalStorage(WITHDRAW_TRANSACTION, DEFAULT_WITHDRAW_PARAMS);
   const navigate = useNavigate();
 
+  const showWarningModal = useCallback((action: string) => {
+    openAlert({
+      title: t('You’ve {{action}} tokens', { replace: { action: action } }),
+      type: NotificationType.INFO,
+      content: t('You’ve already {{action}} your tokens. Check for unread notifications to stay updated on any important', { replace: { action: action } }),
+      okButton: {
+        text: t('I understand'),
+        onClick: closeAlert,
+        icon: CheckCircle
+      }
+    });
+  }, [closeAlert, openAlert, t]);
+
   const onClickAction = useCallback(() => {
     switch (notificationItem.actionType) {
       case NotificationActionType.WITHDRAW: {
-        const metadata = notificationItem.metadata as WithdrawClaimNotificationMetadata;
+        if (totalWidrawable && BigN(totalWidrawable).gt(BN_ZERO)) {
+          const metadata = notificationItem.metadata as WithdrawClaimNotificationMetadata;
 
-        setWithdrawStorage({
-          ...DEFAULT_UN_STAKE_PARAMS,
-          slug: metadata.stakingSlug,
-          chain: metadata.stakingSlug.split('___')[2],
-          from: notificationItem.address
-        });
-        navigate('/transaction/withdraw');
+          setWithdrawStorage({
+            ...DEFAULT_UN_STAKE_PARAMS,
+            slug: metadata.stakingSlug,
+            chain: metadata.stakingSlug.split('___')[2],
+            from: notificationItem.address
+          });
+          changeReadNotificationStatus(notificationItem).then(() => {
+            navigate('/transaction/withdraw');
+          }).catch(console.error);
+        } else {
+          showWarningModal('withdrawn');
+        }
 
         break;
       }
 
       case NotificationActionType.CLAIM: {
-        const metadata = notificationItem.metadata as WithdrawClaimNotificationMetadata;
+        if (unclaimedReward && BigN(unclaimedReward).gt(BN_ZERO)) {
+          const metadata = notificationItem.metadata as WithdrawClaimNotificationMetadata;
 
-        setClaimRewardStorage({
-          ...DEFAULT_CLAIM_REWARD_PARAMS,
-          slug: metadata.stakingSlug,
-          chain: metadata.stakingSlug.split('___')[2],
-          from: notificationItem.address
-        });
-        navigate('/transaction/claim-reward');
+          setClaimRewardStorage({
+            ...DEFAULT_CLAIM_REWARD_PARAMS,
+            slug: metadata.stakingSlug,
+            chain: metadata.stakingSlug.split('___')[2],
+            from: notificationItem.address
+          });
+          changeReadNotificationStatus(notificationItem).then(() => {
+            navigate('/transaction/claim-reward');
+          }).catch(console.error);
+        } else {
+          showWarningModal('claimed');
+        }
 
         break;
       }
     }
-  }, [navigate, notificationItem.actionType, notificationItem.address, notificationItem.metadata, setClaimRewardStorage, setWithdrawStorage]);
+  }, [navigate, notificationItem, setClaimRewardStorage, setWithdrawStorage, showWarningModal, totalWidrawable, unclaimedReward]);
 
   const handleActionNotification = useCallback(() => {
     const { icon, title } = getNotificationAction(notificationItem.extrinsicType);
@@ -122,6 +175,16 @@ function Component (props: Props): React.ReactElement<Props> {
         setTrigger(!isTrigger);
       });
   }, [_onCancel, isTrigger, notificationItem, readNotification, setTrigger]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimestampMs(Date.now());
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   return (
     <SwModal

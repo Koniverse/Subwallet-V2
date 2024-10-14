@@ -8,6 +8,7 @@ import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, Button, Checkbox, SettingItem, Switch, SwSubHeader } from '@subwallet/react-ui';
+import { CheckboxChangeEvent } from '@subwallet/react-ui/es/checkbox';
 import CN from 'classnames';
 import { BellSimpleRinging } from 'phosphor-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -22,13 +23,27 @@ interface ViewOption {
   value: NotificationTimePeriod;
 }
 
+interface NotificationSetupDetail {
+  [NotificationActionType.SEND]: boolean,
+  [NotificationActionType.RECEIVE]: boolean,
+  [NotificationActionType.WITHDRAW]: boolean,
+  [NotificationActionType.CLAIM]: boolean
+}
+
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
   const goBack = useDefaultNavigate().goBack;
   const { notificationSetup } = useSelector((state: RootState) => state.settings);
-  const enableNotification = notificationSetup.isEnabled;
+  const [isEnableNotification, setIsEnableNotification] = useState(notificationSetup.isEnabled);
   const [loadingNotification, setLoadingNotification] = useState(false);
+  const defaultNotificationSetupValue = useMemo(() => ({
+    [NotificationActionType.SEND]: notificationSetup.notificationSetup.isHideSend,
+    [NotificationActionType.RECEIVE]: notificationSetup.notificationSetup.isHideReceive,
+    [NotificationActionType.WITHDRAW]: notificationSetup.notificationSetup.isHideWithdraw,
+    [NotificationActionType.CLAIM]: notificationSetup.notificationSetup.isHideAnnouncement
+  }), [notificationSetup.notificationSetup.isHideAnnouncement, notificationSetup.notificationSetup.isHideReceive, notificationSetup.notificationSetup.isHideSend, notificationSetup.notificationSetup.isHideWithdraw]);
+  const [currentNotificationSetup, setCurrentNotificationSetup] = useState<NotificationSetupDetail>(defaultNotificationSetupValue);
 
   const notificationOptions = [
     { label: t('Hide send notifications'), value: NotificationActionType.SEND },
@@ -66,21 +81,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     };
   }, [goBack]);
 
-  const onSwitchNotification = useCallback((currentValue: boolean) => {
-    return () => {
-      const newNotificationSetup = {
-        ...notificationSetup,
-        isEnabled: !currentValue
-      };
+  const onSwitchNotification = useCallback(() => {
+    setIsEnableNotification(!isEnableNotification);
+  }, [isEnableNotification]);
 
-      setLoadingNotification(true);
-      saveNotificationSetup(newNotificationSetup)
-        .catch(console.error)
-        .finally(() => {
-          setLoadingNotification(false);
-        });
-    };
-  }, [notificationSetup]);
+  const onChangeNotificationSetup = useCallback((e: CheckboxChangeEvent) => {
+    setCurrentNotificationSetup((prevState) => ({
+      ...prevState,
+      [e.target.value]: e.target.checked
+    }));
+  }, []);
 
   return (
     <PageWrapper className={`notification-setting ${className}`}>
@@ -109,13 +119,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             name={t('Enable notifications')}
             rightItem={(
               <Switch
-                checked={enableNotification}
-                loading={loadingNotification}
-                onClick={onSwitchNotification(enableNotification)}
+                checked={isEnableNotification}
+                onClick={onSwitchNotification}
               />
             )}
           />
-          {enableNotification && <div className={'content-wrapper'}>
+          {isEnableNotification && <div className={'content-wrapper'}>
             <div className={'options-container'}>
               <div className={'option-title'}>{t('Notification setup:')}</div>
               {
@@ -125,6 +134,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                     key={option.value}
                   >
                     <Checkbox
+                      checked={currentNotificationSetup[option.value]}
+                      onChange={onChangeNotificationSetup}
                       value={option.value}
                     >
                       <span className={'option-label'}>{option.label}</span>
@@ -145,15 +156,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         </div>
         <Button
           block={true}
+          disabled={loadingNotification}
+          loading={loadingNotification}
           // todo: handle params for notification setup
           onClick={onSaveNotificationSetup({
-            isEnabled: true,
+            isEnabled: isEnableNotification,
             notificationSetup: {
-              isHideAnnouncement: true,
+              isHideAnnouncement: currentNotificationSetup[NotificationActionType.CLAIM],
               isHideMarketing: true,
-              isHideReceive: false,
-              isHideSend: false,
-              isHideWithdraw: false
+              isHideReceive: currentNotificationSetup[NotificationActionType.RECEIVE],
+              isHideSend: currentNotificationSetup[NotificationActionType.SEND],
+              isHideWithdraw: currentNotificationSetup[NotificationActionType.WITHDRAW]
             }
           })}
         >
