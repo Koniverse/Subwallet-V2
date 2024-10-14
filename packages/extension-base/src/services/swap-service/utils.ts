@@ -3,16 +3,16 @@
 
 import { Asset, Assets, Chain, Chains } from '@chainflip/sdk/swap';
 import { COMMON_ASSETS, COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
-import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetName, _getAssetSymbol, _getContractAddressOfToken, _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import { CHAINFLIP_BROKER_API } from '@subwallet/extension-base/services/swap-service/handler/chainflip-handler';
 import { SwapPair, SwapProviderId, SwapRequest } from '@subwallet/extension-base/types/swap';
-import { CurrencyAmount, Percent, QUOTER_ADDRESSES, Token, TradeType, V3_CORE_FACTORY_ADDRESSES } from '@uniswap/sdk-core';
+import { CurrencyAmount, Percent, QUOTER_ADDRESSES, SWAP_ROUTER_02_ADDRESSES, Token, TradeType, V3_CORE_FACTORY_ADDRESSES } from '@uniswap/sdk-core';
 // @ts-ignore
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json';
-import { computePoolAddress, FeeAmount, Pool, Route, SwapQuoter, SwapRouter, Trade } from '@uniswap/v3-sdk';
+import { computePoolAddress, FeeAmount, Pool as PoolV3, Route as RouteV3, SwapQuoter, SwapRouter as SwapRouterV3, Trade as TradeV3 } from '@uniswap/v3-sdk';
 import BigN from 'bignumber.js';
 import { ethers } from 'ethers';
 
@@ -56,7 +56,7 @@ export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
   [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB],
   [SwapProviderId.UNISWAP_SEPOLIA]: [COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA, 'base_sepolia'],
-  [SwapProviderId.UNISWAP_ETHEREUM]: [COMMON_CHAIN_SLUGS.ARBITRUM, 'base_mainnet']
+  [SwapProviderId.UNISWAP_ETHEREUM]: [COMMON_CHAIN_SLUGS.ETHEREUM, COMMON_CHAIN_SLUGS.ARBITRUM, 'base_mainnet']
 };
 
 export function getSwapAlternativeAsset (swapPair: SwapPair): string | undefined {
@@ -122,33 +122,28 @@ export interface UniSwapPoolInfo {
   tick: number
 }
 
-export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi, chainService: ChainService): Promise<[string, string]> {
-  const { from, to: _to } = request.pair;
-  let to = _to;
+interface HandlerUniswapFunctionProps {
+  fromToken: _ChainAsset;
+  toToken: _ChainAsset;
+  fromChain: _ChainInfo;
+  recipient: string;
+  fromAmount: string;
+  web3Api: _EvmApi;
+}
 
-  if (to === 'base_sepolia-ERC20-WETH-0x4200000000000000000000000000000000000006') {
-    to = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
-  } else if (to === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
-    to = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-  } else if (to === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
-    to = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
-  } else if (to === 'optimism-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1') {
-    if (from === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
-      to = 'base_mainnet-ERC20-DAI-0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb';
-    } else {
-      to = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
-    }
-  }
+interface HandlerUniswapFunctionResult {
+  quote: string;
+  callData: string;
+  routerAddress: string;
+}
 
-  const fromToken = chainService.getAssetBySlug(from);
-  const toToken = chainService.getAssetBySlug(to);
 
-  const fromChain = chainService.getChainInfoByKey(fromToken.originChain);
-  const chainId: number = _getEvmChainId(fromChain) || 0;
-  const useV2 = ['base_sepolia', 'base_mainnet', COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA].includes(fromChain.slug);
-
+const handleUniswapV3 = async ({ fromAmount, fromChain, fromToken, recipient, toToken, web3Api }: HandlerUniswapFunctionProps): Promise<HandlerUniswapFunctionResult> => {
   const fromContract = _getContractAddressOfToken(fromToken);
   const toContract = _getContractAddressOfToken(toToken);
+  const chainId: number = _getEvmChainId(fromChain) || 0;
+  const useV2 = ['base_sepolia', 'base_mainnet', COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA].includes(fromChain.slug);
+  const swaptoDAI = _getAssetSymbol(toToken) === 'DAI';
 
   const fromTokenStruct = new Token(
     chainId,
@@ -167,7 +162,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
   );
 
   const currentPoolAddress = computePoolAddress({
-    fee: to.includes('DAI') ? FeeAmount.LOW : FeeAmount.HIGH,
+    fee: swaptoDAI ? FeeAmount.LOW : FeeAmount.HIGH,
     tokenA: fromTokenStruct,
     tokenB: toTokenStruct,
     factoryAddress: V3_CORE_FACTORY_ADDRESSES[chainId]
@@ -189,24 +184,6 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
   ]);
 
   const provider = new ethers.JsonRpcProvider(web3Api.apiUrl);
-  // const quoterContract1 = new ethers.Contract(
-  //   QUOTER_ADDRESSES[chainId as number],
-  //   Quoter.abi,
-  //   provider
-  // );
-  // try {
-  //   const quotedAmountOut = await quoterContract1.quoteExactInputSingle.staticCall([
-  //     fromContract,
-  //     toContract,
-  //     fee,
-  //     request.fromAmount,
-  //     toContract
-  //   ]);
-  //
-  //   console.log(quotedAmountOut);
-  // } catch (e) {
-  //   console.log(e);
-  // }
 
   const poolInfo: UniSwapPoolInfo = {
     token0: fromContract,
@@ -220,7 +197,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
     tick: parseInt(slot0[1])
   };
 
-  const pool = new Pool(
+  const pool = new PoolV3(
     fromTokenStruct,
     toTokenStruct,
     poolInfo.fee,
@@ -229,7 +206,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
     poolInfo.tick
   );
 
-  const swapRoute = new Route(
+  const swapRoute = new RouteV3(
     [pool],
     fromTokenStruct,
     toTokenStruct
@@ -239,7 +216,7 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
     swapRoute,
     CurrencyAmount.fromRawAmount(
       fromTokenStruct,
-      request.fromAmount
+      fromAmount
     ),
     TradeType.EXACT_INPUT,
     {
@@ -254,11 +231,11 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
 
   const availQuote = web3Api.api.eth.abi.decodeParameter('uint256', quoteCallReturnData);
 
-  const uncheckedTrade = Trade.createUncheckedTrade({
+  const uncheckedTrade = TradeV3.createUncheckedTrade({
     route: swapRoute,
     inputAmount: CurrencyAmount.fromRawAmount(
       fromTokenStruct,
-      request.fromAmount
+      fromAmount
     ),
     outputAmount: CurrencyAmount.fromRawAmount(
       toTokenStruct,
@@ -267,14 +244,49 @@ export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi
     tradeType: TradeType.EXACT_INPUT
   });
 
-  const methodParameters = SwapRouter.swapCallParameters([uncheckedTrade], {
+  const methodParameters = SwapRouterV3.swapCallParameters([uncheckedTrade], {
     slippageTolerance: new Percent(500, 10_000),
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    recipient: request.address
+    recipient
   });
+  const routerAddress = SWAP_ROUTER_02_ADDRESSES(chainId)
 
-  return [
-    availQuote.toString(),
-    methodParameters.calldata
-  ];
+  return {
+    quote: availQuote.toString(),
+    callData: methodParameters.calldata,
+    routerAddress
+  };
+};
+
+export async function handleUniswapQuote (request: SwapRequest, web3Api: _EvmApi, chainService: ChainService): Promise<HandlerUniswapFunctionResult> {
+  const { from, to: _to } = request.pair;
+  let to = _to;
+
+  if (to === 'base_sepolia-ERC20-WETH-0x4200000000000000000000000000000000000006') {
+    to = 'sepolia_ethereum-ERC20-WETH-0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14';
+  } else if (to === 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831') {
+    to = 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+  } else if (to === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
+    to = 'arbitrum_one-ERC20-USDC-0xaf88d065e77c8cC2239327C5EDb3A432268e5831';
+  } else if (to === 'optimism-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1') {
+    if (from === 'base_mainnet-ERC20-USDC-0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913') {
+      to = 'base_mainnet-ERC20-DAI-0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb';
+    } else {
+      to = 'arbitrum_one-ERC20-DAI-0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
+    }
+  }
+
+  const fromToken = chainService.getAssetBySlug(from);
+  const toToken = chainService.getAssetBySlug(to);
+
+  const fromChain = chainService.getChainInfoByKey(fromToken.originChain);
+
+  return await handleUniswapV3({
+    fromAmount: request.fromAmount,
+    fromChain,
+    fromToken,
+    recipient: request.address,
+    toToken,
+    web3Api
+  });
 }

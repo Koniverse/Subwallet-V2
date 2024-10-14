@@ -1,0 +1,52 @@
+diff --git a/node_modules/@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json b/node_modules/@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json
+index d7c2857..5a42685 100644
+--- a/node_modules/@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json
++++ b/node_modules/@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json
+@@ -46,11 +46,6 @@
+               "name": "recipient",
+               "type": "address"
+             },
+-            {
+-              "internalType": "uint256",
+-              "name": "deadline",
+-              "type": "uint256"
+-            },
+             {
+               "internalType": "uint256",
+               "name": "amountIn",
+@@ -102,11 +97,6 @@
+               "name": "recipient",
+               "type": "address"
+             },
+-            {
+-              "internalType": "uint256",
+-              "name": "deadline",
+-              "type": "uint256"
+-            },
+             {
+               "internalType": "uint256",
+               "name": "amountIn",
+@@ -153,11 +143,6 @@
+               "name": "recipient",
+               "type": "address"
+             },
+-            {
+-              "internalType": "uint256",
+-              "name": "deadline",
+-              "type": "uint256"
+-            },
+             {
+               "internalType": "uint256",
+               "name": "amountOut",
+@@ -209,11 +194,6 @@
+               "name": "recipient",
+               "type": "address"
+             },
+-            {
+-              "internalType": "uint256",
+-              "name": "deadline",
+-              "type": "uint256"
+-            },
+             {
+               "internalType": "uint256",
+               "name": "amountOut",

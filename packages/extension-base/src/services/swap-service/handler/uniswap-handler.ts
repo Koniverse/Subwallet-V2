@@ -19,7 +19,6 @@ import { calculateSwapRate, handleUniswapQuote, SWAP_QUOTE_TIMEOUT_MAP } from '@
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
 import { OptimalSwapPathParams, SwapEarlyValidation, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { getEthereumSmartAccountOwner } from '@subwallet/extension-base/utils';
-import { SWAP_ROUTER_02_ADDRESSES } from '@uniswap/sdk-core';
 import { batchTx, encodeApproveTx, QuoteResponse, rawTx } from 'klaster-sdk';
 import { TransactionConfig } from 'web3-core';
 
@@ -89,7 +88,7 @@ export class UniswapHandler implements SwapBaseInterface {
     const toToken = this.swapBaseHandler.chainService.getAssetBySlug(to);
     const fromChain = this.swapBaseHandler.chainService.getChainInfoByKey(fromToken.originChain);
 
-    const [availQuote] = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService);
+    const { quote: availQuote } = await handleUniswapQuote(request, this.swapBaseHandler.chainService.getEvmApi(fromChain.slug), this.swapBaseHandler.chainService);
     const result: SwapQuote = {
       pair: request.pair,
       fromAmount: request.fromAmount,
@@ -146,15 +145,10 @@ export class UniswapHandler implements SwapBaseInterface {
       }
     }
 
-    const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug(bridgeTokenSlug);
-
-    const bridgeOriginChain = this.swapBaseHandler.chainService.getChainInfoByKey(bridgeOriginToken.originChain);
-    const bridgeDestChain = this.swapBaseHandler.chainService.getChainInfoByKey(toToken.originChain);
-
-    const toAddress = SWAP_ROUTER_02_ADDRESSES(chainId);
+    // const toAddress = SWAP_ROUTER_02_ADDRESSES(chainId);
 
     const evmApi = this.swapBaseHandler.chainService.getEvmApi(fromToken.originChain);
-    const [, calldata] = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService);
+    const { callData, routerAddress: toAddress } = await handleUniswapQuote(request, evmApi, this.swapBaseHandler.chainService);
 
     const owner = getEthereumSmartAccountOwner(request.address);
     let tx: UserOpBundle | QuoteResponse;
@@ -168,7 +162,7 @@ export class UniswapHandler implements SwapBaseInterface {
 
       const swapTx = rawTx({
         to: toAddress as `0x${string}`,
-        data: calldata as `0x${string}`,
+        data: callData as `0x${string}`,
         gasLimit: BigInt(250_000)
       });
       const txBatch = batchTx(chainId, [approveSwapTx, swapTx]);
@@ -178,8 +172,12 @@ export class UniswapHandler implements SwapBaseInterface {
       await klasterService.init(owner?.owner as string);
 
       if (bridgeTokenSlug === '0x') {
-        tx = await klasterService.buildTx(bridgeOriginChain, [txBatch]);
+        tx = await klasterService.buildTx(fromChain, [txBatch]);
       } else {
+        const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug(bridgeTokenSlug);
+        const bridgeOriginChain = this.swapBaseHandler.chainService.getChainInfoByKey(bridgeOriginToken.originChain);
+        const bridgeDestChain = this.swapBaseHandler.chainService.getChainInfoByKey(toToken.originChain);
+
         tx = await klasterService.getBridgeTx(bridgeOriginToken, toToken, bridgeOriginChain, bridgeDestChain, params.quote.toAmount, txBatch);
       }
     } else {
@@ -187,26 +185,35 @@ export class UniswapHandler implements SwapBaseInterface {
 
       const swapTxConfig: TransactionConfig = {
         ...swapApprovalTxConfig,
-        data: calldata as `0x${string}`,
+        gas: 250_000,
+        data: callData as `0x${string}`,
         to: toAddress as `0x${string}`
       };
 
       if (bridgeTokenSlug === '0x') {
-        tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [swapApprovalTxConfig, swapTxConfig]);
+        tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(fromChain) as number, owner as SmartAccountData, [swapApprovalTxConfig, swapTxConfig]);
       } else {
+        const bridgeOriginToken = this.swapBaseHandler.chainService.getAssetBySlug(bridgeTokenSlug);
+        const bridgeOriginChain = this.swapBaseHandler.chainService.getChainInfoByKey(bridgeOriginToken.originChain);
+        const bridgeDestChain = this.swapBaseHandler.chainService.getChainInfoByKey(toToken.originChain);
         const [feeResp, bridgeTxConfig] = await getAcrossBridgeData({
-          amount: BigInt(params.quote.fromAmount),
+          amount: BigInt(params.quote.toAmount),
+          srcAccount: request.address,
+          sourceChainId: _getEvmChainId(bridgeOriginChain) as number,
+          sourceTokenContract: _getContractAddressOfToken(bridgeOriginToken),
           destAccount: request.address,
           destinationChainId: _getEvmChainId(bridgeDestChain) as number,
           destinationTokenContract: _getContractAddressOfToken(toToken),
-          sourceChainId: _getEvmChainId(bridgeOriginChain) as number,
-          sourceTokenContract: _getContractAddressOfToken(bridgeOriginToken),
-          srcAccount: owner?.owner as string,
           isTestnet: this.isTestnet
         });
         const bridgeApprovalTxConfig = await getERC20SpendingApprovalTx(feeResp.spokePoolAddress, params.address, _getContractAddressOfToken(bridgeOriginToken), evmApi);
 
-        tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(bridgeOriginChain) as number, owner as SmartAccountData, [swapApprovalTxConfig, swapTxConfig, bridgeApprovalTxConfig, bridgeTxConfig]);
+        tx = await ParticleAAHandler.createUserOperation(_getEvmChainId(fromChain) as number, owner as SmartAccountData, [
+          swapApprovalTxConfig,
+          swapTxConfig,
+          bridgeApprovalTxConfig,
+          bridgeTxConfig
+        ]);
       }
     }
 
