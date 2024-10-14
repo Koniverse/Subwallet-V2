@@ -207,21 +207,17 @@ const EARN_VMANTA_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.UNSTAKE_VMANTA
 ];
 
-const SUBTRATE_ACTIONS: ExtrinsicType[] = [
-  ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_AVAIL
-];
-
 const EVM_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.TOKEN_SPENDING_APPROVAL,
   ExtrinsicType.EVM_EXECUTE,
-  ExtrinsicType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM
 ];
 
 const OTHER_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.TRANSFER_XCM,
   ExtrinsicType.SEND_NFT,
   ExtrinsicType.SWAP,
-  ExtrinsicType.CROWDLOAN
+  ExtrinsicType.CROWDLOAN,
+  ExtrinsicType.CLAIM_AVAIL_BRIDGE
 ];
 
 export const getAccountTransactionActions = (signMode: AccountSignMode, networkType: AccountChainType, type?: KeypairType, _meta?: KeyringPair$Meta, _specialNetwork?: string): ExtrinsicType[] => {
@@ -237,8 +233,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_SDOT_ACTIONS,
           ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
-          ...OTHER_ACTIONS,
-          ...SUBTRATE_ACTIONS
+          ...OTHER_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [
@@ -266,8 +261,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_SDOT_ACTIONS,
           ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
-          ...OTHER_ACTIONS,
-          ...SUBTRATE_ACTIONS
+          ...OTHER_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [
@@ -300,7 +294,6 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           // ...EARN_SDOT_ACTIONS,
           // ...EARN_QDOT_ACTIONS,
           ...OTHER_ACTIONS,
-          ...SUBTRATE_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [

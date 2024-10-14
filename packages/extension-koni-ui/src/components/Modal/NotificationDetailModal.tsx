@@ -115,7 +115,7 @@ function Component (props: Props): React.ReactElement<Props> {
     const { icon, title } = getNotificationAction(notificationItem.extrinsicType);
     const sampleData: ActionInfo = {
       title,
-      extrinsicType: ExtrinsicType.TRANSFER_TOKEN, // todo: recheck this
+      extrinsicType: ExtrinsicType.TRANSFER_TOKEN, // todo: recheck to remove this
       backgroundColor: token.geekblue,
       leftIcon: icon
     };

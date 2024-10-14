@@ -44,7 +44,7 @@ export interface WithdrawClaimNotificationMetadata {
   stakingSlug: string
 }
 
-export interface ClaimAvailBridgeOnAvailNotificationMetadata {
+export interface ClaimAvailBridgeOnAvailNotificationMetadata { // todo: consider to merge with claim on Ethereum
   messageId: string,
   sourceChain: AvailBridgeSourceChain,
   sourceTransactionHash: string,

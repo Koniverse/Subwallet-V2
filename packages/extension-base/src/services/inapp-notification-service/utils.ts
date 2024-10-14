@@ -25,15 +25,11 @@ export function getReceiveDescription (amount: string, symbol: string) {
   return `You have just received ${amount} ${symbol}`;
 }
 
-export function getAvailBridgeClaimOnAvailDescription (amount: string, symbol: string) {
-  return `You has ${amount} ${symbol} to claim`; // todo: can standardize all claim type to a general claim description
+export function getAvailBridgeClaimDescription (amount: string, symbol: string) {
+  return `You has ${amount} ${symbol} to claim`; // todo: consider to standardize all claim type to a general claim description
 }
 
-export function getAvailBridgeClaimOnEthDescription (amount: string, symbol: string) {
-  return `You has ${amount} ${symbol} to claim`;
-}
-
-export const getIsTabRead = (notificationTab: NotificationTab) => {
+export function getIsTabRead (notificationTab: NotificationTab) {
   if (notificationTab === NotificationTab.UNREAD) {
     return false;
   }
@@ -112,6 +108,8 @@ export function createClaimNotification (claimItemInfo: EarningRewardItem, token
   };
 }
 
+// todo: can refactor utils and const of avail bridge to a new file. Also check in /transfer/xcm/availBridge.ts file
+
 export const AVAIL_BRIDGE_INDEXER = {
   AVAIL_MAINNET: 'https://bridge-indexer.avail.so',
   AVAIL_TESTNET: 'https://turing-bridge-indexer.fra.avail.so'
@@ -145,17 +143,12 @@ export interface AvailBridgeTransaction {
   sourceTransactionIndex: string,
 
   status: AvailBridgeTransactionStatus
-  dataType: AvailBridgeDataType, // todo: can remove
-}
-
-enum AvailBridgeDataType {
-  ERC20 = 'ERC20'
 }
 
 enum AvailBridgeTransactionStatus {
   READY_TO_CLAIM = 'READY_TO_CLAIM',
   CLAIMED = 'CLAIMED',
-  BRIDGED = 'BRIDGED' // todo: recheck
+  BRIDGED = 'BRIDGED'
 }
 
 export enum AvailBridgeSourceChain {
@@ -163,14 +156,14 @@ export enum AvailBridgeSourceChain {
   ETHEREUM = 'ETHEREUM',
 }
 
-export async function fetchAllAvailBridgeClaimable (address: string, sourceChain: AvailBridgeSourceChain) {
+export async function fetchAllAvailBridgeClaimable (address: string, sourceChain: AvailBridgeSourceChain, isTestnet: boolean) {
   const transactions: AvailBridgeTransaction[] = [];
   let isContinue = true;
   let page = 0;
   const pageSize = 100;
 
   while (isContinue) {
-    const response = await fetchAvailBridgeTransactions(address, sourceChain, AvailBridgeTransactionStatus.READY_TO_CLAIM, pageSize, page);
+    const response = await fetchAvailBridgeTransactions(address, sourceChain, AvailBridgeTransactionStatus.READY_TO_CLAIM, pageSize, page, isTestnet);
 
     if (!response) {
       break;
@@ -185,7 +178,7 @@ export async function fetchAllAvailBridgeClaimable (address: string, sourceChain
   return transactions;
 }
 
-export async function fetchAvailBridgeTransactions (userAddress: string, sourceChain: AvailBridgeSourceChain, status: AvailBridgeTransactionStatus, pageSize = 100, page = 0) {
+export async function fetchAvailBridgeTransactions (userAddress: string, sourceChain: AvailBridgeSourceChain, status: AvailBridgeTransactionStatus, pageSize = 100, page = 0, isTestnet: boolean) {
   const params = new URLSearchParams({
     userAddress,
     sourceChain,
@@ -195,8 +188,9 @@ export async function fetchAvailBridgeTransactions (userAddress: string, sourceC
   });
 
   try {
+    const api = isTestnet ? AVAIL_BRIDGE_INDEXER.AVAIL_TESTNET : AVAIL_BRIDGE_INDEXER.AVAIL_MAINNET;
     const rawResponse = await fetch(
-      `${AVAIL_BRIDGE_INDEXER.AVAIL_TESTNET}/transactions?${params.toString()}`, // todo: handle mainnet-testnet
+      `${api}/transactions?${params.toString()}`,
       {
         method: 'GET',
         headers: {
@@ -213,11 +207,7 @@ export async function fetchAvailBridgeTransactions (userAddress: string, sourceC
       return undefined;
     }
 
-    const b = await rawResponse.json() as AvailBridgeTransactionsResponse;
-
-    console.log(`${AVAIL_BRIDGE_INDEXER.AVAIL_TESTNET}/transactions?${params.toString()}`, b);
-
-    return b;
+    return await rawResponse.json() as AvailBridgeTransactionsResponse;
   } catch (e) {
     console.error(e);
 

@@ -79,6 +79,7 @@ const getTransactionComponent = (extrinsicType: ExtrinsicType): typeof BaseTrans
     case ExtrinsicType.STAKING_COMPOUNDING:
     case ExtrinsicType.EVM_EXECUTE:
     case ExtrinsicType.UNKNOWN:
+    default:
       return BaseTransactionConfirmation;
   }
 };

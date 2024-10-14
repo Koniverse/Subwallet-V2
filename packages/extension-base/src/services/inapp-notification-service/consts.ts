@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import { getAvailBridgeClaimOnAvailDescription, getAvailBridgeClaimOnEthDescription, getClaimDescription, getReceiveDescription, getSendDescription, getWithdrawDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { getAvailBridgeClaimDescription, getClaimDescription, getReceiveDescription, getSendDescription, getWithdrawDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 
 export const NotificationTitleMap = {
   [NotificationActionType.WITHDRAW]: 'Token Withdrawal',
@@ -18,8 +18,8 @@ export const NotificationDescriptionMap = {
   [NotificationActionType.CLAIM]: getClaimDescription,
   [NotificationActionType.SEND]: getSendDescription,
   [NotificationActionType.RECEIVE]: getReceiveDescription,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: getAvailBridgeClaimOnAvailDescription,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: getAvailBridgeClaimOnEthDescription
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: getAvailBridgeClaimDescription,
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: getAvailBridgeClaimDescription
 };
 
 export const ONE_DAY_MILLISECOND = 86400000;

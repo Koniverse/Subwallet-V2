@@ -116,13 +116,21 @@ export class InappNotificationService implements CronServiceInterface {
     const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
 
     substrateAddresses.forEach((address) => {
-      fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.ETHEREUM)
+      fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.ETHEREUM, true)
+        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
+        .catch(console.error);
+
+      fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.ETHEREUM, false)
         .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
         .catch(console.error);
     });
 
     evmAddresses.forEach((address) => {
-      fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.AVAIL)
+      fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.AVAIL, true)
+        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
+        .catch(console.error);
+
+      fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.AVAIL, false)
         .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
         .catch(console.error);
     });
@@ -132,16 +140,15 @@ export class InappNotificationService implements CronServiceInterface {
     const actionType = isSubstrateAddress(address) ? NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL : NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM;
     const timestamp = Date.now();
     const notifications: _BaseNotificationInfo[] = transactions.map((transaction) => {
-      // console.log('address', address, transactions);
       const { amount, depositorAddress, messageId, receiverAddress, sourceBlockHash, sourceChain, sourceTransactionHash, sourceTransactionIndex } = transaction;
 
       return {
         id: `${actionType}___${messageId}___${timestamp}`,
-        address: depositorAddress,
+        address: receiverAddress,
         title: NotificationTitleMap[actionType],
         description: NotificationDescriptionMap[actionType](formatNumber(amount, 18), 'AVAIL'), // todo: improve passing decimal and symbol. Currently only AVAIL with decimal: 18
         time: timestamp,
-        extrinsicType: ExtrinsicType.STAKING_CLAIM_REWARD, // todo: add new extrinsicType
+        extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE,
         isRead: false,
         actionType,
         metadata: {
