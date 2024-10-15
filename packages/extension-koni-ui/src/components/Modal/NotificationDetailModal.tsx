@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { NotificationActionType, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import { CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
-import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
-import { changeReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { NOTIFICATION_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
@@ -13,7 +11,6 @@ import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import { Checks, DownloadSimple, Eye, Gift, X } from 'phosphor-react';
 import React, { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps & {
@@ -21,6 +18,7 @@ type Props = ThemeProps & {
   notificationItem: NotificationInfoItem;
   isTrigger: boolean;
   setTrigger: (value: boolean) => void;
+  onClickAction: () => void;
 };
 
 export interface ActionInfo {
@@ -33,7 +31,7 @@ export interface ActionInfo {
 }
 
 function Component (props: Props): React.ReactElement<Props> {
-  const { className, isTrigger, notificationItem, onCancel, setTrigger } = props;
+  const { className, isTrigger, notificationItem, onCancel, onClickAction, setTrigger } = props;
   const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead);
   const { t } = useTranslation();
   const { token } = useTheme() as Theme;
@@ -65,52 +63,6 @@ function Component (props: Props): React.ReactElement<Props> {
     }
   };
 
-  const [, setClaimRewardStorage] = useLocalStorage(CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS);
-  const [, setWithdrawStorage] = useLocalStorage(WITHDRAW_TRANSACTION, DEFAULT_WITHDRAW_PARAMS);
-  const navigate = useNavigate();
-
-  const onClickAction = useCallback(() => {
-    switch (notificationItem.actionType) {
-      case NotificationActionType.WITHDRAW: {
-        const metadata = notificationItem.metadata as WithdrawClaimNotificationMetadata;
-
-        setWithdrawStorage({
-          ...DEFAULT_UN_STAKE_PARAMS,
-          slug: metadata.stakingSlug,
-          chain: metadata.stakingSlug.split('___')[2],
-          from: notificationItem.address
-        });
-        navigate('/transaction/withdraw');
-
-        break;
-      }
-
-      case NotificationActionType.CLAIM: {
-        const metadata = notificationItem.metadata as WithdrawClaimNotificationMetadata;
-
-        setClaimRewardStorage({
-          ...DEFAULT_CLAIM_REWARD_PARAMS,
-          slug: metadata.stakingSlug,
-          chain: metadata.stakingSlug.split('___')[2],
-          from: notificationItem.address
-        });
-        navigate('/transaction/claim-reward');
-
-        break;
-      }
-
-      case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL: {
-        // todo: update this
-        break;
-      }
-
-      case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: {
-        // todo: update this
-        break;
-      }
-    }
-  }, [navigate, notificationItem.actionType, notificationItem.address, notificationItem.metadata, setClaimRewardStorage, setWithdrawStorage]);
-
   const handleNotificationInfo = useCallback(() => {
     const { icon, title } = getNotificationAction(notificationItem.extrinsicType);
     const sampleData: ActionInfo = {
@@ -125,7 +77,10 @@ function Component (props: Props): React.ReactElement<Props> {
 
   const onClickReadButton = useCallback(() => {
     setReadNotification(!readNotification);
-    changeReadNotificationStatus(notificationItem)
+    switchReadNotificationStatus({
+      id: notificationItem.id,
+      isRead: notificationItem.isRead
+    })
       .catch(console.error)
       .finally(() => {
         _onCancel();

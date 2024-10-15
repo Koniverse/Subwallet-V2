@@ -6,5 +6,9 @@ import { NotificationTab } from '@subwallet/extension-base/services/inapp-notifi
 export interface GetNotificationParams {
   proxyId: string,
   notificationTab: NotificationTab
-  // todo: filter by time period
+}
+
+export interface RequestSwitchStatusParams {
+  id: string,
+  isRead: boolean
 }

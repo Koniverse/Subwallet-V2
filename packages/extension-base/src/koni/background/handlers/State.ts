@@ -164,7 +164,7 @@ export default class KoniState {
     this.earningService = new EarningService(this);
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
-    this.inappNotificationService = new InappNotificationService(this.dbService, this.keyringService);
+    this.inappNotificationService = new InappNotificationService(this.dbService, this.keyringService, this.eventService);
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -291,6 +291,7 @@ export default class KoniState {
     await this.balanceService.init();
     await this.earningService.init();
     await this.swapService.init();
+    await this.inappNotificationService.init();
 
     this.onReady();
     this.onAccountAdd();

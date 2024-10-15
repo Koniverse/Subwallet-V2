@@ -17,7 +17,7 @@ import { HistoryQuery } from '@subwallet/extension-base/services/storage-service
 import YieldPoolStore from '@subwallet/extension-base/services/storage-service/db-stores/YieldPoolStore';
 import YieldPositionStore from '@subwallet/extension-base/services/storage-service/db-stores/YieldPositionStore';
 import { BalanceItem, YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { BN_ZERO, reformatAddress } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
@@ -450,7 +450,8 @@ export default class DatabaseService {
         this.stores.crowdloan,
         this.stores.staking,
         this.stores.transaction,
-        this.stores.nominatorMetadata
+        this.stores.nominatorMetadata,
+        this.stores.inappNotification
       ];
 
       if (resetAll) {
@@ -635,8 +636,12 @@ export default class DatabaseService {
     return this.stores.inappNotification.markAllRead(proxyId);
   }
 
-  public changeReadStatus (notification: _NotificationInfo) {
-    return this.stores.inappNotification.changeReadStatus(notification);
+  public switchReadStatus (params: RequestSwitchStatusParams) {
+    return this.stores.inappNotification.switchReadStatus(params);
+  }
+
+  public removeAccountNotifications (proxyId: string) {
+    return this.stores.inappNotification.removeAccountNotifications(proxyId);
   }
 
   async exportDB () {

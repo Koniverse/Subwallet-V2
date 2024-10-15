@@ -4,12 +4,13 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_LISTEN_AVAIL_BRIDGE_CLAIM } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
+import { EventService } from '@subwallet/extension-base/services/event-service';
 import { NotificationDescriptionMap, NotificationTitleMap, ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AvailBridgeSourceChain, AvailBridgeTransaction, fetchAllAvailBridgeClaimable } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { categoryAddresses, formatNumber } from '@subwallet/extension-base/utils';
 import { isSubstrateAddress } from '@subwallet/keyring';
 
@@ -17,20 +18,34 @@ export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
   private readonly dbService: DatabaseService;
   private readonly keyringService: KeyringService;
+  private readonly eventService: EventService;
   private refeshAvailBridgeClaimTimeOut: NodeJS.Timeout | undefined;
 
-  constructor (dbService: DatabaseService, keyringService: KeyringService) {
+  constructor (dbService: DatabaseService, keyringService: KeyringService, eventService: EventService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
     this.dbService = dbService;
     this.keyringService = keyringService;
+    this.eventService = eventService;
+  }
+
+  async init (): Promise<void> {
+    this.status = ServiceStatus.INITIALIZING;
+
+    await this.eventService.waitAccountReady;
+
+    this.status = ServiceStatus.INITIALIZED;
+
+    await this.start();
+
+    this.onAccountProxyRemove();
   }
 
   async markAllRead (proxyId: string) {
     await this.dbService.markAllRead(proxyId);
   }
 
-  async changeReadStatus (notification: _NotificationInfo) {
-    await this.dbService.changeReadStatus(notification);
+  async switchReadStatus (params: RequestSwitchStatusParams) {
+    await this.dbService.switchReadStatus(params);
   }
 
   public subscribeUnreadNotificationsCountMap (callback: (data: Record<string, number>) => void) {
@@ -56,12 +71,26 @@ export class InappNotificationService implements CronServiceInterface {
   passValidateNotification (candidateNotification: _BaseNotificationInfo, notificationFromDB: _NotificationInfo[]) {
     if ([NotificationActionType.WITHDRAW, NotificationActionType.CLAIM].includes(candidateNotification.actionType)) {
       const { actionType, address, metadata, time } = candidateNotification;
+      const candidateMetadata = metadata as WithdrawClaimNotificationMetadata;
 
       for (const notification of notificationFromDB) {
-        const sameNotification = notification.address === address && notification.actionType === actionType && JSON.stringify(notification.metadata) === JSON.stringify(metadata); // todo: improve compare object
-        const overdue = time - notification.time >= ONE_DAY_MILLISECOND;
+        const comparedMetadata = notification.metadata as WithdrawClaimNotificationMetadata;
 
-        if (sameNotification && !overdue) {
+        if (notification.address !== address) {
+          continue;
+        }
+
+        if (notification.actionType !== actionType) {
+          continue;
+        }
+
+        if (time - notification.time >= ONE_DAY_MILLISECOND) {
+          continue;
+        }
+
+        const sameNotification = candidateMetadata.stakingType === comparedMetadata.stakingType && candidateMetadata.stakingSlug === comparedMetadata.stakingSlug;
+
+        if (sameNotification) {
           return false;
         }
       }
@@ -202,5 +231,15 @@ export class InappNotificationService implements CronServiceInterface {
 
   stopCron (): Promise<void> {
     return Promise.resolve(undefined);
+  }
+
+  onAccountProxyRemove () {
+    this.eventService.on('accountProxy.remove', (proxyId: string) => {
+      this.removeAccountNotifications(proxyId);
+    });
+  }
+
+  removeAccountNotifications (proxyId: string) {
+    this.dbService.removeAccountNotifications(proxyId).catch(console.error);
   }
 }

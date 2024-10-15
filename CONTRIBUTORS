@@ -1,25 +1,26 @@
-    2842	AnhMTV                        	Release version 1.2.32
-    2541	Nam Phạm                      	[Issue 3680] chore: update chainlist
-    2192	S2kael                        	[Issue-3711] Rollback handle pending state for balance item
-     848	lw-cdm                        	[Issue-3407] WebApp - Support Avail Ledger app
-     565	nguyentiendung                	[Issue-2845] Fix UI bugs export accounts
+    2844	AnhMTV                        	Release version 1.3.1
+    2543	Nam Phạm                      	[Issue 3700] Unified account - enable TON network by default
+    2334	S2kael                        	[Unified] Fix eslint
+     869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
+     568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
      465	Jaco                          	0.42.5 (#969)
-     327	bluezdot                      	[Issue-3635] feat: update content
-     241	Thiendekaco                   	
+     388	bluezdot                      	
+     354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      185	quangdo                       	
+     172	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
+     170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      157	dominhquang                   	
-     118	lw-cdm                        	
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
+      96	lw                            	
       83	Hieu Dao                      	Update README.md
+      83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
-      81	leewong                       	Swap - Change idle time to 300s
-      70	bluedot                       	[Issue-3579] fix: update check fully migrate
-      66	Frenkie Nguyen                	[Issue 2352] fix eslint
+      73	bluedot                       	[Issue-3579] fix: update check fully migrate
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
       28	PDTnhah                       	[Issue-3680] Update chainlist
-      24	S2kael                        	
+      25	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
@@ -51,7 +52,6 @@
        1	Forrest                       	Add Web3AccountsOptions to web3FromAddress function (#617)
        1	itsonal                       	add new language - Urdu (#847)
        1	KarishmaBothara               	Added code to support custom signed extension/user extension (#670)
-       1	lw                            	[UI] Fix issue related to input overflow width
        1	Marcel Jackisch               	Minor changes to readme (#376)
        1	Michael Healy                 	Small typo (#932)
        1	Minh Ha                       	✨ allows background handler to handle custom extention port name (#685)

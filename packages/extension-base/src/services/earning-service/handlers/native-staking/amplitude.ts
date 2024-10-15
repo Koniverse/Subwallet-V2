@@ -9,7 +9,7 @@ import { _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chai
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { BaseYieldPositionInfo, BasicTxErrorType, EarningRewardItem, EarningStatus, NativeYieldPoolInfo, ParachainStakingStakeOption, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, EarningRewardItem, EarningStatus, NativeYieldPoolInfo, ParachainStakingStakeOption, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, parseRawNumber, reformatAddress } from '@subwallet/extension-base/utils';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
@@ -230,10 +230,7 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
     const totalBalance = new BN(activeStake).add(new BN(unstakingBalance));
     const stakingStatus = getEarningStatusByNominations(new BN(activeStake), nominationList);
 
-    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
-
-    // todo: optimize performance by only create notification in case claimable
-    await this.createWithdrawNotifications(unstakingList, tokenInfo, address, this.baseInfo.slug, YieldPoolType.NATIVE_STAKING);
+    await this.createWithdrawNotifications(unstakingList, this.nativeToken, address);
 
     return {
       status: stakingStatus,
@@ -328,7 +325,6 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
     const substrateApi = this.substrateApi;
 
     await substrateApi.isReady;
-    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
 
     if (!_STAKING_CHAIN_GROUP.kilt.includes(this.chain) && !_STAKING_CHAIN_GROUP.krest_network.includes(this.chain)) {
       await Promise.all(useAddresses.map(async (address) => {
@@ -347,7 +343,7 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
         };
 
         if (_unclaimedReward.toString() !== '0') {
-          await this.createClaimNotification(earningRewardItem, tokenInfo);
+          await this.createClaimNotification(earningRewardItem, this.nativeToken);
         }
 
         callBack(earningRewardItem);

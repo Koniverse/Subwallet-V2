@@ -283,10 +283,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
       stakingStatus = EarningStatus.NOT_EARNING;
     }
 
-    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
-
-    // todo: optimize performance by only create notification in case claimable
-    await this.createWithdrawNotifications(unstakings, tokenInfo, address, this.baseInfo.slug, YieldPoolType.NOMINATION_POOL);
+    await this.createWithdrawNotifications(unstakings, this.nativeToken, address);
 
     return {
       status: stakingStatus,
@@ -367,7 +364,6 @@ export default class NominationPoolHandler extends BasePoolHandler {
   async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem) => void): Promise<VoidFunction> {
     let cancel = false;
     const substrateApi = this.substrateApi;
-    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
 
     await substrateApi.isReady;
 
@@ -386,7 +382,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
             };
 
             if (_unclaimedReward.toString() !== '0') {
-              await this.createClaimNotification(earningRewardItem, tokenInfo);
+              await this.createClaimNotification(earningRewardItem, this.nativeToken);
             }
 
             callBack(earningRewardItem);
