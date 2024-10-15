@@ -264,14 +264,17 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
           };
 
           const xcmOriginSubstrateApi = await this.state.getSubstrateApi(altInputTokenInfo.originChain).isReady;
+          const evmApi = this.state.getEvmApi(altInputTokenInfo.originChain);
 
           const xcmTransfer = await createXcmExtrinsic({
             originTokenInfo: altInputTokenInfo,
             destinationTokenInfo: inputTokenInfo,
             sendingValue: bnAmount.toString(),
+            sender: address,
             recipient: address,
             chainInfoMap: this.state.getChainInfoMap(),
-            substrateApi: xcmOriginSubstrateApi
+            substrateApi: xcmOriginSubstrateApi,
+            evmApi
           });
 
           const _xcmFeeInfo = await xcmTransfer.paymentInfo(address);
@@ -509,6 +512,7 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
     const originTokenInfo = this.state.getAssetBySlug(originTokenSlug);
     const destinationTokenInfo = this.state.getAssetBySlug(destinationTokenSlug);
     const substrateApi = this.state.getSubstrateApi(originChainInfo.slug);
+    const evmApi = this.state.getEvmApi(originChainInfo.slug);
 
     const inputTokenBalance = await this.state.balanceService.getTransferableBalance(address, destinationTokenInfo.originChain, destinationTokenSlug);
     const bnInputTokenBalance = new BN(inputTokenBalance.value);
@@ -522,9 +526,11 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
       chainInfoMap: this.state.getChainInfoMap(),
       destinationTokenInfo,
       originTokenInfo,
+      sender: address,
       recipient: address,
       sendingValue: bnTotalAmount.toString(),
-      substrateApi
+      substrateApi,
+      evmApi
     });
 
     const xcmData: RequestCrossChainTransfer = {

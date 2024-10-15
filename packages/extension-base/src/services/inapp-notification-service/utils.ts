@@ -39,7 +39,7 @@ export function getIsTabRead (notificationTab: NotificationTab) {
   }
 
   return undefined;
-};
+}
 
 function createWithdrawNotification (amount: string, address: string, symbol: string, stakingSlug: string, stakingType: YieldPoolType): _BaseNotificationInfo {
   const actionType = NotificationActionType.WITHDRAW;

@@ -30,7 +30,7 @@ import { isBounceableAddress } from '@subwallet/extension-base/services/balance-
 import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObject, getPSP34TransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
-import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createSnowBridgeExtrinsic, createXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
+import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createSnowBridgeExtrinsic, createXcmExtrinsic, CreateXcmExtrinsicProps, FunctionCreateXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { getClaimTxOnAvail, getClaimTxOnEthereum, isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
@@ -1455,53 +1455,32 @@ export default class KoniExtension {
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
 
     if (fromKeyPair && destinationTokenInfo) {
+      const evmApi = this.#koniState.getEvmApi(originNetworkKey);
+      const substrateApi = this.#koniState.getSubstrateApi(originNetworkKey);
+      const params: CreateXcmExtrinsicProps = {
+        destinationTokenInfo,
+        originTokenInfo,
+        sendingValue: value,
+        sender: from,
+        recipient: to,
+        chainInfoMap,
+        substrateApi,
+        evmApi
+      };
+
+      let funcCreateExtrinsic: FunctionCreateXcmExtrinsic;
+
       if (isSnowBridgeEvmTransfer) {
-        const evmApi = this.#koniState.getEvmApi(originNetworkKey);
-
-        extrinsic = await createSnowBridgeExtrinsic({
-          destinationTokenInfo,
-          originTokenInfo,
-          sendingValue: value,
-          sender: from,
-          recipient: to,
-          chainInfoMap,
-          evmApi
-        });
+        funcCreateExtrinsic = createSnowBridgeExtrinsic;
+      } else if (isAvailBridgeFromEvm) {
+        funcCreateExtrinsic = createAvailBridgeTxFromEth;
+      } else if (isAvailBridgeFromAvail) {
+        funcCreateExtrinsic = createAvailBridgeExtrinsicFromAvail;
       } else {
-        const substrateApi = this.#koniState.getSubstrateApi(originNetworkKey);
-
-        if (isAvailBridgeFromEvm) {
-          const evmApi = this.#koniState.getEvmApi(originNetworkKey);
-
-          extrinsic = await createAvailBridgeTxFromEth({
-            destinationTokenInfo,
-            originTokenInfo,
-            sendingValue: value,
-            sender: from,
-            recipient: to,
-            chainInfoMap,
-            evmApi
-          });
-        } else if (isAvailBridgeFromAvail) {
-          extrinsic = await createAvailBridgeExtrinsicFromAvail({
-            destinationTokenInfo,
-            originTokenInfo,
-            sendingValue: value,
-            recipient: to,
-            chainInfoMap,
-            substrateApi
-          });
-        } else {
-          extrinsic = await createXcmExtrinsic({
-            destinationTokenInfo,
-            originTokenInfo,
-            sendingValue: value,
-            recipient: to,
-            chainInfoMap,
-            substrateApi
-          });
-        }
+        funcCreateExtrinsic = createXcmExtrinsic;
       }
+
+      extrinsic = await funcCreateExtrinsic(params);
 
       additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
         const { value: senderTransferable } = await this.getAddressTransferableBalance({ address: from, networkKey: originNetworkKey, token: originTokenInfo.slug });
@@ -1755,13 +1734,14 @@ export default class KoniExtension {
 
   private async getXcmMaxTransferable (originTokenInfo: _ChainAsset, destChain: string, address: string): Promise<BigN> {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
+    const evmApi = this.#koniState.chainService.getEvmApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, originTokenInfo.slug);
     const existentialDeposit = originTokenInfo.minAmount || '0';
 
     if (destinationTokenInfo) {
       const [bnMockExecutionFee, { value }] = await Promise.all([
-        getXcmMockTxFee(substrateApi, chainInfoMap, originTokenInfo, destinationTokenInfo),
+        getXcmMockTxFee(substrateApi, evmApi, chainInfoMap, originTokenInfo, destinationTokenInfo),
         this.getAddressTransferableBalance({ extrinsicType: ExtrinsicType.TRANSFER_XCM, address, networkKey: originTokenInfo.originChain, token: originTokenInfo.slug })
       ]);
 

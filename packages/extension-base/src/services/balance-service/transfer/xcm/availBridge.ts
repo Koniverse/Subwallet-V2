@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
-import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _AVAIL_BRIDGE_GATEWAY_ABI, _AVAIL_TEST_BRIDGE_GATEWAY_ABI, getAvailBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
@@ -12,6 +12,7 @@ import { AVAIL_BRIDGE_API } from '@subwallet/extension-base/services/inapp-notif
 import { decodeAddress } from '@subwallet/keyring';
 import { PrefixedHexString } from 'ethereumjs-util';
 import { TransactionConfig } from 'web3-core';
+import { ContractSendMethod } from 'web3-eth-contract';
 
 import { u8aToHex } from '@polkadot/util';
 
@@ -53,13 +54,16 @@ type Message = {
   messageType: string;
 };
 
-export async function getAvailBridgeTxFromEth (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, destinationChainInfo: _ChainInfo, sender: string, recipient: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
+export async function getAvailBridgeTxFromEth (originChainInfo: _ChainInfo, sender: string, recipient: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
   const availBridgeContractAddress = getAvailBridgeGatewayContract(originChainInfo.slug);
   const ABI = getAvailBridgeAbi(originChainInfo.slug);
   const availBridgeContract = getWeb3Contract(availBridgeContractAddress, evmApi, ABI);
-  const transferData = availBridgeContract.methods.sendAVAIL(u8aToHex(decodeAddress(recipient)), value).encodeABI() as string;
+  const _address = u8aToHex(decodeAddress(recipient));
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+  const sendAvail = availBridgeContract.methods.sendAVAIL(_address, value) as ContractSendMethod;
+  const transferData = sendAvail.encodeABI();
   const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
-  const gasLimit = await availBridgeContract.methods.sendAVAIL(u8aToHex(decodeAddress(recipient)), value).estimateGas({ from: sender }) as number;
+  const gasLimit = await sendAvail.estimateGas({ from: sender });
 
   return {
     from: sender,
@@ -171,6 +175,7 @@ export async function getClaimTxOnEthereum (chainSlug: string, notification: _No
   const metadata = notification.metadata as ClaimAvailBridgeOnEthereumNotificationMetadata;
   const merkleProof = await getClaimProofOnEthereum(chainSlug, metadata.sourceBlockHash, metadata.sourceTransactionIndex);
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   const transfer = availBridgeContract.methods.receiveAVAIL(
     {
       messageType: '0x02',
@@ -206,9 +211,9 @@ export async function getClaimTxOnEthereum (chainSlug: string, notification: _No
       leaf: merkleProof.leaf,
       leafIndex: merkleProof.leafIndex
     }
-  );
-  const transferData = transfer.encodeABI() as string;
-  const gasLimit = await transfer.estimateGas({ from: metadata.receiverAddress }) as number;
+  ) as ContractSendMethod;
+  const transferData = transfer.encodeABI();
+  const gasLimit = await transfer.estimateGas({ from: metadata.receiverAddress });
   const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
 
   return {

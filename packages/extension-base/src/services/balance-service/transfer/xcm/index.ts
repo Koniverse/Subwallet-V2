@@ -16,22 +16,20 @@ import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { u8aToHex } from '@polkadot/util';
-import { addressToEvm, isEthereumAddress } from '@polkadot/util-crypto';
+import { addressToEvm } from '@polkadot/util-crypto';
 
-type CreateXcmExtrinsicProps = {
+export type CreateXcmExtrinsicProps = {
   originTokenInfo: _ChainAsset;
   destinationTokenInfo: _ChainAsset;
   recipient: string;
   sendingValue: string;
-
+  evmApi: _EvmApi;
   substrateApi: _SubstrateApi;
   chainInfoMap: Record<string, _ChainInfo>;
+  sender: string;
 }
 
-type CreateSnowBridgeExtrinsicProps = Omit<CreateXcmExtrinsicProps, 'substrateApi'> & {
-  evmApi: _EvmApi;
-  sender: string
-}
+export type FunctionCreateXcmExtrinsic = (props: CreateXcmExtrinsicProps) => Promise<SubmittableExtrinsic<'promise'> | TransactionConfig>;
 
 export const createSnowBridgeExtrinsic = async ({ chainInfoMap,
   destinationTokenInfo,
@@ -39,7 +37,7 @@ export const createSnowBridgeExtrinsic = async ({ chainInfoMap,
   originTokenInfo,
   recipient,
   sender,
-  sendingValue }: CreateSnowBridgeExtrinsicProps): Promise<TransactionConfig> => {
+  sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
   const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
 
@@ -76,43 +74,43 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
 };
 
 export const createAvailBridgeTxFromEth = ({ chainInfoMap,
-  destinationTokenInfo,
   evmApi,
   originTokenInfo,
   recipient,
   sender,
-  sendingValue }: CreateSnowBridgeExtrinsicProps): Promise<TransactionConfig> => {
+  sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
-  const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
 
-  return getAvailBridgeTxFromEth(originTokenInfo, originChainInfo, destinationChainInfo, sender, recipient, sendingValue, evmApi);
+  return getAvailBridgeTxFromEth(originChainInfo, sender, recipient, sendingValue, evmApi);
 };
 
 export const createAvailBridgeExtrinsicFromAvail = async ({ recipient, sendingValue, substrateApi }: CreateXcmExtrinsicProps): Promise<SubmittableExtrinsic<'promise'>> => {
   return await getAvailBridgeExtrinsicFromAvail(recipient, sendingValue, substrateApi);
 };
 
-export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {
+export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, evmApi: _EvmApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {
   try {
     const destChainInfo = chainInfoMap[destinationTokenInfo.originChain];
     const originChainInfo = chainInfoMap[originTokenInfo.originChain];
-    const address = '5DRewsYzhJqZXU3SRaWy1FSt5iDr875ao91aw5fjrJmDG4Ap'; // todo: move this
+    const fakeAddress = '5DRewsYzhJqZXU3SRaWy1FSt5iDr875ao91aw5fjrJmDG4Ap'; // todo: move this
+    const substrateAddress = fakeAddress; // todo: move this
+    const evmAddress = u8aToHex(addressToEvm(fakeAddress)); // todo: move this
 
     // mock receiving account from sender
-    const recipient = !isEthereumAddress(address) && _isChainEvmCompatible(destChainInfo) && !_isChainEvmCompatible(originChainInfo)
-      ? u8aToHex(addressToEvm(address))
-      : address
-    ;
+    const sender = _isChainEvmCompatible(originChainInfo) ? evmAddress : substrateAddress;
+    const recipient = _isChainEvmCompatible(destChainInfo) ? evmAddress : substrateAddress;
 
     const mockTx = await createXcmExtrinsic({
       chainInfoMap,
       destinationTokenInfo,
       originTokenInfo,
-      recipient: recipient,
+      sender,
+      recipient,
       sendingValue: '1000000000000000000',
-      substrateApi
+      substrateApi,
+      evmApi
     });
-    const paymentInfo = await mockTx.paymentInfo(address);
+    const paymentInfo = await mockTx.paymentInfo(fakeAddress);
 
     return new BigN(paymentInfo?.partialFee?.toString() || '0');
   } catch (e) {

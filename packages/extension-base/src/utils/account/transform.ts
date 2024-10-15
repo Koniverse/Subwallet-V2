@@ -209,7 +209,7 @@ const EARN_VMANTA_ACTIONS: ExtrinsicType[] = [
 
 const EVM_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.TOKEN_SPENDING_APPROVAL,
-  ExtrinsicType.EVM_EXECUTE,
+  ExtrinsicType.EVM_EXECUTE
 ];
 
 const OTHER_ACTIONS: ExtrinsicType[] = [
@@ -293,7 +293,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           // ...EARN_LDOT_ACTIONS,
           // ...EARN_SDOT_ACTIONS,
           // ...EARN_QDOT_ACTIONS,
-          ...OTHER_ACTIONS,
+          ...OTHER_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
         return [
