@@ -1892,22 +1892,19 @@ export class ChainService {
     const activeChainSlugs = this.getActiveChainSlugs();
     const assetRegistry = this.getAssetRegistry();
 
-    if (Object.keys(assetSettings).length === 0) { // only initiate the first time
-      Object.values(assetRegistry).forEach((assetInfo) => {
-        const isSettingExisted = assetInfo.slug in assetSettings;
+    Object.values(assetRegistry).forEach((assetInfo) => {
+      const isSettingExisted = assetInfo.slug in assetSettings;
 
-        // Set visible for every enabled chains
-        if (activeChainSlugs.includes(assetInfo.originChain) && !isSettingExisted) {
-          // Setting only exist when set either by chain settings or user
-          assetSettings[assetInfo.slug] = {
-            visible: true
-          };
-        }
-      });
+      // Set visible for every enabled chains
+      if (activeChainSlugs.includes(assetInfo.originChain) && !isSettingExisted) {
+        // Setting only exist when set either by chain settings or user
+        assetSettings[assetInfo.slug] = {
+          visible: true
+        };
+      }
+    });
 
-      this.setAssetSettings(assetSettings, false);
-    }
-
+    this.setAssetSettings(assetSettings, false);
     this.eventService.emit('asset.ready', true);
   }
 

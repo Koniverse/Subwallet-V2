@@ -273,7 +273,6 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       quoteResponse.quote.includedFees.forEach((fee) => {
         switch (fee.type) {
           case ChainflipFeeType.INGRESS: {
-            console.log('ingress', fee);
             feeComponent.push({
               tokenSlug: fromAsset.slug,
               amount: fee.amount,
@@ -284,7 +283,6 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
           // eslint-disable-next-line no-fallthrough
           case ChainflipFeeType.EGRESS: {
-            console.log('egress', fee);
             feeComponent.push({
               tokenSlug: toAsset.slug,
               amount: fee.amount,
@@ -300,8 +298,6 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
           // eslint-disable-next-line no-fallthrough
           case ChainflipFeeType.BROKER: {
-            console.log('broker fee', fee);
-
             feeComponent.push({
               tokenSlug: this.intermediaryAssetSlug,
               amount: fee.amount,
@@ -385,7 +381,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
   }
 
   public async handleSubmitStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
-    const { address, quote, recipient } = params;
+    const { address, quote, recipient, slippage } = params;
 
     const pair = quote.pair;
     const fromAsset = this.chainService.getAssetBySlug(pair.from);
@@ -400,14 +396,23 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
     const fromAssetId = _getAssetSymbol(fromAsset);
     const toAssetId = _getAssetSymbol(toAsset);
 
+    const minReceive = new BigNumber(quote.rate).times(1 - slippage).toString();
+
     const depositAddressResponse = await this.swapSdk.requestDepositAddress({
       srcChain: srcChainId,
       destChain: destChainId,
       srcAsset: fromAssetId as Asset,
       destAsset: toAssetId as Asset,
       destAddress: receiver,
-      amount: quote.fromAmount
+      amount: quote.fromAmount,
+      fillOrKillParams: {
+        minPrice: minReceive, // minimum accepted price for swaps through the channel
+        refundAddress: address, // address to which assets are refunded
+        retryDurationBlocks: 100 // 100 blocks * 6 seconds = 10 minutes before deposits are refunded
+      }
     });
+
+    console.log('depositAddressResp', depositAddressResponse);
 
     const txData: ChainflipSwapTxData = {
       address,

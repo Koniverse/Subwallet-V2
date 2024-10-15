@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 1.3.1
+Build date: Oct 08, 2024.
+
+Features & Update:
+- Support Unified account
+
 ## 1.2.32
 Build date: Oct 01, 2024.
 

@@ -195,6 +195,7 @@ function Component ({ className = '', items, modalId, onBack, onCancel, onSelect
       title={t('Select account')}
     >
       <Search
+        autoFocus={true}
         className={'__search-box'}
         onSearch={handleSearch}
         placeholder={t<string>('Enter your account name or address')}
