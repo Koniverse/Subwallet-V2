@@ -11,7 +11,7 @@ import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-
 import { TonChainHandler } from '@subwallet/extension-base/services/chain-service/handler/TonChainHandler';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
-import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, fetchPatchData, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, fetchPatchData, randomizeProvider, updateLatestChainInfo, _isLocalToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
@@ -265,6 +265,18 @@ export class ChainService {
     });
 
     return filteredAssetRegistry;
+  }
+
+  public getAssetHubToken () {
+    const assetHubToken : Record<string, _ChainAsset> = {};
+
+    Object.values(this.getAssetRegistry()).forEach((asset) => {
+      if (asset.originChain === 'statemint'){
+        assetHubToken[asset.slug] = asset;
+      }
+    });
+
+    return assetHubToken;
   }
 
   public getChainInfoMap (): Record<string, _ChainInfo> {
@@ -594,7 +606,7 @@ export class ChainService {
 
   public upsertCustomToken (token: _ChainAsset) {
     if (token.slug.length === 0) { // new token
-      if (token.assetType === _AssetType.NATIVE) {
+      if (token.assetType === _AssetType.NATIVE || token.assetType === _AssetType.LOCAL) {
         const defaultSlug = this.generateSlugForNativeToken(token.originChain, token.assetType, token.symbol);
 
         token.slug = `${_CUSTOM_PREFIX}${defaultSlug}`;
@@ -605,7 +617,7 @@ export class ChainService {
       }
     }
 
-    if (token.originChain && _isAssetFungibleToken(token)) {
+    if (token.originChain && (_isAssetFungibleToken(token) || _isLocalToken(token)) ) {
       token.hasValue = !(this.getChainInfoByKey(token.originChain)?.isTestnet);
     }
 
@@ -1812,14 +1824,37 @@ export class ChainService {
     };
   }
 
+  private async getAssetIdTokenInfo (assetId : string | undefined, tokenType : _AssetType, chain : string): Promise<_SmartContractTokenInfo> {
+    if ([_AssetType.LOCAL].includes(tokenType) && assetId) {
+      return await this.substrateChainHandler.getSubstrateAssetIdTokenInfo(assetId, chain);
+    }
+
+    return {
+      decimals: -1,
+      name: '',
+      symbol: '',
+      contractError: false
+    };
+  }
+
   public async validateCustomToken (data: _ValidateCustomAssetRequest): Promise<_ValidateCustomAssetResponse> {
     const assetRegistry = this.getSmartContractTokens();
+    const asset = this.getAssetHubToken();
     let existedToken: _ChainAsset | undefined;
 
     for (const token of Object.values(assetRegistry)) {
       const contractAddress = token?.metadata?.contractAddress as string;
 
       if (_isEqualContractAddress(contractAddress, data.contractAddress) && token.assetType === data.type && token.originChain === data.originChain) {
+        existedToken = token;
+        break;
+      }
+    }
+
+    for (const token of Object.values(asset)) {
+      const assetId = token?.metadata?.assetId as string;
+
+      if(assetId === data.assetId && token.assetType === data.type && token.originChain === data.originChain) {
         existedToken = token;
         break;
       }
@@ -1836,7 +1871,7 @@ export class ChainService {
       };
     }
 
-    const { contractError, decimals, name, symbol } = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller);
+    const { contractError, decimals, name, symbol } = data.contractAddress !== 'undefined' ? await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller) : await this.getAssetIdTokenInfo(data.assetId, data.type, data.originChain);
 
     return {
       name,

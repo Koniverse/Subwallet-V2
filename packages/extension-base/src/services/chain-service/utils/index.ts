@@ -223,6 +223,10 @@ export function _isChainSupportWasmPSP22 (chainInfo: _ChainInfo) {
   return chainInfo.substrateInfo?.supportSmartContract?.includes(_AssetType.PSP22) || false;
 }
 
+export function _isAssetHubChain (chainInfo: _ChainInfo) {
+  return chainInfo.slug === 'statemint';
+}
+
 export function _isChainSupportGRC20 (chainInfo: _ChainInfo) {
   return chainInfo.substrateInfo?.supportSmartContract?.includes(_AssetType.GRC20) || false;
 }
@@ -276,6 +280,10 @@ export function _getTokenTypesSupportedByChain (chainInfo: _ChainInfo): _AssetTy
         result.push(assetType);
       }
     });
+  }
+
+  if (['statemint'].includes(chainInfo.slug)) {
+    result.push(_AssetType.LOCAL);
   }
 
   return result;
