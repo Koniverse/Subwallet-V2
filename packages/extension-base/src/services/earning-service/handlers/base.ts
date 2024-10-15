@@ -106,7 +106,7 @@ export default abstract class BasePoolHandler {
     const ed = new BN(this.nativeToken.minAmount || '0');
     const calculateMaintainBalance = new BN(15).mul(ed).div(BN_TEN);
 
-    const maintainBalance = (this.chain === 'bittensor' || ed.gte(defaultMaintainBalance)) ? calculateMaintainBalance : defaultMaintainBalance;
+    const maintainBalance = ed.gte(defaultMaintainBalance) ? calculateMaintainBalance : defaultMaintainBalance;
 
     return maintainBalance.toString();
   }

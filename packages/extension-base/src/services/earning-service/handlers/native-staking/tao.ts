@@ -11,7 +11,7 @@ import { BaseYieldPositionInfo, BasicTxErrorType, EarningStatus, NativeYieldPool
 import { reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
-import { BN, BN_ZERO } from '@polkadot/util';
+import { BN, BN_TEN, BN_ZERO } from '@polkadot/util';
 
 import { calculateReward } from '../../utils';
 
@@ -120,6 +120,15 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
     return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
   }
   /* Unimplemented function  */
+
+  public override get maintainBalance (): string {
+    const ed = new BN(this.nativeToken.minAmount || '0');
+    const calculateMaintainBalance = new BN(15).mul(ed).div(BN_TEN);
+
+    const maintainBalance = calculateMaintainBalance;
+
+    return maintainBalance.toString();
+  }
 
   /* Subscribe pool info */
 
