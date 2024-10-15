@@ -6,7 +6,7 @@ import { CRON_LISTEN_AVAIL_BRIDGE_CLAIM } from '@subwallet/extension-base/consta
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { NotificationDescriptionMap, NotificationTitleMap, ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
-import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _BaseNotificationInfo, _NotificationInfo, ClaimAvailBridgeNotificationMetadata, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AvailBridgeSourceChain, AvailBridgeTransaction, fetchAllAvailBridgeClaimable } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
@@ -74,8 +74,6 @@ export class InappNotificationService implements CronServiceInterface {
       const candidateMetadata = metadata as WithdrawClaimNotificationMetadata;
 
       for (const notification of notificationFromDB) {
-        const comparedMetadata = notification.metadata as WithdrawClaimNotificationMetadata;
-
         if (notification.address !== address) {
           continue;
         }
@@ -88,6 +86,7 @@ export class InappNotificationService implements CronServiceInterface {
           continue;
         }
 
+        const comparedMetadata = notification.metadata as WithdrawClaimNotificationMetadata;
         const sameNotification = candidateMetadata.stakingType === comparedMetadata.stakingType && candidateMetadata.stakingSlug === comparedMetadata.stakingSlug;
 
         if (sameNotification) {
@@ -98,12 +97,24 @@ export class InappNotificationService implements CronServiceInterface {
 
     if ([NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM, NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL].includes(candidateNotification.actionType)) {
       const { address, metadata, time } = candidateNotification;
+      const candidateMetadata = metadata as ClaimAvailBridgeNotificationMetadata;
 
       for (const notification of notificationFromDB) {
-        const sameNotification = notification.address === address && JSON.stringify(notification.metadata) === JSON.stringify(metadata); // todo: improve compare object
-        const overdue = time - notification.time >= 2 * ONE_DAY_MILLISECOND;
+        if (notification.address !== address) {
+          continue;
+        }
 
-        if (sameNotification && !overdue) {
+        if (time - notification.time >= 2 * ONE_DAY_MILLISECOND) {
+          continue;
+        }
+
+        const comparedMetadata = notification.metadata as ClaimAvailBridgeNotificationMetadata;
+        const sameNotification =
+          candidateMetadata.messageId === comparedMetadata.messageId &&
+          candidateMetadata.sourceBlockHash === comparedMetadata.sourceBlockHash &&
+          candidateMetadata.sourceTransactionHash === comparedMetadata.sourceTransactionHash;
+
+        if (sameNotification) {
           return false;
         }
       }
@@ -171,14 +182,15 @@ export class InappNotificationService implements CronServiceInterface {
   async processWriteAvailBridgeClaim (address: string, transactions: AvailBridgeTransaction[]) {
     const actionType = isSubstrateAddress(address) ? NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL : NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM;
     const timestamp = Date.now();
+    const symbol = 'AVAIL';
     const notifications: _BaseNotificationInfo[] = transactions.map((transaction) => {
       const { amount, depositorAddress, messageId, receiverAddress, sourceBlockHash, sourceChain, sourceTransactionHash, sourceTransactionIndex } = transaction;
 
       return {
         id: `${actionType}___${messageId}___${timestamp}`,
         address: receiverAddress,
-        title: NotificationTitleMap[actionType],
-        description: NotificationDescriptionMap[actionType](formatNumber(amount, 18), 'AVAIL'), // todo: improve passing decimal and symbol. Currently only AVAIL with decimal: 18
+        title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
+        description: NotificationDescriptionMap[actionType](formatNumber(amount, 18), symbol), // todo: improve passing decimal and symbol. Currently only AVAIL with decimal: 18
         time: timestamp,
         extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE,
         isRead: false,

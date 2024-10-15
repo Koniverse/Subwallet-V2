@@ -7,7 +7,7 @@ import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-han
 import { _AVAIL_BRIDGE_GATEWAY_ABI, _AVAIL_TEST_BRIDGE_GATEWAY_ABI, getAvailBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
-import { _NotificationInfo, ClaimAvailBridgeOnAvailNotificationMetadata, ClaimAvailBridgeOnEthereumNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AVAIL_BRIDGE_API } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { decodeAddress } from '@subwallet/keyring';
 import { PrefixedHexString } from 'ethereumjs-util';
@@ -97,7 +97,7 @@ export async function getAvailBridgeExtrinsicFromAvail (recipient: string, sendi
 export async function getClaimTxOnAvail (notification: _NotificationInfo, substrateApi: _SubstrateApi) {
   const chainApi = await substrateApi.isReady;
   const chainSlug = chainApi.chainSlug;
-  const metadata = notification.metadata as ClaimAvailBridgeOnAvailNotificationMetadata;
+  const metadata = notification.metadata as ClaimAvailBridgeNotificationMetadata;
   const lastestEthHeadSlot = await getLastestEthHeadSlot(chainSlug);
   const lastestBlockHash = await getLastestBlockHash(chainSlug, lastestEthHeadSlot);
   const proof = await getClaimProofOnAvail(chainSlug, lastestBlockHash, metadata.messageId);
@@ -172,7 +172,7 @@ export async function getClaimTxOnEthereum (chainSlug: string, notification: _No
   const availBridgeContractAddress = getAvailBridgeGatewayContract(chainSlug);
   const ABI = getAvailBridgeAbi(chainSlug);
   const availBridgeContract = getWeb3Contract(availBridgeContractAddress, evmApi, ABI);
-  const metadata = notification.metadata as ClaimAvailBridgeOnEthereumNotificationMetadata;
+  const metadata = notification.metadata as ClaimAvailBridgeNotificationMetadata;
   const merkleProof = await getClaimProofOnEthereum(chainSlug, metadata.sourceBlockHash, metadata.sourceTransactionIndex);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
@@ -229,7 +229,7 @@ export async function getClaimTxOnEthereum (chainSlug: string, notification: _No
 }
 
 function getAddressMessage (notification: _NotificationInfo) {
-  const metadata = notification.metadata as ClaimAvailBridgeOnAvailNotificationMetadata;
+  const metadata = notification.metadata as ClaimAvailBridgeNotificationMetadata;
 
   return {
     message: {

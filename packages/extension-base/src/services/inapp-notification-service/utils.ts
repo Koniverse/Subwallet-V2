@@ -29,11 +29,11 @@ export function getSendDescription (amount: string, symbol: string) {
 export function getReceiveDescription (amount: string, symbol: string) {
   return `You have just received ${amount} ${symbol}`;
 }
-/* Description */
 
 export function getAvailBridgeClaimDescription (amount: string, symbol: string) {
-  return `You has ${amount} ${symbol} to claim`; // todo: consider to standardize all claim type to a general claim description
+  return `${amount} ${symbol} ready to claim from Avail bridge. Click to claim now!`
 }
+/* Description */
 
 export function getIsTabRead (notificationTab: NotificationTab) {
   if (notificationTab === NotificationTab.UNREAD) {

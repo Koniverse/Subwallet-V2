@@ -42,8 +42,8 @@ export enum NotificationIconBackgroundColorMap {
   RECEIVE = 'lime-7',
   WITHDRAW = 'blue-8',
   CLAIM = 'yellow-7',
-  CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'red-10', // temporary set
-  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'red-10'
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'yellow-7', // temporary set
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'yellow-7'
 }
 
 export const NotificationIconMap = {

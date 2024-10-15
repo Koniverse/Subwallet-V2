@@ -26,8 +26,8 @@ export interface ActionTypeToMetadataMap {
   [NotificationActionType.RECEIVE]: SendReceiveNotificationMetadata
   [NotificationActionType.WITHDRAW]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeOnAvailNotificationMetadata,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeOnEthereumNotificationMetadata
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeNotificationMetadata,
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeNotificationMetadata
 }
 
 export interface SendReceiveNotificationMetadata {
@@ -44,19 +44,8 @@ export interface WithdrawClaimNotificationMetadata {
   stakingSlug: string
 }
 
-export interface ClaimAvailBridgeOnAvailNotificationMetadata { // todo: consider to merge with claim on Ethereum
+export interface ClaimAvailBridgeNotificationMetadata {
   messageId: string,
-  sourceChain: AvailBridgeSourceChain,
-  sourceTransactionHash: string,
-  depositorAddress: string,
-  receiverAddress: string,
-  amount: string,
-  sourceBlockHash: string,
-  sourceTransactionIndex: string,
-}
-
-export interface ClaimAvailBridgeOnEthereumNotificationMetadata {
-  messageId: string
   sourceChain: AvailBridgeSourceChain,
   sourceTransactionHash: string,
   depositorAddress: string,
