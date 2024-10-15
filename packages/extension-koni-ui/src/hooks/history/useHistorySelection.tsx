@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountProxy } from '@subwallet/extension-base/types';
 import { useChainInfoWithState, useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { AccountAddressItemType, ChainItemType } from '@subwallet/extension-koni-ui/types';
 import { getReformatedAddressRelatedToChain, isAccountAll } from '@subwallet/extension-koni-ui/utils';
@@ -68,10 +68,6 @@ export default function useHistorySelection () {
     if (isAccountAll(currentAccountProxy.id)) {
       accountProxies.forEach((ap) => {
         if (isAccountAll(ap.id)) {
-          return;
-        }
-
-        if ([AccountProxyType.READ_ONLY].includes(ap.accountType)) {
           return;
         }
 

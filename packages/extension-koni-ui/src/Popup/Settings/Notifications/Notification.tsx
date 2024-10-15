@@ -14,7 +14,7 @@ import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useAlert, useDefaultNavigate, useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
-import { changeReadNotificationStatus, getInappNotifications, markAllReadNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { getInappNotifications, markAllReadNotification, switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -217,7 +217,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               chain: metadata.stakingSlug.split('___')[2],
               from: item.address
             });
-            changeReadNotificationStatus(item).then(() => {
+            switchReadNotificationStatus(item).then(() => {
               navigate('/transaction/withdraw');
             }).catch(console.error);
           } else {
@@ -239,7 +239,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               chain: metadata.stakingSlug.split('___')[2],
               from: item.address
             });
-            changeReadNotificationStatus(item).then(() => {
+            switchReadNotificationStatus(item).then(() => {
               navigate('/transaction/claim-reward');
             }).catch(console.error);
           } else {
@@ -251,7 +251,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       }
 
       if (!item.isRead) {
-        changeReadNotificationStatus(item)
+        switchReadNotificationStatus(item)
           .catch(console.error)
           .finally(() => {
             setTrigger(!isTrigger);

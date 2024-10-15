@@ -1,8 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import {GetNotificationParams, RequestSwitchStatusParams} from '@subwallet/extension-base/types/notification';
+import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging';
 
 export async function markAllReadNotification (request: string) {
