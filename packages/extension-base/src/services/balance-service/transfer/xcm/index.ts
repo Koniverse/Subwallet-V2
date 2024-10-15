@@ -23,10 +23,10 @@ export type CreateXcmExtrinsicProps = {
   destinationTokenInfo: _ChainAsset;
   recipient: string;
   sendingValue: string;
-  evmApi: _EvmApi;
-  substrateApi: _SubstrateApi;
+  evmApi?: _EvmApi;
+  substrateApi?: _SubstrateApi;
   chainInfoMap: Record<string, _ChainInfo>;
-  sender: string;
+  sender?: string;
 }
 
 export type FunctionCreateXcmExtrinsic = (props: CreateXcmExtrinsicProps) => Promise<SubmittableExtrinsic<'promise'> | TransactionConfig>;
@@ -45,6 +45,14 @@ export const createSnowBridgeExtrinsic = async ({ chainInfoMap,
     throw new Error('This is not a valid SnowBridge transfer');
   }
 
+  if (!evmApi) {
+    throw Error('Evm API is not available');
+  }
+
+  if (!sender) {
+    throw Error('Sender is required');
+  }
+
   return getSnowBridgeEvmTransfer(originTokenInfo, originChainInfo, destinationChainInfo, sender, recipient, sendingValue, evmApi);
 };
 
@@ -56,6 +64,10 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
   substrateApi }: CreateXcmExtrinsicProps): Promise<SubmittableExtrinsic<'promise'>> => {
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
   const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
+
+  if (!substrateApi) {
+    throw Error('Substrate API is not available');
+  }
 
   const chainApi = await substrateApi.isReady;
   const api = chainApi.api;
@@ -81,14 +93,26 @@ export const createAvailBridgeTxFromEth = ({ chainInfoMap,
   sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
 
+  if (!evmApi) {
+    throw Error('Evm API is not available');
+  }
+
+  if (!sender) {
+    throw Error('Sender is required');
+  }
+
   return getAvailBridgeTxFromEth(originChainInfo, sender, recipient, sendingValue, evmApi);
 };
 
 export const createAvailBridgeExtrinsicFromAvail = async ({ recipient, sendingValue, substrateApi }: CreateXcmExtrinsicProps): Promise<SubmittableExtrinsic<'promise'>> => {
+  if (!substrateApi) {
+    throw Error('Substrate API is not available');
+  }
+
   return await getAvailBridgeExtrinsicFromAvail(recipient, sendingValue, substrateApi);
 };
 
-export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, evmApi: _EvmApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {
+export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {
   try {
     const destChainInfo = chainInfoMap[destinationTokenInfo.originChain];
     const originChainInfo = chainInfoMap[originTokenInfo.originChain];
@@ -107,8 +131,7 @@ export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, evmApi: _EvmA
       sender,
       recipient,
       sendingValue: '1000000000000000000',
-      substrateApi,
-      evmApi
+      substrateApi
     });
     const paymentInfo = await mockTx.paymentInfo(fakeAddress);
 

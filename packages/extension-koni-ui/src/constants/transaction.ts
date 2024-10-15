@@ -3,7 +3,7 @@
 
 import { ExtrinsicType, StakingType } from '@subwallet/extension-base/background/KoniTypes';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { CancelUnStakeParams, ClaimRewardParams, EarnParams, SendNftParams, StakeParams, SwapParams, TransactionFormBaseProps, TransferParams, UnStakeParams, WithdrawParams } from '@subwallet/extension-koni-ui/types';
+import { CancelUnStakeParams, ClaimAvailBridgeParams, ClaimRewardParams, EarnParams, SendNftParams, StakeParams, SwapParams, TransactionFormBaseProps, TransferParams, UnStakeParams, WithdrawParams } from '@subwallet/extension-koni-ui/types';
 
 import { ALL_KEY } from './common';
 
@@ -50,6 +50,8 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.UNSTAKE_STDOT]: detectTranslate('Unstake stDOT'),
   [ExtrinsicType.UNSTAKE_QDOT]: detectTranslate('Unstake qDOT'),
   [ExtrinsicType.UNSTAKE_VMANTA]: detectTranslate('Unstake vMANTA'),
+
+  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: detectTranslate('Claim AVAIL Bridge'),
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap')
@@ -139,4 +141,9 @@ export const DEFAULT_SWAP_PARAMS: SwapParams = {
   fromTokenSlug: '',
   toTokenSlug: '',
   defaultSlug: ''
+};
+
+export const DEFAULT_CLAIM_AVAIL_BRIDGE_PARAMS: ClaimAvailBridgeParams = {
+  ...DEFAULT_TRANSACTION_PARAMS,
+  notificationId: ''
 };

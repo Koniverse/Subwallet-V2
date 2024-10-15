@@ -1734,14 +1734,13 @@ export default class KoniExtension {
 
   private async getXcmMaxTransferable (originTokenInfo: _ChainAsset, destChain: string, address: string): Promise<BigN> {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
-    const evmApi = this.#koniState.chainService.getEvmApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, originTokenInfo.slug);
     const existentialDeposit = originTokenInfo.minAmount || '0';
 
     if (destinationTokenInfo) {
       const [bnMockExecutionFee, { value }] = await Promise.all([
-        getXcmMockTxFee(substrateApi, evmApi, chainInfoMap, originTokenInfo, destinationTokenInfo),
+        getXcmMockTxFee(substrateApi, chainInfoMap, originTokenInfo, destinationTokenInfo),
         this.getAddressTransferableBalance({ extrinsicType: ExtrinsicType.TRANSFER_XCM, address, networkKey: originTokenInfo.originChain, token: originTokenInfo.slug })
       ]);
 
@@ -3780,8 +3779,18 @@ export default class KoniExtension {
     return this.#koniState.inappNotificationService.switchReadStatus(params);
   }
 
-  private async getInappNotifications (params: GetNotificationParams) {
-    return this.#koniState.inappNotificationService.getNotificationsByParams(params);
+  private async fetchInappNotifications (params: GetNotificationParams) {
+    return this.#koniState.inappNotificationService.fetchNotificationsByParams(params);
+  }
+
+  private async getInappNotification (id: string) {
+    const result = await this.#koniState.inappNotificationService.getNotificationById(id);
+
+    if (!result) {
+      throw new Error('Notification not found');
+    }
+
+    return result;
   }
   /* Notification service */
 
@@ -4412,8 +4421,10 @@ export default class KoniExtension {
         return this.markAllReadNotification(request as string);
       case 'pri(inappNotification.switchReadNotificationStatus)':
         return this.switchReadNotificationStatus(request as RequestSwitchStatusParams);
-      case 'pri(inappNotification.getInappNotifications)':
-        return this.getInappNotifications(request as GetNotificationParams);
+      case 'pri(inappNotification.fetch)':
+        return this.fetchInappNotifications(request as GetNotificationParams);
+      case 'pri(inappNotification.get)':
+        return this.getInappNotification(request as string);
         /* Notification service */
 
         /* Avail Bridge */

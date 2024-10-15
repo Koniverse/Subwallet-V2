@@ -1,9 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainAsset } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_LISTEN_AVAIL_BRIDGE_CLAIM } from '@subwallet/extension-base/constants';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
+import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { NotificationDescriptionMap, NotificationTitleMap, ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { _BaseNotificationInfo, _NotificationInfo, ClaimAvailBridgeNotificationMetadata, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
@@ -16,16 +18,15 @@ import { isSubstrateAddress } from '@subwallet/keyring';
 
 export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
-  private readonly dbService: DatabaseService;
-  private readonly keyringService: KeyringService;
-  private readonly eventService: EventService;
   private refeshAvailBridgeClaimTimeOut: NodeJS.Timeout | undefined;
 
-  constructor (dbService: DatabaseService, keyringService: KeyringService, eventService: EventService) {
+  constructor (
+    private readonly dbService: DatabaseService,
+    private readonly keyringService: KeyringService,
+    private readonly eventService: EventService,
+    private readonly chainService: ChainService
+  ) {
     this.status = ServiceStatus.NOT_INITIALIZED;
-    this.dbService = dbService;
-    this.keyringService = keyringService;
-    this.eventService = eventService;
   }
 
   async init (): Promise<void> {
@@ -60,8 +61,12 @@ export class InappNotificationService implements CronServiceInterface {
     return await this.dbService.getUnreadNotificationsCountMap();
   }
 
-  public async getNotificationsByParams (params: GetNotificationParams) {
+  public async fetchNotificationsByParams (params: GetNotificationParams) {
     return this.dbService.getNotificationsByParams(params);
+  }
+
+  public async getNotificationById (id: string) {
+    return this.dbService.getNotification(id);
   }
 
   cleanUpOldNotifications (overdueTime = ONE_DAY_MILLISECOND * 60) {
@@ -127,7 +132,7 @@ export class InappNotificationService implements CronServiceInterface {
     const proxyId = this.keyringService.context.belongUnifiedAccount(address) || address;
     const accountName = this.keyringService.context.getCurrentAccountProxyName(proxyId);
     const newNotifications: _NotificationInfo[] = [];
-    const unreadNotifications = await this.getNotificationsByParams({
+    const unreadNotifications = await this.fetchNotificationsByParams({
       notificationTab: NotificationTab.UNREAD,
       proxyId
     });
@@ -158,53 +163,89 @@ export class InappNotificationService implements CronServiceInterface {
     const addresses = this.keyringService.context.getAllAddresses();
     const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
 
+    const chainAssets = this.chainService.getAssetRegistry();
+
+    enum ASSET_TYPE {
+      TEST_EVM = 'test_evm',
+      TEST_SUBSTRATE = 'test_substrate',
+      MAIN_EVM = 'main_evm',
+      MAIN_SUBSTRATE = 'main_substrate'
+    }
+
+    const chainAssetMap = Object.values(chainAssets).reduce((acc, chainAsset) => {
+      let type: ASSET_TYPE | undefined;
+
+      if (chainAsset.symbol === 'AVAIL') {
+        if (chainAsset.originChain === 'sepolia_ethereum') {
+          type = ASSET_TYPE.TEST_EVM;
+        } else if (chainAsset.originChain === 'availTuringTest') {
+          type = ASSET_TYPE.TEST_SUBSTRATE;
+        } else if (chainAsset.originChain === 'ethereum') {
+          type = ASSET_TYPE.MAIN_EVM;
+        } else if (chainAsset.originChain === 'avail_mainnet') {
+          type = ASSET_TYPE.MAIN_SUBSTRATE;
+        }
+      }
+
+      if (type) {
+        acc[type] = chainAsset;
+      }
+
+      return acc;
+    }, {} as Record<ASSET_TYPE, _ChainAsset>);
+
     substrateAddresses.forEach((address) => {
       fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.ETHEREUM, true)
-        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
+        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions, chainAssetMap[ASSET_TYPE.TEST_SUBSTRATE]))
         .catch(console.error);
 
       fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.ETHEREUM, false)
-        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
+        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions, chainAssetMap[ASSET_TYPE.MAIN_SUBSTRATE]))
         .catch(console.error);
     });
 
     evmAddresses.forEach((address) => {
       fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.AVAIL, true)
-        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
+        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions, chainAssetMap[ASSET_TYPE.TEST_EVM]))
         .catch(console.error);
 
       fetchAllAvailBridgeClaimable(address, AvailBridgeSourceChain.AVAIL, false)
-        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions))
+        .then(async (transactions) => await this.processWriteAvailBridgeClaim(address, transactions, chainAssetMap[ASSET_TYPE.MAIN_EVM]))
         .catch(console.error);
     });
   }
 
-  async processWriteAvailBridgeClaim (address: string, transactions: AvailBridgeTransaction[]) {
+  async processWriteAvailBridgeClaim (address: string, transactions: AvailBridgeTransaction[], token: _ChainAsset) {
     const actionType = isSubstrateAddress(address) ? NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL : NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM;
     const timestamp = Date.now();
-    const symbol = 'AVAIL';
+    const symbol = token.symbol;
+    const decimals = token.decimals ?? 0;
     const notifications: _BaseNotificationInfo[] = transactions.map((transaction) => {
-      const { amount, depositorAddress, messageId, receiverAddress, sourceBlockHash, sourceChain, sourceTransactionHash, sourceTransactionIndex } = transaction;
+      const { amount, depositorAddress, messageId, receiverAddress, sourceBlockHash, sourceChain, sourceTransactionHash, sourceTransactionIndex, status } = transaction;
+      const metadata: ClaimAvailBridgeNotificationMetadata = {
+        chainSlug: token.originChain,
+        tokenSlug: token.slug,
+        messageId,
+        sourceChain,
+        sourceTransactionHash,
+        depositorAddress,
+        receiverAddress,
+        amount,
+        sourceBlockHash,
+        sourceTransactionIndex,
+        status
+      };
 
       return {
         id: `${actionType}___${messageId}___${timestamp}`,
-        address: receiverAddress,
+        address: address, // address is receiverAddress
         title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
-        description: NotificationDescriptionMap[actionType](formatNumber(amount, 18), symbol), // todo: improve passing decimal and symbol. Currently only AVAIL with decimal: 18
+        description: NotificationDescriptionMap[actionType](formatNumber(amount, decimals), symbol),
         time: timestamp,
         extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE,
         isRead: false,
         actionType,
-        metadata: {
-          messageId,
-          sourceChain,
-          sourceTransactionHash,
-          depositorAddress,
-          receiverAddress,
-          amount,
-          sourceBlockHash,
-          sourceTransactionIndex
-        }
+        metadata
       };
     });
 

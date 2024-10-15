@@ -12,6 +12,10 @@ export async function switchReadNotificationStatus (request: RequestSwitchStatus
   return sendMessage('pri(inappNotification.switchReadNotificationStatus)', request);
 }
 
-export async function getInappNotifications (request: GetNotificationParams) {
-  return sendMessage('pri(inappNotification.getInappNotifications)', request);
+export async function fetchInappNotifications (request: GetNotificationParams) {
+  return sendMessage('pri(inappNotification.fetch)', request);
+}
+
+export async function getInappNotification (notificationId: string) {
+  return sendMessage('pri(inappNotification.get)', notificationId);
 }

@@ -147,11 +147,10 @@ export interface AvailBridgeTransaction {
   amount: string,
   sourceBlockHash: string,
   sourceTransactionIndex: string,
-
   status: AvailBridgeTransactionStatus
 }
 
-enum AvailBridgeTransactionStatus {
+export enum AvailBridgeTransactionStatus {
   READY_TO_CLAIM = 'READY_TO_CLAIM',
   CLAIMED = 'CLAIMED',
   BRIDGED = 'BRIDGED'

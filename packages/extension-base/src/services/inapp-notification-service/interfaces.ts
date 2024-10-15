@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AvailBridgeSourceChain } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { AvailBridgeSourceChain, AvailBridgeTransactionStatus } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { YieldPoolType } from '@subwallet/extension-base/types';
 
 export interface _BaseNotificationInfo {
@@ -45,14 +45,17 @@ export interface WithdrawClaimNotificationMetadata {
 }
 
 export interface ClaimAvailBridgeNotificationMetadata {
-  messageId: string,
-  sourceChain: AvailBridgeSourceChain,
-  sourceTransactionHash: string,
-  depositorAddress: string,
-  receiverAddress: string,
-  amount: string,
-  sourceBlockHash: string,
-  sourceTransactionIndex: string,
+  chainSlug: string;
+  tokenSlug: string;
+  messageId: string;
+  sourceChain: AvailBridgeSourceChain;
+  sourceTransactionHash: string;
+  depositorAddress: string;
+  receiverAddress: string;
+  amount: string;
+  sourceBlockHash: string;
+  sourceTransactionIndex: string;
+  status: AvailBridgeTransactionStatus;
 }
 
 export enum NotificationTimePeriod {
@@ -65,7 +68,7 @@ export enum NotificationActionType {
   SEND = 'SEND',
   RECEIVE = 'RECEIVE',
   WITHDRAW = 'WITHDRAW',
-  CLAIM = 'CLAIM',
+  CLAIM = 'CLAIM', // Claim reward
   CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'CLAIM_AVAIL_BRIDGE_ON_AVAIL',
   CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM'
 }
@@ -76,13 +79,18 @@ export enum NotificationTab {
   READ = 'READ'
 }
 
+export interface ShowNotificationPayload {
+  // send: boolean, // notice when an account does a transaction to send asset
+  // receive: boolean, // notice when an account does a transaction to receive asset
+  earningClaim: boolean, // notice when an account has an earning reward to claim
+  earningWithdraw: boolean, // notice when an account has an earning unstake to withdraw
+  availBridgeClaim: boolean, // notice when an account has an avail bridge to claim
+  // marketing: boolean, // notice when wallet has a marketing announcement
+  // marketing: boolean, // notice when wallet has a marketing announcement
+  // announcement: boolean // notice when wallet has an announcement
+}
+
 export interface NotificationSetup {
   isEnabled: boolean,
-  notificationSetup: {
-    isHideSend: boolean,
-    isHideReceive: boolean,
-    isHideWithdraw: boolean,
-    isHideMarketing: boolean,
-    isHideAnnouncement: boolean
-  }
+  showNotice: ShowNotificationPayload
 }

@@ -2262,7 +2262,8 @@ export interface KoniRequestSignatures {
   'pri(inappNotification.subscribeUnreadNotificationCountMap)': [null, Record<string, number>, Record<string, number>];
   'pri(inappNotification.markAllReadNotification)': [string, null];
   'pri(inappNotification.switchReadNotificationStatus)': [RequestSwitchStatusParams, null];
-  'pri(inappNotification.getInappNotifications)': [GetNotificationParams, _NotificationInfo[]];
+  'pri(inappNotification.fetch)': [GetNotificationParams, _NotificationInfo[]];
+  'pri(inappNotification.get)': [string, _NotificationInfo];
   /* Notification Service */
 
   /* Avail Bridge */
