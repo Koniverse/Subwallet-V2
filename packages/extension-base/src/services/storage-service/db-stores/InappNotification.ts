@@ -61,16 +61,12 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
   }
 
   async getUnreadNotificationsCountMap () {
-    const data = await this.table.filter((item) => !item.isRead).toArray();
+    const unreadNotifications = await this.table.filter((item) => !item.isRead).toArray();
 
-    return data.reduce((acc, item) => {
-      if (!acc[item.proxyId]) {
-        acc[item.proxyId] = 1;
-      } else {
-        acc[item.proxyId] = acc[item.proxyId] + 1;
-      }
+    return unreadNotifications.reduce((countMap, item) => {
+      countMap[item.proxyId] = (countMap[item.proxyId] || 0) + 1;
 
-      return acc;
+      return countMap;
     }, {} as Record<string, number>);
   }
 

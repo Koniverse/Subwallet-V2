@@ -8,13 +8,19 @@ import { NotificationDescriptionMap, NotificationTitleMap } from '@subwallet/ext
 import { _BaseNotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { EarningRewardItem, UnstakingInfo, UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
 import { formatNumber } from '@subwallet/extension-base/utils';
+import { t } from 'i18next';
 
+/* Description */
 export function getWithdrawDescription (amount: string, symbol: string, stakingType: YieldPoolType) {
-  return `You has ${amount} ${symbol} ${stakingType} to withdraw`;
+  if (stakingType === YieldPoolType.LIQUID_STAKING) {
+    return `${amount} ${symbol} ready to withdraw from ${symbol} liquid staking. Click to withdraw now!`;
+  }
+
+  return `${amount} ${symbol} ready to withdraw from ${symbol} staking. Click to withdraw now!`;
 }
 
-export function getClaimDescription (amount: string, symbol: string, stakingType: YieldPoolType) {
-  return `You has ${amount} ${symbol} ${stakingType} to claim`;
+export function getClaimDescription (amount: string, symbol: string) {
+  return `${amount} ${symbol} ready to claim from ${symbol} staking. Click to claim now!`;
 }
 
 export function getSendDescription (amount: string, symbol: string) {
@@ -24,6 +30,7 @@ export function getSendDescription (amount: string, symbol: string) {
 export function getReceiveDescription (amount: string, symbol: string) {
   return `You have just received ${amount} ${symbol}`;
 }
+/* Description */
 
 export const getIsTabRead = (notificationTab: NotificationTab) => {
   if (notificationTab === NotificationTab.UNREAD) {
@@ -44,7 +51,7 @@ function createWithdrawNotification (amount: string, address: string, symbol: st
 
   return {
     id: `${actionType}___${stakingSlug}___${time}`,
-    title: NotificationTitleMap[actionType],
+    title: t(NotificationTitleMap[actionType], { replace: { tokenSymbol: symbol } }),
     description: NotificationDescriptionMap[actionType](amount, symbol, stakingType),
     address,
     time,
@@ -90,8 +97,8 @@ export function createClaimNotification (claimItemInfo: EarningRewardItem, token
 
   return {
     id: `${actionType}___${slug}___${time}`,
-    title: NotificationTitleMap[actionType],
-    description: NotificationDescriptionMap[actionType](amount, symbol, type),
+    title: t(NotificationTitleMap[actionType], { replace: { tokenSymbol: symbol } }),
+    description: NotificationDescriptionMap[actionType](amount, symbol),
     address,
     time,
     extrinsicType,

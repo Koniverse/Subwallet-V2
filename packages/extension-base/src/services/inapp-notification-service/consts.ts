@@ -5,10 +5,10 @@ import { NotificationActionType } from '@subwallet/extension-base/services/inapp
 import { getClaimDescription, getReceiveDescription, getSendDescription, getWithdrawDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 
 export const NotificationTitleMap = {
-  [NotificationActionType.WITHDRAW]: 'Token Withdrawal',
-  [NotificationActionType.CLAIM]: 'Token Claimable',
-  [NotificationActionType.SEND]: 'Token Send',
-  [NotificationActionType.RECEIVE]: 'Token Receive'
+  [NotificationActionType.WITHDRAW]: '[{{accountName}}] WITHDRAW {{tokenSymbol}}',
+  [NotificationActionType.CLAIM]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
+  [NotificationActionType.SEND]: '[{{accountName}}] SEND {{tokenSymbol}}',
+  [NotificationActionType.RECEIVE]: '[{{accountName}}] RECEIVE {{tokenSymbol}}'
 };
 
 export const NotificationDescriptionMap = {
