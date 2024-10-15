@@ -450,7 +450,8 @@ export default class DatabaseService {
         this.stores.crowdloan,
         this.stores.staking,
         this.stores.transaction,
-        this.stores.nominatorMetadata
+        this.stores.nominatorMetadata,
+        this.stores.inappNotification
       ];
 
       if (resetAll) {
@@ -637,6 +638,10 @@ export default class DatabaseService {
 
   public switchReadStatus (params: RequestSwitchStatusParams) {
     return this.stores.inappNotification.switchReadStatus(params);
+  }
+
+  public removeAccountNotifications (proxyId: string) {
+    return this.stores.inappNotification.removeAccountNotifications(proxyId);
   }
 
   async exportDB () {

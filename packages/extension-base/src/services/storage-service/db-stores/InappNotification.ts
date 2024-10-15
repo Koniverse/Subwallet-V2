@@ -89,4 +89,8 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
       .equals(params.id)
       .modify({ isRead: !params.isRead });
   }
+
+  removeAccountNotifications (proxyId: string) {
+    return this.table.where('proxyId').equalsIgnoreCase(proxyId).delete();
+  }
 }

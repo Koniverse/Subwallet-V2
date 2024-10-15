@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
+import { EventService } from '@subwallet/extension-base/services/event-service';
 import { ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { _BaseNotificationInfo, _NotificationInfo, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
@@ -12,11 +13,25 @@ export class InappNotificationService implements CronServiceInterface {
   status: ServiceStatus;
   private readonly dbService: DatabaseService;
   private readonly keyringService: KeyringService;
+  private readonly eventService: EventService;
 
-  constructor (dbService: DatabaseService, keyringService: KeyringService) {
+  constructor (dbService: DatabaseService, keyringService: KeyringService, eventService: EventService) {
     this.status = ServiceStatus.NOT_INITIALIZED;
     this.dbService = dbService;
     this.keyringService = keyringService;
+    this.eventService = eventService;
+  }
+
+  async init (): Promise<void> {
+    this.status = ServiceStatus.INITIALIZING;
+
+    await this.eventService.waitAccountReady;
+
+    this.status = ServiceStatus.INITIALIZED;
+
+    await this.start();
+
+    this.onAccountProxyRemove();
   }
 
   async markAllRead (proxyId: string) {
@@ -131,5 +146,15 @@ export class InappNotificationService implements CronServiceInterface {
 
   stopCron (): Promise<void> {
     return Promise.resolve(undefined);
+  }
+
+  onAccountProxyRemove () {
+    this.eventService.on('accountProxy.remove', (proxyId: string) => {
+      this.removeAccountNotifications(proxyId);
+    });
+  }
+
+  removeAccountNotifications (proxyId: string) {
+    this.dbService.removeAccountNotifications(proxyId).catch(console.error);
   }
 }
