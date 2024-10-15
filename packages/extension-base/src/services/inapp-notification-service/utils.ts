@@ -8,7 +8,6 @@ import { NotificationDescriptionMap, NotificationTitleMap } from '@subwallet/ext
 import { _BaseNotificationInfo, NotificationActionType, NotificationTab } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { EarningRewardItem, UnstakingInfo, UnstakingStatus, YieldPoolType } from '@subwallet/extension-base/types';
 import { formatNumber } from '@subwallet/extension-base/utils';
-import { t } from 'i18next';
 
 /* Description */
 export function getWithdrawDescription (amount: string, symbol: string, stakingType: YieldPoolType) {
@@ -51,7 +50,7 @@ function createWithdrawNotification (amount: string, address: string, symbol: st
 
   return {
     id: `${actionType}___${stakingSlug}___${time}`,
-    title: t(NotificationTitleMap[actionType], { replace: { tokenSymbol: symbol } }),
+    title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
     description: NotificationDescriptionMap[actionType](amount, symbol, stakingType),
     address,
     time,
@@ -97,7 +96,7 @@ export function createClaimNotification (claimItemInfo: EarningRewardItem, token
 
   return {
     id: `${actionType}___${slug}___${time}`,
-    title: t(NotificationTitleMap[actionType], { replace: { tokenSymbol: symbol } }),
+    title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
     description: NotificationDescriptionMap[actionType](amount, symbol),
     address,
     time,
