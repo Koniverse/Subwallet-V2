@@ -124,7 +124,7 @@ export default abstract class BasePoolHandler {
   }
 
   public async createWithdrawNotifications (unstakingInfos: UnstakingInfo[], tokenInfo: _ChainAsset, address: string) {
-    const notifications = createWithdrawNotifications(unstakingInfos, tokenInfo, address, this.baseInfo.slug , this.type);
+    const notifications = createWithdrawNotifications(unstakingInfos, tokenInfo, address, this.baseInfo.slug, this.type);
 
     await this.state.inappNotificationService.validateAndWriteNotificationsToDB(notifications, address);
   }

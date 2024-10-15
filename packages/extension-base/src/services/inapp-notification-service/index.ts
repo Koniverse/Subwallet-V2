@@ -114,6 +114,7 @@ export class InappNotificationService implements CronServiceInterface {
 
   async validateAndWriteNotificationsToDB (notifications: _BaseNotificationInfo[], address: string) {
     const proxyId = this.keyringService.context.belongUnifiedAccount(address) || address;
+    const accountName = this.keyringService.context.getCurrentAccountProxyName(proxyId);
     const newNotifications: _NotificationInfo[] = [];
     const unreadNotifications = await this.getNotificationsByParams({
       notificationTab: NotificationTab.UNREAD,
@@ -121,6 +122,8 @@ export class InappNotificationService implements CronServiceInterface {
     });
 
     for (const notification of notifications) {
+      notification.title = notification.title.replace('{{accountName}}', accountName);
+
       if (this.passValidateNotification(notification, unreadNotifications)) {
         newNotifications.push({
           ...notification,

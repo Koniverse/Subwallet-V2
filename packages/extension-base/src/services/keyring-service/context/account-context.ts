@@ -81,6 +81,10 @@ export class AccountContext {
     return this.state.addressesByProxyId(proxyId);
   }
 
+  public getCurrentAccountProxyName (proxyId: string) {
+    return this.state.getAccountProxyName(proxyId);
+  }
+
   /* Modify accounts */
 
   public accountsEdit (request: RequestAccountProxyEdit): boolean {

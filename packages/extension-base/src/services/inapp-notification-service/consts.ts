@@ -5,12 +5,12 @@ import { NotificationActionType } from '@subwallet/extension-base/services/inapp
 import { getAvailBridgeClaimDescription, getClaimDescription, getReceiveDescription, getSendDescription, getWithdrawDescription } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 
 export const NotificationTitleMap = {
-  [NotificationActionType.WITHDRAW]: 'Token Withdrawal',
-  [NotificationActionType.CLAIM]: 'Token Claimable',
-  [NotificationActionType.SEND]: 'Token Send',
-  [NotificationActionType.RECEIVE]: 'Token Receive',
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: 'Token Claimable',
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: 'Token Claimable'
+  [NotificationActionType.WITHDRAW]: '[{{accountName}}] WITHDRAW {{tokenSymbol}}',
+  [NotificationActionType.CLAIM]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
+  [NotificationActionType.SEND]: '[{{accountName}}] SEND {{tokenSymbol}}',
+  [NotificationActionType.RECEIVE]: '[{{accountName}}] RECEIVE {{tokenSymbol}}',
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: '[{{accountName}}] CLAIM {{tokenSymbol}}'
 };
 
 export const NotificationDescriptionMap = {
@@ -22,4 +22,4 @@ export const NotificationDescriptionMap = {
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: getAvailBridgeClaimDescription
 };
 
-export const ONE_DAY_MILLISECOND = 86400000;
+export const ONE_DAY_MILLISECOND = 1000 * 24 * 60 * 60;
