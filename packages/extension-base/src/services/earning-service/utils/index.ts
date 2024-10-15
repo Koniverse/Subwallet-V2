@@ -155,17 +155,3 @@ export function applyDecimal (bnNumber: BN, decimals: number) {
 
   return bnNumber.div(bnDecimals);
 }
-
-export function getTaoTotalStake (rawDelegateState: RawDelegateState) {
-  const nodeInfos = rawDelegateState.items;
-  const stakes = nodeInfos.map((stake) => stake.balance);
-  let totalStake = BigInt(0);
-
-  for (const _stake of stakes) {
-    const stakeAmount = BigInt(_stake);
-
-    totalStake += stakeAmount;
-  }
-
-  return totalStake;
-}

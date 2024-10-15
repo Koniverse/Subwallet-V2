@@ -65,6 +65,10 @@ function getBlockExplorerTxRoute (chainInfo: _ChainInfo) {
 export function getExplorerLink (chainInfo: _ChainInfo, value: string, type: 'account' | 'tx'): string | undefined {
   const explorerLink = _getBlockExplorerFromChain(chainInfo);
 
+  if (chainInfo.slug === 'bittensor') {
+    return undefined;
+  }
+
   if (explorerLink && type === 'account') {
     const route = getBlockExplorerAccountRoute(explorerLink);
 
