@@ -37,7 +37,7 @@ interface TokenTypeOption {
 }
 
 function isAssetHubChain (chainslug: string) {
-  return chainslug === 'statemint';
+  return ['statemint', 'statemine'].includes(chainslug);
 }
 
 function getTokenTypeSupported (chainInfo: _ChainInfo) {

@@ -282,7 +282,7 @@ export function _getTokenTypesSupportedByChain (chainInfo: _ChainInfo): _AssetTy
     });
   }
 
-  if (['statemint'].includes(chainInfo.slug)) {
+  if (['statemint', 'statemine'].includes(chainInfo.slug)) {
     result.push(_AssetType.LOCAL);
   }
 

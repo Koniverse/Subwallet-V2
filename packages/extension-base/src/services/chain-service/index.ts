@@ -271,7 +271,7 @@ export class ChainService {
     const assetHubToken: Record<string, _ChainAsset> = {};
 
     Object.values(this.getAssetRegistry()).forEach((asset) => {
-      if (asset.originChain === 'statemint') {
+      if (['statemint', 'statemine'].includes(asset.originChain)) {
         assetHubToken[asset.slug] = asset;
       }
     });
