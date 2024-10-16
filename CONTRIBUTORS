@@ -1,16 +1,16 @@
-    2844	AnhMTV                        	Release version 1.3.1
-    2543	Nam Phạm                      	[Issue 3700] Unified account - enable TON network by default
-    2334	S2kael                        	[Unified] Fix eslint
+    2858	AnhMTV                        	Release version 1.3.2
+    2545	Nam Phạm                      	[Issue 3609] chore: fix eslint
+    2343	S2kael                        	[Issue-3634] Fix swap error
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
      465	Jaco                          	0.42.5 (#969)
-     388	bluezdot                      	
+     393	bluezdot                      	[Issue-3760] fix: fix chainlist
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      185	quangdo                       	
+     178	dominhquang                   	[Issue-3756] Improve UI related to Select token screen
      172	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
-     157	dominhquang                   	
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
       96	lw                            	
       83	Hieu Dao                      	Update README.md
@@ -19,8 +19,9 @@
       73	bluedot                       	[Issue-3579] fix: update check fully migrate
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      28	PDTnhah                       	[Issue-3680] Update chainlist
+      37	PDTnhah                       	
       25	S2kael                        	
+      20	tunghp2002                    	[Add] Extension - Add type notification
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
@@ -39,6 +40,7 @@
        2	joe petrowski                 	add plasm (#462)
        2	Remon Nashid                  	Prevent unauthorized apps from abusing pub(authorize.tab) request (#686)
        2	Shawn Tabrizi                 	Add configurable notifications (#767)
+       2	tunghp2002                    	
        2	WoeOm                         	add darwinia network (#493)
        2	Yash Mittal                   	Address comment
        1	0_0./                         	
@@ -60,6 +62,5 @@
        1	Stéphane P                    	README Fix typo (#700)
        1	Tore19                        	Add Stafi network (#454)
        1	trieunhu                      	Load transfer history polkadot and kusama by subquid
-       1	tunghp2002                    	[Fixed] Extension - Fix do not show earning position for StellaSwap
        1	Vlad Proshchavaiev            	Update extension with Subsocial SS58 included (#416)
        1	雪霁                            	Batch export (#666)
