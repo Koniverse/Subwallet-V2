@@ -167,7 +167,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             if (isValidAssetId) {
               setLoading(true);
               validateCustomToken({
-                contractAddress: 'undefined',
                 originChain: selectedChain,
                 type: selectedTokenType,
                 assetId: assetId

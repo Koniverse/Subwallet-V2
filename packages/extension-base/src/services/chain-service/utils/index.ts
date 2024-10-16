@@ -224,7 +224,7 @@ export function _isChainSupportWasmPSP22 (chainInfo: _ChainInfo) {
 }
 
 export function _isAssetHubChain (chainInfo: _ChainInfo) {
-  return chainInfo.slug === 'statemint';
+  return ['statemint', 'statemine'].includes(chainInfo.slug);
 }
 
 export function _isChainSupportGRC20 (chainInfo: _ChainInfo) {
