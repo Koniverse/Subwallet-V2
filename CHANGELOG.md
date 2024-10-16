@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 1.3.3
+Build date: Oct 16, 2024.
+
+Features & Update:
+- Fix bug Do not show watch-only account on History (#3732)
+- Update Network details screen for TON (#3747)
+- Update chain-list
+  - Update logo for MATIC token
+  - Remove Tinkernet
+
+Bugs fixed:
+- Fix min stake for TAO(Bittensor) (#3788)
+- Fix bug show OG WUD BURN NFT Collection (#3791)
+
+
 ## 1.3.2
 Build date: Oct 12, 2024.
 
