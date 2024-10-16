@@ -202,7 +202,7 @@ export interface _ValidateCustomAssetRequest {
   originChain: string,
   type: _AssetType,
   contractCaller?: string,
-  assetId ?: string,
+  assetId?: string,
 }
 
 export interface _SmartContractTokenInfo {

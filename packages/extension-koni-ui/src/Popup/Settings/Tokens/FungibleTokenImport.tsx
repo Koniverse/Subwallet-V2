@@ -36,7 +36,7 @@ interface TokenTypeOption {
   value: _AssetType
 }
 
-function isAssetHubChain (chainslug : string) {
+function isAssetHubChain (chainslug: string) {
   return chainslug === 'statemint';
 }
 
@@ -161,7 +161,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       ({ getFieldValue }) => ({
         validator: (_, assetId: string) => {
           return new Promise<void>((resolve, reject) => {
-            console.log(123123123)
             const selectedTokenType = getFieldValue('type') as _AssetType;
             const isValidAssetId = [_AssetType.LOCAL].includes(selectedTokenType);
 
@@ -205,7 +204,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         }
       })
     ];
-  }, [chainNetworkPrefix, form, selectedChain, t]);
+  }, [form, selectedChain, t]);
 
   const hideFields = useMemo(() => !isAssetHubChain(selectedChain) ? ['assetId'] : ['contractAddress'], [selectedChain]);
 

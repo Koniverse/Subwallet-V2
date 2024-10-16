@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { GearApi } from '@gear-js/api';
-import {_AssetType, _ChainInfo} from '@subwallet/chain-list/types';
+import { _AssetType } from '@subwallet/chain-list/types';
 import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { AbstractChainHandler } from '@subwallet/extension-base/services/chain-service/handler/AbstractChainHandler';
@@ -210,7 +210,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     return [nameRes, decimals, symbolRes, contractError];
   }
 
-  private async getLocalTokenInfo (apiPromise : ApiPromise, assetId : string): Promise<[string, number, string, boolean]> {
+  private async getLocalTokenInfo (apiPromise: ApiPromise, assetId: string): Promise<[string, number, string, boolean]> {
     const _metadata = await apiPromise.query.assets.metadata(BigInt(assetId));
 
     interface AssetMetadata {
@@ -222,6 +222,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     const metadata = _metadata.toPrimitive() as unknown as AssetMetadata;
 
     let idError = false;
+
     if (!metadata.name || !metadata.symbol) {
       idError = true;
     }
@@ -273,7 +274,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     }
   }
 
-  public async getSubstrateAssetIdTokenInfo (assetId : string, originChain : string) : Promise<_SmartContractTokenInfo> {
+  public async getSubstrateAssetIdTokenInfo (assetId: string, originChain: string): Promise<_SmartContractTokenInfo> {
     const apiPromise = this.getSubstrateApiByChain(originChain).api;
 
     try {

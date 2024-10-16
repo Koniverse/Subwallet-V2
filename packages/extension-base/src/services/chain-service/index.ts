@@ -268,10 +268,10 @@ export class ChainService {
   }
 
   public getAssetHubToken () {
-    const assetHubToken : Record<string, _ChainAsset> = {};
+    const assetHubToken: Record<string, _ChainAsset> = {};
 
     Object.values(this.getAssetRegistry()).forEach((asset) => {
-      if (asset.originChain === 'statemint'){
+      if (asset.originChain === 'statemint') {
         assetHubToken[asset.slug] = asset;
       }
     });
@@ -617,7 +617,7 @@ export class ChainService {
       }
     }
 
-    if (token.originChain && (_isAssetFungibleToken(token) || _isLocalToken(token)) ) {
+    if (token.originChain && (_isAssetFungibleToken(token) || _isLocalToken(token))) {
       token.hasValue = !(this.getChainInfoByKey(token.originChain)?.isTestnet);
     }
 
@@ -1824,7 +1824,7 @@ export class ChainService {
     };
   }
 
-  private async getAssetIdTokenInfo (assetId : string | undefined, tokenType : _AssetType, chain : string): Promise<_SmartContractTokenInfo> {
+  private async getAssetIdTokenInfo (assetId: string | undefined, tokenType: _AssetType, chain: string): Promise<_SmartContractTokenInfo> {
     if ([_AssetType.LOCAL].includes(tokenType) && assetId) {
       return await this.substrateChainHandler.getSubstrateAssetIdTokenInfo(assetId, chain);
     }
@@ -1854,7 +1854,7 @@ export class ChainService {
     for (const token of Object.values(asset)) {
       const assetId = token?.metadata?.assetId as string;
 
-      if(assetId === data.assetId && token.assetType === data.type && token.originChain === data.originChain) {
+      if (assetId === data.assetId && token.assetType === data.type && token.originChain === data.originChain) {
         existedToken = token;
         break;
       }
