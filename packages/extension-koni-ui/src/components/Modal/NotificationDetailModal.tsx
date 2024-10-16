@@ -9,7 +9,7 @@ import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import { Checks, DownloadSimple, Eye, Gift, X } from 'phosphor-react';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled, { useTheme } from 'styled-components';
 
@@ -63,11 +63,11 @@ function Component (props: Props): React.ReactElement<Props> {
     }
   };
 
-  const handleActionNotification = useCallback(() => {
+  const handleNotificationInfo = useMemo(() => {
     const { icon, title } = getNotificationAction(notificationItem.extrinsicType);
     const sampleData: ActionInfo = {
       title,
-      extrinsicType: ExtrinsicType.TRANSFER_TOKEN,
+      extrinsicType: ExtrinsicType.TRANSFER_TOKEN, // todo: recheck to remove this
       backgroundColor: token.geekblue,
       leftIcon: icon
     };
@@ -102,13 +102,13 @@ function Component (props: Props): React.ReactElement<Props> {
         >
           <div className={'__left-part'}>
             <BackgroundIcon
-              backgroundColor={handleActionNotification().backgroundColor}
-              phosphorIcon={handleActionNotification().leftIcon}
+              backgroundColor={handleNotificationInfo.backgroundColor}
+              phosphorIcon={handleNotificationInfo.leftIcon}
               size='sm'
               weight='fill'
             />
           </div>
-          <div className={'__right-part'}>{handleActionNotification().title}</div>
+          <div className={'__right-part'}>{handleNotificationInfo.title}</div>
         </div>
         <div
           className={'__mark-read-button'}

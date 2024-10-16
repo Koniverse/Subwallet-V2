@@ -127,6 +127,10 @@ export class AccountContext {
     return this.state.getDecodedAddresses(accountProxy, allowGetAllAccount);
   }
 
+  public getAllAddresses () {
+    return this.state.getAllAddresses();
+  }
+
   /* Get address for another service */
 
   /* Mnemonic */

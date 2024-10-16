@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BrowserConfirmationType, LanguageType, ThemeNames, UiSettings, WalletUnlockType } from '@subwallet/extension-base/background/KoniTypes';
+import { NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { targetIsExtension } from '@subwallet/extension-base/utils';
 
 export const DEFAULT_THEME: ThemeNames = ThemeNames.DARK;
@@ -15,14 +16,17 @@ export const DEFAULT_SHOW_ZERO_BALANCE = true;
 export const DEFAULT_SHOW_BALANCE = false;
 export const DEFAULT_ALL_LOGO = '';
 export const DEFAULT_CAMERA_ENABLE = false;
-export const DEFAULT_NOTIFICATION_SETUP = {
+export const DEFAULT_NOTIFICATION_SETUP: NotificationSetup = {
   isEnabled: true,
-  notificationSetup: {
-    isHideSend: false,
-    isHideReceive: false,
-    isHideWithdraw: false, // todo: just for test, remove later
-    isHideMarketing: false,
-    isHideAnnouncement: false
+  showNotice: {
+    // send: true,
+    // receive: true,
+    earningClaim: true,
+    earningWithdraw: true,
+    availBridgeClaim: true
+    // isHideWithdraw: false, // todo: just for test, remove later
+    // isHideMarketing: false,
+    // isHideAnnouncement: false
   }
 };
 

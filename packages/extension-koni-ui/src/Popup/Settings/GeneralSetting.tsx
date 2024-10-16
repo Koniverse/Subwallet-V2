@@ -391,7 +391,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
           <SettingItem
             className={CN('security-item', 'notification-item')}
-            onPressItem={onClickEnableNotification}
             leftItemIcon={(
               <BackgroundIcon
                 backgroundColor={token['magenta-7']}
@@ -402,6 +401,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               />
             )}
             name={t('Enable notifications')}
+            onPressItem={onClickEnableNotification}
             rightItem={(
               <div className={'__trigger-right-item'}>
                 <Icon

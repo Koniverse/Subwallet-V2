@@ -3,18 +3,19 @@
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { _NotificationInfo, NotificationActionType, NotificationSetup, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import { GetNotificationParams } from '@subwallet/extension-base/types/notification';
+import { _NotificationInfo, ClaimAvailBridgeNotificationMetadata, NotificationActionType, NotificationSetup, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { AvailBridgeTransactionStatus } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { AlertModal, EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
 import Search from '@subwallet/extension-koni-ui/components/Search';
-import { BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
+import { BN_ZERO, CLAIM_AVAIL_BRIDGE_TRANSACTION, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_AVAIL_BRIDGE_PARAMS, DEFAULT_CLAIM_REWARD_PARAMS, DEFAULT_UN_STAKE_PARAMS, DEFAULT_WITHDRAW_PARAMS, NOTIFICATION_DETAIL_MODAL, WITHDRAW_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useAlert, useDefaultNavigate, useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
 import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
-import { getInappNotifications, markAllReadNotification, switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
+import { fetchInappNotifications, markAllReadNotification, switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -41,14 +42,18 @@ export enum NotificationIconBackgroundColorMap {
   SEND = 'colorSuccess',
   RECEIVE = 'lime-7',
   WITHDRAW = 'blue-8',
-  CLAIM = 'yellow-7'
+  CLAIM = 'yellow-7',
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'yellow-7', // temporary set
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'yellow-7'
 }
 
 export const NotificationIconMap = {
   SEND: ArrowSquareUpRight,
   RECEIVE: ArrowSquareDownLeft,
   WITHDRAW: DownloadSimple,
-  CLAIM: Gift
+  CLAIM: Gift,
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL: Gift, // temporary set
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Gift
 };
 
 const alertModalId = 'notification-alert-modal';
@@ -79,6 +84,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [, setClaimRewardStorage] = useLocalStorage(CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS);
   const [, setWithdrawStorage] = useLocalStorage(WITHDRAW_TRANSACTION, DEFAULT_WITHDRAW_PARAMS);
+  const [, setClaimAvailBridgeStorage] = useLocalStorage(CLAIM_AVAIL_BRIDGE_TRANSACTION, DEFAULT_CLAIM_AVAIL_BRIDGE_PARAMS);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
@@ -164,7 +170,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value as NotificationTab);
     setLoading(true);
-    getInappNotifications({
+    fetchInappNotifications({
       proxyId: currentProxyId,
       notificationTab: value
     } as GetNotificationParams)
@@ -205,6 +211,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     return () => {
       const slug = (item.metadata as WithdrawClaimNotificationMetadata).stakingSlug;
       const totalWithdrawable = getTotalWidrawable(slug, poolInfoMap, yieldPositions, currentAccountProxy, isAllAccount, chainsByAccountType, currentTimestampMs);
+      const switchStatusParams: RequestSwitchStatusParams = {
+        id: item.id,
+        isRead: false
+      };
 
       switch (item.actionType) {
         case NotificationActionType.WITHDRAW: {
@@ -217,7 +227,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               chain: metadata.stakingSlug.split('___')[2],
               from: item.address
             });
-            switchReadNotificationStatus(item).then(() => {
+            switchReadNotificationStatus(switchStatusParams).then(() => {
               navigate('/transaction/withdraw');
             }).catch(console.error);
           } else {
@@ -239,8 +249,32 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               chain: metadata.stakingSlug.split('___')[2],
               from: item.address
             });
-            switchReadNotificationStatus(item).then(() => {
+            switchReadNotificationStatus(switchStatusParams).then(() => {
               navigate('/transaction/claim-reward');
+            }).catch(console.error);
+          } else {
+            showWarningModal('claimed');
+          }
+
+          break;
+        }
+
+        case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM:
+
+        // eslint-disable-next-line no-fallthrough
+        case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL: {
+          const metadata = item.metadata as ClaimAvailBridgeNotificationMetadata;
+
+          if (metadata.status === AvailBridgeTransactionStatus.READY_TO_CLAIM) {
+            setClaimAvailBridgeStorage({
+              chain: metadata.chainSlug,
+              asset: metadata.tokenSlug,
+              notificationId: item.id,
+              fromAccountProxy: item.proxyId,
+              from: item.address
+            });
+            switchReadNotificationStatus(switchStatusParams).then(() => {
+              navigate('/transaction/claim-avail-bridge');
             }).catch(console.error);
           } else {
             showWarningModal('claimed');
@@ -258,7 +292,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           });
       }
     };
-  }, [accounts, chainsByAccountType, currentAccountProxy, currentTimestampMs, earningRewards, isAllAccount, isTrigger, navigate, poolInfoMap, setClaimRewardStorage, setWithdrawStorage, showWarningModal, yieldPositions]);
+  }, [accounts, chainsByAccountType, currentAccountProxy, currentTimestampMs, earningRewards, isAllAccount, isTrigger, navigate, poolInfoMap, setClaimAvailBridgeStorage, setClaimRewardStorage, setWithdrawStorage, showWarningModal, yieldPositions]);
 
   const renderItem = useCallback((item: NotificationInfoItem) => {
     return (
@@ -320,7 +354,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       .catch(console.error);
 
     setLoading(true);
-    getInappNotifications({
+    fetchInappNotifications({
       proxyId: currentProxyId,
       notificationTab: selectedFilterTab
     } as GetNotificationParams)
@@ -332,7 +366,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [currentProxyId, selectedFilterTab]);
 
   useEffect(() => {
-    getInappNotifications({
+    fetchInappNotifications({
       proxyId: currentProxyId,
       notificationTab: NotificationTab.ALL
     } as GetNotificationParams)

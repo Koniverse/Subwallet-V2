@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { NotificationStore, ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 
 const initialState: NotificationStore = {
