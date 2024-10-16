@@ -108,8 +108,6 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
     return accounts.filter((account) => account.address.toLowerCase() === fromValue.toLowerCase());
   }, [accounts, fromValue]);
 
-  console.log(networkPrefix);
-
   return (
     <>
       <TransactionContent>
@@ -139,7 +137,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
           />
           <Form.Item>
             <MetaInfo
-              className='claim-reward-meta-info'
+              className='claim-avail-bridge-meta-info'
               hasBackgroundWrapper={true}
             >
               <MetaInfo.Chain
@@ -150,7 +148,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
                 metadata && (
                   <MetaInfo.Number
                     decimals={decimals}
-                    label={t('Reward claiming')}
+                    label={t('Token claiming')}
                     suffix={symbol}
                     value={metadata.amount}
                   />
@@ -211,7 +209,7 @@ const Wrapper: React.FC<Props> = (props: Props) => {
         })
         .catch(() => {
           setNotification(undefined);
-          navigate('/somewhere/else');
+          navigate('/home/tokens');
         })
         .finally(() => {
           resolve(true);
@@ -240,7 +238,7 @@ const ClaimAvailBridge = styled(Wrapper)<Props>(({ theme: { token } }: Props) =>
       overflow: 'hidden'
     },
 
-    '.unstaked-field, .free-balance': {
+    '.free-balance': {
       marginBottom: token.marginXS
     },
 
@@ -248,22 +246,8 @@ const ClaimAvailBridge = styled(Wrapper)<Props>(({ theme: { token } }: Props) =>
       marginTop: token.paddingSM
     },
 
-    '.cancel-unstake-info-item > .__col': {
-      flex: 'initial',
-      paddingRight: token.paddingXXS
-    },
-
-    '.claim-reward-meta-info': {
+    '.claim-avail-bridge-meta-info': {
       marginTop: token.marginXXS
-    },
-
-    '.ant-checkbox-wrapper': {
-      display: 'flex',
-      alignItems: 'center',
-
-      '.ant-checkbox': {
-        top: 0
-      }
     }
   };
 });
