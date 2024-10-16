@@ -24,7 +24,7 @@ import { ActivityIndicator, Button, Icon, ModalContext, SwList, SwSubHeader } fr
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
-import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, CheckCircle, Checks, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
+import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, CheckCircle, Checks, Coins, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -52,8 +52,8 @@ export const NotificationIconMap = {
   RECEIVE: ArrowSquareDownLeft,
   WITHDRAW: DownloadSimple,
   CLAIM: Gift,
-  CLAIM_AVAIL_BRIDGE_ON_AVAIL: Gift, // temporary set
-  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Gift
+  CLAIM_AVAIL_BRIDGE_ON_AVAIL: Coins, // temporary set
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Coins
 };
 
 const alertModalId = 'notification-alert-modal';

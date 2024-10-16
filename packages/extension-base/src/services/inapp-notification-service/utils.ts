@@ -31,7 +31,7 @@ export function getReceiveDescription (amount: string, symbol: string) {
 }
 
 export function getAvailBridgeClaimDescription (amount: string, symbol: string) {
-  return `${amount} ${symbol} ready to claim from Avail bridge. Click to claim now!`;
+  return `${amount} ${symbol} ready to claim from ${symbol} cross-chain transfer. Click to claim now!`;
 }
 /* Description */
 
