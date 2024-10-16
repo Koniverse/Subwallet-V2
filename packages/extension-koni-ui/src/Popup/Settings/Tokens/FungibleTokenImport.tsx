@@ -287,7 +287,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [chainNetworkPrefix, chainInfoMap, showNotification, t, goBack]);
 
   const onSubmitAssetId: FormCallbacks<TokenImportFormType>['onFinish'] = useCallback((formValues: TokenImportFormType) => {
-    const { chain, decimals, priceId, symbol, tokenName, type, assetId } = formValues;
+    const { assetId, chain, decimals, priceId, symbol, tokenName, type } = formValues;
 
     if (assetId) {
       setLoading(true);
