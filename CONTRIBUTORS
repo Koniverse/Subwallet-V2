@@ -1,13 +1,13 @@
-    2858	AnhMTV                        	Release version 1.3.2
-    2545	Nam Phạm                      	[Issue 3609] chore: fix eslint
-    2343	S2kael                        	[Issue-3634] Fix swap error
+    2864	AnhMTV                        	
+    2546	Nam Phạm                      	[Issue 3747] chore: fix eslint
+    2344	S2kael                        	[Issue-3794] Update stable version for chain-list
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
      465	Jaco                          	0.42.5 (#969)
      393	bluezdot                      	[Issue-3760] fix: fix chainlist
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      185	quangdo                       	
-     178	dominhquang                   	[Issue-3756] Improve UI related to Select token screen
+     179	dominhquang                   	[Issue-3732] Fix bug do not show watch-only account on History (All account mode)
      172	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
@@ -19,9 +19,9 @@
       73	bluedot                       	[Issue-3579] fix: update check fully migrate
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      37	PDTnhah                       	
+      40	PDTnhah                       	[Issue-3747] Extension - Update Network details screen for TON
+      26	tunghp2002                    	[Fix] - Handle kodadot NFT
       25	S2kael                        	
-      20	tunghp2002                    	[Add] Extension - Add type notification
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
