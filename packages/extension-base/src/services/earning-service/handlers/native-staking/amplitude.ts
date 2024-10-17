@@ -563,7 +563,7 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
       extrinsic = chainApi.api.tx.parachainStaking.leaveDelegators();
     }
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */

@@ -466,7 +466,7 @@ export default class TaoNativeStakingPoolHandler extends BaseParaStakingPoolHand
 
     const extrinsic = apiPromise.api.tx.subtensorModule.removeStake(selectedTarget, binaryAmount);
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */

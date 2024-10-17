@@ -774,7 +774,7 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
       extrinsic = chainApi.api.tx.staking.unbond(binaryAmount);
     }
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */
