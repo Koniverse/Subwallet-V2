@@ -1873,7 +1873,16 @@ export class ChainService {
       };
     }
 
-    const { contractError, decimals, name, symbol } = data.contractAddress ? await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller) : await this.getAssetIdTokenInfo(data.assetId, data.type, data.originChain);
+    let name : string;
+    let decimals: number | undefined;
+    let symbol : string;
+    let contractError : boolean;
+
+    if (data.contractAddress) {
+      ({ contractError, decimals, name, symbol } = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller));
+    } else {
+      ({ contractError, decimals, name, symbol } = await this.getAssetIdTokenInfo(data.assetId, data.type, data.originChain));
+    }
 
     return {
       name,
