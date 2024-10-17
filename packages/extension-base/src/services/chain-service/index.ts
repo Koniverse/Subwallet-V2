@@ -1873,7 +1873,7 @@ export class ChainService {
       };
     }
 
-    let info : _SmartContractTokenInfo;
+    let info: _SmartContractTokenInfo;
 
     if (data.contractAddress) {
       info = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller);
