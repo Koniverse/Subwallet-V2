@@ -9,7 +9,7 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
-import { BaseYieldPositionInfo, BasicTxErrorType, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposureItem, PalletStakingNominations, RequestStakePoolingBonding, SpStakingExposurePage, StakeCancelWithdrawalParams, StakingTxErrorType, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposureItem, PalletStakingNominations, RequestYieldStepSubmit, SpStakingExposurePage, StakeCancelWithdrawalParams, StakingTxErrorType, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
@@ -569,21 +569,19 @@ export default class NominationPoolHandler extends BasePoolHandler {
 
   async handleYieldJoin (_data: SubmitYieldJoinData, path: OptimalYieldPath, currentStep: number): Promise<HandleYieldStepData> {
     const data = _data as SubmitJoinNominationPool;
-    const { address, amount, selectedPool } = data;
+    const { address, amount } = data;
     const positionInfo = await this.getPoolPosition(address);
     const [extrinsic] = await this.createJoinExtrinsic(data, positionInfo);
 
-    const joinPoolData: RequestStakePoolingBonding = {
-      poolPosition: positionInfo,
-      slug: this.slug,
-      selectedPool,
-      amount,
-      address
+    const joinPoolData: RequestYieldStepSubmit = {
+      path,
+      data: data,
+      currentStep
     };
 
     return {
       txChain: this.chain,
-      extrinsicType: ExtrinsicType.STAKING_JOIN_POOL,
+      extrinsicType: ExtrinsicType.JOIN_YIELD_POOL,
       extrinsic,
       txData: joinPoolData,
       transferNativeAmount: amount,
