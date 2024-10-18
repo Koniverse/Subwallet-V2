@@ -718,7 +718,7 @@ export default class TransactionService {
       } catch (e) {
         console.error(e);
       }
-    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.JOIN_YIELD_POOL, ExtrinsicType.STAKING_POOL_WITHDRAW, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
+    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.JOIN_YIELD_POOL, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
       this.state.eventService.emit('transaction.submitStaking', transaction.chain);
     } else if (transaction.extrinsicType === ExtrinsicType.SWAP) {
       const inputData = parseTransactionData<ExtrinsicType.SWAP>(transaction.data);
