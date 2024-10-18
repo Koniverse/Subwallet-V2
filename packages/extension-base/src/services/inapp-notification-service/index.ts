@@ -4,12 +4,13 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_LISTEN_AVAIL_BRIDGE_CLAIM } from '@subwallet/extension-base/constants';
+import { fetchLastestRemindNotificationTime } from '@subwallet/extension-base/constants/remind-notification-time';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { NotificationDescriptionMap, NotificationTitleMap, ONE_DAY_MILLISECOND } from '@subwallet/extension-base/services/inapp-notification-service/consts';
 import { _BaseNotificationInfo, _NotificationInfo, ClaimAvailBridgeNotificationMetadata, NotificationActionType, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
-import { AvailBridgeSourceChain, AvailBridgeTransaction, fetchAllAvailBridgeClaimable } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { AvailBridgeSourceChain, AvailBridgeTransaction, fetchAllAvailBridgeClaimable, hrsToMillisecond } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
@@ -73,29 +74,36 @@ export class InappNotificationService implements CronServiceInterface {
     return this.dbService.cleanUpOldNotifications(overdueTime);
   }
 
-  passValidateNotification (candidateNotification: _BaseNotificationInfo, notificationFromDB: _NotificationInfo[]) {
+  passValidateNotification (candidateNotification: _BaseNotificationInfo, comparedNotifications: _NotificationInfo[], remindTimeConfigInHrs: Record<NotificationActionType, number>) { // todo: simplify condition !!
     if ([NotificationActionType.WITHDRAW, NotificationActionType.CLAIM].includes(candidateNotification.actionType)) {
       const { actionType, address, metadata, time } = candidateNotification;
       const candidateMetadata = metadata as WithdrawClaimNotificationMetadata;
+      const remindTime = hrsToMillisecond(remindTimeConfigInHrs[candidateNotification.actionType]);
 
-      for (const notification of notificationFromDB) {
-        if (notification.address !== address) {
+      for (const comparedNotification of comparedNotifications) {
+        const specialCase = comparedNotification.actionType === NotificationActionType.WITHDRAW && !comparedNotification.isRead;
+
+        if (comparedNotification.address !== address) {
           continue;
         }
 
-        if (notification.actionType !== actionType) {
+        if (comparedNotification.actionType !== actionType) {
           continue;
         }
 
-        if (time - notification.time >= ONE_DAY_MILLISECOND) {
-          continue;
-        }
-
-        const comparedMetadata = notification.metadata as WithdrawClaimNotificationMetadata;
+        const comparedMetadata = comparedNotification.metadata as WithdrawClaimNotificationMetadata;
         const sameNotification = candidateMetadata.stakingType === comparedMetadata.stakingType && candidateMetadata.stakingSlug === comparedMetadata.stakingSlug;
 
-        if (sameNotification) {
+        if (!sameNotification) {
+          continue;
+        }
+
+        if (time - comparedNotification.time <= remindTime) {
           return false;
+        } else {
+          if (specialCase) {
+            return false;
+          }
         }
       }
     }
@@ -103,13 +111,14 @@ export class InappNotificationService implements CronServiceInterface {
     if ([NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM, NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL].includes(candidateNotification.actionType)) {
       const { address, metadata, time } = candidateNotification;
       const candidateMetadata = metadata as ClaimAvailBridgeNotificationMetadata;
+      const remindTime = hrsToMillisecond(remindTimeConfigInHrs[candidateNotification.actionType]);
 
-      for (const notification of notificationFromDB) {
+      for (const notification of comparedNotifications) {
         if (notification.address !== address) {
           continue;
         }
 
-        if (time - notification.time >= 2 * ONE_DAY_MILLISECOND) {
+        if (time - notification.time >= remindTime) {
           continue;
         }
 
@@ -131,24 +140,25 @@ export class InappNotificationService implements CronServiceInterface {
   async validateAndWriteNotificationsToDB (notifications: _BaseNotificationInfo[], address: string) {
     const proxyId = this.keyringService.context.belongUnifiedAccount(address) || address;
     const accountName = this.keyringService.context.getCurrentAccountProxyName(proxyId);
-    const newNotifications: _NotificationInfo[] = [];
-    const unreadNotifications = await this.fetchNotificationsByParams({
-      notificationTab: NotificationTab.UNREAD,
-      proxyId
-    });
+    const passNotifications: _NotificationInfo[] = [];
 
-    for (const notification of notifications) {
-      notification.title = notification.title.replace('{{accountName}}', accountName);
+    const [comparedNotifications, remindTimeConfig] = await Promise.all([
+      this.fetchNotificationsByParams({ notificationTab: NotificationTab.ALL, proxyId }),
+      await fetchLastestRemindNotificationTime()
+    ]);
 
-      if (this.passValidateNotification(notification, unreadNotifications)) {
-        newNotifications.push({
-          ...notification,
+    for (const candidateNotification of notifications) {
+      candidateNotification.title = candidateNotification.title.replace('{{accountName}}', accountName);
+
+      if (this.passValidateNotification(candidateNotification, comparedNotifications, remindTimeConfig)) {
+        passNotifications.push({
+          ...candidateNotification,
           proxyId
         });
       }
     }
 
-    await this.dbService.upsertNotifications(newNotifications);
+    await this.dbService.upsertNotifications(passNotifications);
   }
 
   cronCreateAvailBridgeClaimNotification () {

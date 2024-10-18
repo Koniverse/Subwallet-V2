@@ -223,3 +223,7 @@ export async function fetchAvailBridgeTransactions (userAddress: string, sourceC
 export function filterClaimableOfAddress (address: string, transactions: AvailBridgeTransaction[]) {
   return transactions.filter((transaction) => transaction.receiverAddress.toLowerCase() === address.toLowerCase());
 }
+
+export function hrsToMillisecond (hours: number) {
+  return hours * 60 * 60 * 1000;
+}
