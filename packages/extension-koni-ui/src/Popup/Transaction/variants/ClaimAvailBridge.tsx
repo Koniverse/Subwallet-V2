@@ -148,7 +148,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
                 metadata && (
                   <MetaInfo.Number
                     decimals={decimals}
-                    label={t('Token claiming')}
+                    label={t('Amount')}
                     suffix={symbol}
                     value={metadata.amount}
                   />

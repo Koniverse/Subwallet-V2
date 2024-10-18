@@ -41,7 +41,7 @@ const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransa
           claimToken && (
             <MetaInfo.Number
               decimals={claimToken.decimals || 0}
-              label={t('Claim amount')}
+              label={t('Amount')}
               suffix={claimToken.symbol}
               value={metadata.amount}
             />

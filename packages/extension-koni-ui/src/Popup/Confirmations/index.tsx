@@ -255,7 +255,7 @@ const Component = function ({ className }: Props) {
         case ExtrinsicType.SWAP:
           return t('Swap confirmation');
         case ExtrinsicType.CLAIM_AVAIL_BRIDGE:
-          return t('Claim avail bridge confirm');
+          return t('Claim confirmation');
         case ExtrinsicType.CROWDLOAN:
         case ExtrinsicType.EVM_EXECUTE:
         case ExtrinsicType.UNKNOWN:

@@ -441,7 +441,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 actionBtnIcon={<Icon phosphorIcon={FadersHorizontal} />}
                 className={'__search-box'}
                 onSearch={handleSearch}
-                placeholder={t<string>('Enter network name')}
+                placeholder={t<string>('Search notification')}
                 searchValue={currentSearchText}
               />
               {loading

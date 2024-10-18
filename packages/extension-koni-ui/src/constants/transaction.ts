@@ -51,7 +51,7 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.UNSTAKE_QDOT]: detectTranslate('Unstake qDOT'),
   [ExtrinsicType.UNSTAKE_VMANTA]: detectTranslate('Unstake vMANTA'),
 
-  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: detectTranslate('Claim AVAIL Bridge'),
+  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: detectTranslate('Claim tokens'),
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap')
