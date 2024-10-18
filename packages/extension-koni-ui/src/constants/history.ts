@@ -44,7 +44,7 @@ export const TxTypeNameMap: Record<ExtrinsicType, string> = {
   [ExtrinsicType.EVM_EXECUTE]: detectTranslate('EVM Execute'),
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap'),
-  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: detectTranslate('Claim Avail Bridge'),
+  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: detectTranslate('Claim token'),
   [ExtrinsicType.UNKNOWN]: detectTranslate('Unknown')
 };
 

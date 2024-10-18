@@ -8,7 +8,7 @@ import { NotificationInfoItem } from '@subwallet/extension-koni-ui/Popup/Setting
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, ModalContext, SwModal } from '@subwallet/react-ui';
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
-import { Checks, DownloadSimple, Eye, Gift, X } from 'phosphor-react';
+import { Checks, Coins, DownloadSimple, Eye, Gift, X } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled, { useTheme } from 'styled-components';
@@ -30,6 +30,12 @@ export interface ActionInfo {
   isRead?: boolean;
 }
 
+export interface BriefActionInfo {
+  icon: ActionInfo['leftIcon'];
+  title: ActionInfo['title'];
+  backgroundColor?: ActionInfo['backgroundColor'];
+}
+
 function Component (props: Props): React.ReactElement<Props> {
   const { className, isTrigger, notificationItem, onCancel, onClickAction, setTrigger } = props;
   const [readNotification, setReadNotification] = useState<boolean>(notificationItem.isRead);
@@ -43,7 +49,7 @@ function Component (props: Props): React.ReactElement<Props> {
     onCancel && onCancel();
   }, [inactiveModal, onCancel]);
 
-  const getNotificationAction = (type: ExtrinsicType) => {
+  const getNotificationAction = (type: ExtrinsicType): BriefActionInfo => {
     switch (type) {
       case ExtrinsicType.STAKING_WITHDRAW:
         return {
@@ -58,7 +64,7 @@ function Component (props: Props): React.ReactElement<Props> {
       case ExtrinsicType.CLAIM_AVAIL_BRIDGE:
         return {
           title: 'Claim',
-          icon: Gift
+          icon: Coins
         };
       default:
         return {
