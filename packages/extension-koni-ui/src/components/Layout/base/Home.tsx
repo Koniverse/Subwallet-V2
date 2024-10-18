@@ -32,6 +32,7 @@ const Component = ({ children, className, isDisableHeader, onClickFilterIcon, on
   const { activeModal } = useContext(ModalContext);
   const { unreadNotificationCountMap } = useSelector((state: RootState) => state.notification);
   const { currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const { notificationSetup: { isEnabled: notiEnable } } = useSelector((state: RootState) => state.settings);
 
   const unreadNotificationCount = useMemo(() => {
     if (!currentAccountProxy || !unreadNotificationCountMap) {
@@ -88,7 +89,7 @@ const Component = ({ children, className, isDisableHeader, onClickFilterIcon, on
               phosphorIcon={BellSimpleRinging}
               size='md'
             />
-            {!!unreadNotificationCount && <div className={CN('__unread-count')}>{unreadNotificationCount}</div>}
+            {notiEnable && !!unreadNotificationCount && <div className={CN('__unread-count')}>{unreadNotificationCount}</div>}
           </div>
 
         ),
@@ -99,7 +100,7 @@ const Component = ({ children, className, isDisableHeader, onClickFilterIcon, on
     }
 
     return icons;
-  }, [onClickFilterIcon, onClickSearchIcon, onOpenCustomizeModal, onOpenNotification, showFilterIcon, showNotificationIcon, showSearchIcon, t, unreadNotificationCount]);
+  }, [onClickFilterIcon, onClickSearchIcon, onOpenCustomizeModal, onOpenNotification, showFilterIcon, showNotificationIcon, showSearchIcon, t, unreadNotificationCount, notiEnable]);
 
   const onClickListIcon = useCallback(() => {
     navigate('/settings/list');

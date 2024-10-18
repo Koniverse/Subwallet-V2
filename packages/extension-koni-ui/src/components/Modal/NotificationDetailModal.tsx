@@ -55,6 +55,11 @@ function Component (props: Props): React.ReactElement<Props> {
           title: 'Claim',
           icon: Gift
         };
+      case ExtrinsicType.CLAIM_AVAIL_BRIDGE:
+        return {
+          title: 'Claim',
+          icon: Gift
+        };
       default:
         return {
           title: 'View details',

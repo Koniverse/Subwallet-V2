@@ -45,7 +45,7 @@ export default class SettingService {
         ...DEFAULT_SETTING,
         ...(value || {}),
         notificationSetup: {
-          isEnabled: value?.notificationSetup?.isEnabled || DEFAULT_SETTING.notificationSetup.isEnabled,
+          isEnabled: value?.notificationSetup?.isEnabled ?? DEFAULT_SETTING.notificationSetup.isEnabled,
           showNotice: {
             ...DEFAULT_SETTING.notificationSetup.showNotice,
             ...(value?.notificationSetup?.showNotice || {})
