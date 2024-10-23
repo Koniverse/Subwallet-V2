@@ -34,6 +34,10 @@ jobs:
         CHAINFLIP_BROKER_API: ${{ secrets.CHAINFLIP_BROKER_API }}
         BITTENSOR_API_KEY_1: ${{ secrets.BITTENSOR_API_KEY_1 }} 
         BITTENSOR_API_KEY_2: ${{ secrets.BITTENSOR_API_KEY_2 }}
+        BITTENSOR_API_KEY_3: ${{ secrets.BITTENSOR_API_KEY_3 }}
+        BITTENSOR_API_KEY_4: ${{ secrets.BITTENSOR_API_KEY_4 }}
+        BITTENSOR_API_KEY_5: ${{ secrets.BITTENSOR_API_KEY_5 }}
+        BITTENSOR_API_KEY_6: ${{ secrets.BITTENSOR_API_KEY_6 }}
         BRANCH_NAME: master
       run: |
         yarn install --immutable | grep -v 'YN0013'
