@@ -3,7 +3,7 @@
 
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
 import { YIELD_POOL_STAT_REFRESH_INTERVAL } from '@subwallet/extension-base/koni/api/yield/helper/utils';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { createXcmExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
@@ -345,26 +345,27 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
 
     const missingAmount = bnAmount.sub(bnInputTokenBalance); // TODO: what if input token is not LOCAL ??
     const xcmFee = new BN(path.totalFee[1].amount || '0');
+
     const xcmAmount = missingAmount.add(xcmFee);
+    const existentialDeposit = new BN(this.nativeToken.minAmount || '0');
 
     const bnAltInputTokenBalance = new BN(altInputTokenBalance.value || '0');
 
-    if (!bnAltInputTokenBalance.sub(xcmAmount).sub(xcmFee).gt(BN_ZERO)) {
+    if (!bnAltInputTokenBalance.sub(xcmAmount).sub(xcmFee).sub(existentialDeposit).gt(BN_ZERO)) {
       processValidation.failedStep = path.steps[1];
       processValidation.ok = false;
       processValidation.status = YieldValidationStatus.NOT_ENOUGH_BALANCE;
 
-      const maxBn = bnInputTokenBalance.add(new BN(altInputTokenBalance.value)).sub(xcmFee).sub(xcmFee);
+      const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO))).sub(existentialDeposit);
+      const maxBn = bnInputTokenBalance.add(bnMaxXCM);
       const maxValue = formatNumber(maxBn.toString(), inputTokenInfo.decimals || 0);
+      const maxXCMValue = formatNumber(bnMaxXCM.toString(), inputTokenInfo.decimals || 0);
 
-      const altInputTokenInfo = this.state.getAssetBySlug(altInputTokenSlug);
       const symbol = altInputTokenInfo.symbol;
       const altNetwork = this.state.getChainInfo(altInputTokenInfo.originChain);
       const inputNetworkName = this.chainInfo.name;
       const altNetworkName = altNetwork.name;
       const currentValue = formatNumber(bnInputTokenBalance.toString(), inputTokenInfo.decimals || 0);
-      const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee).sub(xcmFee);
-      const maxXCMValue = formatNumber(bnMaxXCM.toString(), inputTokenInfo.decimals || 0);
 
       processValidation.message = t(
         'You can only enter a maximum of {{maxValue}} {{symbol}}, which is {{currentValue}} {{symbol}} ({{inputNetworkName}}) and {{maxXCMValue}} {{symbol}} ({{altNetworkName}}). Lower your amount and try again.',
