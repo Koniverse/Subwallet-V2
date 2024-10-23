@@ -33,7 +33,7 @@ const CAN_NOT_CHANGE_SETTING: Array<keyof NotificationSetup['showNotice']> = ['e
 const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
   const { token } = useTheme() as Theme;
   const { t } = useTranslation();
-  const goBack = useDefaultNavigate().goBack;
+  const { goBack } = useDefaultNavigate();
   const { notificationSetup } = useSelector((state: RootState) => state.settings);
   const [currentNotificationSetting, setCurrentNotificationSetting] = useState<NotificationSetup>(notificationSetup);
   const [loadingNotification, setLoadingNotification] = useState(false);
@@ -41,15 +41,15 @@ const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
   const notificationOptions = useMemo((): ShowNoticeOption[] => {
     return [
       {
-        label: t('Show claim reward notifications'),
+        label: t('Claim tokens'),
         value: 'earningClaim'
       },
       {
-        label: t('Show withdraw notifications'),
+        label: t('Withdraw tokens'),
         value: 'earningWithdraw'
       },
       {
-        label: t('Show claim AVAIL bridge notifications'),
+        label: t('Claim AVAIL bridge'),
         value: 'availBridgeClaim'
       }
     ];
@@ -117,7 +117,7 @@ const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
         onBack={goBack}
         paddingVertical
         showBackButton
-        title={t('Notification setting')}
+        title={t('Notification settings')}
       />
 
       <div className={'body-container'}>
@@ -143,7 +143,7 @@ const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
           />
           {currentNotificationSetting.isEnabled && <div className={'content-wrapper'}>
             <div className={'options-container'}>
-              <div className={'option-title'}>{t('Notification setup:')}</div>
+              <div className={'option-title'}>{t('Show notifications about')}</div>
               {
                 notificationOptions.map((option) => (
                   <div

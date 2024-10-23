@@ -53,17 +53,17 @@ function Component (props: Props): React.ReactElement<Props> {
     switch (type) {
       case ExtrinsicType.STAKING_WITHDRAW:
         return {
-          title: 'Withdraw',
+          title: 'Withdraw tokens',
           icon: DownloadSimple
         };
       case ExtrinsicType.STAKING_CLAIM_REWARD:
         return {
-          title: 'Claim',
+          title: 'Claim tokens',
           icon: Gift
         };
       case ExtrinsicType.CLAIM_AVAIL_BRIDGE:
         return {
-          title: 'Claim',
+          title: 'Claim tokens',
           icon: Coins
         };
       default:
@@ -133,7 +133,7 @@ function Component (props: Props): React.ReactElement<Props> {
               weight='fill'
             />
           </div>
-          <div className={'__right-part'}>{readNotification ? t('Mark un-read') : t('Mark read')}</div>
+          <div className={'__right-part'}>{readNotification ? t('Mark as unread') : t('Mark as read')}</div>
         </div>
       </div>
 

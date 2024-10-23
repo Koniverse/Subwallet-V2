@@ -374,7 +374,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               key: 'browser-confirmation-type-trigger',
               leftIcon: BellSimpleRinging,
               leftIconBgColor: token['volcano-6'],
-              title: t('Notifications')
+              title: t('Browser notifications')
             })}
             disabled={loadingMap.browserConfirmationType}
             id='browser-confirmation-type-select-modal'
@@ -388,9 +388,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             size='small'
             title={t('Notifications')}
           />
-
           <SettingItem
-            className={CN('security-item', 'notification-item')}
+            className={CN('__trigger-item setting-item', 'notification-item')}
             leftItemIcon={(
               <BackgroundIcon
                 backgroundColor={token['magenta-7']}

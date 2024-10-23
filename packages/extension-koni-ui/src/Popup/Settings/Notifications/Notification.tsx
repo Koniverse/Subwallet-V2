@@ -320,8 +320,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const renderEmptyList = useCallback(() => {
     return (
       <EmptyList
-        emptyMessage={t('Your notification will appear here.')}
-        emptyTitle={t('Have not notification yet')}
+        emptyMessage={t('Your notifications will appear here')}
+        emptyTitle={t('No notifications yet')}
         phosphorIcon={ListBullets}
       />
     );
@@ -340,10 +340,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           loading: loadingNotification,
           size: 'xs',
           shape: 'circle',
-          children: t('Enable notification')
+          children: t('Enable notifications')
         }}
-        emptyMessage={t('Your notification will appear here.')}
-        emptyTitle={t('Notification feature is not enabled')}
+        emptyMessage={t('Enable notifications now to not miss anything!')}
+        emptyTitle={t('Notifications are disabled')}
         phosphorIcon={BellSimpleSlash}
       />
     );
@@ -429,7 +429,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           size='xs'
           type='ghost'
         >
-          {t('Mark read all')}
+          {t('Mark all as read')}
         </Button>
       </div>
 
