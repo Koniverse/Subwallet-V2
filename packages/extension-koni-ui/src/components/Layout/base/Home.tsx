@@ -125,8 +125,13 @@ const Component = ({ children, className, isDisableHeader, onClickFilterIcon, on
 };
 
 const Home = styled(Component)<Props>(({ theme: { token } }: Props) => ({
+  '.ant-sw-header-right-part': {
+    display: 'flex'
+  },
+
   '.notification-icon': {
-    position: 'relative'
+    position: 'relative',
+    display: 'flex'
   },
 
   '.__unread-count': {
@@ -140,7 +145,7 @@ const Home = styled(Component)<Props>(({ theme: { token } }: Props) => ({
     backgroundColor: token.colorError,
     position: 'absolute',
     right: 0,
-    top: 16,
+    bottom: 0,
     minWidth: '12px'
   }
 }));

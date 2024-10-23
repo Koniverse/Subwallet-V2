@@ -171,7 +171,7 @@ const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
           // todo: handle params for notification setup
           onClick={onSaveNotificationSetup(currentNotificationSetting)}
         >
-          {t('Save setting')}
+          {t('Save settings')}
         </Button>
       </div>
     </PageWrapper>

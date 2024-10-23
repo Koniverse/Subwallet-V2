@@ -386,7 +386,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             selected={_browserConfirmationType}
             shape='round'
             size='small'
-            title={t('Notifications')}
+            title={t('View notifications in')}
           />
           <SettingItem
             className={CN('__trigger-item setting-item', 'notification-item')}
@@ -399,7 +399,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 weight='fill'
               />
             )}
-            name={t('Enable notifications')}
+            name={t('In-app notifications')}
             onPressItem={onClickEnableNotification}
             rightItem={(
               <div className={'__trigger-right-item'}>
