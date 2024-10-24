@@ -342,9 +342,10 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
           state: APIItemState.READY
         };
 
-        if (_unclaimedReward.toString() !== '0') {
-          await this.createClaimNotification(earningRewardItem, this.nativeToken);
-        }
+        // TODO: Enable this when claim action is ready
+        // if (_unclaimedReward.toString() !== '0') {
+        //   await this.createClaimNotification(earningRewardItem, this.nativeToken);
+        // }
 
         callBack(earningRewardItem);
       }));
