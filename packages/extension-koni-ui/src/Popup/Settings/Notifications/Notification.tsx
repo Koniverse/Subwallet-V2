@@ -6,6 +6,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _NotificationInfo, ClaimAvailBridgeNotificationMetadata, NotificationActionType, NotificationSetup, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AvailBridgeTransactionStatus } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
+import { detectTranslate } from '@subwallet/extension-base/utils';
 import { AlertModal, EmptyList, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import NotificationDetailModal from '@subwallet/extension-koni-ui/components/Modal/NotificationDetailModal';
@@ -14,7 +15,7 @@ import { BN_ZERO, CLAIM_AVAIL_BRIDGE_TRANSACTION, CLAIM_REWARD_TRANSACTION, DEFA
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useAlert, useDefaultNavigate, useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
-import { saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
+import { enableChain, saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
 import { fetchInappNotifications, markAllReadNotification, switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -24,7 +25,7 @@ import { ActivityIndicator, Button, Icon, ModalContext, SwList, SwSubHeader } fr
 import { SwIconProps } from '@subwallet/react-ui/es/icon';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
-import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, CheckCircle, Checks, Coins, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets } from 'phosphor-react';
+import { ArrowSquareDownLeft, ArrowSquareUpRight, BellSimpleRinging, BellSimpleSlash, CheckCircle, Checks, Coins, DownloadSimple, FadersHorizontal, GearSix, Gift, ListBullets, XCircle } from 'phosphor-react';
 import React, { SyntheticEvent, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -60,31 +61,53 @@ const alertModalId = 'notification-alert-modal';
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, checkActive } = useContext(ModalContext);
+
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const goBack = useDefaultNavigate().goBack;
+  const { goBack } = useDefaultNavigate();
   const { token } = useTheme() as Theme;
-  const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
-  const [selectedFilterTab, setSelectedFilterTab] = useState<NotificationTab>(NotificationTab.ALL);
-  const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
-  const { notificationSetup } = useSelector((state: RootState) => state.settings);
-  const enableNotification = notificationSetup.isEnabled;
-  const [notifications, setNotifications] = useState<_NotificationInfo[]>([]);
-  const { accounts, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
-  const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
-  const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
-  const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
-  // use this to trigger get date when click read/unread
-  const [isTrigger, setTrigger] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [currentSearchText, setCurrentSearchText] = useState<string>('');
-  const [currentTimestampMs, setCurrentTimestampMs] = useState(Date.now());
-  const { earningRewards, poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
+  const { alertProps, closeAlert, openAlert, updateAlertProps } = useAlert(alertModalId);
   const chainsByAccountType = useGetChainSlugsByAccount();
 
   const [, setClaimRewardStorage] = useLocalStorage(CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS);
   const [, setWithdrawStorage] = useLocalStorage(WITHDRAW_TRANSACTION, DEFAULT_WITHDRAW_PARAMS);
   const [, setClaimAvailBridgeStorage] = useLocalStorage(CLAIM_AVAIL_BRIDGE_TRANSACTION, DEFAULT_CLAIM_AVAIL_BRIDGE_PARAMS);
+
+  const { notificationSetup } = useSelector((state: RootState) => state.settings);
+  const { accounts, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const { earningRewards, poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
+  const { chainInfoMap, chainStateMap } = useSelector((state) => state.chainStore);
+
+  const filterTabItems = useMemo<FilterTabItemType[]>(() => {
+    return [
+      {
+        label: t('All'),
+        value: NotificationTab.ALL
+      },
+      {
+        label: t('Unread'),
+        value: NotificationTab.UNREAD
+      },
+      {
+        label: t('Read'),
+        value: NotificationTab.READ
+      }
+    ];
+  }, [t]);
+
+  const [selectedFilterTab, setSelectedFilterTab] = useState<NotificationTab>(NotificationTab.ALL);
+  const [viewDetailItem, setViewDetailItem] = useState<NotificationInfoItem | undefined>(undefined);
+  const [notifications, setNotifications] = useState<_NotificationInfo[]>([]);
+  const [currentProxyId] = useState<string | undefined>(currentAccountProxy?.id);
+  const [loadingNotification, setLoadingNotification] = useState<boolean>(false);
+  const [isTrigger, setTrigger] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [currentSearchText, setCurrentSearchText] = useState<string>('');
+  // use this to trigger get date when click read/unread
+  const [currentTimestampMs, setCurrentTimestampMs] = useState(Date.now());
+
+  const enableNotification = notificationSetup.isEnabled;
+  const isNotificationDetailModalVisible = checkActive(NOTIFICATION_DETAIL_MODAL);
 
   const notificationItems = useMemo((): NotificationInfoItem[] => {
     const filterTabFunction = (item: NotificationInfoItem) => {
@@ -150,23 +173,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     navigate('/settings/notification-config');
   }, [navigate]);
 
-  const filterTabItems = useMemo<FilterTabItemType[]>(() => {
-    return [
-      {
-        label: t('All'),
-        value: NotificationTab.ALL
-      },
-      {
-        label: t('Unread'),
-        value: NotificationTab.UNREAD
-      },
-      {
-        label: t('Read'),
-        value: NotificationTab.READ
-      }
-    ];
-  }, [t]);
-
   const onSelectFilterTab = useCallback((value: string) => {
     setSelectedFilterTab(value as NotificationTab);
     setLoading(true);
@@ -194,6 +200,57 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     goBack();
   }, [goBack]);
 
+  const showActiveChainModal = useCallback((chainSlug: string, action: NotificationActionType.WITHDRAW | NotificationActionType.CLAIM) => {
+    const onOk = () => {
+      updateAlertProps({
+        okLoading: true,
+        cancelDisabled: true
+      });
+
+      enableChain(chainSlug, false)
+        .then(() => {
+          setTimeout(() => {
+            updateAlertProps({
+              okLoading: false,
+              cancelDisabled: false
+            });
+            closeAlert();
+          }, 2000);
+        })
+        .catch(() => {
+          updateAlertProps({
+            okLoading: false,
+            cancelDisabled: false
+          });
+        });
+    };
+
+    const chainInfo = chainInfoMap[chainSlug];
+
+    const content = action === NotificationActionType.WITHDRAW
+      ? detectTranslate('{{networkName}} network is currently disabled. Enable the network and then re-click the notification to start withdrawing your funds')
+      : detectTranslate('{{networkName}} network is currently disabled. Enable the network and then re-click the notification to start claiming your funds');
+
+    openAlert({
+      title: t('Enable network'),
+      type: NotificationType.WARNING,
+      content: t(content, { replace: { networkName: chainInfo?.name || chainSlug } }),
+      closable: false,
+      maskClosable: false,
+      cancelButton: {
+        icon: XCircle,
+        onClick: closeAlert,
+        schema: 'secondary',
+        text: t('Cancel')
+      },
+      okButton: {
+        icon: CheckCircle,
+        onClick: onOk,
+        text: t('Enable')
+      }
+    });
+  }, [closeAlert, openAlert, t, updateAlertProps, chainInfoMap]);
+
   const showWarningModal = useCallback((action: string) => {
     openAlert({
       title: t('You’ve {{action}} tokens', { replace: { action: action } }),
@@ -216,6 +273,24 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         isRead: false
       };
 
+      // Check chain active status before navigate
+      switch (item.actionType) {
+        case NotificationActionType.WITHDRAW: {
+          const metadata = item.metadata as WithdrawClaimNotificationMetadata;
+
+          const chainSlug = metadata.stakingSlug.split('___')[2];
+
+          if (chainStateMap[chainSlug]?.active) {
+            break;
+          } else {
+            showActiveChainModal(chainSlug, item.actionType);
+
+            return;
+          }
+        }
+      }
+
+      // Check data available before navigate
       switch (item.actionType) {
         case NotificationActionType.WITHDRAW: {
           if (totalWithdrawable && BigN(totalWithdrawable).gt(BN_ZERO)) {
@@ -239,21 +314,27 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
         case NotificationActionType.CLAIM: {
           const unclaimedReward = getYieldRewardTotal(slug, earningRewards, poolInfoMap, accounts, isAllAccount, currentAccountProxy, chainsByAccountType);
+          const metadata = item.metadata as WithdrawClaimNotificationMetadata;
+          const chainSlug = metadata.stakingSlug.split('___')[2];
 
           if (unclaimedReward && BigN(unclaimedReward).gt(BN_ZERO)) {
-            const metadata = item.metadata as WithdrawClaimNotificationMetadata;
-
             setClaimRewardStorage({
               ...DEFAULT_CLAIM_REWARD_PARAMS,
               slug: metadata.stakingSlug,
-              chain: metadata.stakingSlug.split('___')[2],
+              chain: chainSlug,
               from: item.address
             });
             switchReadNotificationStatus(switchStatusParams).then(() => {
               navigate('/transaction/claim-reward');
             }).catch(console.error);
           } else {
-            showWarningModal('claimed');
+            if (chainStateMap[chainSlug]?.active) {
+              showWarningModal('claimed');
+            } else {
+              showActiveChainModal(chainSlug, item.actionType);
+
+              return;
+            }
           }
 
           break;
@@ -292,7 +373,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           });
       }
     };
-  }, [accounts, chainsByAccountType, currentAccountProxy, currentTimestampMs, earningRewards, isAllAccount, isTrigger, navigate, poolInfoMap, setClaimAvailBridgeStorage, setClaimRewardStorage, setWithdrawStorage, showWarningModal, yieldPositions]);
+  }, [accounts, showActiveChainModal, chainStateMap, chainsByAccountType, currentAccountProxy, currentTimestampMs, earningRewards, isAllAccount, isTrigger, navigate, poolInfoMap, setClaimAvailBridgeStorage, setClaimRewardStorage, setWithdrawStorage, showWarningModal, yieldPositions]);
 
   const renderItem = useCallback((item: NotificationInfoItem) => {
     return (

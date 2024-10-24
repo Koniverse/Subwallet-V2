@@ -37,11 +37,14 @@ const Component: React.FC<Props> = (props: Props) => {
   const { cancelButton,
     className,
     closable,
+    cancelDisabled,
     content,
     modalId,
     subtitle,
     okButton,
+    okLoading,
     title,
+    maskClosable,
     onCancel,
     type = NotificationType.INFO } = props;
 
@@ -63,6 +66,7 @@ const Component: React.FC<Props> = (props: Props) => {
               <Button
                 block={true}
                 className={'__left-button'}
+                disabled={cancelDisabled}
                 icon={cancelButton.icon && (
                   <Icon
                     phosphorIcon={cancelButton.icon}
@@ -84,6 +88,7 @@ const Component: React.FC<Props> = (props: Props) => {
                   weight={okButton.iconWeight || 'fill'}
                 />
               )}
+              loading={okLoading}
               onClick={okButton?.onClick}
               schema={okButton.schema}
             >
@@ -92,6 +97,7 @@ const Component: React.FC<Props> = (props: Props) => {
           </>
         }
         id={modalId}
+        maskClosable={maskClosable}
         onCancel={closable === false ? undefined : (onCancel || onDefaultCancel)}
         title={title}
       >
