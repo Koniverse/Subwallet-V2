@@ -223,6 +223,14 @@ export function _isChainSupportWasmPSP22 (chainInfo: _ChainInfo) {
   return chainInfo.substrateInfo?.supportSmartContract?.includes(_AssetType.PSP22) || false;
 }
 
+export function _isAssetHubChain (chainInfo: _ChainInfo) {
+  return ['statemint', 'statemine'].includes(chainInfo.slug);
+}
+
+export function _isAssetHubToken (token: _ChainAsset) {
+  return ['statemint', 'statemine'].includes(token.originChain);
+}
+
 export function _isChainSupportGRC20 (chainInfo: _ChainInfo) {
   return chainInfo.substrateInfo?.supportSmartContract?.includes(_AssetType.GRC20) || false;
 }
@@ -276,6 +284,10 @@ export function _getTokenTypesSupportedByChain (chainInfo: _ChainInfo): _AssetTy
         result.push(assetType);
       }
     });
+  }
+
+  if (['statemint', 'statemine'].includes(chainInfo.slug)) {
+    result.push(_AssetType.LOCAL);
   }
 
   return result;
@@ -457,6 +469,12 @@ export function _getBlockExplorerFromChain (chainInfo: _ChainInfo): string | und
 export function _parseMetadataForSmartContractAsset (contractAddress: string): Record<string, string> {
   return {
     contractAddress
+  };
+}
+
+export function _parseMetadataForAssetId (assetId: string): Record<string, string> {
+  return {
+    assetId
   };
 }
 
