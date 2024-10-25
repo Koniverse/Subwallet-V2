@@ -51,6 +51,10 @@ interface Validator {
 
 export const BITTENSOR_API_KEY_1 = process.env.BITTENSOR_API_KEY_1 || '';
 export const BITTENSOR_API_KEY_2 = process.env.BITTENSOR_API_KEY_2 || '';
+export const BITTENSOR_API_KEY_3 = process.env.BITTENSOR_API_KEY_3 || '';
+export const BITTENSOR_API_KEY_4 = process.env.BITTENSOR_API_KEY_4 || '';
+export const BITTENSOR_API_KEY_5 = process.env.BITTENSOR_API_KEY_5 || '';
+export const BITTENSOR_API_KEY_6 = process.env.BITTENSOR_API_KEY_6 || '';
 
 function random (...keys: string[]) {
   const validKeys = keys.filter((key) => key);
@@ -60,7 +64,7 @@ function random (...keys: string[]) {
 }
 
 export const bittensorApiKey = (): string => {
-  return random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2);
+  return random(BITTENSOR_API_KEY_1, BITTENSOR_API_KEY_2, BITTENSOR_API_KEY_3, BITTENSOR_API_KEY_4, BITTENSOR_API_KEY_5, BITTENSOR_API_KEY_6);
 };
 
 /* Fetch data */
