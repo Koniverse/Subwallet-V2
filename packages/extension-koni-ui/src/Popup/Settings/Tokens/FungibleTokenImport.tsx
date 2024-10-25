@@ -241,7 +241,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       form.resetFields([...baseResetFields]);
     }
 
-    setFieldDisabled(!all.chain || !all.type || allError.contractAddress.length > 0);
+    setFieldDisabled(!all.chain || !all.type || allError.contractAddress.length > 0 || allError.assetId.length > 0);
     setIsDisabled(empty || error);
   }, [chainInfoMap, form]);
 
