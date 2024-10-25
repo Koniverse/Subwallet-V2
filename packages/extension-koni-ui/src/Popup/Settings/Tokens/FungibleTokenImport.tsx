@@ -229,13 +229,15 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       }
 
       form.resetFields(['contractAddress', ...baseResetFields]);
+      form.resetFields(['assetId', ...baseResetFields]);
     }
 
     if (type) {
       form.resetFields(['contractAddress', ...baseResetFields]);
+      form.resetFields(['assetId', ...baseResetFields]);
     }
 
-    if (allError.contractAddress.length > 0) {
+    if (allError.contractAddress.length > 0 || allError.assetId.length > 0) {
       form.resetFields([...baseResetFields]);
     }
 
@@ -429,7 +431,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   <AddressInput
                     disabled={!selectedTokenType}
                     placeholder={t('Please type or paste an assetId')}
-                    label={t('AssetId')}
+                    label={t('Asset Id')}
                     showScanner={true}
                   />
                 </Form.Item>
