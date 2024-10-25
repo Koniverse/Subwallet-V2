@@ -1,14 +1,14 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Layout } from '@subwallet/extension-koni-ui/components';
+import { Layout, RemindUpgradeUnifiedAccount } from '@subwallet/extension-koni-ui/components';
 import { GlobalSearchTokenModal } from '@subwallet/extension-koni-ui/components/Modal/GlobalSearchTokenModal';
 import RemindUpgradeFirefoxVersion from '@subwallet/extension-koni-ui/components/Modal/RemindUpgradeFirefoxVersion';
 import { GeneralTermModal } from '@subwallet/extension-koni-ui/components/Modal/TermsAndConditions/GeneralTermModal';
 import { CONFIRM_GENERAL_TERM, DEFAULT_SESSION_VALUE, GENERAL_TERM_AND_CONDITION_MODAL, HOME_CAMPAIGN_BANNER_MODAL, LATEST_SESSION, REMIND_BACKUP_SEED_PHRASE_MODAL, REMIND_UPGRADE_FIREFOX_VERSION } from '@subwallet/extension-koni-ui/constants';
 import { AppOnlineContentContext } from '@subwallet/extension-koni-ui/contexts/AppOnlineContentProvider';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useAccountBalance, useGetChainSlugsByAccountType, useGetMantaPayConfig, useHandleMantaPaySync, useSetSessionLatest, useTokenGroup, useUpgradeFireFoxVersion } from '@subwallet/extension-koni-ui/hooks';
+import { useAccountBalance, useGetChainSlugsByAccount, useGetMantaPayConfig, useHandleMantaPaySync, useSetSessionLatest, useTokenGroup, useUpgradeFireFoxVersion } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { RemindBackUpSeedPhraseParamState, SessionStorage, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isFirefox } from '@subwallet/extension-koni-ui/utils';
@@ -28,7 +28,7 @@ const historyPageIgnoreBanner = 'ignoreBanner';
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const chainsByAccountType = useGetChainSlugsByAccountType();
+  const chainsByAccountType = useGetChainSlugsByAccount();
   const tokenGroupStructure = useTokenGroup(chainsByAccountType);
   const location = useLocation();
   const accountBalance = useAccountBalance(tokenGroupStructure.tokenGroupMap);
@@ -125,11 +125,12 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           <Layout.Home
             onClickSearchIcon={onOpenGlobalSearchToken}
             showFilterIcon
-            showSearchIcon
+            showNotificationIcon
           >
             <Outlet />
             <GeneralTermModal onOk={onAfterConfirmTermModal} />
             <RemindUpgradeFirefoxVersion />
+            <RemindUpgradeUnifiedAccount />
           </Layout.Home>
         </div>
       </HomeContext.Provider>

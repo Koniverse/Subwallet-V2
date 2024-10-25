@@ -14,7 +14,7 @@ import { useFilterModal, useGroupYieldPosition, useHandleChainConnection, useSel
 import { getBalanceValue } from '@subwallet/extension-koni-ui/hooks/screen/home/useAccountBalance';
 import { ChainConnectionWrapper } from '@subwallet/extension-koni-ui/Popup/Home/Earning/shared/ChainConnectionWrapper';
 import { EarningEntryParam, EarningEntryView, EarningPoolsParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue } from '@subwallet/extension-koni-ui/utils';
 import { Icon, ModalContext, SwList } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -44,7 +44,7 @@ function Component ({ poolGroup, symbol }: ComponentProps) {
 
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const assetRegistry = useSelector((state) => state.assetRegistry.assetRegistry);
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy } = useSelector((state) => state.accountState);
 
   const [, setEarnStorage] = useLocalStorage(EARN_TRANSACTION, DEFAULT_EARN_PARAMS);
   const yieldPositions = useGroupYieldPosition();
@@ -56,14 +56,14 @@ function Component ({ poolGroup, symbol }: ComponentProps) {
 
   const { filterSelectionMap, onApplyFilter, onChangeFilterOption, onCloseFilterModal, selectedFilters } = useFilterModal(FILTER_MODAL_ID);
 
-  const filterOptions = [
+  const filterOptions = useMemo(() => [
     { label: t('Nomination pool'), value: YieldPoolType.NOMINATION_POOL },
     { label: t('Direct nomination'), value: YieldPoolType.NATIVE_STAKING },
     { label: t('Liquid staking'), value: YieldPoolType.LIQUID_STAKING },
     { label: t('Lending'), value: YieldPoolType.LENDING },
     { label: t('Parachain staking'), value: YieldPoolType.PARACHAIN_STAKING },
     { label: t('Single farming'), value: YieldPoolType.SINGLE_FARMING }
-  ];
+  ], [t]);
 
   const positionSlugs = useMemo(() => {
     return yieldPositions.map((p) => p.slug);
@@ -174,11 +174,11 @@ function Component ({ poolGroup, symbol }: ComponentProps) {
         ...DEFAULT_EARN_PARAMS,
         slug: item.slug,
         chain: item.chain,
-        from: currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : ''
+        fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
       });
       navigate('/transaction/earn');
     },
-    [currentAccount?.address, navigate, setEarnStorage]
+    [currentAccountProxy, navigate, setEarnStorage]
   );
 
   const onConnectChainSuccess = useCallback(() => {

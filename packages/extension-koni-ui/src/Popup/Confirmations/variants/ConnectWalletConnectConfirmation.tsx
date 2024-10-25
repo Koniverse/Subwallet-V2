@@ -42,7 +42,10 @@ function Component ({ className, request }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const notification = useNotification();
+
+  // todo: deprecated, recheck usage
   const setSelectedAccountTypes = useSetSelectedAccountTypes(true);
+
   const [blockAddNetwork, setBlockAddNetwork] = useState(false);
   const [networkNeedToImport, setNetworkNeedToImport] = useState<string[]>([]);
 

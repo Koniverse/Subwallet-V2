@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
+import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { EarningRewardHistoryItem, SpecialYieldPoolInfo, SpecialYieldPositionInfo, YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { AlertModal, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { BN_TEN, BN_ZERO, DEFAULT_EARN_PARAMS, DEFAULT_UN_STAKE_PARAMS, EARN_TRANSACTION, UN_STAKE_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
@@ -12,7 +13,7 @@ import { EarningInfoPart } from '@subwallet/extension-koni-ui/Popup/Home/Earning
 import { RewardInfoPart } from '@subwallet/extension-koni-ui/Popup/Home/Earning/EarningPositionDetail/RewardInfoPart';
 import { WithdrawInfoPart } from '@subwallet/extension-koni-ui/Popup/Home/Earning/EarningPositionDetail/WithdrawInfoPart';
 import { EarningEntryParam, EarningEntryView, EarningPositionDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isAccountAll, isChainInfoAccordantAccountChainType } from '@subwallet/extension-koni-ui/utils';
 import { Button, ButtonProps, Icon, Number } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -44,8 +45,25 @@ function Component ({ compound,
   const isShowBalance = useSelector((state) => state.settings.isShowBalance);
   const { assetRegistry } = useSelector((state) => state.assetRegistry);
   const { currencyData, priceMap } = useSelector((state) => state.price);
-  const { currentAccount, isAllAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy, isAllAccount } = useSelector((state) => state.accountState);
+  const { chainInfoMap } = useSelector((state) => state.chainStore);
+  const targetAddress = useMemo(() => {
+    if (currentAccountProxy && isAccountAll(currentAccountProxy?.id)) {
+      return ALL_ACCOUNT_KEY;
+    }
 
+    const accountAddress = currentAccountProxy?.accounts.find(({ chainType }) => {
+      if (chainInfoMap[poolInfo.chain]) {
+        const chainInfo = chainInfoMap[poolInfo.chain];
+
+        return isChainInfoAccordantAccountChainType(chainInfo, chainType);
+      }
+
+      return false;
+    });
+
+    return accountAddress?.address;
+  }, [chainInfoMap, currentAccountProxy, poolInfo.chain]);
   const [, setEarnStorage] = useLocalStorage(EARN_TRANSACTION, DEFAULT_EARN_PARAMS);
   const [, setUnStakeStorage] = useLocalStorage(UN_STAKE_TRANSACTION, DEFAULT_UN_STAKE_PARAMS);
 
@@ -87,20 +105,20 @@ function Component ({ compound,
 
   // @ts-ignore
   const filteredRewardHistories = useMemo(() => {
-    if (!isAllAccount && currentAccount) {
-      return rewardHistories.filter((item) => item.slug === poolInfo.slug && item.address === currentAccount.address);
+    if (!isAllAccount && targetAddress) {
+      return rewardHistories.filter((item) => item.slug === poolInfo.slug && item.address === targetAddress);
     } else {
       return [];
     }
-  }, [currentAccount, isAllAccount, poolInfo.slug, rewardHistories]);
+  }, [targetAddress, isAllAccount, poolInfo.slug, rewardHistories]);
 
   const isActiveStakeZero = useMemo(() => {
     return BN_ZERO.eq(activeStake);
   }, [activeStake]);
 
   const transactionFromValue = useMemo(() => {
-    return currentAccount?.address ? isAccountAll(currentAccount.address) ? '' : currentAccount.address : '';
-  }, [currentAccount?.address]);
+    return targetAddress ? isAccountAll(targetAddress) ? '' : targetAddress : '';
+  }, [targetAddress]);
 
   const transactionChainValue = useMemo(() => {
     return compound.chain || poolInfo.chain || '';
@@ -135,10 +153,10 @@ function Component ({ compound,
       ...DEFAULT_EARN_PARAMS,
       slug: compound.slug,
       chain: transactionChainValue,
-      from: transactionFromValue
+      fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
     });
     navigate('/transaction/earn');
-  }, [compound.slug, navigate, setEarnStorage, transactionChainValue, transactionFromValue]);
+  }, [compound.slug, currentAccountProxy, navigate, setEarnStorage, transactionChainValue]);
 
   const onBack = useCallback(() => {
     navigate('/home/earning', { state: {

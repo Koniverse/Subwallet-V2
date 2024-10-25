@@ -5,7 +5,7 @@ import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useMemo } from 'react';
 
 const useGetChainPrefixBySlug = (chain?: string): number => {
-  const { chainInfoMap } = useSelector((state) => state.chainStore);
+  const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   return useMemo(() => {
     if (!chain) {

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { _isChainEvmCompatible, _isCustomChain, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isCustomChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { FilterModal, Layout, NetworkEmptyList, NetworkToggleItem, OptionType, PageWrapper } from '@subwallet/extension-web-ui/components';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
@@ -65,7 +65,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             return true;
           }
         } else if (filter === FilterValue.SUBSTRATE) {
-          if (_isSubstrateChain(chainInfo)) {
+          if (_isChainSubstrateCompatible(chainInfo)) {
             return true;
           }
         } else if (filter === FilterValue.EVM) {

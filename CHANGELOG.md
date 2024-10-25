@@ -1,5 +1,58 @@
 # CHANGELOG
 
+## 1.3.2
+Build date: Oct 12, 2024.
+
+Features & Update:
+- Support TAO in-app staking (#2505)
+- Support Ternoa NFT (#3559)
+- Update default slippage for ChainFlip (#3634)
+- Support export for Derived account (#3751)
+- Update address for TON testnet in the token detail screen on All accounts mode (#3752)
+- Improve UI related to Account selector screen (#3755, #3772))
+- Improve UI related to Select token screen (#3756)
+- Add infobox about Wallet version for TON token (#3718)
+- Update chainlist (#3760)
+  - Add support for LogX token
+  - Add support for Mantle Network
+  - Add support for MATIC (Polygon zkEVM) and POL (Ethereum) token
+  - Add support for zkVerify Testnet
+  - Add support for RARI Chain
+  - Add support for Scroll mainnet
+  - Update some information:
+    - Update Avail group token
+    - Re-check enable TON (TON network) token
+- Add validate tokenOfOwnerByIndex when import NFT (#3609)
+
+## 1.3.1
+Build date: Oct 08, 2024.
+
+Features & Update:
+- Support Unified account
+
+## 1.2.32
+Build date: Oct 01, 2024.
+
+Features & Update:
+- Improve marketing campaign (#3461, #2807)
+
+Bugs fixed:
+- Hot fix handle API status (#3711)
+
+## 1.2.31
+Build date: Sep 28, 2024.
+
+Features & Update:
+- Block action online (#3635)
+- Update chain-list (#3680)
+  - Add XCM support for KSM between Bifrost KSM <> Kusama
+  - Update RPC for Cess Network
+- Add swap pairs for Hydration and ChainFlip (#3633, #3651)
+
+Bugs fixed:
+- Fix bug Do not show earning position for StellaSwap (#3647)
+- Fix bug Can't import JSON file containing Unified account (#3643)
+
 ## 1.2.30
 Build date: Sep 20, 2024.
 

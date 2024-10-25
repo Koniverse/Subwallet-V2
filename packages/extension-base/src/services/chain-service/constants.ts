@@ -55,7 +55,8 @@ export const _NFT_CHAIN_GROUP = {
   unique_evm: ['unique_evm'],
   bitcountry: ['bitcountry', 'pioneer', 'continuum_network'],
   vara: ['vara_network'],
-  avail: ['avail_mainnet']
+  avail: ['avail_mainnet'],
+  ternoa: ['ternoa', 'ternoa_alphanet']
 };
 
 // Staking--------------------------------------------------------------------------------------------------------------
@@ -265,7 +266,8 @@ export const _XCM_TYPE = {
 
 export const _DEFAULT_ACTIVE_CHAINS = [
   ..._DEFAULT_CHAINS,
-  'vara_network'
+  'vara_network',
+  'ton'
 ];
 
 export const EVM_PASS_CONNECT_STATUS: Record<string, string[]> = {

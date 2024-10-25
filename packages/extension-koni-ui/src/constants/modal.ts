@@ -9,15 +9,17 @@ export const IMPORT_ACCOUNT_MODAL = 'import-account-modal';
 export const ATTACH_ACCOUNT_MODAL = 'attach-account-modal';
 export const NEW_SEED_MODAL = 'new-seed-modal';
 export const IMPORT_SEED_MODAL = 'import-seed-modal';
-export const DERIVE_ACCOUNT_MODAL = 'derive-account-modal';
 export const REQUEST_CREATE_PASSWORD_MODAL = 'request-create-password-modal';
 export const CONFIRMATION_DETAIL_MODAL = 'confirmation-detail-modal';
 export const CONFIRMATION_QR_MODAL = 'confirmation-qr-modal';
 export const CONFIRMATION_SCAN_MODAL = 'confirmation-scan-modal';
 export const REQUEST_CAMERA_ACCESS_MODAL = 'request-camera-access-modal';
 export const VALIDATOR_DETAIL_MODAL = 'validator-detail-modal';
+export const NOTIFICATION_DETAIL_MODAL = 'notification-detail-modal';
 export const HISTORY_DETAIL_MODAL = 'history-detail-modal';
 export const RECEIVE_TOKEN_SELECTOR_MODAL = 'receive-tokens-selector-modal';
+export const RECEIVE_MODAL_TOKEN_SELECTOR = 'receive-modal-token-selector';
+export const RECEIVE_MODAL_ACCOUNT_SELECTOR = 'receive-modal-account-selector';
 export const ADD_ADDRESS_BOOK_MODAL = 'add-address-book-modal';
 export const EDIT_ADDRESS_BOOK_MODAL = 'edit-address-book-modal';
 export const DELETE_ADDRESS_BOOK_MODAL = 'delete-address-book-modal';
@@ -28,8 +30,15 @@ export const ADD_CONNECTION_MODAL = 'add-connection-modal';
 export const DISCONNECT_EXTENSION_MODAL = 'disconnect-extension-modal';
 export const REMIND_BACKUP_SEED_PHRASE_MODAL = 'remind-backup-seed-phrase-modal';
 export const REMIND_UPGRADE_FIREFOX_VERSION = 'remind-update-firefox-version';
+export const REMIND_DUPLICATE_ACCOUNT_NAME_MODAL = 'remind-update-unified-account';
 export const EXPORT_ACCOUNTS_PASSWORD_MODAL = 'export-accounts-password-modal';
 export const ADD_NETWORK_WALLET_CONNECT_MODAL = 'add-network-wallet-connect-modal';
+export const ADDRESS_QR_MODAL = 'address-qr-modal';
+export const ACCOUNT_CHAIN_ADDRESSES_MODAL = 'account-chain-addresses-modal';
+export const ACCOUNT_NAME_MODAL = 'account-name-modal';
+export const GLOBAL_ALERT_MODAL = 'global-alert-modal';
+export const TON_WALLET_CONTRACT_SELECTOR_MODAL = 'ton-wallet-contract-selector-modal';
+export const TON_ACCOUNT_SELECTOR_MODAL = 'ton-account-selector-modal';
 
 /* Campaign */
 export const HOME_CAMPAIGN_BANNER_MODAL = 'home-campaign-banner-modal';
@@ -65,3 +74,8 @@ export const EARNING_MIGRATION_MODAL = 'earning-migration-modal';
 /* Ledger */
 export const WARNING_LEDGER_RECEIVE_MODAL = 'warning-ledger-receive-modal';
 /* Ledger */
+
+/* Derive */
+export const DERIVE_ACCOUNT_LIST_MODAL = 'derive-account-list-modal';
+export const DERIVE_ACCOUNT_ACTION_MODAL = 'derive-account-action-modal';
+/* Derive */

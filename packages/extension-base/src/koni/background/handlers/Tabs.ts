@@ -6,7 +6,6 @@ import type { InjectedAccount } from '@subwallet/extension-inject/types';
 import { _AssetType } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
 import { createSubscription, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
 import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import RequestBytesSign from '@subwallet/extension-base/background/RequestBytesSign';
@@ -19,10 +18,11 @@ import KoniState from '@subwallet/extension-base/koni/background/handlers/State'
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
-import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { AuthUrlInfo, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
+import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { Subscription } from 'rxjs';
 import Web3 from 'web3';
@@ -40,7 +40,7 @@ interface AccountSub {
   url: string;
 }
 
-function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthType?: AccountAuthType): InjectedAccount[] {
+function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?: AuthUrlInfo, accountAuthTypes?: AccountAuthType[]): InjectedAccount[] {
   const accountSelected = authInfo
     ? (
       authInfo.isAllowed
@@ -52,13 +52,23 @@ function transformAccountsV2 (accounts: SubjectInfo, anyType = false, authInfo?:
     )
     : [];
 
-  let authTypeFilter = ({ type }: SingleAddress) => true;
+  const authTypeFilter = ({ type }: SingleAddress) => {
+    if (accountAuthTypes) {
+      if (!type) {
+        return false;
+      }
 
-  if (accountAuthType === 'substrate') {
-    authTypeFilter = ({ type }: SingleAddress) => (type !== 'ethereum');
-  } else if (accountAuthType === 'evm') {
-    authTypeFilter = ({ type }: SingleAddress) => (type === 'ethereum');
-  }
+      const validTypes = {
+        evm: EthereumKeypairTypes,
+        substrate: SubstrateKeypairTypes,
+        ton: TonKeypairTypes
+      };
+
+      return accountAuthTypes.some((authType) => validTypes[authType]?.includes(type));
+    } else {
+      return true;
+    }
+  };
 
   return Object
     .values(accounts)
@@ -140,9 +150,13 @@ export default class KoniTabs {
       payloadAfterValidated: request
     };
 
-    const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+    const { errors } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    return this.#koniState.sign(url, new RequestBytesSign(request), { address, ...pair?.meta });
+    if (errors.length === 0) {
+      return this.#koniState.sign(url, new RequestBytesSign(request));
+    } else {
+      throw errors[0];
+    }
   }
 
   private async extrinsicSign (url: string, request: SignerPayloadJSON): Promise<ResponseSigning> {
@@ -154,9 +168,13 @@ export default class KoniTabs {
       payloadAfterValidated: request
     };
 
-    const { pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
+    const { errors, pair } = await generateValidationProcess(this.#koniState, url, payloadValidate, [validationAuthMiddleware]);
 
-    return this.#koniState.sign(url, new RequestExtrinsicSign(request), { address, ...pair?.meta });
+    if (pair && errors.length === 0) {
+      return this.#koniState.sign(url, new RequestExtrinsicSign(request));
+    } else {
+      throw errors[0];
+    }
   }
 
   private metadataProvide (url: string, request: MetadataDef): Promise<boolean> {
@@ -281,14 +299,28 @@ export default class KoniTabs {
     return authList[shortenUrl];
   }
 
-  private async accountsListV2 (url: string, { accountAuthType,
-    anyType }: RequestAccountList): Promise<InjectedAccount[]> {
+  private async accountsListV2 (url: string, { accountAuthType, anyType }: RequestAccountList): Promise<InjectedAccount[]> {
     const authInfo = await this.getAuthInfo(url);
 
-    return transformAccountsV2(this.#koniState.keyringService.accounts, anyType, authInfo, authInfo?.accountAuthType || accountAuthType);
+    const accountAuthTypes: AccountAuthType[] = [];
+
+    if (accountAuthType) {
+      accountAuthTypes.push(accountAuthType);
+    } else if (authInfo) {
+      if (authInfo.accountAuthTypes.includes('substrate')) {
+        accountAuthTypes.push('substrate');
+      }
+
+      if (authInfo.accountAuthTypes.includes('evm')) {
+        accountAuthTypes.push('evm');
+      }
+    }
+
+    return transformAccountsV2(this.#koniState.keyringService.context.pairs, anyType, authInfo, accountAuthTypes);
   }
 
-  private accountsSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
+  // TODO: Update logic
+  private accountsSubstrateSubscribeV2 (url: string, { accountAuthType }: RequestAccountSubscribe, id: string, port: chrome.runtime.Port): string {
     const cb = createSubscription<'pub(accounts.subscribeV2)'>(id, port);
     const authInfoSubject = this.#koniState.requestService.subscribeAuthorizeUrlSubject;
 
@@ -296,10 +328,23 @@ export default class KoniTabs {
       subscription: authInfoSubject.subscribe((infos: AuthUrls) => {
         this.getAuthInfo(url, infos)
           .then((authInfo) => {
-            const accountAuthType_ = authInfo?.accountAuthType || accountAuthType;
-            const accounts = this.#koniState.keyringService.accounts;
+            const accountAuthTypes: AccountAuthType[] = [];
 
-            return cb(transformAccountsV2(accounts, false, authInfo, accountAuthType_));
+            if (accountAuthType) {
+              accountAuthTypes.push(accountAuthType);
+            } else if (authInfo) {
+              if (authInfo.accountAuthTypes.includes('substrate')) {
+                accountAuthTypes.push('substrate');
+              }
+
+              if (authInfo.accountAuthTypes.includes('evm')) {
+                accountAuthTypes.push('evm');
+              }
+            }
+
+            const accounts = this.#koniState.keyringService.context.pairs;
+
+            return cb(transformAccountsV2(accounts, false, authInfo, accountAuthTypes));
           })
           .catch(console.error);
       }),
@@ -330,7 +375,9 @@ export default class KoniTabs {
   }
 
   private authorizeV2 (url: string, request: RequestAuthorizeTab): Promise<boolean> {
-    if (request.accountAuthType === 'evm') {
+    const isConnectOnlyEvmAccountType = request.accountAuthTypes?.length === 1 && request.accountAuthTypes?.includes('evm');
+
+    if (isConnectOnlyEvmAccountType) {
       return new Promise((resolve, reject) => {
         this.#koniState.authorizeUrlV2(url, request).then(resolve).catch((e: Error) => {
           reject(new EvmProviderError(EvmProviderErrorType.USER_REJECTED_REQUEST));
@@ -341,26 +388,34 @@ export default class KoniTabs {
     }
   }
 
+  // TODO: Update logic
   private async getEvmCurrentAccount (url: string): Promise<string[]> {
     return await new Promise((resolve) => {
       this.getAuthInfo(url).then((authInfo) => {
-        const allAccounts = this.#koniState.keyringService.accounts;
-        const accountList = transformAccountsV2(allAccounts, false, authInfo, 'evm').map((a) => a.address);
+        const allAccounts = this.#koniState.keyringService.context.pairs;
+        const accountList = transformAccountsV2(allAccounts, false, authInfo, ['evm']).map((a) => a.address);
         let accounts: string[] = [];
 
-        const address = this.#koniState.keyringService.currentAccount.address;
+        const proxyId = this.#koniState.keyringService.context.currentAccount.proxyId;
 
-        if (address === ALL_ACCOUNT_KEY || !address) {
+        if (proxyId === ALL_ACCOUNT_KEY || !proxyId) {
           accounts = accountList;
         } else {
-          if (accountList.includes(address)) {
-            const result = accountList.filter((adr) => adr !== address);
+          const addresses = this.#koniState.keyringService.context.addressesByProxyId(proxyId);
 
-            result.unshift(address);
-            accounts = result;
-          } else {
-            accounts = accountList;
+          const result: string[] = [];
+          const inList: string[] = [];
+
+          for (const account of accountList) {
+            if (!addresses.includes(account)) {
+              result.push(account);
+            } else {
+              inList.push(account);
+            }
           }
+
+          result.unshift(...inList);
+          accounts = result;
         }
 
         resolve(accounts);
@@ -471,23 +526,16 @@ export default class KoniTabs {
             const urlStripped = stripUrl(url);
 
             if (value && value[urlStripped]) {
-              const { accountAuthType, isAllowedMap } = { ...value[urlStripped] };
+              const { accountAuthTypes, isAllowedMap } = { ...value[urlStripped] };
 
-              if (!accountAuthType) {
+              if (!accountAuthTypes) {
                 resolve();
               }
 
-              switch (accountAuthType) {
-                case 'substrate':
-                  resolve();
-                  break;
-
-                case 'evm':
+              if (accountAuthTypes?.includes('evm')) {
+                if (accountAuthTypes.length === 1) {
                   delete value[urlStripped];
-
-                  break;
-
-                case 'both': {
+                } else {
                   value[urlStripped].isAllowedMap = Object.entries(isAllowedMap).reduce<Record<string, boolean>>((allowedMap, [address, value]) => {
                     if (isEthereumAddress(address)) {
                       allowedMap[address] = false;
@@ -498,9 +546,10 @@ export default class KoniTabs {
                     return allowedMap;
                   }, {});
 
-                  value[urlStripped].accountAuthType = 'substrate';
-                  break;
+                  value[urlStripped].accountAuthTypes = accountAuthTypes?.filter((type) => type !== 'evm');
                 }
+              } else {
+                resolve();
               }
 
               this.#koniState.setAuthorize(value, () => {
@@ -760,6 +809,7 @@ export default class KoniTabs {
     return evmState.chainId || '0x0';
   }
 
+  // TODO: Update logic
   private async evmSubscribeEvents (url: string, id: string, port: chrome.runtime.Port) {
     // This method will be called after DApp request connect to extension
     const cb = createSubscription<'evm(events.subscribe)'>(id, port);
@@ -784,7 +834,7 @@ export default class KoniTabs {
       }
     };
 
-    const accountListSubscription = this.#koniState.keyringService.currentAccountSubject
+    const accountListSubscription = this.#koniState.keyringService.context.observable.currentAccount
       .subscribe(() => {
         onCurrentAccountChanged().catch(console.error);
       });
@@ -963,6 +1013,7 @@ export default class KoniTabs {
     }
   }
 
+  // TODO: Update logic
   public async evmSendTransaction (id: string, url: string, { params }: RequestArguments) {
     const transactionParams = (params as EvmSendTransactionParams[])[0];
 
@@ -1001,7 +1052,7 @@ export default class KoniTabs {
         case 'eth_signTypedData_v4':
           return await this.evmSign(id, url, request);
         case 'wallet_requestPermissions':
-          await this.authorizeV2(url, { origin: '', accountAuthType: 'evm', reConfirm: true });
+          await this.authorizeV2(url, { origin: '', accountAuthTypes: ['evm'], reConfirm: true });
 
           return await this.getEvmPermission(url, id);
         case 'wallet_getPermissions':
@@ -1191,7 +1242,7 @@ export default class KoniTabs {
       case 'pub(accounts.listV2)':
         return this.accountsListV2(url, request as RequestAccountList);
       case 'pub(accounts.subscribeV2)':
-        return this.accountsSubscribeV2(url, request as RequestAccountSubscribe, id, port);
+        return this.accountsSubstrateSubscribeV2(url, request as RequestAccountSubscribe, id, port);
       case 'pub(accounts.unsubscribe)':
         return this.accountsUnsubscribe(url, request as RequestAccountUnsubscribe);
       case 'evm(events.subscribe)':

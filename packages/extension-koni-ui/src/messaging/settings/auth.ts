@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrls } from '@subwallet/extension-base/background/handlers/State';
 import { RequestAuthorizationBlock, RequestAuthorizationPerSite } from '@subwallet/extension-base/background/KoniTypes';
 import { ResponseAuthorizeList } from '@subwallet/extension-base/background/types';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 
 import { sendMessage } from '../base';
 
@@ -25,10 +25,6 @@ export async function changeAuthorizationAll (connectValue: boolean, callback: (
 
 export async function changeAuthorization (connectValue: boolean, url: string, callback: (data: AuthUrls) => void): Promise<boolean> {
   return sendMessage('pri(authorize.changeSite)', { url, connectValue }, callback);
-}
-
-export async function changeAuthorizationPerAccount (address: string, connectValue: boolean, url: string, callback: (data: AuthUrls) => void): Promise<boolean> {
-  return sendMessage('pri(authorize.changeSitePerAccount)', { address, url, connectValue }, callback);
 }
 
 export async function changeAuthorizationPerSite (request: RequestAuthorizationPerSite): Promise<boolean> {
