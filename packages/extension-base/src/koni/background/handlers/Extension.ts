@@ -234,7 +234,7 @@ export default class KoniExtension {
   // FIXME This looks very much like what we have in Tabs
   private accountsSubscribe (id: string, port: chrome.runtime.Port): boolean {
     const cb = createSubscription<'pri(accounts.subscribe)'>(id, port);
-    const accountSubject = this.#koniState.keyringService.accountSubject;
+    const accountSubject = this.#koniState.keyringService.pairSubject;
     const subscription = accountSubject.subscribe((accounts: SubjectInfo): void =>
       cb(transformAccounts(accounts))
     );
@@ -504,7 +504,7 @@ export default class KoniExtension {
       currentGenesisHash: currentAccount?.currentGenesisHash
     };
 
-    const subscriptionAccounts = keyringService.accountSubject.subscribe((storedAccounts: SubjectInfo): void => {
+    const subscriptionAccounts = keyringService.pairSubject.subscribe((storedAccounts: SubjectInfo): void => {
       const transformedAccounts = transformAccounts(storedAccounts);
 
       responseData.accounts = transformedAccounts?.length ? [{ ...ACCOUNT_ALL_JSON }, ...transformedAccounts] : [];
@@ -1778,12 +1778,13 @@ export default class KoniExtension {
             transferAmount.value
           ] = await getEVMTransactionObject(chainInfo, from, to, txVal, !!transferAll, evmApi);
         }
+
         const owner = getEthereumSmartAccountOwner(from);
         const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
 
         if (owner) {
           const provider = await this.#koniState.settingService.getCASettings();
-          let caTransaction: QuoteResponse |  UserOpBundle;
+          let caTransaction: QuoteResponse | UserOpBundle;
 
           if (provider.caProvider === CAProvider.KLASTER) {
             const klasterService = new KlasterService();
@@ -1796,6 +1797,7 @@ export default class KoniExtension {
               gasLimit: BigInt((transaction.gas || 0).toString())
             });
             const txBatch = batchTx(_getEvmChainId(chainInfo) as number, [transferTx]);
+
             caTransaction = await klasterService.buildTx(chainInfo, [txBatch]);
           } else {
             caTransaction = await ParticleAAHandler.createUserOperation(_getEvmChainId(chainInfo) || 1, owner, [transaction]);

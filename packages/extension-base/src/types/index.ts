@@ -12,6 +12,7 @@ export interface Message extends MessageEvent {
   }
 }
 
+export * from './account';
 export * from './balance';
 export * from './buy';
 export * from './campaigns';

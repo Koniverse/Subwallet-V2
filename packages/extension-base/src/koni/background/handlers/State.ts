@@ -10,6 +10,7 @@ import { AccountRefMap, AddTokenRequestExternal, AmountData, APIItemState, ApiMa
 import { AccountJson, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY, ALL_GENESIS_HASH, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
 import { convertErrorFormat, generateValidationProcess, PayloadValidated, ValidateStepFunction, validationAuthMiddleware, validationAuthWCMiddleware, validationConnectMiddleware, validationEvmDataTransactionMiddleware, validationEvmSignMessageMiddleware } from '@subwallet/extension-base/core/logic-validation';
+import { AccountAbstractionService } from '@subwallet/extension-base/services/account-abstraction-service/service';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import BuyService from '@subwallet/extension-base/services/buy-service';
@@ -41,7 +42,7 @@ import { TransactionEventResponse } from '@subwallet/extension-base/services/tra
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import AccountRefStore from '@subwallet/extension-base/stores/AccountRef';
-import { BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
+import { AAProvider, BalanceItem, BalanceMap, EvmFeeInfo, StorageDataInterface } from '@subwallet/extension-base/types';
 import { isAccountAll, isManifestV3, stripUrl, targetIsWeb } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
@@ -150,6 +151,11 @@ export default class KoniState {
   private waitStarting: Promise<void> | null = null;
 
   constructor (providers: Providers = {}) {
+    AccountAbstractionService.createInstance({
+      providers: [AAProvider.KLASTER, AAProvider.PARTICLE],
+      providerConfig: {}
+    });
+
     this.providers = providers;
 
     this.eventService = new EventService();
@@ -159,7 +165,7 @@ export default class KoniState {
     this.chainService = new ChainService(this.dbService, this.eventService);
     this.subscanService = SubscanService.getInstance();
     this.settingService = new SettingService();
-    this.keyringService = new KeyringService(this.eventService, this.settingService);
+    this.keyringService = new KeyringService(this);
     this.requestService = new RequestService(this.chainService, this.settingService, this.keyringService);
     this.priceService = new PriceService(this.dbService, this.eventService, this.chainService);
     this.balanceService = new BalanceService(this);

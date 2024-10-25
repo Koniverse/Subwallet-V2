@@ -1,31 +1,39 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { stringShorten } from '@polkadot/util';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 import { CurrentAccountInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
+import { AccountAbstractionService } from '@subwallet/extension-base/services/account-abstraction-service/service';
 import { CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
 import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
 import { ParticleAAHandler, ParticleContract } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
-import { EventService } from '@subwallet/extension-base/services/event-service';
-import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { CurrentAccountStore } from '@subwallet/extension-base/stores';
+import { AccountProxyMap, AccountProxyStoreData, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { addLazy } from '@subwallet/extension-base/utils';
+import { combineAccountsWithSubjectInfo } from '@subwallet/extension-base/utils/account/transform';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 import { InjectAccount } from '@subwallet/ui-keyring/types';
-import { BehaviorSubject } from 'rxjs';
-
-import { stringShorten } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
+import { BehaviorSubject, combineLatest } from 'rxjs';
 
 export class KeyringService {
   private readonly currentAccountStore = new CurrentAccountStore();
   readonly currentAccountSubject = new BehaviorSubject<CurrentAccountInfo>({ address: '', currentGenesisHash: null });
 
   readonly addressesSubject = keyring.addresses.subject;
-  public readonly accountSubject = keyring.accounts.subject;
-  private beforeAccount: SubjectInfo = this.accountSubject.value;
+  public readonly pairSubject = keyring.accounts.subject;
+  private beforeAccount: SubjectInfo = this.pairSubject.value;
   private injected: boolean;
+  private readonly accountAbstractionService: AccountAbstractionService;
+
+  private readonly _modifyPairSubject = new BehaviorSubject<ModifyPairStoreData>({});
+  private readonly _accountProxySubject = new BehaviorSubject<AccountProxyStoreData>({});
+
+  private readonly accountSubject = new BehaviorSubject<AccountProxyMap>({});
 
   readonly keyringStateSubject = new BehaviorSubject<KeyringState>({
     isReady: false,
@@ -33,24 +41,34 @@ export class KeyringService {
     isLocked: false
   });
 
-  constructor (private eventService: EventService, private settingService: SettingService) {
+  constructor (private koniState: KoniState) {
     this.injected = false;
-    this.eventService.waitCryptoReady.then(() => {
+    this.koniState.eventService.waitCryptoReady.then(() => {
       this.currentAccountStore.get('CurrentAccountInfo', (rs) => {
         rs && this.currentAccountSubject.next(rs);
       });
       this.subscribeAccounts().catch(console.error);
       this.subscribeCASetting().catch(console.error);
     }).catch(console.error);
+
+    this.accountAbstractionService = AccountAbstractionService.getInstance();
   }
 
   private async subscribeAccounts () {
     // Wait until account ready
-    await this.eventService.waitAccountReady;
+    await this.koniState.eventService.waitAccountReady;
 
-    this.beforeAccount = { ...this.accountSubject.value };
+    this.beforeAccount = { ...this.pairSubject.value };
 
-    this.accountSubject.subscribe((subjectInfo) => {
+    const pairs = this.pairSubject.asObservable();
+    const modifyPairs = this._modifyPairSubject.asObservable();
+    const accountGroups = this._accountProxySubject.asObservable();
+    const chainInfoMap = this.koniState.chainService.subscribeChainInfoMap().asObservable();
+    const aaProxyMap = this.accountAbstractionService.observables.aaProxyMap;
+    let fireOnFirst = true;
+
+    // emit event
+    pairs.subscribe((subjectInfo) => {
       // Check if accounts changed
       const beforeAddresses = Object.keys(this.beforeAccount);
       const afterAddresses = Object.keys(subjectInfo);
@@ -60,14 +78,16 @@ export class KeyringService {
 
         // Remove account
         removedAddresses.forEach((address) => {
-          this.eventService.emit('account.remove', address);
+          this.koniState.eventService.emit('account.remove', address);
+          this.accountAbstractionService.removeOwner(address);
         });
       } else if (beforeAddresses.length < afterAddresses.length) {
         const addedAddresses = afterAddresses.filter((address) => !beforeAddresses.includes(address));
 
         // Add account
         addedAddresses.forEach((address) => {
-          this.eventService.emit('account.add', address);
+          this.koniState.eventService.emit('account.add', address);
+          this.accountAbstractionService.getAndCreateAAProxyIfNeed(address).catch(console.error);
         });
       } else {
         // Handle case update later
@@ -75,12 +95,23 @@ export class KeyringService {
 
       this.beforeAccount = { ...subjectInfo };
     });
+
+    combineLatest([pairs, modifyPairs, accountGroups, chainInfoMap, aaProxyMap]).subscribe(([pairs, modifyPairs, accountGroups, chainInfoMap, aaProxyMap]) => {
+      addLazy('combineAccounts', () => {
+        const result = combineAccountsWithSubjectInfo(pairs, modifyPairs, accountGroups, aaProxyMap, chainInfoMap);
+
+        fireOnFirst = false;
+        this.accountSubject.next(result);
+      }, 300, 1800, fireOnFirst);
+    });
+
+    this.accountSubject.subscribe((value) => console.debug('accountSubject', value));
   }
 
   private async subscribeCASetting () {
-    await this.eventService.waitInjectReady;
-    const subject = this.settingService.getCASubject();
-    let currentProvider = (await this.settingService.getCASettings()).caProvider;
+    await this.koniState.eventService.waitInjectReady;
+    const subject = this.koniState.settingService.getCASubject();
+    let currentProvider = (await this.koniState.settingService.getCASettings()).caProvider;
 
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
     subject.asObservable().subscribe(async ({ caProvider }) => {
@@ -123,9 +154,9 @@ export class KeyringService {
 
   updateKeyringState (isReady = true) {
     if (!this.keyringState.isReady && isReady) {
-      this.eventService.waitCryptoReady.then(() => {
-        this.eventService.emit('keyring.ready', true);
-        this.eventService.emit('account.ready', true);
+      this.koniState.eventService.waitCryptoReady.then(() => {
+        this.koniState.eventService.emit('keyring.ready', true);
+        this.koniState.eventService.emit('account.ready', true);
       }).catch(console.error);
     }
 
@@ -137,7 +168,7 @@ export class KeyringService {
   }
 
   get accounts (): SubjectInfo {
-    return this.accountSubject.value;
+    return this.pairSubject.value;
   }
 
   get addresses (): SubjectInfo {
@@ -150,7 +181,7 @@ export class KeyringService {
 
   setCurrentAccount (currentAccountData: CurrentAccountInfo) {
     this.currentAccountSubject.next(currentAccountData);
-    this.eventService.emit('account.updateCurrent', currentAccountData);
+    this.koniState.eventService.emit('account.updateCurrent', currentAccountData);
     this.currentAccountStore.set('CurrentAccountInfo', currentAccountData);
   }
 
@@ -162,31 +193,33 @@ export class KeyringService {
   /* Inject */
 
   public async addInjectAccounts (_accounts: InjectedAccountWithMeta[], _caProvider?: CAProvider) {
-    const caProvider = _caProvider || (await this.settingService.getCASettings()).caProvider;
+    const caProvider = _caProvider || (await this.koniState.settingService.getCASettings()).caProvider;
     const accounts: InjectAccount[] = await Promise.all(_accounts.map(async (acc): Promise<InjectAccount> => {
       const isEthereum = isEthereumAddress(acc.address);
 
-      if (isEthereum) {
-        let smartAddress: string;
-
-        if (caProvider === CAProvider.KLASTER) {
-          smartAddress = await KlasterService.getSmartAccount(acc.address);
-        } else {
-          smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
-        }
-
-        return {
-          ...acc,
-          address: smartAddress,
-          meta: {
-            ...acc.meta,
-            isSmartAccount: true,
-            smartAccountOwner: acc.address,
-            aaSdk: caProvider,
-            aaProvider: ParticleContract
-          }
-        };
-      }
+      // if (isEthereum) {
+      //   let smartAddress: string;
+      //
+      //   await this.accountAbstractionService.getAndCreateAAProxyIfNeed(acc.address);
+      //
+      //   if (caProvider === CAProvider.KLASTER) {
+      //     smartAddress = await KlasterService.getSmartAccount(acc.address);
+      //   } else {
+      //     smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
+      //   }
+      //
+      //   return {
+      //     ...acc,
+      //     address: smartAddress,
+      //     meta: {
+      //       ...acc.meta,
+      //       isSmartAccount: true,
+      //       smartAccountOwner: acc.address,
+      //       aaSdk: caProvider,
+      //       aaProvider: ParticleContract
+      //     }
+      //   };
+      // }
 
       return acc;
     })
@@ -225,23 +258,25 @@ export class KeyringService {
     }
 
     if (!this.injected) {
-      this.eventService.emit('inject.ready', true);
+      this.koniState.eventService.emit('inject.ready', true);
       this.injected = true;
     }
   }
 
   public async removeInjectAccounts (_addresses: string[]) {
-    const caProvider = (await this.settingService.getCASettings()).caProvider;
+    const caProvider = (await this.koniState.settingService.getCASettings()).caProvider;
     const convertedAddresses = await Promise.all(_addresses.map(async (address) => {
       const isEthereum = isEthereumAddress(address);
 
-      if (isEthereum) {
-        if (caProvider === CAProvider.KLASTER) {
-          return await KlasterService.getSmartAccount(address);
-        } else {
-          return await ParticleAAHandler.getSmartAccount({ owner: address });
-        }
-      }
+      // if (isEthereum) {
+      //   this.accountAbstractionService.removeOwner(address);
+      //
+      //   if (caProvider === CAProvider.KLASTER) {
+      //     return await KlasterService.getSmartAccount(address);
+      //   } else {
+      //     return await ParticleAAHandler.getSmartAccount({ owner: address });
+      //   }
+      // }
 
       return address;
     }));
