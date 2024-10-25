@@ -211,7 +211,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
   }
 
   private async getLocalTokenInfo (apiPromise: ApiPromise, assetId: string): Promise<[string, number, string, boolean]> {
-    const _metadata = await apiPromise.query.assets.metadata(BigInt(assetId));
+    const _metadata = await apiPromise.query.assets.metadata(assetId);
 
     interface AssetMetadata {
       name: string,

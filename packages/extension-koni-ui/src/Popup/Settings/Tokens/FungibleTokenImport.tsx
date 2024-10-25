@@ -163,43 +163,38 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         validator: (_, assetId: string) => {
           return new Promise<void>((resolve, reject) => {
             const selectedTokenType = getFieldValue('type') as _AssetType;
-            const isValidAssetId = [_AssetType.LOCAL].includes(selectedTokenType);
 
-            if (isValidAssetId) {
-              setLoading(true);
-              validateCustomToken({
-                originChain: selectedChain,
-                type: selectedTokenType,
-                assetId: assetId
+            setLoading(true);
+            validateCustomToken({
+              originChain: selectedChain,
+              type: selectedTokenType,
+              assetId: assetId
+            })
+              .then((validationResult) => {
+                setLoading(false);
+
+                if (validationResult.isExist) {
+                  reject(new Error(t('Existed token')));
+                }
+
+                if (validationResult.contractError) {
+                  reject(new Error(t('Invalid asset ID')));
+                }
+
+                if (!validationResult.isExist && !validationResult.contractError) {
+                  form.setFieldValue('tokenName', validationResult.name);
+                  form.setFieldsValue({
+                    tokenName: validationResult.name,
+                    decimals: validationResult.decimals,
+                    symbol: validationResult.symbol
+                  });
+                  resolve();
+                }
               })
-                .then((validationResult) => {
-                  setLoading(false);
-
-                  if (validationResult.isExist) {
-                    reject(new Error(t('Existed token')));
-                  }
-
-                  if (validationResult.contractError) {
-                    reject(new Error(t('Error validating this token')));
-                  }
-
-                  if (!validationResult.isExist && !validationResult.contractError) {
-                    form.setFieldValue('tokenName', validationResult.name);
-                    form.setFieldsValue({
-                      tokenName: validationResult.name,
-                      decimals: validationResult.decimals,
-                      symbol: validationResult.symbol
-                    });
-                    resolve();
-                  }
-                })
-                .catch(() => {
-                  setLoading(false);
-                  reject(new Error(t('Error validating this token')));
-                });
-            } else {
-              reject(t('Invalid assetId'));
-            }
+              .catch(() => {
+                setLoading(false);
+                reject(new Error(t('Error validating this token')));
+              });
           });
         }
       })
@@ -430,8 +425,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 >
                   <AddressInput
                     disabled={!selectedTokenType}
-                    placeholder={t('Please type or paste an assetId')}
-                    label={t('Asset Id')}
+                    placeholder={t('Please type or paste an asset ID')}
+                    label={t('Asset ID')}
                     showScanner={true}
                   />
                 </Form.Item>
