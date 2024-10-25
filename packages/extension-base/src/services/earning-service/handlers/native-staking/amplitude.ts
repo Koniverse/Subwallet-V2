@@ -230,6 +230,8 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
     const totalBalance = new BN(activeStake).add(new BN(unstakingBalance));
     const stakingStatus = getEarningStatusByNominations(new BN(activeStake), nominationList);
 
+    await this.createWithdrawNotifications(unstakingList, this.nativeToken, address);
+
     return {
       status: stakingStatus,
       balanceToken: this.nativeToken.slug,
@@ -332,13 +334,20 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
           return;
         }
 
-        callBack({
+        const earningRewardItem = {
           ...this.baseInfo,
           address: address,
           type: this.type,
           unclaimedReward: _unclaimedReward.toString(),
           state: APIItemState.READY
-        });
+        };
+
+        // TODO: Enable this when claim action is ready
+        // if (_unclaimedReward.toString() !== '0') {
+        //   await this.createClaimNotification(earningRewardItem, this.nativeToken);
+        // }
+
+        callBack(earningRewardItem);
       }));
     }
 

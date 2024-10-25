@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BrowserConfirmationType, CurrencyType, LanguageType, RequestSettingsType, RequestSubscribeBalancesVisibility, ThemeNames, UiSettings, WalletUnlockType } from '@subwallet/extension-base/background/KoniTypes';
+import { NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging';
 
 export async function toggleBalancesVisibility (): Promise<boolean> {
@@ -34,6 +35,10 @@ export async function saveAutoLockTime (value: number): Promise<boolean> {
 
 export async function saveEnableChainPatrol (value: boolean): Promise<boolean> {
   return sendMessage('pri(settings.saveEnableChainPatrol)', { enable: value });
+}
+
+export async function saveNotificationSetup (request: NotificationSetup): Promise<boolean> {
+  return sendMessage('pri(settings.saveNotificationSetup)', request);
 }
 
 export async function saveLanguage (lang: LanguageType): Promise<boolean> {

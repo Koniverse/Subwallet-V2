@@ -3,6 +3,7 @@
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 import { ChainInfoMap } from '@subwallet/chain-list';
+import { NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-var-requires
 export const buyServiceInfos: Record<string, unknown>[] = require('./buyServiceInfos.json');
@@ -18,6 +19,8 @@ export const termAndCondition: Record<string, unknown> = require('./termAndCondi
 export const currencySymbol: Record<string, unknown> = require('./currencySymbol.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const blockedActionsFeatures: Record<string, unknown> = require('./blockedActionsFeatures.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+export const remindNotificationTime: Record<NotificationActionType, number> = require('./remindNotificationTime.json');
 
 export enum StaticKey {
   BUY_SERVICE_INFOS = 'buy-service-infos',
@@ -27,7 +30,8 @@ export enum StaticKey {
   CROWDLOAN_FUNDS = 'crowdloan-funds',
   TERM_AND_CONDITION = 'term-and-condition',
   BUY_TOKEN_CONFIGS = 'buy-token-configs',
-  BLOCKED_ACTIONS_FEATURES = 'blocked-actions-features'
+  BLOCKED_ACTIONS_FEATURES = 'blocked-actions-features',
+  REMIND_NOTIFICATION_TIME = 'remind-notification-time',
 }
 
 export const staticData = {
@@ -38,5 +42,6 @@ export const staticData = {
   [StaticKey.MARKETING_CAMPAINGS]: marketingCampaigns,
   [StaticKey.TERM_AND_CONDITION]: termAndCondition.default,
   [StaticKey.BUY_TOKEN_CONFIGS]: buyTokenConfigs,
-  [StaticKey.BLOCKED_ACTIONS_FEATURES]: blockedActionsFeatures
+  [StaticKey.BLOCKED_ACTIONS_FEATURES]: blockedActionsFeatures,
+  [StaticKey.REMIND_NOTIFICATION_TIME]: remindNotificationTime
 };

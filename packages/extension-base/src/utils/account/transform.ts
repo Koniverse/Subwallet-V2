@@ -212,6 +212,10 @@ const EVM_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.EVM_EXECUTE
 ];
 
+const CLAIM_AVAIL_BRIDGE: ExtrinsicType[] = [
+  ExtrinsicType.CLAIM_AVAIL_BRIDGE
+];
+
 const OTHER_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.TRANSFER_XCM,
   ExtrinsicType.SEND_NFT,
@@ -232,6 +236,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_SDOT_ACTIONS,
           ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
+          ...CLAIM_AVAIL_BRIDGE,
           ...OTHER_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
@@ -241,6 +246,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...POOL_STAKE_ACTIONS,
           ...EARN_STDOT_ACTIONS,
           ...OTHER_ACTIONS,
+          ...CLAIM_AVAIL_BRIDGE,
           ...EVM_ACTIONS
         ];
       case AccountChainType.TON:
@@ -260,6 +266,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...EARN_SDOT_ACTIONS,
           ...EARN_QDOT_ACTIONS,
           ...EARN_VMANTA_ACTIONS,
+          ...CLAIM_AVAIL_BRIDGE,
           ...OTHER_ACTIONS
         ];
       case AccountChainType.ETHEREUM:
@@ -272,6 +279,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
                 ...NATIVE_STAKE_ACTIONS,
                 ...POOL_STAKE_ACTIONS,
                 ...EARN_STDOT_ACTIONS,
+                ...CLAIM_AVAIL_BRIDGE,
                 ...OTHER_ACTIONS,
                 ...EVM_ACTIONS
               ]
@@ -299,6 +307,7 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
           ...BASE_TRANSFER_ACTIONS,
           ...EARN_STDOT_ACTIONS,
           ...EVM_ACTIONS,
+          ...CLAIM_AVAIL_BRIDGE,
           ExtrinsicType.STAKING_WITHDRAW, // For liquid staking
           ExtrinsicType.SEND_NFT,
           ExtrinsicType.SWAP
@@ -339,6 +348,10 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
     // Transfer XCM
     if (['polkadot', 'kusama', 'statemint', 'statemine'].includes(specialNetwork)) {
       result.push(ExtrinsicType.TRANSFER_XCM);
+    }
+
+    if (['availTuringTest', 'avail_mainnet'].includes(specialNetwork)) {
+      result.push(...CLAIM_AVAIL_BRIDGE);
     }
 
     return result;
