@@ -174,13 +174,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     }
 
     let contractError = false;
-    let tokenContract : any;
-
-    if (tokenType === _AssetType.GRC20) {
-      tokenContract = getGRC20ContractPromise(apiPromise, contractAddress);
-    } else if (tokenType === _AssetType.VFT) {
-      tokenContract = getVFTContractPromise(apiPromise, contractAddress);
-    }
+    const tokenContract = tokenType === _AssetType.GRC20 ? getGRC20ContractPromise(apiPromise, contractAddress) : getVFTContractPromise(apiPromise, contractAddress);
 
     const [nameRes, symbolRes, decimalsRes] = await Promise.all([
       tokenContract.service.name(GEAR_DEFAULT_ADDRESS),
