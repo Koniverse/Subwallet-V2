@@ -455,6 +455,7 @@ export const convertAAACountToAccountJSON = (account: AAAccount, chainIdMap: Rec
   }
 
   const signMode: AccountSignMode = AccountSignMode.SMART_ACCOUNT;
+  console.debug('chainIds missing', chainIds.filter((chainId) => !chainIdMap[chainId.toString()]));
   const specialChains: string[] = chainIds.map((chainId) => chainIdMap[chainId.toString()] || '');
 
   return {

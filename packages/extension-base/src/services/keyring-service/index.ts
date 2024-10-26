@@ -1,15 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { stringShorten } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
 import { CurrentAccountInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { AccountAbstractionService } from '@subwallet/extension-base/services/account-abstraction-service/service';
-import { CAProvider } from '@subwallet/extension-base/services/chain-abstraction-service/helper/util';
-import { KlasterService } from '@subwallet/extension-base/services/chain-abstraction-service/klaster';
-import { ParticleAAHandler, ParticleContract } from '@subwallet/extension-base/services/chain-abstraction-service/particle';
 import { CurrentAccountStore } from '@subwallet/extension-base/stores';
 import { AccountProxyMap, AccountProxyStoreData, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { addLazy } from '@subwallet/extension-base/utils';
@@ -17,8 +12,9 @@ import { combineAccountsWithSubjectInfo } from '@subwallet/extension-base/utils/
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
-import { InjectAccount } from '@subwallet/ui-keyring/types';
 import { BehaviorSubject, combineLatest } from 'rxjs';
+
+import { stringShorten } from '@polkadot/util';
 
 export class KeyringService {
   private readonly currentAccountStore = new CurrentAccountStore();
@@ -125,14 +121,14 @@ export class KeyringService {
         const currentAddress = this.currentAccountSubject.value.address;
         const currentAccountOwner = accounts.find(({ address }) => address === currentAddress)?.meta.smartAccountOwner;
 
-        await this.addInjectAccounts(accounts.map(({ meta, type }): InjectedAccountWithMeta => ({
-          address: meta.smartAccountOwner as string,
-          meta: {
-            source: meta.source as string,
-            name: meta.name as string
-          },
-          type
-        })), caProvider);
+        // await this.addInjectAccounts(accounts.map(({ meta, type }): InjectedAccountWithMeta => ({
+        //   address: meta.smartAccountOwner as string,
+        //   meta: {
+        //     source: meta.source as string,
+        //     name: meta.name as string
+        //   },
+        //   type
+        // })), caProvider);
 
         if (currentAccountOwner) {
           const newPairs = keyring.getPairs();
@@ -192,39 +188,7 @@ export class KeyringService {
 
   /* Inject */
 
-  public async addInjectAccounts (_accounts: InjectedAccountWithMeta[], _caProvider?: CAProvider) {
-    const caProvider = _caProvider || (await this.koniState.settingService.getCASettings()).caProvider;
-    const accounts: InjectAccount[] = await Promise.all(_accounts.map(async (acc): Promise<InjectAccount> => {
-      const isEthereum = isEthereumAddress(acc.address);
-
-      // if (isEthereum) {
-      //   let smartAddress: string;
-      //
-      //   await this.accountAbstractionService.getAndCreateAAProxyIfNeed(acc.address);
-      //
-      //   if (caProvider === CAProvider.KLASTER) {
-      //     smartAddress = await KlasterService.getSmartAccount(acc.address);
-      //   } else {
-      //     smartAddress = await ParticleAAHandler.getSmartAccount({ owner: acc.address, provider: ParticleContract });
-      //   }
-      //
-      //   return {
-      //     ...acc,
-      //     address: smartAddress,
-      //     meta: {
-      //       ...acc.meta,
-      //       isSmartAccount: true,
-      //       smartAccountOwner: acc.address,
-      //       aaSdk: caProvider,
-      //       aaProvider: ParticleContract
-      //     }
-      //   };
-      // }
-
-      return acc;
-    })
-    );
-
+  public addInjectAccounts (accounts: InjectedAccountWithMeta[]) {
     keyring.addInjects(accounts.map((account) => {
       const name = account.meta.name || stringShorten(account.address);
 
@@ -263,25 +227,8 @@ export class KeyringService {
     }
   }
 
-  public async removeInjectAccounts (_addresses: string[]) {
-    const caProvider = (await this.koniState.settingService.getCASettings()).caProvider;
-    const convertedAddresses = await Promise.all(_addresses.map(async (address) => {
-      const isEthereum = isEthereumAddress(address);
-
-      // if (isEthereum) {
-      //   this.accountAbstractionService.removeOwner(address);
-      //
-      //   if (caProvider === CAProvider.KLASTER) {
-      //     return await KlasterService.getSmartAccount(address);
-      //   } else {
-      //     return await ParticleAAHandler.getSmartAccount({ owner: address });
-      //   }
-      // }
-
-      return address;
-    }));
-
-    const addresses = convertedAddresses.map((address) => {
+  public removeInjectAccounts (_addresses: string[]) {
+    const addresses = _addresses.map((address) => {
       try {
         return keyring.getPair(address).address;
       } catch (error) {

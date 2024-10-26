@@ -1,11 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { KlasterService } from '@subwallet/extension-base/services/account-abstraction-service/providers/klaster';
-import { ParticleAAHandler } from '@subwallet/extension-base/services/account-abstraction-service/providers/particle';
 import { AAAccount, AAAccountType, AAProvider, AAProviderConfig, AAProxy, AAServiceConfig, AAServiceConfigInit } from '@subwallet/extension-base/types';
 import { createAccountProxyId } from '@subwallet/extension-base/utils/account/transform';
 import { BehaviorSubject } from 'rxjs';
+
+import { getSupportedChainIds } from './constants';
+import { KlasterService, ParticleAAHandler } from './providers';
 
 const DEFAULT_CONFIG: AAServiceConfig = {
   providers: [AAProvider.KLASTER, AAProvider.PARTICLE],
@@ -183,7 +184,7 @@ export class AccountAbstractionService {
     return {
       address: address,
       type: AAAccountType.CONTRACT,
-      chainIds: [1n],
+      chainIds: getSupportedChainIds(AAProvider.KLASTER, config),
       owner,
       provider: AAProvider.KLASTER,
       providerConfig: this.values.config.providerConfig[AAProvider.KLASTER]
@@ -197,7 +198,7 @@ export class AccountAbstractionService {
     return {
       address: address,
       type: AAAccountType.CONTRACT,
-      chainIds: [1n],
+      chainIds: getSupportedChainIds(AAProvider.PARTICLE, config),
       owner,
       provider: AAProvider.PARTICLE,
       providerConfig: this.values.config.providerConfig[AAProvider.PARTICLE]

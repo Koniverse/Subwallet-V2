@@ -3,7 +3,8 @@
 
 import { AccountContract, SmartAccount, SmartAccountConfig, Transaction, UserOp, UserOpBundle } from '@particle-network/aa';
 import { SmartAccountData } from '@subwallet/extension-base/background/types';
-import { AAProviderConfig } from '@subwallet/extension-base/types';
+import { getSupportedChainIds } from '@subwallet/extension-base/services/account-abstraction-service/constants';
+import { AAProvider, AAProviderConfig } from '@subwallet/extension-base/types';
 import { anyNumberToBN } from '@subwallet/extension-base/utils';
 import { createMockParticleProvider } from '@subwallet/extension-base/utils/mock/provider/particle';
 import { TransactionConfig } from 'web3-core';
@@ -22,23 +23,35 @@ const defaultParticleConfig: SmartAccountConfig = {
       BICONOMY: [
         {
           version: '1.0.0',
-          chainIds: [1]
+          chainIds: getSupportedChainIds(AAProvider.PARTICLE, { version: 'BICONOMY', name: '1.0.0' }).map((value) => Number(value))
         },
         {
           version: '2.0.0',
-          chainIds: [1, 11155111, 8453, 84532, 42161]
+          chainIds: getSupportedChainIds(AAProvider.PARTICLE, { version: 'BICONOMY', name: '2.0.0' }).map((value) => Number(value))
         }
       ],
       CYBERCONNECT: [
         {
           version: '1.0.0',
-          chainIds: [1]
+          chainIds: getSupportedChainIds(AAProvider.PARTICLE, { version: 'CYBERCONNECT', name: '1.0.0' }).map((value) => Number(value))
         }
       ],
       SIMPLE: [
         {
           version: '1.0.0',
-          chainIds: [1]
+          chainIds: getSupportedChainIds(AAProvider.PARTICLE, { version: 'SIMPLE', name: '1.0.0' }).map((value) => Number(value))
+        }
+      ],
+      COINBASE: [
+        {
+          version: '1.0.0',
+          chainIds: getSupportedChainIds(AAProvider.PARTICLE, { version: 'COINBASE', name: '1.0.0' }).map((value) => Number(value))
+        }
+      ],
+      LIGHT: [
+        {
+          version: '1.0.2',
+          chainIds: getSupportedChainIds(AAProvider.PARTICLE, { version: 'LIGHT', name: '1.0.2' }).map((value) => Number(value))
         }
       ]
     }

@@ -4084,15 +4084,15 @@ export default class KoniExtension {
 
   /// Inject account
   private async addInjects (request: RequestAddInjectedAccounts): Promise<boolean> {
-    await this.#koniState.keyringService.addInjectAccounts(request.accounts);
+    this.#koniState.keyringService.addInjectAccounts(request.accounts);
 
-    return true;
+    return Promise.resolve(true);
   }
 
   private async removeInjects (request: RequestRemoveInjectedAccounts): Promise<boolean> {
-    await this.#koniState.keyringService.removeInjectAccounts(request.addresses);
+    this.#koniState.keyringService.removeInjectAccounts(request.addresses);
 
-    return true;
+    return Promise.resolve(true);
   }
 
   private async subscribeYieldPoolInfo (id: string, port: chrome.runtime.Port) {
