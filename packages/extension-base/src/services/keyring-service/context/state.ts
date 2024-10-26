@@ -301,6 +301,10 @@ export class AccountState {
 
   /* Current account */
 
+  public getAccountProxyName (proxyId: string) {
+    return this.accounts[proxyId].name;
+  }
+
   /* Check address exists */
   public checkAddressExists (addresses: string[]): ExistsAccount | undefined {
     for (const address of addresses) {

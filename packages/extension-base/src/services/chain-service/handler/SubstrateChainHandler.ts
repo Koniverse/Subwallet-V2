@@ -210,6 +210,26 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     return [nameRes, decimals, symbolRes, contractError];
   }
 
+  private async getLocalTokenInfo (apiPromise: ApiPromise, assetId: string): Promise<[string, number, string, boolean]> {
+    const _metadata = await apiPromise.query.assets.metadata(assetId);
+
+    interface AssetMetadata {
+      name: string,
+      symbol: string,
+      decimals: number
+    }
+
+    const metadata = _metadata.toPrimitive() as unknown as AssetMetadata;
+
+    let idError = false;
+
+    if (!metadata.name || !metadata.symbol) {
+      idError = true;
+    }
+
+    return [metadata.name, metadata.decimals, metadata.symbol, idError];
+  }
+
   public async getSubstrateContractTokenInfo (contractAddress: string, tokenType: _AssetType, originChain: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     // todo: improve this funtion later
 
@@ -235,6 +255,30 @@ export class SubstrateChainHandler extends AbstractChainHandler {
           [name, decimals, symbol, contractError] = await this.getVftTokenInfo(apiPromise, contractAddress);
           break;
       }
+
+      return {
+        name,
+        decimals,
+        symbol,
+        contractError
+      };
+    } catch (e) {
+      this.logger.error(e);
+
+      return {
+        name: '',
+        decimals: -1,
+        symbol: '',
+        contractError: true
+      };
+    }
+  }
+
+  public async getSubstrateAssetIdTokenInfo (assetId: string, originChain: string): Promise<_SmartContractTokenInfo> {
+    const apiPromise = this.getSubstrateApiByChain(originChain).api;
+
+    try {
+      const [name, decimals, symbol, contractError] = await this.getLocalTokenInfo(apiPromise, assetId);
 
       return {
         name,

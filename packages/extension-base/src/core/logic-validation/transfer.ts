@@ -359,16 +359,22 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
       } else if (isTonTransaction(transaction)) {
         estimateFee.value = transaction.estimateFee; // todo: might need to update logic estimate fee inside for future actions excluding normal transfer Ton and Jetton
       } else {
-        const gasLimit = await evmApi.api.eth.estimateGas(transaction);
+        const gasLimit = transaction.gas || await evmApi.api.eth.estimateGas(transaction);
 
         const priority = await calculateGasFeeParams(evmApi, chainInfo.slug);
 
-        if (priority.baseGasFee) {
-          const maxFee = priority.maxFeePerGas; // TODO: Need review
-
-          estimateFee.value = maxFee.multipliedBy(gasLimit).toFixed(0);
+        if (transaction.maxFeePerGas) {
+          estimateFee.value = new BigN(transaction.maxFeePerGas.toString()).multipliedBy(gasLimit).toFixed(0);
+        } else if (transaction.gasPrice) {
+          estimateFee.value = new BigN((transaction.gasPrice || 0).toString()).multipliedBy(gasLimit).toFixed(0);
         } else {
-          estimateFee.value = new BigN(priority.gasPrice).multipliedBy(gasLimit).toFixed(0);
+          if (priority.baseGasFee) {
+            const maxFee = priority.maxFeePerGas; // TODO: Need review
+
+            estimateFee.value = maxFee.multipliedBy(gasLimit).toFixed(0);
+          } else {
+            estimateFee.value = new BigN(priority.gasPrice).multipliedBy(gasLimit).toFixed(0);
+          }
         }
 
         estimateFee.tooHigh = priority.busyNetwork;

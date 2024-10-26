@@ -218,6 +218,10 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
       } as UnstakingInfo);
     });
 
+    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
+
+    await this.createWithdrawNotifications(unstakingList, tokenInfo, address);
+
     return {
       status: stakingStatus,
       balanceToken: this.nativeToken.slug,

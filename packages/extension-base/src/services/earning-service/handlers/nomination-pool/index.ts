@@ -188,7 +188,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
 
   /* Subscribe pool position */
 
-  async parsePoolMemberMetadata (substrateApi: _SubstrateApi, poolMemberInfo: PalletNominationPoolsPoolMember, currentEra: string, _deriveSessionProgress: DeriveSessionProgress): Promise<Omit<YieldPositionInfo, keyof BaseYieldPositionInfo>> {
+  async parsePoolMemberMetadata (substrateApi: _SubstrateApi, poolMemberInfo: PalletNominationPoolsPoolMember, currentEra: string, _deriveSessionProgress: DeriveSessionProgress, address: string): Promise<Omit<YieldPositionInfo, keyof BaseYieldPositionInfo>> {
     const chainInfo = this.chainInfo;
     const unlimitedNominatorRewarded = substrateApi.api.consts.staking.maxExposurePageSize !== undefined;
     const _maxNominatorRewardedPerValidator = (substrateApi.api.consts.staking.maxNominatorRewardedPerValidator || 0).toString();
@@ -283,6 +283,8 @@ export default class NominationPoolHandler extends BasePoolHandler {
       stakingStatus = EarningStatus.NOT_EARNING;
     }
 
+    await this.createWithdrawNotifications(unstakings, this.nativeToken, address);
+
     return {
       status: stakingStatus,
       balanceToken: this.nativeToken.slug,
@@ -322,7 +324,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
           const owner = reformatAddress(useAddresses[i], 42);
 
           if (poolMemberInfo) {
-            const nominatorMetadata = await this.parsePoolMemberMetadata(substrateApi, poolMemberInfo, currentEra, _deriveSessionProgress);
+            const nominatorMetadata = await this.parsePoolMemberMetadata(substrateApi, poolMemberInfo, currentEra, _deriveSessionProgress, owner);
 
             resultCallback({
               ...defaultInfo,
@@ -371,13 +373,19 @@ export default class NominationPoolHandler extends BasePoolHandler {
           const _unclaimedReward = await substrateApi.api.call?.nominationPoolsApi?.pendingRewards(address);
 
           if (_unclaimedReward) {
-            callBack({
+            const earningRewardItem = {
               ...this.baseInfo,
               address: address,
               type: this.type,
               unclaimedReward: _unclaimedReward.toString(),
               state: APIItemState.READY
-            });
+            };
+
+            if (_unclaimedReward.toString() !== '0') {
+              await this.createClaimNotification(earningRewardItem, this.nativeToken);
+            }
+
+            callBack(earningRewardItem);
           }
         }
       }

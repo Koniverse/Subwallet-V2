@@ -19,9 +19,22 @@ const useAlert = (alertModalId: string, initAlertProps?: AlertDialogProps) => {
     setAlertProps(undefined);
   }, [alertModalId, inactiveModal]);
 
+  const updateAlertProps = useCallback((alertProps: Partial<AlertDialogProps>) => {
+    setAlertProps((prev) => {
+      if (!prev) {
+        return undefined;
+      }
+
+      return {
+        ...prev,
+        ...alertProps
+      };
+    });
+  }, []);
+
   return {
     alertProps,
-    setAlertProps,
+    updateAlertProps,
     openAlert,
     closeAlert
   };
