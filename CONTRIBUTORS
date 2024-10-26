@@ -1,14 +1,14 @@
-    2865	AnhMTV                        	Release version 1.3.3
+    2871	AnhMTV                        	
     2546	Nam Phạm                      	[Issue 3747] chore: fix eslint
-    2344	S2kael                        	[Issue-3794] Update stable version for chain-list
+    2359	S2kael                        	[Issue-3806] Update stable version for chain-list
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
      465	Jaco                          	0.42.5 (#969)
-     393	bluezdot                      	[Issue-3760] fix: fix chainlist
+     458	bluezdot                      	[Issue-3515] fix: minor fix
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
+     186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
      185	quangdo                       	
-     179	dominhquang                   	[Issue-3732] Fix bug do not show watch-only account on History (All account mode)
-     172	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
+     179	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
@@ -18,10 +18,10 @@
       82	Thibaut Sardan                	Add account filtering feature (#832)
       73	bluedot                       	[Issue-3579] fix: update check fully migrate
       63	Roman                         	fix ui issues
+      59	PDTnhah                       	[Issue-3806] Fix UI bug
       53	Dominhquangdev                	update Bridge code
-      40	PDTnhah                       	[Issue-3747] Extension - Update Network details screen for TON
-      26	tunghp2002                    	[Fix] - Handle kodadot NFT
-      25	S2kael                        	
+      28	tunghp2002                    	[Chore] Change cache
+      26	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
