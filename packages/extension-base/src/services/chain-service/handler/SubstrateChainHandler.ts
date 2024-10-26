@@ -119,12 +119,12 @@ export class SubstrateChainHandler extends AbstractChainHandler {
 
   private async getPsp22TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     const tokenContract = new ContractPromise(apiPromise, _PSP22_ABI, contractAddress);
-    let tokenSmartContract : _SmartContractTokenInfo = {
+    const tokenSmartContract: _SmartContractTokenInfo = {
       name: '',
       decimals: -1,
       symbol: '',
       contractError: false
-    }
+    };
 
     const [nameResp, symbolResp, decimalsResp] = await Promise.all([
       tokenContract.query['psp22Metadata::tokenName'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }), // read-only operation so no gas limit
@@ -146,7 +146,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
       tokenSmartContract.symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
 
       if (!tokenSmartContract.name || !tokenSmartContract.symbol) {
-        tokenSmartContract.contractError = true
+        tokenSmartContract.contractError = true;
       }
 
       return tokenSmartContract;
@@ -155,12 +155,12 @@ export class SubstrateChainHandler extends AbstractChainHandler {
 
   private async getPsp34TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     const tokenContract = new ContractPromise(apiPromise, _PSP34_ABI, contractAddress);
-    let tokenSmartContract : _SmartContractTokenInfo = {
+    const tokenSmartContract: _SmartContractTokenInfo = {
       name: '',
       decimals: -1,
       symbol: '',
       contractError: false
-    }
+    };
 
     const collectionIdResp = await tokenContract.query['psp34::collectionId'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }); // read-only operation so no gas limit
 
@@ -180,12 +180,12 @@ export class SubstrateChainHandler extends AbstractChainHandler {
   }
 
   private async getVaraFungibleTokenInfo (apiPromise: ApiPromise, contractAddress: string, tokenType: _AssetType): Promise<_SmartContractTokenInfo> {
-    let tokenSmartContract : _SmartContractTokenInfo = {
+    const tokenSmartContract: _SmartContractTokenInfo = {
       name: '',
       decimals: -1,
       symbol: '',
       contractError: false
-    }
+    };
 
     if (!(apiPromise instanceof GearApi)) {
       if (tokenType === _AssetType.GRC20) {
