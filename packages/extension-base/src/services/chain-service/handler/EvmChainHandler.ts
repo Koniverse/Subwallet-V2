@@ -147,7 +147,9 @@ export class EvmChainHandler extends AbstractChainHandler {
         tokenContract = new evmApi.api.eth.Contract(_ERC721_ABI, contractAddress);
 
         const [_name, _symbol] = await Promise.all([
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
           tokenContract.methods.name().call() as string,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
           tokenContract.methods.symbol().call() as string
         ]);
 
@@ -157,8 +159,11 @@ export class EvmChainHandler extends AbstractChainHandler {
         tokenContract = new evmApi.api.eth.Contract(_ERC20_ABI, contractAddress);
 
         const [_decimals, _symbol, _name] = await Promise.all([
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
           tokenContract.methods.decimals().call() as number,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
           tokenContract.methods.symbol().call() as string,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
           tokenContract.methods.name().call() as string
         ]);
 

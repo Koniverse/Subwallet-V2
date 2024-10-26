@@ -3,7 +3,7 @@
 
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
-import {AbiItem} from "web3-utils";
+import { AbiItem } from 'web3-utils';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const _ERC20_ABI: AbiItem[] | AbiItem = require('./erc20_abi.json');
