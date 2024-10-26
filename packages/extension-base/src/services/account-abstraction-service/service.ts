@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AAAccount, AAAccountType, AAProvider, AAProviderConfig, AAProxy, AAServiceConfig, AAServiceConfigInit } from '@subwallet/extension-base/types';
+import { AAAccount, AAAccountType, AAProvider, AAProviderConfig, AAProxy, AAServiceConfig, AAServiceConfigInit, AATransaction, RawTransactionConfig } from '@subwallet/extension-base/types';
 import { createAccountProxyId } from '@subwallet/extension-base/utils/account/transform';
 import { BehaviorSubject } from 'rxjs';
 
@@ -21,6 +21,11 @@ const DEFAULT_CONFIG: AAServiceConfig = {
     }
   }
 };
+
+interface CreateTransactionResult {
+  signer: string;
+  transactions: AATransaction[];
+}
 
 export class AccountAbstractionService {
   private configSubject: BehaviorSubject<AAServiceConfig> = new BehaviorSubject<AAServiceConfig>(DEFAULT_CONFIG);
@@ -60,6 +65,7 @@ export class AccountAbstractionService {
     const configSubject = this.configSubject;
     const proxyToOwnerSubject = this.proxyToOwnerSubject;
     const addressToProxySubject = this.addressToProxySubject;
+    const aaProxyMapSubject = this.aaProxyMapSubject;
 
     return {
       get config () {
@@ -70,6 +76,9 @@ export class AccountAbstractionService {
       },
       get addressToProxy () {
         return addressToProxySubject.getValue();
+      },
+      get aaProxyMap () {
+        return aaProxyMapSubject.getValue();
       }
     };
   }
@@ -261,6 +270,63 @@ export class AccountAbstractionService {
     this.addressToProxySubject.next(addressToProxy);
 
     return aaProxy;
+  }
+
+  private findAccount (address: string): AAAccount | undefined {
+    const proxyId = this.values.addressToProxy[address];
+
+    if (!proxyId) {
+      return undefined;
+    }
+
+    const aaProxy = this.values.aaProxyMap[proxyId];
+
+    return aaProxy.accounts.find((account) => account.address === address);
+  }
+
+  private async _createKlasterTransacions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    const owner = account.owner as string;
+    const config = account.providerConfig as AAProviderConfig;
+    const klasterService = await KlasterService.createKlasterService(owner, config);
+    const transactions = await klasterService.buildTx(txList);
+
+    return {
+      signer: owner,
+      transactions
+    };
+  }
+
+  private async _createEoaTransacions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    return Promise.reject(new Error('Unsupported provider'));
+  }
+
+  private async _createParticleTransacions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    return Promise.reject(new Error('Unsupported provider'));
+  }
+
+  private async _createTransacion (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    if (account.type === AAAccountType.EOA) {
+      return this._createEoaTransacions(account, txList);
+    } else {
+      switch (account.provider) {
+        case AAProvider.KLASTER:
+          return this._createKlasterTransacions(account, txList);
+        case AAProvider.PARTICLE:
+          return this._createParticleTransacions(account, txList);
+        default:
+          throw new Error('Unsupported provider');
+      }
+    }
+  }
+
+  public async createTransactions (address: string, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    const account = this.findAccount(address);
+
+    if (!account) {
+      throw new Error('Account not found');
+    }
+
+    return this._createTransacion(account, txList);
   }
 
   static createInstance (initConfig: AAServiceConfigInit) {
