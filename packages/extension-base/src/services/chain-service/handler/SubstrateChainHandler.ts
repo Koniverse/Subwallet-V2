@@ -22,6 +22,12 @@ import { _PSP22_ABI, _PSP34_ABI } from '../../../koni/api/contract-handler/utils
 
 export const DEFAULT_AUX = ['Aux1', 'Aux2', 'Aux3', 'Aux4', 'Aux5', 'Aux6', 'Aux7', 'Aux8', 'Aux9'];
 
+interface AssetMetadata {
+  name: string,
+  symbol: string,
+  decimals: number
+}
+
 export class SubstrateChainHandler extends AbstractChainHandler {
   private substrateApiMap: Record<string, _SubstrateApi> = {};
 
@@ -129,11 +135,11 @@ export class SubstrateChainHandler extends AbstractChainHandler {
       const decimalsObj = decimalsResp.output?.toHuman() as Record<string, any>;
       const nameObj = nameResp.output?.toHuman() as Record<string, any>;
 
-      const name = nameResp.output ? (nameObj.Ok as string || nameObj.ok as string) : '';
-      const decimals = decimalsResp.output ? (new BN((decimalsObj.Ok || decimalsObj.ok) as string | number)).toNumber() : 0;
-      const symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
+      const name = nameResp.output ? nameObj.Ok as string : '';
+      const decimals = decimalsResp.output ? new BN((decimalsObj.Ok) as string | number).toNumber() : 0;
+      const symbol = decimalsResp.output ? symbolObj.Ok as string : '';
 
-      if (!name || !symbol || typeof name === 'object' || typeof symbol === 'object') {
+      if (!name || !symbol) {
         contractError = true;
       }
 
@@ -160,15 +166,21 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     }
   }
 
-  private async getGrc20TokenInfo (apiPromise: ApiPromise, contractAddress: string): Promise<[string, number, string, boolean]> {
+  private async getGrc20VftTokenInfo (apiPromise: ApiPromise, contractAddress: string, tokenType: _AssetType): Promise<[string, number, string, boolean]> {
     if (!(apiPromise instanceof GearApi)) {
-      console.warn('Cannot subscribe GRC20 balance without GearApi instance');
+      console.warn(`Cannot subscribe ${tokenType} balance without GearApi instance`);
 
       return ['', -1, '', true];
     }
 
     let contractError = false;
-    const tokenContract = getGRC20ContractPromise(apiPromise, contractAddress);
+    let tokenContract : any;
+
+    if (tokenType === _AssetType.GRC20) {
+      tokenContract = getGRC20ContractPromise(apiPromise, contractAddress);
+    } else if (tokenType === _AssetType.VFT) {
+      tokenContract = getVFTContractPromise(apiPromise, contractAddress);
+    }
 
     const [nameRes, symbolRes, decimalsRes] = await Promise.all([
       tokenContract.service.name(GEAR_DEFAULT_ADDRESS),
@@ -176,32 +188,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
       tokenContract.service.decimals(GEAR_DEFAULT_ADDRESS)
     ]);
 
-    const decimals = typeof decimalsRes === 'string' ? parseInt(decimalsRes) : decimalsRes;
-
-    if (!nameRes || !symbolRes) {
-      contractError = true;
-    }
-
-    return [nameRes, decimals, symbolRes, contractError];
-  }
-
-  private async getVftTokenInfo (apiPromise: ApiPromise, contractAddress: string): Promise<[string, number, string, boolean]> {
-    if (!(apiPromise instanceof GearApi)) {
-      console.warn('Cannot subscribe VFT balance without GearApi instance');
-
-      return ['', -1, '', true];
-    }
-
-    let contractError = false;
-    const tokenContract = getVFTContractPromise(apiPromise, contractAddress);
-
-    const [nameRes, symbolRes, decimalsRes] = await Promise.all([
-      tokenContract.service.name(GEAR_DEFAULT_ADDRESS),
-      tokenContract.service.symbol(GEAR_DEFAULT_ADDRESS),
-      tokenContract.service.decimals(GEAR_DEFAULT_ADDRESS)
-    ]);
-
-    const decimals = typeof decimalsRes === 'string' ? parseInt(decimalsRes) : decimalsRes;
+    const decimals = parseInt(decimalsRes.toString());
 
     if (!nameRes || !symbolRes) {
       contractError = true;
@@ -212,12 +199,6 @@ export class SubstrateChainHandler extends AbstractChainHandler {
 
   private async getLocalTokenInfo (apiPromise: ApiPromise, assetId: string): Promise<[string, number, string, boolean]> {
     const _metadata = await apiPromise.query.assets.metadata(assetId);
-
-    interface AssetMetadata {
-      name: string,
-      symbol: string,
-      decimals: number
-    }
 
     const metadata = _metadata.toPrimitive() as unknown as AssetMetadata;
 
@@ -249,10 +230,10 @@ export class SubstrateChainHandler extends AbstractChainHandler {
           [name, decimals, symbol, contractError] = await this.getPsp34TokenInfo(apiPromise, contractAddress, contractCaller);
           break;
         case _AssetType.GRC20:
-          [name, decimals, symbol, contractError] = await this.getGrc20TokenInfo(apiPromise, contractAddress);
+          [name, decimals, symbol, contractError] = await this.getGrc20VftTokenInfo(apiPromise, contractAddress, tokenType);
           break;
         case _AssetType.VFT:
-          [name, decimals, symbol, contractError] = await this.getVftTokenInfo(apiPromise, contractAddress);
+          [name, decimals, symbol, contractError] = await this.getGrc20VftTokenInfo(apiPromise, contractAddress, tokenType);
           break;
       }
 
