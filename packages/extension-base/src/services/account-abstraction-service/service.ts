@@ -4,9 +4,10 @@
 import { AAAccount, AAAccountType, AAProvider, AAProviderConfig, AAProxy, AAServiceConfig, AAServiceConfigInit, AATransaction, RawTransactionConfig } from '@subwallet/extension-base/types';
 import { createAccountProxyId } from '@subwallet/extension-base/utils/account/transform';
 import { BehaviorSubject } from 'rxjs';
+import { TransactionConfig } from 'web3-core';
 
 import { getSupportedChainIds } from './constants';
-import { KlasterService, ParticleAAHandler } from './providers';
+import { KlasterService, ParticleService } from './providers';
 
 const DEFAULT_CONFIG: AAServiceConfig = {
   providers: [AAProvider.KLASTER, AAProvider.PARTICLE],
@@ -202,7 +203,7 @@ export class AccountAbstractionService {
 
   private async createAAParticle (owner: string): Promise<AAAccount> {
     const config = this.values.config.providerConfig[AAProvider.PARTICLE];
-    const address = await ParticleAAHandler.getSmartAccount(owner, config);
+    const address = await ParticleService.getSmartAccount(owner, config);
 
     return {
       address: address,
@@ -284,7 +285,7 @@ export class AccountAbstractionService {
     return aaProxy.accounts.find((account) => account.address === address);
   }
 
-  private async _createKlasterTransacions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+  private async _createKlasterTransactions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
     const owner = account.owner as string;
     const config = account.providerConfig as AAProviderConfig;
     const klasterService = await KlasterService.createKlasterService(owner, config);
@@ -296,23 +297,33 @@ export class AccountAbstractionService {
     };
   }
 
-  private async _createEoaTransacions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
-    return Promise.reject(new Error('Unsupported provider'));
+  private async _createEoaTransactions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    return Promise.resolve({
+      signer: account.owner as string,
+      transactions: txList
+    });
   }
 
-  private async _createParticleTransacions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
-    return Promise.reject(new Error('Unsupported provider'));
+  private async _createParticleTransactions (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+    const owner = account.owner as string;
+    const config = account.providerConfig as AAProviderConfig;
+    const userOpBundles = await ParticleService.createUserOperations(owner, config, txList);
+
+    return {
+      signer: owner,
+      transactions: userOpBundles
+    };
   }
 
-  private async _createTransacion (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
+  private async _createTransaction (account: AAAccount, txList: RawTransactionConfig[]): Promise<CreateTransactionResult> {
     if (account.type === AAAccountType.EOA) {
-      return this._createEoaTransacions(account, txList);
+      return this._createEoaTransactions(account, txList);
     } else {
       switch (account.provider) {
         case AAProvider.KLASTER:
-          return this._createKlasterTransacions(account, txList);
+          return this._createKlasterTransactions(account, txList);
         case AAProvider.PARTICLE:
-          return this._createParticleTransacions(account, txList);
+          return this._createParticleTransactions(account, txList);
         default:
           throw new Error('Unsupported provider');
       }
@@ -326,7 +337,7 @@ export class AccountAbstractionService {
       throw new Error('Account not found');
     }
 
-    return this._createTransacion(account, txList);
+    return this._createTransaction(account, txList);
   }
 
   static createInstance (initConfig: AAServiceConfigInit) {

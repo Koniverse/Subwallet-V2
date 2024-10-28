@@ -18,3 +18,8 @@ export interface RawTransactionConfig {
 }
 
 export type AATransaction = UserOpBundle | QuoteResponse | TransactionConfig;
+
+export interface TxBatch {
+  txs: RawTransactionConfig[];
+  chainId: number;
+}

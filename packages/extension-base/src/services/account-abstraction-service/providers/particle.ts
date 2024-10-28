@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountContract, SmartAccount, SmartAccountConfig, Transaction, UserOp, UserOpBundle } from '@particle-network/aa';
-import { SmartAccountData } from '@subwallet/extension-base/background/types';
 import { getSupportedChainIds } from '@subwallet/extension-base/services/account-abstraction-service/constants';
-import { AAProvider, AAProviderConfig } from '@subwallet/extension-base/types';
-import { anyNumberToBN } from '@subwallet/extension-base/utils';
+import { AAProvider, AAProviderConfig, RawTransactionConfig } from '@subwallet/extension-base/types';
+import { anyNumberToBN, splitTransactionsBatches } from '@subwallet/extension-base/utils';
 import { createMockParticleProvider } from '@subwallet/extension-base/utils/mock/provider/particle';
-import { TransactionConfig } from 'web3-core';
 
 export const ParticleContract: AccountContract = {
   name: 'BICONOMY',
@@ -58,7 +56,7 @@ const defaultParticleConfig: SmartAccountConfig = {
   }
 };
 
-export class ParticleAAHandler {
+export class ParticleService {
   static getSmartAccount = async (owner: string, config: AAProviderConfig): Promise<string> => {
     const provider = createMockParticleProvider(1, owner);
 
@@ -69,12 +67,12 @@ export class ParticleAAHandler {
     return smartAccount.getAddress();
   };
 
-  static createUserOperation = async (chainId: number, account: SmartAccountData, _txList: TransactionConfig[]): Promise<UserOpBundle> => {
-    const provider = createMockParticleProvider(chainId, account.owner);
+  private static createUserOperation = async (owner: string, config: AAProviderConfig, chainId: number, _txList: RawTransactionConfig[]): Promise<UserOpBundle> => {
+    const provider = createMockParticleProvider(chainId, owner);
 
     const smartAccount = new SmartAccount(provider, defaultParticleConfig);
 
-    smartAccount.setSmartAccountContract(account.provider || ParticleContract);
+    smartAccount.setSmartAccountContract(config);
 
     const txList: Transaction[] = [];
 
@@ -94,12 +92,23 @@ export class ParticleAAHandler {
     return await smartAccount.buildUserOperation({ tx: txList });
   };
 
-  static sendSignedUserOperation = async (chainId: number, account: SmartAccountData, userOp: UserOp): Promise<string> => {
-    const provider = createMockParticleProvider(chainId, account.owner);
+  static createUserOperations = async (owner: string, config: AAProviderConfig, txs: RawTransactionConfig[]): Promise<UserOpBundle[]> => {
+    const txBatch = splitTransactionsBatches(txs);
+
+    return Promise.all(
+      txBatch
+        .map(async (batch) => {
+          return ParticleService.createUserOperation(owner, config, batch.chainId, batch.txs);
+        })
+    );
+  };
+
+  static sendSignedUserOperation = async (owner: string, config: AAProviderConfig, chainId: number, userOp: UserOp): Promise<string> => {
+    const provider = createMockParticleProvider(chainId, owner);
 
     const smartAccount = new SmartAccount(provider, defaultParticleConfig);
 
-    smartAccount.setSmartAccountContract(account.provider || ParticleContract);
+    smartAccount.setSmartAccountContract(config);
 
     return await smartAccount.sendSignedUserOperation(userOp);
   };
