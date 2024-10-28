@@ -80,21 +80,22 @@ export class RariNftApi extends BaseNftApi {
           const collectionName = nft.itemCollection.name;
           const NftMetadata = nft.meta;
           const NFTimageUrl = NftMetadata.content[0]?.url || '';
+          const formatCollectionId = collectionId.replace(/^RARI:/, '');
 
           const parsedNft = {
             id: nft.tokenId,
             name: NftMetadata.name,
             description: NftMetadata.description || '',
             image: NFTimageUrl,
-            collectionId: nft.collection,
+            collectionId: formatCollectionId,
             chain: this.chain,
             owner: address
           } as NftItem;
 
           params.updateItem(this.chain, parsedNft, address);
 
-          if (!collectionMap.has(collectionId)) {
-            collectionMap.set(collectionId, collectionName);
+          if (!collectionMap.has(formatCollectionId)) {
+            collectionMap.set(formatCollectionId, collectionName);
           }
         }));
       }));
@@ -104,9 +105,9 @@ export class RariNftApi extends BaseNftApi {
       }
     }
 
-    for (const [collectionId, collectionName] of collectionMap.entries()) {
+    for (const [formatCollectionId, collectionName] of collectionMap.entries()) {
       const parsedCollection = {
-        collectionId,
+        collectionId: formatCollectionId,
         chain: this.chain,
         collectionName,
         image: ''

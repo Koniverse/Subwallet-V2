@@ -185,8 +185,8 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
           address={address}
           chainSlug={chainSlug}
           id={tonWalletContractSelectorModalId}
-          onCancel={onCloseTonWalletContactModal}
           onBack={onCloseTonWalletContactModal}
+          onCancel={onCloseTonWalletContactModal}
         />
       }
     </>
