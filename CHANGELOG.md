@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 1.3.4
+Build date: Oct 28, 2024.
+
+Features & Update:
+- Integrate Avail Bridge (#3423)
+- Support Notification in app (#3507, #3515)
+- Allow importing assets on Asset Hub (#3636)
+- Update api key for TAO(Bittensor) (#3809)
+- Update chain-list (#3806)
+  - Add support for Unichain testnet
+  - Update address prefix for Bifrost
+
+
 ## 1.3.3
 Build date: Oct 16, 2024.
 
