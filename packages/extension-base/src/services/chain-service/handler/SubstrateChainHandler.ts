@@ -145,7 +145,7 @@ export class SubstrateChainHandler extends AbstractChainHandler {
       tokenSmartContract.decimals = decimalsResp.output ? (new BN((decimalsObj.Ok || decimalsObj.ok) as string | number)).toNumber() : 0;
       tokenSmartContract.symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
 
-      if (!tokenSmartContract.name || !tokenSmartContract.symbol) {
+      if (!tokenSmartContract.name || !tokenSmartContract.symbol || typeof tokenSmartContract.name === 'object' || typeof tokenSmartContract.symbol === 'object') {
         tokenSmartContract.contractError = true;
       }
 
@@ -243,11 +243,6 @@ export class SubstrateChainHandler extends AbstractChainHandler {
       symbol: '',
       contractError: false
     };
-
-    // let name = '';
-    // let decimals: number | undefined = -1;
-    // let symbol = '';
-    // let contractError = false;
 
     const apiPromise = this.getSubstrateApiByChain(originChain).api;
 
