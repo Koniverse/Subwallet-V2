@@ -7,7 +7,7 @@ import { subscribeCardanoBalance } from '@subwallet/extension-base/services/bala
 import { _CardanoApi, _EvmApi, _SubstrateApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainCardanoCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureCardanoChain, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
-import { categoryAddresses, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
+import { getAddressesByChainTypeMap, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 
 import { subscribeTonBalance } from './ton/ton';
@@ -41,7 +41,7 @@ export const getAccountJsonByAddress = (address: string): AccountJson | null => 
 
 /** Filter addresses to subscribe by chain info */
 const filterAddress = (addresses: string[], chainInfo: _ChainInfo): [string[], string[]] => {
-  const { bitcoin, cardano, evm, substrate, ton } = categoryAddresses(addresses);
+  const { bitcoin, cardano, evm, substrate, ton } = getAddressesByChainTypeMap(addresses);
 
   if (_isChainEvmCompatible(chainInfo)) {
     return [evm, [...bitcoin, ...substrate, ...ton, ...cardano]];

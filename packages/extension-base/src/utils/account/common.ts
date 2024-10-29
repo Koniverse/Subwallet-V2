@@ -1,7 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { flatten } from '@reduxjs/toolkit/dist/query/utils';
 import { _ChainInfo } from '@subwallet/chain-list/types';
+import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
@@ -69,40 +71,46 @@ export const getAccountChainTypeForAddress = (address: string): AccountChainType
   return getAccountChainType(type);
 };
 
-export function categoryAddresses (addresses: string[]): {
-  substrate: string[],
-  evm: string[],
-  ton: string[],
-  bitcoin: string[],
-  cardano: string[]
-} {
-  const substrate: string[] = [];
-  const evm: string[] = [];
-  const ton: string[] = [];
-  const bitcoin: string[] = [];
-  const cardano: string[] = [];
+interface AddressesByChainType {
+  [ChainType.SUBSTRATE]: string[],
+  [ChainType.EVM]: string[],
+  [ChainType.BITCOIN]: string[],
+  [ChainType.TON]: string[],
+  [ChainType.CARDANO]: string[]
+}
+
+export function getAddressesByChainType (addresses: string[], chainTypes: ChainType[]): string[] {
+  const addressByChainTypeMap = getAddressesByChainTypeMap(addresses);
+
+  return flatten(chainTypes.map((chainType) => {
+    return addressByChainTypeMap[chainType];
+  }));
+}
+
+export function getAddressesByChainTypeMap (addresses: string[]): AddressesByChainType {
+  const addressByChainType: AddressesByChainType = {
+    substrate: [],
+    evm: [],
+    bitcoin: [],
+    ton: [],
+    cardano: []
+  };
 
   addresses.forEach((address) => {
     if (isEthereumAddress(address)) {
-      evm.push(address);
+      addressByChainType.evm.push(address);
     } else if (isTonAddress(address)) {
-      ton.push(address);
+      addressByChainType.ton.push(address);
     } else if (isBitcoinAddress(address)) {
-      bitcoin.push(address);
+      addressByChainType.bitcoin.push(address);
     } else if (isCardanoAddress(address)) {
-      cardano.push(address);
+      addressByChainType.cardano.push(address);
     } else {
-      substrate.push(address);
+      addressByChainType.substrate.push(address);
     }
   });
 
-  return {
-    bitcoin,
-    evm,
-    substrate,
-    ton,
-    cardano
-  };
+  return addressByChainType;
 }
 
 export function quickFormatAddressToCompare (address?: string) {

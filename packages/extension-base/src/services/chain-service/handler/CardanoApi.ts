@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
+import { CardanoBalanceItem } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _CardanoApi, _ChainConnectionStatus } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -14,7 +15,7 @@ export const API_KEY = {
 
 export class CardanoApi implements _CardanoApi {
   chainSlug: string;
-  private api: CardanoApi;
+  private api: BlockFrostAPI;
   apiUrl: string;
   apiError?: string;
   apiRetry = 0;
@@ -78,16 +79,12 @@ export class CardanoApi implements _CardanoApi {
     await this.isReadyHandler.promise;
   }
 
-  private createProvider (isTestnet = true) {
+  private createProvider (isTestnet = true): BlockFrostAPI {
     const projectId = isTestnet ? API_KEY.testnet : API_KEY.mainnet;
 
     return new BlockFrostAPI({
       projectId
     });
-  }
-
-  private getJsonRpc (url: string) {
-    return `${url}/jsonRPC`;
   }
 
   connect (): void {
@@ -129,6 +126,18 @@ export class CardanoApi implements _CardanoApi {
       console.warn(`Disconnected from ${this.chainSlug} of ${this.apiUrl}`);
       this.isApiReady = false;
       this.isReadyHandler = createPromiseHandler<_CardanoApi>();
+    }
+  }
+
+  async getBalanceMap (address: string): Promise<CardanoBalanceItem[]> {
+    try {
+      const balance = await this.api.addresses(address);
+
+      return balance.amount as CardanoBalanceItem[];
+    } catch (error) {
+      console.error(error);
+
+      return [];
     }
   }
 }

@@ -6,6 +6,7 @@
 import type { ApiInterfaceRx } from '@polkadot/api/types';
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
+import { CardanoBalanceItem } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
 import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { TonWalletContract } from '@subwallet/keyring/types';
@@ -135,7 +136,7 @@ export interface _TonApi extends _ChainBaseApi, _TonUtilsApi {
   isReady: Promise<_TonApi>;
 }
 
-export interface _TonUtilsApi {
+interface _TonUtilsApi {
   getBalance (address: Address): Promise<bigint>;
   open<T extends Contract>(src: T): OpenedContract<T>;
   estimateExternalMessageFee (walletContract: TonWalletContract, body: Cell, isInit: boolean, ignoreSignature?: boolean): Promise<EstimateExternalMessageFee>;
@@ -145,8 +146,12 @@ export interface _TonUtilsApi {
   getAccountState (address: string): Promise<AccountState>;
 }
 
-export interface _CardanoApi extends _ChainBaseApi {
+export interface _CardanoApi extends _ChainBaseApi, _CardanoUtilsApi {
   isReady: Promise<_CardanoApi>;
+}
+
+interface _CardanoUtilsApi {
+  getBalanceMap (address: string): Promise<CardanoBalanceItem[]>
 }
 
 export interface EstimateExternalMessageFee {

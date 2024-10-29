@@ -69,6 +69,6 @@ export interface SubscribeTonPalletBalance extends SubscribeBasePalletBalance {
   tonApi: _TonApi;
 }
 
-export interface SusbcribeCardanoPalletBallance extends SubscribeBasePalletBalance {
+export interface SusbcribeCardanoPalletBalance extends SubscribeBasePalletBalance {
   cardanoApi: _CardanoApi;
 }

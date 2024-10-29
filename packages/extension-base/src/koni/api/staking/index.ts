@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { NominatorMetadata, StakingItem, StakingRewardItem } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainType, NominatorMetadata, StakingItem, StakingRewardItem } from '@subwallet/extension-base/background/KoniTypes';
 import { getAmplitudeStakingOnChain, getAstarStakingOnChain, getParaStakingOnChain } from '@subwallet/extension-base/koni/api/staking/paraChain';
 import { getNominationPoolReward, getRelayPoolingOnChain, getRelayStakingOnChain } from '@subwallet/extension-base/koni/api/staking/relayChain';
 import { getAllSubsquidStaking } from '@subwallet/extension-base/koni/api/staking/subsquidStaking';
@@ -10,7 +10,7 @@ import { _PURE_EVM_CHAINS } from '@subwallet/extension-base/services/chain-servi
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _isChainEvmCompatible, _isChainSupportSubstrateStaking, _isSubstrateRelayChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
-import { categoryAddresses } from '@subwallet/extension-base/utils';
+import { getAddressesByChainType } from '@subwallet/extension-base/utils';
 
 interface PromiseMapping {
   api: _SubstrateApi,
@@ -19,7 +19,8 @@ interface PromiseMapping {
 
 export function stakingOnChainApi (addresses: string[], substrateApiMap: Record<string, _SubstrateApi>, chainInfoMap: Record<string, _ChainInfo>, stakingCallback: (networkKey: string, rs: StakingItem) => void, nominatorStateCallback: (nominatorMetadata: NominatorMetadata) => void) {
   const filteredApiMap: PromiseMapping[] = [];
-  const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
+  const evmAddresses = getAddressesByChainType(addresses, [ChainType.EVM]);
+  const substrateAddresses = getAddressesByChainType(addresses, [ChainType.SUBSTRATE]);
 
   Object.entries(chainInfoMap).forEach(([networkKey, chainInfo]) => {
     if (_PURE_EVM_CHAINS.indexOf(networkKey) < 0 && _isChainSupportSubstrateStaking(chainInfo)) {
