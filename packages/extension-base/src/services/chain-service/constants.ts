@@ -56,7 +56,8 @@ export const _NFT_CHAIN_GROUP = {
   bitcountry: ['bitcountry', 'pioneer', 'continuum_network'],
   vara: ['vara_network'],
   avail: ['avail_mainnet'],
-  ternoa: ['ternoa', 'ternoa_alphanet']
+  ternoa: ['ternoa', 'ternoa_alphanet'],
+  rari: ['rari']
 };
 
 // Staking--------------------------------------------------------------------------------------------------------------
