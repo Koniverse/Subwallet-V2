@@ -6,7 +6,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { getAccountChainType } from '@subwallet/extension-base/utils';
-import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isTonAddress } from '@subwallet/keyring';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isCardanoAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
 import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
@@ -73,12 +73,14 @@ export function categoryAddresses (addresses: string[]): {
   substrate: string[],
   evm: string[],
   ton: string[],
-  bitcoin: string[]
+  bitcoin: string[],
+  cardano: string[]
 } {
   const substrate: string[] = [];
   const evm: string[] = [];
   const ton: string[] = [];
   const bitcoin: string[] = [];
+  const cardano: string[] = [];
 
   addresses.forEach((address) => {
     if (isEthereumAddress(address)) {
@@ -87,6 +89,8 @@ export function categoryAddresses (addresses: string[]): {
       ton.push(address);
     } else if (isBitcoinAddress(address)) {
       bitcoin.push(address);
+    } else if (isCardanoAddress(address)) {
+      cardano.push(address);
     } else {
       substrate.push(address);
     }
@@ -96,7 +100,8 @@ export function categoryAddresses (addresses: string[]): {
     bitcoin,
     evm,
     substrate,
-    ton
+    ton,
+    cardano
   };
 }
 

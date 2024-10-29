@@ -920,6 +920,14 @@ export default class KoniState {
     return this.chainService.getTonApi(networkKey);
   }
 
+  public getCardanoApiMap () {
+    return this.chainService.getCardanoApiMap();
+  }
+
+  public getCardanoApi (networkKey: string) {
+    return this.chainService.getCardanoApi(networkKey)
+  }
+
   public getApiMap () {
     return {
       substrate: this.chainService.getSubstrateApiMap(),

@@ -145,6 +145,10 @@ export interface _TonUtilsApi {
   getAccountState (address: string): Promise<AccountState>;
 }
 
+export interface _CardanoApi extends _ChainBaseApi {
+  isReady: Promise<_CardanoApi>;
+}
+
 export interface EstimateExternalMessageFee {
   source_fees: {
     in_fwd_fee: number,
