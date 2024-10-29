@@ -3,11 +3,12 @@
 
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
+import { AbiItem } from 'web3-utils';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
-export const _ERC20_ABI = require('./erc20_abi.json');
+export const _ERC20_ABI: AbiItem[] | AbiItem = require('./erc20_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
-export const _ERC721_ABI = require('./erc721_abi.json');
+export const _ERC721_ABI: AbiItem[] | AbiItem = require('./erc721_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const _TEST_ERC721_ABI = require('./test_erc721_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
