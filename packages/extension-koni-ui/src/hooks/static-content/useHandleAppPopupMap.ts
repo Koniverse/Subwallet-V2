@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
+import { EXTENSION_VERSION } from '@subwallet/extension-koni-ui/constants';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { updatePopupHistoryData } from '@subwallet/extension-koni-ui/stores/base/StaticContent';
 import { MktCampaignHistoryData } from '@subwallet/extension-koni-ui/types/staticContent';
+import { satisfies } from 'compare-versions';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -52,10 +54,20 @@ export const useHandleAppPopupMap = (): AppPopupHookType => {
     [dispatch, popupHistoryMap]
   );
 
+  const filteredData = useMemo(() => {
+    return appPopupData.filter(({ app_version_range: appVersionRange, info }) => {
+      if (appVersionRange) {
+        return info?.platforms.includes('extension') && satisfies(EXTENSION_VERSION, appVersionRange);
+      } else {
+        return info?.platforms.includes('extension');
+      }
+    });
+  }, [appPopupData]);
+
   const appPopupMap = useMemo(() => {
-    if (appPopupData) {
+    if (filteredData) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const result: Record<string, AppPopupData[]> = appPopupData.reduce((r, a) => {
+      const result: Record<string, AppPopupData[]> = filteredData.reduce((r, a) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
         r[a.position] = r[a.position] || [];
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
@@ -69,7 +81,7 @@ export const useHandleAppPopupMap = (): AppPopupHookType => {
     } else {
       return {};
     }
-  }, [appPopupData]);
+  }, [filteredData]);
 
   return {
     updatePopupHistoryMap,

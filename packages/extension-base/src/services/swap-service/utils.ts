@@ -5,6 +5,7 @@ import { Asset, Assets, Chain, Chains } from '@chainflip/sdk/swap';
 import { COMMON_ASSETS, COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _getAssetDecimals } from '@subwallet/extension-base/services/chain-service/utils';
+import { CHAINFLIP_BROKER_API } from '@subwallet/extension-base/services/swap-service/handler/chainflip-handler';
 import { SwapPair, SwapProviderId } from '@subwallet/extension-base/types/swap';
 import BigN from 'bignumber.js';
 
@@ -13,7 +14,8 @@ export const CHAIN_FLIP_MAINNET_EXPLORER = 'https://scan.chainflip.io';
 
 export const CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING: Record<string, Chain> = {
   [COMMON_CHAIN_SLUGS.POLKADOT]: Chains.Polkadot,
-  [COMMON_CHAIN_SLUGS.ETHEREUM]: Chains.Ethereum
+  [COMMON_CHAIN_SLUGS.ETHEREUM]: Chains.Ethereum,
+  [COMMON_CHAIN_SLUGS.ARBITRUM]: Chains.Arbitrum
 };
 
 export const CHAIN_FLIP_SUPPORTED_TESTNET_MAPPING: Record<string, Chain> = {
@@ -24,7 +26,8 @@ export const CHAIN_FLIP_SUPPORTED_TESTNET_MAPPING: Record<string, Chain> = {
 export const CHAIN_FLIP_SUPPORTED_MAINNET_ASSET_MAPPING: Record<string, Asset> = {
   [COMMON_ASSETS.DOT]: Assets.DOT,
   [COMMON_ASSETS.ETH]: Assets.ETH,
-  [COMMON_ASSETS.USDC_ETHEREUM]: Assets.USDC
+  [COMMON_ASSETS.USDC_ETHEREUM]: Assets.USDC,
+  [COMMON_ASSETS.USDT_ETHEREUM]: Assets.USDT
 };
 
 export const CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, Asset> = {
@@ -42,7 +45,7 @@ export const SWAP_QUOTE_TIMEOUT_MAP: Record<string, number> = { // in millisecon
 export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.HYDRADX_MAINNET]: [COMMON_CHAIN_SLUGS.HYDRADX],
   [SwapProviderId.HYDRADX_TESTNET]: [COMMON_CHAIN_SLUGS.HYDRADX_TESTNET],
-  [SwapProviderId.CHAIN_FLIP_MAINNET]: [COMMON_CHAIN_SLUGS.POLKADOT, COMMON_CHAIN_SLUGS.ETHEREUM],
+  [SwapProviderId.CHAIN_FLIP_MAINNET]: [COMMON_CHAIN_SLUGS.POLKADOT, COMMON_CHAIN_SLUGS.ETHEREUM, COMMON_CHAIN_SLUGS.ARBITRUM],
   [SwapProviderId.CHAIN_FLIP_TESTNET]: [COMMON_CHAIN_SLUGS.CHAINFLIP_POLKADOT, COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA],
   [SwapProviderId.POLKADOT_ASSET_HUB]: [COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB],
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
@@ -72,4 +75,33 @@ export function convertSwapRate (rate: string, fromAsset: _ChainAsset, toAsset: 
   const bnRate = new BigN(rate);
 
   return bnRate.times(10 ** decimalDiff).pow(-1).toNumber();
+}
+
+export function getChainflipOptions (isTestnet: boolean) {
+  if (isTestnet) {
+    return {
+      network: getChainflipNetwork(isTestnet)
+    };
+  }
+
+  return {
+    network: getChainflipNetwork(isTestnet),
+    broker: getChainflipBroker(isTestnet)
+  };
+}
+
+function getChainflipNetwork (isTestnet: boolean) {
+  return isTestnet ? 'perseverance' : 'mainnet';
+}
+
+export function getChainflipBroker (isTestnet: boolean) { // noted: currently not use testnet broker
+  if (isTestnet) {
+    return {
+      url: `https://perseverance.chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
+    };
+  } else {
+    return {
+      url: `https://chainflip-broker.io/rpc/${CHAINFLIP_BROKER_API}`
+    };
+  }
 }

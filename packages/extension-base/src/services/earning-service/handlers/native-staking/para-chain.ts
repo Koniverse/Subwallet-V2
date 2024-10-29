@@ -3,13 +3,13 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType, ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { getBondedValidators, getEarningStatusByNominations, getParaCurrentInflation, InflationConfig, isUnstakeAll } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _EXPECTED_BLOCK_TIME, _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _STAKING_CHAIN_GROUP, MANTA_MIN_DELEGATION, MANTA_VALIDATOR_POINTS_PER_BLOCK } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { BaseYieldPositionInfo, CollatorExtraInfo, EarningStatus, NativeYieldPoolInfo, PalletParachainStakingDelegationRequestsScheduledRequest, PalletParachainStakingDelegator, ParachainStakingCandidateMetadata, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, CollatorExtraInfo, EarningStatus, NativeYieldPoolInfo, PalletParachainStakingDelegationRequestsScheduledRequest, PalletParachainStakingDelegator, ParachainStakingCandidateMetadata, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, parseRawNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
@@ -288,6 +288,9 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     const totalStake = bnTotalStake.toString();
     const activeStake = bnTotalActiveStake.toString();
     const unstakingBalance = bnTotalUnstaking.toString();
+    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
+
+    await this.createWithdrawNotifications(Object.values(unstakingMap), tokenInfo, address);
 
     return {
       status: stakingStatus,

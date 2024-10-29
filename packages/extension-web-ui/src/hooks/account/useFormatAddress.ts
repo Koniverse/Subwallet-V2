@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson } from '@subwallet/extension-base/background/types';
+import { AbstractAddressJson } from '@subwallet/extension-base/types';
 import { findNetworkJsonByGenesisHash, reformatAddress } from '@subwallet/extension-web-ui/utils';
 import { useCallback } from 'react';
 

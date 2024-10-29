@@ -17,7 +17,9 @@ export const subscribeGRC20Balance = ({ addresses,
   callback,
   chainInfo,
   substrateApi }: SubscribeSubstratePalletBalance): VoidCallback => {
-  if (!(substrateApi instanceof GearApi)) {
+  const apiPromise = substrateApi.api;
+
+  if (!(apiPromise instanceof GearApi)) {
     console.warn('Cannot subscribe GRC20 balance without GearApi instance');
 
     return noop;
@@ -28,7 +30,7 @@ export const subscribeGRC20Balance = ({ addresses,
   const tokenList = filterAssetsByChainAndType(assetMap, chain, [_AssetType.GRC20]);
 
   Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
-    grc20ContractMap[slug] = getGRC20ContractPromise(substrateApi, _getContractAddressOfToken(tokenInfo));
+    grc20ContractMap[slug] = getGRC20ContractPromise(apiPromise, _getContractAddressOfToken(tokenInfo));
   });
 
   const getTokenBalances = () => {
@@ -81,7 +83,9 @@ export const subscribeVftBalance = ({ addresses,
   callback,
   chainInfo,
   substrateApi }: SubscribeSubstratePalletBalance): VoidCallback => {
-  if (!(substrateApi instanceof GearApi)) {
+  const apiPromise = substrateApi.api;
+
+  if (!(apiPromise instanceof GearApi)) {
     console.warn('Cannot subscribe VFT balance without GearApi instance');
 
     return noop;
@@ -92,7 +96,7 @@ export const subscribeVftBalance = ({ addresses,
   const tokenList = filterAssetsByChainAndType(assetMap, chain, [_AssetType.VFT]);
 
   Object.entries(tokenList).forEach(([slug, tokenInfo]) => {
-    vftContractMap[slug] = getVFTContractPromise(substrateApi, _getContractAddressOfToken(tokenInfo));
+    vftContractMap[slug] = getVFTContractPromise(apiPromise, _getContractAddressOfToken(tokenInfo));
   });
 
   const getTokenBalances = () => {

@@ -3,8 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
-import { YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountSelector, CancelUnstakeSelector, HiddenInput } from '@subwallet/extension-koni-ui/components';
 import { useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-koni-ui/hooks';
@@ -60,6 +59,7 @@ const Component = () => {
   const poolInfo = poolInfoMap[slug];
   const poolType = poolInfo.type;
   const poolChain = poolInfo.chain;
+  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const fromValue = useWatchTransaction('from', form, defaultData);
   const chainValue = useWatchTransaction('chain', form, defaultData);
@@ -160,6 +160,7 @@ const Component = () => {
             name={'from'}
           >
             <AccountSelector
+              addressPrefix={networkPrefix}
               disabled={!isAllAccount}
               doFilter={false}
               externalAccounts={accountList}

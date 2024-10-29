@@ -251,6 +251,7 @@ export class SubstrateApi implements _SubstrateApi {
 
     if (this.isApiReadyOnce) {
       this.handleApiReady.resolve(this);
+      this.isApiReady = true;
     }
   }
 

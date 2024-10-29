@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getBlockExplorerFromChain, _getChainNativeTokenBasicInfo, _getChainSubstrateAddressPrefix, _getCrowdloanUrlFromChain, _getEvmChainId, _getSubstrateParaId, _isChainEvmCompatible, _isCustomChain, _isPureEvmChain, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getBlockExplorerFromChain, _getChainNativeTokenBasicInfo, _getChainSubstrateAddressPrefix, _getCrowdloanUrlFromChain, _getEvmChainId, _getSubstrateParaId, _isChainEvmCompatible, _isChainSubstrateCompatible, _isCustomChain, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { ProviderSelector } from '@subwallet/extension-koni-ui/components/Field/ProviderSelector';
@@ -61,6 +61,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const [chainInfo] = useState(_chainInfo);
   const [chainState] = useState(_chainState);
+
+  const isPureTonChain = useMemo(() => {
+    return chainInfo && _isPureTonChain(chainInfo);
+  }, [chainInfo]);
 
   const isPureEvmChain = useMemo(() => {
     return chainInfo && _isPureEvmChain(chainInfo);
@@ -122,12 +126,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     let result = '';
     const types: string[] = [];
 
-    if (_isSubstrateChain(chainInfo)) {
+    if (_isChainSubstrateCompatible(chainInfo)) {
       types.push('Substrate');
     }
 
     if (_isChainEvmCompatible(chainInfo)) {
       types.push('EVM');
+    }
+
+    if (chainInfo.slug === 'ton') {
+      types.push('TON');
     }
 
     for (let i = 0; i < types.length; i++) {
@@ -359,6 +367,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                     tooltipPlacement={'topLeft'}
                   />
                 </Col>
+
+                {
+                  !isPureTonChain &&
                 <Col span={12}>
                   {
                     !isPureEvmChain
@@ -380,11 +391,23 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                       )
                   }
                 </Col>
+                }
+                {
+                  isPureTonChain &&
+                  <Col span={!isPureEvmChain ? 12 : 24}>
+                    <Field
+                      content={chainTypeString()}
+                      placeholder={t('Network type')}
+                      tooltip={t('Network type')}
+                      tooltipPlacement={'topLeft'}
+                    />
+                  </Col>
+                }
               </Row>
 
               <Row gutter={token.paddingSM}>
                 {
-                  !isPureEvmChain &&
+                  (!isPureEvmChain && !isPureTonChain) &&
                   <Col span={12}>
                     <Field
                       content={addressPrefix.toString()}
@@ -395,14 +418,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                   </Col>
                 }
 
-                <Col span={!isPureEvmChain ? 12 : 24}>
-                  <Field
-                    content={chainTypeString()}
-                    placeholder={t('Network type')}
-                    tooltip={t('Network type')}
-                    tooltipPlacement={'topLeft'}
-                  />
-                </Col>
+                {
+                  !isPureTonChain &&
+                  <Col span={!isPureEvmChain ? 12 : 24}>
+                    <Field
+                      content={chainTypeString()}
+                      placeholder={t('Network type')}
+                      tooltip={t('Network type')}
+                      tooltipPlacement={'topLeft'}
+                    />
+                  </Col>
+                }
               </Row>
 
               <Form.Item
@@ -418,7 +444,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               </Form.Item>
 
               {
-                !_isPureEvmChain(chainInfo) && <Form.Item
+                (!_isPureEvmChain(chainInfo) && !isPureTonChain) && <Form.Item
                   name={'crowdloanUrl'}
                   rules={[{ validator: crowdloanUrlValidator }]}
                   statusHelpAsTooltip={true}

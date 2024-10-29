@@ -83,6 +83,8 @@ export interface AppCommonData {
   position_params: PositionParam[];
   conditions: MktCampaignCondition;
   info?: AppBasicInfoData;
+  comparison_operator: 'AND' | 'OR';
+  locations: string[];
 }
 
 export interface AppPopupData extends AppCommonData {
@@ -92,6 +94,8 @@ export interface AppPopupData extends AppCommonData {
   media: string;
   buttons: AppContentButton[];
   repeat_every_x_days: number | null;
+  ios_version_range: string;
+  app_version_range: string;
 }
 
 export interface AppBannerData extends AppCommonData {
@@ -99,6 +103,8 @@ export interface AppBannerData extends AppCommonData {
   media: string;
   action: AppContentButtonAction;
   instruction: AppContentButtonInstruction | null;
+  ios_version_range: string;
+  app_version_range: string;
 }
 
 export interface AppConfirmationData extends AppCommonData {

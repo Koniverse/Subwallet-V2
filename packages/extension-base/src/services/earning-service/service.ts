@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_REFRESH_CHAIN_STAKING_METADATA, CRON_REFRESH_EARNING_REWARD_HISTORY_INTERVAL, CRON_REFRESH_STAKING_REWARD_FAST_INTERVAL } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { PersistDataServiceInterface, ServiceStatus, StoppableServiceInterface } from '@subwallet/extension-base/services/base/types';
@@ -12,12 +12,12 @@ import BaseLiquidStakingPoolHandler from '@subwallet/extension-base/services/ear
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
-import { EarningRewardHistoryItem, EarningRewardItem, EarningRewardJson, HandleYieldStepData, HandleYieldStepParams, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldWithdrawal, ResponseEarlyValidateYield, TransactionData, ValidateYieldProcessParams, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { BasicTxErrorType, EarningRewardHistoryItem, EarningRewardItem, EarningRewardJson, HandleYieldStepData, HandleYieldStepParams, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestYieldLeave, RequestYieldWithdrawal, ResponseEarlyValidateYield, TransactionData, ValidateYieldProcessParams, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { addLazy, categoryAddresses, createPromiseHandler, PromiseHandler, removeLazy } from '@subwallet/extension-base/utils';
 import { fetchStaticCache } from '@subwallet/extension-base/utils/fetchStaticCache';
 import { BehaviorSubject } from 'rxjs';
 
-import { AcalaLiquidStakingPoolHandler, AmplitudeNativeStakingPoolHandler, AstarNativeStakingPoolHandler, BasePoolHandler, BifrostLiquidStakingPoolHandler, BifrostMantaLiquidStakingPoolHandler, InterlayLendingPoolHandler, NominationPoolHandler, ParallelLiquidStakingPoolHandler, ParaNativeStakingPoolHandler, RelayNativeStakingPoolHandler, StellaSwapLiquidStakingPoolHandler } from './handlers';
+import { AcalaLiquidStakingPoolHandler, AmplitudeNativeStakingPoolHandler, AstarNativeStakingPoolHandler, BasePoolHandler, BifrostLiquidStakingPoolHandler, BifrostMantaLiquidStakingPoolHandler, InterlayLendingPoolHandler, NominationPoolHandler, ParallelLiquidStakingPoolHandler, ParaNativeStakingPoolHandler, RelayNativeStakingPoolHandler, StellaSwapLiquidStakingPoolHandler, TaoNativeStakingPoolHandler } from './handlers';
 
 const fetchPoolsData = async () => {
   const fetchData = await fetchStaticCache<{data: Record<string, YieldPoolInfo>}>('earning/yield-pools.json', { data: {} });
@@ -80,6 +80,10 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
       if (_STAKING_CHAIN_GROUP.amplitude.includes(chain)) {
         handlers.push(new AmplitudeNativeStakingPoolHandler(this.state, chain));
+      }
+
+      if (_STAKING_CHAIN_GROUP.bittensor.includes(chain)) {
+        handlers.push(new TaoNativeStakingPoolHandler(this.state, chain));
       }
 
       if (_STAKING_CHAIN_GROUP.nominationPool.includes(chain)) {
@@ -473,7 +477,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
     await this.eventService.waitChainReady;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
     const activeChains = this.state.activeChainSlugs;
     const unsubList: Array<VoidFunction> = [];
 
@@ -533,7 +537,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
     await this.eventService.waitChainReady;
     await this.eventService.waitKeyringReady;
 
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     const existedYieldPosition = await this.dbService.getYieldNominationPoolPosition(addresses, this.state.activeChainSlugs);
 
@@ -608,7 +612,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
     await this.eventService.waitKeyringReady;
     this.runUnsubscribePoolsPosition();
 
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     this.subscribePoolPositions(addresses, (data) => {
       this.updateYieldPosition(data);
@@ -649,6 +653,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
       this.earningRewardSubject.next(stakingRewardState);
 
       this.earningsRewardQueue = [];
+      this.earningRewardReady.resolve();
     });
   }
 
@@ -657,7 +662,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
     await this.eventService.waitChainReady;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
     const activeChains = this.state.activeChainSlugs;
     const unsubList: Array<VoidFunction> = [];
 
@@ -695,9 +700,14 @@ export default class EarningService implements StoppableServiceInterface, Persis
   }
 
   earningsRewardInterval: NodeJS.Timer | undefined;
+  earningRewardReady: PromiseHandler<void> = createPromiseHandler<void>();
+
+  waitEarningRewardReady () {
+    return this.earningRewardReady.promise;
+  }
 
   runSubscribeStakingRewardInterval () {
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;
@@ -725,7 +735,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
     await this.eventService.waitChainReady;
 
-    const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+    const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
     const activeChains = this.state.activeChainSlugs;
     const unsubList: Array<VoidFunction> = [];
 
@@ -785,7 +795,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
 
   runSubscribeEarningRewardHistoryInterval () {
     this.runUnsubscribeEarningRewardHistoryInterval();
-    const addresses = this.state.getDecodedAddresses();
+    const addresses = this.state.keyringService.context.getDecodedAddresses();
 
     if (!addresses.length) {
       return;

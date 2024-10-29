@@ -16,10 +16,10 @@ export interface AppConfirmationHookType {
 export const useHandleAppConfirmationMap = (): AppConfirmationHookType => {
   const dispatch = useDispatch();
   const { appConfirmationData, confirmationHistoryMap } = useSelector((state: RootState) => state.staticContent);
-  const bannerHistoryMapRef = useRef<Record<string, MktCampaignHistoryData>>(confirmationHistoryMap);
+  const confirmationHistoryMapRef = useRef<Record<string, MktCampaignHistoryData>>(confirmationHistoryMap);
 
   useEffect(() => {
-    bannerHistoryMapRef.current = confirmationHistoryMap;
+    confirmationHistoryMapRef.current = confirmationHistoryMap;
   }, [confirmationHistoryMap]);
 
   useEffect(() => {
@@ -38,10 +38,10 @@ export const useHandleAppConfirmationMap = (): AppConfirmationHookType => {
     const result: Record<string, MktCampaignHistoryData> = {};
 
     Object.keys(newData).forEach((key) => {
-      if (!bannerHistoryMapRef.current[key]) {
+      if (!confirmationHistoryMapRef.current[key]) {
         result[key] = newData[key];
       } else {
-        result[key] = bannerHistoryMapRef.current[key];
+        result[key] = confirmationHistoryMapRef.current[key];
       }
     });
 

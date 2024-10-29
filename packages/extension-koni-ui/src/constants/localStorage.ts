@@ -18,20 +18,26 @@ export const UN_STAKE_TRANSACTION = 'transaction.un-stake';
 export const CANCEL_UN_STAKE_TRANSACTION = 'transaction.cancel-un-stake';
 export const WITHDRAW_TRANSACTION = 'transaction.withdraw';
 export const CLAIM_REWARD_TRANSACTION = 'transaction.claim-reward';
+export const CLAIM_AVAIL_BRIDGE_TRANSACTION = 'transaction.claim-avail-bridge';
 
 export const TRANSACTION_STORAGES = [TRANSFER_TRANSACTION, NFT_TRANSACTION, EARN_TRANSACTION, UN_STAKE_TRANSACTION, CANCEL_UN_STAKE_TRANSACTION, WITHDRAW_TRANSACTION, CLAIM_REWARD_TRANSACTION, SWAP_TRANSACTION];
 
 export const SELECTED_ACCOUNT_TYPE = 'account.selected-type';
+export const SELECTED_MNEMONIC_TYPE = 'account.selected-mnemonic-type';
 export const SEED_PREVENT_MODAL = 'seed.prevent-modal';
-
+export const IS_SHOW_TON_CONTRACT_VERSION_WARNING = 'account.is-show-ton-contract-version-warning';
 export const CONFIRM_GENERAL_TERM = 'general.term-and-condition';
 export const MISSIONS_POOL_LIVE_ID = 'mission-pool-live-id';
 export const CONFIRM_SWAP_TERM = 'swap.term-and-service';
 export const CONFIRM_TERM_SEED_PHRASE = 'seed-phrase.term-and-condition';
 export const CLAIM_DAPP_STAKING_REWARDS = 'general.claim-dapp-staking-rewards';
 export const EARNING_MIGRATION_ANNOUNCEMENT = 'announcement.earning-migration';
+export const EARNING_WARNING_ANNOUNCEMENT = 'announcement.earning-position';
 export const TIME_OUT_RECORD = 'general.time-out-record';
 export const APP_INSTRUCTION_DATA = 'static.instruction-data';
 export const SHOW_APP_POPUP = 'static.show-app-popup';
 export const LATEST_SESSION = 'general.latest-session';
 export const UPGRADE_FIREFOX_VERSION = 'general.updated-version-firefox';
+export const UPGRADE_DUPLICATE_ACCOUNT_NAME = 'general.upgrade-duplicate-account-name';
+
+export const ADDRESS_INPUT_AUTO_FORMAT_VALUE = 'component.address-input.auto-format-value'; // value: boolean

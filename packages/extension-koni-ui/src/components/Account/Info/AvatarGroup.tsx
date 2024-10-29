@@ -4,13 +4,12 @@
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { KeypairType } from '@subwallet/keyring/types';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export interface BaseAccountInfo {
   address: string;
@@ -20,6 +19,7 @@ export interface BaseAccountInfo {
 
 interface Props extends ThemeProps {
   accounts?: Array<BaseAccountInfo>;
+  identPrefix?: number
 }
 
 const sizeAva = {
@@ -27,7 +27,7 @@ const sizeAva = {
   large: 24
 };
 
-const Component: React.FC<Props> = ({ accounts: _accounts, className }: Props) => {
+const Component: React.FC<Props> = ({ accounts: _accounts, className, identPrefix }: Props) => {
   const accounts = useSelector((state: RootState) => state.accountState.accounts);
   const noAllAccount: BaseAccountInfo[] = useMemo((): BaseAccountInfo[] => {
     return (_accounts || accounts).filter((account) => !isAccountAll(account.address));
@@ -57,7 +57,7 @@ const Component: React.FC<Props> = ({ accounts: _accounts, className }: Props) =
                 key={account.address}
               >
                 <SwAvatar
-                  identPrefix={42}
+                  identPrefix={identPrefix || 42}
                   size={showCount === 3 ? sizeAva.default : sizeAva.large}
                   value={account.address}
                 />

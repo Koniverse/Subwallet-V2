@@ -3,11 +3,11 @@
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { AssetSetting, ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
-import { _getXcmUnstableWarning, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
+import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getContractAddressOfToken, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
 import { AlertBox, AlertModal, HiddenInput } from '@subwallet/extension-web-ui/components';
@@ -635,12 +635,14 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
     if (chain !== destChain) {
       const originChainInfo = chainInfoMap[chain];
       const destChainInfo = chainInfoMap[destChain];
+      const assetSlug = values.asset;
+      const isMythosFromHydrationToMythos = _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
 
-      if (_isXcmTransferUnstable(originChainInfo, destChainInfo)) {
+      if (_isXcmTransferUnstable(originChainInfo, destChainInfo, assetSlug)) {
         openAlert({
           type: NotificationType.WARNING,
-          content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo)),
-          title: t('Pay attention!'),
+          content: t(_getXcmUnstableWarning(originChainInfo, destChainInfo, assetSlug)),
+          title: isMythosFromHydrationToMythos ? t('High fee alert!') : t('Pay attention!'),
           okButton: {
             text: t('Continue'),
             onClick: () => {

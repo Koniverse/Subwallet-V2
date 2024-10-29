@@ -17,6 +17,8 @@ const actionHandler = ActionHandler.instance;
 
 actionHandler.setHandler(SWHandler.instance);
 
+globalThis.window = globalThis.self;
+
 cryptoWaitReady()
   .then((): void => {
     const koniState = SWHandler.instance.state;

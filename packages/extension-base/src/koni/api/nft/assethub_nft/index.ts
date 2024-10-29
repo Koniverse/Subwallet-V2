@@ -55,6 +55,28 @@ export default class AssetHubNftsPalletApi extends BaseNftApi {
       .then((res) => res.json());
   }
 
+  private processImageUrl (image: string | undefined, isKodadot: boolean, isTokenInfo: boolean): string | undefined {
+    if (!image) {
+      return undefined;
+    }
+
+    if (isKodadot) {
+      return isTokenInfo
+        ? image.replace('ipfs://ipfs/', 'https://image.w.kodadot.xyz/ipfs/')
+        : image.replace('ipfs://', 'https://image.w.kodadot.xyz/ipfs/');
+    }
+
+    return this.parseUrl(image);
+  }
+
+  private parseTokenInfo (tokenInfo: TokenDetail | null, classId: string): TokenDetail | null {
+    if (classId === '244' && tokenInfo) {
+      return JSON.parse(tokenInfo as unknown as string) as TokenDetail;
+    }
+
+    return tokenInfo;
+  }
+
   /**
    * Retrieve id of NFTs
    *
@@ -117,8 +139,6 @@ export default class AssetHubNftsPalletApi extends BaseNftApi {
   }
 
   public async handleNft (address: string, params: HandleNftParams) {
-    // const start = performance.now();
-
     const assetIds = await this.getNfts([address]);
 
     try {
@@ -139,16 +159,28 @@ export default class AssetHubNftsPalletApi extends BaseNftApi {
 
         nftIds.push(parsedTokenId);
 
-        const [tokenInfo, collectionMeta] = await Promise.all([
+        let [tokenInfo, collectionMeta] = await Promise.all([
           this.getTokenDetails(assetId),
           this.getCollectionDetail(parseInt(parsedClassId))
         ]);
+
+        const isKodadot = assetId.classId === '244';
+
+        tokenInfo = this.parseTokenInfo(tokenInfo, assetId.classId as string);
+
+        if (tokenInfo) {
+          tokenInfo.image = this.processImageUrl(tokenInfo?.image, isKodadot, true);
+        }
+
+        if (collectionMeta) {
+          collectionMeta.image = this.processImageUrl(collectionMeta?.image, isKodadot, false);
+        }
 
         const parsedNft = {
           id: parsedTokenId,
           name: tokenInfo?.name as string,
           description: tokenInfo?.description as string,
-          image: tokenInfo && tokenInfo.image ? this.parseUrl(tokenInfo?.image) : undefined,
+          image: tokenInfo?.image,
           collectionId: this.parseTokenId(parsedClassId),
           chain: this.chain,
           owner: address,
@@ -161,7 +193,7 @@ export default class AssetHubNftsPalletApi extends BaseNftApi {
           collectionId: parsedClassId,
           chain: this.chain,
           collectionName: collectionMeta?.name,
-          image: collectionMeta && collectionMeta.image ? this.parseUrl(collectionMeta?.image) : undefined
+          image: collectionMeta?.image
         } as NftCollection;
 
         params.updateCollection(this.chain, parsedCollection);
