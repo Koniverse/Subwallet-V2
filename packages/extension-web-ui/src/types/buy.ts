@@ -25,4 +25,4 @@ export interface BuyServiceInfo {
   url: string;
 }
 
-export type CreateBuyOrderFunction = (token: string, address: string, network: string, walletReference: string) => Promise<string>;
+export type CreateBuyOrderFunction = (token: string, address: string, network: string, walletReference: string, action: 'BUY' | 'SELL') => Promise<string>;

@@ -81,6 +81,7 @@ export const STAKING_NETWORK_DETAIL_MODAL = 'staking-network-detail-modal';
 
 /* Transaction */
 export const TRANSACTION_TRANSFER_MODAL = 'transfer-fund-modal';
+export const OFF_RAMP_TRANSACTION_TRANSFER_MODAL = 'off-ramp-transfer-fund-modal';
 export const TRANSACTION_YIELD_UNSTAKE_MODAL = 'transaction-yield-unstake-modal';
 export const TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL = 'transaction-yield-cancel-unstake-modal';
 export const TRANSACTION_YIELD_WITHDRAW_MODAL = 'transaction-yield-withdraw-modal';

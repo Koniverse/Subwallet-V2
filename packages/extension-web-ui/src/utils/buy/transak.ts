@@ -5,15 +5,22 @@ import { TRANSAK_API_KEY, TRANSAK_URL } from '@subwallet/extension-web-ui/consta
 import { CreateBuyOrderFunction } from '@subwallet/extension-web-ui/types';
 import qs from 'querystring';
 
-export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, network) => {
+export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, network, walletReference, action) => {
   return new Promise((resolve) => {
-    const params = {
-      apiKey: TRANSAK_API_KEY,
-      defaultCryptoCurrency: symbol,
-      networks: network,
-      cryptoCurrencyList: symbol,
-      walletAddress: address
+    const params: any = {
+      apiKey: '307807a5-5fb3-4add-8a6c-fca4972e0470',
+      defaultCryptoCurrency: 'USDT',
+      networks: 'ethereum',
+      cryptoCurrencyList: 'USDT',
+      productsAvailed: action
     };
+    if(action === 'BUY'){
+      params.walletAddress = address;
+    } else {
+      params.partnerCustomerId = address;
+      params.redirectURL = 'http://192.168.10.212:9000/home/tokens';
+      params.walletRedirection = true;
+    }
 
     const query = qs.stringify(params);
 

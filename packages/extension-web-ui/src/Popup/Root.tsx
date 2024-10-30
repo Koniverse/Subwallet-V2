@@ -6,6 +6,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { isSameAddress, TARGET_ENV } from '@subwallet/extension-base/utils';
 import BaseWeb from '@subwallet/extension-web-ui/components/Layout/base/BaseWeb';
 import { Logo2D } from '@subwallet/extension-web-ui/components/Logo';
+import { DEFAULT_OFF_RAMP_PARAMS, OFF_RAMP_DATA } from '@subwallet/extension-web-ui/constants';
 import { DEFAULT_ROUTER_PATH } from '@subwallet/extension-web-ui/constants/router';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
@@ -22,8 +23,9 @@ import { NotificationProps } from '@subwallet/react-ui/es/notification/Notificat
 import CN from 'classnames';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { useLocalStorage } from 'usehooks-ts';
 
 import { CONFIRMATION_MODAL, TRANSACTION_STORAGES } from '../constants';
 import { WebUIContextProvider } from '../contexts/WebUIContext';
@@ -99,6 +101,18 @@ interface RootLocationState {
   useOpenModal?: string
 }
 
+function getOffRampData (orderId: string, searchParams: URLSearchParams) {
+  return {
+    orderId,
+    partnerCustomerId: searchParams.get('partnerCustomerId') || '',
+    cryptoCurrency: searchParams.get('cryptoCurrency') || '',
+    cryptoAmount: searchParams.get('cryptoAmount') || '',
+    numericCryptoAmount: parseFloat(searchParams.get('cryptoAmount') || '0'),
+    walletAddress: searchParams.get('walletAddress') || '',
+    network: searchParams.get('network') || ''
+  };
+}
+
 function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactElement {
   const dataContext = useContext(DataContext);
   const screenContext = useContext(ScreenContext);
@@ -106,8 +120,23 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
   const notify = useNotification();
   const [rootLoading, setRootLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const initDataRef = useRef<Promise<boolean>>(dataContext.awaitStores(['accountState', 'chainStore', 'assetRegistry', 'requestState', 'settings', 'mantaPay']));
   const firstRender = useRef(true);
+  // Pathname query
+  const [, setStorage] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
+  const orderId = searchParams.get('orderId') || '';
+
+  const details = useMemo(() => {
+    return getOffRampData(orderId, searchParams);
+  }, [orderId, searchParams]);
+
+  useEffect(() => {
+    if (orderId) {
+      setStorage(details);
+    }
+  }, [details, orderId, setStorage]);
 
   useSubscribeLanguage();
 

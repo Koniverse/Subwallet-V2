@@ -14,3 +14,13 @@ export const filterAssetsByChainAndType = (chainAssetMap: Record<string, _ChainA
 
   return result;
 };
+
+export const filterAssetsByChainAndSymbol = (chainAssetMap: Record<string, _ChainAsset>, chain: string, symbol: string): _ChainAsset | null => {
+  for (const assetInfo of Object.values(chainAssetMap)) {
+    if (assetInfo.originChain === chain && assetInfo.symbol === symbol) {
+      return assetInfo;
+    }
+  }
+
+  return null;
+};

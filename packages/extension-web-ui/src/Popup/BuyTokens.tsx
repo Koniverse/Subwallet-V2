@@ -17,7 +17,7 @@ import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatA
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon, ModalContext, SwSubHeader } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { CheckCircle, ShoppingCartSimple, XCircle } from 'phosphor-react';
+import { CheckCircle, ShoppingCartSimple, Ticket, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -62,6 +62,16 @@ const modalId = 'disclaimer-modal';
 function Component ({ className, modalContent, slug }: Props) {
   const locationState = useLocation().state as BuyTokensParam;
   const [_currentSymbol] = useState<string | undefined>(locationState?.symbol);
+
+  const [buyForm, setBuyForm] = useState(true);
+
+  const handleForm = (mode: string) => {
+    setBuyForm(mode === 'BUY');
+  };
+
+  const handleBuyForm = () => handleForm('BUY');
+  const handleSellForm = () => handleForm('SELL');
+
   const currentSymbol = slug || _currentSymbol;
 
   const notify = useNotification();
@@ -210,7 +220,7 @@ function Component ({ className, modalContent, slug }: Props) {
     return false;
   }, [selectedService, selectedAddress, selectedTokenKey, tokens, tokenItems]);
 
-  const onClickNext = useCallback(() => {
+  const onClickNext = useCallback((action: 'BUY' | 'SELL') => {
     setLoading(true);
 
     const { address, service, tokenKey } = form.getFieldsValue();
@@ -255,7 +265,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
       disclaimerPromise.then(() => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return urlPromise!(symbol, walletAddress, serviceNetwork, walletReference);
+        return urlPromise!(symbol, walletAddress, serviceNetwork, walletReference, action);
       })
         .then((url) => {
           openInNewTab(url)();
@@ -373,14 +383,26 @@ function Component ({ className, modalContent, slug }: Props) {
           onBack={goBack}
           paddingVertical
           showBackButton
-          title={t('Buy token')}
+          title={t('Buy & sell token')}
         />
       )}
+      <div className='form-row'>
+        <div
+          // eslint-disable-next-line react/jsx-no-bind
+          onClick={handleBuyForm}
+          style={{ cursor: 'pointer' }}
+        >Buy</div>
+        <div
+          // eslint-disable-next-line react/jsx-no-bind
+          onClick={handleSellForm}
+          style={{ cursor: 'pointer' }}
+        >Sell</div>
+      </div>
       <div className={'__scroll-container'}>
         <div className='__buy-icon-wrapper'>
           <Icon
             className={'__buy-icon'}
-            phosphorIcon={ShoppingCartSimple}
+            phosphorIcon={buyForm ? ShoppingCartSimple : Ticket}
             weight={'fill'}
           />
         </div>
@@ -431,16 +453,17 @@ function Component ({ className, modalContent, slug }: Props) {
       <div className={'__layout-footer'}>
         <Button
           disabled={!isSupportBuyTokens}
-          icon={ (
+          icon={(
             <Icon
-              phosphorIcon={ShoppingCartSimple}
+              phosphorIcon={buyForm ? ShoppingCartSimple : Ticket}
               weight={'fill'}
             />
           )}
           loading={loading}
-          onClick={onClickNext}
+          // eslint-disable-next-line react/jsx-no-bind
+          onClick={() => onClickNext(buyForm ? 'BUY' : 'SELL')}
         >
-          {t('Buy now')}
+          {buyForm ? t('Buy now') : t('Sell now')}
         </Button>
       </div>
       <BaseModal

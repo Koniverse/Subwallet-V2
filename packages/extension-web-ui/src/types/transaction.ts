@@ -3,6 +3,15 @@
 
 import { StakingType } from '@subwallet/extension-base/background/KoniTypes';
 
+export interface OffRampParams {
+  orderId: string,
+  partnerCustomerId: string
+  cryptoCurrency: string
+  numericCryptoAmount: number
+  walletAddress: string
+  network: string
+}
+
 export interface TransactionFormBaseProps {
   from: string,
   chain: string

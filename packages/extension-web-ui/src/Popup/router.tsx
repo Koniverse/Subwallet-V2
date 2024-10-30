@@ -120,6 +120,7 @@ const AccountExport = new LazyLoader('AccountExport', () => import('@subwallet/e
 const Transaction = new LazyLoader('Transaction', () => import('@subwallet/extension-web-ui/Popup/Transaction/Transaction'));
 const TransactionDone = new LazyLoader('TransactionDone', () => import('@subwallet/extension-web-ui/Popup/TransactionDone'));
 const SendFund = new LazyLoader('SendFund', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/SendFund'));
+const SendFundOffRamp = new LazyLoader('OffRampSendFund', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/SendFundOffRamp'));
 const SendNFT = new LazyLoader('SendNFT', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/SendNFT'));
 const Earn = new LazyLoader('Stake', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Earn'));
 const Unstake = new LazyLoader('Unstake', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Unbond'));
@@ -240,6 +241,7 @@ export const router = createBrowserRouter([
         ...Transaction.generateRouterObject('/transaction'),
         children: [
           SendFund.generateRouterObject('send-fund'),
+          SendFundOffRamp.generateRouterObject('off-ramp-send-fund'),
           SendNFT.generateRouterObject('send-nft'),
           Earn.generateRouterObject('earn'),
           Unstake.generateRouterObject('unstake'),
