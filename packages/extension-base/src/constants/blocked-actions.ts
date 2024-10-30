@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { packageInfo } from '@subwallet/extension-base';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { fetchStaticData } from '@subwallet/extension-base/utils';
 
@@ -9,11 +10,14 @@ interface BlockedActionsFeaturesMap {
   blockedFeaturesList: string[]
 }
 
+export const APP_ENV = process.env.TARGET_ENV as string;
+export const APP_VER = packageInfo.version;
+
 const PRODUCTION_BRANCHES = ['master', 'webapp', 'webapp-dev'];
 const branchName = process.env.BRANCH_NAME || 'koni-dev';
 const targetFolder = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'list' : 'preview';
 
-interface EnvConfig {
+export interface EnvConfig {
   appConfig?: AppConfig,
   browserConfig?: BrowserConfig,
   osConfig?: OSConfig
@@ -21,17 +25,17 @@ interface EnvConfig {
 
 // todo: check if can check exactly App Environment, Browser Type, OS Type
 
-interface AppConfig {
+export interface AppConfig {
   environment: string,
   version?: string,
 }
 
-interface BrowserConfig {
+export interface BrowserConfig {
   type: string,
   version?: string
 }
 
-interface OSConfig {
+export interface OSConfig {
   type: string,
   version?: string
 }
