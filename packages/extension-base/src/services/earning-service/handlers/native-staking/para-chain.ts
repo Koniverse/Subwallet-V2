@@ -539,6 +539,8 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       validator.commission = collatorCommission;
     }
 
+    console.log('ALL COLLATORS', allCollators);
+
     return allCollators;
   }
 
