@@ -463,6 +463,8 @@ export async function getParachainCollatorsInfo (chain: string, substrateApi: _S
     validator.commission = collatorCommission;
   }
 
+  console.log('All Collators', allCollators);
+
   return allCollators;
 }
 
