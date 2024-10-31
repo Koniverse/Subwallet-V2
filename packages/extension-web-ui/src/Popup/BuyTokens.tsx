@@ -17,7 +17,7 @@ import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatA
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon, ModalContext, SwSubHeader } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { CheckCircle, ShoppingCartSimple, Ticket, XCircle } from 'phosphor-react';
+import { CheckCircle, ShoppingCartSimple, Tag, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -383,26 +383,37 @@ function Component ({ className, modalContent, slug }: Props) {
           onBack={goBack}
           paddingVertical
           showBackButton
-          title={t('Buy & sell token')}
+          title={t('Buy & sell tokens')}
         />
       )}
-      <div className='form-row'>
-        <div
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={handleBuyForm}
-          style={{ cursor: 'pointer' }}
-        >Buy</div>
-        <div
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={handleSellForm}
-          style={{ cursor: 'pointer' }}
-        >Sell</div>
-      </div>
-      <div className={'__scroll-container'}>
+        <div className={'__scroll-container'}>
+          <div className='form-row __service-container'>
+          <div style={{
+              position: 'absolute',
+              top: '0.25rem',
+              left: buyForm ? '0.25rem' : 'calc(50% + 0.25rem)',
+              width: 'calc(50% - 0.5rem)',
+              height: 'calc(100% - 0.5rem)',
+              backgroundColor: '#252525',
+              borderRadius: '0.5rem',
+              transition: 'left 0.3s ease-in-out'
+          }}></div>
+
+          <div
+            onClick={handleBuyForm}
+            className='__service-selector'>
+              Buy
+          </div>
+          <div
+            onClick={handleSellForm}
+            className='__service-selector'>
+              Sell
+          </div>
+        </div>
         <div className='__buy-icon-wrapper'>
           <Icon
             className={'__buy-icon'}
-            phosphorIcon={buyForm ? ShoppingCartSimple : Ticket}
+            phosphorIcon={buyForm ? ShoppingCartSimple : Tag}
             weight={'fill'}
           />
         </div>
@@ -421,7 +432,7 @@ function Component ({ className, modalContent, slug }: Props) {
             <AccountSelector
               disabled={!isAllAccount}
               filter={accountsFilter}
-              label={t('Select account')}
+              label={buyForm ? t('Buy to account') : t('Sell from account')}
             />
           </Form.Item>
 
@@ -455,7 +466,7 @@ function Component ({ className, modalContent, slug }: Props) {
           disabled={!isSupportBuyTokens}
           icon={(
             <Icon
-              phosphorIcon={buyForm ? ShoppingCartSimple : Ticket}
+              phosphorIcon={buyForm ? ShoppingCartSimple : Tag}
               weight={'fill'}
             />
           )}
@@ -594,6 +605,26 @@ const BuyTokens = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       overflow: 'auto',
       paddingLeft: token.padding,
       paddingRight: token.padding
+    },
+
+    '.__service-container': {
+      backgroundColor: '#1A1A1A',
+      borderRadius: '0.5rem',
+      padding: '0.25rem',
+      height: '2.5rem',
+      position: 'relative',
+      display: 'flex',
+      overflow: 'hidden',
+    },
+
+    '.__service-selector':{
+      cursor: 'pointer',
+      width: '50%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      zIndex: 1
     },
 
     '.__buy-icon-wrapper': {

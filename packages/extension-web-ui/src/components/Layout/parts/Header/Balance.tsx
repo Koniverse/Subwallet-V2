@@ -263,7 +263,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
       onClick: onOpenSendFund
     },
     {
-      label: 'Buy/Sell',
+      label: 'Buy & Sell',
       type: 'buys',
       icon: PlusMinus,
       onClick: onOpenBuyTokens,
@@ -488,7 +488,7 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         destroyOnClose={true}
         id={BUY_TOKEN_MODAL}
         onCancel={handleCancelBuy}
-        title={t('Buy & sell token')}
+        title={t('Buy & sell tokens')}
       >
         <BuyTokens
           key={buyTokensKey}
