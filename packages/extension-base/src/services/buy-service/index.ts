@@ -60,7 +60,8 @@ export default class BuyService {
 
         temp.serviceInfo[service] = {
           network: info.network,
-          symbol: info.symbol
+          symbol: info.symbol,
+          supportSell: info.supportSell
         };
 
         temp.services.push(service);

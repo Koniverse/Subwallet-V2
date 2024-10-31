@@ -5,7 +5,7 @@ import { TRANSAK_API_KEY, TRANSAK_URL } from '@subwallet/extension-web-ui/consta
 import { CreateBuyOrderFunction } from '@subwallet/extension-web-ui/types';
 import qs from 'querystring';
 
-export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, network, walletReference, action) => {
+export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, network, slug, walletReference, action) => {
   return new Promise((resolve) => {
     const params: any = {
       apiKey: '307807a5-5fb3-4add-8a6c-fca4972e0470',
@@ -18,7 +18,7 @@ export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, netw
       params.walletAddress = address;
     } else {
       params.partnerCustomerId = address;
-      params.redirectURL = 'http://192.168.10.212:9000/home/tokens';
+      params.redirectURL = `http://192.168.10.213:9000/off-ramp-loading?slug=${slug}`;
       params.walletRedirection = true;
     }
 

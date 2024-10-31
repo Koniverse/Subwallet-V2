@@ -121,11 +121,11 @@ function Component ({ className, modalContent, slug }: Props) {
   const { contactUrl, name: serviceName, policyUrl, termUrl, url } = useMemo((): BuyServiceInfo => {
     return services[selectedService] || { name: '', url: '', contactUrl: '', policyUrl: '', termUrl: '' };
   }, [selectedService, services]);
-
+;
   const getServiceItems = useCallback((tokenSlug: string): ServiceItem[] => {
     const buyInfo = tokens[tokenSlug];
     const result: ServiceItem[] = [];
-
+    console.log('Checking', buyInfo);
     for (const serviceItem of baseServiceItems) {
       const temp: ServiceItem = {
         ...serviceItem,
@@ -135,6 +135,20 @@ function Component ({ className, modalContent, slug }: Props) {
       result.push(temp);
     }
 
+    return result;
+  }, [tokens]);
+
+  const getOffRampServiceItems = useCallback((tokenSlug: string): ServiceItem[] => {
+    const buyInfo = tokens[tokenSlug];
+    const result: ServiceItem[] = [];
+    for (const serviceItem of baseServiceItems) {
+      const temp: ServiceItem = {
+        ...serviceItem,
+        disabled: buyInfo ? !buyInfo.services.includes(serviceItem.key) || !buyInfo.serviceInfo[serviceItem.key]?.supportSell : true
+      };
+
+      result.push(temp);
+    }
     return result;
   }, [tokens]);
 
@@ -208,6 +222,8 @@ function Component ({ className, modalContent, slug }: Props) {
   }, [accountType, assetRegistry, currentSymbol, ledgerNetwork, tokens]);
 
   const serviceItems = useMemo(() => getServiceItems(selectedTokenKey), [getServiceItems, selectedTokenKey]);
+  const offRampServiceItems = useMemo(() => getOffRampServiceItems(selectedTokenKey), [getOffRampServiceItems, selectedTokenKey]);
+
 
   const isSupportBuyTokens = useMemo(() => {
     if (selectedService && selectedAddress && selectedTokenKey) {
@@ -249,7 +265,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
     if (urlPromise && serviceInfo && buyInfo.services.includes(service)) {
       const { network: serviceNetwork, symbol } = serviceInfo;
-
+      const slug = buyInfo.slug;
       const disclaimerPromise = new Promise<void>((resolve, reject) => {
         if (!disclaimerAgree[service]) {
           onConfirm().then(() => {
@@ -265,7 +281,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
       disclaimerPromise.then(() => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return urlPromise!(symbol, walletAddress, serviceNetwork, walletReference, action);
+        return urlPromise!(symbol, walletAddress, serviceNetwork, slug, walletReference, action);
       })
         .then((url) => {
           openInNewTab(url)();
@@ -359,7 +375,14 @@ function Component ({ className, modalContent, slug }: Props) {
 
   useEffect(() => {
     if (selectedTokenKey) {
-      const services = getServiceItems(selectedTokenKey);
+      let services;
+
+      if(!buyForm) {
+        services = getOffRampServiceItems(selectedTokenKey);
+      } else {
+        services = getServiceItems(selectedTokenKey);
+      }
+
       const filtered = services.filter((service) => !service.disabled);
 
       if (filtered.length > 1) {
@@ -448,7 +471,7 @@ function Component ({ className, modalContent, slug }: Props) {
             <Form.Item name={'service'}>
               <ServiceSelector
                 disabled={!selectedTokenKey}
-                items={serviceItems}
+                items={buyForm ? serviceItems : offRampServiceItems}
                 placeholder={t('Select supplier')}
                 title={t('Select supplier')}
               />

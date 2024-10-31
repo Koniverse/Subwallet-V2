@@ -4,6 +4,7 @@
 export interface BuyService {
   network: string;
   symbol: string;
+  supportSell: boolean;
 }
 
 export type SupportService = 'transak' | 'banxa' | 'coinbase' | 'moonpay' | 'onramper';
@@ -25,4 +26,4 @@ export interface BuyServiceInfo {
   url: string;
 }
 
-export type CreateBuyOrderFunction = (token: string, address: string, network: string, walletReference: string, action: 'BUY' | 'SELL') => Promise<string>;
+export type CreateBuyOrderFunction = (token: string, address: string, network: string, slug: string ,walletReference: string, action: 'BUY' | 'SELL') => Promise<string>;

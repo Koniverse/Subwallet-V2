@@ -128,10 +128,10 @@ function Component ({ children, className, modalContent, modalId }: Props) {
 
   useNavigateOnChangeAccount(homePath, !modalContent);
 
-  const [currentPage, setCurrentPage] = useLocalStorage<string>(CURRENT_PAGE, '/');
   const [offRampData, setOffRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
   const goBack = useCallback(() => {
-    if(currentPage === '/transaction/off-ramp-send-fund'){
+
+    if(location.pathname === '/transaction/off-ramp-send-fund'){
       setOffRampData(DEFAULT_OFF_RAMP_PARAMS);
     }
     navigate(homePath);

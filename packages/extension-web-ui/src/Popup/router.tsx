@@ -63,6 +63,7 @@ const Welcome = new LazyLoader('Welcome', () => import('@subwallet/extension-web
 const CreateDone = new LazyLoader('CreateDone', () => import('@subwallet/extension-web-ui/Popup/CreateDone'));
 const RedirectHandler = new LazyLoader('RedirectHandler', () => import('@subwallet/extension-web-ui/Popup/RedirectHandler'));
 const BuyTokens = new LazyLoader('BuyTokens', () => import('@subwallet/extension-web-ui/Popup/BuyTokens'));
+const OffRampLoading = new LazyLoader('OffRampLoading', () => import('@subwallet/extension-web-ui/Popup/OffRampLoading'))
 
 const Tokens = new LazyLoader('Tokens', () => import('@subwallet/extension-web-ui/Popup/Home/Tokens'));
 const TokenDetailList = new LazyLoader('TokenDetailList', () => import('@subwallet/extension-web-ui/Popup/Home/Tokens/DetailList'));
@@ -197,6 +198,7 @@ export const router = createBrowserRouter([
       },
       Welcome.generateRouterObject('/welcome', true),
       BuyTokens.generateRouterObject('/buy-tokens'),
+      OffRampLoading.generateRouterObject('/off-ramp-loading'),
       CreateDone.generateRouterObject('/create-done'),
       RedirectHandler.generateRouterObject('/redirect-handler/:feature'),
       {

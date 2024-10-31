@@ -85,6 +85,7 @@ export const DEFAULT_TRANSFER_PARAMS: TransferParams = {
 
 export const DEFAULT_OFF_RAMP_PARAMS: OffRampParams = {
   orderId: '',
+  slug: '',
   partnerCustomerId: '',
   cryptoCurrency: '',
   numericCryptoAmount: 0,
