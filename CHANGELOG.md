@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 1.3.5
+Build date: Oct 31, 2024.
+
+Features & Update:
+- Support ERC-1155 (#3726)
+- Refactor logic parsing data from contract response (#3070)
+- Re-check some old types from ExtrinsicType (#3654)
+- Update chain-list (#3815)
+  - Add support for World Chain
+  - Add support for Mode Mainnet
+  - Add support for Lisk mainnet
+  - Add support for Zircuit mainnet
+  - Add support for Tangle Network mainnet
+  - Add support Story Odyssey Testnet
+
+Bug fixed:
+- Fixed bug Do not show token (#3721)
+
+
 ## 1.3.4
 Build date: Oct 28, 2024.
 
