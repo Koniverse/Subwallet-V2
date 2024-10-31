@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
+import { EvmFeeInfo } from '@subwallet/extension-base/types';
 import { getERC20Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _ERC721_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { getPSP34ContractPromise } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
@@ -11,8 +12,7 @@ import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import BigN from 'bignumber.js';
 import { TransactionConfig } from 'web3-core';
-import { EvmFeeInfo } from "@subwallet/extension-base/types";
-import { t } from "i18next";
+import { t } from 'i18next';
 
 export async function getEVMTransactionObject (
   chainInfo: _ChainInfo,
