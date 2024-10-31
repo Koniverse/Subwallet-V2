@@ -4,7 +4,7 @@
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY, APP_ENV, APP_VER, fetchBlockedConfigObjects, fetchLastestBlockedActionsAndFeatures, getPassConfigId } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, fetchBlockedConfigObjects, fetchLastestBlockedActionsAndFeatures, getPassConfigId } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForAction, checkSupportForFeature, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -101,20 +101,8 @@ export default class TransactionService {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     const blockedConfigObjects = await fetchBlockedConfigObjects();
-    const currentConfig = { // todo: do something to get config
-      appConfig: {
-        environment: APP_ENV,
-        version: APP_VER
-      },
-      browserConfig: {
-        type: 'chrome',
-        version: '1.0'
-      },
-      osConfig: {
-        type: 'macOS',
-        version: '1.0'
-      }
-    };
+    const currentConfig = this.state.settingService.getEnvironmentSetting();
+
     const passBlockedConfigId = getPassConfigId(currentConfig, blockedConfigObjects);
 
     const blockedActionsFeaturesMaps = await fetchLastestBlockedActionsAndFeatures(passBlockedConfigId);

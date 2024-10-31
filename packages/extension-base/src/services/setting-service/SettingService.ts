@@ -75,8 +75,8 @@ export default class SettingService {
     this.passPhishingStore.set('PassPhishing', data, callback);
   }
 
-  public getEnvironmentSubject (): Subject<EnvConfig> {
-    return this.environmentStore.subject;
+  public getEnvironmentSetting () {
+    return this.environmentStore.subject.value;
   }
 
   public getEnvironmentList (update: (value: EnvConfig) => void): void {

@@ -1628,6 +1628,10 @@ export default class KoniState {
     });
   }
 
+  public initEnvConfig (envConfig: EnvConfig): void {
+    this.settingService.setEnvironment(envConfig);
+  }
+
   public async resetWallet (resetAll: boolean) {
     await this.keyringService.resetWallet(resetAll);
     await this.earningService.resetYieldPosition();
