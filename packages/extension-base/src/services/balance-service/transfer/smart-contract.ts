@@ -11,6 +11,8 @@ import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import BigN from 'bignumber.js';
 import { TransactionConfig } from 'web3-core';
+import { EvmFeeInfo } from "@subwallet/extension-base/types";
+import { t } from "i18next";
 
 export async function getEVMTransactionObject (
   chainInfo: _ChainInfo,
@@ -122,11 +124,24 @@ export async function getERC721Transaction (
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const contract = new web3Api.api.eth.Contract(_ERC721_ABI, contractAddress);
 
-  const [gasLimit, priority] = await Promise.all([
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-    contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).estimateGas({ from: senderAddress }) as number,
-    calculateGasFeeParams(web3Api, chain)
-  ]);
+  let gasLimit: number;
+  let priority: EvmFeeInfo;
+
+  try {
+    [gasLimit, priority] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+      contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).estimateGas({ from: senderAddress }) as number,
+      calculateGasFeeParams(web3Api, chain)
+    ]);
+  } catch (e) {
+    const error = e as Error;
+
+    if (error.message.includes('transfer to non ERC721Receiver implementer')) {
+      error.message = t('Recipent address cannot receive this NFT');
+    }
+
+    throw error;
+  }
 
   return {
     from: senderAddress,
