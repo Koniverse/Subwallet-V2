@@ -9,13 +9,12 @@ import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContex
 import { TransactionContext, TransactionContextProps } from '@subwallet/extension-web-ui/contexts/TransactionContext';
 import { useAlert, useChainChecker, useNavigateOnChangeAccount, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { ManageChainsParam, Theme, ThemeProps, TransactionFormBaseProps } from '@subwallet/extension-web-ui/types';
-import { detectTransactionPersistKey } from '@subwallet/extension-web-ui/utils';
+import { detectTransactionPersistKey, removeStorage } from '@subwallet/extension-web-ui/utils';
 import { ButtonProps, ModalContext, SwSubHeader } from '@subwallet/react-ui';
 import CN from 'classnames';
 import React, { useCallback, useContext, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useLocalStorage } from 'usehooks-ts';
 
 interface Props extends ThemeProps {
   title?: string;
@@ -128,11 +127,10 @@ function Component ({ children, className, modalContent, modalId }: Props) {
 
   useNavigateOnChangeAccount(homePath, !modalContent);
 
-  const [offRampData, setOffRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
   const goBack = useCallback(() => {
 
     if(location.pathname === '/transaction/off-ramp-send-fund'){
-      setOffRampData(DEFAULT_OFF_RAMP_PARAMS);
+      removeStorage(OFF_RAMP_DATA);
     }
     navigate(homePath);
   }, [homePath, navigate]);

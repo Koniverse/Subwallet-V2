@@ -1,10 +1,14 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { DEFAULT_OFF_RAMP_PARAMS, OFF_RAMP_DATA } from '@subwallet/extension-web-ui/constants';
-import { ThemeProps } from '@subwallet/extension-web-ui/types';
-import React, { useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toBNString } from '@subwallet/extension-base/utils';
+import { DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
+import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
+import { useGetChainAssetInfo, useNotification, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import { RootState } from '@subwallet/extension-web-ui/stores';
+import { OffRampParams, ThemeProps } from '@subwallet/extension-web-ui/types';
+import React, { useCallback, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
@@ -12,36 +16,56 @@ import { LoadingScreen } from '../components';
 
 type Props = ThemeProps;
 
-function getOffRampData (orderId: string, searchParams: URLSearchParams) {
-  return {
-    orderId,
-    slug: searchParams.get('slug') || '',
-    partnerCustomerId: searchParams.get('partnerCustomerId') || '',
-    cryptoCurrency: searchParams.get('cryptoCurrency') || '',
-    cryptoAmount: searchParams.get('cryptoAmount') || '',
-    numericCryptoAmount: parseFloat(searchParams.get('cryptoAmount') || '0'),
-    walletAddress: searchParams.get('walletAddress') || '',
-    network: searchParams.get('network') || ''
-  };
-}
-
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
-  const navigate = useNavigate();
-  // Pathname query
-  const [, setStorage] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const orderId = searchParams.get('orderId') || '';
+  // Handle Sell Token
+  const { accounts } = useSelector((state: RootState) => state.accountState);
+  const [, setStorage] = useLocalStorage(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
+  const [offRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
+  const notify = useNotification();
+  const { t } = useTranslation();
 
-  const details = useMemo(() => {
-    return getOffRampData(orderId, searchParams);
-  }, [orderId, searchParams]);
+  const addresses = accounts.map((account) => account.address);
+  const { isWebUI } = useContext(ScreenContext);
+
+  const data = offRampData;
+  const TokenInfo = useGetChainAssetInfo(data.slug);
+
+  console.log('Hiiii', TokenInfo);
+  const navigate = useNavigate();
+
+  const onOpenSellToken = useCallback((data: OffRampParams) => {
+    const partnerCustomerId = data.partnerCustomerId;
+    const walletAddress = data.walletAddress;
+    const slug = data.slug;
+    const address = partnerCustomerId;
+    const bnAmount = toBNString(data.numericCryptoAmount.toString(), TokenInfo?.decimals || 0);
+    console.log('Was here');
+    const transferParams = {
+      ...DEFAULT_TRANSFER_PARAMS,
+      chain: TokenInfo?.originChain || '',
+      destChain: TokenInfo?.originChain || '',
+      asset: TokenInfo?.slug || '',
+      from: address,
+      defaultSlug: slug || '',
+      to: walletAddress,
+      value: bnAmount.toString()
+    };
+
+    setStorage(transferParams);
+
+    if (!isWebUI) {
+      navigate('/transaction/off-ramp-send-fund');
+    } else {
+      navigate('/transaction/home/tokens?onOpen=true');
+      // activeModal(OFF_RAMP_TRANSACTION_TRANSFER_MODAL);
+    }
+  }, [TokenInfo?.decimals, TokenInfo?.originChain, TokenInfo?.slug, setStorage, isWebUI, navigate]);
 
   useEffect(() => {
-    if (orderId) {
-      setStorage(details);
-      navigate('/home/tokens');
+    if (data.orderId && addresses.includes(data.partnerCustomerId)) {
+      onOpenSellToken(data);
     }
-  }, [details, orderId, setStorage, navigate]);
+  }, [addresses, data, onOpenSellToken]);
 
   return (
     <>

@@ -121,36 +121,23 @@ function Component ({ className, modalContent, slug }: Props) {
   const { contactUrl, name: serviceName, policyUrl, termUrl, url } = useMemo((): BuyServiceInfo => {
     return services[selectedService] || { name: '', url: '', contactUrl: '', policyUrl: '', termUrl: '' };
   }, [selectedService, services]);
-;
   const getServiceItems = useCallback((tokenSlug: string): ServiceItem[] => {
     const buyInfo = tokens[tokenSlug];
     const result: ServiceItem[] = [];
-    console.log('Checking', buyInfo);
+
     for (const serviceItem of baseServiceItems) {
       const temp: ServiceItem = {
         ...serviceItem,
-        disabled: buyInfo ? !buyInfo.services.includes(serviceItem.key) : true
+        disabled: buyInfo
+          ? !buyInfo.services.includes(serviceItem.key) || (!buyForm && !buyInfo.serviceInfo[serviceItem.key]?.supportSell)
+          : true
       };
 
       result.push(temp);
     }
 
     return result;
-  }, [tokens]);
-
-  const getOffRampServiceItems = useCallback((tokenSlug: string): ServiceItem[] => {
-    const buyInfo = tokens[tokenSlug];
-    const result: ServiceItem[] = [];
-    for (const serviceItem of baseServiceItems) {
-      const temp: ServiceItem = {
-        ...serviceItem,
-        disabled: buyInfo ? !buyInfo.services.includes(serviceItem.key) || !buyInfo.serviceInfo[serviceItem.key]?.supportSell : true
-      };
-
-      result.push(temp);
-    }
-    return result;
-  }, [tokens]);
+  }, [tokens, buyForm]);
 
   const onConfirm = useCallback((): Promise<void> => {
     activeModal(modalId);
@@ -191,7 +178,7 @@ function Component ({ className, modalContent, slug }: Props) {
   const tokenItems = useMemo<TokenItemType[]>(() => {
     const result: TokenItemType[] = [];
 
-    const list = [...Object.values(tokens)];
+    const list = [...Object.values(tokens)].filter((token) => buyForm || token.services.some((service) => token.serviceInfo[service]?.supportSell === true));
 
     const filtered = currentSymbol ? list.filter((value) => value.slug === currentSymbol || value.symbol === currentSymbol) : list;
 
@@ -219,11 +206,9 @@ function Component ({ className, modalContent, slug }: Props) {
     });
 
     return result;
-  }, [accountType, assetRegistry, currentSymbol, ledgerNetwork, tokens]);
+  }, [accountType, assetRegistry, currentSymbol, ledgerNetwork, tokens, buyForm]);
 
   const serviceItems = useMemo(() => getServiceItems(selectedTokenKey), [getServiceItems, selectedTokenKey]);
-  const offRampServiceItems = useMemo(() => getOffRampServiceItems(selectedTokenKey), [getOffRampServiceItems, selectedTokenKey]);
-
 
   const isSupportBuyTokens = useMemo(() => {
     if (selectedService && selectedAddress && selectedTokenKey) {
@@ -237,6 +222,20 @@ function Component ({ className, modalContent, slug }: Props) {
   }, [selectedService, selectedAddress, selectedTokenKey, tokens, tokenItems]);
 
   const onClickNext = useCallback((action: 'BUY' | 'SELL') => {
+    if (action === 'SELL') {
+      if (currentAccount && currentAccount.isReadOnly) {
+        notify({
+          message: t('Feature not available for watch-only account'),
+          type: 'info',
+          duration: 3
+        });
+
+        setLoading(false);
+
+        return;
+      }
+    }
+
     setLoading(true);
 
     const { address, service, tokenKey } = form.getFieldsValue();
@@ -301,7 +300,7 @@ function Component ({ className, modalContent, slug }: Props) {
     } else {
       setLoading(false);
     }
-  }, [form, tokens, chainInfoMap, disclaimerAgree, onConfirm, walletReference, notify, t]);
+  }, [form, tokens, chainInfoMap, currentAccount, notify, t, disclaimerAgree, onConfirm, walletReference]);
 
   const filterAccountType = useMemo((): AccountType => {
     if (currentSymbol) {
@@ -340,8 +339,12 @@ function Component ({ className, modalContent, slug }: Props) {
       }
     }
 
+    if (!buyForm && account.isReadOnly) {
+      return false;
+    }
+
     return true;
-  }, [filterAccountType]);
+  }, [filterAccountType, buyForm]);
 
   useEffect(() => {
     if (currentAddress !== currentAccount?.address) {
@@ -375,13 +378,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
   useEffect(() => {
     if (selectedTokenKey) {
-      let services;
-
-      if(!buyForm) {
-        services = getOffRampServiceItems(selectedTokenKey);
-      } else {
-        services = getServiceItems(selectedTokenKey);
-      }
+      const services = getServiceItems(selectedTokenKey);
 
       const filtered = services.filter((service) => !service.disabled);
 
@@ -409,27 +406,32 @@ function Component ({ className, modalContent, slug }: Props) {
           title={t('Buy & sell tokens')}
         />
       )}
-        <div className={'__scroll-container'}>
-          <div className='form-row __service-container'>
+      <div className={'__scroll-container'}>
+        <div className='form-row __service-container'>
           <div style={{
-              position: 'absolute',
-              top: '0.25rem',
-              left: buyForm ? '0.25rem' : 'calc(50% + 0.25rem)',
-              width: 'calc(50% - 0.5rem)',
-              height: 'calc(100% - 0.5rem)',
-              backgroundColor: '#252525',
-              borderRadius: '0.5rem',
-              transition: 'left 0.3s ease-in-out'
-          }}></div>
+            position: 'absolute',
+            top: '0.25rem',
+            left: buyForm ? '0.25rem' : 'calc(50% + 0.25rem)',
+            width: 'calc(50% - 0.5rem)',
+            height: 'calc(100% - 0.5rem)',
+            backgroundColor: '#252525',
+            borderRadius: '0.5rem',
+            transition: 'left 0.3s ease-in-out'
+          }}
+          ></div>
 
           <div
+            // eslint-disable-next-line react/jsx-no-bind
+            className='__service-selector'
             onClick={handleBuyForm}
-            className='__service-selector'>
+          >
               Buy
           </div>
           <div
+            // eslint-disable-next-line react/jsx-no-bind
+            className='__service-selector'
             onClick={handleSellForm}
-            className='__service-selector'>
+          >
               Sell
           </div>
         </div>
@@ -471,7 +473,7 @@ function Component ({ className, modalContent, slug }: Props) {
             <Form.Item name={'service'}>
               <ServiceSelector
                 disabled={!selectedTokenKey}
-                items={buyForm ? serviceItems : offRampServiceItems}
+                items={serviceItems}
                 placeholder={t('Select supplier')}
                 title={t('Select supplier')}
               />
@@ -637,10 +639,10 @@ const BuyTokens = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       height: '2.5rem',
       position: 'relative',
       display: 'flex',
-      overflow: 'hidden',
+      overflow: 'hidden'
     },
 
-    '.__service-selector':{
+    '.__service-selector': {
       cursor: 'pointer',
       width: '50%',
       display: 'flex',

@@ -16,6 +16,7 @@ import { AddressInput } from '@subwallet/extension-web-ui/components/Field/Addre
 import AmountInput from '@subwallet/extension-web-ui/components/Field/AmountInput';
 import { ChainSelector } from '@subwallet/extension-web-ui/components/Field/ChainSelector';
 import { TokenItemType, TokenSelector } from '@subwallet/extension-web-ui/components/Field/TokenSelector';
+import { OFF_RAMP_DATA } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useAlert, useFetchChainAssetInfo, useGetChainPrefixBySlug, useInitValidateTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext } from '@subwallet/extension-web-ui/hooks';
 import { useIsMantaPayEnabled } from '@subwallet/extension-web-ui/hooks/account/useIsMantaPayEnabled';
@@ -24,7 +25,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-web-ui/reducer';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-web-ui/types';
-import { findAccountByAddress, formatBalance, ledgerMustCheckNetwork, noop, reformatAddress, transactionDefaultFilterAccount } from '@subwallet/extension-web-ui/utils';
+import { findAccountByAddress, formatBalance, ledgerMustCheckNetwork, noop, reformatAddress, removeStorage,transactionDefaultFilterAccount } from '@subwallet/extension-web-ui/utils';
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
@@ -34,13 +35,12 @@ import { PaperPlaneRight, PaperPlaneTilt } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-import { useIsFirstRender, useLocalStorage } from 'usehooks-ts';
+import { useIsFirstRender } from 'usehooks-ts';
 
 import { BN, BN_ZERO } from '@polkadot/util';
 import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
-import { DEFAULT_OFF_RAMP_PARAMS, OFF_RAMP_DATA } from '@subwallet/extension-web-ui/constants';
 
 type Props = ThemeProps & {
   modalContent?: boolean;
@@ -632,8 +632,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
   }, [maxTransfer]);
 
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
-    const [, setOffRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
-    setOffRampData(DEFAULT_OFF_RAMP_PARAMS);
+    removeStorage(OFF_RAMP_DATA);
 
     if (chain !== destChain) {
       const originChainInfo = chainInfoMap[chain];

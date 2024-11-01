@@ -32,7 +32,6 @@ import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
 import DetailTable from './DetailTable';
-import { filterAssetsByChainAndSymbol, toBNString } from '@subwallet/extension-base/utils';
 
 type Props = ThemeProps;
 const BN_0 = new BigN(0);
@@ -200,50 +199,6 @@ const Component = (): React.ReactElement => {
   },
   [currentAccount, navigate, notify, t, setStorage]
   );
-
-  const [offRampData, setOffRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
-  const { assetRegistry } = useSelector((state: RootState) => state.assetRegistry);
-  const data = offRampData;
-
-  const onOpenSellToken = useCallback(() => {
-    if (currentAccount && currentAccount.isReadOnly) {
-      notify({
-        message: t('The account you are using is watch-only, you cannot send assets with it'),
-        type: 'info',
-        duration: 3
-      });
-
-      return;
-    }
-
-    const partnerCustomerId = data.partnerCustomerId;
-    const cryptoCurrency = data.cryptoCurrency;
-    const walletAddress = data.walletAddress;
-    const network = data.network;
-    const TokenInfo = filterAssetsByChainAndSymbol(assetRegistry, network, cryptoCurrency);
-    const address = currentAccount ? (isAccountAll(currentAccount.address) ? partnerCustomerId : currentAccount.address) : '';
-    const bnAmount = toBNString(data.numericCryptoAmount.toString(), TokenInfo?.decimals || 0);
-
-    setStorage({
-      ...DEFAULT_TRANSFER_PARAMS,
-      chain: TokenInfo?.originChain || '',
-      destChain: TokenInfo?.originChain || '',
-      asset: TokenInfo?.slug || '',
-      from: address,
-      defaultSlug: TokenInfo?.slug || '',
-      to: walletAddress,
-      value: bnAmount.toString()
-    });
-    navigate('/transaction/off-ramp-send-fund');
-  },
-  [currentAccount, navigate, notify, t, setStorage]
-  );
-  const addresses = accounts.map(account => account.address);
-  useEffect(() => {
-    if (data.orderId && !isWebUI && addresses.includes(data.partnerCustomerId)) {
-      onOpenSellToken();
-    }
-  }, [data.orderId, onOpenSellToken]);
 
   const onOpenBuyTokens = useCallback(() => {
     navigate('/buy-tokens');

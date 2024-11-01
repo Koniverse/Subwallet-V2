@@ -9,16 +9,17 @@ export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, netw
   return new Promise((resolve) => {
     const params: any = {
       apiKey: '307807a5-5fb3-4add-8a6c-fca4972e0470',
-      defaultCryptoCurrency: 'USDT',
-      networks: 'ethereum',
-      cryptoCurrencyList: 'USDT',
+      defaultCryptoCurrency: symbol,
+      networks: network,
+      cryptoCurrencyList: symbol,
       productsAvailed: action
     };
-    if(action === 'BUY'){
+
+    if (action === 'BUY') {
       params.walletAddress = address;
     } else {
       params.partnerCustomerId = address;
-      params.redirectURL = `http://192.168.10.213:9000/off-ramp-loading?slug=${slug}`;
+      params.redirectURL = `http://192.168.10.213:9000/home/tokens?slug=${slug}`;
       params.walletRedirection = true;
     }
 

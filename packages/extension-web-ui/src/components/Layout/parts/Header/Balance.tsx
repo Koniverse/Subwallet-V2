@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { balanceNoPrefixFormater, filterAssetsByChainAndSymbol, formatNumber, toBNString } from '@subwallet/extension-base/utils';
+import { balanceNoPrefixFormater, formatNumber } from '@subwallet/extension-base/utils';
 import { ReceiveQrModal, TokensSelectorModal } from '@subwallet/extension-web-ui/components/Modal';
 import { AccountSelectorModal } from '@subwallet/extension-web-ui/components/Modal/AccountSelectorModal';
 import { BaseModal } from '@subwallet/extension-web-ui/components/Modal/BaseModal';
-import { BUY_TOKEN_MODAL, DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, OFF_RAMP_TRANSACTION_TRANSFER_MODAL, TRANSACTION_TRANSFER_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
+import { BUY_TOKEN_MODAL, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, OFF_RAMP_TRANSACTION_TRANSFER_MODAL, TRANSACTION_TRANSFER_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
@@ -18,7 +18,7 @@ import SendFund from '@subwallet/extension-web-ui/Popup/Transaction/variants/Sen
 import SendFundOffRamp from '@subwallet/extension-web-ui/Popup/Transaction/variants/SendFundOffRamp';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { BuyTokenInfo, PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
-import { getAccountType, isAccountAll } from '@subwallet/extension-web-ui/utils';
+import { getAccountType, isAccountAll, removeStorage } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, ModalContext, Number, Tag, Tooltip, Typography } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowFatLinesDown, ArrowsClockwise, Eye, EyeSlash, PaperPlaneTilt, PlusMinus } from 'phosphor-react';
@@ -160,51 +160,6 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   [currentAccount, setStorage, tokenGroupSlug, activeModal, notify, t]
   );
 
-  //Handle Sell Token
-  const [offRampData, setOffRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
-  const { assetRegistry } = useSelector((state) => state.assetRegistry);
-  const data = offRampData;
-
-  const onOpenSellToken = useCallback(() => {
-    if (currentAccount && currentAccount.isReadOnly) {
-      notify({
-        message: t('The account you are using is read-only, you cannot send assets with it'),
-        type: 'info',
-        duration: 3
-      });
-
-      return;
-    }
-
-      const partnerCustomerId = data.partnerCustomerId
-      const cryptoCurrency = data.cryptoCurrency;
-      const walletAddress = data.walletAddress;
-      const network = data.network;
-      const TokenInfo = filterAssetsByChainAndSymbol(assetRegistry, network, cryptoCurrency);
-      const address = partnerCustomerId;
-      const bnAmount = toBNString(data.numericCryptoAmount.toString(), TokenInfo?.decimals || 0);
-
-    setStorage({
-      ...DEFAULT_TRANSFER_PARAMS,
-        chain: TokenInfo?.originChain || '',
-        destChain: TokenInfo?.originChain || '',
-        asset: TokenInfo?.slug || '',
-        from: address,
-        defaultSlug: TokenInfo?.slug || '',
-        to: walletAddress,
-        value: bnAmount.toString()
-    });
-    activeModal(OFF_RAMP_TRANSACTION_TRANSFER_MODAL);
-  },
-  [currentAccount, setStorage, tokenGroupSlug, activeModal, notify, t]
-  );
-
-  const addresses = accounts.map(account => account.address);
-  useEffect(() => {
-    if (data.orderId && addresses.includes(data.partnerCustomerId)) {
-      onOpenSellToken();
-    }
-  }, [data.orderId, onOpenSendFund]);
 
   useEffect(() => {
     setSendFundKey(`sendFundKey-${Date.now()}`);
@@ -228,8 +183,8 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   }, [inactiveModal]);
 
   const handleCancelSell = useCallback(() => {
-  setOffRampData(DEFAULT_OFF_RAMP_PARAMS);
-  inactiveModal(OFF_RAMP_TRANSACTION_TRANSFER_MODAL);
+    removeStorage(OFF_RAMP_DATA);
+    inactiveModal(OFF_RAMP_TRANSACTION_TRANSFER_MODAL);
   }, [inactiveModal]);
 
   const isSupportBuyTokens = useMemo(() => {

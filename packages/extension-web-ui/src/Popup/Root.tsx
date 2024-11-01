@@ -22,11 +22,11 @@ import { NotificationProps } from '@subwallet/react-ui/es/notification/Notificat
 import CN from 'classnames';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { useLocalStorage } from 'usehooks-ts';
 
-
-import { CONFIRMATION_MODAL, TRANSACTION_STORAGES } from '../constants';
+import { CONFIRMATION_MODAL, DEFAULT_OFF_RAMP_PARAMS,OFF_RAMP_DATA, TRANSACTION_STORAGES } from '../constants';
 import { WebUIContextProvider } from '../contexts/WebUIContext';
 
 changeHeaderLogo(<Logo2D />);
@@ -100,6 +100,19 @@ interface RootLocationState {
   useOpenModal?: string
 }
 
+function getOffRampData (orderId: string, searchParams: URLSearchParams) {
+  return {
+    orderId,
+    slug: searchParams.get('slug') || '',
+    partnerCustomerId: searchParams.get('partnerCustomerId') || '',
+    cryptoCurrency: searchParams.get('cryptoCurrency') || '',
+    cryptoAmount: searchParams.get('cryptoAmount') || '',
+    numericCryptoAmount: parseFloat(searchParams.get('cryptoAmount') || '0'),
+    walletAddress: searchParams.get('walletAddress') || '',
+    network: searchParams.get('network') || ''
+  };
+}
+
 function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactElement {
   const dataContext = useContext(DataContext);
   const screenContext = useContext(ScreenContext);
@@ -110,6 +123,16 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
 
   const initDataRef = useRef<Promise<boolean>>(dataContext.awaitStores(['accountState', 'chainStore', 'assetRegistry', 'requestState', 'settings', 'mantaPay']));
   const firstRender = useRef(true);
+
+  const navigate = useNavigate();
+  // Pathname query
+  const [, setStorage] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const orderId = searchParams.get('orderId') || '';
+
+  const details = useMemo(() => {
+    return getOffRampData(orderId, searchParams);
+  }, [orderId, searchParams]);
 
   useSubscribeLanguage();
 
@@ -129,6 +152,13 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
       .length
     , [accounts]
   );
+
+  // useEffect(() => {
+  //   if (orderId && !isNoAccount) {
+  //     setStorage(details);
+  //     navigate('/off-ramp-loading');
+  //   }
+  // }, [details, orderId, setStorage, navigate, isNoAccount]);
 
   useEffect(() => {
     initDataRef.current.then(() => {
