@@ -1,13 +1,13 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { toBNString } from '@subwallet/extension-base/utils';
+import { addLazy, toBNString } from '@subwallet/extension-base/utils';
 import { DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useGetChainAssetInfo, useNotification, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { OffRampParams, ThemeProps } from '@subwallet/extension-web-ui/types';
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
@@ -24,7 +24,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const notify = useNotification();
   const { t } = useTranslation();
 
-  const addresses = accounts.map((account) => account.address);
+  const addresses = useMemo(() => accounts.map((account) => account.address), [accounts]);
   const { isWebUI } = useContext(ScreenContext);
 
   const data = offRampData;
@@ -56,7 +56,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     if (!isWebUI) {
       navigate('/transaction/off-ramp-send-fund');
     } else {
-      navigate('/transaction/home/tokens?onOpen=true');
+      navigate('/home/tokens?onOpen=true');
       // activeModal(OFF_RAMP_TRANSACTION_TRANSFER_MODAL);
     }
   }, [TokenInfo?.decimals, TokenInfo?.originChain, TokenInfo?.slug, setStorage, isWebUI, navigate]);
