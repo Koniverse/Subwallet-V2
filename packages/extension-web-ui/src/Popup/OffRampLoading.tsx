@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { toBNString } from '@subwallet/extension-base/utils';
+import { addLazy, toBNString } from '@subwallet/extension-base/utils';
 import { DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useGetChainAssetInfo, useNotification, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
@@ -63,7 +63,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   useEffect(() => {
     if (data.orderId && addresses.includes(data.partnerCustomerId)) {
-      onOpenSellToken(data);
+      addLazy('redirectOffRamp', () => {
+        onOpenSellToken(data);
+      }, undefined, 30000, false);
     }
   }, [addresses, data, onOpenSellToken]);
 
