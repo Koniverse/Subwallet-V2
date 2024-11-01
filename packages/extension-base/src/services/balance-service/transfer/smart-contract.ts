@@ -137,7 +137,7 @@ export async function getERC721Transaction (
     const error = e as Error;
 
     if (error.message.includes('transfer to non ERC721Receiver implementer')) {
-      error.message = t('Recipent address cannot receive this NFT');
+      error.message = t('Unable to send. NFT not supported on recipient address');
     }
 
     throw error;
