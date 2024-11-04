@@ -11,14 +11,13 @@ import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-
 import { TonChainHandler } from '@subwallet/extension-base/services/chain-service/handler/TonChainHandler';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
-import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, fetchPatchData, PatchInfo, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import AssetSettingStore from '@subwallet/extension-base/stores/AssetSetting';
 import { addLazy, calculateMetadataHash, fetchStaticData, filterAssetsByChainAndType, getShortMetadata, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { Md5 } from 'ts-md5';
 import Web3 from 'web3';
 
 import { logger as createLogger } from '@polkadot/util/logger';
@@ -51,7 +50,7 @@ const ignoredList = [
   'storyPartner_testnet'
 ];
 
-const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
+export const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
   return Object.fromEntries(
     Object.entries(assets)
       .filter(([, info]) => chainInfo[info.originChain])
@@ -109,9 +108,6 @@ export class ChainService {
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
   private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
-  // private assetMapPatch: string = JSON.stringify({});
-  // private assetLogoPatch: string = JSON.stringify({});
-  private appliedPatchVersion = '';
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -253,6 +249,10 @@ export class ChainService {
     return this.dataMap.assetRegistry;
   }
 
+  public setAssetRegistry (assetRegistry: Record<string, _ChainAsset>) {
+    this.dataMap.assetRegistry = assetRegistry;
+  }
+
   public getMultiChainAssetMap () {
     return MultiChainAssetMap;
   }
@@ -283,6 +283,10 @@ export class ChainService {
 
   public getChainInfoMap (): Record<string, _ChainInfo> {
     return this.dataMap.chainInfoMap;
+  }
+
+  public setChainInfoMap (chainInfoMap: Record<string, _ChainInfo>) {
+    this.dataMap.chainInfoMap = chainInfoMap;
   }
 
   public getEvmChainInfoMap (): Record<string, _ChainInfo> {
@@ -700,77 +704,6 @@ export class ChainService {
     clearInterval(this.refreshLatestChainDataTimeOut);
   }
 
-  validatePatchWithHash (latestPatch: PatchInfo) {
-    const { ChainAsset, ChainAssetHashMap, ChainInfo, ChainInfoHashMap, MultiChainAsset, MultiChainAssetHashMap } = latestPatch;
-
-    for (const [chainSlug, chain] of Object.entries(ChainInfo)) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { chainStatus, providers, ...chainWithoutProvidersAndStatus } = chain;
-
-      if (Md5.hashStr(JSON.stringify(chainWithoutProvidersAndStatus)) !== ChainInfoHashMap[chainSlug]) {
-        return false;
-      }
-    }
-
-    for (const [assetSlug, asset] of Object.entries(ChainAsset)) {
-      if (Md5.hashStr(JSON.stringify(asset)) !== ChainAssetHashMap[assetSlug]) {
-        return false;
-      }
-    }
-
-    for (const [mAssetSlug, mAsset] of Object.entries(MultiChainAsset)) {
-      if (Md5.hashStr(JSON.stringify(mAsset)) !== MultiChainAssetHashMap[mAssetSlug]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  handleLatestPatch (latestPatch: PatchInfo) {
-    try {
-      const isSafePatch = this.validatePatchWithHash(latestPatch);
-      const { ChainAsset: latestAssetInfo, ChainInfo: latestChainInfo, MultiChainAsset: latestMultiChainAsset, appliedVersion } = latestPatch;
-      // todo: AssetLogoMap, ChainLogoMap
-
-      if (isSafePatch && this.appliedPatchVersion !== appliedVersion) {
-        if (latestChainInfo && Object.keys(latestChainInfo).length > 0) {
-          const chainInfoMap = Object.assign({}, this.dataMap.chainInfoMap, latestChainInfo);
-
-          this.dataMap.chainInfoMap = chainInfoMap;
-          this.chainInfoMapSubject.next(chainInfoMap);
-        }
-
-        if (latestAssetInfo && Object.keys(latestAssetInfo).length > 0) {
-          const assetRegistry = filterAssetInfoMap(this.getChainInfoMap(), Object.assign({}, this.dataMap.assetRegistry, latestAssetInfo));
-
-          this.dataMap.assetRegistry = assetRegistry;
-          this.assetRegistrySubject.next(assetRegistry);
-
-          this.autoEnableTokens()
-            .then(() => {
-              this.eventService.emit('asset.updateState', '');
-            })
-            .catch(console.error);
-        }
-
-        if (latestMultiChainAsset && Object.keys(latestMultiChainAsset).length > 0) {
-          const multiChainAssetMap = { ...MultiChainAssetMap, ...latestMultiChainAsset };
-
-          this.multiChainAssetMapSubject.next(multiChainAssetMap);
-        }
-
-        this.appliedPatchVersion = appliedVersion;
-      }
-    } catch (e) {
-      console.error('Error fetching latest patch data');
-    }
-
-    this.eventService.emit('asset.online.ready', true);
-
-    this.logger.log('Finished updating latest asset');
-  }
-
   handleLatestChainData (latestChainInfo: _ChainInfo[]) {
     try {
       if (latestChainInfo && latestChainInfo.length > 0) {
@@ -905,16 +838,6 @@ export class ChainService {
     //     })
     //     .catch(console.error);
     // }).catch(console.error);
-
-    this.fetchLatestPatchData().then((latestPatch) => {
-      if (latestPatch) {
-        this.eventService.waitAssetReady
-          .then(() => {
-            this.handleLatestPatch(latestPatch);
-          })
-          .catch(console.error);
-      }
-    }).catch(console.error);
 
     this.fetchLatestChainData().then((latestChainInfo) => {
       this.handleLatestChainData(latestChainInfo);
@@ -1229,10 +1152,6 @@ export class ChainService {
   // private async fetchLatestAssetData () {
   //   return await Promise.all([fetchPatchData<Record<string, _ChainAsset>>('ChainAsset.json'), fetchPatchData<Record<string, string>>('AssetLogoMap.json')]); // lastest logo also here.
   // }
-
-  private async fetchLatestPatchData () {
-    return await fetchPatchData<PatchInfo>('data.json');
-  }
 
   // @ts-ignore
   private async fetchLatestPriceIdsData () {
