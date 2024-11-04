@@ -50,7 +50,10 @@ const SORTING_MODAL_ID = 'pool-sorting-modal';
 const FILTER_MODAL_ID = 'pool-filter-modal';
 
 const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
-  const { chain, className = '', defaultValue, disabled,
+  const { chain,
+    className = '',
+    defaultValue: cachedValue,
+    disabled,
     from,
     id = 'pool-selector',
     label, loading, onChange,
@@ -213,6 +216,10 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   , [disabled, items.length, nominationPoolValueList.length]
   );
 
+  const stakedPool = useMemo(() => nominationPoolValueList[0], [nominationPoolValueList]);
+
+  const defaultPool = useMemo(() => (defaultSelectPool?.[0] || '').toString(), [defaultSelectPool]);
+
   const _onSelectItem = useCallback((value: string) => {
     onChange && onChange({ target: { value } });
   }, [onChange]);
@@ -364,11 +371,11 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   }, []);
 
   useEffect(() => {
-    const defaultSelectedPool = defaultValue || nominationPoolValueList[0] || `${defaultSelectPool?.[0] || ''}`;
+    const defaultSelectedPool = stakedPool || value || cachedValue || defaultPool;
 
     onChange && onChange({ target: { value: defaultSelectedPool } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nominationPoolValueList, items]);
+  }, [stakedPool, items]);
 
   useEffect(() => {
     if (!isActive) {
