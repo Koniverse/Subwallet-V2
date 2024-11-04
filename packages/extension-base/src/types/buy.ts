@@ -16,6 +16,7 @@ export interface BuyTokenInfo {
   support: 'ETHEREUM' | 'SUBSTRATE';
   services: Array<SupportService>;
   serviceInfo: Record<SupportService, BuyService>;
+  supportSell: boolean;
 }
 
 export interface BuyServiceInfo {

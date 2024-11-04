@@ -178,7 +178,7 @@ function Component ({ className, modalContent, slug }: Props) {
   const tokenItems = useMemo<TokenItemType[]>(() => {
     const result: TokenItemType[] = [];
 
-    const list = [...Object.values(tokens)].filter((token) => buyForm || token.services.some((service) => token.serviceInfo[service]?.supportSell === true));
+    const list = [...Object.values(tokens)].filter((token) => buyForm || token.supportSell);
 
     const filtered = currentSymbol ? list.filter((value) => value.slug === currentSymbol || value.symbol === currentSymbol) : list;
 
@@ -280,7 +280,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
       disclaimerPromise.then(() => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return urlPromise!(symbol, walletAddress, serviceNetwork, slug, walletReference, action);
+        return urlPromise!({ symbol, address: walletAddress, network: serviceNetwork, slug, walletReference, action });
       })
         .then((url) => {
           openInNewTab(url)();
@@ -421,15 +421,15 @@ function Component ({ className, modalContent, slug }: Props) {
           ></div>
 
           <div
-            // eslint-disable-next-line react/jsx-no-bind
             className='__service-selector'
+            // eslint-disable-next-line react/jsx-no-bind
             onClick={handleBuyForm}
           >
               Buy
           </div>
           <div
-            // eslint-disable-next-line react/jsx-no-bind
             className='__service-selector'
+            // eslint-disable-next-line react/jsx-no-bind
             onClick={handleSellForm}
           >
               Sell

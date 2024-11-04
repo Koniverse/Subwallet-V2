@@ -23,7 +23,7 @@ import { Button, Icon, ModalContext, Number, Tag, Tooltip, Typography } from '@s
 import CN from 'classnames';
 import { ArrowFatLinesDown, ArrowsClockwise, Eye, EyeSlash, PaperPlaneTilt, PlusMinus } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
@@ -160,6 +160,16 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   [currentAccount, setStorage, tokenGroupSlug, activeModal, notify, t]
   );
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const onOpen = searchParams.get('onOpen') || '';
+
+  useEffect(() => {
+    if (onOpen === 'true') {
+      activeModal(OFF_RAMP_TRANSACTION_TRANSFER_MODAL);
+      searchParams.delete('onOpen');
+      setSearchParams(searchParams);
+    }
+  }, [onOpen, activeModal, searchParams, setSearchParams]);
 
   useEffect(() => {
     setSendFundKey(`sendFundKey-${Date.now()}`);

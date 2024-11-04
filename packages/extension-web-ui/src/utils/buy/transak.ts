@@ -5,25 +5,40 @@ import { TRANSAK_API_KEY, TRANSAK_URL } from '@subwallet/extension-web-ui/consta
 import { CreateBuyOrderFunction } from '@subwallet/extension-web-ui/types';
 import qs from 'querystring';
 
-export const createTransakOrder: CreateBuyOrderFunction = (symbol, address, network, slug, walletReference, action) => {
+interface TransakOrderParams {
+  apiKey: string;
+  defaultCryptoCurrency: string;
+  networks: string;
+  cryptoCurrencyList: string;
+  productsAvailed: string;
+  walletAddress?: string;
+  partnerCustomerId?: string;
+  redirectURL?: string;
+  walletRedirection?: boolean;
+}
+
+export const createTransakOrder: CreateBuyOrderFunction = (orderParams) => {
+  const { action = 'BUY', address, network, slug = '', symbol } = orderParams;
+
   return new Promise((resolve) => {
-    const params: any = {
+    const location = window.location.origin;
+    const params: TransakOrderParams = {
       apiKey: '307807a5-5fb3-4add-8a6c-fca4972e0470',
       defaultCryptoCurrency: symbol,
       networks: network,
       cryptoCurrencyList: symbol,
-      productsAvailed: action
+      productsAvailed: action || 'BUY'
     };
 
     if (action === 'BUY') {
       params.walletAddress = address;
     } else {
       params.partnerCustomerId = address;
-      params.redirectURL = `http://192.168.10.213:9000/home/tokens?slug=${slug}`;
+      params.redirectURL = `${location}/off-ramp-loading?slug=${slug ?? ''}`;
       params.walletRedirection = true;
     }
 
-    const query = qs.stringify(params);
+    const query = qs.stringify(params as unknown as Record<string, string | number | boolean | null>);
 
     resolve(`${TRANSAK_URL}?${query}`);
   });

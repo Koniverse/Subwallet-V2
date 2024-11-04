@@ -3,7 +3,7 @@
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { AlertModal, Layout, PageWrapper, RecheckChainConnectionModal } from '@subwallet/extension-web-ui/components';
-import { CURRENT_PAGE, DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSACTION_PARAMS, OFF_RAMP_DATA, TRANSACTION_TITLE_MAP, TRANSACTION_TRANSFER_MODAL, TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL, TRANSACTION_YIELD_CLAIM_MODAL, TRANSACTION_YIELD_FAST_WITHDRAW_MODAL, TRANSACTION_YIELD_UNSTAKE_MODAL, TRANSACTION_YIELD_WITHDRAW_MODAL, TRANSFER_NFT_MODAL } from '@subwallet/extension-web-ui/constants';
+import { DEFAULT_TRANSACTION_PARAMS, OFF_RAMP_DATA, TRANSACTION_TITLE_MAP, TRANSACTION_TRANSFER_MODAL, TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL, TRANSACTION_YIELD_CLAIM_MODAL, TRANSACTION_YIELD_FAST_WITHDRAW_MODAL, TRANSACTION_YIELD_UNSTAKE_MODAL, TRANSACTION_YIELD_WITHDRAW_MODAL, TRANSFER_NFT_MODAL } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { TransactionContext, TransactionContextProps } from '@subwallet/extension-web-ui/contexts/TransactionContext';
@@ -15,6 +15,7 @@ import CN from 'classnames';
 import React, { useCallback, useContext, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useLocalStorage } from 'usehooks-ts';
 
 interface Props extends ThemeProps {
   title?: string;
@@ -128,12 +129,12 @@ function Component ({ children, className, modalContent, modalId }: Props) {
   useNavigateOnChangeAccount(homePath, !modalContent);
 
   const goBack = useCallback(() => {
-
-    if(location.pathname === '/transaction/off-ramp-send-fund'){
+    if (location.pathname === '/transaction/off-ramp-send-fund') {
       removeStorage(OFF_RAMP_DATA);
     }
+
     navigate(homePath);
-  }, [homePath, navigate]);
+  }, [homePath, location.pathname, navigate]);
 
   const [subHeaderRightButtons, setSubHeaderRightButtons] = useState<ButtonProps[] | undefined>();
   const [{ disabled: disableBack, onClick: onClickBack }, setBackProps] = useState<{

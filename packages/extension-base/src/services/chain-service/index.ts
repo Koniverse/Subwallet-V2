@@ -15,7 +15,7 @@ import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import AssetSettingStore from '@subwallet/extension-base/stores/AssetSetting';
-import { addLazy, calculateMetadataHash, fetchStaticData, filterAssetsByChainAndSymbol, filterAssetsByChainAndType, getShortMetadata, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
+import { addLazy, calculateMetadataHash, fetchStaticData, filterAssetsByChainAndType, getShortMetadata, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
 import { BehaviorSubject, Subject } from 'rxjs';
 import Web3 from 'web3';
 
@@ -451,10 +451,6 @@ export class ChainService {
 
   public getAssetByChainAndType (chainSlug: string, assetTypes: _AssetType[]) {
     return filterAssetsByChainAndType(this.getAssetRegistry(), chainSlug, assetTypes);
-  }
-
-  public getAssetByChainAndSymbol (chainSlug: string, symbol: string) {
-    return filterAssetsByChainAndSymbol(this.getAssetRegistry(), chainSlug, symbol);
   }
 
   public getSmartContractNfts () {

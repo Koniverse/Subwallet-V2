@@ -827,6 +827,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
 
         <Form
           className={'form-container form-space-sm'}
+          disabled={true}
           form={form}
           initialValues={formDefault}
           onFinish={onSubmit}
@@ -892,7 +893,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
               networkGenesisHash={destChainGenesisHash}
               placeholder={t('Account address')}
               saveAddress={true}
-              showAddressBook={true}
+              showAddressBook={false}
               showScanner={true}
             />
           </Form.Item>

@@ -16,6 +16,7 @@ export interface BuyTokenInfo {
   support: 'ETHEREUM' | 'SUBSTRATE';
   services: Array<SupportService>;
   serviceInfo: Record<SupportService, BuyService>;
+  supportSell: boolean;
 }
 
 export interface BuyServiceInfo {
@@ -26,4 +27,13 @@ export interface BuyServiceInfo {
   url: string;
 }
 
-export type CreateBuyOrderFunction = (token: string, address: string, network: string, slug: string ,walletReference: string, action: 'BUY' | 'SELL') => Promise<string>;
+interface CreateOrderParams {
+  symbol: string;
+  address: string;
+  network: string;
+  slug?: string;
+  walletReference?: string;
+  action?: 'BUY' | 'SELL';
+}
+
+export type CreateBuyOrderFunction = (orderParams: CreateOrderParams) => Promise<string>;
