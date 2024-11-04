@@ -212,3 +212,7 @@ export interface MissionPoolStore extends BaseReduxStore {
 export interface SwapStore extends BaseReduxStore {
   swapPairs: SwapPair[];
 }
+
+export interface NotificationStore extends BaseReduxStore {
+  unreadNotificationCountMap: Record<string, number>;
+}

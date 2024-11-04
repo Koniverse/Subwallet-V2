@@ -43,7 +43,14 @@ export default class SettingService {
     this.settingsStore.get('Settings', (value) => {
       update({
         ...DEFAULT_SETTING,
-        ...(value || {})
+        ...(value || {}),
+        notificationSetup: {
+          isEnabled: value?.notificationSetup?.isEnabled ?? DEFAULT_SETTING.notificationSetup.isEnabled,
+          showNotice: {
+            ...DEFAULT_SETTING.notificationSetup.showNotice,
+            ...(value?.notificationSetup?.showNotice || {})
+          }
+        }
       });
     });
   }

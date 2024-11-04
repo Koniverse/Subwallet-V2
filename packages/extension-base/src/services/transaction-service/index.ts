@@ -13,6 +13,7 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
+import { ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { TRANSACTION_TIMEOUT } from '@subwallet/extension-base/services/transaction-service/constants';
 import { parseLiquidStakingEvents, parseLiquidStakingFastUnstakeEvents, parseTransferEventLogs, parseXcmEventLogs } from '@subwallet/extension-base/services/transaction-service/event-parser';
@@ -608,6 +609,17 @@ export default class TransactionService {
         const inputAsset = this.state.chainService.getAssetBySlug(data.quote.pair.from);
 
         historyItem.amount = { value: data.quote.fromAmount, symbol: _getAssetSymbol(inputAsset), decimals: _getAssetDecimals(inputAsset) };
+        historyItem.additionalInfo = data;
+
+        break;
+      }
+
+      case ExtrinsicType.CLAIM_AVAIL_BRIDGE: {
+        const data = parseTransactionData<ExtrinsicType.CLAIM_AVAIL_BRIDGE>(transaction.data); // TODO: switch by provider
+        const metadata = data.notification.metadata as ClaimAvailBridgeNotificationMetadata;
+        const claimAsset = this.state.chainService.getAssetBySlug(metadata.tokenSlug);
+
+        historyItem.amount = { value: metadata.amount, symbol: _getAssetSymbol(claimAsset), decimals: _getAssetDecimals(claimAsset) };
         historyItem.additionalInfo = data;
 
         break;

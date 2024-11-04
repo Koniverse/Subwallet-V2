@@ -311,9 +311,6 @@ const Component = (): React.ReactElement => {
     };
   }, [handleResize]);
 
-  console.log('isHaveOnlyTonSoloAcc', isHaveOnlyTonSoloAcc);
-  console.log('isShowTonWarning', isShowTonWarning);
-
   return (
     <div
       className={'tokens-screen-container'}

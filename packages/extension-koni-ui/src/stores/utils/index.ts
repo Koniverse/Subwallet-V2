@@ -500,3 +500,11 @@ export const updateLedgerGenericAllowNetworks = (data: string[]) => {
 
 export const subscribeLedgerGenericAllowNetworks = lazySubscribeMessage('pri(ledger.generic.allow)', null, updateLedgerGenericAllowNetworks, updateLedgerGenericAllowNetworks);
 /* Ledger */
+
+/* Notification service */
+export const updateUnreadNotificationCountMap = (data: Record<string, number>) => {
+  store.dispatch({ type: 'notification/updateUnreadNotificationCountMap', payload: data });
+};
+
+export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappNotification.subscribeUnreadNotificationCountMap)', null, updateUnreadNotificationCountMap, updateUnreadNotificationCountMap);
+/* Notification service */
