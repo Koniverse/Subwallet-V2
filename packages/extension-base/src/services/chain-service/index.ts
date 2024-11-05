@@ -50,10 +50,10 @@ const ignoredList = [
   'storyPartner_testnet'
 ];
 
-export const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
+export const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>, addedChains?: string[]): Record<string, _ChainAsset> => {
   return Object.fromEntries(
     Object.entries(assets)
-      .filter(([, info]) => chainInfo[info.originChain])
+      .filter(([, info]) => chainInfo[info.originChain] || addedChains?.includes(info.originChain))
   );
 };
 
@@ -357,6 +357,10 @@ export class ChainService {
 
   public getChainStateMap () {
     return this.dataMap.chainStateMap;
+  }
+
+  public setChainStateMap (chainStateMap: Record<string, _ChainState>) {
+    this.dataMap.chainStateMap = chainStateMap;
   }
 
   public getChainStateByKey (key: string) {

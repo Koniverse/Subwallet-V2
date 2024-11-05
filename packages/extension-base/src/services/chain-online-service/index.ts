@@ -5,6 +5,7 @@ import { MultiChainAssetMap } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { ChainService, filterAssetInfoMap } from '@subwallet/extension-base/services/chain-service';
 import { LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
+import { _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { fetchPatchData, PatchInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { Md5 } from 'ts-md5';
@@ -90,19 +91,37 @@ export class ChainOnlineService {
       // 1. validate fetch data with its hash
       const isSafePatch = this.validatePatchWithHash(latestPatch);
       const { ChainAsset: latestAssetInfo, ChainInfo: latestChainInfo, MultiChainAsset: latestMultiChainAsset, patchVersion } = latestPatch;
-      let chainInfoMap = {};
-      let assetRegistry = {};
-      let multiChainAssetMap = {};
+      let chainInfoMap: Record<string, _ChainInfo> = {};
+      let assetRegistry: Record<string, _ChainAsset> = {};
+      let multiChainAssetMap: Record<string, _MultiChainAsset> = {};
+      let currentChainState: Record<string, _ChainState> = {};
+
+      let addedChain: string[] = [];
       // todo: AssetLogoMap, ChainLogoMap
 
       if (isSafePatch && this.patchVersion !== patchVersion) {
         // 2. merge data map
         if (latestChainInfo && Object.keys(latestChainInfo).length > 0) {
           chainInfoMap = Object.assign({}, this.chainService.getChainInfoMap(), latestChainInfo);
+
+          currentChainState = this.chainService.getChainStateMap();
+          const currentChainStateKey = Object.keys(currentChainState);
+          const newChainStateKey = Object.keys(chainInfoMap);
+
+          addedChain = newChainStateKey.filter((chain) => !currentChainStateKey.includes(chain));
+
+          addedChain.forEach((key) => {
+            currentChainState[key] = {
+              active: false,
+              currentProvider: Object.keys(chainInfoMap[key].providers)[0],
+              manualTurnOff: false,
+              slug: key
+            };
+          });
         }
 
         if (latestAssetInfo && Object.keys(latestAssetInfo).length > 0) {
-          assetRegistry = filterAssetInfoMap(this.chainService.getChainInfoMap(), Object.assign({}, this.chainService.getAssetRegistry(), latestAssetInfo));
+          assetRegistry = filterAssetInfoMap(this.chainService.getChainInfoMap(), Object.assign({}, this.chainService.getAssetRegistry(), latestAssetInfo), addedChain);
         }
 
         if (latestMultiChainAsset && Object.keys(latestMultiChainAsset).length > 0) {
@@ -126,6 +145,10 @@ export class ChainOnlineService {
             .catch(console.error);
 
           this.chainService.subscribeMultiChainAssetMap().next(multiChainAssetMap);
+
+          this.chainService.setChainStateMap(currentChainState);
+          this.chainService.subscribeChainStateMap().next(currentChainState);
+
           this.patchVersion = patchVersion;
         }
       }
