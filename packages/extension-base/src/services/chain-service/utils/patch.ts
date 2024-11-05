@@ -19,7 +19,10 @@ export interface PatchInfo {
   ChainAsset: Record<string, _ChainAsset>,
   ChainAssetHashMap: Record<string, string>,
   MultiChainAsset: Record<string, _MultiChainAsset>,
-  MultiChainAssetHashMap: Record<string, string>
+  MultiChainAssetHashMap: Record<string, string>,
+  ChainLogoMap: Record<string, string>,
+  AssetLogoMap: Record<string, string>,
+  mAssetLogoMap: Record<string, string>
 }
 
 export async function fetchPatchData<T> (slug: string) {

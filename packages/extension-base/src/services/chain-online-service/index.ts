@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { MultiChainAssetMap } from '@subwallet/chain-list';
+import { AssetLogoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { ChainService, filterAssetInfoMap } from '@subwallet/extension-base/services/chain-service';
 import { LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
@@ -92,7 +92,13 @@ export class ChainOnlineService {
     try {
       // 1. validate fetch data with its hash
       const isSafePatch = this.validatePatchWithHash(latestPatch);
-      const { ChainAsset: latestAssetInfo, ChainInfo: latestChainInfo, MultiChainAsset: latestMultiChainAsset, patchVersion: latestPatchVersion } = latestPatch;
+      const { AssetLogoMap: latestAssetLogoMap,
+        ChainAsset: latestAssetInfo,
+        ChainInfo: latestChainInfo,
+        ChainLogoMap: latestChainLogoMap,
+        MultiChainAsset: latestMultiChainAsset,
+        mAssetLogoMap: lastestMAssetLogoMap,
+        patchVersion: latestPatchVersion } = latestPatch;
       const currentPatchVersion = this.settingService.getChainlistInfo().patchVersion;
 
       let chainInfoMap: Record<string, _ChainInfo> = {};
@@ -152,6 +158,18 @@ export class ChainOnlineService {
 
           this.chainService.setChainStateMap(currentChainState);
           this.chainService.subscribeChainStateMap().next(currentChainState);
+
+          if (latestChainLogoMap) {
+            const logoMap = Object.assign({}, ChainLogoMap, latestChainLogoMap);
+
+            this.chainService.subscribeChainLogoMap().next(logoMap);
+          }
+
+          if (latestAssetLogoMap) {
+            const logoMap = Object.assign({}, AssetLogoMap, latestAssetLogoMap, lastestMAssetLogoMap);
+
+            this.chainService.subscribeAssetLogoMap().next(logoMap);
+          }
 
           this.settingService.setChainlist({ patchVersion: latestPatchVersion });
         }
