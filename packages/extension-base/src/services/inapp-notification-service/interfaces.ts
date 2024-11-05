@@ -27,7 +27,8 @@ export interface ActionTypeToMetadataMap {
   [NotificationActionType.WITHDRAW]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeNotificationMetadata,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeNotificationMetadata
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeNotificationMetadata,
+  [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE]: unknown,
 }
 
 export interface SendReceiveNotificationMetadata {
@@ -70,7 +71,8 @@ export enum NotificationActionType {
   WITHDRAW = 'WITHDRAW',
   CLAIM = 'CLAIM', // Claim reward
   CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'CLAIM_AVAIL_BRIDGE_ON_AVAIL',
-  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM'
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM',
+  HAVE_TO_WAIT_POLYGON_BRIDGE = 'HAVE_TO_WAIT_POLYGON_BRIDGE'
 }
 
 export enum NotificationTab {

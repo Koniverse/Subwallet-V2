@@ -5,6 +5,7 @@ import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
 import { isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { _getChainSubstrateAddressPrefix, _getEvmChainId, _getSubstrateParaId, _getSubstrateRelayParent, _getXcmAssetMultilocation, _isChainEvmCompatible, _isPureEvmChain, _isSubstrateParaChain } from '@subwallet/extension-base/services/chain-service/utils';
 
 import { decodeAddress, evmToAddress } from '@polkadot/util-crypto';
@@ -95,8 +96,14 @@ function getAvailBridgeWarning (): string {
   return 'Cross-chain transfer of this token may take up to 90 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
 }
 
+function getPolygonBridgeWarning (): string {
+  return 'Cross-chain transfer of this token may take up to 90 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
+}
+
 export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): string {
-  if (_isAvailBridgeXcm(originChainInfo, destChainInfo)) {
+  if (_isPolygonBridgeXcm(originChainInfo, destChainInfo)) {
+    return getPolygonBridgeWarning();
+  } else if (_isAvailBridgeXcm(originChainInfo, destChainInfo)) {
     return getAvailBridgeWarning();
   } else if (_isSnowBridgeXcm(originChainInfo, destChainInfo)) {
     return getSnowBridgeUnstableWarning(originChainInfo);
@@ -124,6 +131,10 @@ export function _isAvailBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _
 
 export function _isMythosFromHydrationToMythos (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
   return originChainInfo.slug === 'hydradx_main' && destChainInfo.slug === 'mythos' && assetSlug === 'hydradx_main-LOCAL-MYTH';
+}
+
+export function _isPolygonBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
+  return _isPolygonChainBridge(originChainInfo.slug, destChainInfo.slug);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

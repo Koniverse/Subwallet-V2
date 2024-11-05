@@ -9,6 +9,7 @@ import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, chec
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -738,6 +739,15 @@ export default class TransactionService {
 
       // todo: consider async
       this.state.chainService.updateAssetSetting(toAssetSlug, { visible: true }, true).catch(console.error);
+    } else if (transaction.extrinsicType === ExtrinsicType.TRANSFER_XCM) {
+      const inputData = parseTransactionData<ExtrinsicType.TRANSFER_XCM>(transaction.data);
+      const isPolygonBridge = _isPolygonChainBridge(inputData.originNetworkKey, inputData.destinationNetworkKey);
+      const extrinsicHash = transaction.extrinsicHash;
+
+      if (isPolygonBridge) {
+        this.state.inappNotificationService.writeWaitPolygonBridge(inputData, extrinsicHash)
+          .catch(console.error);
+      }
     }
   }
 

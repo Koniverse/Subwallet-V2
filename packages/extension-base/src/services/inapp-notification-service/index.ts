@@ -13,6 +13,7 @@ import { _BaseNotificationInfo, _NotificationInfo, ClaimAvailBridgeNotificationM
 import { AvailBridgeSourceChain, AvailBridgeTransaction, fetchAllAvailBridgeClaimable, hrsToMillisecond } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
+import { RequestCrossChainTransfer } from '@subwallet/extension-base/types';
 import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { categoryAddresses, formatNumber } from '@subwallet/extension-base/utils';
 import { isSubstrateAddress } from '@subwallet/keyring';
@@ -260,6 +261,28 @@ export class InappNotificationService implements CronServiceInterface {
     });
 
     await this.validateAndWriteNotificationsToDB(notifications, address);
+  }
+
+  public async writeWaitPolygonBridge (request: RequestCrossChainTransfer, transactionHash: string) {
+    const { from: address, tokenSlug, value: amount } = request;
+    const actionType = NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE;
+    const timestamp = Date.now();
+    const token = this.chainService.getAssetBySlug(tokenSlug);
+    const symbol = token.symbol;
+    const decimals = token.decimals ?? 0;
+    const notification: _BaseNotificationInfo = {
+      id: `${actionType}___${transactionHash}___${timestamp}`,
+      address: address, // address is senderAddress
+      title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
+      description: NotificationDescriptionMap[actionType](formatNumber(amount, decimals), symbol),
+      time: timestamp,
+      extrinsicType: ExtrinsicType.TRANSFER_XCM,
+      isRead: false,
+      actionType,
+      metadata: undefined
+    };
+
+    await this.validateAndWriteNotificationsToDB([notification], address);
   }
 
   async start (): Promise<void> {

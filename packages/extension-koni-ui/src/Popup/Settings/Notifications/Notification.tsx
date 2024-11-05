@@ -45,7 +45,8 @@ export enum NotificationIconBackgroundColorMap {
   WITHDRAW = 'blue-8',
   CLAIM = 'yellow-7',
   CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'yellow-7', // temporary set
-  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'yellow-7'
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'yellow-7',
+  HAVE_TO_WAIT_POLYGON_BRIDGE = 'blue-8'
 }
 
 export const NotificationIconMap = {
@@ -54,7 +55,8 @@ export const NotificationIconMap = {
   WITHDRAW: DownloadSimple,
   CLAIM: Gift,
   CLAIM_AVAIL_BRIDGE_ON_AVAIL: Coins, // temporary set
-  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Coins
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Coins,
+  HAVE_TO_WAIT_POLYGON_BRIDGE: Coins
 };
 
 const alertModalId = 'notification-alert-modal';
