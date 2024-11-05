@@ -8,17 +8,19 @@ import { LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/s
 import { _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { fetchPatchData, PatchInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
+import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { Md5 } from 'ts-md5';
 
 export class ChainOnlineService {
   private chainService: ChainService;
+  private settingService: SettingService;
   private eventService: EventService;
 
   refreshLatestChainDataTimeOut: NodeJS.Timer | undefined;
-  private patchVersion = '';
 
-  constructor (chainService: ChainService, eventService: EventService) {
+  constructor (chainService: ChainService, settingService: SettingService, eventService: EventService) {
     this.chainService = chainService;
+    this.settingService = settingService;
     this.eventService = eventService;
   }
 
@@ -90,7 +92,9 @@ export class ChainOnlineService {
     try {
       // 1. validate fetch data with its hash
       const isSafePatch = this.validatePatchWithHash(latestPatch);
-      const { ChainAsset: latestAssetInfo, ChainInfo: latestChainInfo, MultiChainAsset: latestMultiChainAsset, patchVersion } = latestPatch;
+      const { ChainAsset: latestAssetInfo, ChainInfo: latestChainInfo, MultiChainAsset: latestMultiChainAsset, patchVersion: latestPatchVersion } = latestPatch;
+      const currentPatchVersion = this.settingService.getChainlistInfo().patchVersion;
+
       let chainInfoMap: Record<string, _ChainInfo> = {};
       let assetRegistry: Record<string, _ChainAsset> = {};
       let multiChainAssetMap: Record<string, _MultiChainAsset> = {};
@@ -99,7 +103,7 @@ export class ChainOnlineService {
       let addedChain: string[] = [];
       // todo: AssetLogoMap, ChainLogoMap
 
-      if (isSafePatch && this.patchVersion !== patchVersion) {
+      if (isSafePatch && currentPatchVersion !== latestPatchVersion) {
         // 2. merge data map
         if (latestChainInfo && Object.keys(latestChainInfo).length > 0) {
           chainInfoMap = Object.assign({}, this.chainService.getChainInfoMap(), latestChainInfo);
@@ -149,7 +153,7 @@ export class ChainOnlineService {
           this.chainService.setChainStateMap(currentChainState);
           this.chainService.subscribeChainStateMap().next(currentChainState);
 
-          this.patchVersion = patchVersion;
+          this.settingService.setChainlist({ patchVersion: latestPatchVersion });
         }
       }
     } catch (e) {

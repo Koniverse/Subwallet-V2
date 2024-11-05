@@ -167,7 +167,7 @@ export default class KoniState {
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
     this.inappNotificationService = new InappNotificationService(this.dbService, this.keyringService, this.eventService, this.chainService);
-    this.chainOnlineService = new ChainOnlineService(this.chainService, this.eventService);
+    this.chainOnlineService = new ChainOnlineService(this.chainService, this.settingService, this.eventService);
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
