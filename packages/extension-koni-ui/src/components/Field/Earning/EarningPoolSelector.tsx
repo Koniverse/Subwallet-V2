@@ -130,7 +130,17 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
     return compound?.nominations.map((item) => item.validatorAddress) || [];
   }, [compound?.nominations]);
 
-  const defaultSelectPool = defaultPoolMap?.[chain];
+  const stakedPool = useMemo(() => nominationPoolValueList[0], [nominationPoolValueList]);
+
+  const recommendPool = useMemo(() => {
+    const recommendPools: number[] = defaultPoolMap?.[chain] || [];
+
+    if (recommendPools.length) {
+      return recommendPools[0].toString();
+    } else {
+      return '';
+    }
+  }, [defaultPoolMap, chain]);
 
   const resultList = useMemo((): NominationPoolDataType[] => {
     const recommendedSessionHeader: NominationPoolDataType = { address: '', bondedAmount: '', decimals: 0, id: -1, idStr: '-1', isProfitable: false, memberCounter: 0, roles: { bouncer: '', depositor: '', nominator: '', root: '' }, state: 'Open', symbol: '', name: 'Recommended', isSessionHeader: true, disabled: true };
@@ -215,10 +225,6 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
       !items.length
   , [disabled, items.length, nominationPoolValueList.length]
   );
-
-  const stakedPool = useMemo(() => nominationPoolValueList[0], [nominationPoolValueList]);
-
-  const defaultPool = useMemo(() => (defaultSelectPool?.[0] || '').toString(), [defaultSelectPool]);
 
   const _onSelectItem = useCallback((value: string) => {
     onChange && onChange({ target: { value } });
@@ -371,11 +377,11 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   }, []);
 
   useEffect(() => {
-    const defaultSelectedPool = stakedPool || value || cachedValue || defaultPool;
+    const defaultSelectedPool = stakedPool || value || cachedValue || recommendPool;
 
     onChange && onChange({ target: { value: defaultSelectedPool } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stakedPool, items]);
+  }, [stakedPool, recommendPool, items]);
 
   useEffect(() => {
     if (!isActive) {
