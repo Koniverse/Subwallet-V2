@@ -1006,6 +1006,8 @@ export default class KoniState {
   }
 
   async resumeAllNetworks () {
+    this.chainOnlineService.checkLatestData();
+
     return this.chainService.resumeAllChainApis();
   }
 

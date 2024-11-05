@@ -1,4 +1,4 @@
-// [object Object]
+// Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
 import { MultiChainAssetMap } from '@subwallet/chain-list';
@@ -64,7 +64,11 @@ export class ChainOnlineService {
 
     for (const [assetSlug, assetHash] of Object.entries(latestPatch.ChainAssetHashMap)) {
       if (!candidateAssetRegistry[assetSlug]) {
-        if (latestPatch.)
+        if (!latestPatch.ChainInfo[assetSlug]) { // assets are not existed in case chain is removed
+          continue;
+        }
+
+        return false;
       }
 
       if (this.md5Hash(candidateAssetRegistry[assetSlug]) !== assetHash) {
@@ -72,15 +76,11 @@ export class ChainOnlineService {
       }
     }
 
-    console.log('b');
-
     for (const [mAssetSlug, mAssetHash] of Object.entries(latestPatch.MultiChainAssetHashMap)) {
       if (this.md5Hash(candidateMultiChainAssetMap[mAssetSlug]) !== mAssetHash) {
         return false;
       }
     }
-
-    console.log('c');
 
     return true;
   }
@@ -94,8 +94,6 @@ export class ChainOnlineService {
       let assetRegistry = {};
       let multiChainAssetMap = {};
       // todo: AssetLogoMap, ChainLogoMap
-      console.log('[i] isSafePatch', isSafePatch)
-      console.log('[i] latestPatch', latestPatch)
 
       if (isSafePatch && this.patchVersion !== patchVersion) {
         // 2. merge data map
@@ -103,23 +101,16 @@ export class ChainOnlineService {
           chainInfoMap = Object.assign({}, this.chainService.getChainInfoMap(), latestChainInfo);
         }
 
-        console.log('[i] done chain')
-
         if (latestAssetInfo && Object.keys(latestAssetInfo).length > 0) {
           assetRegistry = filterAssetInfoMap(this.chainService.getChainInfoMap(), Object.assign({}, this.chainService.getAssetRegistry(), latestAssetInfo));
         }
-
-        console.log('[i] done asset')
 
         if (latestMultiChainAsset && Object.keys(latestMultiChainAsset).length > 0) {
           multiChainAssetMap = { ...MultiChainAssetMap, ...latestMultiChainAsset };
         }
 
-        console.log('[i] done multi asset')
-
         // 3. validate data before write
         const isCorrectPatch = this.validatePatchBeforeStore(chainInfoMap, assetRegistry, multiChainAssetMap, latestPatch);
-        console.log('[i] isCorrectPatch', isCorrectPatch)
 
         // 4. write to subject
         if (isCorrectPatch) {
