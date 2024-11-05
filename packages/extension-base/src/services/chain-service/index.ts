@@ -4,7 +4,7 @@
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
-import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
+import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
@@ -56,22 +56,6 @@ export const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets
       .filter(([, info]) => chainInfo[info.originChain] || addedChains?.includes(info.originChain))
   );
 };
-
-// const rawAssetRefMap = (assetRefMap: Record<string, _AssetRef>) => {
-//   const result: Record<string, _AssetRef> = {};
-//
-//   Object.entries(assetRefMap).forEach(([key, assetRef]) => {
-//     const originChainInfo = ChainInfoMap[assetRef.srcChain];
-//     const destChainInfo = ChainInfoMap[assetRef.destChain];
-//     const isSnowBridgeXcm = assetRef.path === _AssetRefPath.XCM && _isSnowBridgeXcm(originChainInfo, destChainInfo);
-//
-//     if (!isSnowBridgeXcm) {
-//       result[key] = assetRef;
-//     }
-//   });
-//
-//   return result;
-// };
 
 export class ChainService {
   private dataMap: _DataMap = {
@@ -697,13 +681,6 @@ export class ChainService {
     this.dataMap.assetRefMap = AssetRefMap;
   }
 
-  checkLatestData () {
-    clearInterval(this.refreshLatestChainDataTimeOut);
-    this.handleLatestData();
-
-    this.refreshLatestChainDataTimeOut = setInterval(this.handleLatestData.bind(this), LATEST_CHAIN_DATA_FETCHING_INTERVAL);
-  }
-
   stopCheckLatestChainData () {
     clearInterval(this.refreshLatestChainDataTimeOut);
   }
@@ -728,26 +705,6 @@ export class ChainService {
     }
   }
 
-  // handleLatestAssetRef (latestBlockedAssetRefList: string[], latestAssetRefMap: Record<string, _AssetRef> | null) {
-  //   const updatedAssetRefMap: Record<string, _AssetRef> = { ...AssetRefMap };
-  //
-  //   if (latestAssetRefMap) {
-  //     for (const [assetRefKey, assetRef] of Object.entries(latestAssetRefMap)) {
-  //       updatedAssetRefMap[assetRefKey] = assetRef;
-  //     }
-  //   }
-  //
-  //   latestBlockedAssetRefList.forEach((blockedAssetRef) => {
-  //     delete updatedAssetRefMap[blockedAssetRef];
-  //   });
-  //
-  //   this.dataMap.assetRefMap = updatedAssetRefMap;
-  //
-  //   this.xcmRefMapSubject.next(this.xcmRefMap);
-  //   this.swapRefMapSubject.next(this.swapRefMap);
-  //   this.logger.log('Finished updating latest asset ref');
-  // }
-
   handleLatestPriceId (latestPriceIds: Record<string, string | null>) {
     let isUpdated = false;
 
@@ -765,45 +722,6 @@ export class ChainService {
 
     this.logger.log('Finished updating latest price IDs');
   }
-
-  // handleLatestAssetData (latestAssetInfo: Record<string, _ChainAsset> | null, latestAssetLogoMap: Record<string, string> | null) {
-  //   try {
-  //     if (latestAssetInfo) {
-  //       const latestAssetPatch = JSON.stringify(latestAssetInfo);
-  //
-  //       if (this.assetMapPatch !== latestAssetPatch) {
-  //         const assetRegistry = filterAssetInfoMap(this.getChainInfoMap(), Object.assign({}, this.dataMap.assetRegistry, latestAssetInfo));
-  //
-  //         this.assetMapPatch = latestAssetPatch;
-  //         this.dataMap.assetRegistry = assetRegistry;
-  //         this.assetRegistrySubject.next(assetRegistry);
-  //
-  //         this.autoEnableTokens()
-  //           .then(() => {
-  //             this.eventService.emit('asset.updateState', '');
-  //           })
-  //           .catch(console.error);
-  //       }
-  //     }
-  //
-  //     if (latestAssetLogoMap) {
-  //       const latestAssetLogoPatch = JSON.stringify(latestAssetLogoMap);
-  //
-  //       if (this.assetLogoPatch !== latestAssetLogoPatch) {
-  //         const logoMap = { ...AssetLogoMap, ...latestAssetLogoMap };
-  //
-  //         this.assetLogoPatch = latestAssetLogoPatch;
-  //         this.assetLogoMapSubject.next(logoMap);
-  //       }
-  //     }
-  //   } catch (e) {
-  //     console.error('Error fetching latest asset data');
-  //   }
-  //
-  //   this.eventService.emit('asset.online.ready', true);
-  //
-  //   this.logger.log('Finished updating latest asset');
-  // }
 
   async autoEnableTokens () {
     const autoEnableTokens = Object.values(this.dataMap.assetRegistry).filter((asset) => _isAssetAutoEnable(asset));
@@ -835,21 +753,9 @@ export class ChainService {
   }
 
   handleLatestData () {
-    // this.fetchLatestAssetData().then(([latestAssetInfo, latestAssetLogoMap]) => {
-    //   this.eventService.waitAssetReady
-    //     .then(() => {
-    //       this.handleLatestAssetData(latestAssetInfo, latestAssetLogoMap);
-    //     })
-    //     .catch(console.error);
-    // }).catch(console.error);
-
     this.fetchLatestChainData().then((latestChainInfo) => {
       this.handleLatestChainData(latestChainInfo);
     }).catch(console.error);
-
-    // this.fetchLatestAssetRef().then(([latestAssetRef, latestAssetRefMap]) => {
-    //   this.handleLatestAssetRef(latestAssetRef, latestAssetRefMap);
-    // }).catch(console.error);
 
     this.fetchLatestPriceIdsData().then((latestPriceIds) => {
       this.handleLatestPriceId(latestPriceIds);
@@ -1925,8 +1831,6 @@ export class ChainService {
       this.evmChainHandler.wakeUp(),
       this.tonChainHandler.wakeUp()
     ]);
-
-    this.checkLatestData();
   }
 
   public async initAssetSettings () {

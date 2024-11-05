@@ -88,7 +88,7 @@ export class ChainOnlineService {
     return true;
   }
 
-  handleLatestPatch (latestPatch: PatchInfo) {
+  async handleLatestPatch (latestPatch: PatchInfo) {
     try {
       // 1. validate fetch data with its hash
       const isSafePatch = this.validatePatchWithHash(latestPatch);
@@ -99,13 +99,12 @@ export class ChainOnlineService {
         MultiChainAsset: latestMultiChainAsset,
         mAssetLogoMap: lastestMAssetLogoMap,
         patchVersion: latestPatchVersion } = latestPatch;
-      const currentPatchVersion = this.settingService.getChainlistInfo().patchVersion;
+      const currentPatchVersion = (await this.settingService.getChainlistSetting())?.patchVersion || '';
 
       let chainInfoMap: Record<string, _ChainInfo> = {};
       let assetRegistry: Record<string, _ChainAsset> = {};
       let multiChainAssetMap: Record<string, _MultiChainAsset> = {};
       let currentChainState: Record<string, _ChainState> = {};
-
       let addedChain: string[] = [];
       // todo: AssetLogoMap, ChainLogoMap
 
@@ -185,12 +184,13 @@ export class ChainOnlineService {
     return await fetchPatchData<PatchInfo>('data.json');
   }
 
-  handleLatestData () {
+  handleLatestPatchData () {
     this.fetchLatestPatchData().then((latestPatch) => {
       if (latestPatch) {
         this.eventService.waitAssetReady
           .then(() => {
-            this.handleLatestPatch(latestPatch);
+            this.handleLatestPatch(latestPatch)
+              .catch(console.error);
           })
           .catch(console.error);
       }
@@ -199,8 +199,9 @@ export class ChainOnlineService {
 
   checkLatestData () {
     clearInterval(this.refreshLatestChainDataTimeOut);
-    this.handleLatestData();
+    this.handleLatestPatchData();
+    this.chainService.handleLatestData();
 
-    this.refreshLatestChainDataTimeOut = setInterval(this.handleLatestData.bind(this), LATEST_CHAIN_DATA_FETCHING_INTERVAL);
+    this.refreshLatestChainDataTimeOut = setInterval(this.handleLatestPatchData.bind(this), LATEST_CHAIN_DATA_FETCHING_INTERVAL);
   }
 }

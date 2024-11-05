@@ -3,9 +3,8 @@
 
 import { LanguageType, PassPhishing, RequestSettingsType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { LANGUAGE } from '@subwallet/extension-base/constants';
-import { ChainlistStoreSubject } from '@subwallet/extension-base/services/chain-online-service/Chainlist';
 import { SWStorage } from '@subwallet/extension-base/storage';
-import { ChainlistConfig } from '@subwallet/extension-base/stores/ChainlistStore';
+import ChainlistStore, { ChainlistConfig } from '@subwallet/extension-base/stores/ChainlistStore';
 import PassPhishingStore from '@subwallet/extension-base/stores/PassPhishingStore';
 import SettingsStore from '@subwallet/extension-base/stores/Settings';
 import { Subject } from 'rxjs';
@@ -16,7 +15,7 @@ import { DEFAULT_SETTING } from './constants';
 export default class SettingService {
   private readonly settingsStore = new SettingsStore();
   private readonly passPhishingStore = new PassPhishingStore();
-  private readonly chainlistStore = new ChainlistStoreSubject();
+  private readonly chainlistStore = new ChainlistStore();
 
   constructor () {
     this.initSetting().catch(console.error);
@@ -76,12 +75,12 @@ export default class SettingService {
     this.passPhishingStore.set('PassPhishing', data, callback);
   }
 
-  public getChainlistInfo (): ChainlistConfig {
-    return this.chainlistStore.subject.value;
+  public getChainlistSetting () {
+    return this.chainlistStore.asyncGet('Chainlist');
   }
 
-  public setChainlist (data: ChainlistConfig): void {
-    this.chainlistStore.upsertData(data);
+  public setChainlist (data: ChainlistConfig, callback?: () => void): void {
+    this.chainlistStore.set('Chainlist', data, callback);
   }
 
   // Use for mobile only

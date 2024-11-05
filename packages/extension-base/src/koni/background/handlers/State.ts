@@ -306,7 +306,6 @@ export default class KoniState {
     await this.startSubscription();
 
     this.chainOnlineService.checkLatestData();
-    this.chainService.checkLatestData();
   }
 
   public async initMantaPay (password: string) {
@@ -1646,7 +1645,6 @@ export default class KoniState {
     this.afterChainServiceInit();
 
     this.chainOnlineService.checkLatestData();
-    this.chainService.checkLatestData();
   }
 
   public async enableMantaPay (updateStore: boolean, address: string, password: string, seedPhrase?: string) {
