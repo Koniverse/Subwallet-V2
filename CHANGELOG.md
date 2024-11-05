@@ -1,5 +1,63 @@
 # CHANGELOG
 
+## 1.3.4
+Build date: Oct 28, 2024.
+
+Features & Update:
+- Integrate Avail Bridge (#3423)
+- Support Notification in app (#3507, #3515)
+- Allow importing assets on Asset Hub (#3636)
+- Update api key for TAO(Bittensor) (#3809)
+- Update chain-list (#3806)
+  - Add support for Unichain testnet
+  - Update address prefix for Bifrost
+
+
+## 1.3.3
+Build date: Oct 16, 2024.
+
+Features & Update:
+- Fix bug Do not show watch-only account on History (#3732)
+- Update Network details screen for TON (#3747)
+- Update chain-list
+  - Update logo for MATIC token
+  - Remove Tinkernet
+
+Bugs fixed:
+- Fix min stake for TAO(Bittensor) (#3788)
+- Fix bug show OG WUD BURN NFT Collection (#3791)
+
+
+## 1.3.2
+Build date: Oct 12, 2024.
+
+Features & Update:
+- Support TAO in-app staking (#2505)
+- Support Ternoa NFT (#3559)
+- Update default slippage for ChainFlip (#3634)
+- Support export for Derived account (#3751)
+- Update address for TON testnet in the token detail screen on All accounts mode (#3752)
+- Improve UI related to Account selector screen (#3755, #3772))
+- Improve UI related to Select token screen (#3756)
+- Add infobox about Wallet version for TON token (#3718)
+- Update chainlist (#3760)
+  - Add support for LogX token
+  - Add support for Mantle Network
+  - Add support for MATIC (Polygon zkEVM) and POL (Ethereum) token
+  - Add support for zkVerify Testnet
+  - Add support for RARI Chain
+  - Add support for Scroll mainnet
+  - Update some information:
+    - Update Avail group token
+    - Re-check enable TON (TON network) token
+- Add validate tokenOfOwnerByIndex when import NFT (#3609)
+
+## 1.3.1
+Build date: Oct 08, 2024.
+
+Features & Update:
+- Support Unified account
+
 ## 1.2.32
 Build date: Oct 01, 2024.
 

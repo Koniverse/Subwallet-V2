@@ -26,3 +26,4 @@ export * from './GlobalSearchTokenModal';
 export * from './Common';
 export * from './Announcement';
 export * from './Selector';
+export * from './NotificationDetailModal';

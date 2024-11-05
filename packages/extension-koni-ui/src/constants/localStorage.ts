@@ -18,13 +18,14 @@ export const UN_STAKE_TRANSACTION = 'transaction.un-stake';
 export const CANCEL_UN_STAKE_TRANSACTION = 'transaction.cancel-un-stake';
 export const WITHDRAW_TRANSACTION = 'transaction.withdraw';
 export const CLAIM_REWARD_TRANSACTION = 'transaction.claim-reward';
+export const CLAIM_AVAIL_BRIDGE_TRANSACTION = 'transaction.claim-avail-bridge';
 
 export const TRANSACTION_STORAGES = [TRANSFER_TRANSACTION, NFT_TRANSACTION, EARN_TRANSACTION, UN_STAKE_TRANSACTION, CANCEL_UN_STAKE_TRANSACTION, WITHDRAW_TRANSACTION, CLAIM_REWARD_TRANSACTION, SWAP_TRANSACTION];
 
 export const SELECTED_ACCOUNT_TYPE = 'account.selected-type';
 export const SELECTED_MNEMONIC_TYPE = 'account.selected-mnemonic-type';
 export const SEED_PREVENT_MODAL = 'seed.prevent-modal';
-
+export const IS_SHOW_TON_CONTRACT_VERSION_WARNING = 'account.is-show-ton-contract-version-warning';
 export const CONFIRM_GENERAL_TERM = 'general.term-and-condition';
 export const MISSIONS_POOL_LIVE_ID = 'mission-pool-live-id';
 export const CONFIRM_SWAP_TERM = 'swap.term-and-service';

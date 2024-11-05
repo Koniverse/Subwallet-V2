@@ -15,6 +15,7 @@ export const CONFIRMATION_QR_MODAL = 'confirmation-qr-modal';
 export const CONFIRMATION_SCAN_MODAL = 'confirmation-scan-modal';
 export const REQUEST_CAMERA_ACCESS_MODAL = 'request-camera-access-modal';
 export const VALIDATOR_DETAIL_MODAL = 'validator-detail-modal';
+export const NOTIFICATION_DETAIL_MODAL = 'notification-detail-modal';
 export const HISTORY_DETAIL_MODAL = 'history-detail-modal';
 export const RECEIVE_TOKEN_SELECTOR_MODAL = 'receive-tokens-selector-modal';
 export const RECEIVE_MODAL_TOKEN_SELECTOR = 'receive-modal-token-selector';
@@ -37,6 +38,7 @@ export const ACCOUNT_CHAIN_ADDRESSES_MODAL = 'account-chain-addresses-modal';
 export const ACCOUNT_NAME_MODAL = 'account-name-modal';
 export const GLOBAL_ALERT_MODAL = 'global-alert-modal';
 export const TON_WALLET_CONTRACT_SELECTOR_MODAL = 'ton-wallet-contract-selector-modal';
+export const TON_ACCOUNT_SELECTOR_MODAL = 'ton-account-selector-modal';
 
 /* Campaign */
 export const HOME_CAMPAIGN_BANNER_MODAL = 'home-campaign-banner-modal';

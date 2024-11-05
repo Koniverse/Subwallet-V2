@@ -22,6 +22,12 @@ import { _PSP22_ABI, _PSP34_ABI } from '../../../koni/api/contract-handler/utils
 
 export const DEFAULT_AUX = ['Aux1', 'Aux2', 'Aux3', 'Aux4', 'Aux5', 'Aux6', 'Aux7', 'Aux8', 'Aux9'];
 
+interface AssetMetadata {
+  name: string,
+  symbol: string,
+  decimals: number
+}
+
 export class SubstrateChainHandler extends AbstractChainHandler {
   private substrateApiMap: Record<string, _SubstrateApi> = {};
 
@@ -111,8 +117,14 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     return result;
   }
 
-  private async getPsp22TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<[string, number, string, boolean]> {
+  private async getPsp22TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     const tokenContract = new ContractPromise(apiPromise, _PSP22_ABI, contractAddress);
+    const tokenSmartContract: _SmartContractTokenInfo = {
+      name: '',
+      decimals: -1,
+      symbol: '',
+      contractError: false
+    };
 
     const [nameResp, symbolResp, decimalsResp] = await Promise.all([
       tokenContract.query['psp22Metadata::tokenName'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }), // read-only operation so no gas limit
@@ -121,54 +133,73 @@ export class SubstrateChainHandler extends AbstractChainHandler {
     ]);
 
     if (!(nameResp.result.isOk && symbolResp.result.isOk && decimalsResp.result.isOk) || !nameResp.output || !decimalsResp.output || !symbolResp.output) {
-      return ['', 1, '', true];
-    } else {
-      let contractError = false;
+      tokenSmartContract.contractError = true;
 
+      return tokenSmartContract;
+    } else {
       const symbolObj = symbolResp.output?.toHuman() as Record<string, any>;
       const decimalsObj = decimalsResp.output?.toHuman() as Record<string, any>;
       const nameObj = nameResp.output?.toHuman() as Record<string, any>;
 
-      const name = nameResp.output ? (nameObj.Ok as string || nameObj.ok as string) : '';
-      const decimals = decimalsResp.output ? (new BN((decimalsObj.Ok || decimalsObj.ok) as string | number)).toNumber() : 0;
-      const symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
+      tokenSmartContract.name = nameResp.output ? (nameObj.Ok as string || nameObj.ok as string) : '';
+      tokenSmartContract.decimals = decimalsResp.output ? (new BN((decimalsObj.Ok || decimalsObj.ok) as string | number)).toNumber() : 0;
+      tokenSmartContract.symbol = decimalsResp.output ? (symbolObj.Ok as string || symbolObj.ok as string) : '';
 
-      if (!name || !symbol || typeof name === 'object' || typeof symbol === 'object') {
-        contractError = true;
+      if (!tokenSmartContract.name || !tokenSmartContract.symbol || typeof tokenSmartContract.name === 'object' || typeof tokenSmartContract.symbol === 'object') {
+        tokenSmartContract.contractError = true;
       }
 
-      return [name, decimals, symbol, contractError];
+      return tokenSmartContract;
     }
   }
 
-  private async getPsp34TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<[string, number, string, boolean]> {
+  private async getPsp34TokenInfo (apiPromise: ApiPromise, contractAddress: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     const tokenContract = new ContractPromise(apiPromise, _PSP34_ABI, contractAddress);
+    const tokenSmartContract: _SmartContractTokenInfo = {
+      name: '',
+      decimals: -1,
+      symbol: '',
+      contractError: false
+    };
 
     const collectionIdResp = await tokenContract.query['psp34::collectionId'](contractCaller || contractAddress, { gasLimit: getDefaultWeightV2(apiPromise) }); // read-only operation so no gas limit
 
     if (!collectionIdResp.result.isOk || !collectionIdResp.output) {
-      return ['', -1, '', true];
+      tokenSmartContract.contractError = true;
+
+      return tokenSmartContract;
     } else {
-      let contractError = false;
       const collectionIdDict = collectionIdResp.output?.toHuman() as Record<string, string>;
 
       if (collectionIdDict.Bytes === '') {
-        contractError = true;
+        tokenSmartContract.contractError = true;
       }
 
-      return ['', -1, '', contractError];
+      return tokenSmartContract;
     }
   }
 
-  private async getGrc20TokenInfo (apiPromise: ApiPromise, contractAddress: string): Promise<[string, number, string, boolean]> {
-    if (!(apiPromise instanceof GearApi)) {
-      console.warn('Cannot subscribe GRC20 balance without GearApi instance');
+  private async getVaraFungibleTokenInfo (apiPromise: ApiPromise, contractAddress: string, tokenType: _AssetType): Promise<_SmartContractTokenInfo> {
+    const tokenSmartContract: _SmartContractTokenInfo = {
+      name: '',
+      decimals: -1,
+      symbol: '',
+      contractError: false
+    };
 
-      return ['', -1, '', true];
+    if (!(apiPromise instanceof GearApi)) {
+      if (tokenType === _AssetType.GRC20) {
+        console.warn('Cannot subscribe GRC20 balance without GearApi instance');
+      } else if (tokenType === _AssetType.VFT) {
+        console.warn('Cannot subscribe VFT balance without GearApi instance');
+      }
+
+      tokenSmartContract.contractError = true;
+
+      return tokenSmartContract;
     }
 
-    let contractError = false;
-    const tokenContract = getGRC20ContractPromise(apiPromise, contractAddress);
+    const tokenContract = tokenType === _AssetType.GRC20 ? getGRC20ContractPromise(apiPromise, contractAddress) : getVFTContractPromise(apiPromise, contractAddress);
 
     const [nameRes, symbolRes, decimalsRes] = await Promise.all([
       tokenContract.service.name(GEAR_DEFAULT_ADDRESS),
@@ -176,65 +207,75 @@ export class SubstrateChainHandler extends AbstractChainHandler {
       tokenContract.service.decimals(GEAR_DEFAULT_ADDRESS)
     ]);
 
-    const decimals = typeof decimalsRes === 'string' ? parseInt(decimalsRes) : decimalsRes;
+    const decimals = parseInt(decimalsRes.toString());
+
+    tokenSmartContract.name = nameRes;
+    tokenSmartContract.decimals = decimals;
+    tokenSmartContract.symbol = symbolRes;
 
     if (!nameRes || !symbolRes) {
-      contractError = true;
+      tokenSmartContract.contractError = true;
     }
 
-    return [nameRes, decimals, symbolRes, contractError];
+    return tokenSmartContract;
   }
 
-  private async getVftTokenInfo (apiPromise: ApiPromise, contractAddress: string): Promise<[string, number, string, boolean]> {
-    if (!(apiPromise instanceof GearApi)) {
-      console.warn('Cannot subscribe VFT balance without GearApi instance');
+  private async getLocalTokenInfo (apiPromise: ApiPromise, assetId: string): Promise<[string, number, string, boolean]> {
+    const _metadata = await apiPromise.query.assets.metadata(assetId);
 
-      return ['', -1, '', true];
+    const metadata = _metadata.toPrimitive() as unknown as AssetMetadata;
+
+    let idError = false;
+
+    if (!metadata.name || !metadata.symbol) {
+      idError = true;
     }
 
-    let contractError = false;
-    const tokenContract = getVFTContractPromise(apiPromise, contractAddress);
-
-    const [nameRes, symbolRes, decimalsRes] = await Promise.all([
-      tokenContract.service.name(GEAR_DEFAULT_ADDRESS),
-      tokenContract.service.symbol(GEAR_DEFAULT_ADDRESS),
-      tokenContract.service.decimals(GEAR_DEFAULT_ADDRESS)
-    ]);
-
-    const decimals = typeof decimalsRes === 'string' ? parseInt(decimalsRes) : decimalsRes;
-
-    if (!nameRes || !symbolRes) {
-      contractError = true;
-    }
-
-    return [nameRes, decimals, symbolRes, contractError];
+    return [metadata.name, metadata.decimals, metadata.symbol, idError];
   }
 
   public async getSubstrateContractTokenInfo (contractAddress: string, tokenType: _AssetType, originChain: string, contractCaller?: string): Promise<_SmartContractTokenInfo> {
     // todo: improve this funtion later
 
-    let name = '';
-    let decimals: number | undefined = -1;
-    let symbol = '';
-    let contractError = false;
+    let tokenSmartContract: _SmartContractTokenInfo = {
+      name: '',
+      decimals: -1,
+      symbol: '',
+      contractError: false
+    };
 
     const apiPromise = this.getSubstrateApiByChain(originChain).api;
 
     try {
       switch (tokenType) {
         case _AssetType.PSP22:
-          [name, decimals, symbol, contractError] = await this.getPsp22TokenInfo(apiPromise, contractAddress, contractCaller);
+          tokenSmartContract = await this.getPsp22TokenInfo(apiPromise, contractAddress, contractCaller);
           break;
         case _AssetType.PSP34:
-          [name, decimals, symbol, contractError] = await this.getPsp34TokenInfo(apiPromise, contractAddress, contractCaller);
+          tokenSmartContract = await this.getPsp34TokenInfo(apiPromise, contractAddress, contractCaller);
           break;
         case _AssetType.GRC20:
-          [name, decimals, symbol, contractError] = await this.getGrc20TokenInfo(apiPromise, contractAddress);
+          tokenSmartContract = await this.getVaraFungibleTokenInfo(apiPromise, contractAddress, tokenType);
           break;
         case _AssetType.VFT:
-          [name, decimals, symbol, contractError] = await this.getVftTokenInfo(apiPromise, contractAddress);
+          tokenSmartContract = await this.getVaraFungibleTokenInfo(apiPromise, contractAddress, tokenType);
           break;
       }
+
+      return tokenSmartContract;
+    } catch (e) {
+      this.logger.error(e);
+      tokenSmartContract.contractError = true;
+
+      return tokenSmartContract;
+    }
+  }
+
+  public async getSubstrateAssetIdTokenInfo (assetId: string, originChain: string): Promise<_SmartContractTokenInfo> {
+    const apiPromise = this.getSubstrateApiByChain(originChain).api;
+
+    try {
+      const [name, decimals, symbol, contractError] = await this.getLocalTokenInfo(apiPromise, assetId);
 
       return {
         name,

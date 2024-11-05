@@ -73,8 +73,16 @@ export class AccountContext {
     return this.state.isUnifiedAccount(proxyId);
   }
 
+  public belongUnifiedAccount (address: string) {
+    return this.state.belongUnifiedAccount(address);
+  }
+
   public addressesByProxyId (proxyId: string) {
     return this.state.addressesByProxyId(proxyId);
+  }
+
+  public getCurrentAccountProxyName (proxyId: string) {
+    return this.state.getAccountProxyName(proxyId);
   }
 
   /* Modify accounts */
@@ -117,6 +125,10 @@ export class AccountContext {
 
   public getDecodedAddresses (accountProxy?: string, allowGetAllAccount = true): string[] {
     return this.state.getDecodedAddresses(accountProxy, allowGetAllAccount);
+  }
+
+  public getAllAddresses () {
+    return this.state.getAllAddresses();
   }
 
   /* Get address for another service */

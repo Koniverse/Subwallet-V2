@@ -125,7 +125,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           <Layout.Home
             onClickSearchIcon={onOpenGlobalSearchToken}
             showFilterIcon
-            showSearchIcon
+            showNotificationIcon
           >
             <Outlet />
             <GeneralTermModal onOk={onAfterConfirmTermModal} />

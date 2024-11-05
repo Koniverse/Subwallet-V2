@@ -142,6 +142,16 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
     );
   }
 
+  let bittensorStakingBalances: BigN[] = new Array<BigN>(addresses.length).fill(new BigN(0));
+
+  if (['bittensor'].includes(chainInfo.slug)) {
+    bittensorStakingBalances = await Promise.all(addresses.map(async (address) => {
+      const TaoTotalStake = await substrateApi.api.query.subtensorModule.totalColdkeyStake(address);
+
+      return new BigN(TaoTotalStake.toString());
+    }));
+  }
+
   const subscription = substrateApi.subscribeDataWithMulti(params, (rs) => {
     const balances = rs[systemAccountKey];
     const poolMemberInfos = rs[poolMembersKey];
@@ -160,6 +170,10 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
 
         totalLockedFromTransfer += nominationPoolBalance;
       }
+
+      const stakeValue = BigInt(bittensorStakingBalances[index].toString());
+
+      totalLockedFromTransfer += stakeValue;
 
       return ({
         address: addresses[index],

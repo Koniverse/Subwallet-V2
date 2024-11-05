@@ -288,6 +288,9 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     const totalStake = bnTotalStake.toString();
     const activeStake = bnTotalActiveStake.toString();
     const unstakingBalance = bnTotalUnstaking.toString();
+    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
+
+    await this.createWithdrawNotifications(Object.values(unstakingMap), tokenInfo, address);
 
     return {
       status: stakingStatus,
@@ -606,7 +609,7 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       extrinsic = apiPromise.api.tx.parachainStaking.scheduleRevokeDelegation(selectedTarget);
     }
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */

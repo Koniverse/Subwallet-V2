@@ -22,14 +22,17 @@ export type AlertDialogButtonProps = {
 }
 
 export type AlertDialogProps = {
-  title: string,
-  subtitle?: React.ReactNode,
-  type?: NotificationType,
-  closable?: boolean,
-  content: React.ReactNode,
-  cancelButton?: AlertDialogButtonProps,
-  okButton: AlertDialogButtonProps,
-  onCancel?: VoidFunction
+  title: string;
+  subtitle?: React.ReactNode;
+  type?: NotificationType;
+  closable?: boolean;
+  content: React.ReactNode;
+  cancelButton?: AlertDialogButtonProps;
+  okButton: AlertDialogButtonProps;
+  onCancel?: VoidFunction;
+  okLoading?: boolean;
+  cancelDisabled?: boolean;
+  maskClosable?: boolean;
 };
 
 export type AccountType = 'ALL' | 'ETHEREUM' | 'SUBSTRATE';
