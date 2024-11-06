@@ -31,7 +31,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const isNft = data.type === ExtrinsicType.SEND_NFT;
   const isMint = isTypeMint(data.type);
   const isLeavePool = isPoolLeave(data.type);
-
+  const hasOrderId = data.type === ExtrinsicType.TRANSFER_TOKEN;
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const additionalInfo = data.additionalInfo;
 
@@ -99,8 +99,8 @@ const Component: React.FC<Props> = (props: Props) => {
             />
           )
       }
-      {additionalInfo?.orderId && (
-      <MetaInfo.Default label={t('Order ID')}> {additionalInfo?.orderId} </MetaInfo.Default>
+      {data.additionalInfo && hasOrderId && (
+        <MetaInfo.Default label={t('Order ID')}> {(data.additionalInfo as TransactionAdditionalInfo[ExtrinsicType.TRANSFER_TOKEN]).orderId} </MetaInfo.Default>
       )}
       {isMint && amountDerivative && (
 

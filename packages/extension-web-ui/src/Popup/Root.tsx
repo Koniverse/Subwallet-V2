@@ -15,7 +15,7 @@ import useNotification from '@subwallet/extension-web-ui/hooks/common/useNotific
 import useUILock from '@subwallet/extension-web-ui/hooks/common/useUILock';
 import { subscribeNotifications } from '@subwallet/extension-web-ui/messaging';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { ThemeProps } from '@subwallet/extension-web-ui/types';
+import { OffRampParams, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { removeStorage } from '@subwallet/extension-web-ui/utils';
 import { changeHeaderLogo, ModalContext } from '@subwallet/react-ui';
 import { NotificationProps } from '@subwallet/react-ui/es/notification/NotificationProvider';
@@ -129,13 +129,18 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
 
   const navigate = useNavigate();
   // Pathname query
-  const [storage, setStorage] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const orderId = searchParams.get('orderId') || '';
+  const [, setStorage] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
+  const [searchParams] = useSearchParams();
 
-  const details = useMemo(() => {
-    return getOffRampData(orderId, searchParams);
-  }, [orderId, searchParams]);
+  const details = useMemo((): OffRampParams | null => {
+    const orderId = searchParams.get('orderId') || '';
+
+    if (orderId) {
+      return getOffRampData(orderId, searchParams);
+    } else {
+      return null;
+    }
+  }, [searchParams]);
 
   useSubscribeLanguage();
 
@@ -157,15 +162,14 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
   );
 
   useEffect(() => {
-    if (orderId) {
+    if (details) {
       setStorage(details);
-    }
 
-    if (storage.orderId && !isNoAccount) {
-      navigate(offRampLoading);
+      if (isNoAccount) {
+        navigate(offRampLoading);
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNoAccount, orderId]);
+  }, [isNoAccount, details, setStorage, navigate]);
 
   useEffect(() => {
     initDataRef.current.then(() => {

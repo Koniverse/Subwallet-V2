@@ -3,7 +3,7 @@
 
 import { BuyService, SupportService } from '@subwallet/extension-base/types';
 
-const DEFAULT_BUY_SERVICE: BuyService = { symbol: '', network: '' };
+const DEFAULT_BUY_SERVICE: BuyService = { symbol: '', network: '', supportSell: false };
 
 export const DEFAULT_SERVICE_INFO: Record<SupportService, BuyService> = {
   transak: { ...DEFAULT_BUY_SERVICE },

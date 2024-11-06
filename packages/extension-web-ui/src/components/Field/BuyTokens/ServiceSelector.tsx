@@ -1,11 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { SupportService } from '@subwallet/extension-base/types';
 import { BasicInputWrapper } from '@subwallet/extension-web-ui/components/Field/Base';
 import { BaseSelectModal } from '@subwallet/extension-web-ui/components/Modal/BaseSelectModal';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { useSelectModalInputHelper } from '@subwallet/extension-web-ui/hooks/form/useSelectModalInputHelper';
-import { SupportService, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { Icon, InputRef, Logo, SelectModalItem, Web3Block } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';

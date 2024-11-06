@@ -25,7 +25,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, makeCrossCh
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-web-ui/reducer';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-web-ui/types';
-import { findAccountByAddress, formatBalance, ledgerMustCheckNetwork, noop, reformatAddress, removeStorage,transactionDefaultFilterAccount } from '@subwallet/extension-web-ui/utils';
+import { findAccountByAddress, formatBalance, ledgerMustCheckNetwork, reformatAddress, removeStorage, transactionDefaultFilterAccount } from '@subwallet/extension-web-ui/utils';
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
@@ -227,12 +227,13 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
   const { t } = useTranslation();
   const notification = useNotification();
 
-  const { defaultData, persistData } = useTransactionContext<TransferParams>();
+  const { defaultData } = useTransactionContext<TransferParams>();
   const { defaultSlug: sendFundSlug } = defaultData;
   const isFirstRender = useIsFirstRender();
   const { isWebUI } = useContext(ScreenContext);
   const [offRampData] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
-  
+  const [orderId] = useState(offRampData.orderId);
+
   const [form] = Form.useForm<TransferParams>();
 
   const formDefault = useMemo((): TransferParams => {
@@ -252,7 +253,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
 
   const { chainInfoMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const { assetRegistry, assetSettingMap, multiChainAssetMap, xcmRefMap } = useSelector((root) => root.assetRegistry);
-  const { accounts, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const { accounts } = useSelector((state: RootState) => state.accountState);
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
   const checkAction = usePreCheckAction(from, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
   const isZKModeEnabled = useIsMantaPayEnabled(from);
@@ -262,7 +263,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
 
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChain === chain && _isNativeToken(assetInfo);
   }, [chainInfoMap, chain, destChain, assetInfo]);
-  
+
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
   const [, update] = useState({});
@@ -515,7 +516,6 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
   }, [accounts, assetRegistry, notification, t]);
 
   const handleBasicSubmit = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
-
     const { asset, chain, destChain, from: _from, to, value } = values;
 
     let sendPromise: Promise<SWTransactionResponse>;
@@ -523,7 +523,6 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
     const chainInfo = chainInfoMap[chain];
     const addressPrefix = chainInfo?.substrateInfo?.addressPrefix ?? 42;
     const from = reformatAddress(_from, addressPrefix);
-
 
     if (chain === destChain) {
       // Transfer token or send fund
@@ -533,7 +532,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
         to: to,
         tokenSlug: asset,
         value: value,
-        orderId: offRampData.orderId,
+        orderId: orderId,
         service: 'transak',
         transferAll: isTransferAll
       });
@@ -551,7 +550,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
     }
 
     return sendPromise;
-  }, [chainInfoMap, isTransferAll]);
+  }, [chainInfoMap, isTransferAll, orderId]);
 
   // todo: must refactor later, temporary solution to support SnowBridge
   const handleSnowBridgeSpendingApproval = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
@@ -604,6 +603,7 @@ const _SendFundOffRamp = ({ className = '', modalContent }: Props): React.ReactE
 
           if (success) {
             removeStorage(OFF_RAMP_DATA);
+
             return await submitData(step + 1);
           } else {
             return false;

@@ -8,7 +8,7 @@ import ReceiveQrModal from '@subwallet/extension-web-ui/components/Modal/Receive
 import { TokensSelectorModal } from '@subwallet/extension-web-ui/components/Modal/ReceiveModal/TokensSelectorModal';
 import NoContent, { PAGE_TYPE } from '@subwallet/extension-web-ui/components/NoContent';
 import { TokenGroupBalanceItem } from '@subwallet/extension-web-ui/components/TokenItem/TokenGroupBalanceItem';
-import { DEFAULT_OFF_RAMP_PARAMS, DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
+import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, SWAP_TRANSACTION, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
@@ -55,7 +55,7 @@ const Component = (): React.ReactElement => {
   const { accountBalance: { tokenGroupBalanceMap,
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
   const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
+
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
 
   const [, setStorage] = useLocalStorage<TransferParams>(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);

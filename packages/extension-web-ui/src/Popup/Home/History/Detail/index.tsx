@@ -67,8 +67,12 @@ function Component ({ className = '', data, onCancel }: Props): React.ReactEleme
       }
     }
 
-    if(data.additionalInfo?.orderId && data.additionalInfo?.service === 'transak'){
-      link = getTransakOrderLink(data.additionalInfo);
+    if ([ExtrinsicType.TRANSFER_BALANCE, ExtrinsicType.TRANSFER_TOKEN].includes(extrinsicType)) {
+      const additionalInfo = data.additionalInfo as TransactionAdditionalInfo[ExtrinsicType.TRANSFER_TOKEN];
+
+      if (additionalInfo?.orderId && additionalInfo?.service === 'transak') {
+        link = getTransakOrderLink(additionalInfo?.orderId);
+      }
     }
 
     return (

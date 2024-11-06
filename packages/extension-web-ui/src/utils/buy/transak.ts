@@ -5,25 +5,13 @@ import { TRANSAK_API_KEY, TRANSAK_URL } from '@subwallet/extension-web-ui/consta
 import { CreateBuyOrderFunction } from '@subwallet/extension-web-ui/types';
 import qs from 'querystring';
 
-interface TransakOrderParams {
-  apiKey: string;
-  defaultCryptoCurrency: string;
-  networks: string;
-  cryptoCurrencyList: string;
-  productsAvailed: string;
-  walletAddress?: string;
-  partnerCustomerId?: string;
-  redirectURL?: string;
-  walletRedirection?: boolean;
-}
-
 export const createTransakOrder: CreateBuyOrderFunction = (orderParams) => {
   const { action = 'BUY', address, network, slug = '', symbol } = orderParams;
 
   return new Promise((resolve) => {
     const location = window.location.origin;
-    const params: TransakOrderParams = {
-      apiKey: '307807a5-5fb3-4add-8a6c-fca4972e0470',
+    const params: Record<string, string | number | boolean | null> = {
+      apiKey: TRANSAK_API_KEY,
       defaultCryptoCurrency: symbol,
       networks: network,
       cryptoCurrencyList: symbol,
@@ -38,7 +26,7 @@ export const createTransakOrder: CreateBuyOrderFunction = (orderParams) => {
       params.walletRedirection = true;
     }
 
-    const query = qs.stringify(params as unknown as Record<string, string | number | boolean | null>);
+    const query = qs.stringify(params);
 
     resolve(`${TRANSAK_URL}?${query}`);
   });

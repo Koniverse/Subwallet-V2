@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { BuyTokenInfo } from '@subwallet/extension-base/types';
 import { balanceNoPrefixFormater, formatNumber } from '@subwallet/extension-base/utils';
 import { ReceiveQrModal, TokensSelectorModal } from '@subwallet/extension-web-ui/components/Modal';
 import { AccountSelectorModal } from '@subwallet/extension-web-ui/components/Modal/AccountSelectorModal';
@@ -17,7 +18,7 @@ import Transaction from '@subwallet/extension-web-ui/Popup/Transaction/Transacti
 import SendFund from '@subwallet/extension-web-ui/Popup/Transaction/variants/SendFund';
 import SendFundOffRamp from '@subwallet/extension-web-ui/Popup/Transaction/variants/SendFundOffRamp';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { BuyTokenInfo, PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { getAccountType, isAccountAll, removeStorage } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, ModalContext, Number, Tag, Tooltip, Typography } from '@subwallet/react-ui';
 import CN from 'classnames';

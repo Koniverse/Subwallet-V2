@@ -307,6 +307,7 @@ const Component: React.FC<Props> = (props: Props) => {
               <>
                 <div className='logo'>
                   <DualLogo
+                    innerSize={52}
                     leftLogo={(
                       <Image
                         height={52}
@@ -323,18 +324,17 @@ const Component: React.FC<Props> = (props: Props) => {
                         width={52}
                       />
                     )}
-                    innerSize={52}
                     sizeLinkIcon={36}
                     sizeSquircleBorder={108}
                   />
                 </div>
                 <ChainSelector
+                  className={'select-ledger-app'}
                   items={networks}
                   label={t('Select Ledger app')}
                   onChange={onChainChange}
                   placeholder={t('Select Ledger app')}
                   value={chain}
-                  className={'select-ledger-app'}
                 />
                 {
                   !!chainMigrateMode && <ChainSelector

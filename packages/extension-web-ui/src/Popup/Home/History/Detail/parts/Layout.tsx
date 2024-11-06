@@ -48,6 +48,7 @@ const Component: React.FC<Props> = (props: Props) => {
         valueColorSchema={HistoryStatusMap[data.status].schema}
       />
       <MetaInfo.Default label={t('Extrinsic hash')}>{(data.extrinsicHash || '').startsWith('0x') ? toShort(data.extrinsicHash, 8, 9) : '...'}</MetaInfo.Default>
+      <MetaInfo.Default label={t('Transaction time')}>{formatHistoryDate(data.time, language, 'detail')}</MetaInfo.Default>
       <HistoryDetailAmount data={data} />
 
       {

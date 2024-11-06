@@ -12,6 +12,9 @@ import BigN from 'bignumber.js';
 export const CHAIN_FLIP_TESTNET_EXPLORER = 'https://blocks-perseverance.chainflip.io';
 export const CHAIN_FLIP_MAINNET_EXPLORER = 'https://scan.chainflip.io';
 
+export const TRANSAK_TEST_MODE = process.env.TRANSAK_TEST_MODE !== undefined ? !!process.env.TRANSAK_TEST_MODE : true;
+export const TRANSAK_URL = TRANSAK_TEST_MODE ? 'https://global-stg.transak.com' : 'https://global.transak.com';
+
 export const CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING: Record<string, Chain> = {
   [COMMON_CHAIN_SLUGS.POLKADOT]: Chains.Polkadot,
   [COMMON_CHAIN_SLUGS.ETHEREUM]: Chains.Ethereum,

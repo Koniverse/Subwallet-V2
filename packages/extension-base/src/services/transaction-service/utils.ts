@@ -4,7 +4,7 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicDataTypeMap, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getBlockExplorerFromChain, _isChainTestNet, _isPureEvmChain } from '@subwallet/extension-base/services/chain-service/utils';
-import { CHAIN_FLIP_MAINNET_EXPLORER, CHAIN_FLIP_TESTNET_EXPLORER } from '@subwallet/extension-base/services/swap-service/utils';
+import { CHAIN_FLIP_MAINNET_EXPLORER, CHAIN_FLIP_TESTNET_EXPLORER, TRANSAK_URL } from '@subwallet/extension-base/services/swap-service/utils';
 import { ChainflipSwapTxData } from '@subwallet/extension-base/types/swap';
 
 // @ts-ignore
@@ -82,6 +82,6 @@ export function getChainflipExplorerLink (data: ChainflipSwapTxData, chainInfo: 
   return `${chainflipDomain}/channels/${data.depositChannelId}`;
 }
 
-export function getTransakOrderLink(data: any) {
-    return `https://global-stg.transak.com/user/order/${data.orderId}`;
+export function getTransakOrderLink (orderId: string) {
+  return `${TRANSAK_URL}/user/order/${orderId}`;
 }

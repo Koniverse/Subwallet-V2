@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountJson, Resolver } from '@subwallet/extension-base/background/types';
+import { BuyServiceInfo, BuyTokenInfo, SupportService } from '@subwallet/extension-base/types';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { BaseModal, baseServiceItems, Layout, PageWrapper, ServiceItem } from '@subwallet/extension-web-ui/components';
 import { AccountSelector } from '@subwallet/extension-web-ui/components/Field/AccountSelector';
@@ -9,7 +10,7 @@ import { ServiceSelector } from '@subwallet/extension-web-ui/components/Field/Bu
 import { TokenItemType, TokenSelector } from '@subwallet/extension-web-ui/components/Field/TokenSelector';
 import { useAssetChecker, useDefaultNavigate, useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { AccountType, BuyServiceInfo, BuyTokenInfo, CreateBuyOrderFunction, SupportService, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { AccountType, CreateBuyOrderFunction, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { BuyTokensParam } from '@subwallet/extension-web-ui/types/navigation';
 import { createBanxaOrder, createCoinbaseOrder, createTransakOrder, findAccountByAddress, noop, openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { getAccountType } from '@subwallet/extension-web-ui/utils/account/account';
@@ -65,12 +66,12 @@ function Component ({ className, modalContent, slug }: Props) {
 
   const [buyForm, setBuyForm] = useState(true);
 
-  const handleForm = (mode: string) => {
+  const handleForm = useCallback((mode: string) => {
     setBuyForm(mode === 'BUY');
-  };
+  }, []);
 
-  const handleBuyForm = () => handleForm('BUY');
-  const handleSellForm = () => handleForm('SELL');
+  const handleBuyForm = useCallback(() => handleForm('BUY'), [handleForm]);
+  const handleSellForm = useCallback(() => handleForm('SELL'), [handleForm]);
 
   const currentSymbol = slug || _currentSymbol;
 
@@ -422,14 +423,12 @@ function Component ({ className, modalContent, slug }: Props) {
 
           <div
             className='__service-selector'
-            // eslint-disable-next-line react/jsx-no-bind
             onClick={handleBuyForm}
           >
               Buy
           </div>
           <div
             className='__service-selector'
-            // eslint-disable-next-line react/jsx-no-bind
             onClick={handleSellForm}
           >
               Sell
@@ -633,7 +632,7 @@ const BuyTokens = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
     },
 
     '.__service-container': {
-      backgroundColor: '#1A1A1A',
+      backgroundColor: token.colorBgSecondary,
       borderRadius: '0.5rem',
       padding: '0.25rem',
       height: '2.5rem',
