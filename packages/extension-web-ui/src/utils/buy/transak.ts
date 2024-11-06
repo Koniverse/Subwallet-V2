@@ -11,7 +11,7 @@ export const createTransakOrder: CreateBuyOrderFunction = (orderParams) => {
   return new Promise((resolve) => {
     const location = window.location.origin;
     const params: Record<string, string | number | boolean | null> = {
-      apiKey: TRANSAK_API_KEY,
+      apiKey: '307807a5-5fb3-4add-8a6c-fca4972e0470',
       defaultCryptoCurrency: symbol,
       networks: network,
       cryptoCurrencyList: symbol,
