@@ -5,7 +5,7 @@ import { AssetLogoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain
 import { _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { ChainService, filterAssetInfoMap } from '@subwallet/extension-base/services/chain-service';
 import { LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
-import { _ChainState } from '@subwallet/extension-base/services/chain-service/types';
+import { _ChainApiStatus, _ChainConnectionStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { fetchPatchData, PatchInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
@@ -104,7 +104,8 @@ export class ChainOnlineService {
       let chainInfoMap: Record<string, _ChainInfo> = {};
       let assetRegistry: Record<string, _ChainAsset> = {};
       let multiChainAssetMap: Record<string, _MultiChainAsset> = {};
-      let currentChainState: Record<string, _ChainState> = {};
+      let currentChainStateMap: Record<string, _ChainState> = {};
+      let currentChainStatusMap: Record<string, _ChainApiStatus> = {};
       let addedChain: string[] = [];
       // todo: AssetLogoMap, ChainLogoMap
 
@@ -113,18 +114,24 @@ export class ChainOnlineService {
         if (latestChainInfo && Object.keys(latestChainInfo).length > 0) {
           chainInfoMap = Object.assign({}, this.chainService.getChainInfoMap(), latestChainInfo);
 
-          currentChainState = this.chainService.getChainStateMap();
-          const currentChainStateKey = Object.keys(currentChainState);
-          const newChainStateKey = Object.keys(chainInfoMap);
+          [currentChainStateMap, currentChainStatusMap] = [this.chainService.getChainStateMap(), this.chainService.getChainStatusMap()];
 
-          addedChain = newChainStateKey.filter((chain) => !currentChainStateKey.includes(chain));
+          const [currentChainStateKey, newChainKey] = [Object.keys(currentChainStateMap), Object.keys(chainInfoMap)];
+
+          addedChain = newChainKey.filter((chain) => !currentChainStateKey.includes(chain));
 
           addedChain.forEach((key) => {
-            currentChainState[key] = {
+            currentChainStateMap[key] = {
               active: false,
               currentProvider: Object.keys(chainInfoMap[key].providers)[0],
               manualTurnOff: false,
               slug: key
+            };
+
+            currentChainStatusMap[key] = {
+              slug: key,
+              connectionStatus: _ChainConnectionStatus.DISCONNECTED,
+              lastUpdated: Date.now()
             };
           });
         }
@@ -155,8 +162,8 @@ export class ChainOnlineService {
 
           this.chainService.subscribeMultiChainAssetMap().next(multiChainAssetMap);
 
-          this.chainService.setChainStateMap(currentChainState);
-          this.chainService.subscribeChainStateMap().next(currentChainState);
+          this.chainService.setChainStateMap(currentChainStateMap);
+          this.chainService.subscribeChainStateMap().next(currentChainStateMap);
 
           if (latestChainLogoMap) {
             const logoMap = Object.assign({}, ChainLogoMap, latestChainLogoMap);
