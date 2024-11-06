@@ -167,7 +167,7 @@ export default class KoniState {
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
     this.inappNotificationService = new InappNotificationService(this.dbService, this.keyringService, this.eventService, this.chainService);
-    this.chainOnlineService = new ChainOnlineService(this.chainService, this.settingService, this.eventService);
+    this.chainOnlineService = new ChainOnlineService(this.chainService, this.settingService, this.eventService, this.dbService);
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -306,6 +306,7 @@ export default class KoniState {
     await this.startSubscription();
 
     this.chainOnlineService.checkLatestData();
+    this.chainService.checkLatestData();
   }
 
   public async initMantaPay (password: string) {
@@ -1645,6 +1646,7 @@ export default class KoniState {
     this.afterChainServiceInit();
 
     this.chainOnlineService.checkLatestData();
+    this.chainService.checkLatestData();
   }
 
   public async enableMantaPay (updateStore: boolean, address: string, password: string, seedPhrase?: string) {

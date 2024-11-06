@@ -4,7 +4,7 @@
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
-import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
+import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
@@ -168,6 +168,14 @@ export class ChainService {
     });
 
     return result;
+  }
+
+  public getlockChainInfoMap () {
+    return this.lockChainInfoMap;
+  }
+
+  public setLockChainInfoMap (isLock: boolean) {
+    this.lockChainInfoMap = isLock;
   }
 
   public getEvmApi (slug: string) {
@@ -681,6 +689,13 @@ export class ChainService {
     this.dataMap.assetRefMap = AssetRefMap;
   }
 
+  checkLatestData () {
+    clearInterval(this.refreshLatestChainDataTimeOut);
+    this.handleLatestData();
+
+    this.refreshLatestChainDataTimeOut = setInterval(this.handleLatestData.bind(this), LATEST_CHAIN_DATA_FETCHING_INTERVAL);
+  }
+
   stopCheckLatestChainData () {
     clearInterval(this.refreshLatestChainDataTimeOut);
   }
@@ -754,8 +769,13 @@ export class ChainService {
 
   handleLatestData () {
     this.fetchLatestChainData().then((latestChainInfo) => {
+      this.lockChainInfoMap = true; // do not need to check current lockChainInfoMap because all remains action is fast enough and don't affect this feature.
       this.handleLatestChainData(latestChainInfo);
-    }).catch(console.error);
+      this.lockChainInfoMap = false;
+    }).catch((e) => {
+      this.lockChainInfoMap = false;
+      console.error('Error update latest chain data', e);
+    });
 
     this.fetchLatestPriceIdsData().then((latestPriceIds) => {
       this.handleLatestPriceId(latestPriceIds);
@@ -1059,18 +1079,10 @@ export class ChainService {
     // }
   }
 
-  // private async fetchLatestAssetData () {
-  //   return await Promise.all([fetchPatchData<Record<string, _ChainAsset>>('ChainAsset.json'), fetchPatchData<Record<string, string>>('AssetLogoMap.json')]); // lastest logo also here.
-  // }
-
   // @ts-ignore
   private async fetchLatestPriceIdsData () {
     return await fetchStaticData<Record<string, string | null>>('chain-assets/price-map');
   }
-
-  // private async fetchLatestAssetRef () {
-  //   return await Promise.all([fetchStaticData<string[]>('chain-assets/disabled-xcm-channels'), fetchPatchData<Record<string, _AssetRef>>('AssetRef.json')]); //
-  // }
 
   private async fetchLatestLedgerGenericAllowChains () {
     return await fetchStaticData<string[]>('chains/ledger-generic-allow-chains') || [];
@@ -1226,8 +1238,36 @@ export class ChainService {
               manualTurnOff
             });
           }
-        } else {
-          // Todo: Remove chain from storage
+        } else { // added chain from patch
+          this.dataMap.chainStateMap[storedSlug] = {
+            currentProvider: storedChainInfo.currentProvider,
+            slug: storedSlug,
+            active: storedChainInfo.active,
+            manualTurnOff
+          };
+
+          this.updateChainConnectionStatus(storedSlug, _ChainConnectionStatus.DISCONNECTED);
+
+          newStorageData.push({
+            ...storedChainSettingMap[storedSlug],
+            active: storedChainInfo.active,
+            currentProvider: storedChainInfo.currentProvider,
+            manualTurnOff
+          });
+
+          mergedChainInfoMap[storedSlug] = {
+            slug: storedSlug,
+            name: storedChainInfo.name,
+            providers: storedChainInfo.providers,
+            evmInfo: storedChainInfo.evmInfo,
+            substrateInfo: storedChainInfo.substrateInfo,
+            bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
+            tonInfo: storedChainInfo.tonInfo,
+            isTestnet: storedChainInfo.isTestnet,
+            chainStatus: storedChainInfo.chainStatus,
+            icon: storedChainInfo.icon,
+            extraInfo: storedChainInfo.extraInfo
+          };
         }
       }
 
@@ -1831,6 +1871,8 @@ export class ChainService {
       this.evmChainHandler.wakeUp(),
       this.tonChainHandler.wakeUp()
     ]);
+
+    this.checkLatestData();
   }
 
   public async initAssetSettings () {
