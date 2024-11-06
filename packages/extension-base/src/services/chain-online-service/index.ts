@@ -179,6 +179,16 @@ export class ChainOnlineService {
 
           await this.dbService.bulkUpdateChainStore(storedChainInfoList);
 
+          const addedAssets: _ChainAsset[] = [];
+
+          Object.entries(assetRegistry).forEach(([slug, asset]) => {
+            if (addedChain.includes(asset.originChain)) {
+              addedAssets.push(asset);
+            }
+          });
+
+          await this.dbService.bulkUpdateAssetsStore(addedAssets);
+
           if (latestChainLogoMap) {
             const logoMap = Object.assign({}, ChainLogoMap, latestChainLogoMap);
 

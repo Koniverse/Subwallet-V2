@@ -1268,6 +1268,8 @@ export class ChainService {
             icon: storedChainInfo.icon,
             extraInfo: storedChainInfo.extraInfo
           };
+
+          deprecatedChainMap[storedSlug] = storedSlug; // todo: set a better name
         }
       }
 
