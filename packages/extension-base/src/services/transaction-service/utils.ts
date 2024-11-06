@@ -81,3 +81,7 @@ export function getChainflipExplorerLink (data: ChainflipSwapTxData, chainInfo: 
 
   return `${chainflipDomain}/channels/${data.depositChannelId}`;
 }
+
+export function getTransakOrderLink(data: any) {
+    return `https://global-stg.transak.com/user/order/${data.orderId}`;
+}

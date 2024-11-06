@@ -343,6 +343,7 @@ export default class TransactionService {
         const sendingTokenInfo = this.state.chainService.getAssetBySlug(inputData.tokenSlug);
 
         historyItem.amount = { value: inputData.value || '0', decimals: sendingTokenInfo.decimals || 0, symbol: sendingTokenInfo.symbol };
+        historyItem.additionalInfo = { orderId: inputData.orderId, service: inputData.service };
         eventLogs && parseTransferEventLogs(historyItem, eventLogs, transaction.chain, sendingTokenInfo, chainInfo);
       }
 
@@ -354,6 +355,7 @@ export default class TransactionService {
         const sendingTokenInfo = this.state.chainService.getAssetBySlug(inputData.tokenSlug);
 
         historyItem.amount = { value: inputData.value || '0', decimals: sendingTokenInfo.decimals || 0, symbol: sendingTokenInfo.symbol };
+        historyItem.additionalInfo = { orderId: inputData.orderId, service: inputData.service };
         eventLogs && parseTransferEventLogs(historyItem, eventLogs, transaction.chain, sendingTokenInfo, chainInfo);
       }
 

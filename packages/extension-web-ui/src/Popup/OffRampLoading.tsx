@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { toBNString } from '@subwallet/extension-base/utils';
-import { DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSFER_PARAMS, NO_ACCOUNT_MODAL, OFF_RAMP_DATA, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
+import { DEFAULT_OFF_RAMP_PARAMS, DEFAULT_TRANSFER_PARAMS, NO_ACCOUNT_MODAL, OFF_RAMP_DATA, REDIRECT_TRANSAK_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useGetChainAssetInfo, useSelector } from '@subwallet/extension-web-ui/hooks';
 import { RootState } from '@subwallet/extension-web-ui/stores';
@@ -21,7 +21,8 @@ import { LoadingScreen } from '../components';
 type Props = ThemeProps;
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
-  const modalId = NO_ACCOUNT_MODAL;
+  const noAccountModalId = NO_ACCOUNT_MODAL;
+  const redirectTransakModalId = REDIRECT_TRANSAK_MODAL;
   const { token } = useTheme() as Theme;
   // Handle Sell Token
   const { accounts } = useSelector((state: RootState) => state.accountState);
@@ -37,7 +38,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const TokenInfo = useGetChainAssetInfo(data.slug);
   const navigate = useNavigate();
 
-  console.log('Whats wrong here');
   const onOpenSellToken = useCallback((data: OffRampParams) => {
     const partnerCustomerId = data.partnerCustomerId;
     const walletAddress = data.walletAddress;
@@ -56,7 +56,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     };
 
     setStorage(transferParams);
-    console.log('Was here');
 
     if (!isWebUI) {
       navigate('/transaction/off-ramp-send-fund');
@@ -66,18 +65,22 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   }, [TokenInfo?.decimals, TokenInfo?.originChain, TokenInfo?.slug, setStorage, isWebUI, navigate]);
 
   useEffect(() => {
-    if (data.orderId && addresses.includes(data.partnerCustomerId)) {
+    if (data.orderId) {
       if (addresses.includes(data.partnerCustomerId)) {
-        onOpenSellToken(data);
+        activeModal(redirectTransakModalId);
       } else {
-        activeModal(modalId);
+        activeModal(noAccountModalId);
       }
     }
-  }, [activeModal, addresses, data, modalId, onOpenSellToken]);
+  }, [activeModal, addresses, data, redirectTransakModalId, onOpenSellToken, noAccountModalId]);
 
   const onClick = useCallback(() => {
     navigate('/home/tokens');
   }, [navigate]);
+
+  const onRedirectclick = useCallback(() => {
+    onOpenSellToken(data);
+  }, [data, onOpenSellToken]);
 
   const { t } = useTranslation();
   const footerModal = useMemo(() => {
@@ -93,13 +96,26 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     );
   }, [onClick, t]);
 
+    const redirectFooterModal = useMemo(() => {
+    return (
+      <>
+        <Button
+          block={true}
+          onClick={onRedirectclick}
+        >
+          {t('I understand')}
+        </Button>
+      </>
+    );
+  }, [onRedirectclick, t]);
+
   return (
     <>
       <LoadingScreen />
       <SwModal
         className={CN(className)}
         footer={footerModal}
-        id={modalId}
+        id={noAccountModalId}
         onCancel={onClick}
         title={t('Unable to sell tokens')}
       >
@@ -113,6 +129,26 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           />
           <div className='__modal-description'>
             {t('The requested account is not found in SubWallet. Re-import the account and try again')}
+          </div>
+        </div>
+      </SwModal>
+      <SwModal
+        className={CN(className)}
+        footer={redirectFooterModal}
+        id={redirectTransakModalId}
+        onCancel={onRedirectclick}
+        title={t('Send token to transak')}
+      >
+        <div className={'__modal-content'}>
+          <PageIcon
+            color={token.colorError}
+            iconProps={{
+              weight: 'fill',
+              phosphorIcon: XCircle
+            }}
+          />
+          <div className='__modal-description'>
+            {t('Send token to transak')}
           </div>
         </div>
       </SwModal>

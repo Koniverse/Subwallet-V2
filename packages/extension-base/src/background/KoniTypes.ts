@@ -1538,7 +1538,9 @@ export interface RequestCheckTransfer extends BaseRequestSign {
   to: string,
   value?: string,
   transferAll?: boolean
-  tokenSlug: string
+  tokenSlug: string,
+  orderId?: string,
+  service?: string
 }
 
 export interface ValidateTransactionResponse {

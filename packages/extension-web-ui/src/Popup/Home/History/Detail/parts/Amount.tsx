@@ -99,7 +99,11 @@ const Component: React.FC<Props> = (props: Props) => {
             />
           )
       }
+      {additionalInfo?.orderId && (
+      <MetaInfo.Default label={t('Order ID')}> {additionalInfo?.orderId} </MetaInfo.Default>
+      )}
       {isMint && amountDerivative && (
+
         <MetaInfo.Number
           decimals={0}
           label={t('Estimated receivables')}

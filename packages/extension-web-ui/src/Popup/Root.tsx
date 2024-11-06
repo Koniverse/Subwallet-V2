@@ -161,7 +161,7 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
       setStorage(details);
     }
 
-    if (storage.orderId && !isNoAccount && location.pathname !== offRampLoading) {
+    if (storage.orderId && !isNoAccount) {
       navigate(offRampLoading);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
