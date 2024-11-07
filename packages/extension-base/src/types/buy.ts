@@ -4,6 +4,7 @@
 export interface BuyService {
   network: string;
   symbol: string;
+  supportSell: boolean;
 }
 
 export type SupportService = 'transak' | 'banxa' | 'coinbase' | 'moonpay' | 'onramper';
@@ -15,6 +16,7 @@ export interface BuyTokenInfo {
   support: 'ETHEREUM' | 'SUBSTRATE';
   services: Array<SupportService>;
   serviceInfo: Record<SupportService, BuyService>;
+  supportSell: boolean;
 }
 
 export interface BuyServiceInfo {

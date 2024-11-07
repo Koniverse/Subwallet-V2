@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountJson, Resolver } from '@subwallet/extension-base/background/types';
+import { BuyServiceInfo, BuyTokenInfo, SupportService } from '@subwallet/extension-base/types';
 import { detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { BaseModal, baseServiceItems, Layout, PageWrapper, ServiceItem } from '@subwallet/extension-web-ui/components';
 import { AccountSelector } from '@subwallet/extension-web-ui/components/Field/AccountSelector';
@@ -9,7 +10,7 @@ import { ServiceSelector } from '@subwallet/extension-web-ui/components/Field/Bu
 import { TokenItemType, TokenSelector } from '@subwallet/extension-web-ui/components/Field/TokenSelector';
 import { useAssetChecker, useDefaultNavigate, useNotification, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { AccountType, BuyServiceInfo, BuyTokenInfo, CreateBuyOrderFunction, SupportService, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { AccountType, CreateBuyOrderFunction, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { BuyTokensParam } from '@subwallet/extension-web-ui/types/navigation';
 import { createBanxaOrder, createCoinbaseOrder, createTransakOrder, findAccountByAddress, noop, openInNewTab } from '@subwallet/extension-web-ui/utils';
 import { getAccountType } from '@subwallet/extension-web-ui/utils/account/account';
@@ -17,7 +18,7 @@ import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatA
 import { findNetworkJsonByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { Button, Form, Icon, ModalContext, SwSubHeader } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { CheckCircle, ShoppingCartSimple, XCircle } from 'phosphor-react';
+import { CheckCircle, ShoppingCartSimple, Tag, XCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
@@ -62,6 +63,16 @@ const modalId = 'disclaimer-modal';
 function Component ({ className, modalContent, slug }: Props) {
   const locationState = useLocation().state as BuyTokensParam;
   const [_currentSymbol] = useState<string | undefined>(locationState?.symbol);
+
+  const [buyForm, setBuyForm] = useState(true);
+
+  const handleForm = useCallback((mode: string) => {
+    setBuyForm(mode === 'BUY');
+  }, []);
+
+  const handleBuyForm = useCallback(() => handleForm('BUY'), [handleForm]);
+  const handleSellForm = useCallback(() => handleForm('SELL'), [handleForm]);
+
   const currentSymbol = slug || _currentSymbol;
 
   const notify = useNotification();
@@ -111,7 +122,6 @@ function Component ({ className, modalContent, slug }: Props) {
   const { contactUrl, name: serviceName, policyUrl, termUrl, url } = useMemo((): BuyServiceInfo => {
     return services[selectedService] || { name: '', url: '', contactUrl: '', policyUrl: '', termUrl: '' };
   }, [selectedService, services]);
-
   const getServiceItems = useCallback((tokenSlug: string): ServiceItem[] => {
     const buyInfo = tokens[tokenSlug];
     const result: ServiceItem[] = [];
@@ -119,14 +129,16 @@ function Component ({ className, modalContent, slug }: Props) {
     for (const serviceItem of baseServiceItems) {
       const temp: ServiceItem = {
         ...serviceItem,
-        disabled: buyInfo ? !buyInfo.services.includes(serviceItem.key) : true
+        disabled: buyInfo
+          ? !buyInfo.services.includes(serviceItem.key) || (!buyForm && !buyInfo.serviceInfo[serviceItem.key]?.supportSell)
+          : true
       };
 
       result.push(temp);
     }
 
     return result;
-  }, [tokens]);
+  }, [tokens, buyForm]);
 
   const onConfirm = useCallback((): Promise<void> => {
     activeModal(modalId);
@@ -167,7 +179,7 @@ function Component ({ className, modalContent, slug }: Props) {
   const tokenItems = useMemo<TokenItemType[]>(() => {
     const result: TokenItemType[] = [];
 
-    const list = [...Object.values(tokens)];
+    const list = [...Object.values(tokens)].filter((token) => buyForm || token.supportSell);
 
     const filtered = currentSymbol ? list.filter((value) => value.slug === currentSymbol || value.symbol === currentSymbol) : list;
 
@@ -195,7 +207,7 @@ function Component ({ className, modalContent, slug }: Props) {
     });
 
     return result;
-  }, [accountType, assetRegistry, currentSymbol, ledgerNetwork, tokens]);
+  }, [accountType, assetRegistry, currentSymbol, ledgerNetwork, tokens, buyForm]);
 
   const serviceItems = useMemo(() => getServiceItems(selectedTokenKey), [getServiceItems, selectedTokenKey]);
 
@@ -210,7 +222,21 @@ function Component ({ className, modalContent, slug }: Props) {
     return false;
   }, [selectedService, selectedAddress, selectedTokenKey, tokens, tokenItems]);
 
-  const onClickNext = useCallback(() => {
+  const onClickNext = useCallback((action: 'BUY' | 'SELL') => {
+    if (action === 'SELL') {
+      if (currentAccount && currentAccount.isReadOnly) {
+        notify({
+          message: t('Feature not available for watch-only account'),
+          type: 'info',
+          duration: 3
+        });
+
+        setLoading(false);
+
+        return;
+      }
+    }
+
     setLoading(true);
 
     const { address, service, tokenKey } = form.getFieldsValue();
@@ -239,7 +265,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
     if (urlPromise && serviceInfo && buyInfo.services.includes(service)) {
       const { network: serviceNetwork, symbol } = serviceInfo;
-
+      const slug = buyInfo.slug;
       const disclaimerPromise = new Promise<void>((resolve, reject) => {
         if (!disclaimerAgree[service]) {
           onConfirm().then(() => {
@@ -255,7 +281,7 @@ function Component ({ className, modalContent, slug }: Props) {
 
       disclaimerPromise.then(() => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return urlPromise!(symbol, walletAddress, serviceNetwork, walletReference);
+        return urlPromise!({ symbol, address: walletAddress, network: serviceNetwork, slug, walletReference, action });
       })
         .then((url) => {
           openInNewTab(url)();
@@ -275,7 +301,7 @@ function Component ({ className, modalContent, slug }: Props) {
     } else {
       setLoading(false);
     }
-  }, [form, tokens, chainInfoMap, disclaimerAgree, onConfirm, walletReference, notify, t]);
+  }, [form, tokens, chainInfoMap, currentAccount, notify, t, disclaimerAgree, onConfirm, walletReference]);
 
   const filterAccountType = useMemo((): AccountType => {
     if (currentSymbol) {
@@ -314,8 +340,12 @@ function Component ({ className, modalContent, slug }: Props) {
       }
     }
 
+    if (!buyForm && account.isReadOnly) {
+      return false;
+    }
+
     return true;
-  }, [filterAccountType]);
+  }, [filterAccountType, buyForm]);
 
   useEffect(() => {
     if (currentAddress !== currentAccount?.address) {
@@ -350,6 +380,7 @@ function Component ({ className, modalContent, slug }: Props) {
   useEffect(() => {
     if (selectedTokenKey) {
       const services = getServiceItems(selectedTokenKey);
+
       const filtered = services.filter((service) => !service.disabled);
 
       if (filtered.length > 1) {
@@ -373,14 +404,40 @@ function Component ({ className, modalContent, slug }: Props) {
           onBack={goBack}
           paddingVertical
           showBackButton
-          title={t('Buy token')}
+          title={t('Buy & sell tokens')}
         />
       )}
       <div className={'__scroll-container'}>
+        <div className='form-row __service-container'>
+          <div style={{
+            position: 'absolute',
+            top: '0.25rem',
+            left: buyForm ? '0.25rem' : 'calc(50% + 0.25rem)',
+            width: 'calc(50% - 0.5rem)',
+            height: 'calc(100% - 0.5rem)',
+            backgroundColor: '#252525',
+            borderRadius: '0.5rem',
+            transition: 'left 0.3s ease-in-out'
+          }}
+          ></div>
+
+          <div
+            className='__service-selector'
+            onClick={handleBuyForm}
+          >
+              Buy
+          </div>
+          <div
+            className='__service-selector'
+            onClick={handleSellForm}
+          >
+              Sell
+          </div>
+        </div>
         <div className='__buy-icon-wrapper'>
           <Icon
             className={'__buy-icon'}
-            phosphorIcon={ShoppingCartSimple}
+            phosphorIcon={buyForm ? ShoppingCartSimple : Tag}
             weight={'fill'}
           />
         </div>
@@ -399,7 +456,7 @@ function Component ({ className, modalContent, slug }: Props) {
             <AccountSelector
               disabled={!isAllAccount}
               filter={accountsFilter}
-              label={t('Select account')}
+              label={buyForm ? t('Buy to account') : t('Sell from account')}
             />
           </Form.Item>
 
@@ -431,16 +488,17 @@ function Component ({ className, modalContent, slug }: Props) {
       <div className={'__layout-footer'}>
         <Button
           disabled={!isSupportBuyTokens}
-          icon={ (
+          icon={(
             <Icon
-              phosphorIcon={ShoppingCartSimple}
+              phosphorIcon={buyForm ? ShoppingCartSimple : Tag}
               weight={'fill'}
             />
           )}
           loading={loading}
-          onClick={onClickNext}
+          // eslint-disable-next-line react/jsx-no-bind
+          onClick={() => onClickNext(buyForm ? 'BUY' : 'SELL')}
         >
-          {t('Buy now')}
+          {buyForm ? t('Buy now') : t('Sell now')}
         </Button>
       </div>
       <BaseModal
@@ -571,6 +629,26 @@ const BuyTokens = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
       overflow: 'auto',
       paddingLeft: token.padding,
       paddingRight: token.padding
+    },
+
+    '.__service-container': {
+      backgroundColor: token.colorBgSecondary,
+      borderRadius: '0.5rem',
+      padding: '0.25rem',
+      height: '2.5rem',
+      position: 'relative',
+      display: 'flex',
+      overflow: 'hidden'
+    },
+
+    '.__service-selector': {
+      cursor: 'pointer',
+      width: '50%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      zIndex: 1
     },
 
     '.__buy-icon-wrapper': {

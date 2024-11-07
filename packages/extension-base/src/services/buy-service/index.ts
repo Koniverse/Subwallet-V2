@@ -48,7 +48,8 @@ export default class BuyService {
         services: [],
         slug: datum.slug,
         symbol: datum.symbol,
-        network: datum.network
+        network: datum.network,
+        supportSell: false
       };
 
       for (const [_service, info] of Object.entries(datum.serviceInfo)) {
@@ -60,10 +61,15 @@ export default class BuyService {
 
         temp.serviceInfo[service] = {
           network: info.network,
-          symbol: info.symbol
+          symbol: info.symbol,
+          supportSell: info.supportSell
         };
 
         temp.services.push(service);
+
+        if (info.supportSell) {
+          temp.supportSell = true;
+        }
       }
 
       if (temp.services.length) {

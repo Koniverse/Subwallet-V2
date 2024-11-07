@@ -84,6 +84,13 @@ const Component: React.FC<Props> = ({ className, transaction }: Props) => {
             />
           )
         }
+        {data.orderId && (
+          <MetaInfo.Default
+            label={t('Order ID')}
+          >
+            {data.orderId}
+          </MetaInfo.Default>
+        )}
       </MetaInfo>
 
       <MetaInfo hasBackgroundWrapper>

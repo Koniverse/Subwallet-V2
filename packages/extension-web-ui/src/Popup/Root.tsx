@@ -15,17 +15,18 @@ import useNotification from '@subwallet/extension-web-ui/hooks/common/useNotific
 import useUILock from '@subwallet/extension-web-ui/hooks/common/useUILock';
 import { subscribeNotifications } from '@subwallet/extension-web-ui/messaging';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { ThemeProps } from '@subwallet/extension-web-ui/types';
+import { OffRampParams, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { removeStorage } from '@subwallet/extension-web-ui/utils';
 import { changeHeaderLogo, ModalContext } from '@subwallet/react-ui';
 import { NotificationProps } from '@subwallet/react-ui/es/notification/NotificationProvider';
 import CN from 'classnames';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { useLocalStorage } from 'usehooks-ts';
 
-import { CONFIRMATION_MODAL, TRANSACTION_STORAGES } from '../constants';
+import { CONFIRMATION_MODAL, DEFAULT_OFF_RAMP_PARAMS, OFF_RAMP_DATA, TRANSACTION_STORAGES } from '../constants';
 import { WebUIContextProvider } from '../contexts/WebUIContext';
 
 changeHeaderLogo(<Logo2D />);
@@ -53,6 +54,9 @@ const crowdloanResultUrl = '/crowdloan-unlock-campaign/contributions-result';
 
 const baseAccountPath = '/accounts';
 const allowImportAccountPaths = ['new-seed-phrase', 'import-seed-phrase', 'import-private-key', 'restore-json', 'import-by-qr', 'attach-read-only', 'connect-polkadot-vault', 'connect-keystone', 'connect-ledger'];
+
+// Off-ramp
+const offRampLoading = '/off-ramp-loading';
 
 const allowImportAccountUrls = allowImportAccountPaths.map((path) => `${baseAccountPath}/${path}`);
 const allowPreventWelcomeUrls = [...allowImportAccountUrls, welcomeUrl, createPasswordUrl, securityUrl,
@@ -99,6 +103,19 @@ interface RootLocationState {
   useOpenModal?: string
 }
 
+function getOffRampData (orderId: string, searchParams: URLSearchParams) {
+  return {
+    orderId,
+    slug: searchParams.get('slug') || '',
+    partnerCustomerId: searchParams.get('partnerCustomerId') || '',
+    cryptoCurrency: searchParams.get('cryptoCurrency') || '',
+    cryptoAmount: searchParams.get('cryptoAmount') || '',
+    numericCryptoAmount: parseFloat(searchParams.get('cryptoAmount') || '0'),
+    walletAddress: searchParams.get('walletAddress') || '',
+    network: searchParams.get('network') || ''
+  };
+}
+
 function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactElement {
   const dataContext = useContext(DataContext);
   const screenContext = useContext(ScreenContext);
@@ -106,8 +123,24 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
   const notify = useNotification();
   const [rootLoading, setRootLoading] = useState(true);
   const [dataLoaded, setDataLoaded] = useState(false);
+
   const initDataRef = useRef<Promise<boolean>>(dataContext.awaitStores(['accountState', 'chainStore', 'assetRegistry', 'requestState', 'settings', 'mantaPay']));
   const firstRender = useRef(true);
+
+  const navigate = useNavigate();
+  // Pathname query
+  const [, setStorage] = useLocalStorage(OFF_RAMP_DATA, DEFAULT_OFF_RAMP_PARAMS);
+  const [searchParams] = useSearchParams();
+
+  const details = useMemo((): OffRampParams | null => {
+    const orderId = searchParams.get('orderId') || '';
+
+    if (orderId) {
+      return getOffRampData(orderId, searchParams);
+    } else {
+      return null;
+    }
+  }, [searchParams]);
 
   useSubscribeLanguage();
 
@@ -127,6 +160,16 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
       .length
     , [accounts]
   );
+
+  useEffect(() => {
+    if (details) {
+      setStorage(details);
+
+      if (isNoAccount) {
+        navigate(offRampLoading);
+      }
+    }
+  }, [isNoAccount, details, setStorage, navigate]);
 
   useEffect(() => {
     initDataRef.current.then(() => {

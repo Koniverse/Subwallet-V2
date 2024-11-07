@@ -650,8 +650,15 @@ export interface NFTTransactionAdditionalInfo {
   collectionName: string;
 }
 
+export interface OffRanpAdditionalInfo {
+  orderId: string;
+  service: string;
+}
+
 export type TransactionAdditionalInfo = {
   [ExtrinsicType.TRANSFER_XCM]: XCMTransactionAdditionalInfo,
+  [ExtrinsicType.TRANSFER_TOKEN]: OffRanpAdditionalInfo,
+  [ExtrinsicType.TRANSFER_BALANCE]: OffRanpAdditionalInfo,
   [ExtrinsicType.SEND_NFT]: NFTTransactionAdditionalInfo,
   [ExtrinsicType.MINT_VDOT]: Pick<SubmitYieldStepData, 'derivativeTokenSlug' | 'exchangeRate' | 'slug'>,
   [ExtrinsicType.MINT_VMANTA]: Pick<SubmitYieldStepData, 'derivativeTokenSlug' | 'exchangeRate' | 'slug'>,
@@ -1538,7 +1545,9 @@ export interface RequestCheckTransfer extends BaseRequestSign {
   to: string,
   value?: string,
   transferAll?: boolean
-  tokenSlug: string
+  tokenSlug: string,
+  orderId?: string,
+  service?: string
 }
 
 export interface ValidateTransactionResponse {

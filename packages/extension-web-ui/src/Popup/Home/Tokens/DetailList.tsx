@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { BuyTokenInfo } from '@subwallet/extension-base/types';
 import { TokenBalance, TokenItem } from '@subwallet/extension-web-ui/components';
 import PageWrapper from '@subwallet/extension-web-ui/components/Layout/PageWrapper';
 import { AccountSelectorModal } from '@subwallet/extension-web-ui/components/Modal/AccountSelectorModal';
@@ -17,7 +18,7 @@ import Banner from '@subwallet/extension-web-ui/Popup/Home/Tokens/Banner';
 import { DetailModal } from '@subwallet/extension-web-ui/Popup/Home/Tokens/DetailModal';
 import { DetailUpperBlock } from '@subwallet/extension-web-ui/Popup/Home/Tokens/DetailUpperBlock';
 import { RootState } from '@subwallet/extension-web-ui/stores';
-import { BuyTokenInfo, EarningPoolsParam, ThemeProps } from '@subwallet/extension-web-ui/types';
+import { EarningPoolsParam, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-web-ui/types/balance';
 import { getAccountType, isAccountAll, sortTokenByValue } from '@subwallet/extension-web-ui/utils';
 import { ModalContext } from '@subwallet/react-ui';

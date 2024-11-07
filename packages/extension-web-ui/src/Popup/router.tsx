@@ -63,6 +63,7 @@ const Welcome = new LazyLoader('Welcome', () => import('@subwallet/extension-web
 const CreateDone = new LazyLoader('CreateDone', () => import('@subwallet/extension-web-ui/Popup/CreateDone'));
 const RedirectHandler = new LazyLoader('RedirectHandler', () => import('@subwallet/extension-web-ui/Popup/RedirectHandler'));
 const BuyTokens = new LazyLoader('BuyTokens', () => import('@subwallet/extension-web-ui/Popup/BuyTokens'));
+const OffRampLoading = new LazyLoader('OffRampLoading', () => import('@subwallet/extension-web-ui/Popup/OffRampLoading'));
 
 const Tokens = new LazyLoader('Tokens', () => import('@subwallet/extension-web-ui/Popup/Home/Tokens'));
 const TokenDetailList = new LazyLoader('TokenDetailList', () => import('@subwallet/extension-web-ui/Popup/Home/Tokens/DetailList'));
@@ -120,6 +121,7 @@ const AccountExport = new LazyLoader('AccountExport', () => import('@subwallet/e
 const Transaction = new LazyLoader('Transaction', () => import('@subwallet/extension-web-ui/Popup/Transaction/Transaction'));
 const TransactionDone = new LazyLoader('TransactionDone', () => import('@subwallet/extension-web-ui/Popup/TransactionDone'));
 const SendFund = new LazyLoader('SendFund', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/SendFund'));
+const SendFundOffRamp = new LazyLoader('OffRampSendFund', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/SendFundOffRamp'));
 const SendNFT = new LazyLoader('SendNFT', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/SendNFT'));
 const Earn = new LazyLoader('Stake', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Earn'));
 const Unstake = new LazyLoader('Unstake', () => import('@subwallet/extension-web-ui/Popup/Transaction/variants/Unbond'));
@@ -196,6 +198,7 @@ export const router = createBrowserRouter([
       },
       Welcome.generateRouterObject('/welcome', true),
       BuyTokens.generateRouterObject('/buy-tokens'),
+      OffRampLoading.generateRouterObject('/off-ramp-loading'),
       CreateDone.generateRouterObject('/create-done'),
       RedirectHandler.generateRouterObject('/redirect-handler/:feature'),
       {
@@ -240,6 +243,7 @@ export const router = createBrowserRouter([
         ...Transaction.generateRouterObject('/transaction'),
         children: [
           SendFund.generateRouterObject('send-fund'),
+          SendFundOffRamp.generateRouterObject('off-ramp-send-fund'),
           SendNFT.generateRouterObject('send-nft'),
           Earn.generateRouterObject('earn'),
           Unstake.generateRouterObject('unstake'),

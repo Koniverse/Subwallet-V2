@@ -10,6 +10,7 @@ export const INJECT_WALLET = 'inject.wallet';
 export const CURRENT_PAGE = 'page.current';
 
 export const TRANSFER_TRANSACTION = 'transaction.transfer';
+export const OFF_RAMP_DATA = 'off-ramp.data';
 export const NFT_TRANSACTION = 'transaction.nft';
 export const STAKE_TRANSACTION = 'transaction.stake';
 export const EARN_TRANSACTION = 'transaction.earn';

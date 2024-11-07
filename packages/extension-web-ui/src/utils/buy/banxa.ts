@@ -5,10 +5,12 @@ import { BANXA_URL } from '@subwallet/extension-web-ui/constants';
 import { CreateBuyOrderFunction } from '@subwallet/extension-web-ui/types';
 import qs from 'querystring';
 
-export const createBanxaOrder: CreateBuyOrderFunction = (token, address, network) => {
+export const createBanxaOrder: CreateBuyOrderFunction = (orderParams) => {
+  const { address, network, symbol } = orderParams;
+
   return new Promise((resolve) => {
     const params = {
-      coinType: token,
+      coinType: symbol,
       blockchain: network,
       walletAddress: address,
       orderType: 'BUY'

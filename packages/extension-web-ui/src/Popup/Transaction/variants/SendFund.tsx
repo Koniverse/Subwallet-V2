@@ -313,7 +313,7 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
   const destChainGenesisHash = chainInfoMap[destChain]?.substrateInfo?.genesisHash || '';
 
   const tokenItems = useMemo<TokenItemType[]>(() => {
-    return getTokenItems(
+    const result = getTokenItems(
       from,
       accounts,
       chainInfoMap,
@@ -323,6 +323,8 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
       sendFundSlug,
       isZKModeEnabled
     );
+
+    return result;
   }, [accounts, assetRegistry, assetSettingMap, chainInfoMap, from, isZKModeEnabled, multiChainAssetMap, sendFundSlug]);
 
   const validateRecipientAddress = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {

@@ -7,7 +7,7 @@ import { reloadCron, saveShowBalance } from '@subwallet/extension-web-ui/messagi
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { Button, Icon, Number, SwNumberProps, Tag, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowsClockwise, ArrowsLeftRight, CopySimple, Eye, EyeSlash, PaperPlaneTilt, ShoppingCartSimple } from 'phosphor-react';
+import { ArrowsClockwise, ArrowsLeftRight, CopySimple, Eye, EyeSlash, PaperPlaneTilt, PlusMinus } from 'phosphor-react';
 import React, { useCallback, useState } from 'react';
 import styled from 'styled-components';
 
@@ -178,7 +178,7 @@ function Component (
         <Button
           icon={
             <Icon
-              phosphorIcon={ShoppingCartSimple}
+              phosphorIcon={PlusMinus}
               size={isShrink ? 'sm' : 'md' }
               weight={'duotone'}
             />
@@ -186,7 +186,7 @@ function Component (
           onClick={onOpenBuyTokens}
           shape='squircle'
           size={isShrink ? 'xs' : 'sm'}
-          tooltip={t('Buy token')}
+          tooltip={t('Buy & sell')}
         />
       </div>
     </div>

@@ -32,6 +32,8 @@ export const RESET_WALLET_MODAL = 'reset-wallet-modal';
 export const SEED_PHRASE_MODAL = 'seed-phrase-modal';
 export const ADD_CONNECTION_MODAL = 'add-connection-modal';
 export const ADD_NETWORK_WALLET_CONNECT_MODAL = 'add-network-wallet-connect-modal';
+export const NO_ACCOUNT_MODAL = 'no-account-modal';
+export const REDIRECT_TRANSAK_MODAL = 'redirect-transak-modal';
 
 export const TRANSFER_NFT_MODAL = 'transfer-nft-modal';
 
@@ -81,6 +83,7 @@ export const STAKING_NETWORK_DETAIL_MODAL = 'staking-network-detail-modal';
 
 /* Transaction */
 export const TRANSACTION_TRANSFER_MODAL = 'transfer-fund-modal';
+export const OFF_RAMP_TRANSACTION_TRANSFER_MODAL = 'off-ramp-transfer-fund-modal';
 export const TRANSACTION_YIELD_UNSTAKE_MODAL = 'transaction-yield-unstake-modal';
 export const TRANSACTION_YIELD_CANCEL_UNSTAKE_MODAL = 'transaction-yield-cancel-unstake-modal';
 export const TRANSACTION_YIELD_WITHDRAW_MODAL = 'transaction-yield-withdraw-modal';
