@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 1.3.6
+Build date: Nov 07, 2024.
+
+Features & Update:
+- Update chain-list (#3828)
+  - Add Polygon Amoy testnet
+  - Add Polygon zkEVM Cardona testnet
+  - Add WETH, POL, USDC (Amoy)
+  - Add ETH, MATIC, POL (Cardona)
+  - Update explorer for Tangle network
+
+Bug fixed:
+- Fixed error auto reset data on Pool field (#3001)
+
 ## 1.3.5
 Build date: Oct 31, 2024.
 
