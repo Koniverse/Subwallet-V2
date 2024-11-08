@@ -185,6 +185,17 @@ export function subscribeBalance (
       });
     }
 
+    // If the chain is not ready, return pending state
+    if (!substrateApiMap[chainSlug].isApiReady) {
+      handleUnsupportedOrPendingAddresses(
+        useAddresses,
+        chainSlug,
+        chainAssetMap,
+        APIItemState.PENDING,
+        callback
+      );
+    }
+
     const substrateApi = await substrateApiMap[chainSlug].isReady;
 
     return subscribeSubstrateBalance(useAddresses, chainInfo, chainAssetMap, substrateApi, evmApi, callback, extrinsicType);

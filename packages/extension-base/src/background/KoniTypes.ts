@@ -1897,7 +1897,7 @@ export interface KoniRequestSignatures {
   'pri(bonding.subscribeNominatorMetadata)': [null, NominatorMetadata[], NominatorMetadata[]];
   'pri(bonding.getBondingOptions)': [BondingOptionParams, ValidatorInfo[]];
   'pri(bonding.getNominationPoolOptions)': [string, NominationPoolInfo[]];
-  'pri(bonding.nominationPool.submitBonding)': [RequestStakePoolingBonding, SWTransactionResponse];
+  'pri(bonding.nominationPool.submitBonding)': [RequestYieldStepSubmit, SWTransactionResponse];
   'pri(bonding.nominationPool.submitUnbonding)': [RequestStakePoolingUnbonding, SWTransactionResponse];
 
   // Chains, assets functions

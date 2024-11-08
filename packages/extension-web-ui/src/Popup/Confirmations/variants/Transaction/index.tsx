@@ -33,11 +33,11 @@ const getTransactionComponent = (extrinsicType: ExtrinsicType): typeof BaseTrans
     case ExtrinsicType.SEND_NFT:
       return SendNftTransactionConfirmation;
     case ExtrinsicType.STAKING_JOIN_POOL:
+    case ExtrinsicType.JOIN_YIELD_POOL:
       return JoinPoolTransactionConfirmation;
     case ExtrinsicType.STAKING_LEAVE_POOL:
       return LeavePoolTransactionConfirmation;
     case ExtrinsicType.STAKING_BOND:
-    case ExtrinsicType.JOIN_YIELD_POOL:
       return BondTransactionConfirmation;
     case ExtrinsicType.STAKING_UNBOND:
       return UnbondTransactionConfirmation;
