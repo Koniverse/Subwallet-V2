@@ -207,8 +207,6 @@ export class ChainOnlineService {
     } catch (e) {
       console.error('Error fetching latest patch data');
     }
-
-    this.eventService.emit('asset.online.ready', true);
   }
 
   private async fetchLatestPatchData () {
@@ -228,9 +226,15 @@ export class ChainOnlineService {
                 console.error('Error update latest patch', e);
               });
           })
-          .catch(console.error);
+          .catch((e) => {
+            console.error('Asset fail to ready', e);
+          });
       }
-    }).catch(console.error);
+    }).catch((e) => {
+      console.error('Error get latest patch or data map is locking', e);
+    });
+
+    this.eventService.emit('asset.online.ready', true);
   }
 
   checkLatestData () {
