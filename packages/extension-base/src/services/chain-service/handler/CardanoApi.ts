@@ -1,8 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { BlockFrostAPI } from '@blockfrost/blockfrost-js';
-import { CardanoBalanceItem } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
+import { CardanoAddressBalance, CardanoBalanceItem } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _CardanoApi, _ChainConnectionStatus } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -15,7 +14,7 @@ export const API_KEY = {
 
 export class CardanoApi implements _CardanoApi {
   chainSlug: string;
-  private api: BlockFrostAPI;
+  // private api: BlockFrostAPI;
   apiUrl: string;
   apiError?: string;
   apiRetry = 0;
@@ -24,14 +23,16 @@ export class CardanoApi implements _CardanoApi {
   isApiReady = false;
   isApiReadyOnce = false;
   isReadyHandler: PromiseHandler<_CardanoApi>;
+  isTestnet: boolean; // todo: add api with interface BlockFrostAPI to remove isTestnet check
 
   providerName: string;
 
   constructor (chainSlug: string, apiUrl: string, { isTestnet, providerName }: _ApiOptions) {
     this.chainSlug = chainSlug;
     this.apiUrl = apiUrl;
+    this.isTestnet = isTestnet ?? true;
     this.providerName = providerName || 'unknown';
-    this.api = this.createProvider(isTestnet);
+    // this.api = this.createProvider(isTestnet);
     this.isReadyHandler = createPromiseHandler<_CardanoApi>();
 
     this.connect();
@@ -69,7 +70,7 @@ export class CardanoApi implements _CardanoApi {
     await this.disconnect();
 
     this.apiUrl = apiUrl;
-    this.api = this.createProvider();
+    // this.api = this.createProvider();
   }
 
   async recoverConnect () {
@@ -79,13 +80,13 @@ export class CardanoApi implements _CardanoApi {
     await this.isReadyHandler.promise;
   }
 
-  private createProvider (isTestnet = true): BlockFrostAPI {
-    const projectId = isTestnet ? API_KEY.testnet : API_KEY.mainnet;
-
-    return new BlockFrostAPI({
-      projectId
-    });
-  }
+  // private createProvider (isTestnet = true): BlockFrostAPI {
+  //   const projectId = isTestnet ? API_KEY.testnet : API_KEY.mainnet;
+  //
+  //   return new BlockFrostAPI({
+  //     projectId
+  //   });
+  // }
 
   connect (): void {
     this.updateConnectionStatus(_ChainConnectionStatus.CONNECTING);
@@ -131,9 +132,20 @@ export class CardanoApi implements _CardanoApi {
 
   async getBalanceMap (address: string): Promise<CardanoBalanceItem[]> {
     try {
-      const balance = await this.api.addresses(address);
+      const url = this.isTestnet ? `https://cardano-preprod.blockfrost.io/api/v0/addresses/${address}` : `https://cardano-mainnet.blockfrost.io/api/v0/addresses/${address}`;
+      const projectId = this.isTestnet ? API_KEY.testnet : API_KEY.mainnet;
+      const response = await fetch(
+        url, {
+          method: 'GET',
+          headers: {
+            'Project_id': projectId
+          }
+        }
+      )
 
-      return balance.amount as CardanoBalanceItem[];
+      const addressBalance = await response.json() as CardanoAddressBalance;
+
+      return addressBalance.amount;
     } catch (error) {
       console.error(error);
 

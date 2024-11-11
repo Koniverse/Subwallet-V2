@@ -1,14 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { flatten } from '@reduxjs/toolkit/dist/query/utils';
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { getAccountChainType } from '@subwallet/extension-base/utils';
-import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isCardanoAddress, isTonAddress } from '@subwallet/keyring';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
 import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
@@ -82,9 +81,9 @@ interface AddressesByChainType {
 export function getAddressesByChainType (addresses: string[], chainTypes: ChainType[]): string[] {
   const addressByChainTypeMap = getAddressesByChainTypeMap(addresses);
 
-  return flatten(chainTypes.map((chainType) => {
+  return chainTypes.map((chainType) => {
     return addressByChainTypeMap[chainType];
-  }));
+  }).flat(); // todo: recheck
 }
 
 export function getAddressesByChainTypeMap (addresses: string[]): AddressesByChainType {
@@ -103,9 +102,7 @@ export function getAddressesByChainTypeMap (addresses: string[]): AddressesByCha
       addressByChainType.ton.push(address);
     } else if (isBitcoinAddress(address)) {
       addressByChainType.bitcoin.push(address);
-    } else if (isCardanoAddress(address)) {
-      addressByChainType.cardano.push(address);
-    } else {
+    } else { // todo: add isCardanoAddress
       addressByChainType.substrate.push(address);
     }
   });
