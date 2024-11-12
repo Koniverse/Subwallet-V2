@@ -4,6 +4,7 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { isCardanoAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { getAccountChainType } from '@subwallet/extension-base/utils';
@@ -81,6 +82,10 @@ interface AddressesByChainType {
 export function getAddressesByChainType (addresses: string[], chainTypes: ChainType[]): string[] {
   const addressByChainTypeMap = getAddressesByChainTypeMap(addresses);
 
+  console.log('vcl', chainTypes, chainTypes.map((chainType) => {
+    return addressByChainTypeMap[chainType];
+  }).flat());
+
   return chainTypes.map((chainType) => {
     return addressByChainTypeMap[chainType];
   }).flat(); // todo: recheck
@@ -102,7 +107,9 @@ export function getAddressesByChainTypeMap (addresses: string[]): AddressesByCha
       addressByChainType.ton.push(address);
     } else if (isBitcoinAddress(address)) {
       addressByChainType.bitcoin.push(address);
-    } else { // todo: add isCardanoAddress
+    } else if (isCardanoAddress(address)) { // todo: add isCardanoAddress from keyring
+      addressByChainType.cardano.push(address);
+    } else {
       addressByChainType.substrate.push(address);
     }
   });

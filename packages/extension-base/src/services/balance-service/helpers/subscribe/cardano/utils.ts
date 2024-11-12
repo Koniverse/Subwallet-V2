@@ -7,3 +7,7 @@ export function getCardanoAssetId (chainAsset: _ChainAsset): string {
   // @ts-ignore
   return chainAsset.metadata.policy_id as string;
 }
+
+export function isCardanoAddress (address: string): boolean {
+  return address.startsWith('addr1') || address.startsWith('addr_test1');
+}

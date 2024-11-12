@@ -7,7 +7,7 @@ import { subscribeCardanoBalance } from '@subwallet/extension-base/services/bala
 import { _CardanoApi, _EvmApi, _SubstrateApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainCardanoCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureCardanoChain, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
-import { getAddressesByChainTypeMap, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
+import { filterAssetsByChainAndType, getAddressesByChainTypeMap, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 
 import { subscribeTonBalance } from './ton/ton';
@@ -97,7 +97,9 @@ const handleUnsupportedOrPendingAddresses = (
     _AssetType.PSP22,
     _AssetType.LOCAL,
     _AssetType.GRC20,
-    _AssetType.VFT
+    _AssetType.VFT,
+    _AssetType.TEP74,
+    _AssetType.CIP26
   ]);
 
   const now = new Date().getTime();

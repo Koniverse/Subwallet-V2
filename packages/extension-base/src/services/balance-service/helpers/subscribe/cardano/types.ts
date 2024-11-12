@@ -5,7 +5,7 @@ export interface CardanoAddressBalance {
   address: string;
   amount: CardanoBalanceItem[],
   stake_address: string,
-  type: string, // todo: create interface for type
+  type: string, // todo: consider create interface for type
   script: boolean
 }
 
