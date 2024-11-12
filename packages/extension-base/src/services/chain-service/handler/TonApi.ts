@@ -70,10 +70,7 @@ export class TonApi implements _TonApi {
 
     // Create new provider and api
     this.apiUrl = apiUrl;
-    this.api = new TonClient({
-      endpoint: this.getJsonRpc(this.apiUrl),
-      apiKey: TON_CENTER_API_KEY
-    });
+    this.api = this.createProvider(apiUrl);
   }
 
   async recoverConnect () {

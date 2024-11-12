@@ -6265,14 +6265,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.93":
-  version: 0.2.93
-  resolution: "@subwallet/chain-list@npm:0.2.93"
+"@subwallet/chain-list@file:../SubWallet-Chainlist/packages/chain-list/build/::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.2.91
+  resolution: "@subwallet/chain-list@file:../SubWallet-Chainlist/packages/chain-list/build/#../SubWallet-Chainlist/packages/chain-list/build/::hash=ad68b1&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: e618b88b667858336291f487747a4cfd8c718af3b6dda369c316f511d18e2e64297441aed7a1f48b3eb2381685898471109519a7bc6916ef2179500805dfe588
+  checksum: 529d48993141013d4ebd796d6ee9e5aa7a728e3b168b61682525b8d78457768a9c4b9c3bb182c878c3428e975b7b1acbfa421a52116f9c67d4c534654e817df1
   languageName: node
   linkType: hard
 
@@ -6665,8 +6665,8 @@ __metadata:
   linkType: soft
 
 "@subwallet/keyring@npm:^0.1.8-beta.0":
-  version: 0.1.8-beta.0
-  resolution: "@subwallet/keyring@npm:0.1.8-beta.0"
+  version: 0.1.8
+  resolution: "@subwallet/keyring@npm:0.1.8"
   dependencies:
     "@ethereumjs/tx": ^5.0.0
     "@metamask/eth-sig-util": ^7.0.3
@@ -6686,7 +6686,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: f29e78fd71ddf09c8e531b682f93b49305580ab2c266d781558322d6af5d0bfae8d80ae21e0c35d7a25711a270991e290cbe49d891b6b47388bb566aa5befb06
+  checksum: 7de36a93cdb9e795f38295eb4942664e873ad3a24a8493cdd2ae45697115bdb4b69dde78b0185c49ab93fb9cb011f71f03b0ebd12f29e1572fdea69be5e1fc7e
   languageName: node
   linkType: hard
 

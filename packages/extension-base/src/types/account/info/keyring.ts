@@ -121,7 +121,8 @@ export enum AccountChainType {
   SUBSTRATE = 'substrate',
   ETHEREUM = 'ethereum',
   BITCOIN = 'bitcoin',
-  TON = 'ton'
+  TON = 'ton',
+  CARDANO = 'cardano'
 }
 
 export enum AccountActions {

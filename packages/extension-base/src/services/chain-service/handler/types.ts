@@ -29,6 +29,7 @@ export interface _ApiOptions {
   metadata?: MetadataItem,
   onUpdateStatus?: (status: _ChainConnectionStatus) => void,
   externalApiPromise?: ApiPromise
+  isTestnet?: boolean
 }
 
 export enum _CHAIN_VALIDATION_ERROR {

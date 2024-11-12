@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
-import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetRefPath, _AssetType, _CardanoInfo, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
+import { CardanoChainHandler } from '@subwallet/extension-base/services/chain-service/handler/CardanoChainHandler';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
@@ -89,6 +90,7 @@ export class ChainService {
   private substrateChainHandler: SubstrateChainHandler;
   private evmChainHandler: EvmChainHandler;
   private tonChainHandler: TonChainHandler;
+  private cardanoChainHandler: CardanoChainHandler;
   private mantaChainHandler: MantaPrivateHandler | undefined;
 
   refreshLatestChainDataTimeOut: NodeJS.Timer | undefined;
@@ -135,6 +137,7 @@ export class ChainService {
     this.substrateChainHandler = new SubstrateChainHandler(this);
     this.evmChainHandler = new EvmChainHandler(this);
     this.tonChainHandler = new TonChainHandler(this);
+    this.cardanoChainHandler = new CardanoChainHandler(this);
 
     this.logger = createLogger('chain-service');
   }
@@ -210,6 +213,14 @@ export class ChainService {
 
   public getTonApiMap () {
     return this.tonChainHandler.getTonApiMap();
+  }
+
+  public getCardanoApi (slug: string) {
+    return this.cardanoChainHandler.getCardanoApiByChain(slug);
+  }
+
+  public getCardanoApiMap () {
+    return this.cardanoChainHandler.getCardanoApiMap();
   }
 
   public getChainCurrentProviderByKey (slug: string) {
@@ -970,6 +981,14 @@ export class ChainService {
 
       this.tonChainHandler.setTonApi(chainInfo.slug, chainApi);
     }
+
+    if (chainInfo.cardanoInfo !== null && chainInfo.cardanoInfo !== undefined) {
+      const isTestnet = chainInfo.isTestnet;
+
+      const chainApi = await this.cardanoChainHandler.initApi(chainInfo.slug, endpoint, { isTestnet, providerName, onUpdateStatus });
+
+      this.cardanoChainHandler.setCardanoApi(chainInfo.slug, chainApi);
+    }
   }
 
   private destroyApiForChain (chainInfo: _ChainInfo) {
@@ -983,6 +1002,10 @@ export class ChainService {
 
     if (chainInfo.tonInfo !== null) {
       this.tonChainHandler.destroyTonApi(chainInfo.slug);
+    }
+
+    if (chainInfo.cardanoInfo !== null) {
+      this.cardanoChainHandler.destroyCardanoApi(chainInfo.slug);
     }
   }
 
@@ -1300,6 +1323,7 @@ export class ChainService {
               substrateInfo: storedChainInfo.substrateInfo,
               bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
               tonInfo: storedChainInfo.tonInfo,
+              cardanoInfo: storedChainInfo.cardanoInfo ?? null,
               isTestnet: storedChainInfo.isTestnet,
               chainStatus: storedChainInfo.chainStatus,
               icon: storedChainInfo.icon,
@@ -1508,6 +1532,7 @@ export class ChainService {
     let substrateInfo: _SubstrateInfo | null = null;
     let evmInfo: _EvmInfo | null = null;
     const tonInfo: _TonInfo | null = null;
+    const cardanoInfo: _CardanoInfo | null = null;
 
     if (params.chainSpec.genesisHash !== '') {
       substrateInfo = {
@@ -1547,6 +1572,7 @@ export class ChainService {
       evmInfo,
       bitcoinInfo: null,
       tonInfo,
+      cardanoInfo,
       isTestnet: false,
       chainStatus: _ChainStatus.ACTIVE,
       icon: '', // Todo: Allow update with custom chain,
@@ -1668,6 +1694,7 @@ export class ChainService {
         // TODO: EVM chain might have WS provider
         if (provider.startsWith('http')) {
           // todo: handle validate ton provider
+          // todo: handle validate cardano provider
 
           // HTTP provider is EVM by default
           api = await this.evmChainHandler.initApi('custom', provider);
@@ -1906,15 +1933,12 @@ export class ChainService {
     this.evmChainHandler.recoverApi(slug).catch(console.error);
   }
 
-  public refreshTonApi (slug: string) {
-    this.tonChainHandler.recoverApi(slug).catch(console.error);
-  }
-
   public async stopAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.sleep(),
       this.evmChainHandler.sleep(),
-      this.tonChainHandler.sleep()
+      this.tonChainHandler.sleep(),
+      this.cardanoChainHandler.sleep()
     ]);
 
     this.stopCheckLatestChainData();
@@ -1924,7 +1948,8 @@ export class ChainService {
     await Promise.all([
       this.substrateChainHandler.wakeUp(),
       this.evmChainHandler.wakeUp(),
-      this.tonChainHandler.wakeUp()
+      this.tonChainHandler.wakeUp(),
+      this.cardanoChainHandler.wakeUp()
     ]);
 
     this.checkLatestData();

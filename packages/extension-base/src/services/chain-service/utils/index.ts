@@ -62,15 +62,19 @@ export function _isEqualSmartContractAsset (asset1: _ChainAsset, asset2: _ChainA
 }
 
 export function _isPureEvmChain (chainInfo: _ChainInfo) {
-  return (!!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo);
+  return (!!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo && !chainInfo.cardanoInfo);
 }
 
 export function _isPureSubstrateChain (chainInfo: _ChainInfo) {
-  return (!chainInfo.evmInfo && !!chainInfo.substrateInfo && !chainInfo.tonInfo);
+  return (!chainInfo.evmInfo && !!chainInfo.substrateInfo && !chainInfo.tonInfo && !chainInfo.cardanoInfo);
 }
 
 export function _isPureTonChain (chainInfo: _ChainInfo) {
-  return (!chainInfo.evmInfo && !chainInfo.substrateInfo && !!chainInfo.tonInfo);
+  return (!chainInfo.evmInfo && !chainInfo.substrateInfo && !!chainInfo.tonInfo && !chainInfo.cardanoInfo);
+}
+
+export function _isPureCardanoChain (chainInfo: _ChainInfo) {
+  return (!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo && !!chainInfo.cardanoInfo);
 }
 
 export function _getOriginChainOfAsset (assetSlug: string) {
@@ -157,6 +161,10 @@ export function _isChainBitcoinCompatible (chainInfo: _ChainInfo) {
 
 export function _isChainTonCompatible (chainInfo: _ChainInfo) {
   return !!chainInfo.tonInfo;
+}
+
+export function _isChainCardanoCompatible (chainInfo: _ChainInfo) {
+  return !!chainInfo.cardanoInfo;
 }
 
 export function _isNativeToken (tokenInfo: _ChainAsset) {

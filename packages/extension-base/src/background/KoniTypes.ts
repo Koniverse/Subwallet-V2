@@ -460,7 +460,9 @@ export enum TransactionDirection {
 export enum ChainType {
   EVM = 'evm',
   SUBSTRATE = 'substrate',
-  TON = 'ton'
+  BITCOIN = 'bitcoin',
+  TON = 'ton',
+  CARDANO = 'cardano'
 }
 
 export enum ExtrinsicType {
