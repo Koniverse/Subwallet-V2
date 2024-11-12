@@ -3,59 +3,56 @@
 
 import {ASTAR_REFRESH_BALANCE_INTERVAL} from '@subwallet/extension-base/constants';
 import {BalanceItem, SusbcribeCardanoPalletBalance} from '@subwallet/extension-base/types';
-import {APIItemState} from "@subwallet/extension-base/background/KoniTypes";
 import {filterAssetsByChainAndType} from "@subwallet/extension-base/utils";
 import {_AssetType} from "@subwallet/chain-list/types";
+import {_CardanoApi} from "@subwallet/extension-base/services/chain-service/types";
+import {CardanoBalanceItem} from "@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types";
+import {getCardanoAssetId} from "@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils";
+import {APIItemState} from "@subwallet/extension-base/background/KoniTypes";
 
-async function getCardanoBalance ({ addresses, assetMap, callback, chainInfo, cardanoApi }: SusbcribeCardanoPalletBalance): Promise<bigint[]> {
-  const chain = chainInfo.slug;
-  const tokenList = filterAssetsByChainAndType(assetMap, chain, [_AssetType.NATIVE, _AssetType.CIP26]);
+async function getBalanceMap (addresses: string[], cardanoApi: _CardanoApi): Promise<Record<string, CardanoBalanceItem[]>> {
+  const addressBalanceMap: Record<string, CardanoBalanceItem[]> = {};
 
-  const getBalance = () => {
-    Object.values(tokenList).map(async (tokenInfo) => {
-      try {
-        const balances = await Promise.all(addresses.map(async (address): Promise<bigint> => {
-          try {
-            const balanceMap = await cardanoApi.getBalanceMap(address);
-            return
-          }
-        }
-      }));
-      }
+  for (const address of addresses) {
+    addressBalanceMap[address] = await cardanoApi.getBalanceMap(address);
   }
 
-  // return await Promise.all(addresses.map(async (address) => {
-  //   try {
-  //     return await cardanoApi.
-  //   } catch (e) {
-  //     return BigInt(0);
-  //   }
-  // }))
+  return addressBalanceMap;
 }
 
 export function subscribeCardanoBalance (params: SusbcribeCardanoPalletBalance) {
-  const { addresses, assetMap, callback, cardanoApi, chainInfo } = params;
+  const {addresses, assetMap, callback, cardanoApi, chainInfo} = params;
   const chain = chainInfo.slug;
-  const nativeTokenInfo = filterAssetsByChainAndType(assetMap, chain, [_AssetType.NATIVE, _AssetType.CIP26]);
-  const nativeTokenSlug = Object.values(nativeTokenInfo)[0]?.slug || '';
+  const tokens = filterAssetsByChainAndType(assetMap, chain, [_AssetType.NATIVE, _AssetType.CIP26]);
 
-  function getBalance () {
-    getCardanoBalance(addresses, cardanoApi)
-      .then((balances) => {
-        return balances.map((balance, index): BalanceItem => {
-          return {
-            address: addresses[index],
-            tokenSlug: nativeTokenSlug,
-            state: APIItemState.READY,
-            free: balance.toString(),
-            locked: '0' // todo: check staking on cardano
-          }
+
+  function getBalance() {
+    getBalanceMap(addresses, cardanoApi)
+      .then((addressBalanceMap) => {
+        Object.values(tokens).map((tokenInfo) => {
+          const balances = addresses.map((address) => {
+            const id = getCardanoAssetId(tokenInfo);
+
+            return addressBalanceMap[address].find(o => o.unit === id)?.quantity || '0';
+          });
+
+          const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
+            return {
+              address: addresses[index],
+              tokenSlug: tokenInfo.slug,
+              free: balance,
+              locked: '0', // todo: research cardano lock balance
+              state: APIItemState.READY
+            }
+          });
+
+          callback(items);
         })
       })
   }
 
-  getBalance();
   const interval = setInterval(getBalance, ASTAR_REFRESH_BALANCE_INTERVAL);
+  getBalance();
 
   return () => {
     clearInterval(interval);
