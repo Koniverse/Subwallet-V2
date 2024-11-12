@@ -138,10 +138,10 @@ export class CardanoApi implements _CardanoApi {
         url, {
           method: 'GET',
           headers: {
-            'Project_id': projectId
+            Project_id: projectId
           }
         }
-      )
+      );
 
       const addressBalance = await response.json() as CardanoAddressBalance;
 
