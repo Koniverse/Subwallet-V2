@@ -462,7 +462,7 @@ export enum ChainType {
   SUBSTRATE = 'substrate',
   BITCOIN = 'bitcoin',
   TON = 'ton',
-  CARDANO = 'cardano' // todo: check to add
+  CARDANO = 'cardano'
 }
 
 export enum ExtrinsicType {

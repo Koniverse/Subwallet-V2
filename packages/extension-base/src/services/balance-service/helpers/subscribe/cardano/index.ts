@@ -32,7 +32,11 @@ export function subscribeCardanoBalance (params: SusbcribeCardanoPalletBalance) 
           const balances = addresses.map((address) => {
             const id = getCardanoAssetId(tokenInfo);
 
-            return addressBalanceMap[address].find((o) => o.unit === id)?.quantity || '0';
+            if (!addressBalanceMap[address]) {
+              return '0';
+            }
+
+            return addressBalanceMap[address].find((asset) => asset.unit === id)?.quantity || '0';
           });
 
           const items: BalanceItem[] = balances.map((balance, index): BalanceItem => {
