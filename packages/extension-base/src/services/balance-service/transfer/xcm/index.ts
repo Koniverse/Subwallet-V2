@@ -7,7 +7,7 @@ import { getAvailBridgeExtrinsicFromAvail, getAvailBridgeTxFromEth } from '@subw
 import { getExtrinsicByPolkadotXcmPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polkadotXcm';
 import { getSnowBridgeEvmTransfer } from '@subwallet/extension-base/services/balance-service/transfer/xcm/snowBridge';
 import { getExtrinsicByXcmPalletPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xcmPallet';
-import { getExtrinsicByXtokensPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xTokens';
+import { getExtrinsicByXtokensPallet, getExtrinsicByXtokensPalletAcala } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xTokens';
 import { _XCM_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _isChainEvmCompatible, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
@@ -80,6 +80,10 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
 
   if (_XCM_CHAIN_GROUP.xcmPallet.includes(originTokenInfo.originChain)) {
     return getExtrinsicByXcmPalletPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
+  }
+
+  if (_XCM_CHAIN_GROUP.acalaXcm.includes(originTokenInfo.originChain)) {
+    return getExtrinsicByXtokensPalletAcala(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);
   }
 
   return getExtrinsicByXtokensPallet(originTokenInfo, originChainInfo, destinationChainInfo, recipient, sendingValue, api);

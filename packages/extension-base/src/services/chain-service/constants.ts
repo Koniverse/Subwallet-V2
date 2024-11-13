@@ -255,7 +255,8 @@ export const _DEFAULT_MANTA_ZK_CHAIN = 'calamari';
 export const _XCM_CHAIN_GROUP = {
   polkadotXcm: ['statemine', 'statemint', 'equilibrium_parachain', 'rococo_assethub', 'mythos'],
   polkadotXcmSpecialCases: ['astar', 'shiden'],
-  xcmPallet: ['polkadot', 'kusama', 'rococo']
+  xcmPallet: ['polkadot', 'kusama', 'rococo'],
+  acalaXcm: ['acala']
   // default is xTokens pallet
 };
 

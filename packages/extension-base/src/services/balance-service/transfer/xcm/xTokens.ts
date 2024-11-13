@@ -43,3 +43,24 @@ export function getExtrinsicByXtokensPallet (tokenInfo: _ChainAsset, originChain
     _getXcmDestWeight(originChainInfo)
   );
 }
+
+export function getExtrinsicByXtokensPalletAcala (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, destinationChainInfo: _ChainInfo, recipientAddress: string, value: string, api: ApiPromise) {
+  const version = 2;
+  const destination = _getXcmMultiLocation(originChainInfo, destinationChainInfo, version, recipientAddress);
+
+  const tokenCurrencyId = _getTokenOnChainInfo(tokenInfo) as Record<string, Record<string, any>>;
+  let currencyId;
+
+  if ('NativeAssetId' in tokenCurrencyId) {
+    currencyId = tokenCurrencyId.NativeAssetId;
+  } else {
+    currencyId = tokenCurrencyId;
+  }
+
+  return api.tx.xTokens.transfer(
+    currencyId,
+    value,
+    destination,
+    _getXcmDestWeight(originChainInfo)
+  );
+}
