@@ -47,6 +47,10 @@ function getBlockExplorerAccountRoute (explorerLink: string) {
     return 'account';
   }
 
+  if (explorerLink.includes('astral.autonomys')) {
+    return 'accounts';
+  }
+
   return 'address';
 }
 
