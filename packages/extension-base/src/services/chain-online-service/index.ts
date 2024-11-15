@@ -105,11 +105,11 @@ export class ChainOnlineService {
         patchVersion: latestPatchVersion } = latestPatch;
       const currentPatchVersion = (await this.settingService.getChainlistSetting())?.patchVersion || '';
 
-      let chainInfoMap: Record<string, _ChainInfo> = {};
-      let assetRegistry: Record<string, _ChainAsset> = {};
-      let multiChainAssetMap: Record<string, _MultiChainAsset> = {};
-      let currentChainStateMap: Record<string, _ChainState> = {};
-      let currentChainStatusMap: Record<string, _ChainApiStatus> = {};
+      let chainInfoMap: Record<string, _ChainInfo> = this.chainService.getChainInfoMap();
+      let assetRegistry: Record<string, _ChainAsset> = this.chainService.getAssetRegistry();
+      let multiChainAssetMap: Record<string, _MultiChainAsset> = MultiChainAssetMap;
+      let currentChainStateMap: Record<string, _ChainState> = this.chainService.getChainStateMap();
+      let currentChainStatusMap: Record<string, _ChainApiStatus> = this.chainService.getChainStatusMap();
       let addedChain: string[] = [];
 
       if (isSafePatch && currentPatchVersion !== latestPatchVersion) {
@@ -143,7 +143,7 @@ export class ChainOnlineService {
           assetRegistry = filterAssetInfoMap(this.chainService.getChainInfoMap(), Object.assign({}, this.chainService.getAssetRegistry(), latestAssetInfo), addedChain);
         }
 
-        if (latestMultiChainAsset && Object.keys(latestMultiChainAsset).length > 0) {
+        if (latestMultiChainAsset && Object.keys(latestMultiChainAsset).length > 0) { // todo: currently not support update latest multichain-asset
           multiChainAssetMap = { ...MultiChainAssetMap, ...latestMultiChainAsset };
         }
 
