@@ -4,8 +4,9 @@
 import { packageInfo } from '@subwallet/extension-base';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { fetchStaticData } from '@subwallet/extension-base/utils';
+import { staticData, StaticKey } from '@subwallet/extension-base/utils/staticData';
 
-interface BlockedActionsFeaturesMap {
+export interface BlockedActionsFeaturesMap {
   blockedActionsMap: Record<ExtrinsicType, string[]>,
   blockedFeaturesList: string[]
 }
@@ -42,7 +43,7 @@ export interface OSConfig {
 
 type BlockedConfigObjects = Record<string, EnvConfig>
 
-export async function fetchBlockedConfigObjects (): Promise<BlockedConfigObjects> { // todo: recheck default return
+export async function fetchBlockedConfigObjects (): Promise<BlockedConfigObjects> {
   const targetFile = `${targetFolder}/envConfig.json`;
 
   return await fetchStaticData<BlockedConfigObjects>('blocked-actions', targetFile);
@@ -143,6 +144,10 @@ function isPassVersion (versionStr: string, versionCondition?: string) { // todo
 }
 
 export async function fetchLastestBlockedActionsAndFeatures (ids: string[]) {
+  if (ids.length === 0) {
+    return [staticData[StaticKey.BLOCKED_ACTIONS_FEATURES]];
+  }
+
   const targetFiles = ids.map((id) => `${targetFolder}/${id}.json`);
 
   return await Promise.all(targetFiles.map((targetFile) => fetchStaticData<BlockedActionsFeaturesMap>('blocked-actions', targetFile)));
