@@ -21,8 +21,6 @@ const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransa
   const { className, transaction } = props;
   const data = transaction.data as RequestClaimBridge;
 
-  console.log('Data', data);
-
   const isPolygonBridge = (data.notification?.actionType === 'CLAIM_POLYGON_BRIDGE');
 
   const metadata = useMemo(() => {

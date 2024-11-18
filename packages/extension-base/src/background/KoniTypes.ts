@@ -2274,7 +2274,6 @@ export interface KoniRequestSignatures {
   'pri(polygonBridge.submitClaimPolygonBridge)': [RequestClaimBridge, SWTransactionResponse]
   /* Polygon Bridge */
 
-
   /* Ledger */
   'pri(ledger.generic.allow)': [null, string[], string[]];
 }

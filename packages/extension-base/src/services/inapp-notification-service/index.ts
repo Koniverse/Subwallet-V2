@@ -167,7 +167,9 @@ export class InappNotificationService implements CronServiceInterface {
 
     this.createAvailBridgeClaimNotification();
 
-    this.createPolygonClaimableTransactions();
+    this.createPolygonClaimableTransactions().catch((err) => {
+      console.error('Error:', err);
+    });
 
     this.refeshAvailBridgeClaimTimeOut = setTimeout(this.cronCreateBridgeClaimNotification.bind(this), CRON_LISTEN_AVAIL_BRIDGE_CLAIM);
   }

@@ -13,7 +13,7 @@ export const NotificationTitleMap = {
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
   [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE]: '[{{accountName}}] BRIDGE {{tokenSymbol}}',
   [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1]: '[{{accountName}}] BRIDGE {{tokenSymbol}}',
-  [NotificationActionType.CLAIM_POLYGON_BRIDGE]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
+  [NotificationActionType.CLAIM_POLYGON_BRIDGE]: '[{{accountName}}] CLAIM {{tokenSymbol}}'
 };
 
 export const NotificationDescriptionMap = {

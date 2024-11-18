@@ -975,7 +975,7 @@ export default class TransactionService {
             eventData.startBlock = await web3Api.eth.getBlockNumber() - 3;
             // Add start info
             emitter.emit('send', eventData); // This event is needed after sending transaction with queue
-            
+
             const txHash = payload;
 
             eventData.extrinsicHash = txHash;

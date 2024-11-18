@@ -3832,12 +3832,11 @@ export default class KoniExtension {
     const extrinsicType = ExtrinsicType.CLAIM_AVAIL_BRIDGE;
 
     let transaction: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
-    let chainType: ChainType;
 
     const evmApi = this.#koniState.getEvmApi(chain);
 
     transaction = await getClaimPolygonBridge(chain, notification, evmApi);
-    chainType = ChainType.EVM;
+    const chainType: ChainType = ChainType.EVM;
 
     return await this.#koniState.transactionService.handleTransaction({
       address,

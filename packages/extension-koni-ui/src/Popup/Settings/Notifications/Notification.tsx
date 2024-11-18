@@ -347,7 +347,9 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         }
 
         case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM:
-        case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL: 
+        case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL:
+
+        // eslint-disable-next-line no-fallthrough
         case NotificationActionType.CLAIM_POLYGON_BRIDGE: {
           const metadata = item.metadata as ClaimAvailBridgeNotificationMetadata;
 
