@@ -16,7 +16,7 @@ import { CrowdloanContributionsResponse } from '@subwallet/extension-base/servic
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BaseRequestSign, BuyServiceInfo, BuyTokenInfo, CommonOptimalPath, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, InternalRequestSign, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestAccountProxyEdit, RequestAccountProxyForget, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckCrossChainTransfer, RequestCheckPublicAndSecretKey, RequestCheckTransfer, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StorageDataInterface, SubmitYieldStepData, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateSwapProcessParams, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
-import { RequestClaimAvailBridge } from '@subwallet/extension-base/types/avail-bridge';
+import { RequestClaimBridge } from '@subwallet/extension-base/types/avail-bridge';
 import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
 import { KeyringPair$Meta } from '@subwallet/keyring/types';
@@ -564,7 +564,7 @@ export interface ExtrinsicDataTypeMap {
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: TokenSpendingApprovalParams,
 
-  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: RequestClaimAvailBridge
+  [ExtrinsicType.CLAIM_AVAIL_BRIDGE]: RequestClaimBridge
 
   [ExtrinsicType.EVM_EXECUTE]: TransactionConfig,
   [ExtrinsicType.CROWDLOAN]: any,
@@ -2267,8 +2267,13 @@ export interface KoniRequestSignatures {
   /* Notification Service */
 
   /* Avail Bridge */
-  'pri(availBridge.submitClaimAvailBridgeOnAvail)': [RequestClaimAvailBridge, SWTransactionResponse]
+  'pri(availBridge.submitClaimAvailBridgeOnAvail)': [RequestClaimBridge, SWTransactionResponse]
   /* Avail Bridge */
+
+  /* Polygon Bridge */
+  'pri(polygonBridge.submitClaimPolygonBridge)': [RequestClaimBridge, SWTransactionResponse]
+  /* Polygon Bridge */
+
 
   /* Ledger */
   'pri(ledger.generic.allow)': [null, string[], string[]];

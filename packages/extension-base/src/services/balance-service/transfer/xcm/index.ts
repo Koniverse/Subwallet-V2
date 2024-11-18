@@ -5,7 +5,7 @@ import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _isPolygonBridgeXcm, _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getAvailBridgeExtrinsicFromAvail, getAvailBridgeTxFromEth } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { getExtrinsicByPolkadotXcmPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polkadotXcm';
-import { _createPolygonBridgeL1toL2Extrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
+import { _createPolygonBridgeL1toL2Extrinsic, _createPolygonBridgeL2toL1Extrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { getSnowBridgeEvmTransfer } from '@subwallet/extension-base/services/balance-service/transfer/xcm/snowBridge';
 import { getExtrinsicByXcmPalletPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xcmPallet';
 import { getExtrinsicByXtokensPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xTokens';
@@ -124,7 +124,7 @@ export const createPolygonBridgeExtrinsic = async ({ chainInfoMap,
   const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
 
   if (!_isPolygonBridgeXcm(originChainInfo, destinationChainInfo)) {
-    throw new Error('This is not a valid SnowBridge transfer');
+    throw new Error('This is not a valid PolygonBridge transfer');
   }
 
   if (!evmApi) {
@@ -138,10 +138,10 @@ export const createPolygonBridgeExtrinsic = async ({ chainInfoMap,
   const sourceChain = originChainInfo.slug;
 
   if (sourceChain === 'polygonzkEvm_cardona' || sourceChain === 'polygonZkEvm') {
-    throw new Error('Currently, only support bridge from L1 to L2');
+    return _createPolygonBridgeL2toL1Extrinsic(originTokenInfo, originChainInfo, sender, recipient, sendingValue, evmApi);
+  } else {
+    return _createPolygonBridgeL1toL2Extrinsic(originTokenInfo, originChainInfo, sender, recipient, sendingValue, evmApi);
   }
-
-  return _createPolygonBridgeL1toL2Extrinsic(originTokenInfo, originChainInfo, sender, recipient, sendingValue, evmApi);
 };
 
 export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {

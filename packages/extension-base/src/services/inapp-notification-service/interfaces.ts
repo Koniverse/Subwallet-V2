@@ -29,6 +29,8 @@ export interface ActionTypeToMetadataMap {
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeNotificationMetadata,
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeNotificationMetadata,
   [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE]: unknown,
+  [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1]: unknown,
+  [NotificationActionType.CLAIM_POLYGON_BRIDGE]: ClaimPolygonBridgeNotificationMetadata
 }
 
 export interface SendReceiveNotificationMetadata {
@@ -59,6 +61,23 @@ export interface ClaimAvailBridgeNotificationMetadata {
   status: AvailBridgeTransactionStatus;
 }
 
+export interface ClaimPolygonBridgeNotificationMetadata {
+  chainSlug: string;
+  tokenSlug: string;
+  _id: string;
+  amounts: string[];
+  counter: number;
+  destinationNetwork: number;
+  originTokenAddress?: string;
+  originTokenNetwork?: number;
+  receiver?: string;
+  sourceNetwork: number;
+  status: string;
+  transactionHash: string;
+  transactionInitiator?: string;
+  userAddress: string;
+}
+
 export enum NotificationTimePeriod {
   TODAY = 'TODAY',
   THIS_WEEK = 'THIS_WEEK',
@@ -72,7 +91,9 @@ export enum NotificationActionType {
   CLAIM = 'CLAIM', // Claim reward
   CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'CLAIM_AVAIL_BRIDGE_ON_AVAIL',
   CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM',
-  HAVE_TO_WAIT_POLYGON_BRIDGE = 'HAVE_TO_WAIT_POLYGON_BRIDGE'
+  HAVE_TO_WAIT_POLYGON_BRIDGE = 'HAVE_TO_WAIT_POLYGON_BRIDGE',
+  HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1 = 'HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1',
+  CLAIM_POLYGON_BRIDGE = 'CLAIM_POLYGON_BRIDGE'
 }
 
 export enum NotificationTab {
@@ -87,6 +108,7 @@ export interface ShowNotificationPayload {
   earningClaim: boolean, // notice when an account has an earning reward to claim
   earningWithdraw: boolean, // notice when an account has an earning unstake to withdraw
   availBridgeClaim: boolean, // notice when an account has an avail bridge to claim
+  polygonBridgeClaim: boolean, // notice when an account has an avail bridge to claim
   // marketing: boolean, // notice when wallet has a marketing announcement
   // marketing: boolean, // notice when wallet has a marketing announcement
   // announcement: boolean // notice when wallet has an announcement

@@ -60,15 +60,14 @@ export function isAvailBridgeGatewayContract (contractAddress: _Address) {
   return [AVAILBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS, AVAILBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS].includes(contractAddress);
 }
 
+const POLYGONBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS = '0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe';
+const POLYGONBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS = '0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582';
+
 export function getPolygonBridgeContract (chain: string): string {
-  if (chain === 'polygonzkEvm_cardona') {
-    return '0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582';
-  } else if (chain === 'sepolia_ethereum') {
-    return '0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582';
-  } else if (chain === 'polygonZkEvm') {
-    return '0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe';
-  } else if (chain === 'ethereum') {
-    return '0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe';
+  if (chain === 'polygonzkEvm_cardona' || chain === 'sepolia_ethereum') {
+    return POLYGONBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS;
+  } else if (chain === 'polygonZkEvm' || chain === 'ethereum') {
+    return POLYGONBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS;
   }
 
   throw new Error('Invalid chain');

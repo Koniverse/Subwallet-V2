@@ -6,7 +6,7 @@ export const POLYGON_BRIDGE_INDEXER = {
   TESTNET: 'https://api-gateway.polygon.technology/api/v3/transactions/testnet'
 };
 
-interface PolygonTransaction {
+export interface PolygonTransaction {
   _id: string;
   transactionIndex?: number;
   sourceNetwork: number;
@@ -23,7 +23,7 @@ interface PolygonTransaction {
   userAddress: string;
   wrappedTokenAddress?: string;
   wrappedTokenNetwork?: number;
-  counter?: number;
+  counter: number;
   bridgeContractAddress?: string;
   eventInitiatorAddress?: string;
   globalExitRootManager?: string;
@@ -76,9 +76,17 @@ interface PolygonTransactionResponse {
 export function getWaitPolygonBridgeDescription (amount: string, symbol: string) {
   return `${amount} ${symbol} will arrive in 30 minutes from Polygon Unified Bridge!`;
 }
+
+export function getWaitPolygonBridgeL2toL1Description (amount: string, symbol: string) {
+  return `${amount} ${symbol} will arrive in 180 minutes from Polygon Unified Bridge!`;
+}
+
+export function getPolygonBridgeClaimDescription (amount: string, symbol: string) {
+  return `${amount} ${symbol} ready to claim from ${symbol} cross-chain transfer. Click to claim now!`;
+}
 /* Description */
 
-export async function fetchPolygonBridgeTransactions (userAddress: string, pageSize = 500, page = 0, isTestnet = true) {
+export async function fetchPolygonBridgeTransactions (userAddress: string, isTestnet: boolean, pageSize = 500, page = 0) {
   const params = new URLSearchParams({
     userAddress,
     pageSize: pageSize.toString(),

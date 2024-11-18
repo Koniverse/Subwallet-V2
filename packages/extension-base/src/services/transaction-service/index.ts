@@ -14,7 +14,7 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
-import { ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { ClaimAvailBridgeNotificationMetadata, NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { TRANSACTION_TIMEOUT } from '@subwallet/extension-base/services/transaction-service/constants';
 import { parseLiquidStakingEvents, parseLiquidStakingFastUnstakeEvents, parseTransferEventLogs, parseXcmEventLogs } from '@subwallet/extension-base/services/transaction-service/event-parser';
@@ -745,7 +745,11 @@ export default class TransactionService {
       const extrinsicHash = transaction.extrinsicHash;
 
       if (isPolygonBridge) {
-        this.state.inappNotificationService.writeWaitPolygonBridge(inputData, extrinsicHash)
+        const actionType = (inputData.originNetworkKey === 'polygonzkEvm_cardona' || inputData.originNetworkKey === 'polygonZkEvm')
+          ? NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1
+          : NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE;
+
+        this.state.inappNotificationService.writeWaitPolygonBridge(inputData, extrinsicHash, actionType)
           .catch(console.error);
       }
     }
@@ -971,7 +975,7 @@ export default class TransactionService {
             eventData.startBlock = await web3Api.eth.getBlockNumber() - 3;
             // Add start info
             emitter.emit('send', eventData); // This event is needed after sending transaction with queue
-
+            
             const txHash = payload;
 
             eventData.extrinsicHash = txHash;

@@ -46,7 +46,9 @@ export enum NotificationIconBackgroundColorMap {
   CLAIM = 'yellow-7',
   CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'yellow-7', // temporary set
   CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'yellow-7',
-  HAVE_TO_WAIT_POLYGON_BRIDGE = 'blue-8'
+  HAVE_TO_WAIT_POLYGON_BRIDGE = 'blue-8',
+  HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1 = 'blue-8',
+  CLAIM_POLYGON_BRIDGE = 'yellow-7'
 }
 
 export const NotificationIconMap = {
@@ -56,7 +58,9 @@ export const NotificationIconMap = {
   CLAIM: Gift,
   CLAIM_AVAIL_BRIDGE_ON_AVAIL: Coins, // temporary set
   CLAIM_AVAIL_BRIDGE_ON_ETHEREUM: Coins,
-  HAVE_TO_WAIT_POLYGON_BRIDGE: Coins
+  HAVE_TO_WAIT_POLYGON_BRIDGE: Coins,
+  HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1: Coins,
+  CLAIM_POLYGON_BRIDGE: Coins
 };
 
 const alertModalId = 'notification-alert-modal';
@@ -343,9 +347,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         }
 
         case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM:
-
-        // eslint-disable-next-line no-fallthrough
-        case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL: {
+        case NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL: 
+        case NotificationActionType.CLAIM_POLYGON_BRIDGE: {
           const metadata = item.metadata as ClaimAvailBridgeNotificationMetadata;
 
           if (metadata.status === AvailBridgeTransactionStatus.READY_TO_CLAIM) {
@@ -357,7 +360,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               from: item.address
             });
             switchReadNotificationStatus(switchStatusParams).then(() => {
-              navigate('/transaction/claim-avail-bridge');
+              navigate('/transaction/claim-bridge');
             }).catch(console.error);
           } else {
             showWarningModal('claimed');
