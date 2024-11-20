@@ -285,7 +285,6 @@ export default class KoniState {
   public async init () {
     await this.eventService.waitCryptoReady;
     await this.chainService.init();
-    this.afterChainServiceInit();
     await this.migrationService.run();
     this.campaignService.init();
     this.mktCampaignService.init();
@@ -304,9 +303,11 @@ export default class KoniState {
     await this.dbService.stores.crowdloan.removeEndedCrowdloans();
 
     await this.startSubscription();
-
     this.chainOnlineService.checkLatestData();
     this.chainService.checkLatestData();
+    this.chainService.subscribeChainInfoMap().subscribe(() => {
+      this.afterChainServiceInit();
+    });
   }
 
   public async initMantaPay (password: string) {
@@ -1643,10 +1644,11 @@ export default class KoniState {
     await this.walletConnectService.resetWallet(resetAll);
 
     await this.chainService.init();
-    this.afterChainServiceInit();
-
     this.chainOnlineService.checkLatestData();
     this.chainService.checkLatestData();
+    this.chainService.subscribeChainInfoMap().subscribe(() => {
+      this.afterChainServiceInit();
+    });
   }
 
   public async enableMantaPay (updateStore: boolean, address: string, password: string, seedPhrase?: string) {

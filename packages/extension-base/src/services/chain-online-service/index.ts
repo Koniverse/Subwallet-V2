@@ -214,27 +214,34 @@ export class ChainOnlineService {
   }
 
   handleLatestPatchData () {
-    this.fetchLatestPatchData().then((latestPatch) => {
-      if (latestPatch && !this.chainService.getlockChainInfoMap()) {
-        this.eventService.waitAssetReady
-          .then(() => {
-            this.chainService.setLockChainInfoMap(true);
-            this.handleLatestPatch(latestPatch)
-              .then(() => this.chainService.setLockChainInfoMap(false))
+    this.fetchLatestPatchData()
+      .then((latestPatch) => {
+        return new Promise<void>((resolve) => {
+          if (latestPatch && !this.chainService.getlockChainInfoMap()) {
+            this.eventService.waitAssetReady
+              .then(() => {
+                this.chainService.setLockChainInfoMap(true);
+                this.handleLatestPatch(latestPatch)
+                  .then(() => this.chainService.setLockChainInfoMap(false))
+                  .catch((e) => {
+                    this.chainService.setLockChainInfoMap(false);
+                    console.error('Error update latest patch', e);
+                  })
+                  .finally(resolve);
+              })
               .catch((e) => {
-                this.chainService.setLockChainInfoMap(false);
-                console.error('Error update latest patch', e);
+                console.error('Asset fail to ready', e);
+                resolve();
               });
-          })
-          .catch((e) => {
-            console.error('Asset fail to ready', e);
-          });
-      }
-    }).catch((e) => {
-      console.error('Error get latest patch or data map is locking', e);
-    });
-
-    this.eventService.emit('asset.online.ready', true);
+          } else {
+            resolve();
+          }
+        });
+      }).catch((e) => {
+        console.error('Error get latest patch or data map is locking', e);
+      }).finally(() => {
+        this.eventService.emit('asset.online.ready', true);
+      });
   }
 
   checkLatestData () {
