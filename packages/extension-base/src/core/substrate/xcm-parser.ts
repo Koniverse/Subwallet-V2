@@ -63,7 +63,7 @@ export function _getXcmMultiLocation (originChainInfo: _ChainInfo, destChainInfo
 }
 
 export function _isXcmTransferUnstable (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
-  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) || _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug);
+  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) || _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug) || _isPolygonBridgeXcm(originChainInfo, destChainInfo);
 }
 
 function getAssetHubBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
@@ -96,13 +96,17 @@ function getAvailBridgeWarning (): string {
   return 'Cross-chain transfer of this token may take up to 90 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
 }
 
-function getPolygonBridgeWarning (): string {
-  return 'Cross-chain transfer of this token may take up to 90 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
+function getPolygonBridgeWarning (originChainInfo: _ChainInfo): string {
+  if (originChainInfo.slug === COMMON_CHAIN_SLUGS.ETHEREUM || originChainInfo.slug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA) {
+    return 'Cross-chain transfer of this token may take up to 30 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
+  } else {
+    return 'Cross-chain transfer of this token may take up to 180 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
+  }
 }
 
 export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): string {
   if (_isPolygonBridgeXcm(originChainInfo, destChainInfo)) {
-    return getPolygonBridgeWarning();
+    return getPolygonBridgeWarning(originChainInfo);
   } else if (_isAvailBridgeXcm(originChainInfo, destChainInfo)) {
     return getAvailBridgeWarning();
   } else if (_isSnowBridgeXcm(originChainInfo, destChainInfo)) {

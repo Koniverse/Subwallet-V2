@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { COMMON_ASSETS, COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_LISTEN_AVAIL_BRIDGE_CLAIM } from '@subwallet/extension-base/constants';
@@ -135,6 +136,32 @@ export class InappNotificationService implements CronServiceInterface {
       }
     }
 
+    if ([NotificationActionType.CLAIM_POLYGON_BRIDGE].includes(candidateNotification.actionType)) {
+      const { address, metadata, time } = candidateNotification;
+      const candidateMetadata = metadata as ClaimPolygonBridgeNotificationMetadata;
+      const remindTime = hrsToMillisecond(remindTimeConfigInHrs[candidateNotification.actionType]);
+
+      for (const notification of comparedNotifications) {
+        if (notification.address !== address) {
+          continue;
+        }
+
+        if (time - notification.time >= remindTime) {
+          continue;
+        }
+
+        const comparedMetadata = notification.metadata as ClaimPolygonBridgeNotificationMetadata;
+        const sameNotification =
+          candidateMetadata._id === comparedMetadata._id &&
+          candidateMetadata.transactionHash === comparedMetadata.transactionHash &&
+          candidateMetadata.counter === comparedMetadata.counter;
+
+        if (sameNotification) {
+          return false;
+        }
+      }
+    }
+
     return true;
   }
 
@@ -142,7 +169,6 @@ export class InappNotificationService implements CronServiceInterface {
     const proxyId = this.keyringService.context.belongUnifiedAccount(address) || address;
     const accountName = this.keyringService.context.getCurrentAccountProxyName(proxyId);
     const passNotifications: _NotificationInfo[] = [];
-
     const [comparedNotifications, remindTimeConfig] = await Promise.all([
       this.fetchNotificationsByParams({ notificationTab: NotificationTab.ALL, proxyId }),
       await fetchLastestRemindNotificationTime()
@@ -262,7 +288,7 @@ export class InappNotificationService implements CronServiceInterface {
         title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
         description: NotificationDescriptionMap[actionType](formatNumber(amount, decimals), symbol),
         time: timestamp,
-        extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE,
+        extrinsicType: ExtrinsicType.CLAIM_BRIDGE,
         isRead: false,
         actionType,
         metadata
@@ -274,28 +300,27 @@ export class InappNotificationService implements CronServiceInterface {
 
   // Polygon Claimable Handle
 
+  // @ts-ignore
   async createPolygonClaimableTransactions () {
     const { evm: evmAddresses } = this.getCategorizedAddresses();
-    const polygonAsset = Object.values(this.chainService.getAssetRegistry()).find(
-      (asset) => asset.originChain === 'sepolia_ethereum'
+    const etherChains = [COMMON_ASSETS.ETH, COMMON_ASSETS.ETH_SEPOLIA];
+
+    const polygonAssets = Object.values(this.chainService.getAssetRegistry()).filter(
+      (asset) => etherChains.includes(asset.slug as COMMON_ASSETS)
     );
 
-    const isTestnet = polygonAsset?.originChain === 'sepolia_ethereum';
+    for (const polygonAsset of polygonAssets) {
+      const isTestnet = polygonAsset?.originChain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA;
 
-    if (evmAddresses.length === 0) {
-      return;
-    }
+      if (evmAddresses.length === 0) {
+        return;
+      }
 
-    for (const address of evmAddresses) {
-      const response = await fetchPolygonBridgeTransactions(address, isTestnet);
+      for (const address of evmAddresses) {
+        const response = await fetchPolygonBridgeTransactions(address, isTestnet);
 
-      if (response && response.success) {
-        const claimableTransactions = response.result.filter(
-          (transaction) => transaction.status === 'READY_TO_CLAIM' && transaction.userAddress === transaction.receiver
-        );
-
-        if (claimableTransactions.length > 0 && polygonAsset) {
-          await this.processPolygonClaimNotification(address, claimableTransactions, polygonAsset);
+        if (response && response.success) {
+          await this.processPolygonClaimNotification(address, response.result, polygonAsset);
         }
       }
     }
@@ -331,7 +356,7 @@ export class InappNotificationService implements CronServiceInterface {
         title: NotificationTitleMap[actionType].replace('{{tokenSymbol}}', symbol),
         description: NotificationDescriptionMap[actionType](formatNumber(amounts[0], decimals), symbol),
         time: timestamp,
-        extrinsicType: ExtrinsicType.CLAIM_AVAIL_BRIDGE,
+        extrinsicType: ExtrinsicType.CLAIM_BRIDGE,
         isRead: false,
         actionType,
         metadata
@@ -381,7 +406,6 @@ export class InappNotificationService implements CronServiceInterface {
   async startCron (): Promise<void> {
     this.cleanUpOldNotifications()
       .catch(console.error);
-    console.log('Crondding');
     this.cronCreateBridgeClaimNotification();
 
     return Promise.resolve();

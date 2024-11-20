@@ -74,7 +74,7 @@ const getTransactionComponent = (extrinsicType: ExtrinsicType): typeof BaseTrans
       return TokenApproveConfirmation;
     case ExtrinsicType.SWAP:
       return SwapTransactionConfirmation;
-    case ExtrinsicType.CLAIM_AVAIL_BRIDGE:
+    case ExtrinsicType.CLAIM_BRIDGE:
       return ClaimBridgeTransactionConfirmation;
     case ExtrinsicType.CROWDLOAN:
     case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:

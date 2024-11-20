@@ -53,9 +53,11 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
   const amountValue = useMemo(() => {
     if (!isPolygonBridge && 'amount' in metadata) {
       return metadata.amount;
+    } else if ('amounts' in metadata) {
+      return metadata.amounts[0];
     }
 
-    return '0';
+    return 0;
   }, [isPolygonBridge, metadata]);
 
   const fromValue = useWatchTransaction('from', form, defaultData);
@@ -200,7 +202,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
             />
           )}
           loading={loading}
-          onClick={checkAction(form.submit, ExtrinsicType.CLAIM_AVAIL_BRIDGE)}
+          onClick={checkAction(form.submit, ExtrinsicType.CLAIM_BRIDGE)}
         >
           {t('Continue')}
         </Button>

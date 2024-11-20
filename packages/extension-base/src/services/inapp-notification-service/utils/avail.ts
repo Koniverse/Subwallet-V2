@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { BridgeTransactionStatus } from '../interfaces';
+
 /* Description */
 export function getAvailBridgeClaimDescription (amount: string, symbol: string) {
   return `${amount} ${symbol} ready to claim from ${symbol} cross-chain transfer. Click to claim now!`;
@@ -40,13 +42,7 @@ export interface AvailBridgeTransaction {
   amount: string,
   sourceBlockHash: string,
   sourceTransactionIndex: string,
-  status: AvailBridgeTransactionStatus
-}
-
-export enum AvailBridgeTransactionStatus {
-  READY_TO_CLAIM = 'READY_TO_CLAIM',
-  CLAIMED = 'CLAIMED',
-  BRIDGED = 'BRIDGED'
+  status: BridgeTransactionStatus
 }
 
 export enum AvailBridgeSourceChain {
@@ -61,7 +57,7 @@ export async function fetchAllAvailBridgeClaimable (address: string, sourceChain
   const pageSize = 100;
 
   while (isContinue) {
-    const response = await fetchAvailBridgeTransactions(address, sourceChain, AvailBridgeTransactionStatus.READY_TO_CLAIM, pageSize, page, isTestnet);
+    const response = await fetchAvailBridgeTransactions(address, sourceChain, BridgeTransactionStatus.READY_TO_CLAIM, pageSize, page, isTestnet);
 
     if (!response) {
       break;
@@ -76,7 +72,7 @@ export async function fetchAllAvailBridgeClaimable (address: string, sourceChain
   return transactions;
 }
 
-export async function fetchAvailBridgeTransactions (userAddress: string, sourceChain: AvailBridgeSourceChain, status: AvailBridgeTransactionStatus, pageSize = 100, page = 0, isTestnet: boolean) {
+export async function fetchAvailBridgeTransactions (userAddress: string, sourceChain: AvailBridgeSourceChain, status: BridgeTransactionStatus, pageSize = 100, page = 0, isTestnet: boolean) {
   const params = new URLSearchParams({
     userAddress,
     sourceChain,

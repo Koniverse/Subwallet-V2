@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _POLYGON_BRIDGE_ABI, getPolygonBridgeContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
@@ -98,8 +99,9 @@ export async function getClaimPolygonBridge (chainSlug: string, notification: _N
   const polygonBridgeContract = getWeb3Contract(polygonBridgeContractAddress, evmApi, _POLYGON_BRIDGE_ABI);
   const metadata = notification.metadata as ClaimPolygonBridgeNotificationMetadata;
 
-  const isTestnet = chainSlug === 'sepolia_ethereum';
+  const isTestnet = chainSlug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA;
   const proofDomain = isTestnet ? POLYGON_PROOF_INDEXER.TESTNET : POLYGON_PROOF_INDEXER.MAINNET;
+
   const proofResponse = await fetch(`${proofDomain}?networkId=${metadata.sourceNetwork}&depositCount=${metadata.counter}`)
     .then((res) => res.json()) as ClaimNotification;
   const proof = proofResponse.proof;
@@ -127,14 +129,22 @@ export async function getClaimPolygonBridge (chainSlug: string, notification: _N
   return transactionConfig;
 }
 
+export async function isClaimedPolygonBridge (chainSlug: string, counter: number, sourceNetwork: number, evmApi: _EvmApi) {
+  const polygonBridgeContractAddress = getPolygonBridgeContract(chainSlug);
+  const polygonBridgeContract = getWeb3Contract(polygonBridgeContractAddress, evmApi, _POLYGON_BRIDGE_ABI);
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-return,@typescript-eslint/no-unsafe-member-access
+  return await polygonBridgeContract.methods.isClaimed(counter, sourceNetwork).call();
+}
+
 export function _isPolygonChainBridge (srcChain: string, destChain: string): boolean {
-  if (srcChain === 'polygonzkEvm_cardona' && destChain === 'sepolia_ethereum') {
+  if (srcChain === 'polygonzkEvm_cardona' && destChain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA) {
     return true;
-  } else if (srcChain === 'sepolia_ethereum' && destChain === 'polygonzkEvm_cardona') {
+  } else if (srcChain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA && destChain === 'polygonzkEvm_cardona') {
     return true;
-  } else if (srcChain === 'polygonZkEvm' && destChain === 'ethereum') {
+  } else if (srcChain === 'polygonZkEvm' && destChain === COMMON_CHAIN_SLUGS.ETHEREUM) {
     return true;
-  } else if (srcChain === 'ethereum' && destChain === 'polygonZkEvm') {
+  } else if (srcChain === COMMON_CHAIN_SLUGS.ETHEREUM && destChain === 'polygonZkEvm') {
     return true;
   }
 

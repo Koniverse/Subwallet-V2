@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { BridgeTransactionStatus } from '../interfaces';
+
 export const POLYGON_BRIDGE_INDEXER = {
   MAINNET: 'https://api-gateway.polygon.technology/api/v3/transactions/mainnet',
   TESTNET: 'https://api-gateway.polygon.technology/api/v3/transactions/testnet'
@@ -16,7 +18,7 @@ export interface PolygonTransaction {
   bridgeType: string;
   dataType: string;
   isDecoded?: boolean;
-  status: string;
+  status: BridgeTransactionStatus;
   timestamp: string;
   tokenIds: any[];
   transactionHash: string;
@@ -30,10 +32,10 @@ export interface PolygonTransaction {
   leaf?: string;
   mainnetExitRoot?: string;
   metadata?: string;
-  originTokenAddress?: string;
-  originTokenNetwork?: number;
-  receiver?: string; // empty when not claimed
-  refuel?: boolean;
+  originTokenAddress: string;
+  originTokenNetwork: number;
+  receiver: string; // empty when not claimed
+  refuel: boolean;
   rollUpExitRoot?: string;
   nonce?: any;
   rootTunnelAddress?: string;
@@ -41,7 +43,7 @@ export interface PolygonTransaction {
   claimTransactionBlockNumber?: number;
   claimTransactionHash?: string;
   claimTransactionTimestamp?: string;
-  transactionInitiator?: string;
+  transactionInitiator: string;
 }
 
 interface PaginationData {
@@ -98,6 +100,7 @@ export async function fetchPolygonBridgeTransactions (userAddress: string, isTes
   networkIds.forEach((networkId) => {
     params.append('destinationNetworkIds', networkId.toString());
     params.append('sourceNetworkIds', networkId.toString());
+    params.append('status', BridgeTransactionStatus.READY_TO_CLAIM);
   });
 
   try {
@@ -127,4 +130,14 @@ export async function fetchPolygonBridgeTransactions (userAddress: string, isTes
 
     return undefined;
   }
+}
+
+export async function fetchAndFilterPolygonTransactionById (transactionId: string, userAddress: string, isTestnet: boolean) {
+  const response = await fetchPolygonBridgeTransactions(userAddress, isTestnet);
+
+  if (!response || !response.success) {
+    return undefined;
+  }
+
+  return response.result.find((tx) => tx._id === transactionId);
 }

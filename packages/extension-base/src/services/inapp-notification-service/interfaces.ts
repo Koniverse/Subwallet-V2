@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AvailBridgeSourceChain, AvailBridgeTransactionStatus } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { AvailBridgeSourceChain } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { YieldPoolType } from '@subwallet/extension-base/types';
 
 export interface _BaseNotificationInfo {
@@ -19,6 +19,12 @@ export interface _BaseNotificationInfo {
 
 export interface _NotificationInfo extends _BaseNotificationInfo {
   proxyId: string
+}
+
+export enum BridgeTransactionStatus {
+  READY_TO_CLAIM = 'READY_TO_CLAIM',
+  CLAIMED = 'CLAIMED',
+  BRIDGED = 'BRIDGED'
 }
 
 export interface ActionTypeToMetadataMap {
@@ -58,7 +64,7 @@ export interface ClaimAvailBridgeNotificationMetadata {
   amount: string;
   sourceBlockHash: string;
   sourceTransactionIndex: string;
-  status: AvailBridgeTransactionStatus;
+  status: BridgeTransactionStatus;
 }
 
 export interface ClaimPolygonBridgeNotificationMetadata {
@@ -68,13 +74,13 @@ export interface ClaimPolygonBridgeNotificationMetadata {
   amounts: string[];
   counter: number;
   destinationNetwork: number;
-  originTokenAddress?: string;
-  originTokenNetwork?: number;
-  receiver?: string;
+  originTokenAddress: string;
+  originTokenNetwork: number;
+  receiver: string;
   sourceNetwork: number;
-  status: string;
+  status: BridgeTransactionStatus;
   transactionHash: string;
-  transactionInitiator?: string;
+  transactionInitiator: string;
   userAddress: string;
 }
 

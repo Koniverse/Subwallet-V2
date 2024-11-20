@@ -34,9 +34,11 @@ const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransa
   const amountValue = useMemo(() => {
     if (!isPolygonBridge && 'amount' in metadata) {
       return metadata.amount;
+    } else if ('amounts' in metadata) {
+      return metadata.amounts[0];
     }
 
-    return '0';
+    return 0;
   }, [isPolygonBridge, metadata]);
 
   const { t } = useTranslation();
