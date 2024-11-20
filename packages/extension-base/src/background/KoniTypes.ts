@@ -5,6 +5,7 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _FundStatus, _MultiChai
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { Resolver } from '@subwallet/extension-base/background/handlers/State';
 import { AccountAuthType, AuthorizeRequest, ConfirmationRequestBase, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeCancel, RequestAuthorizeReject, RequestAuthorizeSubscribe, RequestAuthorizeTab, RequestCurrentAccountAddress, ResponseAuthorizeList } from '@subwallet/extension-base/background/types';
+import { AppConfig, BrowserConfig, OSConfig } from '@subwallet/extension-base/constants';
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
@@ -446,6 +447,12 @@ export type RequestChangePriceCurrency = { currency: CurrencyType }
 export type RequestChangeShowBalance = { enable: boolean };
 
 export type DetectBalanceCache = Record<string, number>;
+
+export type RequestSaveAppConfig = { appConfig: AppConfig };
+
+export type RequestSaveBrowserConfig = { browserConfig: BrowserConfig };
+
+export type RequestSaveOSConfig = { osConfig: OSConfig };
 
 export interface RandomTestRequest {
   start: number;
@@ -2064,6 +2071,11 @@ export interface KoniRequestSignatures {
   'pri(settings.saveShowBalance)': [RequestChangeShowBalance, boolean];
   'pri(settings.logo.assets.subscribe)': [null, Record<string, string>, Record<string, string>];
   'pri(settings.logo.chains.subscribe)': [null, Record<string, string>, Record<string, string>];
+
+  // Environment Config
+  'pri(settings.saveAppConfig)': [RequestSaveAppConfig, boolean];
+  'pri(settings.saveBrowserConfig)': [RequestSaveBrowserConfig, boolean];
+  'pri(settings.saveOSConfig)': [RequestSaveOSConfig, boolean];
 
   /* Earning */
 
