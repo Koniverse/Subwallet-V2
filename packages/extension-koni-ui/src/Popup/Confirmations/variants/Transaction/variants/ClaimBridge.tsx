@@ -3,7 +3,7 @@
 
 import { ClaimAvailBridgeNotificationMetadata, ClaimPolygonBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
-import { RequestClaimBridge } from '@subwallet/extension-base/types/avail-bridge';
+import { RequestClaimBridge } from '@subwallet/extension-base/types/bridge';
 import { CommonTransactionInfo, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { useGetChainAssetInfo, useGetNativeTokenBasicInfo, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -21,7 +21,9 @@ const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransa
   const { className, transaction } = props;
   const data = transaction.data as RequestClaimBridge;
 
-  const isPolygonBridge = (data.notification?.actionType === 'CLAIM_POLYGON_BRIDGE');
+  const isPolygonBridge = useMemo(() => {
+    return data.notification?.actionType === 'CLAIM_POLYGON_BRIDGE';
+  }, [data.notification?.actionType]);
 
   const metadata = useMemo(() => {
     if (isPolygonBridge) {

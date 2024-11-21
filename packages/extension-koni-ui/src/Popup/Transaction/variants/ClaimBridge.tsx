@@ -40,7 +40,9 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
   const { accounts } = useSelector((state) => state.accountState);
   const { chainInfoMap } = useSelector((state) => state.chainStore);
 
-  const isPolygonBridge = (notification?.actionType === 'CLAIM_POLYGON_BRIDGE');
+  const isPolygonBridge = useMemo(() => {
+    return notification?.actionType === 'CLAIM_POLYGON_BRIDGE';
+  }, [notification?.actionType]);
 
   const metadata = useMemo(() => {
     if (isPolygonBridge) {

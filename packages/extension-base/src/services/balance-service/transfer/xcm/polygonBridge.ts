@@ -12,7 +12,7 @@ import { _NotificationInfo, ClaimPolygonBridgeNotificationMetadata } from '@subw
 import { TransactionConfig } from 'web3-core';
 import { ContractSendMethod } from 'web3-eth-contract';
 
-interface gasStation{
+export interface gasStation{
   safeLow: number;
   standard: number;
   fastLow: number;
@@ -39,7 +39,7 @@ export const POLYGON_GAS_INDEXER = {
   TESTNET: 'https://gasstation.polygon.technology/zkevm/cardona'
 };
 
-async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, destinationNetwork: number, evmApi: _EvmApi, isTestnet?: boolean): Promise<TransactionConfig> {
+async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, destinationNetwork: number, evmApi: _EvmApi): Promise<TransactionConfig> {
   const polygonBridgeContractAddress = getPolygonBridgeContract(originChainInfo.slug);
   const polygonBridgeContract = getWeb3Contract(polygonBridgeContractAddress, evmApi, _POLYGON_BRIDGE_ABI);
   const tokenContract = _getContractAddressOfToken(tokenInfo) || '0x0000000000000000000000000000000000000000'; // FOR Ethereum: use null address
@@ -58,21 +58,14 @@ async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originCha
     '0x'
   );
   const transferEncodedCall = transferCall.encodeABI();
-
-  const gasDomain = isTestnet ? POLYGON_GAS_INDEXER.TESTNET : POLYGON_GAS_INDEXER.MAINNET;
-  const gasResponse = isTestnet
-    ? await fetch(`${gasDomain}`).then((res) => res.json()) as gasStation
-    : undefined;
-
-  const gasPriceInWei = gasResponse ? (gasResponse.standard * 1e9 + 200000) : undefined;
-  const priority = !gasResponse ? await calculateGasFeeParams(evmApi, evmApi.chainSlug) : undefined;
+  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
 
   const transactionConfig: TransactionConfig = {
     from: sender,
     to: polygonBridgeContractAddress,
     value: value,
     data: transferEncodedCall,
-    gasPrice: gasPriceInWei || priority?.gasPrice,
+    gasPrice: priority.gasPrice,
     maxFeePerGas: priority?.maxFeePerGas?.toString(),
     maxPriorityFeePerGas: priority?.maxPriorityFeePerGas?.toString()
   };
@@ -85,13 +78,11 @@ async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originCha
 }
 
 export async function _createPolygonBridgeL1toL2Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
-  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 1, evmApi, false);
+  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 1, evmApi);
 }
 
 export async function _createPolygonBridgeL2toL1Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
-  const isTestnet = originChainInfo.slug === 'polygonzkEvm_cardona';
-
-  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 0, evmApi, isTestnet);
+  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 0, evmApi);
 }
 
 export async function getClaimPolygonBridge (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi) {

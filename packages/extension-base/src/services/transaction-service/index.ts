@@ -748,19 +748,6 @@ export default class TransactionService {
 
       // todo: consider async
       this.state.chainService.updateAssetSetting(toAssetSlug, { visible: true }, true).catch(console.error);
-    } else if (transaction.extrinsicType === ExtrinsicType.TRANSFER_XCM) {
-      const inputData = parseTransactionData<ExtrinsicType.TRANSFER_XCM>(transaction.data);
-      const isPolygonBridge = _isPolygonChainBridge(inputData.originNetworkKey, inputData.destinationNetworkKey);
-      const extrinsicHash = transaction.extrinsicHash;
-
-      if (isPolygonBridge) {
-        const actionType = (inputData.originNetworkKey === 'polygonzkEvm_cardona' || inputData.originNetworkKey === 'polygonZkEvm')
-          ? NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1
-          : NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE;
-
-        this.state.inappNotificationService.writeWaitPolygonBridge(inputData, extrinsicHash, actionType)
-          .catch(console.error);
-      }
     }
   }
 

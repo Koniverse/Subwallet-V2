@@ -1,11 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { GAS_PRICE_RATIO, NETWORK_MULTI_GAS_FEE } from '@subwallet/extension-base/constants';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { EvmFeeInfo, EvmFeeInfoCache, InfuraFeeInfo } from '@subwallet/extension-base/types';
 import { BN_WEI, BN_ZERO } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
+
+import { gasStation, POLYGON_GAS_INDEXER } from '../../balance-service/transfer/xcm/polygonBridge';
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || '';
 const INFURA_API_KEY_SECRET = process.env.INFURA_API_KEY_SECRET || '';
@@ -209,6 +212,21 @@ export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, u
 
       return {
         gasPrice,
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+        baseGasFee: undefined,
+        busyNetwork: false
+      };
+    }
+
+    if (networkKey === 'polygonzkEvm_cardona' || networkKey === 'polygonZkEvm') {
+      const isTestnet = networkKey === 'polygonzkEvm_cardona';
+      const gasDomain = isTestnet ? POLYGON_GAS_INDEXER.TESTNET : POLYGON_GAS_INDEXER.MAINNET;
+      const gasResponse = await fetch(`${gasDomain}`).then((res) => res.json()) as gasStation;
+      const gasPriceInWei = gasResponse.standard * 1e9 + 200000;
+
+      return {
+        gasPrice: gasPriceInWei.toString(),
         maxFeePerGas: undefined,
         maxPriorityFeePerGas: undefined,
         baseGasFee: undefined,
