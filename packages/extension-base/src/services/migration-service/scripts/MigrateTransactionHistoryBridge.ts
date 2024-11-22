@@ -8,6 +8,7 @@ import Dexie from 'dexie';
 export default class MigrateTransactionHistoryBridge extends BaseMigrationJob {
   public override async run (): Promise<void> {
     const state = this.state;
+    const newTransactionItems: TransactionHistoryItem[] = [];
 
     try {
       const db = new Dexie('SubWalletDB_v2');
@@ -16,17 +17,18 @@ export default class MigrateTransactionHistoryBridge extends BaseMigrationJob {
 
       const oldTransactionData = (await transactionTable.toArray()) as TransactionHistoryItem[];
 
-      const claimAvailBridgeTransactions = oldTransactionData.filter((item) => item.type === ExtrinsicType.CLAIM_AVAIL_BRIDGE);
+      const claimAvailBridgeTransactions = oldTransactionData.filter((item) => item.type as string === 'claim.claim_avail_bridge');
 
-      console.log('Hmm', claimAvailBridgeTransactions);
-      await Promise.all(claimAvailBridgeTransactions.map(async (item) => {
+      claimAvailBridgeTransactions.forEach((item) => {
         const newItem: TransactionHistoryItem = {
           ...item,
           type: ExtrinsicType.CLAIM_BRIDGE
         };
 
-        await state.historyService.updateHistoryByExtrinsicHash(newItem.extrinsicHash, newItem);
-      }));
+        newTransactionItems.push(newItem);
+      });
+
+      await state.dbService.upsertHistory(newTransactionItems);
     } catch (e) {
       this.logger.error(e);
     }

@@ -516,7 +516,6 @@ export enum ExtrinsicType {
 
   SWAP = 'swap',
 
-  CLAIM_AVAIL_BRIDGE = 'claim.claim_avail_bridge', // Migrate Claim Bridge
   CLAIM_BRIDGE = 'claim.claim_bridge',
 
   // SET_FEE_TOKEN = 'set_fee-token',

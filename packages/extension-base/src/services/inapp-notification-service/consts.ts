@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationActionType } from './interfaces';
-import { getAvailBridgeClaimDescription, getClaimDescription, getPolygonBridgeClaimDescription, getReceiveDescription, getSendDescription, getWaitPolygonBridgeDescription, getWaitPolygonBridgeL2toL1Description, getWithdrawDescription } from './utils';
+import { getAvailBridgeClaimDescription, getClaimDescription, getPolygonBridgeClaimDescription, getReceiveDescription, getSendDescription, getWithdrawDescription } from './utils';
 
 export const NotificationTitleMap = {
   [NotificationActionType.WITHDRAW]: '[{{accountName}}] WITHDRAW {{tokenSymbol}}',
@@ -11,8 +11,6 @@ export const NotificationTitleMap = {
   [NotificationActionType.RECEIVE]: '[{{accountName}}] RECEIVE {{tokenSymbol}}',
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: '[{{accountName}}] CLAIM {{tokenSymbol}}',
-  [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE]: '[{{accountName}}] BRIDGE {{tokenSymbol}}',
-  [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1]: '[{{accountName}}] BRIDGE {{tokenSymbol}}',
   [NotificationActionType.CLAIM_POLYGON_BRIDGE]: '[{{accountName}}] CLAIM {{tokenSymbol}}'
 };
 
@@ -23,8 +21,6 @@ export const NotificationDescriptionMap = {
   [NotificationActionType.RECEIVE]: getReceiveDescription,
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: getAvailBridgeClaimDescription,
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: getAvailBridgeClaimDescription,
-  [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE]: getWaitPolygonBridgeDescription,
-  [NotificationActionType.HAVE_TO_WAIT_POLYGON_BRIDGE_L2_TO_L1]: getWaitPolygonBridgeL2toL1Description,
   [NotificationActionType.CLAIM_POLYGON_BRIDGE]: getPolygonBridgeClaimDescription
 };
 

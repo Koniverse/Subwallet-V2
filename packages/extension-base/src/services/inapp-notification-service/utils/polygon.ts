@@ -75,14 +75,6 @@ interface PolygonTransactionResponse {
 }
 
 /* Description */
-export function getWaitPolygonBridgeDescription (amount: string, symbol: string) {
-  return `${amount} ${symbol} will arrive in 30 minutes from Polygon Unified Bridge!`;
-}
-
-export function getWaitPolygonBridgeL2toL1Description (amount: string, symbol: string) {
-  return `${amount} ${symbol} will arrive in 180 minutes from Polygon Unified Bridge!`;
-}
-
 export function getPolygonBridgeClaimDescription (amount: string, symbol: string) {
   return `${amount} ${symbol} ready to claim from ${symbol} cross-chain transfer. Click to claim now!`;
 }
