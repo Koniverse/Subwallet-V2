@@ -677,11 +677,11 @@ export class ChainService {
     await this.initChains();
     this.chainInfoMapSubject.next(this.getChainInfoMap());
     this.assetRegistrySubject.next(this.getAssetRegistry());
+    this.initAssetRefMap();
     this.xcmRefMapSubject.next(this.xcmRefMap);
 
     await this.initApis();
     await this.initAssetSettings();
-    this.initAssetRefMap();
     await this.autoEnableTokens();
   }
 
