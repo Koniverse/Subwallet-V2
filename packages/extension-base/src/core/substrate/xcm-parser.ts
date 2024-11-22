@@ -4,6 +4,7 @@
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
+import { isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _getChainSubstrateAddressPrefix, _getEvmChainId, _getSubstrateParaId, _getSubstrateRelayParent, _getXcmAssetMultilocation, _isChainEvmCompatible, _isPureEvmChain, _isSubstrateParaChain } from '@subwallet/extension-base/services/chain-service/utils';
 
 import { decodeAddress, evmToAddress } from '@polkadot/util-crypto';
@@ -90,8 +91,14 @@ function getMythosFromHydrationToMythosWarning (): string {
   return 'Cross-chain transfer of this token requires a high transaction fee. Do you want to continue?';
 }
 
+function getAvailBridgeWarning (): string {
+  return 'Cross-chain transfer of this token may take up to 90 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
+}
+
 export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): string {
-  if (_isSnowBridgeXcm(originChainInfo, destChainInfo)) {
+  if (_isAvailBridgeXcm(originChainInfo, destChainInfo)) {
+    return getAvailBridgeWarning();
+  } else if (_isSnowBridgeXcm(originChainInfo, destChainInfo)) {
     return getSnowBridgeUnstableWarning(originChainInfo);
   } else if (_isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug)) {
     return getMythosFromHydrationToMythosWarning();
@@ -106,6 +113,13 @@ export function _isXcmWithinSameConsensus (originChainInfo: _ChainInfo, destChai
 
 export function _isSnowBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
   return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) && (_isPureEvmChain(originChainInfo) || _isPureEvmChain(destChainInfo));
+}
+
+export function _isAvailBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
+  const isAvailBridgeFromEvm = _isPureEvmChain(originChainInfo) && isAvailChainBridge(destChainInfo.slug);
+  const isAvailBridgeFromAvail = isAvailChainBridge(originChainInfo.slug) && _isPureEvmChain(destChainInfo);
+
+  return isAvailBridgeFromEvm || isAvailBridgeFromAvail;
 }
 
 export function _isMythosFromHydrationToMythos (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {

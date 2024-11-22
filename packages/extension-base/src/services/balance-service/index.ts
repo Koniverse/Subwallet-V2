@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { BalanceError } from '@subwallet/extension-base/background/errors/BalanceError';
-import { AmountData, BalanceErrorType, DetectBalanceCache, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { AmountData, APIItemState, BalanceErrorType, DetectBalanceCache, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _isXcmWithinSameConsensus } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
@@ -218,7 +218,7 @@ export class BalanceService implements StoppableServiceInterface {
       unsub = subscribeBalance([address], [chain], [tSlug], assetMap, chainInfoMap, substrateApiMap, evmApiMap, tonApiMap, (result) => {
         const rs = result[0];
 
-        if (rs.tokenSlug === tSlug) {
+        if (rs.tokenSlug === tSlug && rs.state !== APIItemState.PENDING) {
           hasError = false;
           const balance: AmountData = {
             value: rs.free,

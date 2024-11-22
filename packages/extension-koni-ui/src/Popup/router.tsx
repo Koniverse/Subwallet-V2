@@ -88,6 +88,8 @@ const TokenDetail = new LazyLoader('TokenDetail', () => import('@subwallet/exten
 
 const SecurityList = new LazyLoader('SecurityList', () => import('@subwallet/extension-koni-ui/Popup/Settings/Security'));
 const ManageWebsiteAccess = new LazyLoader('ManageWebsiteAccess', () => import('@subwallet/extension-koni-ui/Popup/Settings/Security/ManageWebsiteAccess'));
+const Notifications = new LazyLoader('Notification', () => import('@subwallet/extension-koni-ui/Popup/Settings/Notifications/Notification'));
+const NotificationSetting = new LazyLoader('NotificationSetting', () => import('@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationSetting'));
 const ManageWebsiteAccessDetail = new LazyLoader('ManageWebsiteAccessDetail', () => import('@subwallet/extension-koni-ui/Popup/Settings/Security/ManageWebsiteAccess/Detail'));
 
 const NewSeedPhrase = new LazyLoader('NewSeedPhrase', () => import('@subwallet/extension-koni-ui/Popup/Account/NewSeedPhrase'));
@@ -119,6 +121,7 @@ const Unstake = new LazyLoader('Unstake', () => import('@subwallet/extension-kon
 const CancelUnstake = new LazyLoader('CancelUnstake', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/CancelUnstake'));
 const ClaimReward = new LazyLoader('ClaimReward', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimReward'));
 const Withdraw = new LazyLoader('Withdraw', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/Withdraw'));
+const ClaimAvailBridge = new LazyLoader('ClaimAvailBridge', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimAvailBridge'));
 
 // Earning
 
@@ -205,6 +208,7 @@ export const router = createHashRouter([
           CancelUnstake.generateRouterObject('cancel-unstake'),
           ClaimReward.generateRouterObject('claim-reward'),
           Withdraw.generateRouterObject('withdraw'),
+          ClaimAvailBridge.generateRouterObject('claim-avail-bridge'),
           {
             path: 'compound',
             element: <Example />
@@ -234,6 +238,8 @@ export const router = createHashRouter([
           ManageAddressBook.generateRouterObject('address-book'),
           SecurityList.generateRouterObject('security'),
           ManageWebsiteAccess.generateRouterObject('dapp-access'),
+          Notifications.generateRouterObject('notification'),
+          NotificationSetting.generateRouterObject('notification-config'),
           ManageWebsiteAccessDetail.generateRouterObject('dapp-access-edit'),
           {
             path: 'chains',

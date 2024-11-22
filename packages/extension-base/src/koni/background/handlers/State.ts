@@ -8,7 +8,7 @@ import { withErrorLog } from '@subwallet/extension-base/background/handlers/help
 import { isSubscriptionRunning, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
 import { AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, ChainStakingMetadata, ChainType, ConfirmationsQueue, ConfirmationsQueueTon, CrowdloanItem, CrowdloanJson, CurrencyType, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestConfirmationComplete, RequestConfirmationCompleteTon, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
-import { MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
+import { EnvConfig, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
 import { convertErrorFormat, generateValidationProcess, PayloadValidated, ValidateStepFunction, validationAuthMiddleware, validationAuthWCMiddleware, validationConnectMiddleware, validationEvmDataTransactionMiddleware, validationEvmSignMessageMiddleware } from '@subwallet/extension-base/core/logic-validation';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
@@ -23,6 +23,7 @@ import { EventService } from '@subwallet/extension-base/services/event-service';
 import FeeService from '@subwallet/extension-base/services/fee-service/service';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { HistoryService } from '@subwallet/extension-base/services/history-service';
+import { InappNotificationService } from '@subwallet/extension-base/services/inapp-notification-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import MigrationService from '@subwallet/extension-base/services/migration-service';
 import MintCampaignService from '@subwallet/extension-base/services/mint-campaign-service';
@@ -130,6 +131,7 @@ export default class KoniState {
   readonly earningService: EarningService;
   readonly feeService: FeeService;
   readonly swapService: SwapService;
+  readonly inappNotificationService: InappNotificationService;
 
   // Handle the general status of the extension
   private generalStatus: ServiceStatus = ServiceStatus.INITIALIZING;
@@ -162,6 +164,7 @@ export default class KoniState {
     this.earningService = new EarningService(this);
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
+    this.inappNotificationService = new InappNotificationService(this.dbService, this.keyringService, this.eventService, this.chainService);
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -288,6 +291,7 @@ export default class KoniState {
     await this.balanceService.init();
     await this.earningService.init();
     await this.swapService.init();
+    await this.inappNotificationService.init();
 
     this.onReady();
     this.onAccountAdd();
@@ -1470,7 +1474,7 @@ export default class KoniState {
     this.campaignService.stop();
     await Promise.all([this.cron.stop(), this.subscription.stop()]);
     await this.pauseAllNetworks(undefined, 'IDLE mode');
-    await Promise.all([this.historyService.stop(), this.priceService.stop(), this.balanceService.stop(), this.earningService.stop(), this.swapService.stop()]);
+    await Promise.all([this.historyService.stop(), this.priceService.stop(), this.balanceService.stop(), this.earningService.stop(), this.swapService.stop(), this.inappNotificationService.stop()]);
 
     // Complete sleeping
     sleeping.resolve();
@@ -1507,7 +1511,7 @@ export default class KoniState {
     }
 
     // Start services
-    await Promise.all([this.cron.start(), this.subscription.start(), this.historyService.start(), this.priceService.start(), this.balanceService.start(), this.earningService.start(), this.swapService.start()]);
+    await Promise.all([this.cron.start(), this.subscription.start(), this.historyService.start(), this.priceService.start(), this.balanceService.start(), this.earningService.start(), this.swapService.start(), this.inappNotificationService.start()]);
 
     // Complete starting
     starting.resolve();
@@ -1611,6 +1615,21 @@ export default class KoniState {
         });
       });
     });
+  }
+
+  public saveEnvConfig <T extends keyof EnvConfig> (key: T, value: EnvConfig[T]): void {
+    this.settingService.getEnvironmentList((config) => {
+      const newSettings: EnvConfig = {
+        ...config,
+        [key]: value
+      };
+
+      this.settingService.setEnvironment(newSettings);
+    });
+  }
+
+  public initEnvConfig (envConfig: EnvConfig): void {
+    this.settingService.setEnvironment(envConfig);
   }
 
   public async resetWallet (resetAll: boolean) {

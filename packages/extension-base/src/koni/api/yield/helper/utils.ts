@@ -19,10 +19,9 @@ export const YIELD_EXTRINSIC_TYPES = [
   ExtrinsicType.REDEEM_VDOT,
   ExtrinsicType.REDEEM_LDOT,
   ExtrinsicType.REDEEM_STDOT,
-  ExtrinsicType.STAKING_JOIN_POOL,
+  ExtrinsicType.JOIN_YIELD_POOL,
   ExtrinsicType.STAKING_CLAIM_REWARD,
-  ExtrinsicType.STAKING_LEAVE_POOL,
-  ExtrinsicType.STAKING_POOL_WITHDRAW
+  ExtrinsicType.STAKING_LEAVE_POOL
 ];
 
 export const YIELD_POOL_STAT_REFRESH_INTERVAL = 90000;

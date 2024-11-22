@@ -1,5 +1,66 @@
 # CHANGELOG
 
+## 1.3.6
+Build date: Nov 07, 2024.
+
+Features & Update:
+- Update chain-list (#3828)
+  - Add Polygon Amoy testnet
+  - Add Polygon zkEVM Cardona testnet
+  - Add WETH, POL, USDC (Amoy)
+  - Add ETH, MATIC, POL (Cardona)
+  - Update explorer for Tangle network
+
+Bug fixed:
+- Fixed error auto reset data on Pool field (#3001)
+
+## 1.3.5
+Build date: Oct 31, 2024.
+
+Features & Update:
+- Support ERC-1155 (#3726)
+- Refactor logic parsing data from contract response (#3070)
+- Re-check some old types from ExtrinsicType (#3654)
+- Update chain-list (#3815)
+  - Add support for World Chain
+  - Add support for Mode Mainnet
+  - Add support for Lisk mainnet
+  - Add support for Zircuit mainnet
+  - Add support for Tangle Network mainnet
+  - Add support Story Odyssey Testnet
+
+Bug fixed:
+- Fixed bug Do not show token (#3721)
+
+
+## 1.3.4
+Build date: Oct 28, 2024.
+
+Features & Update:
+- Integrate Avail Bridge (#3423)
+- Support Notification in app (#3507, #3515)
+- Allow importing assets on Asset Hub (#3636)
+- Update api key for TAO(Bittensor) (#3809)
+- Update chain-list (#3806)
+  - Add support for Unichain testnet
+  - Update address prefix for Bifrost
+
+
+## 1.3.3
+Build date: Oct 16, 2024.
+
+Features & Update:
+- Fix bug Do not show watch-only account on History (#3732)
+- Update Network details screen for TON (#3747)
+- Update chain-list
+  - Update logo for MATIC token
+  - Remove Tinkernet
+
+Bugs fixed:
+- Fix min stake for TAO(Bittensor) (#3788)
+- Fix bug show OG WUD BURN NFT Collection (#3791)
+
+
 ## 1.3.2
 Build date: Oct 12, 2024.
 

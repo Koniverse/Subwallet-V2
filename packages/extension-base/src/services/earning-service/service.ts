@@ -653,6 +653,7 @@ export default class EarningService implements StoppableServiceInterface, Persis
       this.earningRewardSubject.next(stakingRewardState);
 
       this.earningsRewardQueue = [];
+      this.earningRewardReady.resolve();
     });
   }
 
@@ -699,6 +700,11 @@ export default class EarningService implements StoppableServiceInterface, Persis
   }
 
   earningsRewardInterval: NodeJS.Timer | undefined;
+  earningRewardReady: PromiseHandler<void> = createPromiseHandler<void>();
+
+  waitEarningRewardReady () {
+    return this.earningRewardReady.promise;
+  }
 
   runSubscribeStakingRewardInterval () {
     const addresses = this.state.keyringService.context.getDecodedAddresses();

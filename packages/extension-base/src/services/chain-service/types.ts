@@ -198,10 +198,11 @@ export interface EnableMultiChainParams {
 }
 
 export interface _ValidateCustomAssetRequest {
-  contractAddress: string,
+  contractAddress?: string,
   originChain: string,
   type: _AssetType,
-  contractCaller?: string
+  contractCaller?: string,
+  assetId?: string,
 }
 
 export interface _SmartContractTokenInfo {

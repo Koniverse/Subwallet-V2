@@ -19,6 +19,7 @@ import { ArrowSquareUpRight, BellSimpleRinging, CaretRight, CheckCircle, Corners
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
 type Props = ThemeProps;
@@ -139,6 +140,7 @@ const SettingsListUrl = '/settings/list';
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const dataContext = useContext(DataContext);
+  const navigate = useNavigate();
   const theme = useSelector((state: RootState) => state.settings.theme);
   const _language = useSelector((state: RootState) => state.settings.language);
   const _browserConfirmationType = useSelector((state: RootState) => state.settings.browserConfirmationType);
@@ -280,6 +282,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     saveTheme(value as ThemeNames).finally(noop);
   }, []);
 
+  const onClickEnableNotification = useCallback(() => {
+    navigate('/settings/notification-config');
+  }, [navigate]);
+
   return (
     <PageWrapper
       className={`general-setting ${className}`}
@@ -368,7 +374,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
               key: 'browser-confirmation-type-trigger',
               leftIcon: BellSimpleRinging,
               leftIconBgColor: token['volcano-6'],
-              title: t('Notifications')
+              title: t('Browser notifications')
             })}
             disabled={loadingMap.browserConfirmationType}
             id='browser-confirmation-type-select-modal'
@@ -380,7 +386,31 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             selected={_browserConfirmationType}
             shape='round'
             size='small'
-            title={t('Notifications')}
+            title={t('View notifications in')}
+          />
+          <SettingItem
+            className={CN('__trigger-item setting-item', 'notification-item')}
+            leftItemIcon={(
+              <BackgroundIcon
+                backgroundColor={token['magenta-7']}
+                phosphorIcon={BellSimpleRinging}
+                size='sm'
+                type='phosphor'
+                weight='fill'
+              />
+            )}
+            name={t('In-app notifications')}
+            onPressItem={onClickEnableNotification}
+            rightItem={(
+              <div className={'__trigger-right-item'}>
+                <Icon
+                  className='__right-icon'
+                  customSize={'20px'}
+                  phosphorIcon={CaretRight}
+                  type='phosphor'
+                />
+              </div>
+            )}
           />
         </div>
       </Layout.WithSubHeaderOnly>
@@ -396,6 +426,9 @@ export const GeneralSetting = styled(Component)<Props>(({ theme: { token } }: Pr
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: -token.marginXS
+    },
+    '.notification-item': {
+      marginTop: token.marginXS
     },
     '.__trigger-item': {
       height: 52,
