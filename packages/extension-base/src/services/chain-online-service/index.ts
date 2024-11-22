@@ -105,11 +105,11 @@ export class ChainOnlineService {
         patchVersion: latestPatchVersion } = latestPatch;
       const currentPatchVersion = (await this.settingService.getChainlistSetting())?.patchVersion || '';
 
-      let chainInfoMap: Record<string, _ChainInfo> = this.chainService.getChainInfoMap();
-      let assetRegistry: Record<string, _ChainAsset> = this.chainService.getAssetRegistry();
-      let multiChainAssetMap: Record<string, _MultiChainAsset> = MultiChainAssetMap;
-      let currentChainStateMap: Record<string, _ChainState> = this.chainService.getChainStateMap();
-      let currentChainStatusMap: Record<string, _ChainApiStatus> = this.chainService.getChainStatusMap();
+      let chainInfoMap: Record<string, _ChainInfo> = structuredClone(this.chainService.getChainInfoMap());
+      let assetRegistry: Record<string, _ChainAsset> = structuredClone(this.chainService.getAssetRegistry());
+      let multiChainAssetMap: Record<string, _MultiChainAsset> = structuredClone(MultiChainAssetMap);
+      let currentChainStateMap: Record<string, _ChainState> = structuredClone(this.chainService.getChainStateMap());
+      let currentChainStatusMap: Record<string, _ChainApiStatus> = structuredClone(this.chainService.getChainStatusMap());
       let addedChain: string[] = [];
 
       if (isSafePatch && currentPatchVersion !== latestPatchVersion) {
@@ -117,7 +117,7 @@ export class ChainOnlineService {
         if (latestChainInfo && Object.keys(latestChainInfo).length > 0) {
           chainInfoMap = Object.assign({}, this.chainService.getChainInfoMap(), latestChainInfo);
 
-          [currentChainStateMap, currentChainStatusMap] = [this.chainService.getChainStateMap(), this.chainService.getChainStatusMap()];
+          [currentChainStateMap, currentChainStatusMap] = [structuredClone(this.chainService.getChainStateMap()), structuredClone(this.chainService.getChainStatusMap())];
 
           const [currentChainStateKey, newChainKey] = [Object.keys(currentChainStateMap), Object.keys(chainInfoMap)];
 
