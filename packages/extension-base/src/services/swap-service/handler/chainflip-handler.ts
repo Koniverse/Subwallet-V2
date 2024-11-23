@@ -107,6 +107,8 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
   }
 
   public async validateSwapRequest (request: SwapRequest): Promise<SwapEarlyValidation> {
+    console.log('tessting');
+
     try {
       // todo: risk of matching wrong chain, asset can lead to loss of funds
 
@@ -227,6 +229,8 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
   }
 
   private parseSwapPath (fromAsset: _ChainAsset, toAsset: _ChainAsset) {
+    console.log('Hello');
+
     if (toAsset.slug !== this.intermediaryAssetSlug && fromAsset.slug !== this.intermediaryAssetSlug) { // Chainflip always use USDC as intermediary
       return [fromAsset.slug, this.intermediaryAssetSlug, toAsset.slug]; // todo: generalize this
     }
@@ -235,6 +239,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
   }
 
   public async getSwapQuote (request: SwapRequest): Promise<SwapQuote | SwapError> {
+    console.log('Yo whats man');
     const fromAsset = this.chainService.getAssetBySlug(request.pair.from);
     const toAsset = this.chainService.getAssetBySlug(request.pair.to);
 
@@ -310,6 +315,10 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
       const defaultFeeToken = _isNativeToken(fromAsset) ? fromAsset.slug : fromChainNativeTokenSlug;
 
+      console.log('HEHEHEEHE', [request.pair, request.fromAmount, quoteResponse.quote.egressAmount.toString(), calculateSwapRate(request.fromAmount, quoteResponse.quote.egressAmount.toString(), fromAsset, toAsset), this.providerInfo, +Date.now() + (SWAP_QUOTE_TIMEOUT_MAP[this.slug] || SWAP_QUOTE_TIMEOUT_MAP.default), metadata.minSwap.value, metadata.maxSwap?.value, quoteResponse.quote.estimatedDurationSeconds, quoteResponse.quote.lowLiquidityWarning, { feeComponent: feeComponent,
+        defaultFeeToken,
+        feeOptions: [defaultFeeToken] }, this.parseSwapPath(fromAsset, toAsset)]);
+
       return {
         pair: request.pair,
         fromAmount: request.fromAmount,
@@ -347,6 +356,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
   }
 
   public async validateSwapProcess (params: ValidateSwapProcessParams): Promise<TransactionError[]> {
+    console.log('Yo whats up');
     const amount = params.selectedQuote.fromAmount;
     const bnAmount = new BigNumber(amount);
 

@@ -18,6 +18,8 @@ import { _SUPPORTED_SWAP_PROVIDERS, OptimalSwapPathParams, QuoteAskResponse, Swa
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
 
+import { SimpleSwapHandler } from './handler/simpleswap-handler';
+
 export class SwapService implements ServiceWithProcessInterface, StoppableServiceInterface {
   protected readonly state: KoniState;
   private eventService: EventService;
@@ -50,6 +52,8 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
       }
 
       const quote = await handler.getSwapQuote(request);
+
+      console.log('quote', quote);
 
       if (!(quote instanceof SwapError)) { // todo: can do better
         availableQuotes.push({
@@ -124,6 +128,7 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
     request.pair.metadata = this.getSwapPairMetadata(request.pair.slug); // todo: improve this
     const quoteAskResponses = await this.askProvidersForQuote(request);
 
+    console.log('Yo');
     // todo: handle error to return back to UI
     // todo: more logic to select the best quote
 
@@ -181,6 +186,9 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
           break;
         case SwapProviderId.ROCOCO_ASSET_HUB:
           this.handlers[providerId] = new AssetHubSwapHandler(this.chainService, this.state.balanceService, 'rococo_assethub');
+          break;
+        case SwapProviderId.SIMPLE_SWAP:
+          this.handlers[providerId] = new SimpleSwapHandler(this.chainService, this.state.balanceService);
           break;
 
         default:
@@ -251,6 +259,8 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
     return Object.entries(this.chainService.swapRefMap).map(([slug, assetRef]) => {
       const fromAsset = this.chainService.getAssetBySlug(assetRef.srcAsset);
 
+      console.log('2');
+
       return {
         slug,
         from: assetRef.srcAsset,
@@ -267,6 +277,7 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
   }
 
   public async validateSwapProcess (params: ValidateSwapProcessParams): Promise<TransactionError[]> {
+    console.log('1');
     const providerId = params.selectedQuote.provider.id;
     const handler = this.handlers[providerId];
 
@@ -280,6 +291,8 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
   public async handleSwapProcess (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
     const handler = this.handlers[params.quote.provider.id];
 
+    console.log('3');
+
     if (params.process.steps.length === 1) { // todo: do better to handle error generating steps
       return Promise.reject(new TransactionError(BasicTxErrorType.INTERNAL_ERROR, 'Please check your network and try again'));
     }
@@ -292,6 +305,8 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
   }
 
   public subscribeSwapPairs (callback: (pairs: SwapPair[]) => void) {
+    console.log('4');
+
     return this.chainService.subscribeSwapRefMap().subscribe((refMap) => {
       const latestData = Object.entries(refMap).map(([slug, assetRef]) => {
         const fromAsset = this.chainService.getAssetBySlug(assetRef.srcAsset);
