@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## 1.3.7
+Build date: Nov 23, 2024.
+
+Features & Update:
+- Update chain-list (#3846)
+  - Add support for Gnosis
+  - Add support for Autonomys Mainnet
+  - Add support for KMA (Manta Pacific), USDC (Base Mainnet)
+  - Update information for some chains and tokens: add explorer, price-id, logo & name
+- Improve display collators list (#2751)
+- Improve block action online by environment (#3814)
+- Integration NFT for Story Protocol (#3854)
+
+Bug fixed:
+- Re-check transaction on Polkadot Asset Hub (#3852)
+
 ## 1.3.6
 Build date: Nov 07, 2024.
 
