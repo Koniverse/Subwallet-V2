@@ -62,9 +62,9 @@ export class ChainOnlineService {
   validatePatchBeforeStore (candidateChainInfoMap: Record<string, _ChainInfo>, candidateAssetRegistry: Record<string, _ChainAsset>, candidateMultiChainAssetMap: Record<string, _MultiChainAsset>, latestPatch: PatchInfo) {
     for (const [chainSlug, chainHash] of Object.entries(latestPatch.ChainInfoHashMap)) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { chainStatus, providers, ...chainWithoutProvidersAndStatus } = candidateChainInfoMap[chainSlug];
+      const { chainStatus, icon, providers, ...chainBaseInfo } = candidateChainInfoMap[chainSlug];
 
-      if (this.md5Hash(chainWithoutProvidersAndStatus) !== chainHash) {
+      if (this.md5Hash(chainBaseInfo) !== chainHash) {
         return false;
       }
     }
@@ -78,7 +78,10 @@ export class ChainOnlineService {
         return false;
       }
 
-      if (this.md5Hash(candidateAssetRegistry[assetSlug]) !== assetHash) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { icon, ...assetBaseInfo } = candidateAssetRegistry[assetSlug];
+
+      if (this.md5Hash(assetBaseInfo) !== assetHash) {
         return false;
       }
     }
