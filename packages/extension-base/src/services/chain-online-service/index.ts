@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AssetLogoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
-import { _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
+import { AssetLogoMap, ChainLogoMap, md5HashChainAsset, md5HashChainInfo } from '@subwallet/chain-list';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { LATEST_CHAIN_PATCH_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-online-service/constants';
 import { ChainService, filterAssetInfoMap } from '@subwallet/extension-base/services/chain-service';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
@@ -11,7 +11,6 @@ import { EventService } from '@subwallet/extension-base/services/event-service';
 import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { IChain } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
-import { Md5 } from 'ts-md5';
 
 export class ChainOnlineService {
   private chainService: ChainService;
@@ -28,30 +27,17 @@ export class ChainOnlineService {
     this.dbService = dbService;
   }
 
-  md5Hash (data: any) {
-    return Md5.hashStr(JSON.stringify(data));
-  }
-
   validatePatchWithHash (latestPatch: PatchInfo) {
-    const { ChainAsset, ChainAssetHashMap, ChainInfo, ChainInfoHashMap, MultiChainAsset, MultiChainAssetHashMap } = latestPatch;
+    const { ChainAsset, ChainAssetHashMap, ChainInfo, ChainInfoHashMap } = latestPatch;
 
     for (const [chainSlug, chain] of Object.entries(ChainInfo)) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { chainStatus, providers, ...chainWithoutProvidersAndStatus } = chain;
-
-      if (this.md5Hash(chainWithoutProvidersAndStatus) !== ChainInfoHashMap[chainSlug]) {
+      if (md5HashChainInfo(chain) !== ChainInfoHashMap[chainSlug]) {
         return false;
       }
     }
 
     for (const [assetSlug, asset] of Object.entries(ChainAsset)) {
-      if (this.md5Hash(asset) !== ChainAssetHashMap[assetSlug]) {
-        return false;
-      }
-    }
-
-    for (const [mAssetSlug, mAsset] of Object.entries(MultiChainAsset)) {
-      if (this.md5Hash(mAsset) !== MultiChainAssetHashMap[mAssetSlug]) {
+      if (md5HashChainAsset(asset) !== ChainAssetHashMap[assetSlug]) {
         return false;
       }
     }
@@ -59,12 +45,9 @@ export class ChainOnlineService {
     return true;
   }
 
-  validatePatchBeforeStore (candidateChainInfoMap: Record<string, _ChainInfo>, candidateAssetRegistry: Record<string, _ChainAsset>, candidateMultiChainAssetMap: Record<string, _MultiChainAsset>, latestPatch: PatchInfo) {
+  validatePatchBeforeStore (candidateChainInfoMap: Record<string, _ChainInfo>, candidateAssetRegistry: Record<string, _ChainAsset>, latestPatch: PatchInfo) {
     for (const [chainSlug, chainHash] of Object.entries(latestPatch.ChainInfoHashMap)) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { chainStatus, icon, providers, ...chainBaseInfo } = candidateChainInfoMap[chainSlug];
-
-      if (this.md5Hash(chainBaseInfo) !== chainHash) {
+      if (md5HashChainInfo(candidateChainInfoMap[chainSlug]) !== chainHash) {
         return false;
       }
     }
@@ -78,16 +61,7 @@ export class ChainOnlineService {
         return false;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { icon, ...assetBaseInfo } = candidateAssetRegistry[assetSlug];
-
-      if (this.md5Hash(assetBaseInfo) !== assetHash) {
-        return false;
-      }
-    }
-
-    for (const [mAssetSlug, mAssetHash] of Object.entries(latestPatch.MultiChainAssetHashMap)) {
-      if (this.md5Hash(candidateMultiChainAssetMap[mAssetSlug]) !== mAssetHash) {
+      if (md5HashChainAsset(candidateAssetRegistry[assetSlug]) !== assetHash) {
         return false;
       }
     }
@@ -103,14 +77,11 @@ export class ChainOnlineService {
         ChainAsset: latestAssetInfo,
         ChainInfo: latestChainInfo,
         ChainLogoMap: latestChainLogoMap,
-        MultiChainAsset: latestMultiChainAsset,
-        mAssetLogoMap: lastestMAssetLogoMap,
         patchVersion: latestPatchVersion } = latestPatch;
       const currentPatchVersion = (await this.settingService.getChainlistSetting())?.patchVersion || '';
 
       let chainInfoMap: Record<string, _ChainInfo> = structuredClone(this.chainService.getChainInfoMap());
       let assetRegistry: Record<string, _ChainAsset> = structuredClone(this.chainService.getAssetRegistry());
-      let multiChainAssetMap: Record<string, _MultiChainAsset> = structuredClone(MultiChainAssetMap);
       let currentChainStateMap: Record<string, _ChainState> = structuredClone(this.chainService.getChainStateMap());
       let currentChainStatusMap: Record<string, _ChainApiStatus> = structuredClone(this.chainService.getChainStatusMap());
       let addedChain: string[] = [];
@@ -146,12 +117,8 @@ export class ChainOnlineService {
           assetRegistry = filterAssetInfoMap(this.chainService.getChainInfoMap(), Object.assign({}, this.chainService.getAssetRegistry(), latestAssetInfo), addedChain);
         }
 
-        if (latestMultiChainAsset && Object.keys(latestMultiChainAsset).length > 0) { // todo: currently not support update latest multichain-asset
-          multiChainAssetMap = { ...MultiChainAssetMap, ...latestMultiChainAsset };
-        }
-
         // 3. validate data before write
-        const isCorrectPatch = this.validatePatchBeforeStore(chainInfoMap, assetRegistry, multiChainAssetMap, latestPatch);
+        const isCorrectPatch = this.validatePatchBeforeStore(chainInfoMap, assetRegistry, latestPatch);
 
         // 4. write to subject
         if (isCorrectPatch) {
@@ -165,8 +132,6 @@ export class ChainOnlineService {
               this.eventService.emit('asset.updateState', '');
             })
             .catch(console.error);
-
-          this.chainService.subscribeMultiChainAssetMap().next(multiChainAssetMap);
 
           this.chainService.setChainStateMap(currentChainStateMap);
           this.chainService.subscribeChainStateMap().next(currentChainStateMap);
@@ -199,7 +164,7 @@ export class ChainOnlineService {
           }
 
           if (latestAssetLogoMap) {
-            const logoMap = Object.assign({}, AssetLogoMap, latestAssetLogoMap, lastestMAssetLogoMap);
+            const logoMap = Object.assign({}, AssetLogoMap, latestAssetLogoMap);
 
             this.chainService.subscribeAssetLogoMap().next(logoMap);
           }
@@ -213,7 +178,7 @@ export class ChainOnlineService {
   }
 
   private async fetchLatestPatchData () {
-    return await fetchPatchData<PatchInfo>('data.json');
+    return await fetchPatchData<PatchInfo>();
   }
 
   handleLatestPatchData () {
