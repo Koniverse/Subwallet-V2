@@ -1,58 +1,29 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {_ChainAsset, _ChainInfo} from '@subwallet/chain-list/types';
-import {TransactionError} from '@subwallet/extension-base/background/errors/TransactionError';
-import {
-  _Address,
-  AmountData,
-  ExtrinsicDataTypeMap,
-  ExtrinsicType,
-  FeeData
-} from '@subwallet/extension-base/background/KoniTypes';
-import {TransactionWarning} from '@subwallet/extension-base/background/warnings/TransactionWarning';
-import {
-  LEDGER_SIGNING_COMPATIBLE_MAP,
-  SIGNING_COMPATIBLE_MAP,
-  XCM_MIN_AMOUNT_RATIO
-} from '@subwallet/extension-base/constants';
-import {_canAccountBeReaped, _isAccountActive} from '@subwallet/extension-base/core/substrate/system-pallet';
-import {FrameSystemAccountInfo} from '@subwallet/extension-base/core/substrate/types';
-import {isBounceableAddress} from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
-import {_TRANSFER_CHAIN_GROUP} from '@subwallet/extension-base/services/chain-service/constants';
-import {_EvmApi, _TonApi} from '@subwallet/extension-base/services/chain-service/types';
-import {
-  _getAssetDecimals,
-  _getAssetSymbol,
-  _getChainExistentialDeposit,
-  _getChainNativeTokenBasicInfo,
-  _getContractAddressOfToken,
-  _getTokenMinAmount,
-  _isNativeToken,
-  _isTokenEvmSmartContract,
-  _isTokenTonSmartContract
-} from '@subwallet/extension-base/services/chain-service/utils';
-import {calculateGasFeeParams} from '@subwallet/extension-base/services/fee-service/utils';
-import {isSubstrateTransaction, isTonTransaction} from '@subwallet/extension-base/services/transaction-service/helpers';
-import {
-  OptionalSWTransaction,
-  SWTransactionInput,
-  SWTransactionResponse
-} from '@subwallet/extension-base/services/transaction-service/types';
-import {
-  AccountSignMode,
-  BasicTxErrorType,
-  BasicTxWarningCode,
-  TransferTxErrorType
-} from '@subwallet/extension-base/types';
-import {balanceFormatter, formatNumber, pairToAccount} from '@subwallet/extension-base/utils';
-import {isTonAddress} from '@subwallet/keyring';
-import {KeyringPair} from '@subwallet/keyring/types';
-import {keyring} from '@subwallet/ui-keyring';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
+import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
+import { _Address, AmountData, ExtrinsicDataTypeMap, ExtrinsicType, FeeData } from '@subwallet/extension-base/background/KoniTypes';
+import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
+import { LEDGER_SIGNING_COMPATIBLE_MAP, SIGNING_COMPATIBLE_MAP, XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
+import { _canAccountBeReaped, _isAccountActive } from '@subwallet/extension-base/core/substrate/system-pallet';
+import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
+import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
+import { _EvmApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
+import { _getAssetDecimals, _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
+import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
+import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { AccountSignMode, BasicTxErrorType, BasicTxWarningCode, TransferTxErrorType } from '@subwallet/extension-base/types';
+import { balanceFormatter, formatNumber, pairToAccount } from '@subwallet/extension-base/utils';
+import { isTonAddress } from '@subwallet/keyring';
+import { KeyringPair } from '@subwallet/keyring/types';
+import { keyring } from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
-import {t} from 'i18next';
+import { t } from 'i18next';
 
-import {isEthereumAddress} from '@polkadot/util-crypto';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 // normal transfer
 export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address, to: _Address, value: string | undefined, transferAll: boolean | undefined): [TransactionError[], KeyringPair | undefined, BigN | undefined] {
@@ -85,17 +56,17 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
   return [errors, keypair, transferValue];
 }
 
-export function additionalValidateTransferForRecipient (sendingTokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverSendingTokenKeepAliveBalance: bigint, transferAmount: bigint, senderSendingTokenTransferable: bigint, _receiverNativeTotal?: string, isReceiverActive?: unknown, isSufficient?: boolean): [TransactionWarning[], TransactionError[]] {
+export function additionalValidateTransferForRecipient (sendingTokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverSendingTokenKeepAliveBalance: bigint, transferAmount: bigint, senderSendingTokenTransferable?: bigint, _receiverNativeTotal?: string, isReceiverActive?: unknown, isSufficient?: boolean): [TransactionWarning[], TransactionError[]] {
   const sendingTokenMinAmount = BigInt(_getTokenMinAmount(sendingTokenInfo));
-  const nativeTokenMinAmount = _getTokenMinAmount(nativeTokenInfo);
+  // const nativeTokenMinAmount = _getTokenMinAmount(nativeTokenInfo);
 
   const warnings: TransactionWarning[] = [];
   const errors: TransactionError[] = [];
 
-  const remainingSendingTokenOfSenderEnoughED = senderSendingTokenTransferable - transferAmount >= sendingTokenMinAmount;
-  const isReceiverAliveByNativeToken = isReceiverActive && _isAccountActive(isReceiverActive as FrameSystemAccountInfo);
+  const remainingSendingTokenOfSenderEnoughED = senderSendingTokenTransferable && senderSendingTokenTransferable - transferAmount >= sendingTokenMinAmount;
+  const isReceiverAliveByNativeToken = isReceiverActive && !_isAccountActive(isReceiverActive as FrameSystemAccountInfo);
   const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= sendingTokenMinAmount;
-  const isReceiverAliveAfterSending =  isSufficient ? isReceivingAmountPassED : isReceiverAliveByNativeToken;
+  // const isReceiverAliveAfterSending = isSufficient ? isReceivingAmountPassED : isReceiverAliveByNativeToken;
 
   if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN) {
     if (!remainingSendingTokenOfSenderEnoughED) {
@@ -104,35 +75,34 @@ export function additionalValidateTransferForRecipient (sendingTokenInfo: _Chain
       warnings.push(warning);
     }
 
-    if (!isReceiverAliveAfterSending) {
+    if (!isReceiverAliveByNativeToken && !isSufficient) {
       const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-        t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: _receiverNativeTotal, nativeSymbol: nativeTokenInfo.symbol, localSymbol: tokenInfo.symbol } })
+        t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: _receiverNativeTotal, nativeSymbol: nativeTokenInfo.symbol, localSymbol: sendingTokenInfo.symbol } })
       );
 
       errors.push(error);
     }
+    // else if (!isReceivingAmountPassED && isSufficient) {
+    //   const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
+    //
+    //   const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+    //
+    //   const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } }));
+    //
+    //   errors.push(error);
+    // }
   }
 
   if (!isReceivingAmountPassED) {
-     const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-       t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: _receiverNativeTotal, nativeSymbol: nativeTokenInfo.symbol, localSymbol: tokenInfo.symbol } })
-     );
+    console.log('type', typeof (receiverSendingTokenKeepAliveBalance));
+    const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
 
-     errors.push(error);
+    const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+
+    const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } }));
+
+    errors.push(error);
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // if (transferAmount + receiverSendingTokenKeepAliveBalance < sendingTokenMinAmount) {
   //   const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;

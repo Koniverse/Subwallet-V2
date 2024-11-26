@@ -1386,28 +1386,31 @@ export default class KoniExtension {
     const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
 
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
-      let senderTransferTokenTransferable: string | undefined;
+      let senderSendingTokenTransferable: bigint | undefined;
       let receiverNativeTotal: string | undefined;
       let isReceiverActive: unknown;
 
       // Check ed for sender
       if (!isTransferNativeToken) {
-        const [_senderTransferTokenTransferable, _receiverNativeTotal] = await Promise.all([
+        const [_senderSendingTokenTransferable, _receiverNativeTotal] = await Promise.all([
           this.getAddressTransferableBalance({ address: from, networkKey, token: tokenSlug, extrinsicType }),
           this.getAddressTotalBalance({ address: to, networkKey, token: nativeTokenSlug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE })
         ]);
 
-        senderTransferTokenTransferable = _senderTransferTokenTransferable.value;
+        senderSendingTokenTransferable = BigInt(_senderSendingTokenTransferable.value);
         receiverNativeTotal = _receiverNativeTotal.value;
         isReceiverActive = _receiverNativeTotal.metadata;
       }
 
-      const { value: receiverTransferTokenTotalBalance } = await this.getAddressTotalBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
+      const { value: _receiverSendingTokenKeepAliveBalance } = await this.getAddressTotalBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
+      const receiverSendingTokenKeepAliveBalance = BigInt(_receiverSendingTokenKeepAliveBalance);
+
+      const amount = BigInt(transferAmount.value);
 
       const substrateApi = this.#koniState.getSubstrateApi(networkKey).api;
       const isSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
 
-      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverTransferTokenTotalBalance, transferAmount.value, senderTransferTokenTransferable, receiverNativeTotal, isReceiverActive, isSufficient);
+      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverNativeTotal, isReceiverActive, isSufficient);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);
