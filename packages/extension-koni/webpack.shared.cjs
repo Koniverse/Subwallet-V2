@@ -154,7 +154,11 @@ module.exports = (entry, alias = {}, isFirefox = false) => {
         filename: 'notification.html',
         template: 'public/notification.html',
         chunks: ['extension']
-      })
+      }),
+      new webpack.NormalModuleReplacementPlugin(
+        /@emurgo\/cardano-serialization-lib-nodejs/,
+        '@emurgo/cardano-serialization-lib-browser'
+      )
     ],
     resolve: {
       alias: packages.reduce((alias, p) => ({
