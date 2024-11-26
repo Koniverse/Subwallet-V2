@@ -720,23 +720,23 @@ export class ChainService {
     }
   }
 
-  handleLatestPriceId (latestPriceIds: Record<string, string | null>) {
-    let isUpdated = false;
-
-    Object.entries(latestPriceIds).forEach(([slug, priceId]) => {
-      if (this.dataMap.assetRegistry[slug] && this.dataMap.assetRegistry[slug].priceId !== priceId) {
-        isUpdated = true;
-        this.dataMap.assetRegistry[slug].priceId = priceId;
-      }
-    });
-
-    if (isUpdated) {
-      this.assetRegistrySubject.next(this.dataMap.assetRegistry);
-      this.eventService.emit('asset.updateState', '');
-    }
-
-    this.logger.log('Finished updating latest price IDs');
-  }
+  // handleLatestPriceId (latestPriceIds: Record<string, string | null>) {
+  //   let isUpdated = false;
+  //
+  //   Object.entries(latestPriceIds).forEach(([slug, priceId]) => {
+  //     if (this.dataMap.assetRegistry[slug] && this.dataMap.assetRegistry[slug].priceId !== priceId) {
+  //       isUpdated = true;
+  //       this.dataMap.assetRegistry[slug].priceId = priceId;
+  //     }
+  //   });
+  //
+  //   if (isUpdated) {
+  //     this.assetRegistrySubject.next(this.dataMap.assetRegistry);
+  //     this.eventService.emit('asset.updateState', '');
+  //   }
+  //
+  //   this.logger.log('Finished updating latest price IDs');
+  // }
 
   async autoEnableTokens () {
     const autoEnableTokens = Object.values(this.dataMap.assetRegistry).filter((asset) => _isAssetAutoEnable(asset));
@@ -777,9 +777,9 @@ export class ChainService {
       console.error('Error update latest chain data', e);
     });
 
-    this.fetchLatestPriceIdsData().then((latestPriceIds) => {
-      this.handleLatestPriceId(latestPriceIds);
-    }).catch(console.error);
+    // this.fetchLatestPriceIdsData().then((latestPriceIds) => {
+    //   this.handleLatestPriceId(latestPriceIds);
+    // }).catch(console.error);
 
     this.fetchLatestLedgerGenericAllowChains()
       .then((latestledgerGenericAllowChains) => {
