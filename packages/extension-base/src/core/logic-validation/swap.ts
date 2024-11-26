@@ -6,7 +6,7 @@ import { SwapError } from '@subwallet/extension-base/background/errors/SwapError
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { _getAssetDecimals, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { BasicTxErrorType } from '@subwallet/extension-base/types';
-import { AssetHubPreValidationMetadata, ChainflipPreValidationMetadata, HydradxPreValidationMetadata, SwapErrorType } from '@subwallet/extension-base/types/swap';
+import { AssetHubPreValidationMetadata, ChainflipPreValidationMetadata, HydradxPreValidationMetadata, SimpleSwapValidationMetadata, SwapErrorType } from '@subwallet/extension-base/types/swap';
 import { formatNumber } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
@@ -159,6 +159,33 @@ export function _getEarlyAssetHubValidationError (error: SwapErrorType, metadata
       return new SwapError(error, 'No swap quote found. Adjust your amount or try again later.');
     case SwapErrorType.MAKE_POOL_NOT_ENOUGH_EXISTENTIAL_DEPOSIT:
       return new SwapError(error, 'You swap too much. It make pool not enough existential deposit'); // TODO: i18n this
+    default:
+      return new SwapError(error);
+  }
+}
+
+export function _getSimpleSwapEarlyValidationError (error: SwapErrorType, metadata: SimpleSwapValidationMetadata): SwapError { // todo: support more providers
+  switch (error) {
+    case SwapErrorType.NOT_MEET_MIN_SWAP: {
+      const message = `Amount too low. Increase your amount above ${metadata.minSwap.value} ${metadata.minSwap.symbol} and try again`;
+
+      return new SwapError(error, message);
+    }
+
+    case SwapErrorType.SWAP_EXCEED_ALLOWANCE: {
+      if (metadata.maxSwap) {
+        return new SwapError(error, `Amount too high. Lower your amount below ${metadata.maxSwap.value} ${metadata.maxSwap.symbol} and try again`);
+      } else {
+        return new SwapError(error, 'Amount too high. Lower your amount and try again');
+      }
+    }
+
+    case SwapErrorType.ASSET_NOT_SUPPORTED:
+      return new SwapError(error, 'This swap pair is not supported');
+    case SwapErrorType.UNKNOWN:
+      return new SwapError(error, `Undefined error. Check your Internet and ${metadata.chain.slug} connection or contact support`);
+    case SwapErrorType.ERROR_FETCHING_QUOTE:
+      return new SwapError(error, 'No swap quote found. Adjust your amount or try again later.');
     default:
       return new SwapError(error);
   }

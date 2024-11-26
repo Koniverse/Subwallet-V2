@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType, TransactionAdditionalInfo } from '@subwallet/extension-base/background/KoniTypes';
-import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
+import { getExplorerLink, getSimpleSwapExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
+import { SimpleSwapTxData, SwapProviderId, SwapTxData } from '@subwallet/extension-base/types';
 import { InfoItemBase } from '@subwallet/extension-koni-ui/components';
 import { HISTORY_DETAIL_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -55,7 +56,15 @@ function Component ({ className = '', data, onCancel }: Props): React.ReactEleme
       originChainInfo = chainInfoMap[additionalInfo.originalChain] || chainInfo;
     }
 
-    const link = (data.extrinsicHash && data.extrinsicHash !== '') && getExplorerLink(originChainInfo, data.extrinsicHash, 'tx');
+    let link = (data.extrinsicHash && data.extrinsicHash !== '') && getExplorerLink(originChainInfo, data.extrinsicHash, 'tx');
+
+    if (extrinsicType === ExtrinsicType.SWAP) {
+      const additionalInfo = data.additionalInfo as SwapTxData;
+
+      if ([SwapProviderId.SIMPLE_SWAP].includes(additionalInfo.provider.id)) {
+        link = getSimpleSwapExplorerLink(additionalInfo as SimpleSwapTxData);
+      }
+    }
 
     return (
       <Button

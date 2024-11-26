@@ -12,6 +12,8 @@ import BigN from 'bignumber.js';
 export const CHAIN_FLIP_TESTNET_EXPLORER = 'https://blocks-perseverance.chainflip.io';
 export const CHAIN_FLIP_MAINNET_EXPLORER = 'https://scan.chainflip.io';
 
+export const SIMPLE_SWAP_EXPLORER = 'https://simpleswap.io';
+
 export const CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING: Record<string, Chain> = {
   [COMMON_CHAIN_SLUGS.POLKADOT]: Chains.Polkadot,
   [COMMON_CHAIN_SLUGS.ETHEREUM]: Chains.Ethereum,
@@ -36,6 +38,11 @@ export const CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, Asset> =
   [COMMON_ASSETS.USDC_SEPOLIA]: Assets.USDC
 };
 
+export const SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, string> = {
+  'bittensor-NATIVE-TAO': 'tao',
+  [COMMON_ASSETS.ETH]: 'eth'
+};
+
 export const SWAP_QUOTE_TIMEOUT_MAP: Record<string, number> = { // in milliseconds
   default: 30000,
   [SwapProviderId.CHAIN_FLIP_TESTNET]: 30000,
@@ -49,7 +56,8 @@ export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.CHAIN_FLIP_TESTNET]: [COMMON_CHAIN_SLUGS.CHAINFLIP_POLKADOT, COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA],
   [SwapProviderId.POLKADOT_ASSET_HUB]: [COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB],
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
-  [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB]
+  [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB],
+  [SwapProviderId.SIMPLE_SWAP]: ['bittensor', 'bittensor_testnet', COMMON_CHAIN_SLUGS.ETHEREUM]
 };
 
 export function getSwapAlternativeAsset (swapPair: SwapPair): string | undefined {
