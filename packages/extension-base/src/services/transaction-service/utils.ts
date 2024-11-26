@@ -39,8 +39,16 @@ function getBlockExplorerAccountRoute (explorerLink: string) {
     return '#/accounts';
   }
 
+  if (explorerLink.includes('tangle.statescan.io')) {
+    return '#/accounts';
+  }
+
   if (explorerLink.includes('explorer.zkverify.io')) {
     return 'account';
+  }
+
+  if (explorerLink.includes('astral.autonomys')) {
+    return 'accounts';
   }
 
   return 'address';

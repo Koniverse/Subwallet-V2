@@ -57,7 +57,8 @@ export const _NFT_CHAIN_GROUP = {
   vara: ['vara_network'],
   avail: ['avail_mainnet'],
   ternoa: ['ternoa', 'ternoa_alphanet'],
-  rari: ['rari']
+  rari: ['rari'],
+  story_odyssey: ['storyOdyssey', 'storyOdyssey_testnet']
 };
 
 // Staking--------------------------------------------------------------------------------------------------------------
