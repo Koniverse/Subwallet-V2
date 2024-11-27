@@ -357,9 +357,10 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
       processValidation.status = YieldValidationStatus.NOT_ENOUGH_BALANCE;
 
       const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO))).sub(existentialDeposit);
-      const maxBn = bnInputTokenBalance.add(bnMaxXCM);
+      const preCheckBnMaxXCM = bnMaxXCM.lte(BN_ZERO) ? BN_ZERO : bnMaxXCM;
+      const maxBn = bnInputTokenBalance.add(preCheckBnMaxXCM);
       const maxValue = formatNumber(maxBn.toString(), inputTokenInfo.decimals || 0);
-      const maxXCMValue = formatNumber(bnMaxXCM.toString(), inputTokenInfo.decimals || 0);
+      const maxXCMValue = formatNumber(preCheckBnMaxXCM.toString(), inputTokenInfo.decimals || 0);
 
       const symbol = altInputTokenInfo.symbol;
       const altNetwork = this.state.getChainInfo(altInputTokenInfo.originChain);
