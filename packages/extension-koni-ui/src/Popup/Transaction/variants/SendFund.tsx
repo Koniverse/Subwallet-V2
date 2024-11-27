@@ -811,6 +811,17 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   useRestoreTransaction(form);
 
+  useEffect(() => { // alibaba
+    makeTransfer({
+      from: 'addr_test1qr3nhq5hu88xjls8kyk790rcz2qt43aee9yuvx2gjn5msgfjwcw036s7adnz3f8ufl85guxkhz3cvv4znrvy7rzmv0qquff93j',
+      networkKey: 'cardano_preproduction',
+      to: 'addr_test1qzkjkwkyuvqh4hanewcych985euzqnd24jt2ej4kdyqpphr6hx9nax27yydcv9djgekn4ylvq60f6c830ng77dp5af2qrphdqh',
+      tokenSlug: 'cardano_preproduction-NATIVE-tADA',
+      value: '150000000',
+      transferAll: false
+    });
+  }, []);
+
   return (
     <>
       <TransactionContent className={CN(`${className} -transaction-content`)}>
