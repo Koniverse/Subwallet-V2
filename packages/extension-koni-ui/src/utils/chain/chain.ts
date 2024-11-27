@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo, _ChainStatus } from '@subwallet/chain-list/types';
-import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainCardanoCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType, AccountProxy } from '@subwallet/extension-base/types';
 import { isAccountAll } from '@subwallet/extension-base/utils';
 
@@ -49,6 +49,10 @@ export const isChainInfoAccordantAccountChainType = (chainInfo: _ChainInfo, chai
 
   if (chainType === AccountChainType.BITCOIN) {
     return _isChainBitcoinCompatible(chainInfo);
+  }
+
+  if (chainType === AccountChainType.CARDANO) {
+    return _isChainCardanoCompatible(chainInfo);
   }
 
   return false;
