@@ -8,13 +8,13 @@ import { CardanoBalanceItem } from '@subwallet/extension-base/services/balance-s
 import { getCardanoAssetId } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _CardanoApi } from '@subwallet/extension-base/services/chain-service/types';
 import { BalanceItem, SusbcribeCardanoPalletBalance } from '@subwallet/extension-base/types';
-import { filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
+import { filterAssetsByChainAndType, reformatAddress } from '@subwallet/extension-base/utils';
 
-async function getBalanceMap (addresses: string[], cardanoApi: _CardanoApi): Promise<Record<string, CardanoBalanceItem[]>> {
+async function getBalanceMap (addresses: string[], cardanoApi: _CardanoApi, isTestnet: boolean): Promise<Record<string, CardanoBalanceItem[]>> {
   const addressBalanceMap: Record<string, CardanoBalanceItem[]> = {};
 
   for (const address of addresses) {
-    addressBalanceMap[address] = await cardanoApi.getBalanceMap(address);
+    addressBalanceMap[address] = await cardanoApi.getBalanceMap(isTestnet ? reformatAddress(address, 0) : address);
   }
 
   return addressBalanceMap;
@@ -23,15 +23,15 @@ async function getBalanceMap (addresses: string[], cardanoApi: _CardanoApi): Pro
 export function subscribeCardanoBalance (params: SusbcribeCardanoPalletBalance) {
   const { addresses, assetMap, callback, cardanoApi, chainInfo } = params;
   const chain = chainInfo.slug;
+  const isTestnet = chainInfo.isTestnet;
   const tokens = filterAssetsByChainAndType(assetMap, chain, [_AssetType.NATIVE, _AssetType.CIP26]);
 
   function getBalance () {
-    getBalanceMap(addresses, cardanoApi)
+    getBalanceMap(addresses, cardanoApi, isTestnet)
       .then((addressBalanceMap) => {
         Object.values(tokens).forEach((tokenInfo) => {
+          const id = getCardanoAssetId(tokenInfo);
           const balances = addresses.map((address) => {
-            const id = getCardanoAssetId(tokenInfo);
-
             if (!addressBalanceMap[address]) {
               return '0';
             }

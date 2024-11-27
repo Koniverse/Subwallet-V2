@@ -6281,12 +6281,12 @@ __metadata:
 
 "@subwallet/chain-list@file:../SubWallet-Chainlist/packages/chain-list/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.2.91
-  resolution: "@subwallet/chain-list@file:../SubWallet-Chainlist/packages/chain-list/build/#../SubWallet-Chainlist/packages/chain-list/build/::hash=68342b&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/chain-list@file:../SubWallet-Chainlist/packages/chain-list/build/#../SubWallet-Chainlist/packages/chain-list/build/::hash=109cff&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 62beef749d75f65def6fd9c66a6b2cdb26fb02cc9365422083df720d44f298f50106167a538ec3ad25d48f525f49ff1560061b71589b7578d14c078e801514cb
+  checksum: 9b6770320833b872c092ea4bbdf767774e75dca9640bb27e67306a4518cb9226b9b4ab768cefada0aa1231303ed6d684b5b6b944221ad5658e1fd27d7841e518
   languageName: node
   linkType: hard
 
@@ -6681,7 +6681,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.7
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=139d02&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=2286f2&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@emurgo/cardano-serialization-lib-nodejs": ^13.2.0
     "@ethereumjs/tx": ^5.0.0
@@ -6702,7 +6702,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 3b691ceb8ba3288c966ef21dda0bbfb4701fd6452440c859164ef5e1e9e2b82950984d89575dfe1be3372b15efab176c09e168621444da7001db9c0ed9f140e5
+  checksum: 94fada10a79d18133296b18703b46d32f6158a31148bff94d9b711a642e291cec436a5d191d29cb113669c9462d073d94c070c1532f6eea34240890a692fa358
   languageName: node
   linkType: hard
 

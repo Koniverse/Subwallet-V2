@@ -7,7 +7,7 @@ import { ALL_ACCOUNT_KEY, isProductionMode } from '@subwallet/extension-base/con
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyring';
-import { BitcoinKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
+import { BitcoinKeypairTypes, CardanoKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
 
@@ -52,7 +52,9 @@ export const getAccountChainType = (type: KeypairType): AccountChainType => {
         ? AccountChainType.TON
         : BitcoinKeypairTypes.includes(type)
           ? AccountChainType.BITCOIN
-          : AccountChainType.SUBSTRATE
+          : CardanoKeypairTypes.includes(type)
+            ? AccountChainType.CARDANO
+            : AccountChainType.SUBSTRATE
     : AccountChainType.SUBSTRATE;
 };
 

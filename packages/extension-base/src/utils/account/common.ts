@@ -4,11 +4,10 @@
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { isCardanoAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { getAccountChainType } from '@subwallet/extension-base/utils';
-import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isTonAddress } from '@subwallet/keyring';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isCardanoAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
 import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
@@ -51,12 +50,12 @@ export function reformatAddress (address: string, networkPrefix = 42, isEthereum
   }
 }
 
-export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => {
+export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => { // todo: check for cardano
   const chainType = _chainInfoToChainType(chainInfo);
 
   if (chainType === AccountChainType.SUBSTRATE) {
     return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
-  } else if (chainType === AccountChainType.TON) {
+  } else if (chainType === AccountChainType.TON || chainType === AccountChainType.CARDANO) {
     const isTestnet = chainInfo.isTestnet;
 
     return reformatAddress(address, isTestnet ? 0 : 1);
@@ -82,10 +81,6 @@ interface AddressesByChainType {
 export function getAddressesByChainType (addresses: string[], chainTypes: ChainType[]): string[] {
   const addressByChainTypeMap = getAddressesByChainTypeMap(addresses);
 
-  console.log('vcl', chainTypes, chainTypes.map((chainType) => {
-    return addressByChainTypeMap[chainType];
-  }).flat());
-
   return chainTypes.map((chainType) => {
     return addressByChainTypeMap[chainType];
   }).flat(); // todo: recheck
@@ -107,7 +102,7 @@ export function getAddressesByChainTypeMap (addresses: string[]): AddressesByCha
       addressByChainType.ton.push(address);
     } else if (isBitcoinAddress(address)) {
       addressByChainType.bitcoin.push(address);
-    } else if (isCardanoAddress(address)) { // todo: add isCardanoAddress from keyring
+    } else if (isCardanoAddress(address)) {
       addressByChainType.cardano.push(address);
     } else {
       addressByChainType.substrate.push(address);
