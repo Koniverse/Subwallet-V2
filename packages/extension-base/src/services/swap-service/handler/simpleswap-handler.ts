@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainAsset } from '@subwallet/chain-list/types';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
@@ -9,14 +9,16 @@ import { _getSimpleSwapEarlyValidationError } from '@subwallet/extension-base/co
 import { _getAssetSymbol, _getChainNativeTokenSlug, _getContractAddressOfToken, _isChainSubstrateCompatible, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { BaseStepDetail, BasicTxErrorType, CommonFeeComponent, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, OptimalSwapPathParams, SimpleSwapTxData, SimpleSwapValidationMetadata, SwapEarlyValidation, SwapErrorType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, TransactionData, ValidateSwapProcessParams } from '@subwallet/extension-base/types';
 import { formatNumber, toBNString } from '@subwallet/extension-base/utils';
-import BigNumber from 'bignumber.js';
+import BigN from 'bignumber.js';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 
 import { BalanceService } from '../../balance-service';
 import { getERC20TransactionObject, getEVMTransactionObject } from '../../balance-service/transfer/smart-contract';
-import { createTransferExtrinsic } from '../../balance-service/transfer/token';
+import { createTransferExtrinsic, getTransferMockTxFee } from '../../balance-service/transfer/token';
 import { ChainService } from '../../chain-service';
+import { EvmApi } from '../../chain-service/handler/EvmApi';
+import { _SubstrateApi } from '../../chain-service/types';
 import { calculateSwapRate, SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING, SWAP_QUOTE_TIMEOUT_MAP } from '../utils';
 import { SwapBaseHandler, SwapBaseInterface } from './base-handler';
 
@@ -51,7 +53,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
 
   public validateSwapProcess (params: ValidateSwapProcessParams): Promise<TransactionError[]> {
     const amount = params.selectedQuote.fromAmount;
-    const bnAmount = new BigNumber(amount);
+    const bnAmount = new BigN(amount);
 
     if (bnAmount.lte(0)) {
       return Promise.resolve([new TransactionError(BasicTxErrorType.INVALID_PARAMS, 'Amount must be greater than 0')]);
@@ -117,6 +119,8 @@ export class SimpleSwapHandler implements SwapBaseInterface {
 
       const resToAmount = await response.json() as string;
       const toAmount = toBNString(resToAmount, toAsset.decimals || 0);
+      const fromAmount = request.fromAmount;
+      const bnFromAmount = new BigN(request.fromAmount);
 
       const rate = calculateSwapRate(request.fromAmount, toAmount, fromAsset, toAsset);
 
@@ -124,17 +128,33 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const fromChainNativeTokenSlug = _getChainNativeTokenSlug(fromChain);
       const defaultFeeToken = _isNativeToken(fromAsset) ? fromAsset.slug : fromChainNativeTokenSlug;
 
-      const feeComponent: CommonFeeComponent[] = [
-        {
-          tokenSlug: fromAsset.slug,
-          amount: '0',
-          feeType: SwapFeeType.NETWORK_FEE
-        }
-      ];
+      const chainType = _isChainSubstrateCompatible(fromChain) ? ChainType.SUBSTRATE : ChainType.EVM;
+
+      let api: _SubstrateApi | EvmApi;
+
+      if (chainType === ChainType.SUBSTRATE) {
+        api = this.chainService.getSubstrateApi(fromChain.slug);
+      } else {
+        api = this.chainService.getEvmApi(fromChain.slug);
+      }
+
+      const networkFeeAmount = await getTransferMockTxFee(request.address, fromChain, fromAsset, api);
+
+      const networkFee: CommonFeeComponent = {
+        tokenSlug: fromAsset.slug,
+        amount: networkFeeAmount.toString(),
+        feeType: SwapFeeType.NETWORK_FEE
+      };
+
+      const platformFee: CommonFeeComponent = {
+        tokenSlug: fromAsset.slug,
+        amount: bnFromAmount.multipliedBy(4).dividedBy(1000).toString(),
+        feeType: SwapFeeType.PLATFORM_FEE
+      };
 
       return {
         pair: request.pair,
-        fromAmount: request.fromAmount,
+        fromAmount,
         toAmount,
         rate,
         provider: this.providerInfo,
@@ -144,7 +164,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         estimatedArrivalTime: 0,
         isLowLiquidity: false,
         feeInfo: {
-          feeComponent,
+          feeComponent: [networkFee, platformFee],
           defaultFeeToken,
           feeOptions: [defaultFeeToken]
         },
@@ -192,7 +212,6 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
       }
 
-      console.log('Hmm', simpleSwapApiKey);
       const swapListParams = new URLSearchParams({
         api_key: `${simpleSwapApiKey}`,
         fixed: 'false',
@@ -208,8 +227,6 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       }
 
       const swapList = await swapListResponse.json() as string[];
-
-      console.log('Hmm', swapList);
 
       if (!swapList.includes(toAsset.symbol.toLowerCase())) {
         return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
@@ -233,7 +250,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const ranges = await rangesResponse.json() as SwapRange;
       const { max, min } = ranges;
 
-      const bnAmount = new BigNumber(request.fromAmount);
+      const bnAmount = new BigN(request.fromAmount);
       const parsedbnAmount = formatNumber(bnAmount.toString(), fromAsset.decimals || 0);
 
       if (parsedbnAmount < min) {
