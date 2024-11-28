@@ -550,8 +550,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     let checkTransferAll = false;
 
     const _doSubmit = async () => {
-      setLoading(true);
-
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];

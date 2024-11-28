@@ -69,7 +69,6 @@ export async function getERC20TransactionObject (
 ): Promise<[TransactionConfig, string]> {
   const networkKey = chainInfo.slug;
   const erc20Contract = getERC20Contract(assetAddress, evmApi);
-
   let freeAmount = new BigN(0);
   let transferValue = value;
 
