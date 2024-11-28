@@ -1388,7 +1388,6 @@ export default class KoniExtension {
 
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
       let senderSendingTokenTransferable: bigint | undefined;
-      let receiverNativeTotal: string | undefined;
       let isReceiverActive: unknown;
 
       // Check ed for sender
@@ -1399,7 +1398,6 @@ export default class KoniExtension {
         ]);
 
         senderSendingTokenTransferable = BigInt(_senderSendingTokenTransferable.value);
-        receiverNativeTotal = _receiverNativeTotal.value;
         isReceiverActive = _receiverNativeTotal.metadata;
       }
 
@@ -1411,7 +1409,7 @@ export default class KoniExtension {
       const substrateApi = this.#koniState.getSubstrateApi(networkKey).api;
       const isSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
 
-      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverNativeTotal, isReceiverActive, isSufficient);
+      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, isReceiverActive, isSufficient);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);

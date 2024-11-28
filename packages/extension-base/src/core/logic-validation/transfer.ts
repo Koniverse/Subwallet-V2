@@ -56,8 +56,9 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
   return [errors, keypair, transferValue];
 }
 
-export function additionalValidateTransferForRecipient (sendingTokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverSendingTokenKeepAliveBalance: bigint, transferAmount: bigint, senderSendingTokenTransferable?: bigint, _receiverNativeTotal?: string, isReceiverActive?: unknown, isSufficient?: boolean): [TransactionWarning[], TransactionError[]] {
+export function additionalValidateTransferForRecipient (sendingTokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverSendingTokenKeepAliveBalance: bigint, transferAmount: bigint, senderSendingTokenTransferable?: bigint, isReceiverActive?: unknown, isSufficient?: boolean): [TransactionWarning[], TransactionError[]] {
   const sendingTokenMinAmount = BigInt(_getTokenMinAmount(sendingTokenInfo));
+  const nativeTokenMinAmount = _getTokenMinAmount(nativeTokenInfo);
 
   const warnings: TransactionWarning[] = [];
   const errors: TransactionError[] = [];
@@ -74,9 +75,21 @@ export function additionalValidateTransferForRecipient (sendingTokenInfo: _Chain
     }
 
     if (!isReceiverAliveByNativeToken && !isSufficient) {
+      const balanceKeepAlive = formatNumber(nativeTokenMinAmount, _getAssetDecimals(nativeTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(nativeTokenInfo) || 6 });
+
       const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-        t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: _receiverNativeTotal, nativeSymbol: nativeTokenInfo.symbol, localSymbol: sendingTokenInfo.symbol } })
+        t('The recipient account has less than {{amount}} {{nativeSymbol}}, which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: balanceKeepAlive, nativeSymbol: nativeTokenInfo.symbol, localSymbol: sendingTokenInfo.symbol } })
       );
+
+      errors.push(error);
+    }
+
+    if (!isReceivingAmountPassED) {
+      const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
+
+      const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+
+      const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } }));
 
       errors.push(error);
     }
@@ -87,7 +100,7 @@ export function additionalValidateTransferForRecipient (sendingTokenInfo: _Chain
 
     const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
 
-    const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } }));
+    const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } }));
 
     errors.push(error);
   }
