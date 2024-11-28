@@ -3,12 +3,12 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { AmountData, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { _NotificationInfo, ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { _NotificationInfo, ClaimAvailBridgeNotificationMetadata, ClaimPolygonBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AccountSelector, HiddenInput, MetaInfo, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { useGetChainAssetInfo, useGetChainPrefixBySlug, useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
-import { submitClaimAvailBridge } from '@subwallet/extension-koni-ui/messaging/transaction/avail-bridge';
+import { submitClaimAvailBridge, submitClaimPolygonBridge } from '@subwallet/extension-koni-ui/messaging/transaction/bridge';
 import { getInappNotification } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
-import { ClaimAvailBridgeParams, FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ClaimBridgeParams, FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToObject, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -25,22 +25,42 @@ interface ComponentProps {
   notification: _NotificationInfo;
 }
 
-const hideFields: Array<keyof ClaimAvailBridgeParams> = ['chain', 'notificationId', 'asset'];
-const validateFields: Array<keyof ClaimAvailBridgeParams> = ['from'];
+const hideFields: Array<keyof ClaimBridgeParams> = ['chain', 'notificationId', 'asset'];
+const validateFields: Array<keyof ClaimBridgeParams> = ['from'];
 
 const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
   const navigate = useNavigate();
   const { notification } = props;
 
-  const { defaultData, persistData } = useTransactionContext<ClaimAvailBridgeParams>();
+  const { defaultData, persistData } = useTransactionContext<ClaimBridgeParams>();
 
-  const [form] = Form.useForm<ClaimAvailBridgeParams>();
-  const formDefault = useMemo((): ClaimAvailBridgeParams => ({ ...defaultData }), [defaultData]);
+  const [form] = Form.useForm<ClaimBridgeParams>();
+  const formDefault = useMemo((): ClaimBridgeParams => ({ ...defaultData }), [defaultData]);
 
   const { accounts } = useSelector((state) => state.accountState);
   const { chainInfoMap } = useSelector((state) => state.chainStore);
 
-  const metadata = notification?.metadata as ClaimAvailBridgeNotificationMetadata;
+  const isPolygonBridge = useMemo(() => {
+    return notification?.actionType === 'CLAIM_POLYGON_BRIDGE';
+  }, [notification?.actionType]);
+
+  const metadata = useMemo(() => {
+    if (isPolygonBridge) {
+      return notification?.metadata as ClaimPolygonBridgeNotificationMetadata;
+    }
+
+    return notification?.metadata as ClaimAvailBridgeNotificationMetadata;
+  }, [isPolygonBridge, notification]);
+
+  const amountValue = useMemo(() => {
+    if (!isPolygonBridge && 'amount' in metadata) {
+      return metadata.amount;
+    } else if ('amounts' in metadata) {
+      return metadata.amounts[0];
+    }
+
+    return 0;
+  }, [isPolygonBridge, metadata]);
 
   const fromValue = useWatchTransaction('from', form, defaultData);
   const chainValue = useWatchTransaction('chain', form, defaultData);
@@ -68,11 +88,11 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
     navigate('/home/tokens');
   }, [navigate]);
 
-  const onFieldsChange: FormCallbacks<ClaimAvailBridgeParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
+  const onFieldsChange: FormCallbacks<ClaimBridgeParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     // TODO: field change
     const { empty, error } = simpleCheckForm(allFields, ['--asset']);
 
-    const allMap = convertFieldToObject<ClaimAvailBridgeParams>(allFields);
+    const allMap = convertFieldToObject<ClaimBridgeParams>(allFields);
 
     setIsDisable(error || empty);
     persistData(allMap);
@@ -80,13 +100,15 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
 
   const { t } = useTranslation();
 
-  const onSubmit: FormCallbacks<ClaimAvailBridgeParams>['onFinish'] = useCallback((values: ClaimAvailBridgeParams) => {
+  const onSubmit: FormCallbacks<ClaimBridgeParams>['onFinish'] = useCallback((values: ClaimBridgeParams) => {
     setLoading(true);
 
     const { chain, from } = values;
 
+    const submitClaim = isPolygonBridge ? submitClaimPolygonBridge : submitClaimAvailBridge;
+
     setTimeout(() => {
-      submitClaimAvailBridge({
+      submitClaim({
         address: from,
         chain: chain,
         notification
@@ -97,7 +119,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
           setLoading(false);
         });
     }, 300);
-  }, [notification, onError, onSuccess]);
+  }, [isPolygonBridge, notification, onError, onSuccess]);
 
   const checkAction = usePreCheckAction(fromValue);
 
@@ -137,7 +159,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
           />
           <Form.Item>
             <MetaInfo
-              className='claim-avail-bridge-meta-info'
+              className='claim-bridge-meta-info'
               hasBackgroundWrapper={true}
             >
               <MetaInfo.Chain
@@ -150,7 +172,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
                     decimals={decimals}
                     label={t('Amount')}
                     suffix={symbol}
-                    value={metadata.amount}
+                    value={ amountValue }
                   />
                 )
               }
@@ -182,7 +204,7 @@ const Component: React.FC<ComponentProps> = (props: ComponentProps) => {
             />
           )}
           loading={loading}
-          onClick={checkAction(form.submit, ExtrinsicType.CLAIM_AVAIL_BRIDGE)}
+          onClick={checkAction(form.submit, ExtrinsicType.CLAIM_BRIDGE)}
         >
           {t('Continue')}
         </Button>
@@ -196,7 +218,7 @@ const Wrapper: React.FC<Props> = (props: Props) => {
 
   const navigate = useNavigate();
 
-  const { defaultData } = useTransactionContext<ClaimAvailBridgeParams>();
+  const { defaultData } = useTransactionContext<ClaimBridgeParams>();
   const { notificationId } = defaultData;
 
   const [notification, setNotification] = useState<_NotificationInfo>();
@@ -228,7 +250,7 @@ const Wrapper: React.FC<Props> = (props: Props) => {
   );
 };
 
-const ClaimAvailBridge = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
+const ClaimBridge = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
   return {
     '&.page-wrapper': {
       height: 'auto',
@@ -246,10 +268,10 @@ const ClaimAvailBridge = styled(Wrapper)<Props>(({ theme: { token } }: Props) =>
       marginTop: token.paddingSM
     },
 
-    '.claim-avail-bridge-meta-info': {
+    '.claim-bridge-meta-info': {
       marginTop: token.marginXXS
     }
   };
 });
 
-export default ClaimAvailBridge;
+export default ClaimBridge;

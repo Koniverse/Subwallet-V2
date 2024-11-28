@@ -30,8 +30,9 @@ import { isBounceableAddress } from '@subwallet/extension-base/services/balance-
 import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObject, getPSP34TransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
-import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createSnowBridgeExtrinsic, createXcmExtrinsic, CreateXcmExtrinsicProps, FunctionCreateXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
+import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createPolygonBridgeExtrinsic, createSnowBridgeExtrinsic, createXcmExtrinsic, CreateXcmExtrinsicProps, FunctionCreateXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { getClaimTxOnAvail, getClaimTxOnEthereum, isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
+import { _isPolygonChainBridge, getClaimPolygonBridge, isClaimedPolygonBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX, SUFFICIENT_CHAIN } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
@@ -48,8 +49,8 @@ import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import { AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BasicTxErrorType, BasicTxWarningCode, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, StakingTxErrorType, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
-import { RequestClaimAvailBridge } from '@subwallet/extension-base/types/avail-bridge';
-import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
+import { RequestClaimBridge } from '@subwallet/extension-base/types/bridge';
+import { GetNotificationParams, RequestIsClaimedPolygonBridge, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
@@ -1459,6 +1460,7 @@ export default class KoniExtension {
     const isAvailBridgeFromEvm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && isAvailChainBridge(destinationNetworkKey);
     const isAvailBridgeFromAvail = isAvailChainBridge(originNetworkKey) && _isPureEvmChain(chainInfoMap[destinationNetworkKey]);
     const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]) && !isAvailBridgeFromEvm;
+    const isPolygonBridgeTransfer = _isPolygonChainBridge(originNetworkKey, destinationNetworkKey);
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
@@ -1479,7 +1481,9 @@ export default class KoniExtension {
 
       let funcCreateExtrinsic: FunctionCreateXcmExtrinsic;
 
-      if (isSnowBridgeEvmTransfer) {
+      if (isPolygonBridgeTransfer) {
+        funcCreateExtrinsic = createPolygonBridgeExtrinsic;
+      } else if (isSnowBridgeEvmTransfer) {
         funcCreateExtrinsic = createSnowBridgeExtrinsic;
       } else if (isAvailBridgeFromEvm) {
         funcCreateExtrinsic = createAvailBridgeTxFromEth;
@@ -1543,7 +1547,7 @@ export default class KoniExtension {
       transaction: extrinsic,
       data: inputData,
       extrinsicType: ExtrinsicType.TRANSFER_XCM,
-      chainType: !isSnowBridgeEvmTransfer && !isAvailBridgeFromEvm ? ChainType.SUBSTRATE : ChainType.EVM,
+      chainType: !isSnowBridgeEvmTransfer && !isAvailBridgeFromEvm && !isPolygonBridgeTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
       transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
       ignoreWarnings,
       isTransferAll: transferAll,
@@ -3841,9 +3845,9 @@ export default class KoniExtension {
   }
   /* Notification service */
 
-  private async submitClaimAvailBridge (data: RequestClaimAvailBridge) {
+  private async submitClaimAvailBridge (data: RequestClaimBridge) {
     const { address, chain, notification } = data;
-    const extrinsicType = ExtrinsicType.CLAIM_AVAIL_BRIDGE;
+    const extrinsicType = ExtrinsicType.CLAIM_BRIDGE;
 
     let transaction: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
     let chainType: ChainType;
@@ -3859,6 +3863,35 @@ export default class KoniExtension {
       transaction = await getClaimTxOnEthereum(chain, notification, evmApi);
       chainType = ChainType.EVM;
     }
+
+    return await this.#koniState.transactionService.handleTransaction({
+      address,
+      chain,
+      transaction,
+      data,
+      extrinsicType,
+      chainType
+    });
+  }
+
+  private async getIsClaimedPolygonBridge (data: RequestIsClaimedPolygonBridge) {
+    const evmApi = this.#koniState.getEvmApi(data.chainslug);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const isClaimed: boolean = await isClaimedPolygonBridge(data.chainslug, data.counter, data.sourceNetwork, evmApi);
+
+    return isClaimed;
+  }
+
+  private async submitClaimPolygonBridge (data: RequestClaimBridge) {
+    const { address, chain, notification } = data;
+    const extrinsicType = ExtrinsicType.CLAIM_BRIDGE;
+
+    let transaction: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
+
+    const evmApi = this.#koniState.getEvmApi(chain);
+
+    transaction = await getClaimPolygonBridge(chain, notification, evmApi);
+    const chainType: ChainType = ChainType.EVM;
 
     return await this.#koniState.transactionService.handleTransaction({
       address,
@@ -4480,12 +4513,21 @@ export default class KoniExtension {
         return this.fetchInappNotifications(request as GetNotificationParams);
       case 'pri(inappNotification.get)':
         return this.getInappNotification(request as string);
+      case 'pri(inappNotification.isClaimedPolygonBridge)':
+        return this.getIsClaimedPolygonBridge(request as RequestIsClaimedPolygonBridge);
         /* Notification service */
 
         /* Avail Bridge */
       case 'pri(availBridge.submitClaimAvailBridgeOnAvail)':
-        return this.submitClaimAvailBridge(request as RequestClaimAvailBridge);
+        return this.submitClaimAvailBridge(request as RequestClaimBridge);
         /* Avail Bridge */
+
+        /* Polygon Bridge */
+
+      case 'pri(polygonBridge.submitClaimPolygonBridge)':
+        return this.submitClaimPolygonBridge(request as RequestClaimBridge);
+
+        /* Polygon Bridge */
 
         /* Ledger */
       case 'pri(ledger.generic.allow)':

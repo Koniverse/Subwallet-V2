@@ -9,6 +9,7 @@ import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, chec
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -624,8 +625,8 @@ export default class TransactionService {
         break;
       }
 
-      case ExtrinsicType.CLAIM_AVAIL_BRIDGE: {
-        const data = parseTransactionData<ExtrinsicType.CLAIM_AVAIL_BRIDGE>(transaction.data); // TODO: switch by provider
+      case ExtrinsicType.CLAIM_BRIDGE: {
+        const data = parseTransactionData<ExtrinsicType.CLAIM_BRIDGE>(transaction.data); // TODO: switch by provider
         const metadata = data.notification.metadata as ClaimAvailBridgeNotificationMetadata;
         const claimAsset = this.state.chainService.getAssetBySlug(metadata.tokenSlug);
 
