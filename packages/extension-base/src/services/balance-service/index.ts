@@ -190,7 +190,14 @@ export class BalanceService implements StoppableServiceInterface {
   }
 
   /** Subscribe token free balance of an address on chain */
-  public async subscribeBalance (address: string, chain: string, tokenSlug: string | undefined, balanceType: 'transferable' | 'total', extrinsicType?: ExtrinsicType, callback?: (rs: AmountData) => void): Promise<[() => void, AmountData]> {
+  public async subscribeBalance (
+    address: string,
+    chain: string,
+    tokenSlug: string | undefined,
+    balanceType: 'transferable' | 'total' | 'keepAlive' = 'transferable',
+    extrinsicType?: ExtrinsicType,
+    callback?: (rs: AmountData) => void
+  ): Promise<[() => void, AmountData]> {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
     const chainState = this.state.chainService.getChainStateByKey(chain);
 
@@ -219,9 +226,14 @@ export class BalanceService implements StoppableServiceInterface {
       unsub = subscribeBalance([address], [chain], [tSlug], assetMap, chainInfoMap, substrateApiMap, evmApiMap, tonApiMap, (result) => {
         const rs = result[0];
 
-        const value = balanceType === 'total'
-          ? new BigN(rs.free).plus(new BigN(rs.locked)).toString()
-          : rs.free;
+        let value: string;
+        switch (balanceType) {
+          case 'total':
+            value = new BigN(rs.free).plus(new BigN(rs.locked)).toString();
+            break;
+          default:
+            value = rs.free;
+        }
 
         if (rs.tokenSlug === tSlug && rs.state !== APIItemState.PENDING) {
           hasError = false;

@@ -77,6 +77,7 @@ import { ChainProperties } from '@polkadot/types/interfaces';
 import { Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import {FrameSystemAccountInfo} from "@subwallet/extension-base/core/substrate/types";
 
 export function isJsonPayload (value: SignerPayloadJSON | SignerPayloadRaw): value is SignerPayloadJSON {
   return (value as SignerPayloadJSON).genesisHash !== undefined;
@@ -1388,7 +1389,7 @@ export default class KoniExtension {
 
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
       let senderSendingTokenTransferable: bigint | undefined;
-      let isReceiverActive: unknown;
+      let receiverSystemAccountInfo: FrameSystemAccountInfo | undefined;
 
       // Check ed for sender
       if (!isTransferNativeToken) {
@@ -1398,7 +1399,7 @@ export default class KoniExtension {
         ]);
 
         senderSendingTokenTransferable = BigInt(_senderSendingTokenTransferable.value);
-        isReceiverActive = _receiverNativeTotal.metadata;
+        receiverSystemAccountInfo = _receiverNativeTotal.metadata as FrameSystemAccountInfo;
       }
 
       const { value: _receiverSendingTokenKeepAliveBalance } = await this.getAddressTotalBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
@@ -1409,7 +1410,7 @@ export default class KoniExtension {
       const substrateApi = this.#koniState.getSubstrateApi(networkKey).api;
       const isSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
 
-      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, isReceiverActive, isSufficient);
+      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverSystemAccountInfo, isSufficient);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);
