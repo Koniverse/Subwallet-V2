@@ -120,7 +120,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const resToAmount = await response.json() as string;
       const toAmount = toBNString(resToAmount, toAsset.decimals || 0);
       const fromAmount = request.fromAmount;
-      const bnFromAmount = new BigN(request.fromAmount);
+      const bnToAmount = new BigN(toAmount);
 
       const rate = calculateSwapRate(request.fromAmount, toAmount, fromAsset, toAsset);
 
@@ -141,15 +141,18 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const networkFeeAmount = await getTransferMockTxFee(request.address, fromChain, fromAsset, api);
 
       const networkFee: CommonFeeComponent = {
-        tokenSlug: fromAsset.slug,
+        tokenSlug: fromChainNativeTokenSlug,
         amount: networkFeeAmount.toString(),
         feeType: SwapFeeType.NETWORK_FEE
       };
 
-      const platformFee: CommonFeeComponent = {
-        tokenSlug: fromAsset.slug,
-        amount: bnFromAmount.multipliedBy(4).dividedBy(1000).toString(),
-        feeType: SwapFeeType.PLATFORM_FEE
+      const walletFeeRate = 4 / 1000;
+      const toAmountBeforeFee = bnToAmount.dividedBy(new BigN(1 - walletFeeRate));
+
+      const walletFee: CommonFeeComponent = {
+        tokenSlug: toAsset.slug,
+        amount: toAmountBeforeFee.multipliedBy(4).dividedBy(1000).toString(),
+        feeType: SwapFeeType.WALLET_FEE
       };
 
       return {
@@ -164,7 +167,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         estimatedArrivalTime: 0,
         isLowLiquidity: false,
         feeInfo: {
-          feeComponent: [networkFee, platformFee],
+          feeComponent: [networkFee, walletFee],
           defaultFeeToken,
           feeOptions: [defaultFeeToken]
         },
@@ -228,7 +231,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
 
       const swapList = await swapListResponse.json() as string[];
 
-      if (!swapList.includes(toAsset.symbol.toLowerCase())) {
+      if (!swapList.includes(toSymbol)) {
         return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
       }
 
@@ -253,7 +256,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const bnAmount = new BigN(request.fromAmount);
       const parsedbnAmount = formatNumber(bnAmount.toString(), fromAsset.decimals || 0);
 
-      if (parsedbnAmount < min) {
+      if (parseFloat(parsedbnAmount) < parseFloat(min)) {
         return {
           error: SwapErrorType.NOT_MEET_MIN_SWAP,
           metadata: {
@@ -272,7 +275,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         };
       }
 
-      if (max && parsedbnAmount > max) {
+      if (max && parseFloat(parsedbnAmount) > parseFloat(max)) {
         return {
           error: SwapErrorType.SWAP_EXCEED_ALLOWANCE,
           metadata: {

@@ -6265,14 +6265,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.95-beta.0":
-  version: 0.2.95-beta.0
-  resolution: "@subwallet/chain-list@npm:0.2.95-beta.0"
+"@subwallet/chain-list@npm:0.2.96-beta.3":
+  version: 0.2.96-beta.3
+  resolution: "@subwallet/chain-list@npm:0.2.96-beta.3"
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
-  checksum: 23710027b2df62ff33eb5cbfe38fe82b254354d2cf67dc5a284233dfc2269e0691c357cd47a2fc7c2ff5bb4d8d1f8a8b7d492b9ac30344f5b594f4bc53335847
+    ts-md5: ^1.3.1
+  checksum: eae4f1fd2ec2454266d9176f7da236a6c1287b42a4e05da72e9c522c82a08e81e3a001e4858a4405641eca9dc83c30263bfa5a2236c06e5e4e59cbc14ca490ee
   languageName: node
   linkType: hard
 
@@ -6593,7 +6594,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.95-beta.0
+    "@subwallet/chain-list": 0.2.96-beta.3
     "@subwallet/extension-base": ^1.3.6-1
     "@subwallet/extension-chains": ^1.3.6-1
     "@subwallet/extension-dapp": ^1.3.6-1
@@ -27077,6 +27078,13 @@ __metadata:
   dependencies:
     tslib: ^2.1.0
   checksum: bb07d56fe4aae69d8860e0301dfdee2d375281159054bc24bf1e49e513fb0835bf7f70a11351344d213a79199c5e695f37ebbf5a447188a377ce0cd81d91ddb5
+  languageName: node
+  linkType: hard
+
+"ts-md5@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "ts-md5@npm:1.3.1"
+  checksum: 88fc4df837e17949fef92a8e71a0691b20e2f8b02a002876a162a102e7c9d364f1eb00cbd217f9578fec5fa07bb66ffa14ed054cdfe164486fab2173c8e9ea23
   languageName: node
   linkType: hard
 

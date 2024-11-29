@@ -40,7 +40,10 @@ export const CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, Asset> =
 
 export const SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, string> = {
   'bittensor-NATIVE-TAO': 'tao',
-  [COMMON_ASSETS.ETH]: 'eth'
+  [COMMON_ASSETS.ETH]: 'eth',
+  [COMMON_ASSETS.DOT]: 'dot',
+  [COMMON_ASSETS.USDC_ETHEREUM]: 'usdc',
+  [COMMON_ASSETS.USDT_ETHEREUM]: 'usdterc20'
 };
 
 export const SWAP_QUOTE_TIMEOUT_MAP: Record<string, number> = { // in milliseconds
@@ -57,7 +60,7 @@ export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.POLKADOT_ASSET_HUB]: [COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB],
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
   [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB],
-  [SwapProviderId.SIMPLE_SWAP]: ['bittensor', 'bittensor_testnet', COMMON_CHAIN_SLUGS.ETHEREUM]
+  [SwapProviderId.SIMPLE_SWAP]: ['bittensor', 'bittensor_testnet', COMMON_CHAIN_SLUGS.ETHEREUM, COMMON_CHAIN_SLUGS.POLKADOT]
 };
 
 export function getSwapAlternativeAsset (swapPair: SwapPair): string | undefined {
