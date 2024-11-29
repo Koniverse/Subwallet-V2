@@ -819,7 +819,11 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       tokenSlug: 'cardano_preproduction-NATIVE-tADA',
       value: '150000000',
       transferAll: false
-    });
+    })
+      .then((rs) => {
+        console.log('[i],', rs);
+      })
+      .catch(console.error);
   }, []);
 
   return (

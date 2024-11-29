@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CardanoAddressBalance, CardanoBalanceItem } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
+import { cborToBytes } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _CardanoApi, _ChainConnectionStatus } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
 
-export const API_KEY = {
+export const API_KEY = { // todo: move to env.
   mainnet: 'mainnet6uE9JH3zGYquaxRKA7IMhEuzRUB58uGK',
   testnet: 'preprodcnP5RADcrWMlf2cQe4ZKm4cjRvrBQFXM'
 };
@@ -24,6 +25,7 @@ export class CardanoApi implements _CardanoApi {
   isApiReadyOnce = false;
   isReadyHandler: PromiseHandler<_CardanoApi>;
   isTestnet: boolean; // todo: add api with interface BlockFrostAPI to remove isTestnet check
+  private projectId: string;
 
   providerName: string;
 
@@ -31,6 +33,7 @@ export class CardanoApi implements _CardanoApi {
     this.chainSlug = chainSlug;
     this.apiUrl = apiUrl;
     this.isTestnet = isTestnet ?? true;
+    this.projectId = isTestnet ? API_KEY.testnet : API_KEY.mainnet;
     this.providerName = providerName || 'unknown';
     // this.api = this.createProvider(isTestnet);
     this.isReadyHandler = createPromiseHandler<_CardanoApi>();
@@ -133,12 +136,11 @@ export class CardanoApi implements _CardanoApi {
   async getBalanceMap (address: string): Promise<CardanoBalanceItem[]> {
     try {
       const url = this.isTestnet ? `https://cardano-preprod.blockfrost.io/api/v0/addresses/${address}` : `https://cardano-mainnet.blockfrost.io/api/v0/addresses/${address}`;
-      const projectId = this.isTestnet ? API_KEY.testnet : API_KEY.mainnet;
       const response = await fetch(
         url, {
           method: 'GET',
           headers: {
-            Project_id: projectId
+            Project_id: this.projectId
           }
         }
       );
@@ -146,10 +148,56 @@ export class CardanoApi implements _CardanoApi {
       const addressBalance = await response.json() as CardanoAddressBalance;
 
       return addressBalance.amount;
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
+      console.error('Error on getting account balance', e);
 
       return [];
+    }
+  }
+
+  async sendCardanoTxReturnHash (tx: string): Promise<string> {
+    try {
+      const url = this.isTestnet ? 'https://cardano-preprod.blockfrost.io/api/v0/tx/submit' : 'https://cardano-mainnet.blockfrost.io/api/v0/tx/submit';
+      const response = await fetch(
+        url, {
+          method: 'POST',
+          headers: {
+            Project_id: this.projectId,
+            'Content-Type': 'application/cbor'
+          },
+          body: cborToBytes(tx)
+        }
+      );
+
+      return await response.text();
+    } catch (e) {
+      console.error('Error on submitting cardano tx', e);
+
+      return '';
+    }
+  }
+
+  async getStatusByTxHash (txHash: string) {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 120000)); // todo: improve this
+
+      const url = this.isTestnet ? `https://cardano-preprod.blockfrost.io/api/v0/txs/${txHash}` : `https://cardano-mainnet.blockfrost.io/api/v0/txs/${txHash}`;
+      const response = await fetch(
+        url, {
+          method: 'GET',
+          headers: {
+            Project_id: this.projectId
+          }
+        }
+      );
+
+      const txInfo = await response.json() as { hash: string, block: string, index: number };
+
+      return !!(txInfo.block && txInfo.hash && txInfo.index >= 0);
+    } catch (e) {
+      console.error('Error on getting tx onchain', e);
+
+      return false;
     }
   }
 }

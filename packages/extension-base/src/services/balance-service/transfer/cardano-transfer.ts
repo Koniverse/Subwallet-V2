@@ -45,11 +45,14 @@ export async function createCardanoTransaction (params: CardanoTransactionConfig
   return [tx, value];
 }
 
+// todo: await built tx, use assetType to check
+// eslint-disable-next-line @typescript-eslint/require-await
 async function createTransferTransaction (params: CardanoTransactionConfigProps, assetType: _AssetType.NATIVE | _AssetType.CIP26): Promise<CardanoTransactionConfig> {
-  // todo: get built tx from server, use assetType to check
   // todo: payload must be string, if no payload => ''
-  const payload = '84a300d9010281825820426e4ac6984d31aad7eed7f69106dda830474799ba2c898d5b837ae35db1b12701018282583900ad2b3ac4e3017adfb3cbb04c5ca7a678204daaac96accab6690010dc7ab98b3e995e211b8615b2466d3a93ec069e9d60f17cd1ef3434ea541a08f0d18082583900e33b8297e1ce697e07b12de2bc781280bac7b9c949c6194894e9b82132761cf8ea1eeb6628a4fc4fcf4470d6b8a38632a298d84f0c5b63c01b000000017451b7cf021a0002922da0f5f6';
-  const fee = await estimateCardanoTxFee(payload);
+  const payload = '84a300d9010281825820561b6403b7836d69a7ef7c728f25425fbf27c17b76d5461361c3208caef5fdf601018282583900ad2b3ac4e3017adfb3cbb04c5ca7a678204daaac96accab6690010dc7ab98b3e995e211b8615b2466d3a93ec069e9d60f17cd1ef3434ea541a08f0d18082583900e33b8297e1ce697e07b12de2bc781280bac7b9c949c6194894e9b82132761cf8ea1eeb6628a4fc4fcf4470d6b8a38632a298d84f0c5b63c01b000000015084291b021a0002922da0f5f6';
+  const fee = estimateCardanoTxFee(payload);
+
+  console.log('fee', fee);
 
   return {
     from: params.from,
@@ -61,5 +64,3 @@ async function createTransferTransaction (params: CardanoTransactionConfigProps,
     cardanoPayload: payload
   };
 }
-
-// expected payload: 84a300d9010281825820426e4ac6984d31aad7eed7f69106dda830474799ba2c898d5b837ae35db1b12701018282583900ad2b3ac4e3017adfb3cbb04c5ca7a678204daaac96accab6690010dc7ab98b3e995e211b8615b2466d3a93ec069e9d60f17cd1ef3434ea541a08f0d18082583900e33b8297e1ce697e07b12de2bc781280bac7b9c949c6194894e9b82132761cf8ea1eeb6628a4fc4fcf4470d6b8a38632a298d84f0c5b63c01b000000017451b7cf021a0002922da0f5f6

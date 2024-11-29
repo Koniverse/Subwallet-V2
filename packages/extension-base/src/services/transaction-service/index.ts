@@ -8,6 +8,7 @@ import { ALL_ACCOUNT_KEY, fetchLastestBlockedActionsAndFeatures } from '@subwall
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForAction, checkSupportForFeature, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { CardanoTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/cardano-transfer';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
@@ -1228,7 +1229,7 @@ export default class TransactionService {
       });
     };
 
-    const tonTransactionConfig = transaction as TonTransactionConfig;
+    const tonTransactionConfig = transaction as TonTransactionConfig; // todo: is this same as payload?
     const seqno = tonTransactionConfig.seqno;
     const messages = tonTransactionConfig.messages;
 
@@ -1277,6 +1278,77 @@ export default class TransactionService {
       eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, e.message));
       emitter.emit('error', eventData);
     });
+
+    return emitter;
+  }
+
+  private signAndSendCardanoTransaction ({ chain, id, transaction, url }: SWTransaction): TransactionEmitter {
+    const emitter = new EventEmitter<TransactionEventMap>();
+    const eventData: TransactionEventResponse = {
+      id,
+      errors: [],
+      warnings: [],
+      extrinsicHash: id
+    };
+
+    const transactionConfig = transaction as CardanoTransactionConfig;
+    const cardanoApi = this.state.chainService.getCardanoApi(chain);
+
+    this.state.requestService.addConfirmationCardano(id, url || EXTENSION_REQUEST_URL, 'cardanoSendTransactionRequest', transactionConfig, {})
+      .then(({ isApproved, payload }) => {
+        if (!isApproved) {
+          this.removeTransaction(id);
+          eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+          emitter.emit('error', eventData);
+        } else {
+          if (!payload) {
+            throw new Error('Failed to sign');
+          }
+
+          // Emit signed event
+          emitter.emit('signed', eventData);
+
+          // Send transaction
+          this.handleTransactionTimeout(emitter, eventData);
+          emitter.emit('send', eventData);
+
+          // send qua api
+          cardanoApi.sendCardanoTxReturnHash(payload)
+            .then((txHash) => {
+              if (!txHash) {
+                eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
+                emitter.emit('error', eventData);
+              }
+
+              eventData.extrinsicHash = txHash;
+              emitter.emit('extrinsicHash', eventData);
+
+              // todo: wait transaction by fetch txHash by API
+              cardanoApi.getStatusByTxHash(txHash).then((status) => {
+                if (!status) {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
+                  emitter.emit('error', eventData);
+                }
+
+                emitter.emit('success', eventData);
+              })
+                .catch((e: Error) => {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+                  emitter.emit('error', eventData);
+                });
+            })
+            .catch((e: Error) => {
+              eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+              emitter.emit('error', eventData);
+            });
+        }
+      })
+      .catch((e: Error) => {
+        this.removeTransaction(id);
+        eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, t(e.message)));
+
+        emitter.emit('error', eventData);
+      });
 
     return emitter;
   }

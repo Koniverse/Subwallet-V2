@@ -6,6 +6,7 @@ import { TransactionError } from '@subwallet/extension-base/background/errors/Tr
 import { Resolver } from '@subwallet/extension-base/background/handlers/State';
 import { AccountAuthType, AuthorizeRequest, ConfirmationRequestBase, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeCancel, RequestAuthorizeReject, RequestAuthorizeSubscribe, RequestAuthorizeTab, RequestCurrentAccountAddress, ResponseAuthorizeList } from '@subwallet/extension-base/background/types';
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
+import { CardanoTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/cardano-transfer';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainState, _EvmApi, _NetworkUpsertParams, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
@@ -1069,6 +1070,12 @@ export interface TonSignRequest {
   canSign: boolean;
 }
 
+export interface CardanoSignRequest {
+  account: AccountJson;
+  hashPayload: string;
+  canSign: boolean;
+}
+
 export interface ErrorValidation {
   message: string;
   name: string;
@@ -1087,6 +1094,12 @@ export interface TonSignatureRequest extends TonSignRequest {
   payload: unknown;
 }
 
+export interface CardanoSignatureRequest extends CardanoSignRequest {
+  id: string;
+  type: string;
+  payload: unknown
+}
+
 export interface EvmSendTransactionRequest extends TransactionConfig, EvmSignRequest {
   estimateGas: string;
   parseData: EvmTransactionData;
@@ -1096,9 +1109,11 @@ export interface EvmSendTransactionRequest extends TransactionConfig, EvmSignReq
 
 // TODO: add account info + dataToSign
 export type TonSendTransactionRequest = TonTransactionConfig;
+export type CardanoSendTransactionRequest = CardanoTransactionConfig;
 
 export type EvmWatchTransactionRequest = EvmSendTransactionRequest;
 export type TonWatchTransactionRequest = TonSendTransactionRequest;
+export type CardanoWatchTransactionRequest = CardanoSendTransactionRequest;
 
 export interface ConfirmationsQueueItemOptions {
   requiredPassword?: boolean;
@@ -1164,8 +1179,15 @@ export interface ConfirmationDefinitionsTon {
   tonWatchTransactionRequest: [ConfirmationsQueueItem<TonWatchTransactionRequest>, ConfirmationResult<string>]
 }
 
+export interface ConfirmationDefinitionsCardano {
+  cardanoSignatureRequest: [ConfirmationsQueueItem<CardanoSignatureRequest>, ConfirmationResult<string>],
+  cardanoSendTransactionRequest: [ConfirmationsQueueItem<CardanoSendTransactionRequest>, ConfirmationResult<string>],
+  cardanoWatchTransactionRequest: [ConfirmationsQueueItem<CardanoWatchTransactionRequest>, ConfirmationResult<string>]
+}
+
 export type ConfirmationType = keyof ConfirmationDefinitions;
 export type ConfirmationTypeTon = keyof ConfirmationDefinitionsTon;
+export type ConfirmationTypeCardano = keyof ConfirmationDefinitionsCardano;
 
 export type ConfirmationsQueue = {
   [CT in ConfirmationType]: Record<string, ConfirmationDefinitions[CT][0]>;
@@ -1173,18 +1195,23 @@ export type ConfirmationsQueue = {
 export type ConfirmationsQueueTon = {
   [CT in ConfirmationTypeTon]: Record<string, ConfirmationDefinitionsTon[CT][0]>;
 }
+export type ConfirmationsQueueCardano = {
+  [CT in ConfirmationTypeCardano]: Record<string, ConfirmationDefinitionsCardano[CT][0]>;
+}
 
 export type RequestConfirmationsSubscribe = null;
-
 export type RequestConfirmationsSubscribeTon = null;
+export type RequestConfirmationsSubscribeCardano = null;
 
 // Design to use only one confirmation
 export type RequestConfirmationComplete = {
   [CT in ConfirmationType]?: ConfirmationDefinitions[CT][1];
 }
-
 export type RequestConfirmationCompleteTon = {
   [CT in ConfirmationTypeTon]?: ConfirmationDefinitionsTon[CT][1];
+}
+export type RequestConfirmationCompleteCardano = {
+  [CT in ConfirmationTypeCardano]?: ConfirmationDefinitionsCardano[CT][1];
 }
 
 export interface BondingOptionParams {
@@ -2138,8 +2165,10 @@ export interface KoniRequestSignatures {
   // Confirmation Queues
   'pri(confirmations.subscribe)': [RequestConfirmationsSubscribe, ConfirmationsQueue, ConfirmationsQueue];
   'pri(confirmationsTon.subscribe)': [RequestConfirmationsSubscribeTon, ConfirmationsQueueTon, ConfirmationsQueueTon];
+  'pri(confirmationsCardano.subscribe)': [RequestConfirmationsSubscribeCardano, ConfirmationsQueueCardano, ConfirmationsQueueCardano];
   'pri(confirmations.complete)': [RequestConfirmationComplete, boolean];
   'pri(confirmationsTon.complete)': [RequestConfirmationCompleteTon, boolean];
+  'pri(confirmationsCardano.complete)': [RequestConfirmationCompleteCardano, boolean];
 
   'pub(utils.getRandom)': [RandomTestRequest, number];
   'pub(accounts.listV2)': [RequestAccountList, InjectedAccount[]];
