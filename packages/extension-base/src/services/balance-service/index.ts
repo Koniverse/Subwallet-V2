@@ -227,6 +227,7 @@ export class BalanceService implements StoppableServiceInterface {
         const rs = result[0];
 
         let value: string;
+
         switch (balanceType) {
           case 'total':
             value = new BigN(rs.free).plus(new BigN(rs.locked)).toString();

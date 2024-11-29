@@ -12,6 +12,7 @@ import { AccountAuthType, AuthorizeRequest, MessageTypes, MetadataRequest, Reque
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
 import { additionalValidateTransferForRecipient, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
 import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
@@ -77,7 +78,6 @@ import { ChainProperties } from '@polkadot/types/interfaces';
 import { Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
-import {FrameSystemAccountInfo} from "@subwallet/extension-base/core/substrate/types";
 
 export function isJsonPayload (value: SignerPayloadJSON | SignerPayloadRaw): value is SignerPayloadJSON {
   return (value as SignerPayloadJSON).genesisHash !== undefined;
