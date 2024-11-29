@@ -56,8 +56,8 @@ function Component ({ className }: Props) {
         return ExtrinsicType.SEND_NFT;
       case 'swap':
         return ExtrinsicType.SWAP;
-      case 'claim-avail-bridge':
-        return ExtrinsicType.CLAIM_AVAIL_BRIDGE;
+      case 'claim-bridge':
+        return ExtrinsicType.CLAIM_BRIDGE;
       case 'send-fund':
       default:
         return ExtrinsicType.TRANSFER_BALANCE;
