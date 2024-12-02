@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AssetLogoMap, ChainLogoMap, md5HashChainAsset, md5HashChainInfo } from '@subwallet/chain-list';
+import { AssetLogoMap, ChainLogoMap } from '@subwallet/chain-list';
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
-import { LATEST_CHAIN_PATCH_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-online-service/constants';
+import { LATEST_CHAIN_PATCH_FETCHING_INTERVAL, md5HashChainAsset, md5HashChainInfo } from '@subwallet/extension-base/services/chain-online-service/constants';
 import { ChainService, filterAssetInfoMap } from '@subwallet/extension-base/services/chain-service';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { fetchPatchData, PatchInfo, randomizeProvider } from '@subwallet/extension-base/services/chain-service/utils';
@@ -17,6 +17,7 @@ export class ChainOnlineService {
   private settingService: SettingService;
   private eventService: EventService;
   private dbService: DatabaseService;
+  private firstApplied: boolean;
 
   refreshLatestChainDataTimeOut: NodeJS.Timer | undefined;
 
@@ -25,6 +26,7 @@ export class ChainOnlineService {
     this.settingService = settingService;
     this.eventService = eventService;
     this.dbService = dbService;
+    this.firstApplied = false;
   }
 
   validatePatchWithHash (latestPatch: PatchInfo) {
@@ -80,18 +82,20 @@ export class ChainOnlineService {
         patchVersion: latestPatchVersion } = latestPatch;
       const currentPatchVersion = (await this.settingService.getChainlistSetting())?.patchVersion || '';
 
+      const oldChainInfoMap: Record<string, _ChainInfo> = structuredClone(this.chainService.getChainInfoMap());
+      const oldAssetRegistry: Record<string, _ChainAsset> = structuredClone(this.chainService.getAssetRegistry());
       let chainInfoMap: Record<string, _ChainInfo> = structuredClone(this.chainService.getChainInfoMap());
       let assetRegistry: Record<string, _ChainAsset> = structuredClone(this.chainService.getAssetRegistry());
-      let currentChainStateMap: Record<string, _ChainState> = structuredClone(this.chainService.getChainStateMap());
-      let currentChainStatusMap: Record<string, _ChainApiStatus> = structuredClone(this.chainService.getChainStatusMap());
+      const currentChainStateMap: Record<string, _ChainState> = structuredClone(this.chainService.getChainStateMap());
+      const currentChainStatusMap: Record<string, _ChainApiStatus> = structuredClone(this.chainService.getChainStatusMap());
       let addedChain: string[] = [];
 
-      if (isSafePatch && currentPatchVersion !== latestPatchVersion) {
+      if (isSafePatch && (!this.firstApplied || currentPatchVersion !== latestPatchVersion)) {
+        this.firstApplied = true;
+
         // 2. merge data map
         if (latestChainInfo && Object.keys(latestChainInfo).length > 0) {
-          chainInfoMap = Object.assign({}, this.chainService.getChainInfoMap(), latestChainInfo);
-
-          [currentChainStateMap, currentChainStatusMap] = [structuredClone(this.chainService.getChainStateMap()), structuredClone(this.chainService.getChainStatusMap())];
+          chainInfoMap = Object.assign({}, oldChainInfoMap, latestChainInfo);
 
           const [currentChainStateKey, newChainKey] = [Object.keys(currentChainStateMap), Object.keys(chainInfoMap)];
 
@@ -114,7 +118,7 @@ export class ChainOnlineService {
         }
 
         if (latestAssetInfo && Object.keys(latestAssetInfo).length > 0) {
-          assetRegistry = filterAssetInfoMap(this.chainService.getChainInfoMap(), Object.assign({}, this.chainService.getAssetRegistry(), latestAssetInfo), addedChain);
+          assetRegistry = filterAssetInfoMap(oldChainInfoMap, Object.assign({}, oldAssetRegistry, latestAssetInfo), addedChain);
         }
 
         // 3. validate data before write
@@ -149,6 +153,7 @@ export class ChainOnlineService {
 
           const addedAssets: _ChainAsset[] = [];
 
+          // todo: the stored asset is lack of adding new assets and edited assets of old chain, update to tracking exactly updated assets from patch online.
           Object.entries(assetRegistry).forEach(([slug, asset]) => {
             if (addedChain.includes(asset.originChain)) {
               addedAssets.push(asset);
