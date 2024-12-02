@@ -406,6 +406,10 @@ export default class DatabaseService {
     return this.stores.asset.upsert(item);
   }
 
+  async bulkUpdateAssetsStore (items: _ChainAsset[]) {
+    return this.stores.asset.bulkUpsert(items);
+  }
+
   async getAllAssetStore () {
     return this.stores.asset.getAll();
   }

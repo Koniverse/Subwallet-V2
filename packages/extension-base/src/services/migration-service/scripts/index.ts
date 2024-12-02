@@ -28,6 +28,7 @@ import MigrateNetworkSettings from './MigrateNetworkSettings';
 import MigrateSettings from './MigrateSettings';
 import MigrateTokenDecimals from './MigrateTokenDecimals';
 import MigrateTransactionHistory from './MigrateTransactionHistory';
+import MigrateTransactionHistoryBridge from './MigrateTransactionHistoryBridge';
 import MigrateTransactionHistoryBySymbol from './MigrateTransactionHistoryBySymbol';
 import MigrateWalletReference from './MigrateWalletReference';
 
@@ -62,7 +63,8 @@ export default <Record<string, typeof BaseMigrationJob>>{
   '1.2.69-01': MigrateRemoveGenesisHash,
   '1.2.13-01': ReloadMetadata,
   '1.2.14-01': ClearMetadataDatabase,
-  '1.2.32-01': MigratePairData
+  '1.2.32-01': MigratePairData,
+  '1.3.6-01': MigrateTransactionHistoryBridge
   // [`${EVERYTIME}-1.1.42-02`]: MigrateTransactionHistoryBySymbol
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
 };

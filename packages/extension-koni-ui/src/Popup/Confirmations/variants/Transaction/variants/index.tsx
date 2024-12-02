@@ -4,7 +4,7 @@
 export type { BaseTransactionConfirmationProps } from './Base';
 export { default as BaseTransactionConfirmation } from './Base';
 export { default as BondTransactionConfirmation } from './Bond';
-export { default as ClaimAvailBridgeTransactionConfirmation } from './ClaimAvailBridge';
+export { default as ClaimBridgeTransactionConfirmation } from './ClaimBridge';
 export { default as CancelUnstakeTransactionConfirmation } from './CancelUnstake';
 export { default as ClaimRewardTransactionConfirmation } from './ClaimReward';
 export { default as JoinPoolTransactionConfirmation } from './JoinPool';
