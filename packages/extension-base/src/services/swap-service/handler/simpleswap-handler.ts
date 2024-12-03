@@ -51,15 +51,38 @@ export class SimpleSwapHandler implements SwapBaseInterface {
     this.providerSlug = SwapProviderId.SIMPLE_SWAP;
   }
 
-  public validateSwapProcess (params: ValidateSwapProcessParams): Promise<TransactionError[]> {
+  public async validateSwapProcess (params: ValidateSwapProcessParams): Promise<TransactionError[]> {
     const amount = params.selectedQuote.fromAmount;
-    const bnAmount = new BigN(amount);
+    const bnAmount = BigInt(amount);
 
-    if (bnAmount.lte(0)) {
+    if (bnAmount <= BigInt(0)) {
       return Promise.resolve([new TransactionError(BasicTxErrorType.INVALID_PARAMS, 'Amount must be greater than 0')]);
     }
 
-    return Promise.resolve([]);
+    let isXcmOk = false;
+
+    for (const [index, step] of params.process.steps.entries()) {
+      const getErrors = async (): Promise<TransactionError[]> => {
+        switch (step.type) {
+          case CommonStepType.DEFAULT:
+            return Promise.resolve([]);
+          case CommonStepType.TOKEN_APPROVAL:
+            return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
+          default:
+            return this.swapBaseHandler.validateSwapStep(params, isXcmOk, index);
+        }
+      };
+
+      const errors = await getErrors();
+
+      if (errors.length) {
+        return errors;
+      } else if (step.type === CommonStepType.XCM) {
+        isXcmOk = true;
+      }
+    }
+
+    return [];
   }
 
   get chainService () {
@@ -86,11 +109,16 @@ export class SimpleSwapHandler implements SwapBaseInterface {
     try {
       const fromAsset = this.chainService.getAssetBySlug(request.pair.from);
       const toAsset = this.chainService.getAssetBySlug(request.pair.to);
-      const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
-      const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
 
       if (!fromAsset || !toAsset) {
         return new SwapError(SwapErrorType.UNKNOWN);
+      }
+
+      const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
+      const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
+
+      if (!fromSymbol || !toSymbol) {
+        return new SwapError(SwapErrorType.ASSET_NOT_SUPPORTED);
       }
 
       const earlyValidation = await this.validateSwapRequest(request);
@@ -109,15 +137,24 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         amount: formatNumber(request.fromAmount, fromAsset.decimals || 0)
       });
 
-      const response = await fetch(`${apiUrl}/get_estimated?${params.toString()}`, {
-        headers: { accept: 'application/json' }
-      });
+      let resToAmount: string;
 
-      if (!response.ok) {
+      try {
+        const response = await fetch(`${apiUrl}/get_estimated?${params.toString()}`, {
+          headers: { accept: 'application/json' }
+        });
+
+        if (!response.ok) {
+          return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
+        }
+
+        resToAmount = await response.json() as string;
+      } catch (err) {
+        console.error('Error:', err);
+
         return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
       }
 
-      const resToAmount = await response.json() as string;
       const toAmount = toBNString(resToAmount, toAsset.decimals || 0);
       const fromAmount = request.fromAmount;
       const bnToAmount = new BigN(toAmount);
@@ -163,7 +200,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         provider: this.providerInfo,
         aliveUntil: +Date.now() + (SWAP_QUOTE_TIMEOUT_MAP[this.slug] || SWAP_QUOTE_TIMEOUT_MAP.default),
         minSwap: toBNString(metadata.minSwap.value, fromAsset.decimals || 0),
-        maxSwap: metadata.maxSwap?.value,
+        maxSwap: toBNString(metadata.maxSwap?.value, fromAsset.decimals || 0),
         estimatedArrivalTime: 0,
         isLowLiquidity: false,
         feeInfo: {
@@ -205,7 +242,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const toAsset = this.chainService.getAssetBySlug(request.pair.to);
 
       if (!fromAsset || !toAsset) {
-        return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
+        return { error: SwapErrorType.ERROR_FETCHING_QUOTE };
       }
 
       const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
@@ -221,18 +258,22 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         symbol: fromSymbol
       });
 
-      const swapListResponse = await fetch(`${apiUrl}/get_pairs?${swapListParams.toString()}`, {
-        headers: { accept: 'application/json' }
-      });
+      try {
+        const swapListResponse = await fetch(`${apiUrl}/get_pairs?${swapListParams.toString()}`, {
+          headers: { accept: 'application/json' }
+        });
 
-      if (!swapListResponse.ok) {
-        return { error: SwapErrorType.UNKNOWN };
-      }
+        if (!swapListResponse.ok) {
+          return { error: SwapErrorType.UNKNOWN };
+        }
 
-      const swapList = await swapListResponse.json() as string[];
+        const swapList = await swapListResponse.json() as string[];
 
-      if (!swapList.includes(toSymbol)) {
-        return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
+        if (!swapList.includes(toSymbol)) {
+          return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
+        }
+      } catch (err) {
+        console.error('Error:', err);
       }
 
       const rangesParams = new URLSearchParams({
@@ -252,11 +293,10 @@ export class SimpleSwapHandler implements SwapBaseInterface {
 
       const ranges = await rangesResponse.json() as SwapRange;
       const { max, min } = ranges;
+      const bnMin = toBNString(min, fromAsset.decimals || 0);
+      const bnAmount = BigInt(request.fromAmount);
 
-      const bnAmount = new BigN(request.fromAmount);
-      const parsedbnAmount = formatNumber(bnAmount.toString(), fromAsset.decimals || 0);
-
-      if (parseFloat(parsedbnAmount) < parseFloat(min)) {
+      if (bnAmount < BigInt(bnMin)) {
         return {
           error: SwapErrorType.NOT_MEET_MIN_SWAP,
           metadata: {
@@ -275,7 +315,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         };
       }
 
-      if (max && parseFloat(parsedbnAmount) > parseFloat(max)) {
+      if (max && bnAmount > BigInt(toBNString(max, fromAsset.decimals || 0))) {
         return {
           error: SwapErrorType.SWAP_EXCEED_ALLOWANCE,
           metadata: {

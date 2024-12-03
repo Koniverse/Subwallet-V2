@@ -40,6 +40,7 @@ export const DefaultLogosMap: Record<string, string> = {
   xtwitter_transparent: '/images/projects/xtwitter_transparent.png',
   chain_flip: '/images/projects/chainflip-mainnet.png',
   hydradx: '/images/projects/hydradx.png',
+  simple_swap: '/images/projects/simple-swap.png',
   polkadot_assethub: '/images/projects/polkadot-asset-hub.png',
   kusama_assethub: '/images/projects/kusama-asset-hub.png',
   rococo_assethub: '/images/projects/rococo-asset-hub.png',
