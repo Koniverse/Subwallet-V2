@@ -1391,6 +1391,10 @@ export default class KoniExtension {
       let senderSendingTokenTransferable: bigint | undefined;
       let receiverSystemAccountInfo: FrameSystemAccountInfo | undefined;
 
+      if (chainInfo.evmInfo) {
+        return undefined;
+      }
+
       // Check ed for sender
       if (!isTransferNativeToken) {
         const [_senderSendingTokenTransferable, _receiverNativeTotal] = await Promise.all([
@@ -1408,9 +1412,9 @@ export default class KoniExtension {
       const amount = BigInt(transferAmount.value);
 
       const substrateApi = this.#koniState.getSubstrateApi(networkKey).api;
-      const isSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
+      const isSendingTokenSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
 
-      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverSystemAccountInfo, isSufficient);
+      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverSystemAccountInfo, isSendingTokenSufficient);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);
@@ -1684,13 +1688,13 @@ export default class KoniExtension {
     }
   }
 
-  private async isSufficientToken (tokenInfo: _ChainAsset, api: ApiPromise): Promise<boolean> {
+  private async isSufficientToken (tokenInfo: _ChainAsset, substrateApi: ApiPromise): Promise<boolean> {
     let metadata: SufficientMetadata;
 
     if (SUFFICIENT_CHAIN.includes(tokenInfo.originChain) && tokenInfo.assetType !== _AssetType.NATIVE) {
       const assetId = tokenInfo?.metadata?.assetId;
 
-      const _metadata = await api.query.assets.asset(assetId);
+      const _metadata = await substrateApi.query.assets.asset(assetId);
 
       metadata = _metadata.toPrimitive() as unknown as SufficientMetadata;
     } else {

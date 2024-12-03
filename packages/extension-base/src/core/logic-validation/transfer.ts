@@ -73,7 +73,7 @@ export function additionalValidateTransferForRecipient (
   const errors: TransactionError[] = [];
 
   const remainingSendingTokenOfSenderEnoughED = senderSendingTokenTransferable ? senderSendingTokenTransferable - transferAmount >= sendingTokenMinAmount : false;
-  const isReceiverAliveByNativeToken = _isAccountActive(receiverSystemAccountInfo as FrameSystemAccountInfo);
+  const isReceiverAliveByNativeToken = receiverSystemAccountInfo ? _isAccountActive(receiverSystemAccountInfo) : false;
   const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= sendingTokenMinAmount;
 
   if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN) {
