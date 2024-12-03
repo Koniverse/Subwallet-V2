@@ -814,10 +814,12 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   useEffect(() => { // alibaba
     makeTransfer({
       from: 'addr_test1qr3nhq5hu88xjls8kyk790rcz2qt43aee9yuvx2gjn5msgfjwcw036s7adnz3f8ufl85guxkhz3cvv4znrvy7rzmv0qquff93j',
-      networkKey: 'cardano_preproduction',
+      networkKey: 'cardano_testnet',
       to: 'addr_test1qzkjkwkyuvqh4hanewcych985euzqnd24jt2ej4kdyqpphr6hx9nax27yydcv9djgekn4ylvq60f6c830ng77dp5af2qrphdqh',
-      tokenSlug: 'cardano_preproduction-NATIVE-tADA',
-      value: '150000000',
+      // tokenSlug: 'cardano_testnet-NATIVE-tADA',
+      // value: '150000000',
+      tokenSlug: 'cardano_testnet-CIP26-BLUEDOT',
+      value: '350000000000000',
       transferAll: false
     })
       .then((rs) => {
