@@ -1371,6 +1371,7 @@ export default class KoniExtension {
           to,
           networkKey,
           value: value || '0',
+          cardanoTtlOffset: CARDANO_TTL_OFFSET,
           transferAll: !!transferAll,
           cardanoApi
         });

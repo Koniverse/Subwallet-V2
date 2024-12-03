@@ -28,3 +28,24 @@ export const cborToBytes = (hex: string): Uint8Array => {
 
   return Buffer.from(hex, 'utf-8');
 };
+
+export async function retryCardanoTxStatus (fn: () => Promise<boolean>, options: { retries: number, delay: number }): Promise<boolean> {
+  let lastError: Error | undefined;
+
+  for (let i = 0; i < options.retries; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (e instanceof Error) {
+        lastError = e;
+      }
+
+      // todo: improve the timeout tx
+      await new Promise((resolve) => setTimeout(resolve, options.delay)); // wait for delay period, then recall the fn()
+    }
+  }
+
+  console.error('Cardano transaction timeout', lastError); // throw only last error, in case no successful result from fn()
+
+  return false;
+}

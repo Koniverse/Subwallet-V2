@@ -1324,7 +1324,7 @@ export default class TransactionService {
               emitter.emit('extrinsicHash', eventData);
 
               // todo: wait transaction by fetch txHash by API
-              cardanoApi.getStatusByTxHash(txHash).then((status) => {
+              cardanoApi.getStatusByTxHash(txHash, transactionConfig.cardanoTtlOffset).then((status) => {
                 if (!status) {
                   eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
                   emitter.emit('error', eventData);

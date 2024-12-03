@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { CardanoAddressBalance, CardanoBalanceItem } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
-import { cborToBytes } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
+import { cborToBytes, retryCardanoTxStatus } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _CardanoApi, _ChainConnectionStatus } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -177,10 +177,10 @@ export class CardanoApi implements _CardanoApi {
     }
   }
 
-  async getStatusByTxHash (txHash: string) {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 120000)); // todo: improve this
+  async getStatusByTxHash (txHash: string, ttl: number): Promise<boolean> {
+    const cronTime = 30000;
 
+    return retryCardanoTxStatus(async () => {
       const url = this.isTestnet ? `https://cardano-preprod.blockfrost.io/api/v0/txs/${txHash}` : `https://cardano-mainnet.blockfrost.io/api/v0/txs/${txHash}`;
       const response = await fetch(
         url, {
@@ -193,11 +193,11 @@ export class CardanoApi implements _CardanoApi {
 
       const txInfo = await response.json() as { hash: string, block: string, index: number };
 
-      return !!(txInfo.block && txInfo.hash && txInfo.index >= 0);
-    } catch (e) {
-      console.error('Error on getting tx onchain', e);
+      if (txInfo.block && txInfo.hash && txInfo.index >= 0) {
+        return true;
+      }
 
-      return false;
-    }
+      throw new Error('Transaction not found');
+    }, { retries: ttl / cronTime, delay: cronTime });
   }
 }
