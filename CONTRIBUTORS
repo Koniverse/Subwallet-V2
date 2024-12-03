@@ -1,10 +1,10 @@
-    2885	AnhMTV                        	Release version 1.3.6
+    2891	AnhMTV                        	Release version 1.3.7
     2546	Nam Phạm                      	[Issue 3747] chore: fix eslint
-    2366	S2kael                        	[Issue-3828] Update stable version for chain-list
+    2369	S2kael                        	[Issue-3852] Update metadata for case KSM and DOT
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
      465	Jaco                          	0.42.5 (#969)
-     458	bluezdot                      	[Issue-3515] fix: minor fix
+     463	bluezdot                      	[Issue-3814] fix: handle exceptions
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
      185	quangdo                       	
@@ -17,10 +17,10 @@
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
       73	bluedot                       	[Issue-3579] fix: update check fully migrate
-      70	PDTnhah                       	[Issue-3828] Update chainlist
+      73	PDTnhah                       	[Issue-3846] Update chainlist
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      34	tunghp2002                    	
+      43	tunghp2002                    	[Update] Fix UI
       26	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
