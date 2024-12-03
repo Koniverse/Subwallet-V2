@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## 1.3.8
+Build date: Dec 03, 2024.
+
+Features & Update:
+- Improve chain-list online patch (#3132)
+- Support Unified bridge on Polygon (#3826)
+  - ETH: Ethereum -> Polygon zkEVM
+  - ETH: Polygon zkEVM -> Ethereum
+- Update chain-list
+  - Add support for G6 network testnet
+  - Add support for LOVA token (PAH, Hydration)
+  - Add support for PIP token (Storty Odyssey Testnet)
+  - Add support for Fraxtal Mainnet
+  - Add support for Cyber
+  - Update Aventus Block Explorer
+  - Delete Story Public Tesnet (Iliad testnet)
+
+
 ## 1.3.7
 Build date: Nov 23, 2024.
 
