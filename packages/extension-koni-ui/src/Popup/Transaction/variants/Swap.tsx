@@ -92,7 +92,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
   const assetRegistryMap = useSelector((state) => state.assetRegistry.assetRegistry);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
   const { currencyData, priceMap } = useSelector((state) => state.price);
-  const chainInfoMap = useSelector((root) => root.chainStore.chainInfoMap);
+  const { chainInfoMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const hasInternalConfirmations = useSelector((state: RootState) => state.requestState.hasInternalConfirmations);
   const { multiChainAssetMap } = useSelector((state) => state.assetRegistry);
   const [form] = Form.useForm<SwapParams>();
@@ -279,8 +279,9 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SWAP,
-      autoFormatValue });
-  }, [accounts, assetRegistryMap, autoFormatValue, chainInfoMap, form]);
+      autoFormatValue,
+      allowLedgerGenerics: ledgerGenericAllowNetworks });
+  }, [accounts, assetRegistryMap, autoFormatValue, chainInfoMap, form, ledgerGenericAllowNetworks]);
 
   const accountAddressItems = useMemo(() => {
     const chainInfo = chainValue ? chainInfoMap[chainValue] : undefined;
