@@ -234,12 +234,6 @@ export const PREDEFINED_FORMATTER: Record<string, NumberFormatter> = {
   balance: balanceFormatter
 };
 
-export const toBNString = (input: string | number | BigNumber, decimal: number): string => {
-  const raw = new BigNumber(input);
-
-  return raw.multipliedBy(BN_TEN.pow(decimal)).toFixed();
-};
-
 export const formatNumber = (
   input: string | number | BigNumber,
   decimal: number,

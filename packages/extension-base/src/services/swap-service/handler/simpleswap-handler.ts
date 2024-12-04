@@ -1,15 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { _getSimpleSwapEarlyValidationError } from '@subwallet/extension-base/core/logic-validation/swap';
-import { _getAssetSymbol, _getChainNativeTokenSlug, _getContractAddressOfToken, _isChainSubstrateCompatible, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getChainNativeTokenSlug, _getContractAddressOfToken, _isChainSubstrateCompatible, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { BaseStepDetail, BasicTxErrorType, CommonFeeComponent, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, OptimalSwapPathParams, SimpleSwapTxData, SimpleSwapValidationMetadata, SwapEarlyValidation, SwapErrorType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, TransactionData, ValidateSwapProcessParams } from '@subwallet/extension-base/types';
-import { formatNumber, toBNString } from '@subwallet/extension-base/utils';
-import BigN from 'bignumber.js';
+import { formatNumber } from '@subwallet/extension-base/utils';
+import BigN, { BigNumber } from 'bignumber.js';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 
@@ -36,6 +35,12 @@ interface ExchangeSimpleSwapData{
 const apiUrl = 'https://api.simpleswap.io';
 
 export const simpleSwapApiKey = process.env.SIMPLE_SWAP_API_KEY || 'a98afe1b-ee37-4c4f-9d5e-5e09d4b43b38';
+
+const toBNString = (input: string | number | BigNumber, decimal: number): string => {
+  const raw = new BigNumber(input);
+
+  return raw.shiftedBy(decimal).integerValue(BigNumber.ROUND_CEIL).toFixed();
+};
 
 export class SimpleSwapHandler implements SwapBaseInterface {
   private swapBaseHandler: SwapBaseHandler;
@@ -155,7 +160,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
       }
 
-      const toAmount = toBNString(resToAmount, toAsset.decimals || 0);
+      const toAmount = toBNString(resToAmount, _getAssetDecimals(toAsset));
       const fromAmount = request.fromAmount;
       const bnToAmount = new BigN(toAmount);
 
@@ -199,8 +204,8 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         rate,
         provider: this.providerInfo,
         aliveUntil: +Date.now() + (SWAP_QUOTE_TIMEOUT_MAP[this.slug] || SWAP_QUOTE_TIMEOUT_MAP.default),
-        minSwap: toBNString(metadata.minSwap.value, fromAsset.decimals || 0),
-        maxSwap: toBNString(metadata.maxSwap?.value, fromAsset.decimals || 0),
+        minSwap: toBNString(metadata.minSwap.value, _getAssetDecimals(fromAsset)),
+        maxSwap: toBNString(metadata.maxSwap?.value, _getAssetDecimals(fromAsset)),
         estimatedArrivalTime: 0,
         isLowLiquidity: false,
         feeInfo: {
@@ -293,7 +298,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
 
       const ranges = await rangesResponse.json() as SwapRange;
       const { max, min } = ranges;
-      const bnMin = toBNString(min, fromAsset.decimals || 0);
+      const bnMin = toBNString(min, _getAssetDecimals(fromAsset));
       const bnAmount = BigInt(request.fromAmount);
 
       if (bnAmount < BigInt(bnMin)) {
@@ -315,7 +320,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         };
       }
 
-      if (max && bnAmount > BigInt(toBNString(max, fromAsset.decimals || 0))) {
+      if (max && bnAmount > BigInt(toBNString(max, _getAssetDecimals(fromAsset)))) {
         return {
           error: SwapErrorType.SWAP_EXCEED_ALLOWANCE,
           metadata: {
@@ -348,6 +353,8 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         } as SimpleSwapValidationMetadata
       };
     } catch (e) {
+      console.error(e);
+
       return { error: SwapErrorType.UNKNOWN };
     }
   }
