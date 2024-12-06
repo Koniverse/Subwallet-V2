@@ -151,7 +151,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const assetInfo = useFetchChainAssetInfo(assetValue);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStateMap, chainStatusMap } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStateMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
@@ -315,8 +315,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SEND_FUND,
-      autoFormatValue });
-  }, [accounts, autoFormatValue, chainInfoMap, form]);
+      autoFormatValue,
+      allowLedgerGenerics: ledgerGenericAllowNetworks });
+  }, [accounts, autoFormatValue, chainInfoMap, form, ledgerGenericAllowNetworks]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {

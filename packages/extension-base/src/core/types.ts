@@ -29,5 +29,6 @@ export interface ValidateRecipientParams {
   toAddress: string,
   account: AccountJson | null,
   actionType: ActionType,
-  autoFormatValue?: boolean
+  autoFormatValue?: boolean,
+  allowLedgerGenerics: string[]
 }
