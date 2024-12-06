@@ -169,7 +169,7 @@ export class CardanoApi implements _CardanoApi {
         }
       );
 
-      return await response.text();
+      return (await response.text()).replace(/^"|"$/g, '');
     } catch (e) {
       console.error('Error on submitting cardano tx', e);
 
