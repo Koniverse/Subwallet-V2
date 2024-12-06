@@ -35,8 +35,8 @@ import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, create
 import { getClaimTxOnAvail, getClaimTxOnEthereum, isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _isPolygonChainBridge, getClaimPolygonBridge, isClaimedPolygonBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX, SUFFICIENT_CHAIN } from '@subwallet/extension-base/services/chain-service/constants';
-import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
+import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _SubstrateAdapterQueryArgs, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getTokenOnChainAssetId, _getXcmAssetMultilocation, _isAssetSmartContractNft, _isBridgedToken, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
 import { _NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
@@ -71,11 +71,10 @@ import { t } from 'i18next';
 import { combineLatest, Subject } from 'rxjs';
 import { TransactionConfig } from 'web3-core';
 
-import { ApiPromise } from '@polkadot/api';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import { ChainProperties } from '@polkadot/types/interfaces';
-import { Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
+import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -1411,7 +1410,7 @@ export default class KoniExtension {
 
       const amount = BigInt(transferAmount.value);
 
-      const substrateApi = this.#koniState.getSubstrateApi(networkKey).api;
+      const substrateApi = this.#koniState.getSubstrateApi(networkKey);
       const isSendingTokenSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
 
       const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverSystemAccountInfo, isSendingTokenSufficient);
@@ -1688,15 +1687,24 @@ export default class KoniExtension {
     }
   }
 
-  private async isSufficientToken (tokenInfo: _ChainAsset, substrateApi: ApiPromise): Promise<boolean> {
+  private async isSufficientToken (tokenInfo: _ChainAsset, substrateApi: _SubstrateApi): Promise<boolean> {
     let metadata: SufficientMetadata;
 
     if (SUFFICIENT_CHAIN.includes(tokenInfo.originChain) && tokenInfo.assetType !== _AssetType.NATIVE) {
-      const assetId = tokenInfo?.metadata?.assetId;
+      const assetId = _isBridgedToken(tokenInfo) ? _getXcmAssetMultilocation(tokenInfo) : _getTokenOnChainAssetId(tokenInfo);
 
-      const _metadata = await substrateApi.query.assets.asset(assetId);
+      const queryParams: _SubstrateAdapterQueryArgs = {
+        section: 'query',
+        module: 'foreignAssets',
+        method: 'asset',
+        args: [assetId]
+      };
 
-      metadata = _metadata.toPrimitive() as unknown as SufficientMetadata;
+      if (!_isBridgedToken(tokenInfo)) {
+        queryParams.module = 'assets';
+      }
+
+      metadata = (await substrateApi.makeRpcQuery<AnyJson>(queryParams)) as unknown as SufficientMetadata;
     } else {
       return false;
     }

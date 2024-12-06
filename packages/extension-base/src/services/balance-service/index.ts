@@ -230,7 +230,7 @@ export class BalanceService implements StoppableServiceInterface {
 
         switch (balanceType) {
           case 'total':
-            value = new BigN(rs.free).plus(new BigN(rs.locked)).toString();
+            value = new BigN(rs.free).plus(new BigN(rs.locked)).toFixed();
             break;
           default:
             value = rs.free;
