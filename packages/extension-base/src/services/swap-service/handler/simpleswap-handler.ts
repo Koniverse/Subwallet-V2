@@ -34,7 +34,7 @@ interface ExchangeSimpleSwapData{
 
 const apiUrl = 'https://api.simpleswap.io';
 
-export const simpleSwapApiKey = process.env.SIMPLE_SWAP_API_KEY || 'a98afe1b-ee37-4c4f-9d5e-5e09d4b43b38';
+export const simpleSwapApiKey = process.env.SIMPLE_SWAP_API_KEY || '';
 
 const toBNString = (input: string | number | BigNumber, decimal: number): string => {
   const raw = new BigNumber(input);
