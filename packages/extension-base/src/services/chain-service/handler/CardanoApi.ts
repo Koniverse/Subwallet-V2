@@ -8,6 +8,8 @@ import { _CardanoApi, _ChainConnectionStatus } from '@subwallet/extension-base/s
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
 
+import { hexAddPrefix, isHex } from '@polkadot/util';
+
 export const API_KEY = { // todo: move to env.
   mainnet: 'mainnet6uE9JH3zGYquaxRKA7IMhEuzRUB58uGK',
   testnet: 'preprodcnP5RADcrWMlf2cQe4ZKm4cjRvrBQFXM'
@@ -169,7 +171,15 @@ export class CardanoApi implements _CardanoApi {
         }
       );
 
-      return (await response.text()).replace(/^"|"$/g, '');
+      const hash = (await response.text()).replace(/^"|"$/g, '');
+
+      if (isHex(hexAddPrefix(hash))) {
+        return hash;
+      } else {
+        console.error('Error on submitting cardano tx');
+
+        return '';
+      }
     } catch (e) {
       console.error('Error on submitting cardano tx', e);
 
