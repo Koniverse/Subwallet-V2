@@ -300,14 +300,17 @@ const Component = () => {
     setFeeOptions(quote.feeInfo.feeOptions);
     setCurrentFeeOption(quote.feeInfo.feeOptions?.[0]);
 
-    const currentRequest = {
-      ...currentQuoteRequest as SwapRequest,
-      currentQuote: quote.provider
-    };
+    setCurrentQuoteRequest((oldRequest) => {
+      if (!oldRequest) {
+        return undefined;
+      }
 
-    setCurrentQuoteRequest(currentRequest);
-
-  }, [currentQuoteRequest]);
+      return {
+        ...oldRequest,
+        currentQuote: quote.provider
+      };
+    });
+  }, []);
 
   const onSelectFeeOption = useCallback((slug: string) => {
     setCurrentFeeOption(slug);
