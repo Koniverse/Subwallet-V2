@@ -93,7 +93,7 @@ export async function getClaimPolygonBridge (chainSlug: string, notification: _N
   const isTestnet = chainSlug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA;
   const proofDomain = isTestnet ? POLYGON_PROOF_INDEXER.TESTNET : POLYGON_PROOF_INDEXER.MAINNET;
 
-  const proofResponse = await fetch(`${proofDomain}?networkId=${metadata.sourceNetwork}&depositCount=${metadata.counter}`)
+  const proofResponse = await fetch(`${proofDomain}?networkId=${metadata.sourceNetwork ?? ''}&depositCount=${metadata.counter ?? ''}`)
     .then((res) => res.json()) as ClaimNotification;
   const proof = proofResponse.proof;
 

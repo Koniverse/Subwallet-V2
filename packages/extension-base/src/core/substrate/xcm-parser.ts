@@ -6,6 +6,7 @@ import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
 import { isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
+import { _isPosChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 import { _getChainSubstrateAddressPrefix, _getEvmChainId, _getSubstrateParaId, _getSubstrateRelayParent, _getXcmAssetMultilocation, _isChainEvmCompatible, _isPureEvmChain, _isSubstrateParaChain } from '@subwallet/extension-base/services/chain-service/utils';
 
 import { decodeAddress, evmToAddress } from '@polkadot/util-crypto';
@@ -63,7 +64,7 @@ export function _getXcmMultiLocation (originChainInfo: _ChainInfo, destChainInfo
 }
 
 export function _isXcmTransferUnstable (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): boolean {
-  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) || _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug) || _isPolygonBridgeXcm(originChainInfo, destChainInfo);
+  return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) || _isMythosFromHydrationToMythos(originChainInfo, destChainInfo, assetSlug) || _isPolygonBridgeXcm(originChainInfo, destChainInfo) || _isPosBridgeXcm(originChainInfo, destChainInfo);
 }
 
 function getAssetHubBridgeUnstableWarning (originChainInfo: _ChainInfo): string {
@@ -104,8 +105,18 @@ function getPolygonBridgeWarning (originChainInfo: _ChainInfo): string {
   }
 }
 
+function getPosBridgeWarning (originChainInfo: _ChainInfo): string {
+  if (originChainInfo.slug === COMMON_CHAIN_SLUGS.ETHEREUM || originChainInfo.slug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA) {
+    return 'Cross-chain transfer of this token may take up to 22 minutes. Do you still want to continue?';
+  } else {
+    return 'Cross-chain transfer of this token may take up to 90 minutes, and you’ll need to manually claim the funds on the destination network to complete the transfer. Do you still want to continue?';
+  }
+}
+
 export function _getXcmUnstableWarning (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo, assetSlug: string): string {
-  if (_isPolygonBridgeXcm(originChainInfo, destChainInfo)) {
+  if (_isPosBridgeXcm(originChainInfo, destChainInfo)) {
+    return getPosBridgeWarning(originChainInfo);
+  } else if (_isPolygonBridgeXcm(originChainInfo, destChainInfo)) {
     return getPolygonBridgeWarning(originChainInfo);
   } else if (_isAvailBridgeXcm(originChainInfo, destChainInfo)) {
     return getAvailBridgeWarning();
@@ -139,6 +150,10 @@ export function _isMythosFromHydrationToMythos (originChainInfo: _ChainInfo, des
 
 export function _isPolygonBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
   return _isPolygonChainBridge(originChainInfo.slug, destChainInfo.slug);
+}
+
+export function _isPosBridgeXcm (originChainInfo: _ChainInfo, destChainInfo: _ChainInfo): boolean {
+  return _isPosChainBridge(originChainInfo.slug, destChainInfo.slug);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

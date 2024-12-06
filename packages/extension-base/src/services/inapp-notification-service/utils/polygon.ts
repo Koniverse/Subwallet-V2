@@ -11,7 +11,7 @@ export const POLYGON_BRIDGE_INDEXER = {
 export interface PolygonTransaction {
   _id: string;
   transactionIndex?: number;
-  sourceNetwork: number;
+  sourceNetwork?: number;
   destinationNetwork: number;
   blockNumber: number;
   amounts: string[];
@@ -25,16 +25,16 @@ export interface PolygonTransaction {
   userAddress: string;
   wrappedTokenAddress?: string;
   wrappedTokenNetwork?: number;
-  counter: number;
+  counter?: number;
   bridgeContractAddress?: string;
   eventInitiatorAddress?: string;
   globalExitRootManager?: string;
   leaf?: string;
   mainnetExitRoot?: string;
   metadata?: string;
-  originTokenAddress: string;
-  originTokenNetwork: number;
-  receiver: string; // empty when not claimed
+  originTokenAddress?: string;
+  originTokenNetwork?: number;
+  receiver?: string; // empty when not claimed
   refuel: boolean;
   rollUpExitRoot?: string;
   nonce?: any;
@@ -43,7 +43,7 @@ export interface PolygonTransaction {
   claimTransactionBlockNumber?: number;
   claimTransactionHash?: string;
   claimTransactionTimestamp?: string;
-  transactionInitiator: string;
+  transactionInitiator?: string;
 }
 
 interface PaginationData {
@@ -87,7 +87,7 @@ export async function fetchPolygonBridgeTransactions (userAddress: string, isTes
     page: page.toString()
   });
 
-  const networkIds = [0, 1];
+  const networkIds = [0, 1, -1];
 
   networkIds.forEach((networkId) => {
     params.append('destinationNetworkIds', networkId.toString());

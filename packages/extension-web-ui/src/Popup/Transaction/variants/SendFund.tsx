@@ -41,6 +41,7 @@ import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
 import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
+import { _isPosChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 
 type Props = ThemeProps & {
   modalContent?: boolean;
@@ -259,7 +260,7 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chain];
 
-    if (_isPolygonChainBridge(chain, destChain)) {
+    if (_isPolygonChainBridge(chain, destChain) || _isPosChainBridge(chain, destChain)) {
       return true;
     }
 

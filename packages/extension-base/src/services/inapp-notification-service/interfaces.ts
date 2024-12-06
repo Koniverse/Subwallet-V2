@@ -70,15 +70,16 @@ export interface ClaimPolygonBridgeNotificationMetadata {
   tokenSlug: string;
   _id: string;
   amounts: string[];
-  counter: number;
+  bridgeType: string;
+  counter?: number;
   destinationNetwork: number;
-  originTokenAddress: string;
-  originTokenNetwork: number;
-  receiver: string;
-  sourceNetwork: number;
+  originTokenAddress?: string;
+  originTokenNetwork?: number;
+  receiver?: string;
+  sourceNetwork?: number;
   status: BridgeTransactionStatus;
   transactionHash: string;
-  transactionInitiator: string;
+  transactionInitiator?: string;
   userAddress: string;
 }
 
