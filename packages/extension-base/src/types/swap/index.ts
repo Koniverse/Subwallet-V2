@@ -159,6 +159,7 @@ export interface SwapRequest {
   slippage: number; // Example: 0.01 for 1%
   recipient?: string;
   feeToken?: string;
+  currentQuote?: SwapProvider
 }
 
 export interface SwapRequestResult {
@@ -218,3 +219,4 @@ export interface SlippageType {
 }
 
 export const CHAINFLIP_SLIPPAGE = 0.02; // Example: 0.01 for 1%
+export const SIMPLE_SWAP_SLIPPAGE = 0.05;

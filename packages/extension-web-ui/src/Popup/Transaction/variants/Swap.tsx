@@ -8,7 +8,7 @@ import { _getAssetDecimals, _getAssetOriginChain, _getAssetSymbol, _getChainNati
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { CommonFeeComponent, CommonOptimalPath, CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { CHAINFLIP_SLIPPAGE, SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
+import { CHAINFLIP_SLIPPAGE, SIMPLE_SWAP_SLIPPAGE, SlippageType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest } from '@subwallet/extension-base/types/swap';
 import { formatNumberString, isAccountAll, swapCustomFormatter } from '@subwallet/extension-base/utils';
 import { AccountSelector, AddMoreBalanceModal, AddressInput, AlertBox, ChooseFeeTokenModal, HiddenInput, MetaInfo, PageWrapper, QuoteResetTime, SlippageModal, SwapFromField, SwapIdleWarningModal, SwapQuotesSelectorModal, SwapRoute, SwapTermsOfServiceModal, SwapToField } from '@subwallet/extension-web-ui/components';
 import { BN_TEN, BN_ZERO, CONFIRM_SWAP_TERM, DEFAULT_SWAP_PARAMS, SWAP_ALL_QUOTES_MODAL, SWAP_CHOOSE_FEE_TOKEN_MODAL, SWAP_IDLE_WARNING_MODAL, SWAP_MORE_BALANCE_MODAL, SWAP_SLIPPAGE_MODAL, SWAP_TERMS_OF_SERVICE_MODAL } from '@subwallet/extension-web-ui/constants';
@@ -266,7 +266,15 @@ const Component = () => {
   }, [form]);
 
   const notSupportSlippageSelection = useMemo(() => {
-    if (currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_TESTNET || currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_MAINNET) {
+    if (currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_TESTNET || currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_MAINNET || currentQuote?.provider.id === SwapProviderId.SIMPLE_SWAP) {
+      return true;
+    }
+
+    return false;
+  }, [currentQuote?.provider.id]);
+
+  const isSimpleSwapSlippage = useMemo(() => {
+    if (currentQuote?.provider.id === SwapProviderId.SIMPLE_SWAP) {
       return true;
     }
 
@@ -291,7 +299,15 @@ const Component = () => {
     setCurrentQuote(quote);
     setFeeOptions(quote.feeInfo.feeOptions);
     setCurrentFeeOption(quote.feeInfo.feeOptions?.[0]);
-  }, []);
+
+    const currentRequest = {
+      ...currentQuoteRequest as SwapRequest,
+      currentQuote: quote.provider
+    };
+
+    setCurrentQuoteRequest(currentRequest);
+
+  }, [currentQuoteRequest]);
 
   const onSelectFeeOption = useCallback((slug: string) => {
     setCurrentFeeOption(slug);
@@ -632,7 +648,11 @@ const Component = () => {
               currentStep: step,
               quote: latestOptimalQuote,
               address: from,
-              slippage: [SwapProviderId.CHAIN_FLIP_MAINNET, SwapProviderId.CHAIN_FLIP_TESTNET].includes(latestOptimalQuote.provider.id) ? CHAINFLIP_SLIPPAGE : currentSlippage.slippage.toNumber(),
+              slippage: [SwapProviderId.CHAIN_FLIP_MAINNET, SwapProviderId.CHAIN_FLIP_TESTNET].includes(latestOptimalQuote.provider.id)
+              ? CHAINFLIP_SLIPPAGE
+              : SwapProviderId.SIMPLE_SWAP.includes(latestOptimalQuote.provider.id)
+                ? SIMPLE_SWAP_SLIPPAGE
+                : currentSlippage.slippage.toNumber(),
               recipient
             });
 
@@ -735,22 +755,42 @@ const Component = () => {
             className='__slippage-action'
             onClick={onOpenSlippageModal}
           >
-            {notSupportSlippageSelection
+          {notSupportSlippageSelection
               ? (
-                <>
-                  <div className={'__slippage-title-wrapper'}>Slippage
-                      <Icon
-                        customSize={'16px'}
-                        iconColor={token.colorSuccess}
-                        phosphorIcon={Info}
-                        size='sm'
-                        weight='fill'
-                      />
-                  :
-                  </div>
-                  &nbsp;<span>{(CHAINFLIP_SLIPPAGE * 100).toString()}%</span>
-                </>
-              )
+                isSimpleSwapSlippage
+                  ? (
+                    <Tooltip
+                      placement={'topRight'}
+                      title='Slippage can be up to 5% due to market conditions'
+                    >
+                      <div className='__slippage-title-wrapper'>Slippage
+                        <Icon
+                          customSize='16px'
+                          iconColor={token.colorSuccess}
+                          phosphorIcon={Info}
+                          size='sm'
+                          weight='fill'
+                        />
+                          &nbsp;<span>Up to {(SIMPLE_SWAP_SLIPPAGE * 100).toString()}%</span>
+                      </div>
+                    </Tooltip>
+                  ) 
+                  : (
+                    <>
+                      <div className='__slippage-title-wrapper'>Slippage
+                        <Icon
+                          customSize='16px'
+                          iconColor={token.colorSuccess}
+                          phosphorIcon={Info}
+                          size='sm'
+                          weight='fill'
+                        />
+                        :
+                      </div>
+                        &nbsp;<span>{(CHAINFLIP_SLIPPAGE * 100).toString()}%</span>
+                    </>
+                  )
+              ) 
               : (
                 <>
                   <div className={'__slippage-title-wrapper'}>Slippage

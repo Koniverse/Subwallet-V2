@@ -139,7 +139,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         fixed: 'false',
         currency_from: fromSymbol,
         currency_to: toSymbol,
-        amount: formatNumber(request.fromAmount, fromAsset.decimals || 0)
+        amount: formatNumber(request.fromAmount, _getAssetDecimals(fromAsset))
       });
 
       let resToAmount: string;

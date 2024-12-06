@@ -60,7 +60,7 @@ export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.POLKADOT_ASSET_HUB]: [COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB],
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
   [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB],
-  [SwapProviderId.SIMPLE_SWAP]: ['bittensor', 'bittensor_testnet', COMMON_CHAIN_SLUGS.ETHEREUM, COMMON_CHAIN_SLUGS.POLKADOT]
+  [SwapProviderId.SIMPLE_SWAP]: ['bittensor', COMMON_CHAIN_SLUGS.ETHEREUM, COMMON_CHAIN_SLUGS.POLKADOT]
 };
 
 export function getSwapAlternativeAsset (swapPair: SwapPair): string | undefined {

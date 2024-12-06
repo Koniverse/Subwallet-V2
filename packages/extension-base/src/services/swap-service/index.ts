@@ -149,7 +149,7 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
 
       quoteError = preferredErrorResp?.error || defaultErrorResp?.error;
     } else {
-      selectedQuote = availableQuotes[0];
+      selectedQuote = availableQuotes.find((quote) => quote.provider.id === request.currentQuote?.id) || availableQuotes[0];
       aliveUntil = selectedQuote?.aliveUntil || (+Date.now() + SWAP_QUOTE_TIMEOUT_MAP.default);
     }
 
