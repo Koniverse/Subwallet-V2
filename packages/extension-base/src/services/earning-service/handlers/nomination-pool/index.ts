@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { APIItemState, ChainType, ExtrinsicType, NominationInfo, StakingType, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { PalletNominationPoolsPoolMember } from '@subwallet/extension-base/core/substrate/types';
@@ -361,7 +362,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
 
   /* Get pool reward */
 
-  async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem) => void): Promise<VoidFunction> {
+  async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem, tokenInfo: _ChainAsset) => void): Promise<VoidFunction> {
     let cancel = false;
     const substrateApi = this.substrateApi;
 
@@ -381,11 +382,13 @@ export default class NominationPoolHandler extends BasePoolHandler {
               state: APIItemState.READY
             };
 
-            if (_unclaimedReward.toString() !== '0') {
-              await this.createClaimNotification(earningRewardItem, this.nativeToken);
-            }
+            // if (_unclaimedReward.toString() !== '0') {
+            //   await this.createClaimNotification(earningRewardItem, this.nativeToken);
+            // }
 
-            callBack(earningRewardItem);
+            if (_unclaimedReward.toString() !== '0') {
+              callBack(earningRewardItem, this.nativeToken);
+            }
           }
         }
       }

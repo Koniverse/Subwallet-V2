@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
+import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { APIItemState, ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { getBondedValidators, getEarningStatusByNominations, isUnstakeAll, KrestDelegateState } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
@@ -320,7 +320,7 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
 
   /* Get pool reward */
 
-  override async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem) => void): Promise<VoidFunction> {
+  override async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem, tokenInfo: _ChainAsset) => void): Promise<VoidFunction> {
     let cancel = false;
     const substrateApi = this.substrateApi;
 
@@ -346,8 +346,9 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
         // if (_unclaimedReward.toString() !== '0') {
         //   await this.createClaimNotification(earningRewardItem, this.nativeToken);
         // }
-
-        callBack(earningRewardItem);
+        if (_unclaimedReward.toString() !== '0') {
+          callBack(earningRewardItem, this.nativeToken);
+        }
       }));
     }
 

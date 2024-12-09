@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
@@ -46,7 +47,7 @@ export default abstract class BaseNativeStakingPoolHandler extends BasePoolHandl
 
   /* Get pool reward */
 
-  async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem) => void): Promise<VoidFunction> {
+  async getPoolReward (useAddresses: string[], callBack: (rs: EarningRewardItem, tokenInfo: _ChainAsset) => void): Promise<VoidFunction> {
     return new Promise((resolve) => resolve(noop));
   }
 
