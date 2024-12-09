@@ -1,6 +1,6 @@
-    2898	AnhMTV                        	Release version 1.3.8
-    2546	Nam Phạm                      	[Issue 3747] chore: fix eslint
-    2372	S2kael                        	[Issue-3852] Update metadata for case KSM and DOT
+    2903	AnhMTV                        	
+    2551	Nam Phạm                      	
+    2374	S2kael                        	[Issue-3713] Fix cannot transfer TON
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
      489	bluezdot                      	[Issue-3132] fix: fix lost asset when reloading extension
@@ -13,14 +13,14 @@
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
       96	lw                            	
+      88	PDTnhah                       	[Issue-3713] Refactor code
       83	Hieu Dao                      	Update README.md
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
       73	bluedot                       	[Issue-3579] fix: update check fully migrate
-      73	PDTnhah                       	[Issue-3846] Update chainlist
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      52	tunghp2002                    	[Update] Hide Max Button ETH <-> Polygonzkevm
+      53	tunghp2002                    	[Update] Hide Max Button ETH <-> Polygonzkevm
       26	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
