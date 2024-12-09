@@ -50,9 +50,10 @@ function Component (props: Props): React.ReactElement<Props> {
       [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
       [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,
       [AccountChainType.BITCOIN]: logoMap.network.bitcoin as string,
-      [AccountChainType.TON]: logoMap.network.ton as string
+      [AccountChainType.TON]: logoMap.network.ton as string,
+      [AccountChainType.CARDANO]: logoMap.network.cardano as string
     };
-  }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
+  }, [logoMap.network.bitcoin, logoMap.network.cardano, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
 
   const _onClickDeriveButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();

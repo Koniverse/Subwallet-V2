@@ -6298,6 +6298,7 @@ __metadata:
     "@apollo/client": ^3.7.14
     "@azns/resolver-core": ^1.4.0
     "@chainflip/sdk": ^1.6.0
+    "@emurgo/cardano-serialization-lib-nodejs": ^13.2.0
     "@equilab/api": ~1.14.25
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
@@ -6681,7 +6682,7 @@ __metadata:
 
 "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.7
-  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=f6dfa7&locator=root-workspace-0b6124%40workspace%3A."
+  resolution: "@subwallet/keyring@file:../SubWallet-Base/packages/keyring/build/#../SubWallet-Base/packages/keyring/build/::hash=e8ecec&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@emurgo/cardano-serialization-lib-nodejs": ^13.2.0
     "@ethereumjs/tx": ^5.0.0
@@ -6702,7 +6703,7 @@ __metadata:
     rxjs: ^7.5.6
     tiny-secp256k1: ^2.2.3
     tslib: ^2.6.2
-  checksum: 0219898a8a5c0c9c8fe996c7346c7c2783cb8a7e17b70c8e3b0ba9574554a67c11ecfe3a31dfc7fa2ff096fda5a720d4ca30ae8da79a79b5ace6855340c300c1
+  checksum: 56c3b6775359df5df83cafbdd79d9e446df23f159a226ff145d5b495fac9a9766c69ee3347a9296a3d9803fecbb70af6ec28ee630b201f997eb5f000155b11a2
   languageName: node
   linkType: hard
 
