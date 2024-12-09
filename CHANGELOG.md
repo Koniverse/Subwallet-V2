@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## 1.3.9
+Build date: Dec 09, 2024.
+
+Features & Update:
+- Allow Polkadot namespace use EVM address (#3870)
+- Support Generic ledger app for Vara network (#3835)
+
+Bug fixed:
+- Fixed bug validating recipient balance when sending Substrate token (#3713)
+- Fixed bug send NFT on Ethereum network (#3762)
+
+
 ## 1.3.8
 Build date: Dec 03, 2024.
 
