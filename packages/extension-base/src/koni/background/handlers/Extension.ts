@@ -43,7 +43,6 @@ import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/reques
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_AUTO_LOCK_TIME } from '@subwallet/extension-base/services/setting-service/constants';
 import { SWTransaction, SWTransactionResponse, SWTransactionResult, TransactionEmitter, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
-import { WALLET_CONNECT_EIP155_NAMESPACE } from '@subwallet/extension-base/services/wallet-connect-service/constants';
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
@@ -2985,13 +2984,13 @@ export default class KoniExtension {
     Object.entries(availableNamespaces)
       .forEach(([key, namespace]) => {
         if (namespace.chains) {
-          const accounts: string[] = [];
+          const accounts: string[] = selectedAccounts.filter((address) => {
+            const [_namespace] = address.split(':');
+
+            return _namespace === key;
+          });
 
           const chains = uniqueStringArray(namespace.chains);
-
-          chains.forEach((chain) => {
-            accounts.push(...(selectedAccounts.filter((address) => isEthereumAddress(address) === (key === WALLET_CONNECT_EIP155_NAMESPACE)).map((address) => `${chain}:${address}`)));
-          });
 
           namespaces[key] = {
             accounts,
