@@ -727,7 +727,6 @@ export default class EarningService implements StoppableServiceInterface, Persis
         this.updateEarningReward(result);
 
         const notification = createClaimNotification(result, tokenInfo);
-        console.log('[notification 2]', notification);
 
         this.state.inappNotificationService.validateAndWriteNotificationsToDB([notification], result.address).catch(console.error);
       }).catch(console.error);
