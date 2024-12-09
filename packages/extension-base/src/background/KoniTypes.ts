@@ -616,6 +616,11 @@ export interface BasicTokenInfo {
   symbol: string;
 }
 
+export interface SufficientMetadata {
+  isSufficient: boolean,
+  minBalance: number
+}
+
 export interface AmountData extends BasicTokenInfo {
   value: string;
   metadata?: unknown;
