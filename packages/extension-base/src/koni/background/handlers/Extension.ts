@@ -7,11 +7,12 @@ import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { createSubscription } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, AssetSetting, AssetSettingUpdateReq, BondingOptionParams, BrowserConfirmationType, CampaignBanner, CampaignData, CampaignDataType, ChainType, CronReloadRequest, CrowdloanJson, ExternalRequestPromiseStatus, ExtrinsicType, KeyringState, MantaPayEnableMessage, MantaPayEnableParams, MantaPayEnableResponse, MantaPaySyncState, MetadataItem, NftCollection, NftJson, NftTransactionRequest, NftTransactionResponse, PriceJson, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestAddInjectedAccounts, RequestApproveConnectWalletSession, RequestApproveWalletConnectNotSupport, RequestAuthorization, RequestAuthorizationBlock, RequestAuthorizationPerAccount, RequestAuthorizationPerSite, RequestAuthorizeApproveV2, RequestBondingSubmit, RequestCameraSettings, RequestCampaignBannerComplete, RequestChangeEnableChainPatrol, RequestChangeLanguage, RequestChangeMasterPassword, RequestChangePriceCurrency, RequestChangeShowBalance, RequestChangeShowZeroBalance, RequestChangeTimeAutoLock, RequestConfirmationComplete, RequestConfirmationCompleteTon, RequestConnectWalletConnect, RequestCrowdloanContributions, RequestDeleteContactAccount, RequestDisconnectWalletConnectSession, RequestEditContactAccount, RequestFindRawMetadata, RequestForgetSite, RequestFreeBalance, RequestGetTransaction, RequestKeyringExportMnemonic, RequestMaxTransferable, RequestMigratePassword, RequestParseEvmContractInput, RequestParseTransactionSubstrate, RequestPassPhishingPage, RequestQrParseRLP, RequestQrSignEvm, RequestQrSignSubstrate, RequestRejectConnectWalletSession, RequestRejectExternalRequest, RequestRejectWalletConnectNotSupport, RequestRemoveInjectedAccounts, RequestResetWallet, RequestResolveExternalRequest, RequestSaveAppConfig, RequestSaveBrowserConfig, RequestSaveOSConfig, RequestSaveRecentAccount, RequestSettingsType, RequestSigningApprovePasswordV2, RequestStakePoolingBonding, RequestStakePoolingUnbonding, RequestSubscribeHistory, RequestSubstrateNftSubmitTransaction, RequestTuringCancelStakeCompound, RequestTuringStakeCompound, RequestUnbondingSubmit, RequestUnlockKeyring, RequestUnlockType, ResolveAddressToDomainRequest, ResolveDomainRequest, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseFindRawMetadata, ResponseKeyringExportMnemonic, ResponseMigratePassword, ResponseNftImport, ResponseParseEvmContractInput, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate, ResponseRejectExternalRequest, ResponseResetWallet, ResponseResolveExternalRequest, ResponseSubscribeHistory, ResponseUnlockKeyring, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, StakingType, ThemeNames, TransactionHistoryItem, TransactionResponse, ValidateNetworkRequest, ValidateNetworkResponse, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, AssetSetting, AssetSettingUpdateReq, BondingOptionParams, BrowserConfirmationType, CampaignBanner, CampaignData, CampaignDataType, ChainType, CronReloadRequest, CrowdloanJson, ExternalRequestPromiseStatus, ExtrinsicType, KeyringState, MantaPayEnableMessage, MantaPayEnableParams, MantaPayEnableResponse, MantaPaySyncState, MetadataItem, NftCollection, NftJson, NftTransactionRequest, NftTransactionResponse, PriceJson, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestAddInjectedAccounts, RequestApproveConnectWalletSession, RequestApproveWalletConnectNotSupport, RequestAuthorization, RequestAuthorizationBlock, RequestAuthorizationPerAccount, RequestAuthorizationPerSite, RequestAuthorizeApproveV2, RequestBondingSubmit, RequestCameraSettings, RequestCampaignBannerComplete, RequestChangeEnableChainPatrol, RequestChangeLanguage, RequestChangeMasterPassword, RequestChangePriceCurrency, RequestChangeShowBalance, RequestChangeShowZeroBalance, RequestChangeTimeAutoLock, RequestConfirmationComplete, RequestConfirmationCompleteTon, RequestConnectWalletConnect, RequestCrowdloanContributions, RequestDeleteContactAccount, RequestDisconnectWalletConnectSession, RequestEditContactAccount, RequestFindRawMetadata, RequestForgetSite, RequestFreeBalance, RequestGetTransaction, RequestKeyringExportMnemonic, RequestMaxTransferable, RequestMigratePassword, RequestParseEvmContractInput, RequestParseTransactionSubstrate, RequestPassPhishingPage, RequestQrParseRLP, RequestQrSignEvm, RequestQrSignSubstrate, RequestRejectConnectWalletSession, RequestRejectExternalRequest, RequestRejectWalletConnectNotSupport, RequestRemoveInjectedAccounts, RequestResetWallet, RequestResolveExternalRequest, RequestSaveAppConfig, RequestSaveBrowserConfig, RequestSaveOSConfig, RequestSaveRecentAccount, RequestSettingsType, RequestSigningApprovePasswordV2, RequestStakePoolingBonding, RequestStakePoolingUnbonding, RequestSubscribeHistory, RequestSubstrateNftSubmitTransaction, RequestTuringCancelStakeCompound, RequestTuringStakeCompound, RequestUnbondingSubmit, RequestUnlockKeyring, RequestUnlockType, ResolveAddressToDomainRequest, ResolveDomainRequest, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseFindRawMetadata, ResponseKeyringExportMnemonic, ResponseMigratePassword, ResponseNftImport, ResponseParseEvmContractInput, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate, ResponseRejectExternalRequest, ResponseResetWallet, ResponseResolveExternalRequest, ResponseSubscribeHistory, ResponseUnlockKeyring, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, StakingType, SufficientMetadata, ThemeNames, TransactionHistoryItem, TransactionResponse, ValidateNetworkRequest, ValidateNetworkResponse, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType, AuthorizeRequest, MessageTypes, MetadataRequest, RequestAccountExport, RequestAuthorizeCancel, RequestAuthorizeReject, RequestCurrentAccountAddress, RequestMetadataApprove, RequestMetadataReject, RequestSigningApproveSignature, RequestSigningCancel, RequestTypes, ResponseAccountExport, ResponseAuthorizeList, ResponseType, SigningRequest, WindowOpenParams } from '@subwallet/extension-base/background/types';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
-import { additionalValidateTransfer, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { additionalValidateTransferForRecipient, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
 import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
@@ -34,16 +35,15 @@ import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, create
 import { getClaimTxOnAvail, getClaimTxOnEthereum, isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _isPolygonChainBridge, getClaimPolygonBridge, isClaimedPolygonBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { _isPosChainBridge, getClaimPosBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
-import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
-import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _isAssetSmartContractNft, _isChainEvmCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
+import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX, SUFFICIENT_CHAIN } from '@subwallet/extension-base/services/chain-service/constants';
+import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _SubstrateAdapterQueryArgs, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getTokenOnChainAssetId, _getXcmAssetMultilocation, _isAssetSmartContractNft, _isBridgedToken, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
 import { _NotificationInfo, ClaimPolygonBridgeNotificationMetadata, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_AUTO_LOCK_TIME } from '@subwallet/extension-base/services/setting-service/constants';
 import { SWTransaction, SWTransactionResponse, SWTransactionResult, TransactionEmitter, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
-import { WALLET_CONNECT_EIP155_NAMESPACE } from '@subwallet/extension-base/services/wallet-connect-service/constants';
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
@@ -74,7 +74,7 @@ import { TransactionConfig } from 'web3-core';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import { ChainProperties } from '@polkadot/types/interfaces';
-import { Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
+import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -1387,23 +1387,33 @@ export default class KoniExtension {
     const transferNativeAmount = isTransferNativeToken ? transferAmount.value : '0';
 
     const additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
-      let senderTransferTokenTransferable: string | undefined;
-      let receiverNativeTransferable: string | undefined;
+      let senderSendingTokenTransferable: bigint | undefined;
+      let receiverSystemAccountInfo: FrameSystemAccountInfo | undefined;
+
+      if (!_isChainSubstrateCompatible(chainInfo)) {
+        return undefined;
+      }
 
       // Check ed for sender
       if (!isTransferNativeToken) {
-        const [_senderTransferTokenTransferable, _receiverNativeTransferable] = await Promise.all([
+        const [_senderSendingTokenTransferable, _receiverNativeTotal] = await Promise.all([
           this.getAddressTransferableBalance({ address: from, networkKey, token: tokenSlug, extrinsicType }),
-          this.getAddressTransferableBalance({ address: to, networkKey, token: nativeTokenSlug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE })
+          this.getAddressTotalBalance({ address: to, networkKey, token: nativeTokenSlug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE })
         ]);
 
-        senderTransferTokenTransferable = _senderTransferTokenTransferable.value;
-        receiverNativeTransferable = _receiverNativeTransferable.value;
+        senderSendingTokenTransferable = BigInt(_senderSendingTokenTransferable.value);
+        receiverSystemAccountInfo = _receiverNativeTotal.metadata as FrameSystemAccountInfo;
       }
 
-      const { value: receiverTransferTokenTransferable } = await this.getAddressTransferableBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
+      const { value: _receiverSendingTokenKeepAliveBalance } = await this.getAddressTotalBalance({ address: to, networkKey, token: tokenSlug, extrinsicType }); // todo: shouldn't be just transferable, locked also counts
+      const receiverSendingTokenKeepAliveBalance = BigInt(_receiverSendingTokenKeepAliveBalance);
 
-      const [warnings, errors] = additionalValidateTransfer(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverTransferTokenTransferable, transferAmount.value, senderTransferTokenTransferable, receiverNativeTransferable);
+      const amount = BigInt(transferAmount.value);
+
+      const substrateApi = this.#koniState.getSubstrateApi(networkKey);
+      const isSendingTokenSufficient = await this.isSufficientToken(transferTokenInfo, substrateApi);
+
+      const [warnings, errors] = additionalValidateTransferForRecipient(transferTokenInfo, nativeTokenInfo, extrinsicType, receiverSendingTokenKeepAliveBalance, amount, senderSendingTokenTransferable, receiverSystemAccountInfo, isSendingTokenSufficient);
 
       warnings.length && inputTransaction.warnings.push(...warnings);
       errors.length && inputTransaction.errors.push(...errors);
@@ -1678,6 +1688,31 @@ export default class KoniExtension {
     }
   }
 
+  private async isSufficientToken (tokenInfo: _ChainAsset, substrateApi: _SubstrateApi): Promise<boolean> {
+    let metadata: SufficientMetadata;
+
+    if (SUFFICIENT_CHAIN.includes(tokenInfo.originChain) && tokenInfo.assetType !== _AssetType.NATIVE) {
+      const assetId = _isBridgedToken(tokenInfo) ? _getXcmAssetMultilocation(tokenInfo) : _getTokenOnChainAssetId(tokenInfo);
+
+      const queryParams: _SubstrateAdapterQueryArgs = {
+        section: 'query',
+        module: 'foreignAssets',
+        method: 'asset',
+        args: [assetId]
+      };
+
+      if (!_isBridgedToken(tokenInfo)) {
+        queryParams.module = 'assets';
+      }
+
+      metadata = (await substrateApi.makeRpcQuery<AnyJson>(queryParams)) as unknown as SufficientMetadata;
+    } else {
+      return false;
+    }
+
+    return metadata.isSufficient;
+  }
+
   private async deleteCustomAsset (assetSlug: string) {
     const assetInfo = this.#koniState.getAssetBySlug(assetSlug);
 
@@ -1708,6 +1743,10 @@ export default class KoniExtension {
     }
 
     return await this.#koniState.balanceService.getTransferableBalance(address, networkKey, token, extrinsicType);
+  }
+
+  private async getAddressTotalBalance ({ address, extrinsicType, networkKey, token }: RequestFreeBalance): Promise<AmountData> {
+    return await this.#koniState.balanceService.getTotalBalance(address, networkKey, token, extrinsicType);
   }
 
   private async getMaxTransferable ({ address, destChain, isXcmTransfer, networkKey, token }: RequestMaxTransferable): Promise<AmountData> {
@@ -2947,13 +2986,13 @@ export default class KoniExtension {
     Object.entries(availableNamespaces)
       .forEach(([key, namespace]) => {
         if (namespace.chains) {
-          const accounts: string[] = [];
+          const accounts: string[] = selectedAccounts.filter((address) => {
+            const [_namespace] = address.split(':');
+
+            return _namespace === key;
+          });
 
           const chains = uniqueStringArray(namespace.chains);
-
-          chains.forEach((chain) => {
-            accounts.push(...(selectedAccounts.filter((address) => isEthereumAddress(address) === (key === WALLET_CONNECT_EIP155_NAMESPACE)).map((address) => `${chain}:${address}`)));
-          });
 
           namespaces[key] = {
             accounts,
