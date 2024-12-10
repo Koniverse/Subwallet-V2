@@ -1498,17 +1498,27 @@ export default class KoniExtension {
       extrinsic = await funcCreateExtrinsic(params);
 
       additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
-        const { value: senderTransferable } = await this.getAddressTransferableBalance({ address: from, networkKey: originNetworkKey, token: originTokenInfo.slug });
+        const { value: _senderTransferable } = await this.getAddressTransferableBalance({ address: from, networkKey: originNetworkKey, token: originTokenInfo.slug });
         const isSnowBridge = _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
-        let recipientNativeBalance = '0';
+        let receiverNativeBalance: bigint | undefined;
+        let isSendingTokenSufficient = false;
+
+        const sendingAmount = BigInt(value);
+        const senderTransferable = BigInt(_senderTransferable);
 
         if (isSnowBridge) {
           const { value } = await this.getAddressTransferableBalance({ address: to, networkKey: destinationNetworkKey, extrinsicType: ExtrinsicType.TRANSFER_BALANCE });
 
-          recipientNativeBalance = value;
+          receiverNativeBalance = BigInt(value);
         }
 
-        const [warning, error] = additionalValidateXcmTransfer(originTokenInfo, destinationTokenInfo, value, senderTransferable, recipientNativeBalance, chainInfoMap[destinationNetworkKey], isSnowBridge);
+        if (_isChainSubstrateCompatible(chainInfoMap[destinationNetworkKey])) {
+          const substrateApi = this.#koniState.getSubstrateApi(destinationNetworkKey);
+
+          isSendingTokenSufficient = await this.isSufficientToken(destinationTokenInfo, substrateApi);
+        }
+
+        const [warning, error] = additionalValidateXcmTransfer(originTokenInfo, destinationTokenInfo, sendingAmount, senderTransferable, chainInfoMap[destinationNetworkKey], isSendingTokenSufficient, receiverNativeBalance, isSnowBridge);
 
         error && inputTransaction.errors.push(error);
         warning && inputTransaction.warnings.push(warning);

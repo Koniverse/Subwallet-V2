@@ -137,36 +137,73 @@ export function validateXcmTransferRequest (destTokenInfo: _ChainAsset | undefin
   return [errors, keypair, transferValue];
 }
 
-export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset, sendingAmount: string, senderTransferable: string, receiverNativeBalance: string, destChainInfo: _ChainInfo, isSnowBridge = false): [TransactionWarning | undefined, TransactionError | undefined] {
+export function additionalValidateXcmTransfer (
+  originTokenInfo: _ChainAsset,
+  destinationTokenInfo: _ChainAsset,
+  sendingAmount: bigint,
+  senderTransferable: bigint,
+  destChainInfo: _ChainInfo,
+  isSendingTokenSufficient: boolean,
+  receiverNativeBalance?: bigint,
+  isSnowBridge = false
+): [TransactionWarning | undefined, TransactionError | undefined] {
   const destMinAmount = _getTokenMinAmount(destinationTokenInfo);
-  const minSendingRequired = new BigN(destMinAmount).multipliedBy(XCM_MIN_AMOUNT_RATIO);
+  const minSendingRequired = BigInt(destMinAmount) * BigInt(XCM_MIN_AMOUNT_RATIO.toFixed());
 
   let error: TransactionError | undefined;
   let warning: TransactionWarning | undefined;
 
+  const isSendingAmountEnough = sendingAmount > minSendingRequired;
+  const bnKeepAliveBalance = _isNativeToken(destinationTokenInfo) && receiverNativeBalance ? receiverNativeBalance + sendingAmount : receiverNativeBalance;
+  const isReceiverAmountPassED = isSnowBridge && bnKeepAliveBalance ? bnKeepAliveBalance > BigInt(_getChainExistentialDeposit(destChainInfo)) : true;
+  const remainingSendingTokenOfSenderEnoughED = !_isNativeToken(originTokenInfo) ? senderTransferable - sendingAmount > BigInt(_getTokenMinAmount(originTokenInfo)) : true;
+  // const isNativeTokenReceiverAmountPassED = isSnowBridge ? receiverNativeBalance + sendingAmount > BigInt(_getChainExistentialDeposit(destChainInfo)) : false;
+  // const isReceiverAmountPassED = isSnowBridge ? receiverNativeBalance > BigInt(_getChainExistentialDeposit(destChainInfo)) : true;
+
   // Check sending token ED for receiver
-  if (new BigN(sendingAmount).lt(minSendingRequired)) {
-    const atLeastStr = formatNumber(minSendingRequired, destinationTokenInfo.decimals || 0, balanceFormatter, { maxNumberFormat: destinationTokenInfo.decimals || 6 });
+  if (!isSendingAmountEnough) {
+    const atLeastStr = formatNumber(minSendingRequired.toString(), destinationTokenInfo.decimals || 0, balanceFormatter, { maxNumberFormat: destinationTokenInfo.decimals || 6 });
 
     error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: originTokenInfo.symbol } }));
   }
 
   // check native token ED on dest chain for receiver
-  const bnKeepAliveBalance = _isNativeToken(destinationTokenInfo) ? new BigN(receiverNativeBalance).plus(sendingAmount) : new BigN(receiverNativeBalance);
+  if (_isNativeToken(destinationTokenInfo) || !isSendingTokenSufficient) {
+    if (!isReceiverAmountPassED) {
+      const { decimals, symbol } = _getChainNativeTokenBasicInfo(destChainInfo);
+      const atLeastStr = formatNumber(_getChainExistentialDeposit(destChainInfo), decimals || 0, balanceFormatter, { maxNumberFormat: 6 });
 
-  if (isSnowBridge && bnKeepAliveBalance.lt(_getChainExistentialDeposit(destChainInfo))) {
-    const { decimals, symbol } = _getChainNativeTokenBasicInfo(destChainInfo);
-    const atLeastStr = formatNumber(_getChainExistentialDeposit(destChainInfo), decimals || 0, balanceFormatter, { maxNumberFormat: 6 });
-
-    error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t(' Insufficient {{symbol}} on {{chain}} to cover min balance ({{amount}} {{symbol}})', { replace: { amount: atLeastStr, symbol, chain: destChainInfo.name } }));
+      error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t(' Insufficient {{symbol}} on {{chain}} to cover min balance ({{amount}} {{symbol}})', { replace: { amount: atLeastStr, symbol, chain: destChainInfo.name } }));
+    }
   }
 
   // Check ed for sender
-  if (!_isNativeToken(originTokenInfo)) {
-    if (new BigN(senderTransferable).minus(sendingAmount).lt(_getTokenMinAmount(originTokenInfo))) {
-      warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
-    }
+  if (!remainingSendingTokenOfSenderEnoughED) {
+    warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
   }
+
+  // // Check sending token ED for receiver
+  // if (new BigN(sendingAmount).lt(minSendingRequired)) {
+  //   const atLeastStr = formatNumber(minSendingRequired, destinationTokenInfo.decimals || 0, balanceFormatter, { maxNumberFormat: destinationTokenInfo.decimals || 6 });
+  //
+  //   error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: originTokenInfo.symbol } }));
+  // }
+  //
+  // // check native token ED on dest chain for receiver
+  //
+  // if (isSnowBridge && bnKeepAliveBalance.lt(_getChainExistentialDeposit(destChainInfo))) {
+  //   const { decimals, symbol } = _getChainNativeTokenBasicInfo(destChainInfo);
+  //   const atLeastStr = formatNumber(_getChainExistentialDeposit(destChainInfo), decimals || 0, balanceFormatter, { maxNumberFormat: 6 });
+  //
+  //   error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t(' Insufficient {{symbol}} on {{chain}} to cover min balance ({{amount}} {{symbol}})', { replace: { amount: atLeastStr, symbol, chain: destChainInfo.name } }));
+  // }
+  //
+  // // Check ed for sender
+  // if (!_isNativeToken(originTokenInfo)) {
+  //   if (new BigN(senderTransferable).minus(sendingAmount).lt(_getTokenMinAmount(originTokenInfo))) {
+  //     warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
+  //   }
+  // }
 
   return [warning, error];
 }
