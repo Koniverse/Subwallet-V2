@@ -2598,9 +2598,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@galacticcouncil/sdk@npm:^4.2.1":
-  version: 4.2.1
-  resolution: "@galacticcouncil/sdk@npm:4.2.1"
+"@galacticcouncil/sdk@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "@galacticcouncil/sdk@npm:5.1.0"
   dependencies:
     "@galacticcouncil/math-lbp": ^1.0.0
     "@galacticcouncil/math-liquidity-mining": ^1.0.0
@@ -2608,25 +2608,26 @@ __metadata:
     "@galacticcouncil/math-stableswap": ^1.0.0
     "@galacticcouncil/math-xyk": ^1.0.0
     "@thi.ng/cache": ^2.1.35
+    "@thi.ng/memoize": ^4.0.2
     bignumber.js: ^9.1.0
     lodash.clonedeep: ^4.5.0
   peerDependencies:
-    "@polkadot/api": ^12.1.1
-    "@polkadot/api-augment": ^12.1.1
-    "@polkadot/api-base": ^12.1.1
-    "@polkadot/api-derive": ^12.1.1
-    "@polkadot/keyring": ^12.6.2
-    "@polkadot/rpc-augment": ^12.1.1
-    "@polkadot/rpc-core": ^12.1.1
-    "@polkadot/rpc-provider": ^12.1.1
-    "@polkadot/types": ^12.1.1
-    "@polkadot/types-augment": ^12.1.1
-    "@polkadot/types-codec": ^12.1.1
-    "@polkadot/types-create": ^12.1.1
-    "@polkadot/types-known": ^12.1.1
-    "@polkadot/util": ^12.6.2
-    "@polkadot/util-crypto": ^12.6.2
-  checksum: abe10458aa9f0f66c1571d8ac8dfb61b55b9a491e13a454ca0bc7f0793df8a124d6e1a74a4b18f0ea43fb7bca9dc79b5efed81e03e2209ac96a254e35460ecfe
+    "@polkadot/api": ~14.0.1
+    "@polkadot/api-augment": ~14.0.1
+    "@polkadot/api-base": ~14.0.1
+    "@polkadot/api-derive": ~14.0.1
+    "@polkadot/keyring": ~13.1.1
+    "@polkadot/rpc-augment": ~14.0.1
+    "@polkadot/rpc-core": ~14.0.1
+    "@polkadot/rpc-provider": ~14.0.1
+    "@polkadot/types": ~14.0.1
+    "@polkadot/types-augment": ~14.0.1
+    "@polkadot/types-codec": ~14.0.1
+    "@polkadot/types-create": ~14.0.1
+    "@polkadot/types-known": ~14.0.1
+    "@polkadot/util": ~13.1.1
+    "@polkadot/util-crypto": ~13.1.1
+  checksum: 0b349c677e1295773c4d3a6a666c7d0544aa5671f590adfb741b321d46ec4332927c5ea118f446548509a0fd54eaa1e03f844e0b917c1292ab0d666621d633f5
   languageName: node
   linkType: hard
 
@@ -6461,7 +6462,7 @@ __metadata:
     "@ethereumjs/common": ^4.1.0
     "@ethereumjs/tx": ^5.1.0
     "@ethersproject/abi": ^5.7.0
-    "@galacticcouncil/sdk": ^4.2.1
+    "@galacticcouncil/sdk": ^5.1.0
     "@gear-js/api": ^0.38.1
     "@json-rpc-tools/utils": ^1.7.6
     "@metamask/eth-sig-util": ^7.0.3
@@ -7054,6 +7055,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@thi.ng/api@npm:^8.11.13":
+  version: 8.11.13
+  resolution: "@thi.ng/api@npm:8.11.13"
+  checksum: dc29cd79d8158cdda6766fee2d7fbb34661acc1dfac709f30a58fb062562cbf929cbe3a6ca6f4856a121594acdd7b5292981595bee71cc4dd0fd99e35aa0c1ef
+  languageName: node
+  linkType: hard
+
 "@thi.ng/api@npm:^8.9.30":
   version: 8.9.30
   resolution: "@thi.ng/api@npm:8.9.30"
@@ -7156,6 +7164,15 @@ __metadata:
   dependencies:
     "@thi.ng/api": ^8.9.30
   checksum: fc07947d50635949c7425fd42d8145d4f26cfe63ff47918097f2d248daf87e31a6502dac9a85bfca366da4bb273d6aaa0f792f1272e4541e6ac1bc548dca35e3
+  languageName: node
+  linkType: hard
+
+"@thi.ng/memoize@npm:^4.0.2":
+  version: 4.0.3
+  resolution: "@thi.ng/memoize@npm:4.0.3"
+  dependencies:
+    "@thi.ng/api": ^8.11.13
+  checksum: ddc13c6a6ed3af467079fca5ad338dc469153228b6b41c302927d2ac38eb68340a1c925b688bb5b75c13fa0df370936b8a57b2cdbe5ed3900e6faf6e4c944e88
   languageName: node
   linkType: hard
 
