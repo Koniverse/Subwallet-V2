@@ -255,8 +255,7 @@ export const _DEFAULT_MANTA_ZK_CHAIN = 'calamari';
 export const _XCM_CHAIN_GROUP = {
   polkadotXcm: ['statemine', 'statemint', 'equilibrium_parachain', 'rococo_assethub', 'mythos'],
   polkadotXcmSpecialCases: ['astar', 'shiden'],
-  xcmPallet: ['polkadot', 'kusama', 'rococo'],
-  acalaXcm: ['acala']
+  xcmPallet: ['polkadot', 'kusama', 'rococo']
   // default is xTokens pallet
 };
 
@@ -283,6 +282,8 @@ export const EVM_PASS_CONNECT_STATUS: Record<string, string[]> = {
 export const EVM_REFORMAT_DECIMALS = {
   acala: ['acala_evm', 'karura_evm']
 };
+
+export const XTOKENS_TRANSFER_TOKEN = ['acala-NATIVE-ACA'];
 
 export const LATEST_CHAIN_DATA_FETCHING_INTERVAL = 120000;
 
