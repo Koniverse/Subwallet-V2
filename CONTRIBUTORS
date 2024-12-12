@@ -1,9 +1,9 @@
-    2904	AnhMTV                        	Release version 1.3.9
+    2907	AnhMTV                        	
     2551	Nam Phạm                      	
-    2374	S2kael                        	[Issue-3713] Fix cannot transfer TON
+    2376	S2kael                        	[Issue-3713] Fix cannot transfer TON
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
-     489	bluezdot                      	[Issue-3132] fix: fix lost asset when reloading extension
+     490	bluezdot                      	[Issue-3888] build: update version @galacticcouncil/sdk to 5.1.0
      465	Jaco                          	0.42.5 (#969)
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
@@ -13,11 +13,11 @@
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
       96	lw                            	
-      88	PDTnhah                       	[Issue-3713] Refactor code
+      89	PDTnhah                       	[Issue 3896] Extension - Unable to transfer local token on Bifrost
       83	Hieu Dao                      	Update README.md
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
-      73	bluedot                       	[Issue-3579] fix: update check fully migrate
+      74	bluedot                       	[Issue-3888] build: upgrade version polkadot api
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
       53	tunghp2002                    	[Update] Hide Max Button ETH <-> Polygonzkevm
