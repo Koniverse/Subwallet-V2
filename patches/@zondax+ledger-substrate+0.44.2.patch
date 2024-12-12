@@ -1,0 +1,16 @@
+diff --git a/node_modules/@zondax/ledger-substrate/dist/supported_apps.js b/node_modules/@zondax/ledger-substrate/dist/supported_apps.js
+index 13b6e54..203d4eb 100644
+--- a/node_modules/@zondax/ledger-substrate/dist/supported_apps.js
++++ b/node_modules/@zondax/ledger-substrate/dist/supported_apps.js
+@@ -284,5 +284,11 @@ exports.supportedApps = [
+         slip0044: 0x800002c5,
+         ss58_addr_type: 42,
+     },
++    {
++        name: 'AvailRecovery',
++        cla: 0xbc,
++        slip0044: 0x80000162,
++        ss58_addr_type: 42,
++    },
+ ];
+ //# sourceMappingURL=supported_apps.js.map

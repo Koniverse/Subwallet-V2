@@ -105,18 +105,32 @@ export const PredefinedLedgerNetwork: LedgerNetwork[] = [
     slip44: 434,
     isHide: true
   },
+  // {
+  //   accountName: 'Avail',
+  //   appName: 'Avail',
+  //   networkName: 'Avail network',
+  //   genesisHash: ChainInfoMap.avail_mainnet.substrateInfo?.genesisHash || '0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a',
+  //   icon: 'substrate',
+  //   network: 'avail',
+  //   slug: ChainInfoMap.avail_mainnet.slug,
+  //   isDevMode: false,
+  //   isGeneric: false,
+  //   isEthereum: false,
+  //   slip44: 709
+  // },
   {
-    accountName: 'Avail',
-    appName: 'Avail',
+    accountName: 'Avail Recovery',
+    appName: 'Avail Recovery',
     networkName: 'Avail network',
     genesisHash: ChainInfoMap.avail_mainnet.substrateInfo?.genesisHash || '0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a',
     icon: 'substrate',
-    network: 'avail',
+    network: 'availRecovery',
     slug: ChainInfoMap.avail_mainnet.slug,
     isDevMode: false,
     isGeneric: false,
     isEthereum: false,
-    slip44: 709
+    isRecovery: true,
+    slip44: 354
   },
   {
     accountName: 'Acala',

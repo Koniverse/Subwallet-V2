@@ -57,7 +57,9 @@ const Component: React.FC<Props> = (props: Props) => {
   const networks = useMemo((): ChainItemType[] => supportedLedger
     .filter(({ isHide }) => !isHide)
     .map((network) => ({
-      name: !network.isGeneric ? network.networkName.replace(' network', '') : network.networkName,
+      name: !network.isGeneric
+        ? network.networkName.replace(' network', '').concat(network.isRecovery ? ' Recovery' : '')
+        : network.networkName,
       slug: network.slug
     })), [supportedLedger]);
 
