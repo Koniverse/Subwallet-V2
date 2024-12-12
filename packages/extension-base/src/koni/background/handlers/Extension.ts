@@ -1467,6 +1467,7 @@ export default class KoniExtension {
     const isAvailBridgeFromAvail = isAvailChainBridge(originNetworkKey) && _isPureEvmChain(chainInfoMap[destinationNetworkKey]);
     const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]) && !isAvailBridgeFromEvm;
     const isPolygonBridgeTransfer = _isPolygonChainBridge(originNetworkKey, destinationNetworkKey);
+    const extrinsicType = ExtrinsicType.TRANSFER_XCM;
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
@@ -1512,9 +1513,7 @@ export default class KoniExtension {
 
         const sendingAmount = BigInt(value);
 
-        const extrinsicType = ExtrinsicType.TRANSFER_XCM;
-
-        const { value: _receiverDestinationTokenKeepAliveBalance } = await this.getAddressTransferableBalance({ address: to, networkKey: destinationNetworkKey, token: destinationTokenInfo.slug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE });
+        const { value: _receiverDestinationTokenKeepAliveBalance } = await this.getAddressTotalBalance({ address: to, networkKey: destinationNetworkKey, token: destinationTokenInfo.slug, extrinsicType });
         const receiverDestinationTokenKeepAliveBalance = BigInt(_receiverDestinationTokenKeepAliveBalance);
 
         // if (isSnowBridge) {
@@ -1524,7 +1523,7 @@ export default class KoniExtension {
         // }
 
         if (!_isNativeToken(destinationNativeTokenInfo)) {
-          const _receiverNativeTotal = await this.getAddressTotalBalance({ address: to, networkKey: destinationNetworkKey, token: destinationNativeTokenSlug, extrinsicType: ExtrinsicType.TRANSFER_BALANCE });
+          const _receiverNativeTotal = await this.getAddressTotalBalance({ address: to, networkKey: destinationNetworkKey, token: destinationNativeTokenSlug, extrinsicType });
 
           receiverSystemAccountInfo = _receiverNativeTotal.metadata as FrameSystemAccountInfo;
         }
@@ -1535,7 +1534,16 @@ export default class KoniExtension {
           isSendingTokenSufficient = await this.isSufficientToken(destinationTokenInfo, substrateApi);
         }
 
-        const [warning, error] = additionalValidateTransferForRecipient(destinationTokenInfo, destinationNativeTokenInfo, extrinsicType, receiverDestinationTokenKeepAliveBalance, sendingAmount, senderTransferable, receiverSystemAccountInfo, isSendingTokenSufficient);
+        const [warning, error] = additionalValidateTransferForRecipient(
+          destinationTokenInfo,
+          destinationNativeTokenInfo,
+          extrinsicType,
+          receiverDestinationTokenKeepAliveBalance,
+          sendingAmount,
+          senderTransferable, // different from sendingTokenInfo being passed in
+          receiverSystemAccountInfo,
+          isSendingTokenSufficient
+        );
 
         warning.length && inputTransaction.warnings.push(...warning);
         error.length && inputTransaction.errors.push(...error);
@@ -1575,7 +1583,7 @@ export default class KoniExtension {
       chain: originNetworkKey,
       transaction: extrinsic,
       data: inputData,
-      extrinsicType: ExtrinsicType.TRANSFER_XCM,
+      extrinsicType,
       chainType: !isSnowBridgeEvmTransfer && !isAvailBridgeFromEvm && !isPolygonBridgeTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
       transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
       ignoreWarnings,
