@@ -577,4 +577,16 @@ export class BalanceService implements StoppableServiceInterface {
 
     return getDefaultTransferProcess();
   }
+
+  public checkNeedApproveSpending (fromChain: string, toChain: string) {
+    const originChainInfo = this.state.chainService.getChainInfoByKey(fromChain);
+
+    if (!toChain) { // normal transfers
+      return false;
+    }
+
+    const destChainInfo = this.state.chainService.getChainInfoByKey(toChain);
+
+    return !_isXcmWithinSameConsensus(originChainInfo, destChainInfo) && _isPureEvmChain(originChainInfo);
+  }
 }

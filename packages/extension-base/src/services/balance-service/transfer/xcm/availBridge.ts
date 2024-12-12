@@ -257,3 +257,8 @@ function getAvailBridgeAbi (chainSlug: string) {
 export function isAvailChainBridge (chainSlug: string) {
   return ['avail_mainnet', 'availTuringTest'].includes(chainSlug);
 }
+
+export function isAvailBridgeFromEvmToAvail (fromChain: string, toChain: string) {
+  return (fromChain === COMMON_CHAIN_SLUGS.ETHEREUM && toChain === 'avail_mainnet') ||
+    (fromChain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA && toChain === 'availTuringTest');
+}
