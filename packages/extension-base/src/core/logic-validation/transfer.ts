@@ -76,7 +76,7 @@ export function additionalValidateTransferForRecipient (
   const isReceiverAliveByNativeToken = receiverSystemAccountInfo ? _isAccountActive(receiverSystemAccountInfo) : false;
   const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= sendingTokenMinAmount;
 
-  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN) {
+  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN || (extrinsicType === ExtrinsicType.TRANSFER_XCM && !_isNativeToken(sendingTokenInfo))) {
     if (!remainingSendingTokenOfSenderEnoughED) {
       const warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
 
