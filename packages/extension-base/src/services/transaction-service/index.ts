@@ -9,7 +9,6 @@ import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, chec
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
-import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -184,6 +183,28 @@ export default class TransactionService {
     } as SWTransaction;
   }
 
+  private fillTransactionDefaultInfoV2 (transactions: SWTransactionInput[]): SWTransaction[] {
+    const currentTime = new Date().getTime();
+
+    return transactions.map((transaction) => {
+      const isInternal = !transaction.url;
+      const transactionId = getTransactionId(transaction.chainType, transaction.chain, isInternal, isWalletConnectRequest(transaction.id));
+
+      return {
+        ...transaction,
+        createdAt: currentTime,
+        updatedAt: currentTime,
+        errors: transaction.errors || [],
+        warnings: transaction.warnings || [],
+        url: transaction.url || EXTENSION_REQUEST_URL,
+        status: ExtrinsicStatus.QUEUED,
+        isInternal,
+        id: transactionId,
+        extrinsicHash: transactionId
+      } as SWTransaction;
+    });
+  }
+
   public async addTransaction (inputTransaction: SWTransactionInput): Promise<TransactionEmitter> {
     const transactions = this.transactions;
     // Fill transaction default info
@@ -194,6 +215,21 @@ export default class TransactionService {
     this.transactionSubject.next({ ...transactions });
 
     return await this.sendTransaction(transaction);
+  }
+
+  public async addTransactionV2 (inputTransactions: SWTransactionInput[]): Promise<TransactionEmitter> {
+    const transactionsInQueue = this.transactions;
+    // Fill transaction default info
+    const transactions = this.fillTransactionDefaultInfoV2(inputTransactions);
+
+    // Add Transaction
+    transactions.forEach((transaction) => {
+      transactionsInQueue[transaction.id] = transaction;
+    });
+
+    this.transactionSubject.next({ ...transactionsInQueue });
+
+    return await this.sendTransactionV2(transactions);
   }
 
   public generateBeforeHandleResponseErrors (errors: TransactionError[]): SWTransactionResponse {
@@ -262,6 +298,67 @@ export default class TransactionService {
     return validatedTransaction;
   }
 
+  public async handleTransactionV2 (transactions: SWTransactionInput[]): Promise<SWTransactionResponse> {
+    const validatedTransactions: SWTransactionResponse[] = [];
+
+    for (const transaction of transactions) {
+      const validatedTransaction = await this.validateTransaction(transaction);
+      const ignoreWarnings: BasicTxWarningCode[] = validatedTransaction.ignoreWarnings || [];
+      const stopByErrors = validatedTransaction.errors.length > 0;
+      const stopByWarnings = validatedTransaction.warnings.length > 0 && validatedTransaction.warnings.some((warning) => !ignoreWarnings.includes(warning.warningType));
+
+      if (stopByErrors || stopByWarnings) {
+        // @ts-ignore
+        'transaction' in validatedTransaction && delete validatedTransaction.transaction;
+        'additionalValidator' in validatedTransaction && delete validatedTransaction.additionalValidator;
+        'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
+
+        return validatedTransaction;
+      }
+
+      validatedTransaction.warnings = [];
+      validatedTransactions.push(validatedTransaction);
+    }
+
+    // todo: handle resolve transaction
+    const emitter = await this.addTransactionV2(validatedTransactions);
+
+    for (const transaction of transactions) {
+      const index = transactions.indexOf(transaction);
+      const validatedTransaction = validatedTransactions[index];
+
+      await new Promise<void>((resolve, reject) => {
+        if (transaction.resolveOnDone) {
+          emitter.on('success', (data: TransactionEventResponse) => {
+            validatedTransaction.id = data.id;
+            validatedTransaction.extrinsicHash = data.extrinsicHash;
+            resolve();
+          });
+        } else {
+          emitter.on('signed', (data: TransactionEventResponse) => {
+            validatedTransaction.id = data.id;
+            validatedTransaction.extrinsicHash = data.extrinsicHash;
+            resolve();
+          });
+        }
+
+        emitter.on('error', (data: TransactionEventResponse) => {
+          if (data.errors.length > 0) {
+            validatedTransaction.errors.push(...data.errors);
+            resolve();
+          }
+        });
+      });
+
+      // @ts-ignore
+      'transaction' in validatedTransaction && delete validatedTransaction.transaction;
+      'additionalValidator' in validatedTransaction && delete validatedTransaction.additionalValidator;
+      'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
+    }
+
+    return validatedTransactions;
+  }
+
   private async sendTransaction (transaction: SWTransaction): Promise<TransactionEmitter> {
     // Send Transaction
     const emitter = await (transaction.chainType === 'substrate' ? this.signAndSendSubstrateTransaction(transaction) : transaction.chainType === 'evm' ? this.signAndSendEvmTransaction(transaction) : this.signAndSendTonTransaction(transaction));
@@ -297,6 +394,43 @@ export default class TransactionService {
     // Todo: handle any event with transaction.eventsHandler
 
     eventsHandler?.(emitter);
+
+    return emitter;
+  }
+
+  private async sendTransactionV2 (transactions: SWTransaction[]): Promise<TransactionEmitter> {
+    // Send Transaction
+    // todo: improve if has multi-transactions on different chains
+    const emitter = await (transactions[0].chainType === 'substrate' ? this.signAndSendSubstrateTransaction(transactions[0]) : transactions[0].chainType === 'evm' ? this.signAndSendEvmTransactionV2(transactions) : this.signAndSendTonTransaction(transactions[0]));
+
+    emitter.on('signed', (data: TransactionEventResponse) => {
+      this.onSigned(data);
+    });
+
+    emitter.on('send', (data: TransactionEventResponse) => {
+      this.onSend(data);
+    });
+
+    emitter.on('extrinsicHash', (data: TransactionEventResponse) => {
+      this.onHasTransactionHash(data);
+    });
+
+    emitter.on('success', (data: TransactionEventResponse) => {
+      this.handlePostProcessing(data.id);
+      this.onSuccess(data);
+    });
+
+    emitter.on('error', (data: TransactionEventResponse) => {
+      // this.handlePostProcessing(data.id); // might enable this later
+      this.onFailed({ ...data, errors: [...data.errors, new TransactionError(BasicTxErrorType.INTERNAL_ERROR)] });
+    });
+
+    emitter.on('timeout', (data: TransactionEventResponse) => {
+      this.onTimeOut({ ...data, errors: [...data.errors, new TransactionError(BasicTxErrorType.TIMEOUT)] });
+    });
+
+    // Todo: handle any event with transaction.eventsHandler
+    transactions.forEach((transaction) => transaction.eventsHandler?.(emitter));
 
     return emitter;
   }
@@ -1050,6 +1184,238 @@ export default class TransactionService {
               }
 
               signedTransaction = signed;
+            }
+
+            // Emit signed event
+            emitter.emit('signed', eventData);
+
+            // Send transaction
+            this.handleTransactionTimeout(emitter, eventData);
+
+            // Add start info
+            eventData.nonce = txObject.nonce;
+            eventData.startBlock = await web3Api.eth.getBlockNumber();
+            emitter.emit('send', eventData); // This event is needed after sending transaction with queue
+            signedTransaction && web3Api.eth.sendSignedTransaction(signedTransaction)
+              .once('transactionHash', (hash) => {
+                eventData.extrinsicHash = hash;
+                emitter.emit('extrinsicHash', eventData);
+              })
+              .once('receipt', (rs) => {
+                eventData.extrinsicHash = rs.transactionHash;
+                eventData.blockHash = rs.blockHash;
+                eventData.blockNumber = rs.blockNumber;
+                emitter.emit('success', eventData);
+              })
+              .once('error', (e) => {
+                eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, t(e.message)));
+                emitter.emit('error', eventData);
+              })
+              .catch((e: Error) => {
+                eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SEND, t(e.message)));
+                emitter.emit('error', eventData);
+              });
+          } else {
+            this.removeTransaction(id);
+            eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+            emitter.emit('error', eventData);
+          }
+        })
+        .catch((e: Error) => {
+          this.removeTransaction(id);
+          eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, t(e.message)));
+
+          emitter.emit('error', eventData);
+        });
+    }
+
+    return emitter;
+  }
+
+  private async signAndSendEvmTransactionV2 (transactions: SWTransaction[]): Promise<TransactionEmitter> {
+    const approveTransaction = transactions[0]; // todo: improve this. It's temp for test
+    const mainTransaction = transactions[transactions.length - 1];
+    const { address, chain, id, transaction, url } = mainTransaction;
+    const payload = (transaction as EvmSendTransactionRequest);
+    const evmApi = this.state.chainService.getEvmApi(chain);
+    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
+    const hasError = !!(payload.errors && payload.errors.length > 0);
+    const accountPair = keyring.getPair(address);
+    const account: AccountJson = pairToAccount(accountPair);
+
+    // Allow sign transaction
+    payload.canSign = true;
+
+    // Fill contract info
+    if (!payload.parseData) {
+      try {
+        const isToContract = await isContractAddress(payload.to || '', evmApi);
+
+        payload.isToContract = isToContract;
+
+        payload.parseData = isToContract
+          ? payload.data
+            ? (await parseContractInput(payload.data || '', payload.to || '', chainInfo)).result
+            : ''
+          : payload.data || '';
+      } catch (e) {
+        console.warn('Unable to parse contract input data');
+        payload.parseData = payload.data as string;
+      }
+    }
+
+    if (!payload.address) {
+      payload.address = address;
+    }
+
+    if ('data' in payload && payload.data === undefined) {
+      delete payload.data;
+    }
+
+    // Set unique nonce to avoid transaction errors
+    if (!payload.nonce) {
+      const evmApi = this.state.chainService.getEvmApi(chain);
+
+      if (evmApi.isApiConnected) {
+        payload.nonce = await evmApi?.api.eth.getTransactionCount(address);
+      }
+    }
+
+    if (!payload.chainId) {
+      payload.chainId = chainInfo?.evmInfo?.evmChainId ?? 1;
+    }
+
+    // Autofill from
+    if (!payload.from) {
+      payload.from = address;
+    }
+
+    const isExternal = !!account.isExternal;
+    const isInjected = !!account.isInjected;
+
+    if (!hasError) {
+      // generate hashPayload for EVM transaction
+      payload.hashPayload = this.generateHashPayload(chain, payload);
+    }
+
+    const emitter = new EventEmitter<TransactionEventMap>();
+
+    const txObject: Web3Transaction = {
+      nonce: payload.nonce ?? 0,
+      from: payload.from as string,
+      gasPrice: anyNumberToBN(payload.gasPrice).toNumber(),
+      maxFeePerGas: anyNumberToBN(payload.maxFeePerGas).toNumber(),
+      maxPriorityFeePerGas: anyNumberToBN(payload.maxPriorityFeePerGas).toNumber(),
+      gasLimit: anyNumberToBN(payload.gas).toNumber(),
+      to: payload.to,
+      value: anyNumberToBN(payload.value).toNumber(),
+      data: payload.data,
+      chainId: payload.chainId
+    };
+
+    const eventData: TransactionEventResponse = {
+      id,
+      errors: [],
+      warnings: [],
+      extrinsicHash: id
+    };
+
+    if (isInjected) {
+      this.state.requestService.addConfirmation(id, url || EXTENSION_REQUEST_URL, 'evmWatchTransactionRequest', payload, {})
+        .then(async ({ isApproved, payload }) => {
+          if (isApproved) {
+            if (!payload) {
+              throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, 'Bad signature');
+            }
+
+            const web3Api = this.state.chainService.getEvmApi(chain).api;
+
+            // Emit signed event
+            emitter.emit('signed', eventData);
+
+            eventData.nonce = txObject.nonce;
+            eventData.startBlock = await web3Api.eth.getBlockNumber() - 3;
+            // Add start info
+            emitter.emit('send', eventData); // This event is needed after sending transaction with queue
+
+            const txHash = payload;
+
+            eventData.extrinsicHash = txHash;
+            emitter.emit('extrinsicHash', eventData);
+
+            this.watchTransactionSubscribes[id] = new Promise<void>((resolve, reject) => {
+              // eslint-disable-next-line prefer-const
+              let subscribe: Subscription;
+
+              const onComplete = () => {
+                subscribe?.unsubscribe?.();
+                delete this.watchTransactionSubscribes[id];
+              };
+
+              const onSuccess = (rs: TransactionReceipt) => {
+                if (rs) {
+                  eventData.extrinsicHash = rs.transactionHash;
+                  eventData.blockHash = rs.blockHash;
+                  eventData.blockNumber = rs.blockNumber;
+                  emitter.emit('success', eventData);
+                  onComplete();
+                  resolve();
+                }
+              };
+
+              const onError = (error: Error) => {
+                if (error) {
+                  // TODO: Change type and message
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SEND, error.message));
+                  emitter.emit('error', eventData);
+                  onComplete();
+                  reject(error);
+                }
+              };
+
+              const onCheck = () => {
+                web3Api.eth.getTransactionReceipt(txHash).then(onSuccess).catch(onError);
+              };
+
+              subscribe = rxjsInterval(3000).subscribe(onCheck);
+            });
+          } else {
+            this.removeTransaction(id);
+            eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+            emitter.emit('error', eventData);
+          }
+        })
+        .catch((e: Error) => {
+          this.removeTransaction(id);
+          // TODO: Change type
+          eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, e.message));
+
+          emitter.emit('error', eventData);
+        });
+    } else {
+      this.state.requestService.addConfirmation(id, url || EXTENSION_REQUEST_URL, 'evmSendTransactionRequest', payload, {})
+        .then(async ({ isApproved, payload }) => { // todo: cần array of paylaod
+          if (isApproved) {
+            let signedTransaction: string | undefined;
+
+            if (!payload) {
+              throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, t('Failed to sign'));
+            }
+
+            const web3Api = this.state.chainService.getEvmApi(chain).api;
+
+            if (!isExternal) {
+              signedTransaction = payload;
+            } else {
+              const signed = mergeTransactionAndSignature(txObject, payload as `0x${string}`);
+
+              const recover = web3Api.eth.accounts.recoverTransaction(signed);
+
+              if (recover.toLowerCase() !== account.address.toLowerCase()) {
+                throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, t('Wrong signature. Please sign with the account you use in dApp'));
+              }
+
+              signedTransaction = signed; // todo: cần array of signedTransaction
             }
 
             // Emit signed event
