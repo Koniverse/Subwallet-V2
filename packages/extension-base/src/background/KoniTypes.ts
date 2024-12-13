@@ -1177,6 +1177,15 @@ export interface ConfirmationDefinitionsTon {
 export type ConfirmationType = keyof ConfirmationDefinitions;
 export type ConfirmationTypeTon = keyof ConfirmationDefinitionsTon;
 
+export interface AddConfirmationParam<CT extends ConfirmationType> {
+  id: string,
+  url: string,
+  type: CT,
+  payload: ConfirmationDefinitions[CT][0]['payload'],
+  options: ConfirmationsQueueItemOptions,
+  validator?: (input: ConfirmationDefinitions[CT][1]) => Error | undefined
+}
+
 export type ConfirmationsQueue = {
   [CT in ConfirmationType]: Record<string, ConfirmationDefinitions[CT][0]>;
 }

@@ -356,7 +356,7 @@ export default class TransactionService {
       'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
     }
 
-    return validatedTransactions;
+    return validatedTransactions[1];
   }
 
   private async sendTransaction (transaction: SWTransaction): Promise<TransactionEmitter> {
@@ -1235,68 +1235,79 @@ export default class TransactionService {
   private async signAndSendEvmTransactionV2 (transactions: SWTransaction[]): Promise<TransactionEmitter> {
     const approveTransaction = transactions[0]; // todo: improve this. It's temp for test
     const mainTransaction = transactions[transactions.length - 1];
-    const { address, chain, id, transaction, url } = mainTransaction;
-    const payload = (transaction as EvmSendTransactionRequest);
-    const evmApi = this.state.chainService.getEvmApi(chain);
-    const chainInfo = this.state.chainService.getChainInfoByKey(chain);
-    const hasError = !!(payload.errors && payload.errors.length > 0);
-    const accountPair = keyring.getPair(address);
-    const account: AccountJson = pairToAccount(accountPair);
+    const { address, chain } = mainTransaction;
 
-    // Allow sign transaction
-    payload.canSign = true;
-
-    // Fill contract info
-    if (!payload.parseData) {
-      try {
-        const isToContract = await isContractAddress(payload.to || '', evmApi);
-
-        payload.isToContract = isToContract;
-
-        payload.parseData = isToContract
-          ? payload.data
-            ? (await parseContractInput(payload.data || '', payload.to || '', chainInfo)).result
-            : ''
-          : payload.data || '';
-      } catch (e) {
-        console.warn('Unable to parse contract input data');
-        payload.parseData = payload.data as string;
-      }
-    }
-
-    if (!payload.address) {
-      payload.address = address;
-    }
-
-    if ('data' in payload && payload.data === undefined) {
-      delete payload.data;
-    }
-
-    // Set unique nonce to avoid transaction errors
-    if (!payload.nonce) {
+    transactions.forEach((tx) => {
+      const { id, transaction, url } = tx;
+      const payload = (transaction as EvmSendTransactionRequest);
       const evmApi = this.state.chainService.getEvmApi(chain);
+      const chainInfo = this.state.chainService.getChainInfoByKey(chain);
+      const hasError = !!(payload.errors && payload.errors.length > 0);
+      const accountPair = keyring.getPair(address);
+      const account: AccountJson = pairToAccount(accountPair);
 
-      if (evmApi.isApiConnected) {
-        payload.nonce = await evmApi?.api.eth.getTransactionCount(address);
+      // Allow sign transaction
+      payload.canSign = true;
+
+      // Fill contract info
+      if (!payload.parseData) {
+        try {
+          const isToContract = await isContractAddress(payload.to || '', evmApi);
+
+          payload.isToContract = isToContract;
+
+          payload.parseData = isToContract
+            ? payload.data
+              ? (await parseContractInput(payload.data || '', payload.to || '', chainInfo)).result
+              : ''
+            : payload.data || '';
+        } catch (e) {
+          console.warn('Unable to parse contract input data');
+          payload.parseData = payload.data as string;
+        }
       }
-    }
 
-    if (!payload.chainId) {
-      payload.chainId = chainInfo?.evmInfo?.evmChainId ?? 1;
-    }
+      if (!payload.address) {
+        payload.address = address;
+      }
 
-    // Autofill from
-    if (!payload.from) {
-      payload.from = address;
-    }
+      if ('data' in payload && payload.data === undefined) {
+        delete payload.data;
+      }
 
-    const isExternal = !!account.isExternal;
-    const isInjected = !!account.isInjected;
+      // Set unique nonce to avoid transaction errors
+      if (!payload.nonce) {
+        const evmApi = this.state.chainService.getEvmApi(chain);
 
-    if (!hasError) {
-      // generate hashPayload for EVM transaction
-      payload.hashPayload = this.generateHashPayload(chain, payload);
-    }
+        if (evmApi.isApiConnected) {
+          payload.nonce = await evmApi?.api.eth.getTransactionCount(address);
+        }
+      }
+
+      if (!payload.chainId) {
+        payload.chainId = chainInfo?.evmInfo?.evmChainId ?? 1;
+      }
+
+      // Autofill from
+      if (!payload.from) {
+        payload.from = address;
+      }
+
+      const isExternal = !!account.isExternal;
+      const isInjected = !!account.isInjected;
+
+      if (!hasError) {
+        // generate hashPayload for EVM transaction
+        payload.hashPayload = this.generateHashPayload(chain, payload);
+      }
+
+      const eventData: TransactionEventResponse = {
+        id,
+        errors: [],
+        warnings: [],
+        extrinsicHash: id
+      };
+    });
 
     const emitter = new EventEmitter<TransactionEventMap>();
 
@@ -1393,7 +1404,7 @@ export default class TransactionService {
           emitter.emit('error', eventData);
         });
     } else {
-      this.state.requestService.addConfirmation(id, url || EXTENSION_REQUEST_URL, 'evmSendTransactionRequest', payload, {})
+      this.state.requestService.addConfirmationV2(id, url || EXTENSION_REQUEST_URL, 'evmSendTransactionRequest', payload, {}) // todo: cần prepare cả 2 cái payload ở đây
         .then(async ({ isApproved, payload }) => { // todo: cần array of paylaod
           if (isApproved) {
             let signedTransaction: string | undefined;

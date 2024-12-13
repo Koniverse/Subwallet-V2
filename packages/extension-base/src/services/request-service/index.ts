@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthRequestV2, ConfirmationDefinitions, ConfirmationDefinitionsTon, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationsQueueTon, ConfirmationType, ConfirmationTypeTon, RequestConfirmationComplete, RequestConfirmationCompleteTon } from '@subwallet/extension-base/background/KoniTypes';
+import { AddConfirmationParam, AuthRequestV2, ConfirmationDefinitions, ConfirmationDefinitionsTon, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationsQueueTon, ConfirmationType, ConfirmationTypeTon, RequestConfirmationComplete, RequestConfirmationCompleteTon } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType, AuthorizeRequest, MetadataRequest, RequestAuthorizeTab, RequestSign, ResponseSigning, SigningRequest } from '@subwallet/extension-base/background/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
@@ -203,6 +203,10 @@ export default class RequestService {
     validator?: (input: ConfirmationDefinitions[CT][1]) => Error | undefined
   ): Promise<ConfirmationDefinitions[CT][1]> {
     return this.#evmRequestHandler.addConfirmation(id, url, type, payload, options, validator);
+  }
+
+  public addConfirmationV2<CT extends ConfirmationType> (addConfirmationParams: AddConfirmationParam<CT>[]): Promise<ConfirmationDefinitions[CT][1]> {
+    return this.#evmRequestHandler.addConfirmationV2(addConfirmationParams);
   }
 
   public addConfirmationTon<CT extends ConfirmationTypeTon> (
