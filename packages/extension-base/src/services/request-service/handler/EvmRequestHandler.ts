@@ -4,7 +4,7 @@
 import { Common } from '@ethereumjs/common';
 import { FeeMarketEIP1559Transaction, FeeMarketEIP1559TxData, LegacyTransaction, LegacyTxData, TypedTransaction } from '@ethereumjs/tx';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
-import { ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete } from '@subwallet/extension-base/background/KoniTypes';
+import { AddConfirmationParam, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete } from '@subwallet/extension-base/background/KoniTypes';
 import { ConfirmationRequestBase, Resolver } from '@subwallet/extension-base/background/types';
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
@@ -61,6 +61,57 @@ export default class EvmRequestHandler {
     options: ConfirmationsQueueItemOptions = {},
     validator?: (input: ConfirmationDefinitions[CT][1]) => Error | undefined
   ): Promise<ConfirmationDefinitions[CT][1]> {
+    const confirmations = this.confirmationsQueueSubject.getValue();
+    const confirmationType = confirmations[type] as Record<string, ConfirmationDefinitions[CT][0]>;
+    const payloadJson = JSON.stringify(payload);
+    const isInternal = isInternalRequest(url);
+
+    if (['evmSignatureRequest', 'evmSendTransactionRequest'].includes(type)) {
+      const isAlwaysRequired = await this.#requestService.settingService.isAlwaysRequired;
+
+      if (isAlwaysRequired) {
+        this.#requestService.keyringService.lock();
+      }
+    }
+
+    // Check duplicate request
+    const duplicated = Object.values(confirmationType).find((c) => (c.url === url) && (c.payloadJson === payloadJson));
+
+    if (duplicated) {
+      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Duplicate request'));
+    }
+
+    confirmationType[id] = {
+      id,
+      url,
+      isInternal,
+      payload,
+      payloadJson,
+      ...options
+    } as ConfirmationDefinitions[CT][0];
+
+    const promise = new Promise<ConfirmationDefinitions[CT][1]>((resolve, reject) => {
+      this.confirmationsPromiseMap[id] = {
+        validator: validator,
+        resolver: {
+          resolve: resolve,
+          reject: reject
+        }
+      };
+    });
+
+    this.confirmationsQueueSubject.next(confirmations);
+
+    if (!isInternal) {
+      this.#requestService.popupOpen();
+    }
+
+    this.#requestService.updateIconV2();
+
+    return promise;
+  }
+
+  public async addConfirmationV2<CT extends ConfirmationType> (addConfirmationParams: AddConfirmationParam<CT>[]): Promise<ConfirmationDefinitions[CT][1][]> {
     const confirmations = this.confirmationsQueueSubject.getValue();
     const confirmationType = confirmations[type] as Record<string, ConfirmationDefinitions[CT][0]>;
     const payloadJson = JSON.stringify(payload);

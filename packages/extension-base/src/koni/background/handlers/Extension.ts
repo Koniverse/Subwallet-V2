@@ -15,8 +15,8 @@ import { additionalValidateTransferForRecipient, additionalValidateXcmTransfer, 
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
-import { getERC20SpendingApprovalTx } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
-import { _ERC721_ABI, isAvailBridgeGatewayContract, isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { getERC20SpendingApprovalTx, getERC20SpendingApprovalTxV2 } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
+import { _ERC721_ABI, getAvailBridgeGatewayContract, getSnowBridgeGatewayContract, isAvailBridgeGatewayContract, isSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { resolveAzeroAddressToDomain, resolveAzeroDomainToAddress } from '@subwallet/extension-base/koni/api/dotsama/domain';
 import { parseSubstrateTransaction } from '@subwallet/extension-base/koni/api/dotsama/parseTransaction';
 import { UNSUPPORTED_TRANSFER_EVM_CHAIN_NAME } from '@subwallet/extension-base/koni/api/nft/config';
@@ -32,17 +32,17 @@ import { getERC20TransactionObject, getERC721Transaction, getEVMTransactionObjec
 import { createTransferExtrinsic, getTransferMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { createTonTransaction } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { createAvailBridgeExtrinsicFromAvail, createAvailBridgeTxFromEth, createPolygonBridgeExtrinsic, createSnowBridgeExtrinsic, createXcmExtrinsic, CreateXcmExtrinsicProps, FunctionCreateXcmExtrinsic, getXcmMockTxFee } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
-import { getClaimTxOnAvail, getClaimTxOnEthereum, isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
+import { getClaimTxOnAvail, getClaimTxOnEthereum, isAvailBridgeFromEvmToAvail, isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _isPolygonChainBridge, getClaimPolygonBridge, isClaimedPolygonBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX, SUFFICIENT_CHAIN } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _SubstrateAdapterQueryArgs, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getTokenOnChainAssetId, _getXcmAssetMultilocation, _isAssetSmartContractNft, _isBridgedToken, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
-import { _NotificationInfo, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_AUTO_LOCK_TIME } from '@subwallet/extension-base/services/setting-service/constants';
-import { SWTransaction, SWTransactionResponse, SWTransactionResult, TransactionEmitter, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
+import { SWTransaction, SWTransactionInput, SWTransactionResponse, SWTransactionResult, TransactionEmitter, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
@@ -1556,6 +1556,154 @@ export default class KoniExtension {
       additionalValidator: additionalValidator,
       eventsHandler: eventsHandler
     });
+  }
+
+  private async makeCrossChainTransferV2 (inputData: RequestCrossChainTransfer): Promise<SWTransactionResponse> {
+    const { destinationNetworkKey, from, originNetworkKey, to, tokenSlug, transferAll, transferBounceable, value } = inputData;
+    const originTokenInfo = this.#koniState.getAssetBySlug(tokenSlug);
+    const isNeedApproveSpending = this.#koniState.balanceService.checkNeedApproveSpending(originNetworkKey, destinationNetworkKey);
+    const transactionsList: SWTransactionInput[] = [];
+
+    if (isNeedApproveSpending) {
+      const contractAddress = _getContractAddressOfToken(originTokenInfo);
+      const isBridgeFromEvmToAvail = isAvailBridgeFromEvmToAvail(originNetworkKey, destinationNetworkKey);
+      const spenderAddress = isBridgeFromEvmToAvail ? getAvailBridgeGatewayContract(originNetworkKey) : getSnowBridgeGatewayContract(originNetworkKey);
+      const evmApi = this.#koniState.getEvmApi(originNetworkKey);
+
+      const tokenSpendingApprovalParam: TokenSpendingApprovalParams = {
+        spenderAddress,
+        contractAddress,
+        owner: from,
+        chain: originNetworkKey,
+        amount: value
+      };
+
+      const transactionConfig = await getERC20SpendingApprovalTxV2(evmApi, tokenSpendingApprovalParam); // todo: convert params to interface TokenSpendingApprovalParams
+
+      transactionsList.push({
+        errors: [],
+        warnings: [],
+        address: from,
+        chain: originNetworkKey,
+        chainType: ChainType.EVM,
+        transferNativeAmount: '0',
+        transaction: transactionConfig,
+        data: tokenSpendingApprovalParam,
+        resolveOnDone: true,
+        extrinsicType: ExtrinsicType.TOKEN_SPENDING_APPROVAL,
+        isTransferAll: false
+      });
+    }
+
+    const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destinationNetworkKey, tokenSlug);
+    const [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
+    let extrinsic: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
+
+    if (errors.length > 0) {
+      return this.#koniState.transactionService.generateBeforeHandleResponseErrors(errors);
+    }
+
+    const chainInfoMap = this.#koniState.getChainInfoMap();
+    const isAvailBridgeFromEvm = _isPureEvmChain(chainInfoMap[originNetworkKey]) && isAvailChainBridge(destinationNetworkKey);
+    const isAvailBridgeFromAvail = isAvailChainBridge(originNetworkKey) && _isPureEvmChain(chainInfoMap[destinationNetworkKey]);
+    const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]) && !isAvailBridgeFromEvm;
+    const isPolygonBridgeTransfer = _isPolygonChainBridge(originNetworkKey, destinationNetworkKey);
+
+    let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
+    let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
+
+    if (fromKeyPair && destinationTokenInfo) {
+      const evmApi = this.#koniState.getEvmApi(originNetworkKey);
+      const substrateApi = this.#koniState.getSubstrateApi(originNetworkKey);
+      const params: CreateXcmExtrinsicProps = {
+        destinationTokenInfo,
+        originTokenInfo,
+        sendingValue: value,
+        sender: from,
+        recipient: to,
+        chainInfoMap,
+        substrateApi,
+        evmApi
+      };
+
+      let funcCreateExtrinsic: FunctionCreateXcmExtrinsic;
+
+      if (isPolygonBridgeTransfer) {
+        funcCreateExtrinsic = createPolygonBridgeExtrinsic;
+      } else if (isSnowBridgeEvmTransfer) {
+        funcCreateExtrinsic = createSnowBridgeExtrinsic;
+      } else if (isAvailBridgeFromEvm) {
+        funcCreateExtrinsic = createAvailBridgeTxFromEth;
+      } else if (isAvailBridgeFromAvail) {
+        funcCreateExtrinsic = createAvailBridgeExtrinsicFromAvail;
+      } else {
+        funcCreateExtrinsic = createXcmExtrinsic;
+      }
+
+      extrinsic = await funcCreateExtrinsic(params);
+
+      additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
+        const { value: senderTransferable } = await this.getAddressTransferableBalance({ address: from, networkKey: originNetworkKey, token: originTokenInfo.slug });
+        const isSnowBridge = _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
+        let recipientNativeBalance = '0';
+
+        if (isSnowBridge) {
+          const { value } = await this.getAddressTransferableBalance({ address: to, networkKey: destinationNetworkKey, extrinsicType: ExtrinsicType.TRANSFER_BALANCE });
+
+          recipientNativeBalance = value;
+        }
+
+        const [warning, error] = additionalValidateXcmTransfer(originTokenInfo, destinationTokenInfo, value, senderTransferable, recipientNativeBalance, chainInfoMap[destinationNetworkKey], isSnowBridge);
+
+        error && inputTransaction.errors.push(error);
+        warning && inputTransaction.warnings.push(warning);
+      };
+
+      eventsHandler = (eventEmitter: TransactionEmitter) => {
+        eventEmitter.on('send', () => {
+          try {
+            const dest = keyring.getPair(to);
+
+            if (dest) {
+              this.updateAssetSetting({
+                autoEnableNativeToken: false,
+                tokenSlug: destinationTokenInfo.slug,
+                assetSetting: { visible: true }
+              }).catch(console.error);
+            }
+          } catch (e) {
+          }
+        });
+      };
+    }
+
+    const ignoreWarnings: BasicTxWarningCode[] = [];
+
+    if (transferAll) {
+      ignoreWarnings.push(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
+    }
+
+    if (transferBounceable) {
+      ignoreWarnings.push(BasicTxWarningCode.IS_BOUNCEABLE_ADDRESS);
+    }
+
+    transactionsList.push({
+      url: EXTENSION_REQUEST_URL,
+      address: from,
+      chain: originNetworkKey,
+      transaction: extrinsic,
+      data: inputData,
+      extrinsicType: ExtrinsicType.TRANSFER_XCM,
+      chainType: !isSnowBridgeEvmTransfer && !isAvailBridgeFromEvm && !isPolygonBridgeTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
+      transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
+      ignoreWarnings,
+      isTransferAll: transferAll,
+      errors,
+      additionalValidator: additionalValidator,
+      eventsHandler: eventsHandler
+    });
+
+    return await this.#koniState.transactionService.handleTransactionV2(transactionsList);
   }
 
   private async evmNftSubmitTransaction (inputData: NftTransactionRequest): Promise<SWTransactionResponse> {
@@ -4280,7 +4428,7 @@ export default class KoniExtension {
       case 'pri(accounts.transfer)':
         return await this.makeTransfer(request as RequestTransfer);
       case 'pri(accounts.crossChainTransfer)':
-        return await this.makeCrossChainTransfer(request as RequestCrossChainTransfer);
+        return await this.makeCrossChainTransferV2(request as RequestCrossChainTransfer);
       case 'pri(accounts.getOptimalTransferProcess)':
         return await this.getOptimalTransferProcess(request as RequestOptimalTransferProcess);
       case 'pri(accounts.approveSpending)':

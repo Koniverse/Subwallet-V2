@@ -13,7 +13,7 @@ import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balanc
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode, CommonOptimalPath, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
@@ -21,7 +21,7 @@ import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/co
 import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
-import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
+import { approveSpending, getMaxTransfer, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
@@ -791,27 +791,49 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     }
   }, [maxTransfer, transferAmountValue]);
 
+  // useEffect(() => {
+  //   getOptimalTransferProcess({
+  //     amount: transferAmountValue,
+  //     address: fromValue,
+  //     originChain: chainValue,
+  //     tokenSlug: assetValue,
+  //     destChain: destChainValue
+  //   })
+  //     .then((result) => {
+  //       dispatchProcessState({
+  //         payload: {
+  //           steps: result.steps,
+  //           feeStructure: result.totalFee
+  //         },
+  //         type: CommonActionType.STEP_CREATE
+  //       });
+  //     })
+  //     .catch((e) => {
+  //       console.log('error', e);
+  //     });
+  // }, [assetValue, chainValue, destChainValue, fromValue, transferAmountValue]);
+
   useEffect(() => {
-    getOptimalTransferProcess({
-      amount: transferAmountValue,
-      address: fromValue,
-      originChain: chainValue,
-      tokenSlug: assetValue,
-      destChain: destChainValue
-    })
-      .then((result) => {
-        dispatchProcessState({
-          payload: {
-            steps: result.steps,
-            feeStructure: result.totalFee
-          },
-          type: CommonActionType.STEP_CREATE
-        });
-      })
-      .catch((e) => {
-        console.log('error', e);
-      });
-  }, [assetValue, chainValue, destChainValue, fromValue, transferAmountValue]);
+    const result: CommonOptimalPath = {
+      totalFee: [MOCK_STEP_FEE, MOCK_STEP_FEE],
+      steps: [
+        DEFAULT_FIRST_STEP,
+        {
+          id: 1,
+          type: CommonStepType.TRANSFER,
+          name: 'Transfer'
+        }
+      ]
+    };
+
+    dispatchProcessState({
+      payload: {
+        steps: result.steps,
+        feeStructure: result.totalFee
+      },
+      type: CommonActionType.STEP_CREATE
+    });
+  }, []);
 
   useRestoreTransaction(form);
 
