@@ -182,6 +182,12 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
+  const [isSignMultiTransaction, setIsSignMultiTransaction] = useState(true);
+
+  // todo: remove after test
+  useEffect(() => {
+    setIsSignMultiTransaction(false);
+  }, []);
 
   // use this to reinit AddressInput component
   const [addressInputRenderKey, setAddressInputRenderKey] = useState<string>(defaultAddressInputRenderKey);
@@ -520,7 +526,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           if (stepType === CommonStepType.TOKEN_APPROVAL) {
             submitPromise = handleBridgeSpendingApproval(values);
           } else {
-            options.isPassConfirmation = isPassConfirmation;
+            options.isPassConfirmation = isPassConfirmation; // todo: also can set at init of any state except first step
             submitPromise = handleBasicSubmit(values, options);
           }
 
@@ -528,7 +534,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           const success = onSuccess(isLastStep, needRollback)(rs);
 
           if (success) {
-            isPassConfirmation = true;
+            if (isSignMultiTransaction) {
+              isPassConfirmation = true;
+            }
 
             return await submitData(step + 1);
           } else {
@@ -550,7 +558,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           setLoading(false);
         });
     }, 300);
-  }, [handleBasicSubmit, handleBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState.currentStep, processState.steps]);
+  }, [handleBasicSubmit, isSignMultiTransaction, handleBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
     const bnMaxTransfer = new BN(maxTransfer);
