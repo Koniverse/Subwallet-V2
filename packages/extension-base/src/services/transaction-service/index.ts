@@ -869,7 +869,7 @@ export default class TransactionService {
     return ethers.Transaction.from(txObject).unsignedSerialized as HexString;
   }
 
-  private async signAndSendEvmTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private async signAndSendEvmTransaction ({ address, chain, id, isPassConfirmation, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
     const payload = (transaction as EvmSendTransactionRequest);
     const evmApi = this.state.chainService.getEvmApi(chain);
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
@@ -1027,7 +1027,7 @@ export default class TransactionService {
           emitter.emit('error', eventData);
         });
     } else {
-      this.state.requestService.addConfirmation(id, url || EXTENSION_REQUEST_URL, 'evmSendTransactionRequest', payload, {})
+      this.state.requestService.addConfirmation(id, url || EXTENSION_REQUEST_URL, 'evmSendTransactionRequest', payload, { isPassConfirmation })
         .then(async ({ isApproved, payload }) => {
           if (isApproved) {
             let signedTransaction: string | undefined;

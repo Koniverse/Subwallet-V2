@@ -27,6 +27,7 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
   transaction: SubmittableExtrinsic | TransactionConfig | TonTransactionConfig;
   additionalValidator?: (inputTransaction: SWTransactionResponse) => Promise<void>;
   eventsHandler?: (eventEmitter: TransactionEmitter) => void;
+  isPassConfirmation?: boolean
 }
 
 export type SWTransactionResult = Omit<SWTransaction, 'transaction' | 'additionalValidator' | 'eventsHandler'>
@@ -41,6 +42,7 @@ export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransact
   errors?: SWTransaction['errors'];
   edAsWarning?: boolean;
   isTransferAll?: boolean;
+  isPassConfirmation?: boolean
   resolveOnDone?: boolean;
   skipFeeValidation?: boolean;
 }

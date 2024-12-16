@@ -51,6 +51,7 @@ type ComponentProps = {
 interface TransferOptions {
   isTransferAll: boolean;
   isTransferBounceable: boolean;
+  isPassConfirmation: boolean;
 }
 
 function getTokenItems (
@@ -458,7 +459,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         to,
         value,
         transferAll: options.isTransferAll,
-        transferBounceable: options.isTransferBounceable
+        transferBounceable: options.isTransferBounceable,
+        isPassConfirmation: options.isPassConfirmation
       });
     }
 
@@ -482,6 +484,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   // Submit transaction
   const doSubmit = useCallback((values: TransferParams, options: TransferOptions) => {
+    let isPassConfirmation = false;
+
     if (isShowWarningOnSubmit(values)) {
       return;
     }
@@ -511,12 +515,21 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           return await submitData(step + 1);
         } else {
           const stepType = processState.steps[step].type;
-          const submitPromise: Promise<SWTransactionResponse> | undefined = stepType === CommonStepType.TOKEN_APPROVAL ? handleBridgeSpendingApproval(values) : handleBasicSubmit(values, options);
+          let submitPromise: Promise<SWTransactionResponse> | undefined;
+
+          if (stepType === CommonStepType.TOKEN_APPROVAL) {
+            submitPromise = handleBridgeSpendingApproval(values);
+          } else {
+            options.isPassConfirmation = isPassConfirmation;
+            submitPromise = handleBasicSubmit(values, options);
+          }
 
           const rs = await submitPromise;
           const success = onSuccess(isLastStep, needRollback)(rs);
 
           if (success) {
+            isPassConfirmation = true;
+
             return await submitData(step + 1);
           } else {
             return false;
@@ -537,7 +550,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           setLoading(false);
         });
     }, 300);
-  }, [handleBasicSubmit, handleBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState]);
+  }, [handleBasicSubmit, handleBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState.currentStep, processState.steps]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
     const bnMaxTransfer = new BN(maxTransfer);
@@ -550,7 +563,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
     const options: TransferOptions = {
       isTransferAll: isTransferAll,
-      isTransferBounceable: false
+      isTransferBounceable: false,
+      isPassConfirmation: false
     };
 
     let checkTransferAll = false;
