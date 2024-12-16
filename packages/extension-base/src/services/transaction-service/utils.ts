@@ -63,7 +63,7 @@ function getBlockExplorerTxRoute (chainInfo: _ChainInfo) {
     return 'transaction';
   }
 
-  if (['invarch'].includes(chainInfo.slug)) {
+  if (['invarch', 'tangle'].includes(chainInfo.slug)) {
     return '#/extrinsics';
   }
 
@@ -85,6 +85,10 @@ export function getExplorerLink (chainInfo: _ChainInfo, value: string, type: 'ac
     }
 
     const route = getBlockExplorerTxRoute(chainInfo);
+
+    if (chainInfo.slug === 'tangle') {
+      return (`${explorerLink}${explorerLink.endsWith('/') ? '' : '/'}extrinsic/${value}${route}/${value}`);
+    }
 
     return (`${explorerLink}${explorerLink.endsWith('/') ? '' : '/'}${route}/${value}`);
   }
