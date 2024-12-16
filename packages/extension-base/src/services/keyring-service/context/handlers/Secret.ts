@@ -5,7 +5,7 @@ import { AccountExternalError, AccountExternalErrorCode, RequestAccountCreateExt
 import { AccountChainType, CommonAccountErrorType, RequestCheckPublicAndSecretKey, RequestPrivateKeyValidateV2, ResponseCheckPublicAndSecretKey, ResponsePrivateKeyValidateV2, SWCommonAccountError } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress } from '@subwallet/keyring';
 import { decodePair } from '@subwallet/keyring/pair/decode';
-import { BitcoinKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
+import { BitcoinKeypairTypes, CardanoKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import keyring from '@subwallet/ui-keyring';
 import { t } from 'i18next';
 
@@ -51,7 +51,7 @@ export class AccountSecretHandler extends AccountBaseHandler {
         genesisHash: ''
       };
 
-      if ([...BitcoinKeypairTypes, ...TonKeypairTypes].includes(type) && isReadOnly) {
+      if ([...BitcoinKeypairTypes, ...TonKeypairTypes, ...CardanoKeypairTypes].includes(type) && isReadOnly) {
         meta.noPublicKey = true;
       }
 
