@@ -209,6 +209,7 @@ const Component = () => {
     return chainInfoMap[toChain] && isEthereumAddress(fromValue) === _isChainEvmCompatible(chainInfoMap[toChain]);
   }, [chainInfoMap, fromAndToTokenMap, fromValue, toAssetInfo, toTokenSlugValue]);
 
+  // Unable to use useEffect due to infinity loop caused by conflict setCurrentSlippage and currentQuote
   const slippage = useMemo(() => {
     const providerId = currentQuote?.provider?.id;
     const slippageMap = {
@@ -759,6 +760,9 @@ const Component = () => {
     return undefined;
   }, [currentPair]);
 
+  const slippageTitle = isSimpleSwapSlippage ? 'Slippage can be up to 5% due to market conditions' : '';
+  const slippageContent = isSimpleSwapSlippage ? `Up to ${(slippage * 100).toString()}%` : `${(slippage * 100).toString()}%`;
+
   const renderSlippage = () => {
     return (
       <>
@@ -767,11 +771,9 @@ const Component = () => {
             className='__slippage-action'
             onClick={onOpenSlippageModal}
           >
-            {isSimpleSwapSlippage
-              ? (
                 <Tooltip
                   placement={'topRight'}
-                  title='Slippage can be up to 5% due to market conditions'
+                  title={slippageTitle}
                 >
                   <div className='__slippage-title-wrapper'>Slippage
                     <Icon
@@ -781,25 +783,9 @@ const Component = () => {
                       size='sm'
                       weight='fill'
                     />
-                        : &nbsp;<span>Up to {(slippage * 100).toString()}%</span>
+                        : &nbsp;<span>{slippageContent}</span>
                   </div>
                 </Tooltip>
-              )
-              : (
-                <>
-                  <div className={'__slippage-title-wrapper'}>Slippage
-                    <Icon
-                      customSize={'16px'}
-                      iconColor={token.colorSuccess}
-                      phosphorIcon={Info}
-                      size='sm'
-                      weight='fill'
-                    />
-                    :
-                  </div>
-                  &nbsp;<span>{(slippage * 100).toString()}%</span>
-                </>
-              )}
 
             {!notSupportSlippageSelection && (
               <div className='__slippage-editor-button'>

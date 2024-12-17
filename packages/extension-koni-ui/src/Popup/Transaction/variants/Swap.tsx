@@ -253,6 +253,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return isTokenCompatibleWithAccountChainTypes(toTokenSlugValue, targetAccountProxy.chainTypes, chainInfoMap);
   }, [chainInfoMap, fromAndToTokenMap, targetAccountProxy.chainTypes, toTokenSlugValue]);
 
+  // Unable to use useEffect due to infinity loop caused by conflict setCurrentSlippage and currentQuote
   const slippage = useMemo(() => {
     const providerId = currentQuote?.provider?.id;
     const slippageMap = {
@@ -769,6 +770,9 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return undefined;
   }, [currentPair]);
 
+  const slippageTitle = isSimpleSwapSlippage ? 'Slippage can be up to 5% due to market conditions' : '';
+  const slippageContent = isSimpleSwapSlippage ? `Up to ${((slippage * 100).toString()).toString()}%` : `${((slippage * 100).toString()).toString()}%`;
+
   const renderSlippage = () => {
     return (
       <>
@@ -777,39 +781,21 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
             className='__slippage-action'
             onClick={onOpenSlippageModal}
           >
-            {isSimpleSwapSlippage
-              ? (
-                <Tooltip
-                  placement={'topRight'}
-                  title='Slippage can be up to 5% due to market conditions'
-                >
-                  <div className='__slippage-title-wrapper'>Slippage
-                    <Icon
-                      customSize='16px'
-                      iconColor={token.colorSuccess}
-                      phosphorIcon={Info}
-                      size='sm'
-                      weight='fill'
-                    />
-                        : &nbsp;<span>Up to {(slippage * 100).toString()}%</span>
-                  </div>
-                </Tooltip>
-              )
-              : (
-                <>
-                  <div className={'__slippage-title-wrapper'}>Slippage
-                    <Icon
-                      customSize={'16px'}
-                      iconColor={token.colorSuccess}
-                      phosphorIcon={Info}
-                      size='sm'
-                      weight='fill'
-                    />
-                    :
-                  </div>
-                  &nbsp;<span>{(slippage * 100).toString()}%</span>
-                </>
-              )}
+            <Tooltip
+              placement={'topRight'}
+              title={slippageTitle}
+            >
+              <div className='__slippage-title-wrapper'>Slippage
+                <Icon
+                  customSize='16px'
+                  iconColor={token.colorSuccess}
+                  phosphorIcon={Info}
+                  size='sm'
+                  weight='fill'
+                />
+                        : &nbsp;<span>{slippageContent}</span>
+              </div>
+            </Tooltip>
 
             {!notSupportSlippageSelection && (
               <div className='__slippage-editor-button'>
