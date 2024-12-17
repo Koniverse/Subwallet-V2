@@ -253,6 +253,19 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     return isTokenCompatibleWithAccountChainTypes(toTokenSlugValue, targetAccountProxy.chainTypes, chainInfoMap);
   }, [chainInfoMap, fromAndToTokenMap, targetAccountProxy.chainTypes, toTokenSlugValue]);
 
+  const slippage = useMemo(() => {
+    const providerId = currentQuote?.provider?.id;
+    const slippageMap = {
+      [SwapProviderId.CHAIN_FLIP_MAINNET]: CHAINFLIP_SLIPPAGE,
+      [SwapProviderId.CHAIN_FLIP_TESTNET]: CHAINFLIP_SLIPPAGE,
+      [SwapProviderId.SIMPLE_SWAP]: SIMPLE_SWAP_SLIPPAGE
+    };
+
+    return providerId && providerId in slippageMap
+      ? slippageMap[providerId as keyof typeof slippageMap]
+      : currentSlippage.slippage.toNumber();
+  }, [currentQuote?.provider?.id, currentSlippage.slippage]);
+
   const onSwitchSide = useCallback(() => {
     if (fromTokenSlugValue && toTokenSlugValue) {
       form.setFieldsValue({
@@ -345,11 +358,13 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
   }, [form]);
 
   const notSupportSlippageSelection = useMemo(() => {
-    if (currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_TESTNET || currentQuote?.provider.id === SwapProviderId.CHAIN_FLIP_MAINNET || currentQuote?.provider.id === SwapProviderId.SIMPLE_SWAP) {
-      return true;
-    }
+    const unsupportedProviders = [
+      SwapProviderId.CHAIN_FLIP_TESTNET,
+      SwapProviderId.CHAIN_FLIP_MAINNET,
+      SwapProviderId.SIMPLE_SWAP
+    ];
 
-    return false;
+    return currentQuote?.provider.id ? unsupportedProviders.includes(currentQuote.provider.id) : false;
   }, [currentQuote?.provider.id]);
 
   const isSimpleSwapSlippage = useMemo(() => {
@@ -661,11 +676,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
               currentStep: step,
               quote: latestOptimalQuote,
               address: from,
-              slippage: [SwapProviderId.CHAIN_FLIP_MAINNET, SwapProviderId.CHAIN_FLIP_TESTNET].includes(latestOptimalQuote.provider.id)
-                ? CHAINFLIP_SLIPPAGE
-                : SwapProviderId.SIMPLE_SWAP.includes(latestOptimalQuote.provider.id)
-                  ? SIMPLE_SWAP_SLIPPAGE
-                  : currentSlippage.slippage.toNumber(),
+              slippage: slippage,
               recipient
             });
 
@@ -716,37 +727,17 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
     } else {
       transactionBlockProcess();
     }
-  }, [accounts, chainValue, checkChainConnected, closeAlert, currentOptimalSwapPath, currentQuote, currentQuoteRequest, currentSlippage.slippage, isChainConnected, notify, onError, onSuccess, openAlert, processState.currentStep, processState.steps.length, swapError, t]);
+  }, [accounts, chainValue, checkChainConnected, closeAlert, currentOptimalSwapPath, currentQuote, currentQuoteRequest, isChainConnected, notify, onError, onSuccess, openAlert, processState.currentStep, processState.steps.length, slippage, swapError, t]);
 
   const minimumReceived = useMemo(() => {
-    const getSlippage = () => {
-      const providerId = currentQuote?.provider?.id; // Lấy provider ID an toàn
+    const adjustedValue = new BigN(currentQuote?.toAmount || '0').multipliedBy(new BigN(1).minus(new BigN(slippage))).integerValue(BigN.ROUND_DOWN);
 
-      if (providerId && [SwapProviderId.CHAIN_FLIP_MAINNET, SwapProviderId.CHAIN_FLIP_TESTNET].includes(providerId)) {
-        return new BigN(CHAINFLIP_SLIPPAGE);
-      }
+    const adjustedValueStr = adjustedValue.toString();
 
-      if (providerId && SwapProviderId.SIMPLE_SWAP.includes(providerId)) {
-        return new BigN(SIMPLE_SWAP_SLIPPAGE);
-      }
-
-      return currentSlippage.slippage;
-    };
-
-    const calcMinimumReceived = (value: string, slippage: BigN) => {
-      const adjustedValue = new BigN(value)
-        .multipliedBy(new BigN(1).minus(slippage))
-        .integerValue(BigN.ROUND_DOWN);
-
-      return adjustedValue.toString().includes('e')
-        ? formatNumberString(adjustedValue.toString())
-        : adjustedValue.toString();
-    };
-
-    const slippage = getSlippage();
-
-    return calcMinimumReceived(currentQuote?.toAmount || '0', slippage);
-  }, [currentQuote?.toAmount, currentSlippage.slippage, currentQuote?.provider?.id]);
+    return adjustedValueStr.includes('e')
+      ? formatNumberString(adjustedValueStr)
+      : adjustedValueStr;
+  }, [slippage, currentQuote?.toAmount]);
 
   const onAfterConfirmTermModal = useCallback(() => {
     return setConfirmedTerm('swap-term-confirmed');
@@ -786,41 +777,23 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
             className='__slippage-action'
             onClick={onOpenSlippageModal}
           >
-            {notSupportSlippageSelection
+            {isSimpleSwapSlippage
               ? (
-                isSimpleSwapSlippage
-                  ? (
-                    <Tooltip
-                      placement={'topRight'}
-                      title='Slippage can be up to 5% due to market conditions'
-                    >
-                      <div className='__slippage-title-wrapper'>Slippage
-                        <Icon
-                          customSize='16px'
-                          iconColor={token.colorSuccess}
-                          phosphorIcon={Info}
-                          size='sm'
-                          weight='fill'
-                        />
-                          &nbsp;<span>≤ {(SIMPLE_SWAP_SLIPPAGE * 100).toString()}%</span>
-                      </div>
-                    </Tooltip>
-                  )
-                  : (
-                    <>
-                      <div className='__slippage-title-wrapper'>Slippage
-                        <Icon
-                          customSize='16px'
-                          iconColor={token.colorSuccess}
-                          phosphorIcon={Info}
-                          size='sm'
-                          weight='fill'
-                        />
-                        :
-                      </div>
-                        &nbsp;<span>{(CHAINFLIP_SLIPPAGE * 100).toString()}%</span>
-                    </>
-                  )
+                <Tooltip
+                  placement={'topRight'}
+                  title='Slippage can be up to 5% due to market conditions'
+                >
+                  <div className='__slippage-title-wrapper'>Slippage
+                    <Icon
+                      customSize='16px'
+                      iconColor={token.colorSuccess}
+                      phosphorIcon={Info}
+                      size='sm'
+                      weight='fill'
+                    />
+                        : &nbsp;<span>Up to {(slippage * 100).toString()}%</span>
+                  </div>
+                </Tooltip>
               )
               : (
                 <>
@@ -834,7 +807,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
                     />
                     :
                   </div>
-                  &nbsp;<span>{currentSlippage.slippage.multipliedBy(100).toString()}%</span>
+                  &nbsp;<span>{(slippage * 100).toString()}%</span>
                 </>
               )}
 
