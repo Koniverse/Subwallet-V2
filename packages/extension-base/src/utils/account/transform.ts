@@ -700,17 +700,10 @@ export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountP
   const specialChain: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialChain : undefined;
 
   for (const accountProxy of accountProxies) {
-    // Have 4 network types, but at the moment, we only support 3 network types
-    if (chainTypes.size === 3) {
-      break;
-    }
-
     for (const chainType of accountProxy.chainTypes) {
       chainTypes.add(chainType);
     }
-  }
 
-  for (const accountProxy of accountProxies) {
     for (const tokenType of accountProxy.tokenTypes) {
       tokenTypes.add(tokenType);
     }
