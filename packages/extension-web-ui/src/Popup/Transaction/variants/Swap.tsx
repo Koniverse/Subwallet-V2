@@ -1652,13 +1652,9 @@ const Swap = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
     '.__swap-provider .__value ': {
       display: 'flex',
       gap: 8,
+      justifyContent: 'flex-end',
+      alignSelf: 'stretch',
       overflow: 'hidden'
-    },
-    '.__swap-provider .__col': {
-      alignItems: 'unset',
-      flexDirection: 'row',
-      justifyContent: 'flex-end'
-
     },
     '.ant-background-icon': {
       width: 24,

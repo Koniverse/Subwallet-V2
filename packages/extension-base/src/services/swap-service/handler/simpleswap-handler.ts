@@ -206,7 +206,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         aliveUntil: +Date.now() + (SWAP_QUOTE_TIMEOUT_MAP[this.slug] || SWAP_QUOTE_TIMEOUT_MAP.default),
         minSwap: toBNString(metadata.minSwap.value, _getAssetDecimals(fromAsset)),
         maxSwap: toBNString(metadata.maxSwap?.value, _getAssetDecimals(fromAsset)),
-        estimatedArrivalTime: 0,
+        estimatedArrivalTime: 3600,
         isLowLiquidity: false,
         feeInfo: {
           feeComponent: [networkFee, walletFee],
