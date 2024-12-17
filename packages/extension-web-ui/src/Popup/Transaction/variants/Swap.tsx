@@ -709,17 +709,35 @@ const Component = () => {
   }, [accounts, chainValue, checkChainConnected, closeAlert, currentOptimalSwapPath, currentQuote, currentQuoteRequest, currentSlippage.slippage, notify, onError, onSuccess, openAlert, processState.currentStep, processState.steps.length, t]);
 
   const minimumReceived = useMemo(() => {
-    const calcMinimumReceived = (value: string) => {
-      const adjustedValue = new BigN(value).multipliedBy(new BigN(1).minus(currentSlippage.slippage)).integerValue(BigN.ROUND_DOWN);
+    const getSlippage = () => {
+      const providerId = currentQuote?.provider?.id; // Lấy provider ID an toàn
+
+      if (providerId && [SwapProviderId.CHAIN_FLIP_MAINNET, SwapProviderId.CHAIN_FLIP_TESTNET].includes(providerId)) {
+        return new BigN(CHAINFLIP_SLIPPAGE);
+      }
+
+      if (providerId && SwapProviderId.SIMPLE_SWAP.includes(providerId)) {
+        return new BigN(SIMPLE_SWAP_SLIPPAGE);
+      }
+
+      return currentSlippage.slippage;
+    };
+
+    const calcMinimumReceived = (value: string, slippage: BigN) => {
+      const adjustedValue = new BigN(value)
+        .multipliedBy(new BigN(1).minus(slippage))
+        .integerValue(BigN.ROUND_DOWN);
 
       return adjustedValue.toString().includes('e')
         ? formatNumberString(adjustedValue.toString())
         : adjustedValue.toString();
     };
 
-    return calcMinimumReceived(currentQuote?.toAmount || '0');
-  }, [currentQuote?.toAmount, currentSlippage.slippage]);
+    const slippage = getSlippage();
 
+    return calcMinimumReceived(currentQuote?.toAmount || '0', slippage);
+  }, [currentQuote?.toAmount, currentSlippage.slippage, currentQuote?.provider?.id]);
+  
   const onAfterConfirmTermModal = useCallback(() => {
     return setConfirmedTerm('swap-term-confirmed');
   }, [setConfirmedTerm]);
