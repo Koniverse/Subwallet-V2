@@ -105,7 +105,7 @@
     "@polkadot/types-support": "^15.0.1",
     "@polkadot/util": "^13.2.3",
     "@polkadot/util-crypto": "^13.2.3",
-    "@subwallet/chain-list": "0.2.95",
+    "@subwallet/chain-list": "0.2.96-beta.3",
     "@subwallet/keyring": "^0.1.8-beta.0",
     "@subwallet/react-ui": "5.1.2-b79",
     "@subwallet/ui-keyring": "0.1.8-beta.0",
