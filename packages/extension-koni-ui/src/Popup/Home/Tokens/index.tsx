@@ -49,8 +49,6 @@ const Component = (): React.ReactElement => {
   const { onOpenReceive, receiveModalProps } = useCoreReceiveModalHelper();
   const popularTokens = useSelector((state: RootState) => state.chainStore.popularTokens);
 
-  console.log('tokens', popularTokens);
-
   const isZkModeSyncing = useSelector((state: RootState) => state.mantaPay.isSyncing);
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
   const [, setStorage] = useLocalStorage<TransferParams>(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
@@ -296,8 +294,6 @@ const Component = (): React.ReactElement => {
 
   const tokenGroupBalanceItems = useMemo<TokenBalanceItemType[]>(() => {
     const result: TokenBalanceItemType[] = [];
-
-    console.log('group',tokenGroupBalanceMap);
 
     sortedTokenGroups.forEach((tokenGroupSlug) => {
       if (tokenGroupBalanceMap[tokenGroupSlug]) {
