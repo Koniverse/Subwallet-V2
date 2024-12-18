@@ -419,7 +419,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       provider: this.providerInfo,
       quote: params.quote,
       slippage: params.slippage,
-      recipient,
+      recipient: receiver,
       process: params.process
     };
 
