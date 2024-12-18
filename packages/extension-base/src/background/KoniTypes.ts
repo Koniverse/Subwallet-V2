@@ -2294,6 +2294,11 @@ export interface KoniRequestSignatures {
 
   /* Ledger */
   'pri(ledger.generic.allow)': [null, string[], string[]];
+  /* Ledger */
+
+  /* Popular tokens */
+  'pri(popular.tokens)': [null, string[], string[]];
+  /* Popular tokens */
 }
 
 export interface ApplicationMetadataType {

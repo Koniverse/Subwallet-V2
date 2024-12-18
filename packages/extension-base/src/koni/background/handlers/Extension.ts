@@ -3933,6 +3933,24 @@ export default class KoniExtension {
 
   /* Ledger */
 
+  /* Popular tokens */
+
+  private subscribePopularTokens (id: string, port: chrome.runtime.Port): string[] {
+    const cb = createSubscription<'pri(popular.tokens)'>(id, port);
+
+    const subscription = this.#koniState.chainService.observablePopularTokens.popularTokens.subscribe(cb);
+
+    this.createUnsubscriptionHandle(id, subscription.unsubscribe);
+
+    port.onDisconnect.addListener((): void => {
+      this.cancelSubscription(id);
+    });
+
+    return this.#koniState.chainService.valuePopularTokens.popularTokens;
+  }
+
+  /* Popular tokens */
+
   // --------------------------------------------------------------
   // eslint-disable-next-line @typescript-eslint/require-await
   public async handle<TMessageType extends MessageTypes> (id: string, type: TMessageType, request: RequestTypes[TMessageType], port: chrome.runtime.Port): Promise<ResponseType<TMessageType>> {
@@ -4543,6 +4561,12 @@ export default class KoniExtension {
       case 'pri(ledger.generic.allow)':
         return this.subscribeLedgerGenericAllowChains(id, port);
         /* Ledger */
+
+        /* Popular tokens */
+      case 'pri(popular.tokens)':
+        return this.subscribePopularTokens(id, port);
+        /* Popular tokens */
+
       // Default
       default:
         throw new Error(`Unable to handle message of type ${type}`);

@@ -17,7 +17,7 @@ import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/Upper
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isAccountAll, sortToken } from '@subwallet/extension-koni-ui/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
 import classNames from 'classnames';
@@ -47,6 +47,9 @@ const Component = (): React.ReactElement => {
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
   const notify = useNotification();
   const { onOpenReceive, receiveModalProps } = useCoreReceiveModalHelper();
+  const popularTokens = useSelector((state: RootState) => state.chainStore.popularTokens);
+
+  console.log('tokens', popularTokens);
 
   const isZkModeSyncing = useSelector((state: RootState) => state.mantaPay.isSyncing);
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
@@ -294,14 +297,16 @@ const Component = (): React.ReactElement => {
   const tokenGroupBalanceItems = useMemo<TokenBalanceItemType[]>(() => {
     const result: TokenBalanceItemType[] = [];
 
+    console.log('group',tokenGroupBalanceMap);
+
     sortedTokenGroups.forEach((tokenGroupSlug) => {
       if (tokenGroupBalanceMap[tokenGroupSlug]) {
         result.push(tokenGroupBalanceMap[tokenGroupSlug]);
       }
     });
 
-    return result.sort(sortTokenByValue);
-  }, [sortedTokenGroups, tokenGroupBalanceMap]);
+    return sortToken(result, popularTokens);
+  }, [sortedTokenGroups, tokenGroupBalanceMap, popularTokens]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);

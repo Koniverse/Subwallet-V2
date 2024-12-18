@@ -508,3 +508,11 @@ export const updateUnreadNotificationCountMap = (data: Record<string, number>) =
 
 export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappNotification.subscribeUnreadNotificationCountMap)', null, updateUnreadNotificationCountMap, updateUnreadNotificationCountMap);
 /* Notification service */
+
+/* Popular tokens */
+export const updatePopularTokens = (data: string[]) => {
+  store.dispatch({ type: 'chainStore/updatePopularTokens', payload: data });
+};
+
+export const subscribePopularTokens = lazySubscribeMessage('pri(popular.tokens)', null, updatePopularTokens, updatePopularTokens);
+/* Popular tokens */

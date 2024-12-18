@@ -92,6 +92,7 @@ export class ChainService {
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
   private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
+  private popularTokensSubject = new BehaviorSubject<string[]>([]);
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -121,7 +122,7 @@ export class ChainService {
     this.logger = createLogger('chain-service');
   }
 
-  public get value () {
+  public get value() {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
 
     return {
@@ -137,6 +138,26 @@ export class ChainService {
     return {
       get ledgerGenericAllowChains () {
         return ledgerGenericAllowChains.asObservable();
+      }
+    };
+  }
+
+  public get valuePopularTokens () {
+    const popularTokens = this.popularTokensSubject;
+
+    return {
+      get popularTokens () {
+        return popularTokens.value;
+      }
+    };
+  }
+
+  public get observablePopularTokens () {
+    const popularTokens = this.popularTokensSubject;
+
+    return {
+      get popularTokens () {
+        return popularTokens.asObservable();
       }
     };
   }
@@ -767,6 +788,11 @@ export class ChainService {
     this.logger.log('Finished updating latest ledger generic allow chains');
   }
 
+  handleLatestPopularTokens (latestPopularTokens: string[]) {
+    this.popularTokensSubject.next(latestPopularTokens);
+    this.logger.log('Finished updating latest popular tokens');
+  }
+
   handleLatestData () {
     this.fetchLatestChainData().then((latestChainInfo) => {
       this.lockChainInfoMap = true; // do not need to check current lockChainInfoMap because all remains action is fast enough and don't affect this feature.
@@ -784,6 +810,12 @@ export class ChainService {
     this.fetchLatestLedgerGenericAllowChains()
       .then((latestledgerGenericAllowChains) => {
         this.handleLatestLedgerGenericAllowChains(latestledgerGenericAllowChains);
+      })
+      .catch(console.error);
+
+    this.fetchLatestPopularTokens()
+      .then((latestPopularTokens) => {
+        this.handleLatestPopularTokens(latestPopularTokens);
       })
       .catch(console.error);
   }
@@ -1086,6 +1118,10 @@ export class ChainService {
 
   private async fetchLatestLedgerGenericAllowChains () {
     return await fetchStaticData<string[]>('chains/ledger-generic-allow-chains') || [];
+  }
+
+  private async fetchLatestPopularTokens () {
+    return await fetchStaticData<string[]>('chain-assets/popular-tokens') || [];
   }
 
   private async initChains () {

@@ -12,3 +12,20 @@ export const sortTokenByValue = (a: TokenBalanceItemType, b: TokenBalanceItemTyp
     return b.total.value.minus(a.total.value).toNumber();
   }
 };
+
+export function sortToken (tokenGroupSlug: TokenBalanceItemType[], popularTokens: string[]) {
+  return tokenGroupSlug.sort((a, b) => {
+    const aIsPiorityToken = popularTokens.includes(a.slug);
+    const bIsPiorityToken = popularTokens.includes(b.slug);
+
+    if (aIsPiorityToken && !bIsPiorityToken) {
+      return -1;
+    } else if (!aIsPiorityToken && bIsPiorityToken) {
+      return 1;
+    } else if (!aIsPiorityToken && !bIsPiorityToken) {
+      return sortTokenByValue(a, b);
+    } else {
+      return 0;
+    }
+  });
+}
