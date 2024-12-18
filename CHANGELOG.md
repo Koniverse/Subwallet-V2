@@ -1,5 +1,59 @@
 # CHANGELOG
 
+## 1.3.10
+Build date: Dec 12, 2024.
+
+Features & Update:
+- Update version polkadot api (#3888)
+- Unable to transfer local token on Bifrost (#3896)
+
+
+## 1.3.9
+Build date: Dec 09, 2024.
+
+Features & Update:
+- Allow Polkadot namespace use EVM address (#3870)
+- Support Generic ledger app for Vara network (#3835)
+
+Bug fixed:
+- Fixed bug validating recipient balance when sending Substrate token (#3713)
+- Fixed bug send NFT on Ethereum network (#3762)
+
+
+## 1.3.8
+Build date: Dec 03, 2024.
+
+Features & Update:
+- Improve chain-list online patch (#3132)
+- Support Unified bridge on Polygon (#3826)
+  - ETH: Ethereum -> Polygon zkEVM
+  - ETH: Polygon zkEVM -> Ethereum
+- Update chain-list
+  - Add support for G6 network testnet
+  - Add support for LOVA token (PAH, Hydration)
+  - Add support for PIP token (Storty Odyssey Testnet)
+  - Add support for Fraxtal Mainnet
+  - Add support for Cyber
+  - Update Aventus Block Explorer
+  - Delete Story Public Tesnet (Iliad testnet)
+
+
+## 1.3.7
+Build date: Nov 23, 2024.
+
+Features & Update:
+- Update chain-list (#3846)
+  - Add support for Gnosis
+  - Add support for Autonomys Mainnet
+  - Add support for KMA (Manta Pacific), USDC (Base Mainnet)
+  - Update information for some chains and tokens: add explorer, price-id, logo & name
+- Improve display collators list (#2751)
+- Improve block action online by environment (#3814)
+- Integration NFT for Story Protocol (#3854)
+
+Bug fixed:
+- Re-check transaction on Polkadot Asset Hub (#3852)
+
 ## 1.3.6
 Build date: Nov 07, 2024.
 
