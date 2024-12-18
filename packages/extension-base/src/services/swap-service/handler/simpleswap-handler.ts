@@ -7,7 +7,7 @@ import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/K
 import { _getSimpleSwapEarlyValidationError } from '@subwallet/extension-base/core/logic-validation/swap';
 import { _getAssetDecimals, _getChainNativeTokenSlug, _getContractAddressOfToken, _isChainSubstrateCompatible, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { BaseStepDetail, BasicTxErrorType, CommonFeeComponent, CommonOptimalPath, CommonStepFeeInfo, CommonStepType, OptimalSwapPathParams, SimpleSwapTxData, SimpleSwapValidationMetadata, SwapEarlyValidation, SwapErrorType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, TransactionData, ValidateSwapProcessParams } from '@subwallet/extension-base/types';
-import { formatNumber } from '@subwallet/extension-base/utils';
+import { _reformatAddressWithChain, formatNumber } from '@subwallet/extension-base/utils';
 import BigN, { BigNumber } from 'bignumber.js';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
@@ -381,8 +381,9 @@ export class SimpleSwapHandler implements SwapBaseInterface {
     const fromAsset = this.chainService.getAssetBySlug(pair.from);
     const toAsset = this.chainService.getAssetBySlug(pair.to);
     const chainInfo = this.chainService.getChainInfoByKey(fromAsset.originChain);
+    const toChainInfo = this.chainService.getChainInfoByKey(toAsset.originChain);
     const chainType = _isChainSubstrateCompatible(chainInfo) ? ChainType.SUBSTRATE : ChainType.EVM;
-    const receiver = recipient ?? address;
+    const receiver = _reformatAddressWithChain(recipient ?? address, toChainInfo);
 
     const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
     const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
