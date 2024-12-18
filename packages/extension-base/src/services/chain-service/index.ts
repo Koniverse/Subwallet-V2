@@ -122,7 +122,7 @@ export class ChainService {
     this.logger = createLogger('chain-service');
   }
 
-  public get value() {
+  public get value () {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
 
     return {
