@@ -634,7 +634,7 @@ const Component = ({ targetAccountProxy }: ComponentProps) => {
               address: from,
               process: currentOptimalSwapPath,
               selectedQuote: currentQuote,
-              recipient
+              recipient // Need to assign format address with toChainInfo in case there's no recipient
             });
 
             const _errors = await validatePromise;
