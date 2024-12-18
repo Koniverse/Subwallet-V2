@@ -8,3 +8,4 @@ export { default as CurrentAccountStore } from './CurrentAccountStore';
 export { default as CurrentCurrencyStore } from './CurrentCurrencyStore';
 export { default as MetadataStore } from './Metadata';
 export { default as ModifyPairStore } from './ModifyPairStore';
+export { default as EnvironmentStore } from './EnvironmentStore';

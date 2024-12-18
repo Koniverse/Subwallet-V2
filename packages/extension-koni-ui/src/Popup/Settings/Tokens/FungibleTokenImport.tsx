@@ -425,8 +425,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
                 >
                   <AddressInput
                     disabled={!selectedTokenType}
-                    placeholder={t('Please type or paste an asset ID')}
                     label={t('Asset ID')}
+                    placeholder={t('Please type or paste an asset ID')}
                     showScanner={true}
                   />
                 </Form.Item>

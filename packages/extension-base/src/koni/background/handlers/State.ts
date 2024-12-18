@@ -8,12 +8,13 @@ import { withErrorLog } from '@subwallet/extension-base/background/handlers/help
 import { isSubscriptionRunning, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
 import { AddTokenRequestExternal, AmountData, APIItemState, ApiMap, AuthRequestV2, ChainStakingMetadata, ChainType, ConfirmationsQueue, ConfirmationsQueueCardano, ConfirmationsQueueTon, CrowdloanItem, CrowdloanJson, CurrencyType, EvmProviderErrorType, EvmSendTransactionParams, EvmSendTransactionRequest, EvmSignatureRequest, ExternalRequestPromise, ExternalRequestPromiseStatus, ExtrinsicType, MantaAuthorizationContext, MantaPayConfig, MantaPaySyncState, NftCollection, NftItem, NftJson, NominatorMetadata, RequestAccountExportPrivateKey, RequestConfirmationComplete, RequestConfirmationCompleteCardano, RequestConfirmationCompleteTon, RequestCrowdloanContributions, RequestSettingsType, ResponseAccountExportPrivateKey, ServiceInfo, SingleModeJson, StakingItem, StakingJson, StakingRewardItem, StakingRewardJson, StakingType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestSign, ResponseRpcListProviders, ResponseSigning } from '@subwallet/extension-base/background/types';
-import { MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
+import { EnvConfig, MANTA_PAY_BALANCE_INTERVAL, REMIND_EXPORT_ACCOUNT } from '@subwallet/extension-base/constants';
 import { convertErrorFormat, generateValidationProcess, PayloadValidated, ValidateStepFunction, validationAuthMiddleware, validationAuthWCMiddleware, validationConnectMiddleware, validationEvmDataTransactionMiddleware, validationEvmSignMessageMiddleware } from '@subwallet/extension-base/core/logic-validation';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { ServiceStatus } from '@subwallet/extension-base/services/base/types';
 import BuyService from '@subwallet/extension-base/services/buy-service';
 import CampaignService from '@subwallet/extension-base/services/campaign-service';
+import { ChainOnlineService } from '@subwallet/extension-base/services/chain-online-service';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _PREDEFINED_SINGLE_MODES } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest } from '@subwallet/extension-base/services/chain-service/types';
@@ -132,6 +133,7 @@ export default class KoniState {
   readonly feeService: FeeService;
   readonly swapService: SwapService;
   readonly inappNotificationService: InappNotificationService;
+  readonly chainOnlineService: ChainOnlineService;
 
   // Handle the general status of the extension
   private generalStatus: ServiceStatus = ServiceStatus.INITIALIZING;
@@ -165,6 +167,7 @@ export default class KoniState {
     this.feeService = new FeeService(this);
     this.swapService = new SwapService(this);
     this.inappNotificationService = new InappNotificationService(this.dbService, this.keyringService, this.eventService, this.chainService);
+    this.chainOnlineService = new ChainOnlineService(this.chainService, this.settingService, this.eventService, this.dbService);
 
     this.subscription = new KoniSubscription(this, this.dbService);
     this.cron = new KoniCron(this, this.subscription, this.dbService);
@@ -282,7 +285,6 @@ export default class KoniState {
   public async init () {
     await this.eventService.waitCryptoReady;
     await this.chainService.init();
-    this.afterChainServiceInit();
     await this.migrationService.run();
     this.campaignService.init();
     this.mktCampaignService.init();
@@ -301,8 +303,11 @@ export default class KoniState {
     await this.dbService.stores.crowdloan.removeEndedCrowdloans();
 
     await this.startSubscription();
-
+    this.chainOnlineService.checkLatestData();
     this.chainService.checkLatestData();
+    this.chainService.subscribeChainInfoMap().subscribe(() => {
+      this.afterChainServiceInit();
+    });
   }
 
   public async initMantaPay (password: string) {
@@ -1010,6 +1015,8 @@ export default class KoniState {
   }
 
   async resumeAllNetworks () {
+    this.chainOnlineService.checkLatestData();
+
     return this.chainService.resumeAllChainApis();
   }
 
@@ -1633,6 +1640,21 @@ export default class KoniState {
     });
   }
 
+  public saveEnvConfig <T extends keyof EnvConfig> (key: T, value: EnvConfig[T]): void {
+    this.settingService.getEnvironmentList((config) => {
+      const newSettings: EnvConfig = {
+        ...config,
+        [key]: value
+      };
+
+      this.settingService.setEnvironment(newSettings);
+    });
+  }
+
+  public initEnvConfig (envConfig: EnvConfig): void {
+    this.settingService.setEnvironment(envConfig);
+  }
+
   public async resetWallet (resetAll: boolean) {
     await this.keyringService.resetWallet(resetAll);
     await this.earningService.resetYieldPosition();
@@ -1653,9 +1675,11 @@ export default class KoniState {
     await this.walletConnectService.resetWallet(resetAll);
 
     await this.chainService.init();
-    this.afterChainServiceInit();
-
+    this.chainOnlineService.checkLatestData();
     this.chainService.checkLatestData();
+    this.chainService.subscribeChainInfoMap().subscribe(() => {
+      this.afterChainServiceInit();
+    });
   }
 
   public async enableMantaPay (updateStore: boolean, address: string, password: string, seedPhrase?: string) {

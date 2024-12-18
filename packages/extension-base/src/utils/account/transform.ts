@@ -216,7 +216,7 @@ const EVM_ACTIONS: ExtrinsicType[] = [
 ];
 
 const CLAIM_AVAIL_BRIDGE: ExtrinsicType[] = [
-  ExtrinsicType.CLAIM_AVAIL_BRIDGE
+  ExtrinsicType.CLAIM_BRIDGE
 ];
 
 const OTHER_ACTIONS: ExtrinsicType[] = [
