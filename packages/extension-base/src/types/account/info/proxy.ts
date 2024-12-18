@@ -63,6 +63,7 @@ export interface AccountProxy extends AccountProxyData {
   children?: string[];
   tokenTypes: _AssetType[];
   accountActions: AccountActions[];
+  isNeedMigrateUnifiedAccount?: boolean;
 }
 
 export type AccountProxyMap = Record<string, AccountProxy>

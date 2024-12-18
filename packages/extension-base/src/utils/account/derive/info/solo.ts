@@ -51,7 +51,7 @@ export const getSoloDerivationInfo = (type: KeypairType, metadata: AccountDerive
         ? validateEvmDerivationPath
         : type === 'ton'
           ? validateTonDerivationPath
-          : () => undefined;
+          : () => undefined; // todo: add derive cardano
       const validateTypeRs = validateTypeFunc(derivePath);
 
       if (validateTypeRs) {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
-import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY, isProductionMode } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
@@ -552,6 +552,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
         let tokenTypes: _AssetType[] = [];
         let accountActions: AccountActions[] = [];
         let specialChain: string | undefined;
+        let isNeedMigrateUnifiedAccount: boolean | undefined;
 
         if (value.accounts.length > 1) {
           accountType = AccountProxyType.UNIFIED;
@@ -563,6 +564,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
 
             return rs;
           }, new Set()));
+
+          if (chainTypes.length < Object.values(ChainType).length) {
+            isNeedMigrateUnifiedAccount = true;
+          }
 
           /* Account actions */
 
@@ -605,7 +610,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
           }
         }
 
-        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes, accountActions }];
+        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes, accountActions, isNeedMigrateUnifiedAccount }];
       })
   );
 
