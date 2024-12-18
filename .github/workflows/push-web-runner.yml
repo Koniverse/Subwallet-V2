@@ -38,6 +38,7 @@ jobs:
         BITTENSOR_API_KEY_4: ${{ secrets.BITTENSOR_API_KEY_4 }}
         BITTENSOR_API_KEY_5: ${{ secrets.BITTENSOR_API_KEY_5 }}
         BITTENSOR_API_KEY_6: ${{ secrets.BITTENSOR_API_KEY_6 }}
+        SIMPLE_SWAP_API_KEY: ${{ secrets.SIMPLE_SWAP_API_KEY }}
         BRANCH_NAME: master
       run: |
         yarn install --immutable | grep -v 'YN0013'

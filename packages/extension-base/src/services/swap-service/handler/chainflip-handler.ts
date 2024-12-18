@@ -412,8 +412,6 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       }
     });
 
-    console.log('depositAddressResp', depositAddressResponse);
-
     const txData: ChainflipSwapTxData = {
       address,
       provider: this.providerInfo,

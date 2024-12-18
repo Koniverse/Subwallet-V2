@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.3.10
+Build date: Dec 12, 2024.
+
+Features & Update:
+- Update version polkadot api (#3888)
+- Unable to transfer local token on Bifrost (#3896)
+
+
 ## 1.3.9
 Build date: Dec 09, 2024.
 
