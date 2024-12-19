@@ -510,7 +510,7 @@ export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappN
 /* Notification service */
 
 /* Popular tokens */
-export const updatePopularTokens = (data: string[]) => {
+export const updatePopularTokens = (data: Record<string, number>) => {
   store.dispatch({ type: 'chainStore/updatePopularTokens', payload: data });
 };
 

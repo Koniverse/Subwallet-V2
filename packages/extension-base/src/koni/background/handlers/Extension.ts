@@ -3935,7 +3935,7 @@ export default class KoniExtension {
 
   /* Popular tokens */
 
-  private subscribePopularTokens (id: string, port: chrome.runtime.Port): string[] {
+  private subscribePopularTokens (id: string, port: chrome.runtime.Port): Record<string, number> {
     const cb = createSubscription<'pri(popular.tokens)'>(id, port);
 
     const subscription = this.#koniState.chainService.observablePopularTokens.popularTokens.subscribe(cb);

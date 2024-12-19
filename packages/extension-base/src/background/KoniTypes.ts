@@ -2297,7 +2297,7 @@ export interface KoniRequestSignatures {
   /* Ledger */
 
   /* Popular tokens */
-  'pri(popular.tokens)': [null, string[], string[]];
+  'pri(popular.tokens)': [null, Record<string, number>, Record<string, number>];
   /* Popular tokens */
 }
 

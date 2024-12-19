@@ -11,7 +11,7 @@ const initialState: ChainStore = {
   chainStateMap: {},
   chainStatusMap: {},
   ledgerGenericAllowNetworks: [],
-  popularTokens: [],
+  popularTokens: {},
   reduxStatus: ReduxStatus.INIT
 };
 
@@ -55,7 +55,7 @@ const chainStoreSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updatePopularTokens (state, action: PayloadAction<string[]>) {
+    updatePopularTokens (state, action: PayloadAction<Record<string, number>>) {
       const { payload } = action;
 
       return {

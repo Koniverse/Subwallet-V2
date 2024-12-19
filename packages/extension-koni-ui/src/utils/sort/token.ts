@@ -13,10 +13,12 @@ export const sortTokenByValue = (a: TokenBalanceItemType, b: TokenBalanceItemTyp
   }
 };
 
-export function sortToken (tokenGroupSlug: TokenBalanceItemType[], popularTokens: string[]) {
+export function sortToken (tokenGroupSlug: TokenBalanceItemType[], popularTokens: Record<string, number>) {
   return tokenGroupSlug.sort((a, b) => {
-    const aIsPiorityToken = popularTokens.includes(a.slug);
-    const bIsPiorityToken = popularTokens.includes(b.slug);
+    const aIsPiorityToken = Object.keys(popularTokens).includes(a.slug);
+    const bIsPiorityToken = Object.keys(popularTokens).includes(b.slug);
+    const aPiority = popularTokens[a.slug];
+    const bPiority = popularTokens[b.slug];
 
     if (aIsPiorityToken && !bIsPiorityToken) {
       return -1;
@@ -25,7 +27,11 @@ export function sortToken (tokenGroupSlug: TokenBalanceItemType[], popularTokens
     } else if (!aIsPiorityToken && !bIsPiorityToken) {
       return sortTokenByValue(a, b);
     } else {
-      return 0;
+      if (aPiority < bPiority) {
+        return -1;
+      } else {
+        return 1;
+      }
     }
   });
 }
