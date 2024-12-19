@@ -392,7 +392,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       fixed: false,
       currency_from: fromSymbol,
       currency_to: toSymbol,
-      amount: quote.fromAmount,
+      amount: formatNumber(quote.fromAmount, _getAssetDecimals(fromAsset)),
       address_to: receiver,
       extra_id_to: '',
       user_refund_address: address,
