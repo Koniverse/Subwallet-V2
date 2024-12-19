@@ -1919,6 +1919,46 @@ export interface ResponseNftImport {
 
 /* Campaign */
 
+/* Migrate Unified Account */
+export interface ResponseIsShowMigrationAccount {
+  isShowMigrationAccount: boolean;
+}
+
+export interface RequestRequiredMigrateAccountStatus {
+  isRequiredMigrate: boolean
+}
+
+export interface RequestMigrateUnifiedAccount {
+  password: string
+}
+
+export interface ResponseMigrateUnifiedAccount {
+  migratedUnifiedAccountIds: string[],
+  soloAccounts: Record<string, SoloAccount[]>
+  sessionId: string; // to keep linking to password in state
+}
+
+interface SoloAccount {
+  proxyId: string, // todo: rename
+  address: string,
+  name: string,
+  chainType: string
+}
+
+export interface RequestMigrateSoloAccount {
+  soloAccounts: SoloAccount[];
+  accountName: string;
+  sessionId: string;
+}
+
+export interface ResponseMigrateSoloAccount {
+  migratedUnifiedAccountId: string
+}
+
+export interface RequestPing {
+  id: string;
+}
+
 /* Core types */
 export type _Address = string;
 export type _BalanceMetadata = unknown;
@@ -2325,6 +2365,12 @@ export interface KoniRequestSignatures {
 
   /* Ledger */
   'pri(ledger.generic.allow)': [null, string[], string[]];
+
+  /* Migrate Unified Account */
+  'pri(migrate.isShowMigrationAccount)': [null, ResponseIsShowMigrationAccount];
+  'pri(migrate.updateRequiredMigrateAccountStatus)': [RequestRequiredMigrateAccountStatus, boolean];
+  'pri(migrate.migrateUnifiedAccount)': [RequestMigrateUnifiedAccount, ResponseMigrateUnifiedAccount];
+  'pri(migrate.migrateSoloAccount)': [RequestMigrateSoloAccount, ResponseMigrateSoloAccount];
 }
 
 export interface ApplicationMetadataType {
