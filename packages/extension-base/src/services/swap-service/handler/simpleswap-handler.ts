@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainAsset } from '@subwallet/chain-list/types';
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
@@ -40,6 +41,62 @@ const toBNString = (input: string | number | BigNumber, decimal: number): string
   const raw = new BigNumber(input);
 
   return raw.shiftedBy(decimal).integerValue(BigNumber.ROUND_CEIL).toFixed();
+};
+
+const fetchSwapList = async (params: { fromSymbol: string }): Promise<string[]> => {
+  const swapListParams = new URLSearchParams({
+    api_key: `${simpleSwapApiKey}`,
+    fixed: 'false',
+    symbol: params.fromSymbol
+  });
+
+  const response = await fetch(`${apiUrl}/get_pairs?${swapListParams.toString()}`, {
+    headers: { accept: 'application/json' }
+  });
+
+  return await response.json() as string[];
+};
+
+const fetchRanges = async (params: { fromSymbol: string; toSymbol: string }): Promise<SwapRange> => {
+  const rangesParams = new URLSearchParams({
+    api_key: `${simpleSwapApiKey}`,
+    fixed: 'false',
+    currency_from: params.fromSymbol,
+    currency_to: params.toSymbol
+  });
+
+  const response = await fetch(`${apiUrl}/get_ranges?${rangesParams.toString()}`, {
+    headers: { accept: 'application/json' }
+  });
+
+  return await response.json() as SwapRange;
+};
+
+const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; fromAmount: string; fromAsset: _ChainAsset; receiver: string; address: string;}): Promise<ExchangeSimpleSwapData> => {
+  const requestBody = {
+    fixed: false,
+    currency_from: params.fromSymbol,
+    currency_to: params.toSymbol,
+    amount: formatNumber(params.fromAmount, _getAssetDecimals(params.fromAsset)), // Convert to small number due to require of api
+    address_to: params.receiver,
+    extra_id_to: '',
+    user_refund_address: params.address,
+    user_refund_extra_id: ''
+  };
+
+  const response = await fetch(
+    `${apiUrl}/create_exchange?api_key=${simpleSwapApiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    }
+  );
+
+  return await response.json() as ExchangeSimpleSwapData;
 };
 
 export class SimpleSwapHandler implements SwapBaseInterface {
@@ -257,22 +314,8 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
       }
 
-      const swapListParams = new URLSearchParams({
-        api_key: `${simpleSwapApiKey}`,
-        fixed: 'false',
-        symbol: fromSymbol
-      });
-
       try {
-        const swapListResponse = await fetch(`${apiUrl}/get_pairs?${swapListParams.toString()}`, {
-          headers: { accept: 'application/json' }
-        });
-
-        if (!swapListResponse.ok) {
-          return { error: SwapErrorType.UNKNOWN };
-        }
-
-        const swapList = await swapListResponse.json() as string[];
+        const swapList = await fetchSwapList({ fromSymbol });
 
         if (!swapList.includes(toSymbol)) {
           return { error: SwapErrorType.ASSET_NOT_SUPPORTED };
@@ -281,22 +324,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
         console.error('Error:', err);
       }
 
-      const rangesParams = new URLSearchParams({
-        api_key: `${simpleSwapApiKey}`,
-        fixed: 'false',
-        currency_from: fromSymbol,
-        currency_to: toSymbol
-      });
-
-      const rangesResponse = await fetch(`${apiUrl}/get_ranges?${rangesParams.toString()}`, {
-        headers: { accept: 'application/json' }
-      });
-
-      if (!rangesResponse.ok) {
-        return { error: SwapErrorType.UNKNOWN };
-      }
-
-      const ranges = await rangesResponse.json() as SwapRange;
+      const ranges = await fetchRanges({ fromSymbol, toSymbol }) as unknown as SwapRange;
       const { max, min } = ranges;
       const bnMin = toBNString(min, _getAssetDecimals(fromAsset));
       const bnAmount = BigInt(request.fromAmount);
@@ -388,30 +416,8 @@ export class SimpleSwapHandler implements SwapBaseInterface {
     const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
     const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
 
-    const requestBody = {
-      fixed: false,
-      currency_from: fromSymbol,
-      currency_to: toSymbol,
-      amount: formatNumber(quote.fromAmount, _getAssetDecimals(fromAsset)),
-      address_to: receiver,
-      extra_id_to: '',
-      user_refund_address: address,
-      user_refund_extra_id: ''
-    };
-
-    const response = await fetch(
-      `${apiUrl}/create_exchange?api_key=${simpleSwapApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      }
-    );
-
-    const depositAddressResponse = await response.json() as ExchangeSimpleSwapData;
+    const { fromAmount } = quote;
+    const depositAddressResponse = await createSwapRequest({ fromSymbol, toSymbol, fromAmount, fromAsset, receiver, address });
 
     const txData: SimpleSwapTxData = {
       id: depositAddressResponse.id,
