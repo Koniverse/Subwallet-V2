@@ -234,6 +234,15 @@ export const PREDEFINED_FORMATTER: Record<string, NumberFormatter> = {
   balance: balanceFormatter
 };
 
+/** @function formatNumber
+ * Convert number to a formatted string by dividing by 10^decimal
+ * @param {string | number | BigNumber} input - Input number
+ * @param {number} decimal - Decimal number
+ * @param {NumberFormatter} [formatter] - Formatter function
+ * - Default: balanceFormatter: With number > 1, show decimal with 2 numbers,
+ * with number < 1, show decimal with 6 (default) number
+ * @param {Record<string, number>} [metadata] - Metadata for formatter
+ */
 export const formatNumber = (
   input: string | number | BigNumber,
   decimal: number,

@@ -31,6 +31,7 @@ interface ExchangeSimpleSwapData{
   id: string;
   trace_id: string;
   address_from: string;
+  amount_to: string;
 }
 
 const apiUrl = 'https://api.simpleswap.io';
@@ -75,17 +76,20 @@ const fetchRanges = async (params: { fromSymbol: string; toSymbol: string }): Pr
 async function getEstimate (request: SwapRequest, fromAsset: _ChainAsset, toAsset: _ChainAsset): Promise<{ toAmount: string; walletFeeAmount: string }> {
   const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
   const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
+  const assetDecimals = _getAssetDecimals(fromAsset);
 
   if (!fromSymbol || !toSymbol) {
     throw new SwapError(SwapErrorType.ASSET_NOT_SUPPORTED);
   }
+
+  const formatedAmount = formatNumber(request.fromAmount, assetDecimals, (s) => s);
 
   const params = new URLSearchParams({
     api_key: `${simpleSwapApiKey}`,
     fixed: 'false',
     currency_from: fromSymbol,
     currency_to: toSymbol,
-    amount: formatNumber(request.fromAmount, _getAssetDecimals(fromAsset))
+    amount: formatedAmount
   });
 
   try {
@@ -115,12 +119,15 @@ async function getEstimate (request: SwapRequest, fromAsset: _ChainAsset, toAsse
   }
 }
 
-const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; fromAmount: string; fromAsset: _ChainAsset; receiver: string; sender: string;}) => {
+const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; fromAmount: string; fromAsset: _ChainAsset; receiver: string; sender: string; toAsset: _ChainAsset;}) => {
+  const fromDecimals = _getAssetDecimals(params.fromAsset);
+  const toDecimals = _getAssetDecimals(params.toAsset);
+  const formatedAmount = formatNumber(params.fromAmount, fromDecimals, (s) => s);
   const requestBody = {
     fixed: false,
     currency_from: params.fromSymbol,
     currency_to: params.toSymbol,
-    amount: formatNumber(params.fromAmount, _getAssetDecimals(params.fromAsset)), // Convert to small number due to require of api
+    amount: formatedAmount, // Convert to small number due to require of api
     address_to: params.receiver,
     extra_id_to: '',
     user_refund_address: params.sender,
@@ -145,7 +152,8 @@ const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; 
 
   return {
     id: depositAddressResponse.id,
-    addressFrom: depositAddressResponse.address_from
+    addressFrom: depositAddressResponse.address_from,
+    amountTo: toBNString(depositAddressResponse.amount_to, toDecimals)
   };
 };
 
@@ -431,7 +439,20 @@ export class SimpleSwapHandler implements SwapBaseInterface {
     const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
 
     const { fromAmount } = quote;
-    const { addressFrom, id } = await createSwapRequest({ fromSymbol, toSymbol, fromAmount, fromAsset, receiver, sender });
+    const { addressFrom, amountTo, id } = await createSwapRequest({ fromSymbol, toSymbol, fromAmount, fromAsset, receiver, sender, toAsset });
+
+    // Validate the amount to be swapped
+    const rate = BigN(amountTo).div(BigN(quote.toAmount)).multipliedBy(100);
+
+    console.debug('quote', quote.toAmount);
+    console.debug('amountTo', amountTo);
+    console.debug('rate', rate.toFixed());
+
+    if (rate.lt(95)) {
+      throw new SwapError(SwapErrorType.NOT_MEET_MIN_EXPECTED);
+    }
+
+    // Can modify quote.toAmount to amountTo after confirm real amount received
 
     const txData: SimpleSwapTxData = {
       id: id,
