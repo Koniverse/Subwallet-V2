@@ -17,8 +17,6 @@ import { getDefaultWeightV2 } from '@subwallet/extension-base/koni/api/contract-
 import { _BALANCE_CHAIN_GROUP, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateAdapterSubscriptionArgs, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _checkSmartContractSupportByChain, _getAssetExistentialDeposit, _getChainExistentialDeposit, _getChainNativeTokenSlug, _getContractAddressOfToken, _getTokenOnChainAssetId, _getTokenOnChainInfo, _getTokenTypesSupportedByChain, _getXcmAssetMultilocation, _isBridgedToken, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { fetchTaoDelegateState } from '@subwallet/extension-base/services/earning-service/handlers/native-staking/tao';
-import { getTaoTotalStake } from '@subwallet/extension-base/services/earning-service/utils';
 import { BalanceItem, SubscribeBasePalletBalance, SubscribeSubstratePalletBalance } from '@subwallet/extension-base/types';
 import { filterAssetsByChainAndType } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
@@ -144,13 +142,13 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
     );
   }
 
-  let bittensorStakingBalances = new Array<bigint>(addresses.length).fill(BigInt(0));
+  let bittensorStakingBalances: BigN[] = new Array<BigN>(addresses.length).fill(new BigN(0));
 
   if (['bittensor'].includes(chainInfo.slug)) {
     bittensorStakingBalances = await Promise.all(addresses.map(async (address) => {
-      const rawDelegateState = await fetchTaoDelegateState(address);
+      const TaoTotalStake = await substrateApi.api.query.subtensorModule.totalColdkeyStake(address);
 
-      return getTaoTotalStake(rawDelegateState);
+      return new BigN(TaoTotalStake.toString());
     }));
   }
 
@@ -173,7 +171,9 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
         totalLockedFromTransfer += nominationPoolBalance;
       }
 
-      totalLockedFromTransfer += bittensorStakingBalances[index];
+      const stakeValue = BigInt(bittensorStakingBalances[index].toString());
+
+      totalLockedFromTransfer += stakeValue;
 
       return ({
         address: addresses[index],
@@ -225,12 +225,13 @@ const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, cha
   const unsubList = await Promise.all(Object.values(tokenMap).map((tokenInfo) => {
     try {
       if (_isBridgedToken(tokenInfo)) {
+        const version: number = ['statemint', 'statemine'].includes(chainInfo.slug) ? 4 : 3;
         const params: _SubstrateAdapterSubscriptionArgs[] = [
           {
             section: 'query',
             module: foreignAssetsAccountKey.split('_')[1],
             method: foreignAssetsAccountKey.split('_')[2],
-            args: addresses.map((address) => [_getTokenOnChainInfo(tokenInfo) || _adaptX1Interior(_getXcmAssetMultilocation(tokenInfo), 3), address])
+            args: addresses.map((address) => [_getTokenOnChainInfo(tokenInfo) || _adaptX1Interior(_getXcmAssetMultilocation(tokenInfo), version), address])
           }
         ];
 
