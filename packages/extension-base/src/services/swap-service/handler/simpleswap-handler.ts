@@ -115,7 +115,7 @@ async function getEstimate (request: SwapRequest, fromAsset: _ChainAsset, toAsse
   }
 }
 
-const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; fromAmount: string; fromAsset: _ChainAsset; receiver: string; address: string;}) => {
+const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; fromAmount: string; fromAsset: _ChainAsset; receiver: string; sender: string;}) => {
   const requestBody = {
     fixed: false,
     currency_from: params.fromSymbol,
@@ -123,7 +123,7 @@ const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; 
     amount: formatNumber(params.fromAmount, _getAssetDecimals(params.fromAsset)), // Convert to small number due to require of api
     address_to: params.receiver,
     extra_id_to: '',
-    user_refund_address: params.address,
+    user_refund_address: params.sender,
     user_refund_extra_id: ''
   };
 
@@ -422,13 +422,14 @@ export class SimpleSwapHandler implements SwapBaseInterface {
     const chainInfo = this.chainService.getChainInfoByKey(fromAsset.originChain);
     const toChainInfo = this.chainService.getChainInfoByKey(toAsset.originChain);
     const chainType = _isChainSubstrateCompatible(chainInfo) ? ChainType.SUBSTRATE : ChainType.EVM;
-    const receiver = _reformatAddressWithChain(recipient ?? address, toChainInfo);
+    const sender = _reformatAddressWithChain(address, chainInfo);
+    const receiver = _reformatAddressWithChain(recipient ?? sender, toChainInfo);
 
     const fromSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[fromAsset.slug];
     const toSymbol = SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING[toAsset.slug];
 
     const { fromAmount } = quote;
-    const { addressFrom, id } = await createSwapRequest({ fromSymbol, toSymbol, fromAmount, fromAsset, receiver, address });
+    const { addressFrom, id } = await createSwapRequest({ fromSymbol, toSymbol, fromAmount, fromAsset, receiver, sender });
 
     const txData: SimpleSwapTxData = {
       id: id,
