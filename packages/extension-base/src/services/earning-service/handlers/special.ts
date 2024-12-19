@@ -347,7 +347,7 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
     const xcmFee = new BN(path.totalFee[1].amount || '0');
 
     const xcmAmount = missingAmount.add(xcmFee);
-    const existentialDeposit = new BN(this.nativeToken.minAmount || '0');
+    const existentialDeposit = new BN(altInputTokenInfo.minAmount || '0');
 
     const bnAltInputTokenBalance = new BN(altInputTokenBalance.value || '0');
 
