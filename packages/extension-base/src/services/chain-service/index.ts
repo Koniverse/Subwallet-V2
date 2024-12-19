@@ -124,38 +124,26 @@ export class ChainService {
 
   public get value () {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+    const popularTokens = this.popularTokensSubject;
 
     return {
       get ledgerGenericAllowChains () {
         return ledgerGenericAllowChains.value;
-      }
-    };
-  }
-
-  public get observable () {
-    const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
-
-    return {
-      get ledgerGenericAllowChains () {
-        return ledgerGenericAllowChains.asObservable();
-      }
-    };
-  }
-
-  public get valuePopularTokens () {
-    const popularTokens = this.popularTokensSubject;
-
-    return {
+      },
       get popularTokens () {
         return popularTokens.value;
       }
     };
   }
 
-  public get observablePopularTokens () {
+  public get observable () {
+    const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
     const popularTokens = this.popularTokensSubject;
 
     return {
+      get ledgerGenericAllowChains () {
+        return ledgerGenericAllowChains.asObservable();
+      },
       get popularTokens () {
         return popularTokens.asObservable();
       }
