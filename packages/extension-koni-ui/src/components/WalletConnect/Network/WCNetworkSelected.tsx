@@ -32,7 +32,8 @@ const Component: React.FC<Props> = (props: Props) => {
             slug: '',
             name: t('{{number}} unknown network', { replace: { number: unSupportNetworks.length } })
           },
-          slug: ''
+          slug: '',
+          wcChain: ''
         }
       )
       : null;

@@ -28,7 +28,7 @@ interface ShowNoticeOption {
   value: keyof NotificationSetup['showNotice'];
 }
 
-const CAN_NOT_CHANGE_SETTING: Array<keyof NotificationSetup['showNotice']> = ['earningClaim', 'earningWithdraw', 'availBridgeClaim'];
+const CAN_NOT_CHANGE_SETTING: Array<keyof NotificationSetup['showNotice']> = ['earningClaim', 'earningWithdraw', 'availBridgeClaim', 'polygonBridgeClaim'];
 
 const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
   const { token } = useTheme() as Theme;
@@ -51,6 +51,10 @@ const Component = ({ className = '' }: Props): React.ReactElement<Props> => {
       {
         label: t('Claim AVAIL bridge'),
         value: 'availBridgeClaim'
+      },
+      {
+        label: t('Claim POLYGON bridge'),
+        value: 'polygonBridgeClaim'
       }
     ];
   }, [t]);

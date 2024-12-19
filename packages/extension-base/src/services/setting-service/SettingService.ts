@@ -5,6 +5,7 @@ import { LanguageType, PassPhishing, RequestSettingsType, UiSettings } from '@su
 import { EnvConfig, LANGUAGE } from '@subwallet/extension-base/constants';
 import { EnvironmentStoreSubject } from '@subwallet/extension-base/services/environment-service/stores/Environment';
 import { SWStorage } from '@subwallet/extension-base/storage';
+import ChainlistStore, { ChainlistConfig } from '@subwallet/extension-base/stores/ChainlistStore';
 import PassPhishingStore from '@subwallet/extension-base/stores/PassPhishingStore';
 import SettingsStore from '@subwallet/extension-base/stores/Settings';
 import { Subject } from 'rxjs';
@@ -15,6 +16,7 @@ import { DEFAULT_SETTING } from './constants';
 export default class SettingService {
   private readonly settingsStore = new SettingsStore();
   private readonly passPhishingStore = new PassPhishingStore();
+  private readonly chainlistStore = new ChainlistStore();
   private readonly environmentStore = new EnvironmentStoreSubject();
 
   constructor () {
@@ -73,6 +75,14 @@ export default class SettingService {
 
   public setPassPhishing (data: Record<string, PassPhishing>, callback?: () => void): void {
     this.passPhishingStore.set('PassPhishing', data, callback);
+  }
+
+  public getChainlistSetting () {
+    return this.chainlistStore.asyncGet('Chainlist');
+  }
+
+  public setChainlist (data: ChainlistConfig, callback?: () => void): void {
+    this.chainlistStore.set('Chainlist', data, callback);
   }
 
   public getEnvironmentSetting () {

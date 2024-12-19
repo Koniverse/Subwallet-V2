@@ -9,6 +9,7 @@ import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferU
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getAvailBridgeGatewayContract, getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
@@ -150,7 +151,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const assetInfo = useFetchChainAssetInfo(assetValue);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStateMap, chainStatusMap } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStateMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
@@ -170,6 +171,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chainValue];
+
+    if (_isPolygonChainBridge(chainValue, destChainValue)) {
+      return true;
+    }
 
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChainValue === chainValue && _isNativeToken(assetInfo);
   }, [chainInfoMap, chainValue, destChainValue, assetInfo]);
@@ -310,8 +315,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SEND_FUND,
-      autoFormatValue });
-  }, [accounts, autoFormatValue, chainInfoMap, form]);
+      autoFormatValue,
+      allowLedgerGenerics: ledgerGenericAllowNetworks });
+  }, [accounts, autoFormatValue, chainInfoMap, form, ledgerGenericAllowNetworks]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
@@ -550,8 +556,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     let checkTransferAll = false;
 
     const _doSubmit = async () => {
-      setLoading(true);
-
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];

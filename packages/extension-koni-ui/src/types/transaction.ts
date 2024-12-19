@@ -67,6 +67,6 @@ export interface SwapParams extends TransactionFormBaseProps {
   defaultSlug: string;
 }
 
-export interface ClaimAvailBridgeParams extends TransactionFormBaseProps {
+export interface ClaimBridgeParams extends TransactionFormBaseProps {
   notificationId: string;
 }

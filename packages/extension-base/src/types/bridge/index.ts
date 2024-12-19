@@ -3,7 +3,7 @@
 
 import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
-export interface RequestClaimAvailBridge {
+export interface RequestClaimBridge {
   address: string,
   chain: string,
   notification: _NotificationInfo

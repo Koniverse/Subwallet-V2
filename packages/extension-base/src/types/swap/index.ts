@@ -67,6 +67,7 @@ export enum SwapProviderId {
   POLKADOT_ASSET_HUB = 'POLKADOT_ASSET_HUB',
   KUSAMA_ASSET_HUB = 'KUSAMA_ASSET_HUB',
   ROCOCO_ASSET_HUB = 'ROCOCO_ASSET_HUB',
+  SIMPLE_SWAP = 'SIMPLE_SWAP'
 }
 
 export const _SUPPORTED_SWAP_PROVIDERS: SwapProviderId[] = [
@@ -76,7 +77,8 @@ export const _SUPPORTED_SWAP_PROVIDERS: SwapProviderId[] = [
   SwapProviderId.HYDRADX_TESTNET,
   SwapProviderId.POLKADOT_ASSET_HUB,
   SwapProviderId.KUSAMA_ASSET_HUB,
-  SwapProviderId.ROCOCO_ASSET_HUB
+  SwapProviderId.ROCOCO_ASSET_HUB,
+  SwapProviderId.SIMPLE_SWAP
 ];
 
 export interface SwapProvider {
@@ -93,7 +95,7 @@ export enum SwapFeeType {
   WALLET_FEE = 'WALLET_FEE'
 }
 
-export type SwapTxData = ChainflipSwapTxData | HydradxSwapTxData; // todo: will be more
+export type SwapTxData = ChainflipSwapTxData | HydradxSwapTxData | SimpleSwapTxData; // todo: will be more
 
 export interface SwapBaseTxData {
   provider: SwapProvider;
@@ -108,6 +110,10 @@ export interface ChainflipSwapTxData extends SwapBaseTxData {
   depositChannelId: string;
   depositAddress: string;
   estimatedDepositChannelExpiryTime?: number;
+}
+
+export interface SimpleSwapTxData extends SwapBaseTxData {
+  id: string;
 }
 
 export interface HydradxSwapTxData extends SwapBaseTxData {
@@ -135,6 +141,12 @@ export interface AssetHubPreValidationMetadata {
   priceImpactPct?: string;
 }
 
+export interface SimpleSwapValidationMetadata{
+  minSwap: AmountData;
+  maxSwap: AmountData;
+  chain: _ChainInfo;
+}
+
 export interface QuoteAskResponse {
   quote?: SwapQuote;
   error?: SwapError;
@@ -147,6 +159,7 @@ export interface SwapRequest {
   slippage: number; // Example: 0.01 for 1%
   recipient?: string;
   feeToken?: string;
+  currentQuote?: SwapProvider
 }
 
 export interface SwapRequestResult {
@@ -206,3 +219,4 @@ export interface SlippageType {
 }
 
 export const CHAINFLIP_SLIPPAGE = 0.02; // Example: 0.01 for 1%
+export const SIMPLE_SWAP_SLIPPAGE = 0.05;

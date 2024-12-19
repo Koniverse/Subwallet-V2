@@ -9,6 +9,7 @@ import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, chec
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -624,8 +625,8 @@ export default class TransactionService {
         break;
       }
 
-      case ExtrinsicType.CLAIM_AVAIL_BRIDGE: {
-        const data = parseTransactionData<ExtrinsicType.CLAIM_AVAIL_BRIDGE>(transaction.data); // TODO: switch by provider
+      case ExtrinsicType.CLAIM_BRIDGE: {
+        const data = parseTransactionData<ExtrinsicType.CLAIM_BRIDGE>(transaction.data); // TODO: switch by provider
         const metadata = data.notification.metadata as ClaimAvailBridgeNotificationMetadata;
         const claimAsset = this.state.chainService.getAssetBySlug(metadata.tokenSlug);
 
@@ -1097,7 +1098,7 @@ export default class TransactionService {
     return emitter;
   }
 
-  private async signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): TransactionEmitter {
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1107,8 +1108,8 @@ export default class TransactionService {
     };
 
     const extrinsic = transaction as SubmittableExtrinsic;
-    const registry = extrinsic.registry;
-    const signedExtensions = registry.signedExtensions;
+    // const registry = extrinsic.registry;
+    // const signedExtensions = registry.signedExtensions;
 
     const signerOption: Partial<SignerOptions> = {
       signer: {
@@ -1125,14 +1126,14 @@ export default class TransactionService {
       withSignedTransaction: true
     };
 
-    if (_isRuntimeUpdated(signedExtensions)) {
-      const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
-
-      if (metadataHash) {
-        signerOption.mode = 1;
-        signerOption.metadataHash = metadataHash;
-      }
-    }
+    // if (_isRuntimeUpdated(signedExtensions)) {
+    //   const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
+    //
+    //   if (metadataHash) {
+    //     signerOption.mode = 1;
+    //     signerOption.metadataHash = metadataHash;
+    //   }
+    // }
 
     extrinsic.signAsync(address, signerOption).then(async (rs) => {
       // Emit signed event

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
+import { GetNotificationParams, RequestIsClaimedPolygonBridge, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging';
 
 export async function markAllReadNotification (request: string) {
@@ -18,4 +18,8 @@ export async function fetchInappNotifications (request: GetNotificationParams) {
 
 export async function getInappNotification (notificationId: string) {
   return sendMessage('pri(inappNotification.get)', notificationId);
+}
+
+export async function getIsClaimNotificationStatus (request: RequestIsClaimedPolygonBridge) {
+  return sendMessage('pri(inappNotification.isClaimedPolygonBridge)', request);
 }

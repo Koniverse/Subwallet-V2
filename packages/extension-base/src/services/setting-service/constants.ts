@@ -23,7 +23,8 @@ export const DEFAULT_NOTIFICATION_SETUP: NotificationSetup = {
     // receive: true,
     earningClaim: true,
     earningWithdraw: true,
-    availBridgeClaim: true
+    availBridgeClaim: true,
+    polygonBridgeClaim: true
     // isHideWithdraw: false, // todo: just for test, remove later
     // isHideMarketing: false,
     // isHideAnnouncement: false

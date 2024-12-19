@@ -42,6 +42,7 @@ export enum TransferTxErrorType {
   INVALID_TOKEN = 'INVALID_TOKEN',
   TRANSFER_ERROR = 'TRANSFER_ERROR',
   RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT = 'RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT',
+  RECEIVER_ACCOUNT_INACTIVE = 'RECEIVER_ACCOUNT_INACTIVE'
 }
 
 export type TransactionErrorType = BasicTxErrorType | TransferTxErrorType | StakingTxErrorType | YieldValidationStatus | SwapErrorType;
