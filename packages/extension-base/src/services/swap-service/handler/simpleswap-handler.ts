@@ -148,8 +148,6 @@ const createSwapRequest = async (params: {fromSymbol: string; toSymbol: string; 
 
   const depositAddressResponse = await response.json() as ExchangeSimpleSwapData;
 
-  console.log('swap data', requestBody, depositAddressResponse);
-
   return {
     id: depositAddressResponse.id,
     addressFrom: depositAddressResponse.address_from,
@@ -443,10 +441,6 @@ export class SimpleSwapHandler implements SwapBaseInterface {
 
     // Validate the amount to be swapped
     const rate = BigN(amountTo).div(BigN(quote.toAmount)).multipliedBy(100);
-
-    console.debug('quote', quote.toAmount);
-    console.debug('amountTo', amountTo);
-    console.debug('rate', rate.toFixed());
 
     if (rate.lt(95)) {
       throw new SwapError(SwapErrorType.NOT_MEET_MIN_EXPECTED);
