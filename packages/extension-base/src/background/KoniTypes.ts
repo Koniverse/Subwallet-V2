@@ -1920,33 +1920,37 @@ export interface ResponseNftImport {
 /* Campaign */
 
 /* Migrate Unified Account */
-export interface ResponseIsShowMigrationAccount {
-  isShowMigrationAccount: boolean;
+export interface ResponseHasAnyAccountForMigration {
+  hasAnyAccountForMigration: boolean;
 }
 
-export interface RequestRequiredMigrateAccountStatus {
-  isRequiredMigrate: boolean
+export interface ResponseIsShowMigrationNotice {
+  isShowMigrationNotice: boolean;
 }
 
-export interface RequestMigrateUnifiedAccount {
+export interface RequestUpdateMigrationAcknowledgedStatus {
+  isAcknowledgedMigration: boolean;
+}
+
+export interface RequestMigrateUnifiedAndFetchEligibleSoloAccounts {
   password: string
 }
 
-export interface ResponseMigrateUnifiedAccount {
+export interface ResponseMigrateUnifiedAndFetchEligibleSoloAccounts {
   migratedUnifiedAccountIds: string[],
-  soloAccounts: Record<string, SoloAccount[]>
+  soloAccounts: Record<string, SoloAccountToBeMigrated[]>
   sessionId: string; // to keep linking to password in state
 }
 
-interface SoloAccount {
-  proxyId: string, // todo: rename
+interface SoloAccountToBeMigrated {
+  upcomingProxyId: string,
   address: string,
   name: string,
   chainType: string
 }
 
 export interface RequestMigrateSoloAccount {
-  soloAccounts: SoloAccount[];
+  soloAccounts: SoloAccountToBeMigrated[];
   accountName: string;
   sessionId: string;
 }
@@ -1955,8 +1959,8 @@ export interface ResponseMigrateSoloAccount {
   migratedUnifiedAccountId: string
 }
 
-export interface RequestPingSessionId {
-  id: string;
+export interface RequestPingSession {
+  sessionId: string;
 }
 
 /* Core types */
@@ -2367,11 +2371,12 @@ export interface KoniRequestSignatures {
   'pri(ledger.generic.allow)': [null, string[], string[]];
 
   /* Migrate Unified Account */
-  'pri(migrate.isShowMigrationAccount)': [null, ResponseIsShowMigrationAccount];
-  'pri(migrate.updateRequiredMigrateAccountStatus)': [RequestRequiredMigrateAccountStatus, boolean];
-  'pri(migrate.migrateUnifiedAccount)': [RequestMigrateUnifiedAccount, ResponseMigrateUnifiedAccount];
+  'pri(migrate.isShowMigrationNotice)': [null, ResponseIsShowMigrationNotice];
+  'pri(migrate.hasAnyAccountForMigration)': [null, ResponseHasAnyAccountForMigration];
+  'pri(migrate.updateMigrationAcknowledgedStatus)': [RequestUpdateMigrationAcknowledgedStatus, boolean];
+  'pri(migrate.migrateUnifiedAndFetchEligibleSoloAccounts)': [RequestMigrateUnifiedAndFetchEligibleSoloAccounts, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts];
   'pri(migrate.migrateSoloAccount)': [RequestMigrateSoloAccount, ResponseMigrateSoloAccount];
-  'pri(migrate.pingSessionId)': [RequestPingSessionId, boolean];
+  'pri(migrate.pingSession)': [RequestPingSession, boolean];
 }
 
 export interface ApplicationMetadataType {
