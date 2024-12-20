@@ -1955,7 +1955,7 @@ export interface ResponseMigrateSoloAccount {
   migratedUnifiedAccountId: string
 }
 
-export interface RequestPing {
+export interface RequestPingSessionId {
   id: string;
 }
 
@@ -2371,6 +2371,7 @@ export interface KoniRequestSignatures {
   'pri(migrate.updateRequiredMigrateAccountStatus)': [RequestRequiredMigrateAccountStatus, boolean];
   'pri(migrate.migrateUnifiedAccount)': [RequestMigrateUnifiedAccount, ResponseMigrateUnifiedAccount];
   'pri(migrate.migrateSoloAccount)': [RequestMigrateSoloAccount, ResponseMigrateSoloAccount];
+  'pri(migrate.pingSessionId)': [RequestPingSessionId, boolean];
 }
 
 export interface ApplicationMetadataType {
