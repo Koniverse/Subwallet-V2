@@ -52,7 +52,7 @@ const defaultErrorMap: Record<SwapErrorType, { message: string, code?: number }>
   },
   NOT_MEET_MIN_EXPECTED: {
     // TODO: update message
-    message: detectTranslate('Received amount is too low. Get new quote and try again'),
+    message: detectTranslate('Unable to process this swap at the moment. Try again later'),
     code: undefined
   }
 };
