@@ -14,7 +14,7 @@ import { SubmittableExtrinsic } from '@polkadot/api/types';
 
 import { BalanceService } from '../../balance-service';
 import { getERC20TransactionObject, getEVMTransactionObject } from '../../balance-service/transfer/smart-contract';
-import { createTransferExtrinsic, getTransferMockTxFee } from '../../balance-service/transfer/token';
+import { createSubstrateExtrinsic, getTransferMockTxFee } from '../../balance-service/transfer/token';
 import { ChainService } from '../../chain-service';
 import { EvmApi } from '../../chain-service/handler/EvmApi';
 import { _SubstrateApi } from '../../chain-service/types';
@@ -428,7 +428,7 @@ export class SimpleSwapHandler implements SwapBaseInterface {
       const chainApi = this.chainService.getSubstrateApi(chainInfo.slug);
       const substrateApi = await chainApi.isReady;
 
-      const [submittableExtrinsic] = await createTransferExtrinsic({
+      const [submittableExtrinsic] = await createSubstrateExtrinsic({
         from: address,
         networkKey: chainInfo.slug,
         substrateApi,
