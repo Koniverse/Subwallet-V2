@@ -602,6 +602,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             accountActions = accountActions.filter((action) => action !== AccountActions.DERIVE);
           }
 
+          if (chainTypes.length === 1 && accountActions.includes(AccountActions.EXPORT_MNEMONIC)) {
+            isNeedMigrateUnifiedAccount = true;
+          }
+
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
