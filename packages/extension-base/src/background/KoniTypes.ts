@@ -277,6 +277,9 @@ export interface MetadataItem {
   types: Record<string, Record<string, string> | string>;
   userExtensions?: ExtDef;
   hexV15?: HexString;
+  ss58Format?: number;
+  tokenDecimals?: number;
+  tokenSymbol?: string;
 }
 
 export interface CrowdloanItem {

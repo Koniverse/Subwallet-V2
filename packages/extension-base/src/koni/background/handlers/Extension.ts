@@ -75,7 +75,7 @@ import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkado
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
-import { getSuitableRegistry, MetadataSource, MetadataWithSource } from '../utils';
+import { getSuitableRegistry, RegistrySource, setupApiRegistry, setupDappRegistry, setupDatabaseRegistry } from '../utils';
 
 export function isJsonPayload (value: SignerPayloadJSON | SignerPayloadRaw): value is SignerPayloadJSON {
   return (value as SignerPayloadJSON).genesisHash !== undefined;
@@ -2546,20 +2546,24 @@ export default class KoniExtension {
 
     if (isJsonPayload(payload)) {
       const [, chainInfo] = this.#koniState.findNetworkKeyByGenesisHash(payload.genesisHash);
-      const [dbMetadata, dappMetadata] = await Promise.all([
-        { metadata: await this.#koniState.chainService.getMetadataByHash(payload.genesisHash), source: MetadataSource.DB },
-        { metadata: this.#koniState.knownMetadata.find((meta: MetadataDef) => meta.genesisHash === payload.genesisHash), source: MetadataSource.DAPP }
-      ]);
 
-      const allMetadata: MetadataWithSource[] = [
-        { metadata: dbMetadata.metadata, source: dbMetadata.source },
-        { metadata: dappMetadata.metadata, source: dappMetadata.source }
-      ].filter((item) => item.metadata);
+      const allRegistry: RegistrySource[] = [
+        setupApiRegistry(chainInfo, this.#koniState),
+        setupDatabaseRegistry(
+          await this.#koniState.chainService.getMetadataByHash(payload.genesisHash) as MetadataItem,
+          chainInfo,
+          payload
+        ),
+        setupDappRegistry(
+          this.#koniState.knownMetadata.find((meta: MetadataDef) => meta.genesisHash === payload.genesisHash) as MetadataDef,
+          payload
+        )
+      ].filter((item): item is RegistrySource => item !== null && item.registry !== undefined);
 
-      if (allMetadata.length === 0) {
+      if (allRegistry.length === 0) {
         registry.setSignedExtensions(payload.signedExtensions);
       } else {
-        registry = getSuitableRegistry(allMetadata, payload, chainInfo, this.#koniState);
+        registry = getSuitableRegistry(allRegistry, payload).metadata;
       }
     }
 

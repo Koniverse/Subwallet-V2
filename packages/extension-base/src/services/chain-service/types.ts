@@ -6,7 +6,6 @@
 import type { ApiInterfaceRx } from '@polkadot/api/types';
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _CrowdloanFund } from '@subwallet/chain-list/types';
-import { MetadataItem } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { TonWalletContract } from '@subwallet/keyring/types';
@@ -95,7 +94,6 @@ export interface _SubstrateApiState {
 }
 
 export interface _SubstrateApi extends _SubstrateApiState, _ChainBaseApi, _SubstrateApiAdapter {
-  metadata?: MetadataItem;
   api: ApiPromise;
   isReady: Promise<_SubstrateApi>;
   connect: (_callbackUpdateMetadata?: (substrateApi: _SubstrateApi) => void) => void;
