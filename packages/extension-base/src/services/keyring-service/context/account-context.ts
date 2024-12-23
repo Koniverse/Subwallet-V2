@@ -20,6 +20,7 @@ export class AccountContext {
   private readonly ledgerHandler: AccountLedgerHandler;
   private readonly modifyHandler: AccountModifyHandler;
   private readonly secretHandler: AccountSecretHandler;
+  // private readonly migrationHandler: AccountMigrationHandler;
 
   constructor (private readonly koniState: KoniState, private readonly parentService: KeyringService) {
     this.state = new AccountState(this.koniState);
@@ -30,6 +31,7 @@ export class AccountContext {
     this.ledgerHandler = new AccountLedgerHandler(this.parentService, this.state);
     this.modifyHandler = new AccountModifyHandler(this.parentService, this.state);
     this.secretHandler = new AccountSecretHandler(this.parentService, this.state);
+    // this.migrationHandler = new AccountMigrationHandler(this.parentService, this.state);
   }
 
   // TODO: Merge to value
@@ -270,6 +272,10 @@ export class AccountContext {
   }
 
   /* Inject */
+
+  /* Migration */
+
+  /* Migration */
 
   /* Others */
 

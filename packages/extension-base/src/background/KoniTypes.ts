@@ -1920,9 +1920,6 @@ export interface ResponseNftImport {
 /* Campaign */
 
 /* Migrate Unified Account */
-export interface ResponseHasAnyAccountForMigration {
-  hasAnyAccountForMigration: boolean;
-}
 
 export interface ResponseIsShowMigrationNotice {
   isShowMigrationNotice: boolean;
@@ -2372,7 +2369,6 @@ export interface KoniRequestSignatures {
 
   /* Migrate Unified Account */
   'pri(migrate.isShowMigrationNotice)': [null, ResponseIsShowMigrationNotice];
-  'pri(migrate.hasAnyAccountForMigration)': [null, ResponseHasAnyAccountForMigration];
   'pri(migrate.updateMigrationAcknowledgedStatus)': [RequestUpdateMigrationAcknowledgedStatus, boolean];
   'pri(migrate.migrateUnifiedAndFetchEligibleSoloAccounts)': [RequestMigrateUnifiedAndFetchEligibleSoloAccounts, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts];
   'pri(migrate.migrateSoloAccount)': [RequestMigrateSoloAccount, ResponseMigrateSoloAccount];
