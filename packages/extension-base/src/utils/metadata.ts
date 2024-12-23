@@ -26,20 +26,27 @@ export const getShortMetadata = (blob: HexString, extraInfo: ExtraInfo, metadata
   return u8aToHex(_merkleizeMetadata.getProofForExtrinsicPayload(blob));
 };
 
-const getMetadataV15 = async (api: ApiPromise): Promise<HexString | undefined> => {
-  try {
-    if (api.call.metadata.metadataAtVersion) {
-      const metadataV15 = await api.call.metadata.metadataAtVersion(15);
+const storeMetadataV15: Map<string, HexString | undefined> = new Map();
 
+const getMetadataV15 = (api: ApiPromise) => {
+  const genesisHash = api.genesisHash.toHex();
+
+  api.call.metadata.metadataAtVersion(15)
+    .then((metadataV15) => {
       if (!metadataV15.isEmpty) {
-        return metadataV15.unwrap().toHex();
-      }
-    }
-  } catch (err) {
-    console.error('Error fetching metadata V15:', err);
-  }
+        const hexValue = metadataV15.unwrap().toHex();
 
-  return undefined;
+        storeMetadataV15.set(genesisHash, hexValue);
+      } else {
+        storeMetadataV15.set(genesisHash, undefined);
+      }
+    })
+    .catch((err) => {
+      console.error('Error:', err);
+      storeMetadataV15.set(genesisHash, undefined);
+    });
+
+  return storeMetadataV15.get(genesisHash);
 };
 
 export const cacheMetadata = (
@@ -62,21 +69,19 @@ export const cacheMetadata = (
     const systemChain = api.runtimeChain;
     // const _metadata: Option<OpaqueMetadata> = await api.call.metadata.metadataAtVersion(15);
     // const metadataHex = _metadata.isSome ? _metadata.unwrap().toHex().slice(2) : ''; // Need unwrap to create metadata object
+    const metadataHex = api.runtimeMetadata.toHex();
+    const metadataV15 = getMetadataV15(api);
 
-    const [metadataHex, hexV15] = await Promise.all([
-      Promise.resolve(api.runtimeMetadata.toHex()),
-      getMetadataV15(api)
-    ]);
-
-    chainService?.upsertMetadata(chain, {
+    const updateMetadata = {
       chain: chain,
       genesisHash: genesisHash,
       specName: specName,
       specVersion: currentSpecVersion,
       hexValue: metadataHex,
       types: getSpecTypes(api.registry, systemChain, api.runtimeVersion.specName, api.runtimeVersion.specVersion) as unknown as Record<string, string>,
-      userExtensions: getSpecExtensions(api.registry, systemChain, api.runtimeVersion.specName),
-      hexV15
-    }).catch(console.error);
+      userExtensions: getSpecExtensions(api.registry, systemChain, api.runtimeVersion.specName)
+    };
+
+    chainService?.upsertMetadata(chain, { ...updateMetadata, hexV15: metadataV15 }).catch(console.error);
   }).catch(console.error);
 };

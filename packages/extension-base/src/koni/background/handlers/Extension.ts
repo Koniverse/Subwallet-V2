@@ -75,7 +75,7 @@ import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkado
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
-import { getSuitableMetadata, MetadataSource, MetadataWithSource, setupDappRegistry, setupDatabaseRegistry } from '../utils';
+import { getSuitableRegistry, MetadataSource, MetadataWithSource } from '../utils';
 
 export function isJsonPayload (value: SignerPayloadJSON | SignerPayloadRaw): value is SignerPayloadJSON {
   return (value as SignerPayloadJSON).genesisHash !== undefined;
@@ -2546,14 +2546,12 @@ export default class KoniExtension {
 
     if (isJsonPayload(payload)) {
       const [, chainInfo] = this.#koniState.findNetworkKeyByGenesisHash(payload.genesisHash);
-      const [apiMetadata, dbMetadata, dappMetadata] = await Promise.all([
-        { metadata: this.#koniState.getSubstrateApi(chainInfo?.slug ?? '').metadata, source: MetadataSource.API },
+      const [dbMetadata, dappMetadata] = await Promise.all([
         { metadata: await this.#koniState.chainService.getMetadataByHash(payload.genesisHash), source: MetadataSource.DB },
         { metadata: this.#koniState.knownMetadata.find((meta: MetadataDef) => meta.genesisHash === payload.genesisHash), source: MetadataSource.DAPP }
       ]);
 
       const allMetadata: MetadataWithSource[] = [
-        { metadata: apiMetadata.metadata, source: apiMetadata.source },
         { metadata: dbMetadata.metadata, source: dbMetadata.source },
         { metadata: dappMetadata.metadata, source: dappMetadata.source }
       ].filter((item) => item.metadata);
@@ -2561,13 +2559,7 @@ export default class KoniExtension {
       if (allMetadata.length === 0) {
         registry.setSignedExtensions(payload.signedExtensions);
       } else {
-        const { metadata, source } = getSuitableMetadata(allMetadata, parseInt(payload.specVersion));
-
-        registry = source === MetadataSource.API && chainInfo
-          ? this.#koniState.getSubstrateApi(chainInfo.slug).api.registry as unknown as TypeRegistry
-          : source === MetadataSource.DB && chainInfo
-            ? setupDatabaseRegistry(metadata as MetadataItem, chainInfo, payload)
-            : setupDappRegistry(metadata as MetadataDef, payload);
+        registry = getSuitableRegistry(allMetadata, payload, chainInfo, this.#koniState);
       }
     }
 
