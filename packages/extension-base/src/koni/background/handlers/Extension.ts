@@ -2563,7 +2563,7 @@ export default class KoniExtension {
       if (allRegistry.length === 0) {
         registry.setSignedExtensions(payload.signedExtensions);
       } else {
-        registry = getSuitableRegistry(allRegistry, payload).metadata;
+        registry = getSuitableRegistry(allRegistry, payload);
       }
     }
 

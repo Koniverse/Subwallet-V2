@@ -13,7 +13,7 @@ import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chai
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
 import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
-import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
+import { IChain, IMetadataItem, IMetadataV15Item } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import AssetSettingStore from '@subwallet/extension-base/stores/AssetSetting';
 import { addLazy, calculateMetadataHash, fetchStaticData, filterAssetsByChainAndType, getShortMetadata, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
@@ -2068,6 +2068,14 @@ export class ChainService {
 
   upsertMetadata (chain: string, metadata: IMetadataItem) {
     return this.dbService.stores.metadata.upsertMetadata(chain, metadata);
+  }
+
+  getMetadataV15 (chain: string) {
+    return this.dbService.stores.metadataV15.getMetadata(chain);
+  }
+
+  upsertMetadataV15 (chain: string, metadata: IMetadataV15Item) {
+    return this.dbService.stores.metadataV15.upsertMetadata(chain, metadata);
   }
 
   getMetadataByHash (hash: string) {

@@ -5,10 +5,25 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 
 import { ApiPromise } from '@polkadot/api';
+import { TypeRegistry } from '@polkadot/types';
 import { getSpecExtensions, getSpecTypes } from '@polkadot/types-known';
-import { u8aToHex } from '@polkadot/util';
+import { formatBalance, isNumber, u8aToHex } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
+import { defaults as addressDefaults } from '@polkadot/util-crypto/address/defaults';
 import { ExtraInfo, merkleizeMetadata } from '@polkadot-api/merkleize-metadata';
+
+interface Statics {
+  api: ApiPromise;
+  registry: TypeRegistry;
+}
+
+export const statics = {
+  api: undefined,
+  registry: new TypeRegistry()
+} as unknown as Statics;
+
+export const DEFAULT_DECIMALS = statics.registry.createType('u32', 12);
+export const DEFAULT_SS58 = statics.registry.createType('u32', addressDefaults.prefix);
 
 export const _isRuntimeUpdated = (signedExtensions?: string[]): boolean => {
   return signedExtensions ? signedExtensions.includes('CheckMetadataHash') : false;
@@ -28,19 +43,29 @@ export const getShortMetadata = (blob: HexString, extraInfo: ExtraInfo, metadata
 
 const getMetadataV15 = async (chain: string, api: ApiPromise, chainService?: ChainService): Promise<void> => {
   try {
+    const currentSpecVersion = api.runtimeVersion.specVersion.toString();
+    const genesisHash = api.genesisHash.toHex();
+    const metadata = await chainService?.getMetadataV15(chain);
+
+    // Avoid date existed metadata
+    if (metadata && metadata.specVersion === currentSpecVersion && metadata.genesisHash === genesisHash) {
+      return;
+    }
+
     if (api.call.metadata.metadataAtVersion) {
       const metadataV15 = await api.call.metadata.metadataAtVersion(15);
 
       if (!metadataV15.isEmpty) {
-        const hexValue = metadataV15.unwrap().toHex();
+        const hexV15 = metadataV15.unwrap().toHex();
+        const updateMetadata = {
+          chain: chain,
+          genesisHash: genesisHash,
+          specVersion: currentSpecVersion,
+          hexV15
 
-        if (chainService) {
-          const metadata = await chainService.getMetadata(chain);
+        };
 
-          if (metadata) {
-            await chainService.upsertMetadata(chain, { ...metadata, hexV15: hexValue });
-          }
-        }
+        chainService?.upsertMetadataV15(chain, { ...updateMetadata }).catch(console.error);
       }
     }
   } catch (err) {
@@ -48,14 +73,32 @@ const getMetadataV15 = async (chain: string, api: ApiPromise, chainService?: Cha
   }
 };
 
-const getMetadata = (chain: string, api: ApiPromise, currentSpecVersion: string, genesisHash: HexString, chainService?: ChainService) => {
+const getMetadata = async (
+  chain: string,
+  api: ApiPromise,
+  chainService?: ChainService
+) => {
+  const currentSpecVersion = api.runtimeVersion.specVersion.toString();
+  const genesisHash = api.genesisHash.toHex();
   const specName = api.runtimeVersion.specName.toString();
+  const metadata = await chainService?.getMetadata(chain);
+
+  // Avoid date existed metadata
+  if (metadata && metadata.specVersion === currentSpecVersion && metadata.genesisHash === genesisHash) {
+    return;
+  }
 
   const systemChain = api.runtimeChain;
-  // const _metadata: Option<OpaqueMetadata> = await api.call.metadata.metadataAtVersion(15);
-  // const metadataHex = _metadata.isSome ? _metadata.unwrap().toHex().slice(2) : ''; // Need unwrap to create metadata object
   const metadataHex = api.runtimeMetadata.toHex();
   const registry = api.registry;
+
+  const tokenInfo = {
+    ss58Format: isNumber(registry.chainSS58)
+      ? registry.chainSS58
+      : DEFAULT_SS58.toNumber(),
+    tokenDecimals: (registry.chainDecimals || [DEFAULT_DECIMALS.toNumber()])[0],
+    tokenSymbol: (registry.chainTokens || formatBalance.getDefaults().unit)[0]
+  };
 
   const updateMetadata = {
     chain: chain,
@@ -65,9 +108,7 @@ const getMetadata = (chain: string, api: ApiPromise, currentSpecVersion: string,
     hexValue: metadataHex,
     types: getSpecTypes(api.registry, systemChain, api.runtimeVersion.specName, api.runtimeVersion.specVersion) as unknown as Record<string, string>,
     userExtensions: getSpecExtensions(api.registry, systemChain, api.runtimeVersion.specName),
-    ss58Format: registry.chainSS58,
-    tokenDecimals: registry.chainDecimals[0],
-    tokenSymbol: registry.chainTokens[0]
+    tokenInfo
   };
 
   chainService?.upsertMetadata(chain, { ...updateMetadata }).catch(console.error);
@@ -80,16 +121,7 @@ export const cacheMetadata = (
 ): void => {
   // Update metadata to database with async methods
   substrateApi.api.isReady.then(async (api) => {
-    const currentSpecVersion = api.runtimeVersion.specVersion.toString();
-    const genesisHash = api.genesisHash.toHex();
-    const metadata = await chainService?.getMetadata(chain);
-
-    // Avoid date existed metadata
-    if (metadata && metadata.specVersion === currentSpecVersion && metadata.genesisHash === genesisHash) {
-      return;
-    }
-
-    getMetadata(chain, api, currentSpecVersion, genesisHash, chainService);
+    await getMetadata(chain, api, chainService);
     await getMetadataV15(chain, api, chainService);
   }).catch(console.error);
 };

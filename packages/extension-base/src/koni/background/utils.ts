@@ -41,9 +41,7 @@ export function getSuitableRegistry (registries: RegistrySource[], payload: Sign
       return a.specVersion - b.specVersion;
     });
 
-  return {
-    metadata: sortedRegistries[0].registry
-  };
+  return sortedRegistries[0].registry;
 }
 
 export function setupApiRegistry (chainInfo: _ChainInfo | undefined, koniState: KoniState): RegistrySource | null {
@@ -71,9 +69,9 @@ export function setupDatabaseRegistry (metadata: MetadataItem, chainInfo: _Chain
 
   registry.register(metadata.types);
   registry.setChainProperties(registry.createType('ChainProperties', {
-    ss58Format: metadata.ss58Format,
-    tokenDecimals: metadata.tokenDecimals,
-    tokenSymbol: metadata.tokenSymbol
+    ss58Format: metadata.tokenInfo?.ss58Format,
+    tokenDecimals: metadata.tokenInfo?.tokenDecimals,
+    tokenSymbol: metadata.tokenInfo?.tokenSymbol
   }) as unknown as ChainProperties);
   registry.setMetadata(_metadata, payload.signedExtensions, metadata.userExtensions);
 
