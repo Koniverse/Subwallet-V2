@@ -4,10 +4,12 @@
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ResultAccountProxyItem, ResultAccountProxyItemType } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SummaryView/ResultAccountProxyItem';
 import { ResultAccountProxyListModal, resultAccountProxyListModal } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SummaryView/ResultAccountProxyListModal';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
 import { CheckCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
@@ -19,13 +21,24 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);
   const [isAccountListModalOpen, setIsAccountListModalOpen] = useState<boolean>(false);
+  const accountProxies = useSelector((root: RootState) => root.accountState.accountProxies);
+
+  const accountProxyNameMapById = useMemo(() => {
+    const result: Record<string, string> = {};
+
+    accountProxies.forEach((ap) => {
+      result[ap.id] = ap.name;
+    });
+
+    return result;
+  }, [accountProxies]);
 
   const resultAccountProxies = useMemo<ResultAccountProxyItemType[]>(() => {
-    return resultProxyIds.map((id, index) => ({
-      accountName: `Account ${index + 1}`,
+    return resultProxyIds.map((id) => ({
+      accountName: accountProxyNameMapById[id] || '',
       accountProxyId: id
     }));
-  }, [resultProxyIds]);
+  }, [accountProxyNameMapById, resultProxyIds]);
 
   const onOpenAccountListModal = useCallback(() => {
     setIsAccountListModalOpen(true);

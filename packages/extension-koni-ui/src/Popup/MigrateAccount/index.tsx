@@ -54,7 +54,7 @@ function Component ({ className = '' }: Props) {
   const onInteractAction = useCallback(() => {
     if (isMigrationNotion) {
       // flag that user acknowledge the migration
-      saveMigrationAcknowledgedStatus({ isAcknowledgedMigration: true }).catch(console.error);
+      saveMigrationAcknowledgedStatus({ isAcknowledgedUnifiedAccountMigration: true }).catch(console.error);
     }
 
     // for now, do nothing
