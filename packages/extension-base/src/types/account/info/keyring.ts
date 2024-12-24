@@ -125,6 +125,8 @@ export enum AccountChainType {
   CARDANO = 'cardano'
 }
 
+export const SUPPORTED_ACCOUNT_CHAIN_TYPES = ['substrate', 'ethereum', 'ton', 'cardano'];
+
 export enum AccountActions {
   DERIVE = 'DERIVE',
   EXPORT_MNEMONIC = 'EXPORT_MNEMONIC',

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
-import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY, isProductionMode } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, CardanoKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
@@ -565,7 +565,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             return rs;
           }, new Set()));
 
-          if (chainTypes.length < Object.values(ChainType).length) {
+          if (chainTypes.length < SUPPORTED_ACCOUNT_CHAIN_TYPES.length) {
             isNeedMigrateUnifiedAccount = true;
           }
 
