@@ -4,11 +4,10 @@
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { BackgroundIcon, Icon, SettingItem, SwIconProps } from '@subwallet/react-ui';
 import { CaretRight, CornersOut, Strategy } from 'phosphor-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
 
@@ -64,8 +63,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const navigate = useNavigate();
   const { token } = useTheme() as Theme;
   const notify = useNotification();
-  const { goBack } = useDefaultNavigate();
   const { t } = useTranslation();
+
+  const goBack = useCallback(() => {
+    navigate('/settings/list');
+  }, [navigate]);
 
   const SettingGroupItemType = useMemo((): SettingGroupItemType[] => ([
     {
