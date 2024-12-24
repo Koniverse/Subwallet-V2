@@ -95,7 +95,7 @@ const Component: React.FC<Props> = (props: Props) => {
     return chainMigrateMode && selectedChain ? `${selectedChain.accountName}` : '';
   }, [chainMigrateMode, migrateSupportLedger]);
 
-  const { error, getAllAddress, isLoading, isLocked, ledger, refresh, warning } = useLedger(chain, true, false, false, selectedChainMigrateMode?.genesisHash);
+  const { error, getAllAddress, isLoading, isLocked, ledger, refresh, warning } = useLedger(chain, true, false, false, selectedChainMigrateMode?.genesisHash, selectedChain?.isRecovery);
 
   const onPreviousStep = useCallback(() => {
     setFirstStep(true);
@@ -250,7 +250,8 @@ const Component: React.FC<Props> = (props: Props) => {
           hardwareType: 'ledger',
           name: item.name,
           isEthereum: selectedChain.isEthereum,
-          isGeneric: selectedChain.isGeneric
+          isGeneric: selectedChain.isGeneric,
+          isLedgerRecovery: selectedChain?.isRecovery
         }))
       })
         .then(() => {

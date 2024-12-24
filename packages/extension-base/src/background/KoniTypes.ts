@@ -792,6 +792,7 @@ export interface CreateHardwareAccountItem {
   name: string;
   isEthereum: boolean;
   isGeneric: boolean;
+  isLedgerRecovery?: boolean;
 }
 
 export interface RequestAccountCreateHardwareV2 extends CreateHardwareAccountItem {
