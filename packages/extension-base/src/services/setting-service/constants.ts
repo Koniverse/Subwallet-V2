@@ -30,6 +30,7 @@ export const DEFAULT_NOTIFICATION_SETUP: NotificationSetup = {
     // isHideAnnouncement: false
   }
 };
+export const DEFAULT_ACKNOWLEDGED_MIGRATION_STATUS = false;
 
 export const DEFAULT_SETTING: UiSettings = {
   language: DEFAULT_LANGUAGE,
@@ -44,5 +45,6 @@ export const DEFAULT_SETTING: UiSettings = {
   timeAutoLock: DEFAULT_AUTO_LOCK_TIME,
   enableChainPatrol: DEFAULT_CHAIN_PATROL_ENABLE,
   notificationSetup: DEFAULT_NOTIFICATION_SETUP,
+  isAcknowledgedMigration: DEFAULT_ACKNOWLEDGED_MIGRATION_STATUS,
   walletReference: ''
 };

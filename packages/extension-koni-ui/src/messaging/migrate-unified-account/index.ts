@@ -1,12 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestMigrateSoloAccount, RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, RequestUpdateMigrationAcknowledgedStatus, ResponseMigrateSoloAccount, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestMigrateSoloAccount, RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseMigrateSoloAccount, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts } from '@subwallet/extension-base/background/KoniTypes';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging';
-
-export function updateMigrationAcknowledgedStatus (request: RequestUpdateMigrationAcknowledgedStatus): Promise<boolean> {
-  return sendMessage('pri(migrate.updateMigrationAcknowledgedStatus)', request);
-}
 
 export function migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts): Promise<ResponseMigrateUnifiedAndFetchEligibleSoloAccounts> {
   return sendMessage('pri(migrate.migrateUnifiedAndFetchEligibleSoloAccounts)', request);

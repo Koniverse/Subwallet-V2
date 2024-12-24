@@ -425,6 +425,7 @@ export interface UiSettings {
   unlockType: WalletUnlockType;
   enableChainPatrol: boolean;
   notificationSetup: NotificationSetup;
+  isAcknowledgedMigration: boolean; // todo: can refactor to: isAcknowledgedUnifiedAccountMigration
   // On-ramp service account reference
   walletReference: string;
 }
@@ -1920,7 +1921,7 @@ export interface ResponseNftImport {
 /* Campaign */
 
 /* Migrate Unified Account */
-export interface RequestUpdateMigrationAcknowledgedStatus {
+export interface RequestSaveMigrationAcknowledgedStatus {
   isAcknowledgedMigration: boolean;
 }
 
@@ -2134,7 +2135,8 @@ export interface KoniRequestSignatures {
   'pri(settings.saveAutoLockTime)': [RequestChangeTimeAutoLock, boolean];
   'pri(settings.saveUnlockType)': [RequestUnlockType, boolean];
   'pri(settings.saveEnableChainPatrol)': [RequestChangeEnableChainPatrol, boolean];
-  'pri(settings.saveNotificationSetup)': [NotificationSetup, boolean]
+  'pri(settings.saveNotificationSetup)': [NotificationSetup, boolean];
+  'pri(settings.saveMigrationAcknowledgedStatus)': [RequestSaveMigrationAcknowledgedStatus, boolean];
   'pri(settings.saveLanguage)': [RequestChangeLanguage, boolean];
   'pri(settings.savePriceCurrency)': [RequestChangePriceCurrency, boolean];
   'pri(settings.saveShowZeroBalance)': [RequestChangeShowZeroBalance, boolean];
@@ -2363,7 +2365,6 @@ export interface KoniRequestSignatures {
   'pri(ledger.generic.allow)': [null, string[], string[]];
 
   /* Migrate Unified Account */
-  'pri(migrate.updateMigrationAcknowledgedStatus)': [RequestUpdateMigrationAcknowledgedStatus, boolean];
   'pri(migrate.migrateUnifiedAndFetchEligibleSoloAccounts)': [RequestMigrateUnifiedAndFetchEligibleSoloAccounts, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts];
   'pri(migrate.migrateSoloAccount)': [RequestMigrateSoloAccount, ResponseMigrateSoloAccount];
   'pri(migrate.pingSession)': [RequestPingSession, boolean];
