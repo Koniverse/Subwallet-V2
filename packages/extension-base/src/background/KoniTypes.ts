@@ -425,7 +425,7 @@ export interface UiSettings {
   unlockType: WalletUnlockType;
   enableChainPatrol: boolean;
   notificationSetup: NotificationSetup;
-  isAcknowledgedMigration: boolean; // todo: can refactor to: isAcknowledgedUnifiedAccountMigration
+  isAcknowledgedUnifiedAccountMigration: boolean;
   // On-ramp service account reference
   walletReference: string;
 }
@@ -1922,7 +1922,7 @@ export interface ResponseNftImport {
 
 /* Migrate Unified Account */
 export interface RequestSaveMigrationAcknowledgedStatus {
-  isAcknowledgedMigration: boolean;
+  isAcknowledgedUnifiedAccountMigration: boolean;
 }
 
 export interface RequestMigrateUnifiedAndFetchEligibleSoloAccounts {
