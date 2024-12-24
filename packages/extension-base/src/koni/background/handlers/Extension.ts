@@ -911,8 +911,8 @@ export default class KoniExtension {
     return true;
   }
 
-  private saveMigrationAcknowledgedStatus ({ isAcknowledgedMigration }: RequestSaveMigrationAcknowledgedStatus) {
-    this.#koniState.updateSetting('isAcknowledgedMigration', isAcknowledgedMigration);
+  private saveMigrationAcknowledgedStatus ({ isAcknowledgedUnifiedAccountMigration }: RequestSaveMigrationAcknowledgedStatus) {
+    this.#koniState.updateSetting('isAcknowledgedUnifiedAccountMigration', isAcknowledgedUnifiedAccountMigration);
 
     return true;
   }
