@@ -1,10 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { getChainTypeLogoMap } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, Copy, Eye, GitCommit, GitMerge, Needle, PencilSimpleLine, QrCode, Question, Strategy, Swatches } from 'phosphor-react';
@@ -46,14 +47,8 @@ function Component (props: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
 
   const chainTypeLogoMap = useMemo(() => {
-    return {
-      [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
-      [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,
-      [AccountChainType.BITCOIN]: logoMap.network.bitcoin as string,
-      [AccountChainType.TON]: logoMap.network.ton as string,
-      [AccountChainType.CARDANO]: logoMap.network.cardano as string
-    };
-  }, [logoMap.network.bitcoin, logoMap.network.cardano, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
+    return getChainTypeLogoMap(logoMap);
+  }, [logoMap]);
 
   const _onClickDeriveButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();
