@@ -12,7 +12,7 @@ import { assert } from '@polkadot/util';
 
 import { AccountBaseHandler } from './Base';
 
-const validDeriveKeypairTypes: KeypairType[] = [...SubstrateKeypairTypes, ...EthereumKeypairTypes, 'ton'];
+const validDeriveKeypairTypes: KeypairType[] = [...SubstrateKeypairTypes, ...EthereumKeypairTypes, 'ton', 'cardano'];
 
 /**
  * @class AccountDeriveHandler
