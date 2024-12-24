@@ -45,6 +45,6 @@ export const DEFAULT_SETTING: UiSettings = {
   timeAutoLock: DEFAULT_AUTO_LOCK_TIME,
   enableChainPatrol: DEFAULT_CHAIN_PATROL_ENABLE,
   notificationSetup: DEFAULT_NOTIFICATION_SETUP,
-  isAcknowledgedMigration: DEFAULT_ACKNOWLEDGED_MIGRATION_STATUS,
+  isAcknowledgedUnifiedAccountMigration: DEFAULT_ACKNOWLEDGED_MIGRATION_STATUS,
   walletReference: ''
 };
