@@ -1522,7 +1522,7 @@ export default class KoniExtension {
         //   receiverNativeBalance = BigInt(value);
         // }
 
-        if (!_isNativeToken(destinationNativeTokenInfo)) {
+        if (!_isNativeToken(destinationTokenInfo)) {
           const _receiverNativeTotal = await this.getAddressTotalBalance({ address: to, networkKey: destinationNetworkKey, token: destinationNativeTokenSlug, extrinsicType });
 
           receiverSystemAccountInfo = _receiverNativeTotal.metadata as FrameSystemAccountInfo;
