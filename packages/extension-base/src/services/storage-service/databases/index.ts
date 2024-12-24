@@ -129,6 +129,10 @@ export default class KoniDatabase extends Dexie {
     this.conditionalVersion(7, {
       inappNotification: 'id, address, proxyId, [proxyId+actionType], actionType'
     });
+
+    this.conditionalVersion(8, {
+      metadataV15: 'genesisHash, chain'
+    });
   }
 
   private conditionalVersion (

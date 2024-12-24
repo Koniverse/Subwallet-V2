@@ -120,7 +120,7 @@ export const cacheMetadata = (
 ): void => {
   // Update metadata to database with async methods
   substrateApi.api.isReady.then((api) => {
-    return updateMetadata(chain, api, chainService)
-      .then(() => updateMetadataV15(chain, api, chainService));
+    updateMetadata(chain, api, chainService).catch(console.error);
+    updateMetadataV15(chain, api, chainService).catch(console.error);
   }).catch(console.error);
 };
