@@ -44,7 +44,7 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
   return blake2AsHex(data, 256);
 };
 
-export const getAccountChainType = (type: KeypairType): AccountChainType => {
+export const getAccountChainType = (type: KeypairType): AccountChainType => { // todo: refactor name: -> getAccountChainTypeFromKeypairType
   return type
     ? EthereumKeypairTypes.includes(type)
       ? AccountChainType.ETHEREUM
@@ -56,6 +56,20 @@ export const getAccountChainType = (type: KeypairType): AccountChainType => {
             ? AccountChainType.CARDANO
             : AccountChainType.SUBSTRATE
     : AccountChainType.SUBSTRATE;
+};
+
+export const getDefaultKeypairTypeFromAccountChainType = (type: AccountChainType): KeypairType => {
+  if (type === AccountChainType.ETHEREUM) {
+    return 'ethereum';
+  } else if (type === AccountChainType.TON) {
+    return 'ton';
+  } else if (type === AccountChainType.BITCOIN) {
+    return 'bitcoin-84';
+  } else if (type === AccountChainType.CARDANO) {
+    return 'cardano';
+  } else {
+    return 'sr25519';
+  }
 };
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {

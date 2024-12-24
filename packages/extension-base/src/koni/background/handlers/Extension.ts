@@ -3974,19 +3974,11 @@ export default class KoniExtension {
   /* Ledger */
 
   /* Migrate Unified Account */
-  private migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts): ResponseMigrateUnifiedAndFetchEligibleSoloAccounts {
-    // todo:
-
-    return {
-      migratedUnifiedAccountIds: [],
-      soloAccounts: {},
-      sessionId: ''
-    };
+  private async migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts): Promise<ResponseMigrateUnifiedAndFetchEligibleSoloAccounts> {
+    return await this.#koniState.keyringService.context.migrateUnifiedAndFetchEligibleSoloAccounts(request);
   }
 
   private migrateSoloAccount (request: RequestMigrateSoloAccount): ResponseMigrateSoloAccount {
-    // todo:
-
     return {
       migratedUnifiedAccountId: ''
     };
@@ -4619,7 +4611,7 @@ export default class KoniExtension {
 
         /* Migrate Unified Account */
       case 'pri(migrate.migrateUnifiedAndFetchEligibleSoloAccounts)':
-        return this.migrateUnifiedAndFetchEligibleSoloAccounts(request as RequestMigrateUnifiedAndFetchEligibleSoloAccounts);
+        return await this.migrateUnifiedAndFetchEligibleSoloAccounts(request as RequestMigrateUnifiedAndFetchEligibleSoloAccounts);
       case 'pri(migrate.migrateSoloAccount)':
         return this.migrateSoloAccount(request as RequestMigrateSoloAccount);
       case 'pri(migrate.pingSession)':
