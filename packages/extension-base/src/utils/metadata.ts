@@ -41,7 +41,7 @@ export const getShortMetadata = (blob: HexString, extraInfo: ExtraInfo, metadata
   return u8aToHex(_merkleizeMetadata.getProofForExtrinsicPayload(blob));
 };
 
-const getMetadataV15 = async (chain: string, api: ApiPromise, chainService?: ChainService): Promise<void> => {
+const updateMetadataV15 = async (chain: string, api: ApiPromise, chainService?: ChainService): Promise<void> => {
   try {
     const currentSpecVersion = api.runtimeVersion.specVersion.toString();
     const genesisHash = api.genesisHash.toHex();
@@ -62,7 +62,6 @@ const getMetadataV15 = async (chain: string, api: ApiPromise, chainService?: Cha
           genesisHash: genesisHash,
           specVersion: currentSpecVersion,
           hexV15
-
         };
 
         chainService?.upsertMetadataV15(chain, { ...updateMetadata }).catch(console.error);
@@ -73,7 +72,7 @@ const getMetadataV15 = async (chain: string, api: ApiPromise, chainService?: Cha
   }
 };
 
-const getMetadata = async (
+const updateMetadata = async (
   chain: string,
   api: ApiPromise,
   chainService?: ChainService
@@ -120,8 +119,8 @@ export const cacheMetadata = (
   chainService?: ChainService
 ): void => {
   // Update metadata to database with async methods
-  substrateApi.api.isReady.then(async (api) => {
-    await getMetadata(chain, api, chainService);
-    await getMetadataV15(chain, api, chainService);
+  substrateApi.api.isReady.then((api) => {
+    return updateMetadata(chain, api, chainService)
+      .then(() => updateMetadataV15(chain, api, chainService));
   }).catch(console.error);
 };

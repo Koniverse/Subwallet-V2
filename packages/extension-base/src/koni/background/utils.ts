@@ -38,7 +38,7 @@ export function getSuitableRegistry (registries: RegistrySource[], payload: Sign
         return a.distance - b.distance;
       }
 
-      return a.specVersion - b.specVersion;
+      return b.specVersion - a.specVersion;
     });
 
   return sortedRegistries[0].registry;
@@ -68,11 +68,7 @@ export function setupDatabaseRegistry (metadata: MetadataItem, chainInfo: _Chain
   const _metadata = new Metadata(registry, metadata.hexValue);
 
   registry.register(metadata.types);
-  registry.setChainProperties(registry.createType('ChainProperties', {
-    ss58Format: metadata.tokenInfo?.ss58Format,
-    tokenDecimals: metadata.tokenInfo?.tokenDecimals,
-    tokenSymbol: metadata.tokenInfo?.tokenSymbol
-  }) as unknown as ChainProperties);
+  registry.setChainProperties(registry.createType('ChainProperties', metadata.tokenInfo) as unknown as ChainProperties);
   registry.setMetadata(_metadata, payload.signedExtensions, metadata.userExtensions);
 
   return {
