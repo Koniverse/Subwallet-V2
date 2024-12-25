@@ -21,11 +21,7 @@ function Component ({ onApprove, onCompleteMigrationProcess, sessionId, soloAcco
   const totalProcessSteps = soloAccountToBeMigratedGroups.length;
 
   const performNextProcess = useCallback(() => {
-    if (currentProcessOrdinal >= totalProcessSteps) {
-      return;
-    }
-
-    if (currentProcessOrdinal + 1 === totalProcessSteps) {
+    if (currentProcessOrdinal === totalProcessSteps) {
       onCompleteMigrationProcess();
 
       return;

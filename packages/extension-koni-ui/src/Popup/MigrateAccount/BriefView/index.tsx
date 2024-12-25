@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { Button } from '@subwallet/react-ui';
+import { Button, Icon } from '@subwallet/react-ui';
+import { CheckCircle, XCircle } from 'phosphor-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -17,19 +18,77 @@ function Component ({ className = '', onDismiss, onMigrateNow }: Props) {
 
   return (
     <div className={className}>
-      <Button onClick={onDismiss}>
-        {t('Dismiss')}
-      </Button>
+      <div className='__header-area'>
 
-      <Button onClick={onMigrateNow}>
-        {t('Migrate now')}
-      </Button>
+      </div>
+
+      <div className='__body-area'>
+
+      </div>
+
+      <div className='__footer-area'>
+        <Button
+          block={true}
+          icon={(
+            <Icon
+              phosphorIcon={XCircle}
+              weight='fill'
+            />
+          )}
+          onClick={onDismiss}
+          schema={'secondary'}
+        >
+          {t('Dismiss')}
+        </Button>
+
+        <Button
+          block={true}
+          icon={(
+            <Icon
+              phosphorIcon={CheckCircle}
+              weight='fill'
+            />
+          )}
+          onClick={onMigrateNow}
+        >
+          {t('Migrate now')}
+        </Button>
+      </div>
     </div>
   );
 }
 
 export const BriefView = styled(Component)<Props>(({ theme: { extendToken, token } }: Props) => {
   return ({
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
 
+    '.__header-area': {
+      minHeight: 74,
+      padding: token.padding,
+      fontSize: token.fontSizeHeading4,
+      lineHeight: token.lineHeightHeading4,
+      textAlign: 'center',
+      color: token.colorTextLight1,
+      borderBottom: '2px solid',
+      borderColor: token.colorBgSecondary
+    },
+
+    '.__body-area': {
+      flex: 1,
+      overflow: 'auto',
+      padding: token.padding,
+      paddingBottom: 0
+    },
+
+    '.__footer-area': {
+      display: 'flex',
+      gap: token.sizeSM,
+      paddingLeft: token.padding,
+      paddingRight: token.padding,
+      paddingTop: token.padding,
+      paddingBottom: 32
+    }
   });
 });
