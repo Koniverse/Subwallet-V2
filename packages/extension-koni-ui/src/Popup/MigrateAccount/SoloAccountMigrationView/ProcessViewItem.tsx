@@ -154,7 +154,6 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
               weight='fill'
             />
           )}
-          loading={loading}
           onClick={onSkip}
           schema={'secondary'}
         >
@@ -254,6 +253,6 @@ export const ProcessViewItem = styled(Component)<Props>(({ theme: { extendToken,
 
     '.__account-type-tag': {
       marginRight: 0
-    },
+    }
   });
 });

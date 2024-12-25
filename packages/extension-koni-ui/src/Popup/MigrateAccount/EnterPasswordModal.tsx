@@ -67,7 +67,6 @@ function Component ({ className = '', onClose, onSubmit }: Props): React.ReactEl
                 weight='fill'
               />
             )}
-            loading={loading}
             onClick={onClose}
             schema={'secondary'}
           >
