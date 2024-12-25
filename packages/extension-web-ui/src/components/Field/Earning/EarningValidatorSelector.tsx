@@ -1,10 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ChainValidatorPreSelect } from '@subwallet/extension-base/constants';
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { YieldPoolType } from '@subwallet/extension-base/types';
-import { detectTranslate } from '@subwallet/extension-base/utils';
+import { detectTranslate, fetchStaticData } from '@subwallet/extension-base/utils';
 import { BaseModal, SelectValidatorInput, StakingValidatorItem } from '@subwallet/extension-web-ui/components';
 import EmptyValidator from '@subwallet/extension-web-ui/components/Account/EmptyValidator';
 import { BasicInputWrapper } from '@subwallet/extension-web-ui/components/Field/Base';
@@ -50,21 +51,6 @@ interface SortOption {
 
 const SORTING_MODAL_ID = 'nominated-sorting-modal';
 const FILTER_MODAL_ID = 'nominated-filter-modal';
-
-const CHAIN_VALIDATOR_CONFIG_LIST = {
-  avail_mainnet: {
-    maxCount: 16,
-    preSelectValidators: '5FjdibsxmNFas5HWcT2i1AXbpfgiNfWqezzo88H2tskxWdt2'
-  },
-  polkadot: {
-    maxCount: 16,
-    preSelectValidators: '13Nd71b9XLWNptAcSgesGMKJctpm1uLjZBWDfVdeA6oyXdg6,15tEXHHDjEv6VKR2MhpnfeJZnKQnTyMPVvGH51BJvBXNoCNK'
-  },
-  kusama: {
-    maxCount: 24,
-    preSelectValidators: 'ERYwYjy1LGY1GWovnxxmXo68SZLLYwjMXNEvhhDhp48zyED,EwwczfxHvFq8zyYFkQv29r9us7M8Gbmw4cUtrvF5ozx6Mf2,HTZ3GN2VpfYoSDxAmaqRSqR5HhNaLcRsoNYJNTuqtiMMptB,CmNYnM3pStTCKgXq67Cp8rURA6GTfdfseJx7posbg2vJVHQ'
-  }
-};
 
 const filterOptions = [
   {
@@ -327,21 +313,28 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   }, [activeModal, id]);
 
   useEffect(() => {
-    const chainValidator = CHAIN_VALIDATOR_CONFIG_LIST[chain as keyof typeof CHAIN_VALIDATOR_CONFIG_LIST];
+    fetchStaticData<Record<string, ChainValidatorPreSelect>>('direct-nomination-validator').then((fetchedPreSelectValidator) => {
+      const chainValidator = fetchedPreSelectValidator[chain];
 
-    if (chainValidator) {
-      setAutoValidator((old) => {
-        if (old) {
-          return old;
-        } else {
-          const selectedValidator = autoSelectValidatorOptimally(items, chainValidator.maxCount, true, chainValidator.preSelectValidators);
+      if (chainValidator) {
+        setAutoValidator((old) => {
+          if (old) {
+            return old;
+          } else {
+            const selectedValidator = autoSelectValidatorOptimally(
+              items,
+              chainValidator.maxCount,
+              true,
+              chainValidator.preSelectValidators
+            );
 
-          return selectedValidator.map((item) => getValidatorKey(item.address, item.identity)).join(',');
-        }
-      });
-    } else {
-      setAutoValidator('');
-    }
+            return selectedValidator.map((item) => getValidatorKey(item.address, item.identity)).join(',');
+          }
+        });
+      } else {
+        setAutoValidator('');
+      }
+    }).catch(console.error);
   }, [items, chain]);
 
   useEffect(() => {
