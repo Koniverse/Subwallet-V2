@@ -26,4 +26,4 @@ export const getSupportedLedger = (networkInfoMap: Record<string, _ChainInfo>, n
   });
 };
 
-export const convertKey = (network: LedgerNetwork) => network.slug.concat(network.isRecovery ? RECOVERY_SLUG : '');
+export const convertNetworkSlug = (network: LedgerNetwork) => network.slug.concat(network.isRecovery ? RECOVERY_SLUG : '');

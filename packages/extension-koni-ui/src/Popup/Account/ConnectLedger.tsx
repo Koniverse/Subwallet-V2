@@ -19,7 +19,7 @@ import styled from 'styled-components';
 
 import DefaultLogosMap from '../../assets/logo';
 import { LedgerChainSelector, LedgerItemType } from '@subwallet/extension-koni-ui/components/Field/LedgerChainSelector';
-import { convertKey } from '@subwallet/extension-koni-ui/utils';
+import { convertNetworkSlug } from '@subwallet/extension-koni-ui/utils';
 
 type Props = ThemeProps;
 
@@ -63,7 +63,7 @@ const Component: React.FC<Props> = (props: Props) => {
         ? network.networkName.replace(' network', '').concat(network.isRecovery ? ' Recovery' : '')
         : network.networkName,
       chain: network.slug,
-      slug: convertKey(network)
+      slug: convertNetworkSlug(network)
     })), [supportedLedger]);
 
   const networkMigrates = useMemo((): ChainItemType[] => migrateSupportLedger
@@ -83,7 +83,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedChain = useMemo((): LedgerNetwork | undefined => {
-    return supportedLedger.find((n) => convertKey(n) === chain);
+    return supportedLedger.find((n) => convertNetworkSlug(n) === chain);
   }, [chain, supportedLedger]);
 
   const selectedChainMigrateMode = useMemo((): MigrationLedgerNetwork | undefined => {
