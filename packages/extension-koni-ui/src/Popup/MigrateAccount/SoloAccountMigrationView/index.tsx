@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { RequestMigrateSoloAccount, SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
+import { SESSION_TIMEOUT } from '@subwallet/extension-base/services/keyring-service/context/handlers/Migration';
 import { pingSession } from '@subwallet/extension-koni-ui/messaging/migrate-unified-account';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -62,8 +63,7 @@ function Component ({ onApprove, onCompleteMigrationProcess, sessionId, soloAcco
 
       timer = setInterval(() => {
         doPing();
-        clearInterval(timer);
-      }, 1000);
+      }, SESSION_TIMEOUT / 2);
 
       doPing();
     }

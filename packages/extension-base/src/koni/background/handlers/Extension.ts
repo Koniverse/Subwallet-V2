@@ -3984,10 +3984,8 @@ export default class KoniExtension {
     };
   }
 
-  private pingSession (request: RequestPingSession) {
-    // todo:
-
-    return true;
+  private pingSession (request: RequestPingSession): boolean {
+    return this.#koniState.keyringService.context.pingSession(request);
   }
 
   /* Migrate Unified Account */
