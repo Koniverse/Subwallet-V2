@@ -3979,15 +3979,12 @@ export default class KoniExtension {
   }
 
   private migrateSoloAccount (request: RequestMigrateSoloAccount): ResponseMigrateSoloAccount {
-    return {
-      migratedUnifiedAccountId: ''
-    };
+    return this.#koniState.keyringService.context.migrateSoloAccount(request);
   }
 
   private pingSession (request: RequestPingSession): boolean {
     return this.#koniState.keyringService.context.pingSession(request);
   }
-
   /* Migrate Unified Account */
 
   // --------------------------------------------------------------

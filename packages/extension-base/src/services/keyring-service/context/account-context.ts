@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestChangeMasterPassword, RequestMigratePassword, RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestChangeMasterPassword, RequestMigratePassword, RequestMigrateSoloAccount, RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import { AccountMigrationHandler } from '@subwallet/extension-base/services/keyring-service/context/handlers/Migration';
@@ -277,6 +277,10 @@ export class AccountContext {
   /* Migration */
   public async migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts) {
     return await this.migrationHandler.migrateUnifiedAndFetchEligibleSoloAccounts(request);
+  }
+
+  public migrateSoloAccount (request: RequestMigrateSoloAccount) {
+    return this.migrationHandler.migrateSoloToUnifiedAccount(request);
   }
 
   public pingSession (request: RequestPingSession) {

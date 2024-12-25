@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts, SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestMigrateSoloAccount, RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseMigrateSoloAccount, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts, SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountBaseHandler } from '@subwallet/extension-base/services/keyring-service/context/handlers/Base';
 import { AccountChainType, AccountProxy, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
 import { createAccountProxyId, getDefaultKeypairTypeFromAccountChainType, getSuri } from '@subwallet/extension-base/utils';
@@ -20,8 +20,6 @@ export class AccountMigrationHandler extends AccountBaseHandler {
   private sessionIdToPassword: Record<string, SessionInfo> = {};
 
   public pingSession ({ sessionId }: RequestPingSession) {
-    console.log(this.sessionIdToPassword);
-
     if (!this.sessionIdToPassword[sessionId]) { // todo: if no persistent sessionId, should we jump to enter password again?
       throw Error(`Session ID ${sessionId} not found.`);
     }
@@ -50,6 +48,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     // Create UniqueId
     const uniqueId = Date.now().toString();
     const timeoutId = setTimeout(() => delete this.sessionIdToPassword[uniqueId], SESSION_TIMEOUT * 2);
+
     this.sessionIdToPassword[uniqueId] = {
       password,
       timeoutId
@@ -120,6 +119,8 @@ export class AccountMigrationHandler extends AccountBaseHandler {
       }
     }
 
+    keyring.lockAll(false);
+
     return unifiedAccountIds;
   }
 
@@ -176,7 +177,49 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     return accountProxies.sort((a, b) => undefinedToStr(a.parentId) < undefinedToStr(b.parentId) ? -1 : undefinedToStr(a.parentId) > undefinedToStr(b.parentId) ? 1 : 0);
   }
 
-  // public migrateSoloToUnifiedAccount () {
-  //
-  // }
+  public migrateSoloToUnifiedAccount (request: RequestMigrateSoloAccount): ResponseMigrateSoloAccount {
+    const { accountName, sessionId, soloAccounts } = request;
+    const password = this.sessionIdToPassword[sessionId].password;
+
+    keyring.unlockKeyring(password);
+    const modifiedPairs = structuredClone(this.state.modifyPairs);
+
+    const firstAccountInfo = soloAccounts[0];
+    const upcomingProxyId = firstAccountInfo.upcomingProxyId;
+    const firstAccountOldProxyId = firstAccountInfo.oldProxyId;
+
+    const mnemonic = this.parentService.context.exportAccountProxyMnemonic({ password, proxyId: firstAccountOldProxyId }).result;
+
+    const keypairTypes = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
+
+    keypairTypes.forEach((type) => {
+      const suri = getSuri(mnemonic, type);
+      const pair = keyring.createFromUri(suri, {}, type);
+      const address = pair.address;
+
+      modifiedPairs[address] = { accountProxyId: upcomingProxyId, migrated: true, key: address };
+    });
+
+    this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName });
+    this.state.upsertModifyPairs(modifiedPairs);
+    keypairTypes.forEach((type) => {
+      const suri = getSuri(mnemonic, type);
+      const { derivePath } = keyExtractSuri(suri);
+      const metadata = {
+        name: accountName,
+        derivationPath: derivePath ? derivePath.substring(1) : undefined
+      };
+
+      const rs = keyring.addUri(suri, metadata, type);
+      const address = rs.pair.address;
+
+      this.state._addAddressToAuthList(address, true);
+    });
+
+    keyring.lockAll(false);
+
+    return {
+      migratedUnifiedAccountId: upcomingProxyId
+    };
+  }
 }
