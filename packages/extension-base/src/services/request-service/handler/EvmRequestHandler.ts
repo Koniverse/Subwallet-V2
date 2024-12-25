@@ -2,11 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Common } from '@ethereumjs/common';
-import { FeeMarketEIP1559Transaction, FeeMarketEIP1559TxData, LegacyTransaction, LegacyTxData, TypedTransaction } from '@ethereumjs/tx';
+import { AuthorizationListItem } from '@ethereumjs/common/src/interfaces';
+import { EOACodeEIP7702Transaction, EOACodeEIP7702TxData, FeeMarketEIP1559Transaction, FeeMarketEIP1559TxData, LegacyTransaction, LegacyTxData, TransactionType, TypedTransaction } from '@ethereumjs/tx';
+
+import { bnToHex, hexAddPrefix, logger as createLogger, numberToHex } from '@polkadot/util';
+import { Logger } from '@polkadot/util/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
-import { ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainType, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete, SignAuthorizeRequest } from '@subwallet/extension-base/background/KoniTypes';
 import { ConfirmationRequestBase, Resolver } from '@subwallet/extension-base/background/types';
+import { _getEvmChainId, findChainInfoByChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import RequestService from '@subwallet/extension-base/services/request-service';
+import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
+import { getTransactionId } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { SignAuthEIP7702 } from '@subwallet/extension-base/types';
 import { anyNumberToBN } from '@subwallet/extension-base/utils/eth';
 import { isInternalRequest } from '@subwallet/extension-base/utils/request';
 import keyring from '@subwallet/ui-keyring';
@@ -15,10 +23,10 @@ import BN from 'bn.js';
 import { toBuffer } from 'ethereumjs-util';
 import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
+import { createWalletClient, http, parseSignature, WalletClient, WalletActions, defineChain } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+import { SignedAuthorization } from 'viem/experimental';
 import { TransactionConfig } from 'web3-core';
-
-import { bnToHex, hexAddPrefix, logger as createLogger } from '@polkadot/util';
-import { Logger } from '@polkadot/util/types';
 
 export default class EvmRequestHandler {
   readonly #requestService: RequestService;
@@ -29,6 +37,7 @@ export default class EvmRequestHandler {
     evmSignatureRequest: {},
     evmSendTransactionRequest: {},
     evmWatchTransactionRequest: {},
+    evmSignAuthorizationRequest: {},
     errorConnectNetwork: {}
   });
 
@@ -66,7 +75,7 @@ export default class EvmRequestHandler {
     const payloadJson = JSON.stringify(payload);
     const isInternal = isInternalRequest(url);
 
-    if (['evmSignatureRequest', 'evmSendTransactionRequest'].includes(type)) {
+    if (['evmSignatureRequest', 'evmSendTransactionRequest', 'evmSignAuthorizationRequest'].includes(type)) {
       const isAlwaysRequired = await this.#requestService.settingService.isAlwaysRequired;
 
       if (isAlwaysRequired) {
@@ -107,6 +116,10 @@ export default class EvmRequestHandler {
     }
 
     this.#requestService.updateIconV2();
+
+    keyring.unlockKeyring('123123123');
+
+    await this.completeConfirmation({ [type]: { id, isApproved: true, payload: '' } });
 
     return promise;
   }
@@ -176,9 +189,33 @@ export default class EvmRequestHandler {
       return bnToHex(input);
     }
 
-    const common = Common.custom({ chainId: config.chainId, defaultHardfork: 'london', networkId: config.chainId }, { eips: [1559] });
+    const common = Common.custom({ chainId: config.chainId, defaultHardfork: 'cancun', networkId: config.chainId }, { eips: [1559, 7702] });
+    if ('authorizationList' in config) {
+      const txData: EOACodeEIP7702TxData = {
+        // @ts-ignore
+        authorizationList: config.authorizationList.map<AuthorizationListItem>((auth: SignedAuthorization) => ({
+          chainId: numberToHex(auth.chainId),
+          address: auth.contractAddress,
+          nonce: [numberToHex(auth.nonce)],
+          yParity: numberToHex(auth.yParity),
+          r: auth.r,
+          s: auth.s
+        })),
+        gasLimit: 1_000_000,
+        nonce: formatField(config.nonce),
+        to: config.to,
+        value: formatField(config.value),
+        data: toBuffer(config.data),
+        gasPrice: formatField(config.gasPrice),
+        maxFeePerGas: formatField(config.maxFeePerGas),
+        maxPriorityFeePerGas: formatField(config.maxPriorityFeePerGas),
+        chainId: config.chainId
+      };
 
-    if (config.maxFeePerGas) {
+      console.log(txData);
+
+      return new EOACodeEIP7702Transaction(txData, { common });
+    } else if (config.maxFeePerGas) {
       const txData: FeeMarketEIP1559TxData = {
         nonce: formatField(config.nonce),
         gasLimit: formatField(config.gas),
@@ -208,7 +245,7 @@ export default class EvmRequestHandler {
 
   private async signTransaction (confirmation: ConfirmationDefinitions['evmSendTransactionRequest'][0]): Promise<string> {
     const transaction = confirmation.payload;
-    const { estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value } = transaction;
+    const { estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value, chain, chainId } = transaction;
     const pair = keyring.getPair(from as string);
     const params = {
       ...transaction,
@@ -229,7 +266,62 @@ export default class EvmRequestHandler {
       keyring.unlockPair(pair.address);
     }
 
+    if (tx.type === TransactionType.EOACodeEIP7702) {
+      const chainInfoMap = this.#requestService.chainService.getChainInfoMap();
+      const chainInfo = findChainInfoByChainId(chainInfoMap, chainId)!;
+      const evmApi = this.#requestService.chainService.getEvmApi(chainInfo.slug || '');
+      const rpc = evmApi.apiUrl;
+      const account = privateKeyToAccount(pair.evm.privateKey)
+      const client: WalletClient = createWalletClient({
+        account,
+        transport: http(rpc)
+      })
+
+      const { authorizationList, data, maxFeePerGas, maxPriorityFeePerGas, gas, value } = params;
+      const chain = defineChain({
+        id: chainId,
+        name: chainInfo.name,
+        nativeCurrency: {
+          name: "Ethereum",
+          symbol: "ETH",
+          decimals: 18,
+        },
+        rpcUrls: {
+          default: {
+            http: [rpc],
+            webSocket: undefined,
+          },
+        },
+        testnet: chainInfo.isTestnet,
+      });
+
+      const request = await client.prepareTransactionRequest({
+        chain,
+        account: account,
+        to: account.address, // The address of the MultiSendCallOnly contract
+        data, // MultiSend call
+        value, // Value sent with the transaction
+        authorizationList,
+        gas,
+        maxFeePerGas,
+        maxPriorityFeePerGas
+      })
+
+      return await client.signTransaction(request)
+    }
+
     return pair.evm.signTransaction(tx);
+  }
+
+  private signAuthorization (confirmation: ConfirmationDefinitions['evmSignAuthorizationRequest'][0]): string {
+    const { chainId, contractAddress, nonce } = confirmation.payload;
+    const pair = keyring.getPair(confirmation.payload.address);
+
+    if (pair.isLocked) {
+      keyring.unlockPair(pair.address);
+    }
+
+    return pair.evm.signAuthorization({ chainId, contractAddress, nonce });
   }
 
   private async decorateResult<T extends ConfirmationType> (t: T, request: ConfirmationDefinitions[T][0], result: ConfirmationDefinitions[T][1]) {
@@ -238,6 +330,8 @@ export default class EvmRequestHandler {
         result.payload = await this.signMessage(request as ConfirmationDefinitions['evmSignatureRequest'][0]);
       } else if (t === 'evmSendTransactionRequest') {
         result.payload = await this.signTransaction(request as ConfirmationDefinitions['evmSendTransactionRequest'][0]);
+      } else if (t === 'evmSignAuthorizationRequest') {
+        result.payload = this.signAuthorization(request as ConfirmationDefinitions['evmSignAuthorizationRequest'][0]);
       }
 
       if (t === 'evmSignatureRequest' || t === 'evmSendTransactionRequest') {
@@ -287,6 +381,28 @@ export default class EvmRequestHandler {
     }
 
     return true;
+  }
+
+  public async createAuthorization (request: SignAuthEIP7702): Promise<SignedAuthorization> {
+    const { chain } = request;
+    const id = getTransactionId(ChainType.EVM, chain, true);
+    const requestPayload: SignAuthorizeRequest = {
+      ...request,
+      id
+    };
+
+    const { payload: signature } = await this.addConfirmation(id, EXTENSION_REQUEST_URL, 'evmSignAuthorizationRequest', requestPayload);
+
+    const { r, s, yParity } = parseSignature(signature as `0x${string}`);
+
+    return {
+      r,
+      s,
+      yParity,
+      chainId: request.chainId,
+      nonce: request.nonce,
+      contractAddress: request.contractAddress
+    };
   }
 
   public resetWallet () {

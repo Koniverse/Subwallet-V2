@@ -24,6 +24,7 @@ const initialState: RequestState = {
   evmSignatureRequest: {},
   evmSendTransactionRequest: {},
   evmWatchTransactionRequest: {},
+  evmSignAuthorizationRequest: {},
   errorConnectNetwork: {},
 
   tonSignatureRequest: {},

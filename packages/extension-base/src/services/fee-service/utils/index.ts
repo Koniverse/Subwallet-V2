@@ -218,7 +218,7 @@ export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, u
 
         return current.lte(previous) ? current : previous; // get min priority
       }
-    }, BN_ZERO);
+    }, networkKey === 'ithaca' ? BigN(2) : BN_ZERO);
 
     if (maxPriorityFeePerGas.eq(BN_ZERO)) {
       const _price = await web3.api.eth.getGasPrice();

@@ -7,8 +7,10 @@ import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import SettingService from '@subwallet/extension-base/services/setting-service/SettingService';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
+import { SignAuthEIP7702 } from '@subwallet/extension-base/types';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 import { BehaviorSubject } from 'rxjs';
+import { SignedAuthorization } from 'viem/experimental';
 
 import { SignerPayloadJSON } from '@polkadot/types/types/extrinsic';
 
@@ -46,6 +48,10 @@ export default class RequestService {
 
     // Reset icon on start service
     this.updateIconV2();
+  }
+
+  public get chainService (): ChainService {
+    return this.#chainService;
   }
 
   public get numAllRequests () {
@@ -274,6 +280,10 @@ export default class RequestService {
 
   public addNotSupportWCRequest (request: WalletConnectNotSupportRequest): void {
     return this.#notSupportWCRequestHandler.addNotSupportWCRequest(request);
+  }
+
+  public createAuthorization (request: SignAuthEIP7702): Promise<SignedAuthorization> {
+    return this.#evmRequestHandler.createAuthorization(request);
   }
 
   // General methods

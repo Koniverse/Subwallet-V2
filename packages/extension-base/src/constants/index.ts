@@ -48,6 +48,8 @@ export const ORDINAL_METHODS = ['drc-20', 'pol-20'];
 
 export const PERMISSIONS_TO_REVOKE = ['eth_accounts'];
 
+export const ACCOUNT_7702_CODE_PREFIX = '0xef0100';
+
 export * from './blocked-actions';
 export * from './environment';
 export * from './signing';

@@ -1,8 +1,9 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { hexAddPrefix } from '@polkadot/util';
 import { _getOriginChainOfAsset } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountChainType, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, EIP7702DelegateType } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
 import { AccountSelectorModal, AlertBox, CloseIcon, EmptyList, PageWrapper, ReceiveModal, TonWalletContractSelectorModal } from '@subwallet/extension-koni-ui/components';
 import BannerGenerator from '@subwallet/extension-koni-ui/components/StaticContent/BannerGenerator';
@@ -13,6 +14,7 @@ import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeCo
 import { useCoreReceiveModalHelper, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
+import { delegateEIP7702, handleTransactionEIP7702 } from '@subwallet/extension-koni-ui/messaging';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
@@ -20,6 +22,7 @@ import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance
 import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
+import BigN from 'bignumber.js';
 import classNames from 'classnames';
 import { Coins, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -310,6 +313,26 @@ const Component = (): React.ReactElement => {
       window.removeEventListener('resize', handleResize);
     };
   }, [handleResize]);
+
+  useEffect(() => {
+    handleTransactionEIP7702({
+      delegateType: EIP7702DelegateType.KERNEL_V3,
+      chain: 'ithaca',
+      address: '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b',
+      calls: [
+        // {
+        //   to: '0x49E46fc304a448A2132d2DBEd6df47D0084cE92f',
+        //   value: hexAddPrefix(BigN(0.1).shiftedBy(18).toString(16)),
+        // },
+        // {
+        //   to: '0x6f59A38564B51c628db66D2a2D0A36A7D14Fe3E5',
+        //   data: '0xa9059cbb00000000000000000000000049e46fc304a448a2132d2dbed6df47d0084ce92f0000000000000000000000000000000000000000000000008ac7230489e80000'
+        // }
+      ]
+    })
+      .then(console.log)
+      .catch(console.error);
+  }, []);
 
   return (
     <div

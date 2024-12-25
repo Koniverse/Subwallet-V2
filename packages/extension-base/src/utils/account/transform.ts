@@ -209,6 +209,7 @@ const EARN_VMANTA_ACTIONS: ExtrinsicType[] = [
 
 const EVM_ACTIONS: ExtrinsicType[] = [
   ExtrinsicType.TOKEN_SPENDING_APPROVAL,
+  ExtrinsicType.EVM_DELEGATE,
   ExtrinsicType.EVM_EXECUTE
 ];
 

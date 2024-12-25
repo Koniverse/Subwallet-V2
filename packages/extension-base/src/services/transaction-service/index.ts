@@ -34,6 +34,7 @@ import { ethers, TransactionLike } from 'ethers';
 import EventEmitter from 'eventemitter3';
 import { t } from 'i18next';
 import { BehaviorSubject, interval as rxjsInterval, Subscription } from 'rxjs';
+import { createPublicClient, http, TransactionReceipt as ViemTransactionReceipt } from 'viem';
 import { TransactionConfig, TransactionReceipt } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
@@ -1028,20 +1029,20 @@ export default class TransactionService {
         });
     } else {
       this.state.requestService.addConfirmation(id, url || EXTENSION_REQUEST_URL, 'evmSendTransactionRequest', payload, {})
-        .then(async ({ isApproved, payload }) => {
+        .then(async ({ isApproved, payload: result }) => {
           if (isApproved) {
             let signedTransaction: string | undefined;
 
-            if (!payload) {
+            if (!result) {
               throw new EvmProviderError(EvmProviderErrorType.UNAUTHORIZED, t('Failed to sign'));
             }
 
             const web3Api = this.state.chainService.getEvmApi(chain).api;
 
             if (!isExternal) {
-              signedTransaction = payload;
+              signedTransaction = result;
             } else {
-              const signed = mergeTransactionAndSignature(txObject, payload as `0x${string}`);
+              const signed = mergeTransactionAndSignature(txObject, result as `0x${string}`);
 
               const recover = web3Api.eth.accounts.recoverTransaction(signed);
 
@@ -1062,25 +1063,59 @@ export default class TransactionService {
             eventData.nonce = txObject.nonce;
             eventData.startBlock = await web3Api.eth.getBlockNumber();
             emitter.emit('send', eventData); // This event is needed after sending transaction with queue
-            signedTransaction && web3Api.eth.sendSignedTransaction(signedTransaction)
-              .once('transactionHash', (hash) => {
-                eventData.extrinsicHash = hash;
-                emitter.emit('extrinsicHash', eventData);
+
+            if ('authorizationList' in payload) {
+              const publicClient = createPublicClient({
+                transport: http(evmApi.apiUrl)
               })
-              .once('receipt', (rs) => {
-                eventData.extrinsicHash = rs.transactionHash;
-                eventData.blockHash = rs.blockHash;
-                eventData.blockNumber = rs.blockNumber;
-                emitter.emit('success', eventData);
-              })
-              .once('error', (e) => {
-                eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, t(e.message)));
-                emitter.emit('error', eventData);
-              })
-              .catch((e: Error) => {
-                eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SEND, t(e.message)));
-                emitter.emit('error', eventData);
-              });
+
+              publicClient.sendRawTransaction({ serializedTransaction: signedTransaction })
+                .then((hash: string) => {
+                  eventData.extrinsicHash = hash;
+                  emitter.emit('extrinsicHash', eventData);
+
+                  return publicClient.waitForTransactionReceipt({
+                    hash: hash,
+                    pollingInterval: 12_000,
+                  });
+                })
+                .then((rs: ViemTransactionReceipt) => {
+                  eventData.extrinsicHash = rs.transactionHash;
+                  eventData.blockHash = rs.blockHash;
+                  eventData.blockNumber = Number(rs.blockNumber.toString(10));
+
+                  if (rs.status === 'success') {
+                    emitter.emit('success', eventData);
+                  } else {
+                    eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
+                    emitter.emit('error', eventData);
+                  }
+                })
+                .catch((e: Error) => {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+                  emitter.emit('error', eventData);
+                })
+            } else {
+              signedTransaction && web3Api.eth.sendSignedTransaction(signedTransaction)
+                .once('transactionHash', (hash) => {
+                  eventData.extrinsicHash = hash;
+                  emitter.emit('extrinsicHash', eventData);
+                })
+                .once('receipt', (rs) => {
+                  eventData.extrinsicHash = rs.transactionHash;
+                  eventData.blockHash = rs.blockHash;
+                  eventData.blockNumber = rs.blockNumber;
+                  emitter.emit('success', eventData);
+                })
+                .once('error', (e) => {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, t(e.message)));
+                  emitter.emit('error', eventData);
+                })
+                .catch((e: Error) => {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SEND, t(e.message)));
+                  emitter.emit('error', eventData);
+                });
+            }
           } else {
             this.removeTransaction(id);
             eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
@@ -1280,6 +1315,60 @@ export default class TransactionService {
 
     return emitter;
   }
+
+  /// EIP-7702
+
+  public async handleEIP7702Transaction (transaction: SWTransactionInput): Promise<SWTransactionResponse> {
+    const validatedTransaction = await this.validateTransaction(transaction);
+    const ignoreWarnings: BasicTxWarningCode[] = validatedTransaction.ignoreWarnings || [];
+    const stopByErrors = validatedTransaction.errors.length > 0;
+    const stopByWarnings = validatedTransaction.warnings.length > 0 && validatedTransaction.warnings.some((warning) => !ignoreWarnings.includes(warning.warningType));
+
+    if (stopByErrors || stopByWarnings) {
+      // @ts-ignore
+      'transaction' in validatedTransaction && delete validatedTransaction.transaction;
+      'additionalValidator' in validatedTransaction && delete validatedTransaction.additionalValidator;
+      'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
+
+      return validatedTransaction;
+    }
+
+    validatedTransaction.warnings = [];
+
+    const emitter = await this.addTransaction(validatedTransaction);
+
+    await new Promise<void>((resolve, reject) => {
+      // TODO
+      if (transaction.resolveOnDone) {
+        emitter.on('success', (data: TransactionEventResponse) => {
+          validatedTransaction.id = data.id;
+          validatedTransaction.extrinsicHash = data.extrinsicHash;
+          resolve();
+        });
+      } else {
+        emitter.on('signed', (data: TransactionEventResponse) => {
+          validatedTransaction.id = data.id;
+          validatedTransaction.extrinsicHash = data.extrinsicHash;
+          resolve();
+        });
+      }
+
+      emitter.on('error', (data: TransactionEventResponse) => {
+        if (data.errors.length > 0) {
+          validatedTransaction.errors.push(...data.errors);
+          resolve();
+        }
+      });
+    });
+
+    // @ts-ignore
+    'transaction' in validatedTransaction && delete validatedTransaction.transaction;
+    'additionalValidator' in validatedTransaction && delete validatedTransaction.additionalValidator;
+    'eventsHandler' in validatedTransaction && delete validatedTransaction.eventsHandler;
+
+    return validatedTransaction;
+  }
+
 
   private handleTransactionTimeout (emitter: EventEmitter<TransactionEventMap>, eventData: TransactionEventResponse): void {
     const timeout = setTimeout(() => {
