@@ -96,20 +96,24 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
     ]);
 
     const bnInputAssetBalance = new BN(inputAssetBalance.value);
-    const bnAltInputAssetBalance = new BN(altInputAssetBalance.value);
+
     const bnMinJoinPool = new BN(poolInfo.statistic.earningThreshold.join);
 
     const inputTokenInfo = this.state.chainService.getAssetBySlug(this.inputAsset);
     const altInputTokenInfo = this.state.chainService.getAssetBySlug(this.altInputAsset);
+    const existentialDeposit = new BN(altInputTokenInfo.minAmount || '0');
+    const bnAltInputAssetBalance = new BN(altInputAssetBalance.value).sub(existentialDeposit);
+    const preCheckAltInputAssetBalance = bnAltInputAssetBalance.gt(BN_ZERO) ? bnAltInputAssetBalance : BN_ZERO;
 
-    if (bnInputAssetBalance.add(bnAltInputAssetBalance).lt(bnMinJoinPool)) {
+    if (bnInputAssetBalance.add(preCheckAltInputAssetBalance).lt(bnMinJoinPool)) {
       const originChain = this.state.getChainInfo(inputTokenInfo.originChain);
       const altChain = this.state.getChainInfo(altInputTokenInfo.originChain);
       const parsedMinJoinPool = formatNumber(bnMinJoinPool.toString(), inputAssetInfo.decimals || 0);
+      const parsedMinAltJoinPool = formatNumber((bnMinJoinPool.add(existentialDeposit)).toString(), inputAssetInfo.decimals || 0);
 
       return {
         passed: false,
-        errorMessage: `You need at least ${parsedMinJoinPool} ${inputTokenInfo.symbol} (${originChain.name}) or ${altInputTokenInfo.symbol} (${altChain.name}) to start earning`
+        errorMessage: `You need at least ${parsedMinJoinPool} ${inputTokenInfo.symbol} (${originChain.name}) or ${parsedMinAltJoinPool} ${altInputTokenInfo.symbol} (${altChain.name}) to start earning`
       };
     }
 
