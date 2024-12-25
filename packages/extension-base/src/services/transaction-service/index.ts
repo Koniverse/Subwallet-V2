@@ -1098,7 +1098,7 @@ export default class TransactionService {
     return emitter;
   }
 
-  private async signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): TransactionEmitter {
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1108,8 +1108,8 @@ export default class TransactionService {
     };
 
     const extrinsic = transaction as SubmittableExtrinsic;
-    const registry = extrinsic.registry;
-    const signedExtensions = registry.signedExtensions;
+    // const registry = extrinsic.registry;
+    // const signedExtensions = registry.signedExtensions;
 
     const signerOption: Partial<SignerOptions> = {
       signer: {
@@ -1126,14 +1126,14 @@ export default class TransactionService {
       withSignedTransaction: true
     };
 
-    if (_isRuntimeUpdated(signedExtensions)) {
-      const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
-
-      if (metadataHash) {
-        signerOption.mode = 1;
-        signerOption.metadataHash = metadataHash;
-      }
-    }
+    // if (_isRuntimeUpdated(signedExtensions)) {
+    //   const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
+    //
+    //   if (metadataHash) {
+    //     signerOption.mode = 1;
+    //     signerOption.metadataHash = metadataHash;
+    //   }
+    // }
 
     extrinsic.signAsync(address, signerOption).then(async (rs) => {
       // Emit signed event

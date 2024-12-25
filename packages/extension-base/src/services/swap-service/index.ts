@@ -18,6 +18,14 @@ import { _SUPPORTED_SWAP_PROVIDERS, OptimalSwapPathParams, QuoteAskResponse, Swa
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
 
+import { SimpleSwapHandler } from './handler/simpleswap-handler';
+
+export const _isChainSupportedByProvider = (providerSlug: SwapProviderId, chain: string) => {
+  const supportedChains = _PROVIDER_TO_SUPPORTED_PAIR_MAP[providerSlug];
+
+  return supportedChains ? supportedChains.includes(chain) : false;
+};
+
 export class SwapService implements ServiceWithProcessInterface, StoppableServiceInterface {
   protected readonly state: KoniState;
   private eventService: EventService;
@@ -41,7 +49,7 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
 
     await Promise.all(Object.values(this.handlers).map(async (handler) => {
       // temporary solution to reduce number of requests to providers, will work as long as there's only 1 provider for 1 chain
-      if (!_PROVIDER_TO_SUPPORTED_PAIR_MAP[handler.providerSlug].includes(swappingSrcChain)) {
+      if (!_isChainSupportedByProvider(handler.providerSlug, swappingSrcChain)) {
         return;
       }
 
@@ -141,7 +149,7 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
 
       quoteError = preferredErrorResp?.error || defaultErrorResp?.error;
     } else {
-      selectedQuote = availableQuotes[0];
+      selectedQuote = availableQuotes.find((quote) => quote.provider.id === request.currentQuote?.id) || availableQuotes[0];
       aliveUntil = selectedQuote?.aliveUntil || (+Date.now() + SWAP_QUOTE_TIMEOUT_MAP.default);
     }
 
@@ -181,6 +189,9 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
           break;
         case SwapProviderId.ROCOCO_ASSET_HUB:
           this.handlers[providerId] = new AssetHubSwapHandler(this.chainService, this.state.balanceService, 'rococo_assethub');
+          break;
+        case SwapProviderId.SIMPLE_SWAP:
+          this.handlers[providerId] = new SimpleSwapHandler(this.chainService, this.state.balanceService);
           break;
 
         default:
