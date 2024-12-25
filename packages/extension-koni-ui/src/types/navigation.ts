@@ -65,9 +65,3 @@ export type AccountDetailParam = {
   requestViewDerivedAccounts?: boolean
   requestViewDerivedAccountDetails?: boolean
 }
-
-// migrate account
-
-export type MigrateAccountParam = {
-  isMigrationNotion?: boolean;
-};

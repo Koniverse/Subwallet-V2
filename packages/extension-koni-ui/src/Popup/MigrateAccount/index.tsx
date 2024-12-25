@@ -8,11 +8,11 @@ import { saveMigrationAcknowledgedStatus, windowOpen } from '@subwallet/extensio
 import { migrateSoloAccount, migrateUnifiedAndFetchEligibleSoloAccounts } from '@subwallet/extension-koni-ui/messaging/migrate-unified-account';
 import { BriefView } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/BriefView';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
-import { MigrateAccountParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { ModalContext } from '@subwallet/react-ui';
 import React, { useCallback, useContext, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { EnterPasswordModal, enterPasswordModalId } from './EnterPasswordModal';
@@ -28,15 +28,17 @@ export enum ScreenView {
 }
 
 function Component ({ className = '' }: Props) {
-  const locationState = useLocation().state as MigrateAccountParam;
-  const isMigrationNotion = !!locationState?.isMigrationNotion;
+  const [searchParams] = useSearchParams();
+  const isMigrationNotion = searchParams.has('is-notion');
   const [currentScreenView, setCurrentScreenView] = useState<ScreenView>(ScreenView.BRIEF);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const { goBack, goHome } = useDefaultNavigate();
+  const { goHome } = useDefaultNavigate();
+  const navigate = useNavigate();
   const [sessionId, setSessionId] = useState<string | undefined>();
   const [resultProxyIds, setResultProxyIds] = useState<string[]>([]);
   const [soloAccountToBeMigratedGroups, setSoloAccountToBeMigratedGroups] = useState<SoloAccountToBeMigrated[][]>([]);
+  const isAcknowledgedUnifiedAccountMigration = useSelector((state: RootState) => state.settings.isAcknowledgedUnifiedAccountMigration);
   const isPopup = useIsPopup();
 
   const accountProxies = useSelector((root: RootState) => root.accountState.accountProxies);
@@ -52,26 +54,35 @@ function Component ({ className = '' }: Props) {
   }, [activeModal]);
 
   const onInteractAction = useCallback(() => {
-    if (isMigrationNotion) {
+    if (isMigrationNotion && !isAcknowledgedUnifiedAccountMigration) {
       // flag that user acknowledge the migration
       saveMigrationAcknowledgedStatus({ isAcknowledgedUnifiedAccountMigration: true }).catch(console.error);
     }
 
     // for now, do nothing
-  }, [isMigrationNotion]);
+  }, [isAcknowledgedUnifiedAccountMigration, isMigrationNotion]);
 
   const onClickDismiss = useCallback(() => {
     onInteractAction();
 
     // close this screen
-    isMigrationNotion ? goHome() : goBack();
-  }, [goBack, goHome, isMigrationNotion, onInteractAction]);
+    isMigrationNotion ? goHome() : navigate('/settings/account-settings');
+  }, [goHome, isMigrationNotion, navigate, onInteractAction]);
 
   const onClickMigrateNow = useCallback(() => {
     onInteractAction();
 
     if (isPopup) {
-      windowOpen({ allowedPath: '/migrate-account' }).then(window.close).catch(console.log);
+      const params: Record<string, string> = {};
+
+      if (isMigrationNotion) {
+        params['is-notion'] = 'true';
+      }
+
+      windowOpen({
+        allowedPath: '/migrate-account',
+        params: Object.keys(params).length ? params : undefined
+      }).then(window.close).catch(console.log);
 
       return;
     }
@@ -81,7 +92,7 @@ function Component ({ className = '' }: Props) {
     } else {
       onOpenPasswordModal();
     }
-  }, [accountProxies, isPopup, onInteractAction, onOpenPasswordModal]);
+  }, [accountProxies, isMigrationNotion, isPopup, onInteractAction, onOpenPasswordModal]);
 
   const onSubmitPassword = useCallback(async (password: string) => {
     // migrate all account

@@ -34,6 +34,7 @@ export const RouteState = {
 
 const welcomeUrl = '/welcome';
 const tokenUrl = '/home/tokens';
+const migrateAccountNotionUrl = '/migrate-account?is-notion=true';
 const loginUrl = '/keyring/login';
 const phishingUrl = '/phishing-page-detected';
 const mv3MigrationUrl = '/mv3-migration';
@@ -98,6 +99,7 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
   const { unlockType } = useSelector((state: RootState) => state.settings);
   const { hasConfirmations, hasInternalConfirmations } = useSelector((state: RootState) => state.requestState);
   const { accounts, currentAccount, hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
+  const isAcknowledgedUnifiedAccountMigration = useSelector((state: RootState) => state.settings.isAcknowledgedUnifiedAccountMigration);
   const [initAccount, setInitAccount] = useState(currentAccount);
   const noAccount = useMemo(() => isNoAccount(accounts), [accounts]);
   const { isUILocked } = useUILock();
@@ -157,6 +159,14 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
     RouteState.lastPathName = location.pathname;
   }, [location]);
 
+  const activePriorityPath = useMemo(() => {
+    if (!isAcknowledgedUnifiedAccountMigration) {
+      return migrateAccountNotionUrl;
+    }
+
+    return undefined;
+  }, [isAcknowledgedUnifiedAccountMigration]);
+
   const redirectPath = useMemo<string | null>(() => {
     const pathName = location.pathname;
     let redirectTarget: string | null = null;
@@ -191,6 +201,8 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
     } else if (pathName === DEFAULT_ROUTER_PATH) {
       if (hasConfirmations) {
         openPModal('confirmations');
+      } else if (activePriorityPath) {
+        redirectTarget = activePriorityPath;
       } else if (firstRender.current && currentPage) {
         redirectTarget = currentPage;
       } else {
@@ -231,7 +243,7 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
     } else {
       return null;
     }
-  }, [location.pathname, dataLoaded, needMigrate, hasMasterPassword, needUnlock, noAccount, hasInternalConfirmations, isOpenPModal, hasConfirmations, currentPage, openPModal]);
+  }, [location.pathname, dataLoaded, needMigrate, hasMasterPassword, needUnlock, noAccount, hasInternalConfirmations, isOpenPModal, hasConfirmations, activePriorityPath, currentPage, openPModal]);
 
   // Remove transaction persist state
   useEffect(() => {
