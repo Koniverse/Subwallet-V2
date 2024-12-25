@@ -15,9 +15,7 @@ export const MAX_NOMINATIONS = '16';
 
 export const PREDEFINED_EARNING_POOL_PROMISE = fetchStaticData<Record<string, number[]>>('nomination-pool-recommendation');
 
-export type ChainValidatorPreSelect = {
+export type ChainRecommendValidator = {
   maxCount: number;
   preSelectValidators: string;
 };
-
-export const DIRECT_NOMINATION_VALIDATOR = fetchStaticData<Record<string, ChainValidatorPreSelect[]>>('direct-nomination-validator');
