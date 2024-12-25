@@ -7,7 +7,7 @@ import { ALL_ACCOUNT_KEY, XCM_FEE_RATIO } from '@subwallet/extension-base/consta
 import { YIELD_POOL_STAT_REFRESH_INTERVAL } from '@subwallet/extension-base/koni/api/yield/helper/utils';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { createXcmExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
-import { _getChainNativeTokenSlug } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetExistentialDeposit, _getAssetName, _getAssetSymbol, _getChainNativeTokenSlug } from '@subwallet/extension-base/services/chain-service/utils';
 import { BaseYieldStepDetail, BasicTxErrorType, HandleYieldStepData, OptimalYieldPath, OptimalYieldPathParams, RequestCrossChainTransfer, RequestEarlyValidateYield, ResponseEarlyValidateYield, RuntimeDispatchInfo, SpecialYieldPoolInfo, SpecialYieldPoolMetadata, SubmitYieldJoinData, SubmitYieldStepData, TransactionData, UnstakingInfo, YieldPoolInfo, YieldPoolTarget, YieldPoolType, YieldProcessValidation, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo, YieldValidationStatus } from '@subwallet/extension-base/types';
 import { createPromiseHandler, formatNumber, PromiseHandler } from '@subwallet/extension-base/utils';
 import { t } from 'i18next';
@@ -101,19 +101,27 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
 
     const inputTokenInfo = this.state.chainService.getAssetBySlug(this.inputAsset);
     const altInputTokenInfo = this.state.chainService.getAssetBySlug(this.altInputAsset);
-    const existentialDeposit = new BN(altInputTokenInfo.minAmount || '0');
+
+    const existentialDeposit = new BN(_getAssetExistentialDeposit(altInputTokenInfo));
     const bnAltInputAssetBalance = new BN(altInputAssetBalance.value).sub(existentialDeposit);
     const preCheckAltInputAssetBalance = bnAltInputAssetBalance.gt(BN_ZERO) ? bnAltInputAssetBalance : BN_ZERO;
 
     if (bnInputAssetBalance.add(preCheckAltInputAssetBalance).lt(bnMinJoinPool)) {
       const originChain = this.state.getChainInfo(inputTokenInfo.originChain);
       const altChain = this.state.getChainInfo(altInputTokenInfo.originChain);
+
+      const originSymbol = _getAssetSymbol(inputTokenInfo);
+      const altSymbol = _getAssetSymbol(altInputTokenInfo);
+
+      const originName = originChain.name;
+      const altName = altChain.name;
+
       const parsedMinJoinPool = formatNumber(bnMinJoinPool.toString(), inputAssetInfo.decimals || 0);
       const parsedMinAltJoinPool = formatNumber((bnMinJoinPool.add(existentialDeposit)).toString(), inputAssetInfo.decimals || 0);
 
       return {
         passed: false,
-        errorMessage: `You need at least ${parsedMinJoinPool} ${inputTokenInfo.symbol} (${originChain.name}) or ${parsedMinAltJoinPool} ${altInputTokenInfo.symbol} (${altChain.name}) to start earning`
+        errorMessage: `You need at least ${parsedMinJoinPool} ${originSymbol} (${originName}) or ${parsedMinAltJoinPool} ${altSymbol} (${altName}) to start earning`
       };
     }
 
@@ -363,14 +371,16 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
       const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO))).sub(existentialDeposit);
       const preCheckBnMaxXCM = bnMaxXCM.lte(BN_ZERO) ? BN_ZERO : bnMaxXCM;
       const maxBn = bnInputTokenBalance.add(preCheckBnMaxXCM);
-      const maxValue = formatNumber(maxBn.toString(), inputTokenInfo.decimals || 0);
-      const maxXCMValue = formatNumber(preCheckBnMaxXCM.toString(), inputTokenInfo.decimals || 0);
+      const inputTokenDecimal = _getAssetDecimals(inputTokenInfo);
 
-      const symbol = altInputTokenInfo.symbol;
-      const altNetwork = this.state.getChainInfo(altInputTokenInfo.originChain);
+      const maxValue = formatNumber(maxBn.toString(), inputTokenDecimal);
+      const maxXCMValue = formatNumber(preCheckBnMaxXCM.toString(), inputTokenDecimal);
+
+      const symbol = _getAssetSymbol(altInputTokenInfo);
+
       const inputNetworkName = this.chainInfo.name;
-      const altNetworkName = altNetwork.name;
-      const currentValue = formatNumber(bnInputTokenBalance.toString(), inputTokenInfo.decimals || 0);
+      const altNetworkName = _getAssetName(altInputTokenInfo);
+      const currentValue = formatNumber(bnInputTokenBalance.toString(), inputTokenDecimal);
 
       processValidation.message = t(
         'You can only enter a maximum of {{maxValue}} {{symbol}}, which is {{currentValue}} {{symbol}} ({{inputNetworkName}}) and {{maxXCMValue}} {{symbol}} ({{altNetworkName}}). Lower your amount and try again.',
