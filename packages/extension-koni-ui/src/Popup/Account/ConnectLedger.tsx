@@ -4,11 +4,13 @@
 import { LedgerNetwork, MigrationLedgerNetwork } from '@subwallet/extension-base/background/KoniTypes';
 import { reformatAddress } from '@subwallet/extension-base/utils';
 import { AccountItemWithName, AccountWithNameSkeleton, BasicOnChangeFunction, ChainSelector, DualLogo, InfoIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { LedgerChainSelector, LedgerItemType } from '@subwallet/extension-koni-ui/components/Field/LedgerChainSelector';
 import { ATTACH_ACCOUNT_MODAL, SUBSTRATE_MIGRATION_KEY, USER_GUIDE_URL } from '@subwallet/extension-koni-ui/constants';
 import { useAutoNavigateToCreatePassword, useCompleteCreateAccount, useGetSupportedLedger, useGoBackFromCreateAccount, useLedger } from '@subwallet/extension-koni-ui/hooks';
 import { createAccountHardwareMultiple } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ChainItemType, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { convertNetworkSlug } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Button, Icon, Image, SwList } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, CircleNotch, Swatches } from 'phosphor-react';
@@ -18,8 +20,6 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import DefaultLogosMap from '../../assets/logo';
-import { LedgerChainSelector, LedgerItemType } from '@subwallet/extension-koni-ui/components/Field/LedgerChainSelector';
-import { convertNetworkSlug } from '@subwallet/extension-koni-ui/utils';
 
 type Props = ThemeProps;
 
