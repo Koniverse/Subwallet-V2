@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestMigrateUnifiedAndFetchEligibleSoloAccounts, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts, SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseMigrateUnifiedAndFetchEligibleSoloAccounts, SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountBaseHandler } from '@subwallet/extension-base/services/keyring-service/context/handlers/Base';
 import { AccountChainType, AccountProxy, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
 import { createAccountProxyId, getDefaultKeypairTypeFromAccountChainType, getSuri } from '@subwallet/extension-base/utils';
@@ -9,7 +9,31 @@ import { keyring } from '@subwallet/ui-keyring';
 
 import { keyExtractSuri } from '@polkadot/util-crypto';
 
+export const SESSION_TIMEOUT = 10000;
+
+interface SessionInfo {
+  password: string,
+  timeoutId: NodeJS.Timeout
+}
+
 export class AccountMigrationHandler extends AccountBaseHandler {
+  private sessionIdToPassword: Record<string, SessionInfo> = {};
+
+  public pingSession ({ sessionId }: RequestPingSession) {
+    console.log(this.sessionIdToPassword);
+
+    if (!this.sessionIdToPassword[sessionId]) { // todo: if no persistent sessionId, should we jump to enter password again?
+      throw Error(`Session ID ${sessionId} not found.`);
+    }
+
+    clearTimeout(this.sessionIdToPassword[sessionId].timeoutId);
+    this.sessionIdToPassword[sessionId].timeoutId = setTimeout(() => {
+      delete this.sessionIdToPassword[sessionId];
+    }, SESSION_TIMEOUT);
+
+    return true;
+  }
+
   public async migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts): Promise<ResponseMigrateUnifiedAndFetchEligibleSoloAccounts> {
     // Get MigrateUnified
     const password = request.password;
@@ -18,15 +42,23 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     const UACanBeMigratedSortedByParent = this.sortUAByParent(UACanBeMigrated); // master account should be migrated before derived account
     const migratedUnifiedAccountIds = await this.migrateUnifiedToUnifiedAccount(password, UACanBeMigratedSortedByParent);
 
-    // GetEligibleSoloAccounts
+    // Get EligibleSoloAccounts
     const rawSoloAccounts = this.getEligibleSoloAccounts(accountProxies);
     const rawEligibleSoloAccounts = this.groupSoloAccountByPair(password, rawSoloAccounts);
     const eligibleSoloAccountMap = this.accountProxiesToEligibleSoloAccountMap(rawEligibleSoloAccounts);
 
+    // Create UniqueId
+    const uniqueId = Date.now().toString();
+    const timeoutId = setTimeout(() => delete this.sessionIdToPassword[uniqueId], SESSION_TIMEOUT * 2);
+    this.sessionIdToPassword[uniqueId] = {
+      password,
+      timeoutId
+    };
+
     return {
       migratedUnifiedAccountIds,
       soloAccounts: eligibleSoloAccountMap,
-      sessionId: '' // todo: handle sessionId
+      sessionId: uniqueId
     };
   }
 
