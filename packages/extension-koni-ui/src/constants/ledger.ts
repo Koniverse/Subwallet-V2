@@ -8,6 +8,7 @@ export const SUBSTRATE_GENERIC_KEY = 'substrate_generic';
 export const SUBSTRATE_MIGRATION_KEY = 'substrate_migration';
 export const POLKADOT_KEY = 'polkadot';
 export const POLKADOT_SLIP_44 = 354;
+export const RECOVERY_SLUG = '_recovery';
 
 export const PredefinedLedgerNetwork: LedgerNetwork[] = [
   {
@@ -126,7 +127,7 @@ export const PredefinedLedgerNetwork: LedgerNetwork[] = [
     genesisHash: ChainInfoMap.avail_mainnet.substrateInfo?.genesisHash || '0xb91746b45e0346cc2f815a520b9c6cb4d5c0902af848db0a80f85932d2e8276a',
     icon: 'substrate',
     network: 'availRecovery',
-    slug: 'avail_mainnet_recovery',
+    slug: ChainInfoMap.avail_mainnet.slug,
     isDevMode: false,
     isGeneric: false,
     isEthereum: false,

@@ -59,6 +59,7 @@ export interface AccountLedgerData {
   originGenesisHash?: string | null;
   /** Ledger's availableGenesisHashes */
   availableGenesisHashes?: string[];
+  /** Is Ledger recovery chain */
   isLedgerRecovery?: boolean;
 }
 

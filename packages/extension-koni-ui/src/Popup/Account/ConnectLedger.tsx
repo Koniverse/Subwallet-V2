@@ -18,6 +18,8 @@ import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import DefaultLogosMap from '../../assets/logo';
+import { LedgerChainSelector, LedgerItemType } from '@subwallet/extension-koni-ui/components/Field/LedgerChainSelector';
+import { convertKey } from '@subwallet/extension-koni-ui/utils';
 
 type Props = ThemeProps;
 
@@ -54,13 +56,14 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const { accounts } = useSelector((state: RootState) => state.accountState);
 
-  const networks = useMemo((): ChainItemType[] => supportedLedger
+  const networks = useMemo((): LedgerItemType[] => supportedLedger
     .filter(({ isHide }) => !isHide)
     .map((network) => ({
       name: !network.isGeneric
         ? network.networkName.replace(' network', '').concat(network.isRecovery ? ' Recovery' : '')
         : network.networkName,
-      slug: network.slug
+      chain: network.slug,
+      slug: convertKey(network)
     })), [supportedLedger]);
 
   const networkMigrates = useMemo((): ChainItemType[] => migrateSupportLedger
@@ -80,7 +83,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedChain = useMemo((): LedgerNetwork | undefined => {
-    return supportedLedger.find((n) => n.slug === chain);
+    return supportedLedger.find((n) => convertKey(n) === chain);
   }, [chain, supportedLedger]);
 
   const selectedChainMigrateMode = useMemo((): MigrationLedgerNetwork | undefined => {
@@ -95,7 +98,7 @@ const Component: React.FC<Props> = (props: Props) => {
     return chainMigrateMode && selectedChain ? `${selectedChain.accountName}` : '';
   }, [chainMigrateMode, migrateSupportLedger]);
 
-  const { error, getAllAddress, isLoading, isLocked, ledger, refresh, warning } = useLedger(chain, true, false, false, selectedChainMigrateMode?.genesisHash, selectedChain?.isRecovery);
+  const { error, getAllAddress, isLoading, isLocked, ledger, refresh, warning } = useLedger(selectedChain?.slug, true, false, false, selectedChainMigrateMode?.genesisHash, selectedChain?.isRecovery);
 
   const onPreviousStep = useCallback(() => {
     setFirstStep(true);
@@ -329,7 +332,7 @@ const Component: React.FC<Props> = (props: Props) => {
                     sizeSquircleBorder={108}
                   />
                 </div>
-                <ChainSelector
+                <LedgerChainSelector
                   className={'select-ledger-app'}
                   items={networks}
                   label={t('Select Ledger app')}

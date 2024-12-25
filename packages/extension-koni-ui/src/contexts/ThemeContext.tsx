@@ -361,7 +361,7 @@ export function ThemeProvider ({ children }: ThemeProviderProps): React.ReactEle
   const themeConfig = useMemo(() => {
     const config = SW_THEME_CONFIGS[themeName];
 
-    Object.assign(config.logoMap.network, logoMaps.chainLogoMap, { avail_mainnet_recovery: logoMaps.chainLogoMap.avail_mainnet });
+    Object.assign(config.logoMap.network, logoMaps.chainLogoMap);
     Object.assign(config.logoMap.symbol, logoMaps.assetLogoMap);
 
     return config;

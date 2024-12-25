@@ -44,7 +44,7 @@ const baseState: StateBase = {
 
 const getNetwork = (ledgerChains: LedgerNetwork[], slug: string, isEthereumNetwork: boolean, isRecovery?: boolean): LedgerNetwork | undefined => {
   if (isRecovery) {
-    return ledgerChains.find((network) => network.isRecovery);
+    return ledgerChains.find((network) => network.slug === slug && network.isRecovery);
   }
 
   return ledgerChains.find((network) => network.slug === slug || (network.isEthereum && isEthereumNetwork));
