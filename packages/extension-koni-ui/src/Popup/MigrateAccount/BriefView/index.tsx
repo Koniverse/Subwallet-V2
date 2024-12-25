@@ -45,11 +45,16 @@ function Component ({ className = '', onDismiss, onMigrateNow }: Props) {
   return (
     <div className={className}>
       <div className='__header-area'>
-        {contentData.title}
+        <div className='__view-title'>
+          {contentData.title}
+        </div>
       </div>
 
       <div className='__body-area'>
-        <ContentGenerator content={contentData.content || ''} />
+        <ContentGenerator
+          className={'__content-generator'}
+          content={contentData.content || ''}
+        />
       </div>
 
       <div className='__footer-area'>
@@ -93,12 +98,21 @@ export const BriefView = styled(Component)<Props>(({ theme: { extendToken, token
     '.__header-area': {
       minHeight: 74,
       padding: token.padding,
-      fontSize: token.fontSizeHeading4,
-      lineHeight: token.lineHeightHeading4,
-      textAlign: 'center',
       color: token.colorTextLight1,
       borderBottom: '2px solid',
-      borderColor: token.colorBgSecondary
+      borderColor: token.colorBgSecondary,
+      display: 'flex',
+      alignItems: 'center'
+    },
+
+    '.__view-title': {
+      flex: 1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      'white-space': 'nowrap',
+      fontSize: token.fontSizeHeading4,
+      lineHeight: token.lineHeightHeading4,
+      textAlign: 'center'
     },
 
     '.__body-area': {
@@ -115,6 +129,33 @@ export const BriefView = styled(Component)<Props>(({ theme: { extendToken, token
       paddingRight: token.padding,
       paddingTop: token.padding,
       paddingBottom: 32
+    },
+
+    // content generator
+
+    '.md-element + .md-element': {
+      marginTop: 20
+    },
+
+    '.md-subtitle': {
+      fontSize: token.fontSizeHeading5,
+      lineHeight: token.lineHeightHeading5,
+      textAlign: 'center'
+    },
+
+    '.md-banner': {
+      maxWidth: '100%',
+      display: 'block'
+    },
+
+    '.md-text-center': {
+      textAlign: 'center'
+    },
+
+    '.md-p-tag': {
+      color: token.colorTextLight4,
+      fontSize: token.fontSize,
+      lineHeight: token.lineHeight
     }
   });
 });
