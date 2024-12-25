@@ -16,7 +16,6 @@ import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useAlert, useDefaultNavigate, useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { useLocalStorage } from '@subwallet/extension-koni-ui/hooks/common/useLocalStorage';
 import { enableChain, saveNotificationSetup } from '@subwallet/extension-koni-ui/messaging';
-import { migrateUnifiedAndFetchEligibleSoloAccounts } from '@subwallet/extension-koni-ui/messaging/migrate-unified-account';
 import { fetchInappNotifications, getIsClaimNotificationStatus, markAllReadNotification, switchReadNotificationStatus } from '@subwallet/extension-koni-ui/messaging/transaction/notification';
 import NotificationItem from '@subwallet/extension-koni-ui/Popup/Settings/Notifications/NotificationItem';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
@@ -80,10 +79,6 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { accounts, currentAccountProxy, isAllAccount } = useSelector((state: RootState) => state.accountState);
   const { earningRewards, poolInfoMap, yieldPositions } = useSelector((state) => state.earning);
   const { chainInfoMap, chainStateMap } = useSelector((state) => state.chainStore);
-
-  useEffect(() => {
-    migrateUnifiedAndFetchEligibleSoloAccounts({ password: '123123123' });
-  }, []);
 
   const filterTabItems = useMemo<FilterTabItemType[]>(() => {
     return [
