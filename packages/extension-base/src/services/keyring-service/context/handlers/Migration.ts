@@ -159,6 +159,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
       eligibleSoloAccountMap[upcomingProxyId] = accounts.map((account) => {
         return {
           upcomingProxyId,
+          oldProxyId: account.accounts[0].proxyId,
           address: account.accounts[0].address,
           name: account.name,
           chainType: account.chainTypes[0]
