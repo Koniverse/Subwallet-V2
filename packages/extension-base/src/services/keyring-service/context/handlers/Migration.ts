@@ -33,19 +33,19 @@ export class AccountMigrationHandler extends AccountBaseHandler {
   }
 
   public async migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts): Promise<ResponseMigrateUnifiedAndFetchEligibleSoloAccounts> {
-    // Get MigrateUnified
+    // Migrate unified -> unified
     const password = request.password;
-    const accountProxies = Object.values(this.state.accounts);
-    const UACanBeMigrated = this.getUACanBeMigrated(accountProxies);
-    const UACanBeMigratedSortedByParent = this.sortUAByParent(UACanBeMigrated); // master account should be migrated before derived account
+    const allAccountProxies = Object.values(this.state.accounts);
+    const UACanBeMigrated = this.getUACanBeMigrated(allAccountProxies);
+    const UACanBeMigratedSortedByParent = this.sortUAByParent(UACanBeMigrated); // master account must be migrated before derived account
     const migratedUnifiedAccountIds = await this.migrateUnifiedToUnifiedAccount(password, UACanBeMigratedSortedByParent);
 
-    // Get EligibleSoloAccounts
-    const rawSoloAccounts = this.getEligibleSoloAccounts(accountProxies);
-    const rawEligibleSoloAccounts = this.groupSoloAccountByPair(password, rawSoloAccounts);
-    const eligibleSoloAccountMap = this.accountProxiesToEligibleSoloAccountMap(rawEligibleSoloAccounts);
+    // Get solo accounts can be migrated
+    const soloAccountsNeedToBeMigrated = this.getSoloAccountsNeedToBeMigrated(allAccountProxies);
+    const soloAccountsNeedToBeMigratedGroup = this.groupSoloAccountByMnemonic(password, soloAccountsNeedToBeMigrated);
+    const eligibleSoloAccountMap = this.accountProxiesToEligibleSoloAccountMap(soloAccountsNeedToBeMigratedGroup);
 
-    // Create UniqueId
+    // Create persistent mapping sessionId <-> password
     const uniqueId = Date.now().toString();
     const timeoutId = setTimeout(() => delete this.sessionIdToPassword[uniqueId], SESSION_TIMEOUT * 2);
 
@@ -131,11 +131,11 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     return accountProxies.filter((account) => this.state.isUnifiedAccount(account.id) && account.isNeedMigrateUnifiedAccount);
   }
 
-  public getEligibleSoloAccounts (accountProxies: AccountProxy[]): AccountProxy[] {
+  public getSoloAccountsNeedToBeMigrated (accountProxies: AccountProxy[]): AccountProxy[] {
     return accountProxies.filter((account) => !this.state.isUnifiedAccount(account.id) && account.isNeedMigrateUnifiedAccount);
   }
 
-  public groupSoloAccountByPair (password: string, accountProxies: AccountProxy[]) {
+  public groupSoloAccountByMnemonic (password: string, accountProxies: AccountProxy[]) {
     const parentService = this.parentService;
 
     return accountProxies.reduce(function (rs: Record<string, AccountProxy[]>, item) {
