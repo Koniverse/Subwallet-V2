@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { findChainInfoByChainId, findChainInfoByHalfGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
+import { _chainInfoToChainType, findChainInfoByChainId, findChainInfoByHalfGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
 import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_POLKADOT_NAMESPACE } from '@subwallet/extension-base/services/wallet-connect-service/constants';
 import { AccountProxy } from '@subwallet/extension-base/types';
 import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
@@ -18,7 +18,9 @@ export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainI
       return {
         chainInfo,
         slug: chainInfo?.slug || chain,
-        supported: !!chainInfo
+        supported: !!chainInfo,
+        accountType: chainInfo ? _chainInfoToChainType(chainInfo) : undefined,
+        wcChain: chain
       };
     } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE) {
       const chainInfo = findChainInfoByHalfGenesisHash(chainMap, info);
@@ -26,13 +28,16 @@ export const chainsToWalletConnectChainInfos = (chainMap: Record<string, _ChainI
       return {
         chainInfo,
         slug: chainInfo?.slug || chain,
-        supported: !!chainInfo
+        supported: !!chainInfo,
+        accountType: chainInfo ? _chainInfoToChainType(chainInfo) : undefined,
+        wcChain: chain
       };
     } else {
       return {
         chainInfo: null,
         slug: chain,
-        supported: false
+        supported: false,
+        wcChain: chain
       };
     }
   });

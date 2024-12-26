@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
-import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_POLKADOT_NAMESPACE, WALLET_CONNECT_SUPPORT_NAMESPACES } from '@subwallet/extension-base/services/wallet-connect-service/constants';
+import { WALLET_CONNECT_SUPPORT_NAMESPACES } from '@subwallet/extension-base/services/wallet-connect-service/constants';
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
-import { AccountJson } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountJson } from '@subwallet/extension-base/types';
 import { isSameAddress, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { WalletConnectChainInfo } from '@subwallet/extension-koni-ui/types';
 import { chainsToWalletConnectChainInfos, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
@@ -16,11 +16,13 @@ import { useSelector } from '../common';
 interface SelectAccount {
   availableAccounts: AccountJson[];
   networks: WalletConnectChainInfo[];
+  accountType: AccountChainType;
   selectedAccounts: string[];
   appliedAccounts: string[];
 }
 
 const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
+  // Result by acc
   const [result, setResult] = useState<Record<string, SelectAccount>>({});
 
   const { accounts } = useSelector((state) => state.accountState);
@@ -28,7 +30,7 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
 
   const noAllAccount = useMemo(() => accounts.filter(({ address }) => !isAccountAll(address)), [accounts]);
 
-  const namespaces = useMemo(() => {
+  const accountTypeMap = useMemo(() => {
     const availableNamespaces: Record<string, string[]> = {};
     const result: Record<string, WalletConnectChainInfo[]> = {};
 
@@ -59,8 +61,18 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
         }
       });
 
-    for (const [namespace, chains] of Object.entries(availableNamespaces)) {
-      result[namespace] = chainsToWalletConnectChainInfos(chainInfoMap, uniqueStringArray(chains));
+    for (const chains of Object.values(availableNamespaces)) {
+      const wcChains = chainsToWalletConnectChainInfos(chainInfoMap, uniqueStringArray(chains));
+
+      for (const chain of wcChains) {
+        if (chain.accountType) {
+          if (!result[chain.accountType]) {
+            result[chain.accountType] = [];
+          }
+
+          result[chain.accountType].push(chain);
+        }
+      }
     }
 
     return result;
@@ -90,28 +102,42 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
   }, [chainInfoMap, params.optionalNamespaces, params.requiredNamespaces]);
 
   const missingType = useMemo((): AccountAuthType[] => {
-    const result: AccountAuthType[] = [];
+    const setAccountTypes = Object.entries(params.requiredNamespaces || {})
+      .reduce((rs, [namespace, data]) => {
+        if (WALLET_CONNECT_SUPPORT_NAMESPACES.includes(namespace)) {
+          const chains = chainsToWalletConnectChainInfos(chainInfoMap, uniqueStringArray(data.chains || []));
 
-    Object.keys(params.requiredNamespaces || {}).forEach((namespace) => {
-      if (WALLET_CONNECT_SUPPORT_NAMESPACES.includes(namespace)) {
-        const available = noAllAccount.some((acc) => {
-          if (namespace === WALLET_CONNECT_EIP155_NAMESPACE && acc.chainType === 'ethereum') {
-            return true;
-          } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE && acc.chainType === 'substrate') {
-            return true;
+          for (const chain of chains) {
+            if (chain.chainInfo && chain.accountType) {
+              rs.add(chain.accountType);
+            }
           }
-
-          return false;
-        });
-
-        if (!available) {
-          result.push(WALLET_CONNECT_EIP155_NAMESPACE === namespace ? 'evm' : 'substrate');
         }
+
+        return rs;
+      }, new Set<AccountChainType>());
+
+    const missingAccountTypes = Array.from(setAccountTypes);
+
+    for (const account of noAllAccount) {
+      if (missingAccountTypes.includes(account.chainType)) {
+        missingAccountTypes.splice(missingAccountTypes.indexOf(account.chainType), 1);
+      }
+    }
+
+    return missingAccountTypes.map((value): AccountAuthType => {
+      switch (value) {
+        case AccountChainType.ETHEREUM:
+          return 'evm';
+        case AccountChainType.SUBSTRATE:
+          return 'substrate';
+        case AccountChainType.TON:
+          return 'ton';
+        default:
+          throw new Error(`Unsupported account type: ${value}`);
       }
     });
-
-    return result;
-  }, [noAllAccount, params.requiredNamespaces]);
+  }, [noAllAccount, params.requiredNamespaces, chainInfoMap]);
 
   const isUnSupportCase = useMemo(() =>
     Object.values(params.requiredNamespaces || {})
@@ -123,7 +149,7 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
 
   const isExitedAnotherUnsupportedNamespace = useMemo(() => params.requiredNamespaces && Object.keys(params.requiredNamespaces).some((namespace) => !isSupportWalletConnectNamespace(namespace)), [params.requiredNamespaces]);
   const supportOneChain = useMemo(() => supportedChains.length === 1, [supportedChains]);
-  const supportOneNamespace = useMemo(() => Object.keys(namespaces).length === 1, [namespaces]);
+  const supportOneAccountType = useMemo(() => Object.keys(accountTypeMap).length === 1, [accountTypeMap]);
   const noNetwork = useMemo((): boolean => {
     return (!params.requiredNamespaces || !Object.keys(params.requiredNamespaces).length) && (!params.optionalNamespaces || !Object.keys(params.optionalNamespaces).length);
   }, [params.optionalNamespaces, params.requiredNamespaces]);
@@ -192,35 +218,30 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
     setResult((oldState) => {
       const result: Record<string, SelectAccount> = {};
 
-      const selectReplace = JSON.stringify(namespaces) !== JSON.stringify(namespaceRef.current);
+      const selectReplace = JSON.stringify(accountTypeMap) !== JSON.stringify(namespaceRef.current);
 
-      for (const [namespace, networks] of Object.entries(namespaces)) {
-        if (WALLET_CONNECT_SUPPORT_NAMESPACES.includes(namespace)) {
-          result[namespace] = {
-            networks,
-            selectedAccounts: selectReplace ? [] : oldState[namespace]?.selectedAccounts || [],
-            appliedAccounts: selectReplace ? [] : oldState[namespace]?.appliedAccounts || [],
-            availableAccounts: noAllAccount
-              .filter((acc) => {
-                if (namespace === WALLET_CONNECT_EIP155_NAMESPACE && acc.chainType === 'ethereum') {
-                  return true;
-                } else if (namespace === WALLET_CONNECT_POLKADOT_NAMESPACE && acc.chainType === 'substrate') {
-                  return true;
-                }
+      for (const [_accountType, networks] of Object.entries(accountTypeMap)) {
+        const accountType = _accountType as AccountChainType;
 
-                return false;
-              })
-          };
-        }
+        result[accountType] = {
+          networks,
+          selectedAccounts: selectReplace ? [] : oldState[accountType]?.selectedAccounts || [],
+          appliedAccounts: selectReplace ? [] : oldState[accountType]?.appliedAccounts || [],
+          availableAccounts: noAllAccount
+            .filter((acc) => {
+              return acc.chainType === accountType;
+            }),
+          accountType
+        };
       }
 
       return result;
     });
 
     return () => {
-      namespaceRef.current = namespaces;
+      namespaceRef.current = accountTypeMap;
     };
-  }, [noAllAccount, namespaces]);
+  }, [noAllAccount, accountTypeMap]);
 
   useEffect(() => {
     const callback = (): boolean => {
@@ -257,7 +278,7 @@ const useSelectWalletConnectAccount = (params: ProposalTypes.Struct) => {
     onSelectAccount,
     isExitedAnotherUnsupportedNamespace,
     supportOneChain,
-    supportOneNamespace,
+    supportOneAccountType,
     supportedChains
   };
 };

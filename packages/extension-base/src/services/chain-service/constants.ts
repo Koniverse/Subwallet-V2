@@ -231,12 +231,12 @@ export const _TRANSFER_CHAIN_GROUP = {
   kintsugi: ['kintsugi', 'kintsugi_test', 'interlay', 'mangatax_para'],
   genshiro: ['genshiro_testnet', 'genshiro', 'equilibrium_parachain'],
   // crab: ['crab', 'pangolin'],
-  bitcountry: ['pioneer', 'bitcountry', 'bifrost', 'bifrost_dot'],
+  bitcountry: ['pioneer', 'bitcountry'],
   statemine: ['statemint', 'statemine', 'darwinia2', 'astar', 'shiden', 'shibuya', 'parallel', 'liberland', 'liberlandTest', 'dentnet', 'dbcchain'],
   riochain: ['riochain'],
   sora_substrate: ['sora_substrate'],
   avail: ['kate', 'goldberg_testnet'],
-  pendulum: ['pendulum', 'amplitude', 'amplitude_test', 'hydradx_main'],
+  pendulum: ['pendulum', 'amplitude', 'amplitude_test', 'hydradx_main', 'bifrost', 'bifrost_dot'],
   centrifuge: ['centrifuge'],
   disable_transfer: ['invarch', 'crab', 'pangolin']
 };
