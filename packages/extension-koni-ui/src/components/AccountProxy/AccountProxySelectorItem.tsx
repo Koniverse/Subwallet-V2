@@ -5,14 +5,14 @@ import { AccountProxy, AccountProxyType } from '@subwallet/extension-base/types'
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getChainTypeLogoMap } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, Copy, Eye, GitCommit, GitMerge, Needle, PencilSimpleLine, QrCode, Question, Strategy, Swatches } from 'phosphor-react';
 import { IconWeight } from 'phosphor-react/src/lib';
-import React, { Context, useContext, useMemo } from 'react';
+import React, { Context, useContext } from 'react';
 import styled, { ThemeContext } from 'styled-components';
 
+import AccountChainTypeLogos from './AccountChainTypeLogos';
 import AccountProxyAvatar from './AccountProxyAvatar';
 
 type Props = ThemeProps & {
@@ -42,13 +42,8 @@ function Component (props: Props): React.ReactElement<Props> {
     showDerivedPath } = props;
 
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
-  const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
 
   const { t } = useTranslation();
-
-  const chainTypeLogoMap = useMemo(() => {
-    return getChainTypeLogoMap(logoMap);
-  }, [logoMap]);
 
   const _onClickDeriveButton: React.MouseEventHandler<HTMLAnchorElement | HTMLButtonElement> = React.useCallback((event) => {
     event.stopPropagation();
@@ -153,10 +148,10 @@ function Component (props: Props): React.ReactElement<Props> {
         </div>
         <div className='__item-center-part'>
           <div className='__item-name'>{accountProxy.name}</div>
-          <div className='__item-chain-types'>
-            {
-              showDerivedPath && !!accountProxy.parentId
-                ? <div className={'__item-derived-path'}>
+          {
+            showDerivedPath && !!accountProxy.parentId
+              ? (
+                <div className={'__item-derived-path'}>
                   <Icon
                     className={'__derived-account-flag'}
                     customSize='12px'
@@ -167,18 +162,14 @@ function Component (props: Props): React.ReactElement<Props> {
                     {accountProxy.suri || ''}
                   </div>
                 </div>
-                : accountProxy.chainTypes.map((nt) => {
-                  return (
-                    <img
-                      alt='Network type'
-                      className={'__item-chain-type-item'}
-                      key={nt}
-                      src={chainTypeLogoMap[nt]}
-                    />
-                  );
-                })
-            }
-          </div>
+              )
+              : (
+                <AccountChainTypeLogos
+                  chainTypes={accountProxy.chainTypes}
+                  className={'__item-chain-type-logos'}
+                />
+              )
+          }
         </div>
         <div className='__item-right-part'>
           <div className='__item-actions'>
@@ -310,20 +301,8 @@ const AccountProxySelectorItem = styled(Component)<Props>(({ theme }) => {
       overflow: 'hidden',
       'white-space': 'nowrap'
     },
-    '.__item-chain-types': {
-      display: 'flex',
-      paddingTop: 2
-    },
-    '.__item-chain-type-item': {
-      display: 'block',
-      boxShadow: '-4px 0px 4px 0px rgba(0, 0, 0, 0.40)',
-      width: token.size,
-      height: token.size,
-      borderRadius: '100%',
-      marginLeft: -token.marginXXS
-    },
-    '.__item-chain-type-item:first-of-type': {
-      marginLeft: 0
+    '.__item-chain-type-logos': {
+      minHeight: 20
     },
     '.__item-address': {
       fontSize: token.fontSizeSM,

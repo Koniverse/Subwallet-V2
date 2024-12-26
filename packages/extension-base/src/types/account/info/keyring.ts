@@ -125,6 +125,14 @@ export enum AccountChainType {
   CARDANO = 'cardano'
 }
 
+export const ACCOUNT_CHAIN_TYPE_ORDINAL_MAP: Record<string, number> = {
+  [AccountChainType.SUBSTRATE]: 1,
+  [AccountChainType.ETHEREUM]: 2,
+  [AccountChainType.TON]: 3,
+  [AccountChainType.CARDANO]: 4,
+  [AccountChainType.BITCOIN]: 5
+};
+
 export const SUPPORTED_ACCOUNT_CHAIN_TYPES = ['substrate', 'ethereum', 'ton', 'cardano'];
 
 export enum AccountActions {

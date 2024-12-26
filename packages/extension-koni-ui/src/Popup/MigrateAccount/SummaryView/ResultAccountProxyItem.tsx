@@ -1,13 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
-import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
-import { Theme } from '@subwallet/extension-koni-ui/themes';
+import { AccountChainType, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
+import { AccountChainTypeLogos, AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getChainTypeLogoMap } from '@subwallet/extension-koni-ui/utils';
-import React, { Context, useContext, useMemo } from 'react';
-import styled, { ThemeContext } from 'styled-components';
+import React from 'react';
+import styled from 'styled-components';
 
 export type ResultAccountProxyItemType = {
   accountName: string;
@@ -19,12 +17,6 @@ type Props = ThemeProps & ResultAccountProxyItemType;
 function Component ({ accountName,
   accountProxyId,
   className }: Props) {
-  const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
-
-  const chainTypeLogoMap = useMemo(() => {
-    return getChainTypeLogoMap(logoMap);
-  }, [logoMap]);
-
   return (
     <div className={className}>
       <div className='__item-account-avatar-wrapper'>
@@ -39,18 +31,10 @@ function Component ({ accountName,
         {accountName}
       </div>
 
-      <div className='__item-chain-type-logos'>
-        {
-          SUPPORTED_ACCOUNT_CHAIN_TYPES.map((ct) => (
-            <img
-              alt='Network type'
-              className={'__item-chain-type-logo'}
-              key={ct}
-              src={chainTypeLogoMap[ct]}
-            />
-          ))
-        }
-      </div>
+      <AccountChainTypeLogos
+        chainTypes={SUPPORTED_ACCOUNT_CHAIN_TYPES as AccountChainType[]}
+        className={'__item-chain-type-logos'}
+      />
     </div>
   );
 }
@@ -76,20 +60,7 @@ export const ResultAccountProxyItem = styled(Component)<Props>(({ theme: { exten
     },
 
     '.__item-chain-type-logos': {
-      display: 'flex'
-    },
 
-    '.__item-chain-type-logo': {
-      display: 'block',
-      width: token.size,
-      height: token.size,
-      backfaceVisibility: 'hidden',
-      borderRadius: '100%',
-      boxShadow: '-4px 0px 4px 0px rgba(0, 0, 0, 0.40)'
-    },
-
-    '.__item-chain-type-logo + .__item-chain-type-logo': {
-      marginLeft: -token.marginXXS
     },
 
     '.__item-account-name': {
