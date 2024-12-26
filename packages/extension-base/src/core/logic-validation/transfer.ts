@@ -5,7 +5,7 @@ import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { _Address, AmountData, ExtrinsicDataTypeMap, ExtrinsicType, FeeData } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
-import { LEDGER_SIGNING_COMPATIBLE_MAP, SIGNING_COMPATIBLE_MAP } from '@subwallet/extension-base/constants';
+import { LEDGER_SIGNING_COMPATIBLE_MAP, SIGNING_COMPATIBLE_MAP, XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
 import { _canAccountBeReaped, _isAccountActive } from '@subwallet/extension-base/core/substrate/system-pallet';
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -67,14 +67,16 @@ export function additionalValidateTransferForRecipient (
   isSendingTokenSufficient?: boolean
 ): [TransactionWarning[], TransactionError[]] {
   const sendingTokenMinAmount = BigInt(_getTokenMinAmount(sendingTokenInfo));
+  const sendingTokenMinAmountXCM = BigInt(new BigN(_getTokenMinAmount(sendingTokenInfo)).multipliedBy(XCM_MIN_AMOUNT_RATIO).toString());
   const nativeTokenMinAmount = _getTokenMinAmount(nativeTokenInfo);
+  const minSendingRequired = extrinsicType !== ExtrinsicType.TRANSFER_XCM ? sendingTokenMinAmount : sendingTokenMinAmountXCM;
 
   const warnings: TransactionWarning[] = [];
   const errors: TransactionError[] = [];
 
   const remainingSendingTokenOfSenderEnoughED = senderSendingTokenTransferable ? senderSendingTokenTransferable - transferAmount >= sendingTokenMinAmount : false;
   const isReceiverAliveByNativeToken = receiverSystemAccountInfo ? _isAccountActive(receiverSystemAccountInfo) : false;
-  const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= sendingTokenMinAmount;
+  const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= minSendingRequired;
   const isReceivingNonNativeToken = extrinsicType === ExtrinsicType.TRANSFER_TOKEN || (extrinsicType === ExtrinsicType.TRANSFER_XCM && !_isNativeToken(sendingTokenInfo));
 
   if (isReceivingNonNativeToken) {
@@ -99,10 +101,11 @@ export function additionalValidateTransferForRecipient (
       const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
 
       const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+      const atLeastAmountStr = extrinsicType === ExtrinsicType.TRANSFER_XCM ? (Number(atLeastStr) * XCM_MIN_AMOUNT_RATIO).toString() : atLeastStr;
 
       const error = new TransactionError(
         TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-        t('You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } })
+        t('You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again', { replace: { amount: atLeastAmountStr, symbol: sendingTokenInfo.symbol } })
       );
 
       errors.push(error);
@@ -113,10 +116,11 @@ export function additionalValidateTransferForRecipient (
     const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
 
     const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+    const atLeastAmountStr = extrinsicType === ExtrinsicType.TRANSFER_XCM ? (Number(atLeastStr) * XCM_MIN_AMOUNT_RATIO).toString() : atLeastStr;
 
     const error = new TransactionError(
       TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-      t('You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } })
+      t('You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again', { replace: { amount: atLeastAmountStr, symbol: sendingTokenInfo.symbol } })
     );
 
     errors.push(error);
