@@ -160,7 +160,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
       eligibleSoloAccountMap[upcomingProxyId] = accounts.map((account) => {
         return {
           upcomingProxyId,
-          oldProxyId: account.accounts[0].proxyId,
+          proxyId: account.accounts[0].proxyId,
           address: account.accounts[0].address,
           name: account.name,
           chainType: account.chainTypes[0]
@@ -186,7 +186,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
 
     const firstAccountInfo = soloAccounts[0];
     const upcomingProxyId = firstAccountInfo.upcomingProxyId;
-    const firstAccountOldProxyId = firstAccountInfo.oldProxyId;
+    const firstAccountOldProxyId = firstAccountInfo.proxyId;
 
     const mnemonic = this.parentService.context.exportAccountProxyMnemonic({ password, proxyId: firstAccountOldProxyId }).result;
 
