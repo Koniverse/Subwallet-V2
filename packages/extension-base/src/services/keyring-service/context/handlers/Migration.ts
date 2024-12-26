@@ -117,6 +117,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
         const suri = unifiedAccount.suri || '';
 
         this.parentService.context.derivationAccountProxyCreate({ name, suri, proxyId: unifiedAccount.parentId || '' }, true);
+        unifiedAccountIds.push(proxyId);
       }
     }
 
@@ -191,13 +192,11 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     const firstAccountInfo = soloAccounts[0];
     const upcomingProxyId = firstAccountInfo.upcomingProxyId;
     const firstAccountOldProxyId = firstAccountInfo.proxyId;
-    // const currentChainTypes = soloAccounts.map((account) => account.chainType);
     const mnemonic = this.parentService.context.exportAccountProxyMnemonic({ password, proxyId: firstAccountOldProxyId }).result;
 
-    const keypairTypesForMordifiedPairs = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
-    // const keypairTypesForAccountMetadata = SUPPORTED_ACCOUNT_CHAIN_TYPES.filter((chainType) => !currentChainTypes.includes(chainType as AccountChainType)).map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
+    const keypairTypes = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
 
-    keypairTypesForMordifiedPairs.forEach((type) => {
+    keypairTypes.forEach((type) => {
       const suri = getSuri(mnemonic, type);
       const pair = keyring.createFromUri(suri, {}, type);
       const address = pair.address;
@@ -206,8 +205,11 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     });
 
     this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName });
+
+    this.migrateDerivedSoloAccountRelationship(soloAccounts);
+
     this.state.upsertModifyPairs(modifiedPairs);
-    keypairTypesForMordifiedPairs.forEach((type) => {
+    keypairTypes.forEach((type) => {
       const suri = getSuri(mnemonic, type);
       const { derivePath } = keyExtractSuri(suri);
       const metadata = {
@@ -227,5 +229,19 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     return {
       migratedUnifiedAccountId: upcomingProxyId
     };
+  }
+
+  public migrateDerivedSoloAccountRelationship (soloAccounts: SoloAccountToBeMigrated[]) { // todo: optimize this function
+    const accountProxies = this.state.accountProxies;
+
+    const proxyIds = soloAccounts.map((account) => account.proxyId);
+    for (const account of Object.values(accountProxies)) {
+      const currentParent = account.parentId;
+      if (currentParent && proxyIds.includes(currentParent)) {
+        accountProxies[account.id].parentId = soloAccounts.filter((account) => account.proxyId === currentParent)[0].upcomingProxyId;
+      }
+    }
+
+    this.state.upsertAccountProxy(accountProxies);
   }
 }
