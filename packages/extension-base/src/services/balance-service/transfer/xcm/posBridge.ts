@@ -168,3 +168,13 @@ export function _isPosChainBridge (srcChain: string, destChain: string): boolean
 
   return false;
 }
+
+export function _isPosChainL2Bridge (srcChain: string, destChain: string): boolean {
+  if (srcChain === 'polygon_amoy' && destChain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA) {
+    return true;
+  } else if (srcChain === 'polygon' && destChain === COMMON_CHAIN_SLUGS.ETHEREUM) {
+    return true;
+  }
+
+  return false;
+}

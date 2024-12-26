@@ -278,6 +278,7 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
               showAddressBook &&
               (
                 <Button
+                  disabled={disabled}
                   icon={(
                     <Icon
                       phosphorIcon={Book}

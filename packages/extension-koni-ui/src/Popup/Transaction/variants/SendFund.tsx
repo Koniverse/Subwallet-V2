@@ -10,7 +10,7 @@ import { ActionType } from '@subwallet/extension-base/core/types';
 import { getAvailBridgeGatewayContract, getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
-import { _isPosChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
+import { _isPosChainBridge, _isPosChainL2Bridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
@@ -179,6 +179,14 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChainValue === chainValue && _isNativeToken(assetInfo);
   }, [chainInfoMap, chainValue, destChainValue, assetInfo]);
+
+  const disabledToAddressInput = useMemo(() => {
+    if (_isPosChainL2Bridge(chainValue, destChainValue)) {
+      return true;
+    }
+
+    return false;
+  }, [chainValue, destChainValue]);
 
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
@@ -378,6 +386,11 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       }
 
       if (part.from || part.destChain) {
+        if (disabledToAddressInput) {
+          form.resetFields(['to']);
+          form.setFieldValue('to', values.from);
+        }
+
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
       }
 
@@ -396,7 +409,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       persistData(form.getFieldsValue());
     },
-    [form, assetRegistry, isTransferAll, persistData]
+    [persistData, form, assetRegistry, disabledToAddressInput, isTransferAll]
   );
 
   const isShowWarningOnSubmit = useCallback((values: TransferParams): boolean => {
@@ -883,6 +896,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           >
             <AddressInputNew
               chainSlug={destChainValue}
+              disabled={disabledToAddressInput}
               dropdownHeight={isNotShowAccountSelector ? 317 : 257}
               key={addressInputRenderKey}
               label={`${t('To')}:`}
