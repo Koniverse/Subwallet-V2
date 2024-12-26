@@ -16,6 +16,11 @@ interface SessionInfo {
   timeoutId: NodeJS.Timeout
 }
 
+interface UnifiedAccountGroup {
+  derivedUnifiedAccounts: AccountProxy[],
+  masterUnifiedAccounts: AccountProxy[]
+}
+
 export class AccountMigrationHandler extends AccountBaseHandler {
   private sessionIdToPassword: Record<string, SessionInfo> = {};
 
@@ -62,63 +67,66 @@ export class AccountMigrationHandler extends AccountBaseHandler {
   }
 
   public async migrateUnifiedToUnifiedAccount (password: string, accountProxies: AccountProxy[]): Promise<string[]> {
-    const unifiedAccountIds: string[] = [];
-    const modifiedPairs = structuredClone(this.state.modifyPairs);
-    let notMigrateDeriveBefore = true;
-
     keyring.unlockKeyring(password);
     this.parentService.updateKeyringState();
 
-    for (const unifiedAccount of accountProxies) {
-      const masterAccount = !unifiedAccount.parentId;
+    const unifiedAccountIds: string[] = [];
+    const modifiedPairs = structuredClone(this.state.modifyPairs);
+
+    const { derivedUnifiedAccounts, masterUnifiedAccounts } = accountProxies.reduce((accountInfo, account: AccountProxy) => {
+      const isDerivedAccount = !!account.parentId;
+
+      isDerivedAccount ? accountInfo.derivedUnifiedAccounts.push(account) : accountInfo.masterUnifiedAccounts.push(account);
+
+      return accountInfo;
+    }, { derivedUnifiedAccounts: [], masterUnifiedAccounts: [] } as unknown as UnifiedAccountGroup);
+
+    for (const unifiedAccount of masterUnifiedAccounts) {
       const proxyId = unifiedAccount.id;
-      const name = unifiedAccount.name;
+      const mnemonic = this.parentService.context.exportAccountProxyMnemonic({
+        password,
+        proxyId
+      }).result;
 
-      if (masterAccount) {
-        const mnemonic = this.parentService.context.exportAccountProxyMnemonic({
-          password,
-          proxyId
-        }).result;
+      const newChainTypes = Object.values(AccountChainType).filter((type) => !unifiedAccount.chainTypes.includes(type) && SUPPORTED_ACCOUNT_CHAIN_TYPES.includes(type));
+      const keypairTypes = newChainTypes.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType));
 
-        const accountChainTypes = unifiedAccount.chainTypes;
-        const newChainTypes = Object.values(AccountChainType).filter((type) => !accountChainTypes.includes(type) && SUPPORTED_ACCOUNT_CHAIN_TYPES.includes(type));
-        const keypairTypes = newChainTypes.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType));
+      keypairTypes.forEach((type) => {
+        const suri = getSuri(mnemonic, type);
+        const pair = keyring.createFromUri(suri, {}, type);
+        const address = pair.address;
 
-        keypairTypes.forEach((type) => {
-          const suri = getSuri(mnemonic, type);
-          const pair = keyring.createFromUri(suri, {}, type);
-          const address = pair.address;
+        modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
+      });
 
-          modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
-        });
+      this.state.upsertModifyPairs(modifiedPairs);
 
-        this.state.upsertModifyPairs(modifiedPairs);
-        keypairTypes.forEach((type) => {
-          const suri = getSuri(mnemonic, type);
-          const { derivePath } = keyExtractSuri(suri);
-          const metadata = {
-            name,
-            derivationPath: derivePath ? derivePath.substring(1) : undefined
-          };
+      keypairTypes.forEach((type) => {
+        const suri = getSuri(mnemonic, type);
+        const { derivePath } = keyExtractSuri(suri);
+        const metadata = {
+          name: unifiedAccount.name,
+          derivationPath: derivePath ? derivePath.substring(1) : undefined
+        };
 
-          const rs = keyring.addUri(suri, metadata, type);
-          const address = rs.pair.address;
+        const rs = keyring.addUri(suri, metadata, type);
+        const address = rs.pair.address;
 
-          this.state._addAddressToAuthList(address, true);
-        });
+        this.state._addAddressToAuthList(address, true);
+      });
 
-        unifiedAccountIds.push(proxyId);
-      } else { // derived account
-        if (notMigrateDeriveBefore) { // todo: can be optimized later
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          notMigrateDeriveBefore = false;
-        }
+      unifiedAccountIds.push(proxyId);
+    }
 
-        const suri = unifiedAccount.suri || '';
+    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait last master unified account migrated. // todo: can be optimized later by await a promise resolve if master account is migrating
 
-        this.parentService.context.derivationAccountProxyCreate({ name, suri, proxyId: unifiedAccount.parentId || '' }, true);
-        unifiedAccountIds.push(proxyId);
-      }
+    for (const unifiedAccount of derivedUnifiedAccounts) {
+      this.parentService.context.derivationAccountProxyCreate({
+        name: unifiedAccount.name,
+        suri: unifiedAccount.suri || '',
+        proxyId: unifiedAccount.parentId || ''
+      }, true);
+      unifiedAccountIds.push(unifiedAccount.id);
     }
 
     keyring.lockAll(false);

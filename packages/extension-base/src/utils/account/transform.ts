@@ -44,7 +44,7 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
   return blake2AsHex(data, 256);
 };
 
-export const getAccountChainType = (type: KeypairType): AccountChainType => { // todo: refactor name: -> getAccountChainTypeFromKeypairType
+export const getAccountChainTypeFromKeypairType = (type: KeypairType): AccountChainType => {
   return type
     ? EthereumKeypairTypes.includes(type)
       ? AccountChainType.ETHEREUM
@@ -430,7 +430,7 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
 export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>, parentAccount?: AccountJson): AccountJson => {
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
-  const chainType: AccountChainType = getAccountChainType(type);
+  const chainType: AccountChainType = getAccountChainTypeFromKeypairType(type);
   let specialChain: string | undefined;
 
   if (!chainInfoMap) {
@@ -491,7 +491,7 @@ export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Objec
 
 export const transformAddress = (address: string, meta?: KeyringPair$Meta): AddressJson => {
   const type = getKeypairTypeByAddress(address);
-  const chainType: AccountChainType = getAccountChainType(type);
+  const chainType: AccountChainType = getAccountChainTypeFromKeypairType(type);
 
   return {
     address,
@@ -616,7 +616,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             accountActions = accountActions.filter((action) => action !== AccountActions.DERIVE);
           }
 
-          if (chainTypes.length === 1 && accountActions.includes(AccountActions.EXPORT_MNEMONIC) && account.type !== 'ton-native') {
+          if (chainTypes.length === 1 && accountActions.includes(AccountActions.EXPORT_MNEMONIC) && account.isMasterAccount && account.type !== 'ton-native') {
             isNeedMigrateUnifiedAccount = true;
           }
 
