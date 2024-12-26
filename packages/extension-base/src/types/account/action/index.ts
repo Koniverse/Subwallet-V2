@@ -4,7 +4,6 @@
 export * from './add';
 export * from './derive';
 export * from './edit';
-export * from './eip7702';
 export * from './export';
 export * from './subscribe';
 export * from './validate';

@@ -6,4 +6,4 @@ import { AccountSignMode } from '@subwallet/extension-koni-ui/types/account';
 
 export const MODE_CAN_SIGN: AccountSignMode[] = [AccountSignMode.PASSWORD, AccountSignMode.QR, AccountSignMode.LEGACY_LEDGER, AccountSignMode.GENERIC_LEDGER];
 
-export const NEED_SIGN_CONFIRMATION: ConfirmationType[] = ['evmSignatureRequest', 'evmSendTransactionRequest', 'signingRequest'];
+export const NEED_SIGN_CONFIRMATION: ConfirmationType[] = ['evmSignatureRequest', 'evmSendTransactionRequest', 'signingRequest', 'evmSignAuthorizationRequest'];

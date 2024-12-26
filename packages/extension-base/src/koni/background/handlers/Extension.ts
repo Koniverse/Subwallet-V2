@@ -3,11 +3,21 @@
 
 import { Common } from '@ethereumjs/common';
 import { LegacyTransaction } from '@ethereumjs/tx';
+
+import { SubmittableExtrinsic } from '@polkadot/api/types';
+import { Metadata, TypeRegistry } from '@polkadot/types';
+import { ChainProperties } from '@polkadot/types/interfaces';
+import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
+import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
+import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { HexString } from '@polkadot/util/types';
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { createSubscription } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, AssetSetting, AssetSettingUpdateReq, BondingOptionParams, BrowserConfirmationType, CampaignBanner, CampaignData, CampaignDataType, ChainType, CronReloadRequest, CrowdloanJson, ExternalRequestPromiseStatus, ExtrinsicType, KeyringState, MantaPayEnableMessage, MantaPayEnableParams, MantaPayEnableResponse, MantaPaySyncState, MetadataItem, NftCollection, NftJson, NftTransactionRequest, NftTransactionResponse, PriceJson, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestAddInjectedAccounts, RequestApproveConnectWalletSession, RequestApproveWalletConnectNotSupport, RequestAuthorization, RequestAuthorizationBlock, RequestAuthorizationPerAccount, RequestAuthorizationPerSite, RequestAuthorizeApproveV2, RequestBondingSubmit, RequestCameraSettings, RequestCampaignBannerComplete, RequestChangeEnableChainPatrol, RequestChangeLanguage, RequestChangeMasterPassword, RequestChangePriceCurrency, RequestChangeShowBalance, RequestChangeShowZeroBalance, RequestChangeTimeAutoLock, RequestConfirmationComplete, RequestConfirmationCompleteTon, RequestConnectWalletConnect, RequestCrowdloanContributions, RequestDeleteContactAccount, RequestDisconnectWalletConnectSession, RequestEditContactAccount, RequestFindRawMetadata, RequestForgetSite, RequestFreeBalance, RequestGetTransaction, RequestKeyringExportMnemonic, RequestMaxTransferable, RequestMigratePassword, RequestParseEvmContractInput, RequestParseTransactionSubstrate, RequestPassPhishingPage, RequestQrParseRLP, RequestQrSignEvm, RequestQrSignSubstrate, RequestRejectConnectWalletSession, RequestRejectExternalRequest, RequestRejectWalletConnectNotSupport, RequestRemoveInjectedAccounts, RequestResetWallet, RequestResolveExternalRequest, RequestSaveAppConfig, RequestSaveBrowserConfig, RequestSaveOSConfig, RequestSaveRecentAccount, RequestSettingsType, RequestSigningApprovePasswordV2, RequestStakePoolingBonding, RequestStakePoolingUnbonding, RequestSubscribeHistory, RequestSubstrateNftSubmitTransaction, RequestTuringCancelStakeCompound, RequestTuringStakeCompound, RequestUnbondingSubmit, RequestUnlockKeyring, RequestUnlockType, ResolveAddressToDomainRequest, ResolveDomainRequest, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseFindRawMetadata, ResponseKeyringExportMnemonic, ResponseMigratePassword, ResponseNftImport, ResponseParseEvmContractInput, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate, ResponseRejectExternalRequest, ResponseResetWallet, ResponseResolveExternalRequest, ResponseSubscribeHistory, ResponseUnlockKeyring, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, StakingType, SufficientMetadata, ThemeNames, TransactionHistoryItem, TransactionResponse, ValidateNetworkRequest, ValidateNetworkResponse, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
+import {
+  AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, AssetSetting, AssetSettingUpdateReq, BondingOptionParams, BrowserConfirmationType, CampaignBanner, CampaignData, CampaignDataType, ChainType, CronReloadRequest, CrowdloanJson, ExternalRequestPromiseStatus, ExtrinsicType, KeyringState, MantaPayEnableMessage, MantaPayEnableParams, MantaPayEnableResponse, MantaPaySyncState, MetadataItem, NftCollection, NftJson, NftTransactionRequest, NftTransactionResponse, PriceJson, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestAddInjectedAccounts, RequestApproveConnectWalletSession, RequestApproveWalletConnectNotSupport, RequestAuthorization, RequestAuthorizationBlock, RequestAuthorizationPerAccount, RequestAuthorizationPerSite, RequestAuthorizeApproveV2, RequestBondingSubmit, RequestCameraSettings, RequestCampaignBannerComplete, RequestChangeEnableChainPatrol, RequestChangeLanguage, RequestChangeMasterPassword, RequestChangePriceCurrency, RequestChangeShowBalance, RequestChangeShowZeroBalance, RequestChangeTimeAutoLock, RequestConfirmationComplete, RequestConfirmationCompleteTon, RequestConnectWalletConnect, RequestCrowdloanContributions, RequestDeleteContactAccount, RequestDisconnectWalletConnectSession, RequestEditContactAccount, RequestFindRawMetadata, RequestForgetSite, RequestFreeBalance, RequestGetTransaction, RequestKeyringExportMnemonic, RequestMaxTransferable, RequestMigratePassword, RequestParseEvmContractInput, RequestParseTransactionSubstrate, RequestPassPhishingPage, RequestQrParseRLP, RequestQrSignEvm, RequestQrSignSubstrate, RequestRejectConnectWalletSession, RequestRejectExternalRequest, RequestRejectWalletConnectNotSupport, RequestRemoveInjectedAccounts, RequestResetWallet, RequestResolveExternalRequest, RequestSaveAppConfig, RequestSaveBrowserConfig, RequestSaveOSConfig, RequestSaveRecentAccount, RequestSettingsType, RequestSigningApprovePasswordV2, RequestStakePoolingBonding, RequestStakePoolingUnbonding, RequestSubscribeHistory, RequestSubstrateNftSubmitTransaction, RequestTuringCancelStakeCompound, RequestTuringStakeCompound, RequestUnbondingSubmit, RequestUnlockKeyring, RequestUnlockType, ResolveAddressToDomainRequest, ResolveDomainRequest, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseFindRawMetadata, ResponseKeyringExportMnemonic, ResponseMigratePassword, ResponseNftImport, ResponseParseEvmContractInput, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate, ResponseRejectExternalRequest, ResponseResetWallet, ResponseResolveExternalRequest, ResponseSubscribeHistory, ResponseUnlockKeyring, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, StakingType, SufficientMetadata, ThemeNames, TransactionHistoryItem, TransactionResponse, ValidateNetworkRequest, ValidateNetworkResponse, ValidatorInfo
+} from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType, AuthorizeRequest, MessageTypes, MetadataRequest, RequestAccountExport, RequestAuthorizeCancel, RequestAuthorizeReject, RequestCurrentAccountAddress, RequestMetadataApprove, RequestMetadataReject, RequestSigningApproveSignature, RequestSigningCancel, RequestTypes, ResponseAccountExport, ResponseAuthorizeList, ResponseType, SigningRequest, WindowOpenParams } from '@subwallet/extension-base/background/types';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
@@ -42,20 +52,20 @@ import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/ext
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_AUTO_LOCK_TIME } from '@subwallet/extension-base/services/setting-service/constants';
-import { getTransactionId } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { SWTransaction, SWTransactionResponse, SWTransactionResult, TransactionEmitter, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { isProposalExpired, isSupportWalletConnectChain, isSupportWalletConnectNamespace } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { ResultApproveWalletConnectSession, WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { AccountsStore } from '@subwallet/extension-base/stores';
 import {
-  AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BasicTxErrorType, BasicTxWarningCode, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, EIP7702DelegateType, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountDelegateEIP7702, RequestAccountNameValidate, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestHandleTransactionWith7702, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, SignAuthEIP7702, StakingTxErrorType, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType
+  AccountJson, AccountProxyMap, AccountsWithCurrentAddress, BalanceJson, BasicTxErrorType, BasicTxWarningCode, BuyServiceInfo, BuyTokenInfo, EarningRewardJson, EIP7702DelegateType, NominationPoolInfo, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountDelegateEIP7702, RequestAccountNameValidate, RequestAccountUnDelegateEIP7702, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestHandleTransactionWith7702, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, SignAuthEIP7702, StakingTxErrorType, StorageDataInterface, TokenSpendingApprovalParams, ValidateYieldProcessParams, YieldPoolType
 } from '@subwallet/extension-base/types';
 import { RequestAccountProxyEdit, RequestAccountProxyForget } from '@subwallet/extension-base/types/account/action/edit';
 import { RequestClaimBridge } from '@subwallet/extension-base/types/bridge';
 import { GetNotificationParams, RequestIsClaimedPolygonBridge, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { RequestEIP7683 } from '@subwallet/extension-base/types/transaction/ethereum/eip7683';
 import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createInitEIP7702Tx, createKernelInitDataEIP7702, createSafeInitDataEIP7702, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
@@ -69,23 +79,10 @@ import { ProposalTypes } from '@walletconnect/types/dist/types/sign-client/propo
 import { SessionTypes } from '@walletconnect/types/dist/types/sign-client/session';
 import { getSdkError } from '@walletconnect/utils';
 import BigN from 'bignumber.js';
+import { ZeroAddress } from 'ethers';
 import { t } from 'i18next';
-import { createSmartAccountClient } from 'permissionless';
-import { createPimlicoClient } from "permissionless/clients/pimlico";
 import { combineLatest, Subject } from 'rxjs';
-import { createPublicClient, createWalletClient, defineChain, http } from 'viem';
-import { entryPoint07Address } from 'viem/account-abstraction';
-import { Account } from 'viem/accounts/types';
-import { toSafeSmartAccount, toKernelSmartAccount } from 'permissionless/accounts';
 import { TransactionConfig } from 'web3-core';
-
-import { SubmittableExtrinsic } from '@polkadot/api/types';
-import { Metadata, TypeRegistry } from '@polkadot/types';
-import { ChainProperties } from '@polkadot/types/interfaces';
-import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
-import { assert, hexAddPrefix, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
-import { HexString } from '@polkadot/util/types';
-import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 export function isJsonPayload (value: SignerPayloadJSON | SignerPayloadRaw): value is SignerPayloadJSON {
   return (value as SignerPayloadJSON).genesisHash !== undefined;
@@ -3978,6 +3975,18 @@ export default class KoniExtension {
 
     nonce++;
 
+    let initData: HexString = '0x';
+
+    if (delegateType === EIP7702DelegateType.KERNEL_V3) {
+      initData = createKernelInitDataEIP7702(address);
+    } else if (delegateType === EIP7702DelegateType.SAFE) {
+      initData = createSafeInitDataEIP7702(address);
+    }
+
+    if (initData === '0x') {
+      return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
+    }
+
     const authParams: SignAuthEIP7702 = {
       address,
       chain,
@@ -3989,19 +3998,53 @@ export default class KoniExtension {
 
     const authorization = await this.#koniState.requestService.createAuthorization(authParams);
 
-    let initData: HexString = '0x';
+    const txConfig = await createInitEIP7702Tx(chain, address as HexString, authorization, initData, api);
 
-    if (delegateType === EIP7702DelegateType.KERNEL_V3) {
-      initData = createKernelInitDataEIP7702(address);
-    } else if (delegateType === EIP7702DelegateType.SAFE) {
-      initData = createSafeInitDataEIP7702(address);
-    }
+    return await this.#koniState.transactionService.handleTransaction({
+      address,
+      chain,
+      transaction: txConfig,
+      data: { ...request, delegateAddress: delegatee },
+      extrinsicType: ExtrinsicType.EIP7702_DELEGATE,
+      chainType: ChainType.EVM
+    });
+  }
 
-    console.log('Authorization:', authorization, initData);
+  private async evmUnDelegate7702 (request: RequestAccountUnDelegateEIP7702): Promise<SWTransactionResponse> {
+    const { address, chain } = request;
 
-    if (initData === '0x') {
+    const chainInfo = this.#koniState.chainService.getChainInfoByKey(chain);
+
+    if (!chainInfo || !_isChainEvmCompatible(chainInfo)) {
       return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
     }
+
+    const chainId = _getEvmChainId(chainInfo) || 0;
+
+    if (!chainId || ![911867].includes(chainId)) {
+      return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
+    }
+
+    const api = this.#koniState.getEvmApi(chain);
+
+    let nonce = await api.api.eth.getTransactionCount(address);
+
+    const delegatee = ZeroAddress;
+
+    nonce++;
+
+    const initData = '0x';
+
+    const authParams: SignAuthEIP7702 = {
+      address,
+      chain,
+      delegateType: EIP7702DelegateType.REMOVE,
+      chainId,
+      nonce: nonce,
+      contractAddress: delegatee
+    };
+
+    const authorization = await this.#koniState.requestService.createAuthorization(authParams);
 
     const txConfig = await createInitEIP7702Tx(chain, address as HexString, authorization, initData, api);
 
@@ -4009,14 +4052,14 @@ export default class KoniExtension {
       address,
       chain,
       transaction: txConfig,
-      data: request,
-      extrinsicType: ExtrinsicType.EVM_DELEGATE,
+      data: { ...request },
+      extrinsicType: ExtrinsicType.EIP7702_UNDELEGATE,
       chainType: ChainType.EVM
     });
   }
 
   private async handleTransactionWith7702 (request: RequestHandleTransactionWith7702): Promise<SWTransactionResponse> {
-    const { address, chain, delegateType, calls } = request;
+    const { address, chain, calls } = request;
 
     if (calls.length === 0) {
       return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
@@ -4034,118 +4077,31 @@ export default class KoniExtension {
       return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
     }
 
-    const api = this.#koniState.getEvmApi(chain);
-    const accountPair = keyring.getPair(address);
-    const rpc = api.apiUrl;
-    const owner: Account = {
-      address: address as HexString,
-      signMessage: async ({ message }) => {
-        const hash: string = typeof message === 'string' ? message : typeof message.raw === 'string' ? message.raw : u8aToHex(message.raw);
-        const id = getTransactionId(ChainType.EVM, chain, true);
-        const rs = await this.#koniState.requestService.addConfirmation(id, EXTENSION_REQUEST_URL, 'evmSignatureRequest', {
-          address,
-          payload: hash,
-          hashPayload: hash,
-          type: 'personal_sign',
-          canSign: true,
-          id
-        })
-
-        return rs.payload as HexString;
+    return this.#koniState.transactionService.handleEIP7702Transaction({
+      address,
+      chain,
+      transaction: {
+        calls: calls.map((call) => ({
+          to: call.to,
+          data: call.data,
+          value: call.value && BigInt(call.value),
+        }))
       },
-      signTransaction: () => {
-        return Promise.reject(new Error('Not implemented'));
-      },
-      signTypedData: () => {
-        return Promise.reject(new Error('Not implemented'));
-      },
-      publicKey: hexAddPrefix(Buffer.from(accountPair.publicKey).toString('hex')),
-      source: 'keypair',
-      type: 'local'
-    }
-    const _chain = defineChain({
-      id: chainId,
-      name: chainInfo.name,
-      nativeCurrency: {
-        name: "Ethereum",
-        symbol: "ETH",
-        decimals: 18,
-      },
-      rpcUrls: {
-        default: {
-          http: [rpc],
-          webSocket: undefined,
-        },
-      },
-      testnet: chainInfo.isTestnet,
-    });
-
-    const publicClient = createPublicClient({
-      transport: http(rpc),
-      chain: _chain
+      data: {},
+      extrinsicType: ExtrinsicType.EIP7702_DELEGATE,
+      chainType: ChainType.EVM
     })
-
-    let smartAccount: Account | undefined;
-
-    if (delegateType === EIP7702DelegateType.KERNEL_V3) {
-      smartAccount = await toKernelSmartAccount({
-        address: address,
-        client: publicClient,
-        version: "0.3.1",
-        owners: [owner],
-        entryPoint: {
-          address: entryPoint07Address,
-          version: "0.7"
-        }
-      })
-    } else if (delegateType === EIP7702DelegateType.SAFE) {
-      smartAccount = await toSafeSmartAccount({
-        address: address,
-        owners: [owner],
-        client: publicClient,
-        version: "1.4.1",
-      })
-    }
-
-    if (!smartAccount) {
-      return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
-    }
-    const pimlicoApiKey = 'pim_AVKEuVYzUrru63JCmuVKnb'
-    const pimlicoUrl = `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${pimlicoApiKey}`
-
-    const pimlicoClient = createPimlicoClient({
-      transport: http(pimlicoUrl),
-    })
-
-    const smartAccountClient = createSmartAccountClient({
-      account: smartAccount,
-      paymaster: pimlicoClient,
-      bundlerTransport: http(pimlicoUrl),
-      userOperation: {
-        estimateFeesPerGas: async () => (await pimlicoClient.getUserOperationGasPrice()).fast,
-      },
-    })
-
-    const userOperationHash = await smartAccountClient.sendUserOperation({
-      calls: calls.map((call) => ({
-        to: call.to,
-        data: call.data,
-        value: call.value && BigInt(call.value),
-      }))
-    })
-
-    console.log('userOperationHash', userOperationHash);
-
-    const { receipt } = await smartAccountClient.waitForUserOperationReceipt({
-      hash: userOperationHash,
-    })
-
-    console.log('txHash', receipt.transactionHash);
-
-    throw new Error('Not implemented');
   }
 
   /* EIP 7702 */
+
+  /* EIP 7683 */
+
+   private async handleEIP7683Request (request: RequestEIP7683): Promise<SWTransactionResponse> {
+     return this.#koniState.handleEIP7683Request(request);
+  }
+
+  /* EIP 7683 */
 
   // --------------------------------------------------------------
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -4760,8 +4716,12 @@ export default class KoniExtension {
 
       case 'pri(accounts.evm.eip7702.delegate)':
         return this.evmDelegate7702(request as RequestAccountDelegateEIP7702);
+      case 'pri(accounts.evm.eip7702.undelegate)':
+        return this.evmUnDelegate7702(request as RequestAccountUnDelegateEIP7702);
       case 'pri(accounts.evm.eip7702.handle)':
         return this.handleTransactionWith7702(request as RequestHandleTransactionWith7702);
+      case 'pri(accounts.evm.eip7683.handle)':
+        return this.handleEIP7683Request(request as RequestEIP7683);
 
       // Default
       default:

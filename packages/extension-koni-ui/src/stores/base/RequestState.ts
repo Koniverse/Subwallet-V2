@@ -46,6 +46,7 @@ export const CONFIRMATIONS_FIELDS: Array<keyof RequestState> = [
   'addTokenRequest',
   'evmSignatureRequest',
   'evmSendTransactionRequest',
+  'evmSignAuthorizationRequest',
   'evmWatchTransactionRequest',
   'errorConnectNetwork',
   'tonSignatureRequest',

@@ -53,6 +53,8 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
 
   [ExtrinsicType.CLAIM_BRIDGE]: detectTranslate('Claim tokens'),
 
+  [ExtrinsicType.EIP7702_DELEGATE]: detectTranslate('Delegate account'),
+
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap')
 };

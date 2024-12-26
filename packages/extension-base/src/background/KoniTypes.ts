@@ -17,8 +17,10 @@ import { CrowdloanContributionsResponse } from '@subwallet/extension-base/servic
 import { SWTransactionResponse, SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
 import {
-  AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BaseRequestSign, BuyServiceInfo, BuyTokenInfo, CommonOptimalPath, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, HandleYieldStepParams, InternalRequestSign, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountDelegateEIP7702, RequestAccountNameValidate, RequestAccountProxyEdit, RequestAccountProxyForget, RequestAccountUnDelegateEIP7702, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckCrossChainTransfer, RequestCheckPublicAndSecretKey, RequestCheckTransfer, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestHandleTransactionWith7702, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, SignAuthEIP7702, StorageDataInterface, SubmitYieldStepData, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateSwapProcessParams, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo
+  AccountDelegateEIP7702Data,
+  AccountJson, AccountsWithCurrentAddress, AddressJson, BalanceJson, BaseRequestSign, BuyServiceInfo, BuyTokenInfo, CommonOptimalPath, CurrentAccountInfo, EarningRewardHistoryItem, EarningRewardJson, EarningStatus, EIP7683Data, HandleYieldStepParams, InternalRequestSign, LeavePoolAdditionalData, NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountDelegateEIP7702, RequestAccountNameValidate, RequestAccountProxyEdit, RequestAccountProxyForget, RequestAccountUnDelegateEIP7702, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestBounceableValidate, RequestChangeTonWalletContractVersion, RequestCheckCrossChainTransfer, RequestCheckPublicAndSecretKey, RequestCheckTransfer, RequestCrossChainTransfer, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestEarlyValidateYield, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestGetYieldPoolTargets, RequestHandleTransactionWith7702, RequestInputAccountSubscribe, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMetadataHash, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, RequestShortenMetadata, RequestStakeCancelWithdrawal, RequestStakeClaimReward, RequestTransfer, RequestUnlockDotCheckCanMint, RequestUnlockDotSubscribeMintedData, RequestYieldLeave, RequestYieldStepSubmit, RequestYieldWithdrawal, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseEarlyValidateYield, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseGetYieldPoolTargets, ResponseInputAccountSubscribe, ResponseJsonGetAccountInfo, ResponseMetadataHash, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2, ResponseShortenMetadata, SignAuthEIP7702, StorageDataInterface, SubmitYieldStepData, SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, SwapTxData, TokenSpendingApprovalParams, UnlockDotTransactionNft, UnstakingStatus, ValidateSwapProcessParams, ValidateYieldProcessParams, YieldPoolInfo, YieldPositionInfo
 } from '@subwallet/extension-base/types';
+import { RequestEIP7683 } from '@subwallet/extension-base/types/transaction/ethereum/eip7683';
 import { RequestClaimBridge } from '@subwallet/extension-base/types/bridge';
 import { GetNotificationParams, RequestIsClaimedPolygonBridge, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { InjectedAccount, InjectedAccountWithMeta, MetadataDefBase } from '@subwallet/extension-inject/types';
@@ -521,7 +523,11 @@ export enum ExtrinsicType {
   CLAIM_BRIDGE = 'claim.claim_bridge',
 
   // EIP7702
-  EVM_DELEGATE = 'evm.eip7702.delegate',
+  EIP7702_DELEGATE = 'evm.eip7702.delegate',
+  EIP7702_UNDELEGATE = 'evm.eip7702.undelegate',
+
+  // EIP7683
+  EIP7683_SWAP = 'evm.eip7683.swap',
 
   // SET_FEE_TOKEN = 'set_fee-token',
 
@@ -576,7 +582,12 @@ export interface ExtrinsicDataTypeMap {
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: TokenSpendingApprovalParams,
 
-  [ExtrinsicType.CLAIM_BRIDGE]: RequestClaimBridge
+  [ExtrinsicType.CLAIM_BRIDGE]: RequestClaimBridge,
+
+  [ExtrinsicType.EIP7702_DELEGATE]: AccountDelegateEIP7702Data,
+  [ExtrinsicType.EIP7702_UNDELEGATE]: RequestAccountUnDelegateEIP7702,
+
+  [ExtrinsicType.EIP7683_SWAP]: EIP7683Data,
 
   [ExtrinsicType.EVM_EXECUTE]: TransactionConfig,
   [ExtrinsicType.CROWDLOAN]: any,
@@ -1164,7 +1175,7 @@ export interface ErrorNetworkConnection {
   errors: ErrorValidation[]
 }
 
-export interface SignAuthorizeRequest extends SignAuthEIP7702 {
+export interface SignAuthorizeRequest extends SignAuthEIP7702, Omit<EvmSignRequest, 'hashPayload'> {
   id: string;
 }
 
@@ -2046,8 +2057,9 @@ export interface KoniRequestSignatures {
 
   // EIP7702
   'pri(accounts.evm.eip7702.delegate)': [RequestAccountDelegateEIP7702, SWTransactionResponse];
-  'pri(accounts.evm.eip7702.unDelegate)': [RequestAccountUnDelegateEIP7702, SWTransactionResponse];
+  'pri(accounts.evm.eip7702.undelegate)': [RequestAccountUnDelegateEIP7702, SWTransactionResponse];
   'pri(accounts.evm.eip7702.handle)': [RequestHandleTransactionWith7702, SWTransactionResponse];
+  'pri(accounts.evm.eip7683.handle)': [RequestEIP7683, HexString];
 
   // Keyring state
   'pri(keyring.subscribe)': [null, KeyringState, KeyringState];

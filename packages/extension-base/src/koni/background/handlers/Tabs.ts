@@ -1,13 +1,18 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { InjectedAccount } from '@subwallet/extension-inject/types';
+import { checkIfDenied } from '@polkadot/phishing';
+import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
+import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
+import { isArray, isNumber } from '@polkadot/util';
+import { isEthereumAddress } from '@polkadot/util-crypto';
+import { HexString } from '@polkadot/util/types';
 
 import { _AssetType } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { createSubscription, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, ExtrinsicStatus, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import RequestBytesSign from '@subwallet/extension-base/background/RequestBytesSign';
 import RequestExtrinsicSign from '@subwallet/extension-base/background/RequestExtrinsicSign';
 import { AccountAuthType, MessageTypes, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestTypes, ResponseRpcListProviders, ResponseSigning, ResponseTypes, SubscriptionMessageTypes } from '@subwallet/extension-base/background/types';
@@ -20,7 +25,9 @@ import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-s
 import { _generateCustomProviderKey } from '@subwallet/extension-base/services/chain-service/utils';
 import { AuthUrlInfo, AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
+import { RequestEIP7683 } from '@subwallet/extension-base/types';
 import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
+import type { InjectedAccount } from '@subwallet/extension-inject/types';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -28,12 +35,6 @@ import { Subscription } from 'rxjs';
 import Web3 from 'web3';
 import { HttpProvider, RequestArguments, WebsocketProvider } from 'web3-core';
 import { JsonRpcPayload } from 'web3-core-helpers';
-
-import { checkIfDenied } from '@polkadot/phishing';
-import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
-import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
-import { isArray, isNumber } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface AccountSub {
   subscription: Subscription;
@@ -1026,6 +1027,18 @@ export default class KoniTabs {
     return transactionHash;
   }
 
+  public async evmEIP7683 (id: string, url: string, { params }: RequestArguments) {
+    const request = (params as RequestEIP7683[])[0];
+
+    const response = await this.#koniState.handleEIP7683Request(request, { url, resolveOn: 'extrinsicHash' });
+
+    if (response.errors.length) {
+      throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, response.errors.join(', '));
+    }
+
+    return response.extrinsicHash as HexString;
+  }
+
   private async handleEvmRequest (id: string, url: string, request: RequestArguments): Promise<unknown> {
     const { method } = request;
 
@@ -1065,6 +1078,8 @@ export default class KoniTabs {
           return await this.switchEvmChain(id, url, request);
         case 'wallet_watchAsset':
           return await this.addEvmToken(id, url, request);
+        case 'wallet_eip7683':
+          return await this.evmEIP7683(id, url, request);
 
         default:
           return this.performWeb3Method(id, url, request);

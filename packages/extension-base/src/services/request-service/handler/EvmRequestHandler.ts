@@ -10,7 +10,7 @@ import { Logger } from '@polkadot/util/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { ChainType, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete, SignAuthorizeRequest } from '@subwallet/extension-base/background/KoniTypes';
 import { ConfirmationRequestBase, Resolver } from '@subwallet/extension-base/background/types';
-import { _getEvmChainId, findChainInfoByChainId } from '@subwallet/extension-base/services/chain-service/utils';
+import { findChainInfoByChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import RequestService from '@subwallet/extension-base/services/request-service';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { getTransactionId } from '@subwallet/extension-base/services/transaction-service/helpers';
@@ -23,7 +23,7 @@ import BN from 'bn.js';
 import { toBuffer } from 'ethereumjs-util';
 import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
-import { createWalletClient, http, parseSignature, WalletClient, WalletActions, defineChain } from 'viem';
+import { createWalletClient, http, parseSignature, WalletClient, defineChain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { SignedAuthorization } from 'viem/experimental';
 import { TransactionConfig } from 'web3-core';
@@ -116,10 +116,6 @@ export default class EvmRequestHandler {
     }
 
     this.#requestService.updateIconV2();
-
-    keyring.unlockKeyring('123123123');
-
-    await this.completeConfirmation({ [type]: { id, isApproved: true, payload: '' } });
 
     return promise;
   }
@@ -245,7 +241,7 @@ export default class EvmRequestHandler {
 
   private async signTransaction (confirmation: ConfirmationDefinitions['evmSendTransactionRequest'][0]): Promise<string> {
     const transaction = confirmation.payload;
-    const { estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value, chain, chainId } = transaction;
+    const { estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value, chainId } = transaction;
     const pair = keyring.getPair(from as string);
     const params = {
       ...transaction,
@@ -388,6 +384,7 @@ export default class EvmRequestHandler {
     const id = getTransactionId(ChainType.EVM, chain, true);
     const requestPayload: SignAuthorizeRequest = {
       ...request,
+      canSign: true,
       id
     };
 

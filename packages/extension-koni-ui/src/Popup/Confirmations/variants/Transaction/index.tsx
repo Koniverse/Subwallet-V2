@@ -10,14 +10,14 @@ import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import TonSignArea from '@subwallet/extension-koni-ui/Popup/Confirmations/parts/Sign/Ton';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ConfirmationQueueItem } from '@subwallet/extension-koni-ui/stores/base/RequestState';
-import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { AlertDialogProps, EvmSignatureSupportType, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import CN from 'classnames';
 import React, { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import { EvmSignArea, SubstrateSignArea } from '../../parts/Sign';
-import { BaseTransactionConfirmation, BondTransactionConfirmation, CancelUnstakeTransactionConfirmation, ClaimBridgeTransactionConfirmation, ClaimRewardTransactionConfirmation, DefaultWithdrawTransactionConfirmation, FastWithdrawTransactionConfirmation, JoinPoolTransactionConfirmation, JoinYieldPoolConfirmation, LeavePoolTransactionConfirmation, SendNftTransactionConfirmation, SwapTransactionConfirmation, TokenApproveConfirmation, TransferBlock, UnbondTransactionConfirmation, WithdrawTransactionConfirmation } from './variants';
+import { BaseTransactionConfirmation, BondTransactionConfirmation, CancelUnstakeTransactionConfirmation, ClaimBridgeTransactionConfirmation, ClaimRewardTransactionConfirmation, DefaultWithdrawTransactionConfirmation, DelegateEIP7702Confirmation, FastWithdrawTransactionConfirmation, JoinPoolTransactionConfirmation, JoinYieldPoolConfirmation, LeavePoolTransactionConfirmation, SendNftTransactionConfirmation, SwapEIP7683Confirmation, SwapTransactionConfirmation, TokenApproveConfirmation, TransferBlock, UnbondTransactionConfirmation, UndelegateEIP7702Confirmation, WithdrawTransactionConfirmation } from './variants';
 
 interface Props extends ThemeProps {
   confirmation: ConfirmationQueueItem;
@@ -76,6 +76,12 @@ const getTransactionComponent = (extrinsicType: ExtrinsicType): typeof BaseTrans
       return SwapTransactionConfirmation;
     case ExtrinsicType.CLAIM_BRIDGE:
       return ClaimBridgeTransactionConfirmation;
+    case ExtrinsicType.EIP7702_DELEGATE:
+      return DelegateEIP7702Confirmation;
+    case ExtrinsicType.EIP7702_UNDELEGATE:
+      return UndelegateEIP7702Confirmation;
+    case ExtrinsicType.EIP7683_SWAP:
+      return SwapEIP7683Confirmation;
     case ExtrinsicType.CROWDLOAN:
     case ExtrinsicType.STAKING_CANCEL_COMPOUNDING:
     case ExtrinsicType.STAKING_COMPOUNDING:
@@ -151,13 +157,13 @@ const Component: React.FC<Props> = (props: Props) => {
         )
       }
       {
-        (type === 'evmSendTransactionRequest' || type === 'evmWatchTransactionRequest') && (
+        (['evmSignatureRequest', 'evmSendTransactionRequest', 'evmWatchTransactionRequest'].includes(type)) && (
           <EvmSignArea
             extrinsicType={transaction.extrinsicType}
             id={item.id}
-            payload={(item as ConfirmationDefinitions['evmSendTransactionRequest' | 'evmWatchTransactionRequest'][0])}
+            payload={(item as ConfirmationDefinitions['evmSendTransactionRequest' | 'evmWatchTransactionRequest' | 'evmSignatureRequest'][0])}
             txExpirationTime={txExpirationTime}
-            type={type}
+            type={type as EvmSignatureSupportType}
           />
         )
       }

@@ -9,7 +9,7 @@ import { _isRuntimeUpdated, detectTranslate } from '@subwallet/extension-base/ut
 import { AlertModal } from '@subwallet/extension-koni-ui/components';
 import { isProductionMode, NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useConfirmationsInfo, useSelector } from '@subwallet/extension-koni-ui/hooks';
-import { ConfirmationType } from '@subwallet/extension-koni-ui/stores/base/RequestState';
+import { ConfirmationQueueItem, ConfirmationType } from '@subwallet/extension-koni-ui/stores/base/RequestState';
 import { AccountSignMode, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, getSignMode, isRawPayload } from '@subwallet/extension-koni-ui/utils';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -20,7 +20,7 @@ import { SignerPayloadJSON } from '@polkadot/types/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { ConfirmationHeader } from './parts';
-import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NetworkConnectionErrorConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
+import { AddNetworkConfirmation, AddTokenConfirmation, AuthorizeConfirmation, ConnectWalletConnectConfirmation, EvmSignatureConfirmation, EvmTransactionConfirmation, MetadataConfirmation, NetworkConnectionErrorConfirmation, NotSupportConfirmation, NotSupportWCConfirmation, SignAuthorizationConfirmation, SignConfirmation, TransactionConfirmation } from './variants';
 
 type Props = ThemeProps
 
@@ -34,10 +34,13 @@ const titleMap: Record<ConfirmationType, string> = {
   signingRequest: detectTranslate('Signature request'),
   connectWCRequest: detectTranslate('WalletConnect'),
   notSupportWCRequest: detectTranslate('WalletConnect'),
-  errorConnectNetwork: detectTranslate('Transaction request')
+  errorConnectNetwork: detectTranslate('Transaction request'),
+  evmSignAuthorizationRequest: detectTranslate('Sign authorization request')
 } as Record<ConfirmationType, string>;
 
 const alertModalId = 'confirmation-alert-modal';
+
+const isInternalTransaction = (confirmation: ConfirmationQueueItem) => confirmation.item.isInternal || confirmation.item.id.startsWith('internal');
 
 const Component = function ({ className }: Props) {
   const { confirmationQueue, numberOfConfirmations } = useConfirmationsInfo();
@@ -92,8 +95,8 @@ const Component = function ({ className }: Props) {
         }
 
         isMessage = _isMessage;
-      } else if (['evmSignatureRequest', 'evmSendTransactionRequest', 'evmWatchTransactionRequest'].includes(confirmation.type)) {
-        const request = confirmation.item as ConfirmationDefinitions['evmSignatureRequest' | 'evmSendTransactionRequest' | 'evmWatchTransactionRequest'][0];
+      } else if (['evmSignatureRequest', 'evmSendTransactionRequest', 'evmWatchTransactionRequest', 'evmSignAuthorizationRequest'].includes(confirmation.type)) {
+        const request = confirmation.item as ConfirmationDefinitions['evmSignatureRequest' | 'evmSendTransactionRequest' | 'evmWatchTransactionRequest' | 'evmSignAuthorizationRequest'][0];
 
         account = findAccountByAddress(accounts, request.payload.address) || undefined;
         canSign = request.payload.canSign;
@@ -120,7 +123,7 @@ const Component = function ({ className }: Props) {
       }
     }
 
-    if (confirmation.item.isInternal && confirmation.type !== 'connectWCRequest') {
+    if (isInternalTransaction(confirmation) && !['connectWCRequest', 'evmSignAuthorizationRequest'].includes(confirmation.type)) {
       return (
         <TransactionConfirmation
           closeAlert={closeAlert}
@@ -173,6 +176,14 @@ const Component = function ({ className }: Props) {
           request={confirmation.item as ConfirmationDefinitions['errorConnectNetwork'][0]}
           type={confirmation.type}
         />);
+
+      case 'evmSignAuthorizationRequest':
+        return (
+          <SignAuthorizationConfirmation
+            request={confirmation.item as ConfirmationDefinitions['evmSignAuthorizationRequest'][0]}
+            type={confirmation.type}
+          />
+        );
     }
 
     return null;
@@ -183,7 +194,7 @@ const Component = function ({ className }: Props) {
       return '';
     }
 
-    if (confirmation.item.isInternal) {
+    if (isInternalTransaction(confirmation)) {
       const transaction = transactionRequest[confirmation.item.id];
 
       if (!transaction) {
@@ -256,6 +267,12 @@ const Component = function ({ className }: Props) {
           return t('Swap confirmation');
         case ExtrinsicType.CLAIM_BRIDGE:
           return t('Claim confirmation');
+        case ExtrinsicType.EIP7702_DELEGATE:
+          return t('Delegate account confirmation');
+        case ExtrinsicType.EIP7702_UNDELEGATE:
+          return t('Undelegate account confirmation');
+        case ExtrinsicType.EIP7683_SWAP:
+          return t('EIP7683 confirmation');
         case ExtrinsicType.CROWDLOAN:
         case ExtrinsicType.EVM_EXECUTE:
         case ExtrinsicType.UNKNOWN:

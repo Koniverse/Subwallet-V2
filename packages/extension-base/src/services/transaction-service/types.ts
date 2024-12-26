@@ -1,14 +1,30 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { HexString } from '@polkadot/util/types';
 import { ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { BaseRequestSign } from '@subwallet/extension-base/types';
 import EventEmitter from 'eventemitter3';
+import type { SignableMessage } from 'viem/types/misc';
 import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';
+
+export interface SmartAccountCall {
+  to: HexString;
+  data?: HexString;
+  value?: BigInt;
+}
+
+export interface SmartAccountTransaction {
+  calls: SmartAccountCall[];
+}
+
+export type ViemSignMessageFunc = (data: { message: SignableMessage }) => Promise<HexString>;
+
+type TransactionSubmitType = 'eoa' | 'smartAccount';
 
 export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>> {
   id: string;
@@ -24,7 +40,8 @@ export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick
   createdAt: number;
   updatedAt: number;
   estimateFee?: FeeData,
-  transaction: SubmittableExtrinsic | TransactionConfig | TonTransactionConfig;
+  transaction: SubmittableExtrinsic | TransactionConfig | TonTransactionConfig | SmartAccountTransaction;
+  submitType?: TransactionSubmitType;
   additionalValidator?: (inputTransaction: SWTransactionResponse) => Promise<void>;
   eventsHandler?: (eventEmitter: TransactionEmitter) => void;
 }
@@ -43,7 +60,10 @@ export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransact
   isTransferAll?: boolean;
   resolveOnDone?: boolean;
   skipFeeValidation?: boolean;
+  resolveOn?: keyof TransactionEventMap;
 }
+
+export type OverrideTransactionInput =  Partial<Pick<SWTransactionInput, 'url' | 'resolveOn'>>
 
 export type SWTransactionResponse = SwInputBase & Pick<SWTransaction, 'warnings' | 'errors'> & Partial<Pick<SWTransaction, 'id' | 'extrinsicHash' | 'status' | 'estimateFee'>>;
 

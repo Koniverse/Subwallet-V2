@@ -3,5 +3,6 @@
 
 export * from './data';
 export * from './error';
+export * from './ethereum';
 export * from './request';
 export * from './warning';

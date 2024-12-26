@@ -18,7 +18,7 @@ import { ChainOnlineService } from '@subwallet/extension-base/services/chain-onl
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _PREDEFINED_SINGLE_MODES } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest } from '@subwallet/extension-base/services/chain-service/types';
-import { _getEvmChainId, _getSubstrateGenesisHash, _getTokenOnChainAssetId, _isAssetFungibleToken, _isChainEnabled, _isChainTestNet, _parseMetadataForSmartContractAsset } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getEvmChainId, _getSubstrateGenesisHash, _getTokenOnChainAssetId, _isAssetFungibleToken, _isChainEnabled, _isChainEvmCompatible, _isChainTestNet, _parseMetadataForSmartContractAsset, findChainInfoByChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import EarningService from '@subwallet/extension-base/services/earning-service/service';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import FeeService from '@subwallet/extension-base/services/fee-service/service';
@@ -39,23 +39,25 @@ import DatabaseService from '@subwallet/extension-base/services/storage-service/
 import { SubscanService } from '@subwallet/extension-base/services/subscan-service';
 import { SwapService } from '@subwallet/extension-base/services/swap-service';
 import TransactionService from '@subwallet/extension-base/services/transaction-service';
-import { TransactionEventResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { OverrideTransactionInput, SmartAccountCall, SWTransactionResponse, TransactionEventResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
-import { BalanceItem, BasicTxErrorType, CurrentAccountInfo, EvmFeeInfo, RequestCheckPublicAndSecretKey, ResponseCheckPublicAndSecretKey, StorageDataInterface } from '@subwallet/extension-base/types';
-import { isManifestV3, stripUrl, targetIsWeb } from '@subwallet/extension-base/utils';
+import { BalanceItem, BasicTxErrorType, CurrentAccountInfo, EIP7683Data, EIP7683Step, EvmFeeInfo, RequestCheckPublicAndSecretKey, RequestEIP7683, ResponseCheckPublicAndSecretKey, StorageDataInterface } from '@subwallet/extension-base/types';
+import { approveToken, bridgeEthTo, isManifestV3, stripUrl, swapTokenToEth, swapTokenToToken, targetIsWeb } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { keyring } from '@subwallet/ui-keyring';
 import BN from 'bn.js';
+import { ZeroAddress } from 'ethers';
 import { t } from 'i18next';
 import { interfaces } from 'manta-extension-sdk';
 import { BehaviorSubject, Subject } from 'rxjs';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
 import { assert, logger as createLogger, noop } from '@polkadot/util';
-import { Logger } from '@polkadot/util/types';
+import { HexString, Logger } from '@polkadot/util/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
+import { parseEther } from 'viem';
 
 import { KoniCron } from '../cron';
 import { KoniSubscription } from '../subscription';
@@ -1869,5 +1871,159 @@ export default class KoniState {
 
   public getCrowdloanContributions ({ address, page, relayChain }: RequestCrowdloanContributions) {
     return this.subscanService.getCrowdloanContributions(relayChain, address, page);
+  }
+
+  /* EIP 7683 */
+
+  public async handleEIP7683Request (request: RequestEIP7683, override?: OverrideTransactionInput): Promise<SWTransactionResponse> {
+    const { sourceChainId, targetChainId, sourceAddress, targetAddress, amount, targetToken, sourceToken } = request;
+    const calls: SmartAccountCall[] = [];
+    const steps: EIP7683Step[] = [];
+
+    // if (sourceChainId !== targetChainId) {
+    //   throw new Error('Invalid chain id');
+    // }
+
+    if (![911867].includes(sourceChainId)) {
+      throw new Error('Invalid chain id');
+    }
+
+    const chainInfoMap = this.chainService.getChainInfoMap();
+
+    const chainInfo = findChainInfoByChainId(chainInfoMap, sourceChainId);
+
+    if (!chainInfo || !_isChainEvmCompatible(chainInfo)) {
+      throw new Error('Invalid chain id');
+    }
+
+    if (sourceAddress !== targetAddress) {
+      throw new Error('Invalid address');
+    }
+
+    if (sourceToken === targetToken && sourceChainId === targetChainId) {
+      throw new Error('Invalid token');
+    }
+
+    const supportSwapToken = ['0xaE83AD7A59ee18CFE97b79a5cf5Cdf2dF18d0695', '0x6f59A38564B51c628db66D2a2D0A36A7D14Fe3E5'];
+
+    if (supportSwapToken.includes(targetToken) && supportSwapToken.includes(sourceToken)) {
+      const router = '0x354EDb76B4D1E53500FB8EE10696f59048C18ccD';
+      const approveData = approveToken(router, amount);
+
+      steps.push({
+        key: 'approve',
+        description: 'Approve router to use token',
+        metadata: {
+          token: sourceToken,
+          amount: amount,
+          spender: router
+        },
+        title: 'Approve token'
+      })
+
+      calls.push({
+        to: sourceToken,
+        data: approveData
+      })
+
+      const swapData = swapTokenToToken(sourceToken, targetToken, amount, targetAddress);
+
+      steps.push({
+        key: 'swap',
+        description: 'Swap token via router',
+        metadata: {
+          router: router,
+          swapAmount: amount,
+          minReceive: '0'
+        },
+        title: 'Swap token'
+      })
+
+      calls.push({
+        to: router,
+        data: swapData
+      })
+    }
+
+    if (sourceChainId === 911867 && targetChainId === 11155111 && targetToken === ZeroAddress) {
+      let bridgeAmount = amount;
+
+      if (supportSwapToken.includes(sourceToken)) {
+        const router = '0x354EDb76B4D1E53500FB8EE10696f59048C18ccD';
+        const approveData = approveToken(router, amount);
+
+        steps.push({
+          key: 'approve',
+          description: 'Approve router to use token',
+          metadata: {
+            token: sourceToken,
+            amount: amount,
+            spender: router
+          },
+          title: 'Approve token'
+        })
+
+        calls.push({
+          to: sourceToken,
+          data: approveData
+        })
+
+        const swapData = swapTokenToEth(sourceToken, amount, targetAddress);
+
+        steps.push({
+          key: 'swap',
+          description: 'Swap token to ETH via router',
+          metadata: {
+            router: router,
+            swapAmount: amount,
+            minReceive: '0'
+          },
+          title: 'Swap token'
+        })
+
+        calls.push({
+          to: router,
+          data: swapData
+        })
+
+        bridgeAmount = `0x${parseEther('0.1').toString(16)}`;
+      }
+
+      const bridge = '0x4200000000000000000000000000000000000010';
+      const bridgeData = bridgeEthTo(targetAddress);
+
+      steps.push({
+        key: 'swap',
+        description: 'Bridge token',
+        metadata: {
+          bridge: bridge,
+          bridgeAmount: bridgeAmount,
+        },
+        title: 'Bridge token'
+      })
+
+      calls.push({
+        to: bridge,
+        data: bridgeData,
+        value: BigInt(bridgeAmount)
+      })
+    }
+
+    console.log('Calls:', calls);
+    console.log('Steps:', steps);
+
+    const data: EIP7683Data = { ...request, steps }
+
+    return this.transactionService.handleEIP7702Transaction({
+      address: sourceAddress,
+      chain: chainInfo.slug,
+      transaction: {
+        calls: calls
+      },
+      data,
+      extrinsicType: ExtrinsicType.EIP7683_SWAP,
+      chainType: ChainType.EVM,
+      ...override
+    })
   }
 }

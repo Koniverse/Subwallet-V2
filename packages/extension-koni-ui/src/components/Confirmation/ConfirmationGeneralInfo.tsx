@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationRequestBase } from '@subwallet/extension-base/background/types';
+import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { getDomainFromUrl } from '@subwallet/extension-base/utils';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -33,8 +34,27 @@ const WalletConnectLogo = (
 
 // Get domain from full url
 function Component ({ className, linkIcon, linkIconBg, request }: Props) {
-  const domain = getDomainFromUrl(request.url);
-  const leftLogoUrl = `https://icons.duckduckgo.com/ip2/${domain}.ico`;
+  const domain = useMemo(() => getDomainFromUrl(request.url), [request.url]);
+  const rightLogo = useMemo(() => {
+    if (domain === EXTENSION_REQUEST_URL) {
+      return (
+        <Logo
+          network={'subwallet'}
+          shape='squircle'
+          size={56}
+        />
+      );
+    }
+
+    return (
+      <Image
+        height={56}
+        shape='squircle'
+        src={`https://icons.duckduckgo.com/ip2/${domain}.ico`}
+        width={56}
+      />
+    );
+  }, [domain]);
 
   const isWCRequest = useMemo(() => isWalletConnectRequest(request.id), [request.id]);
 
@@ -52,14 +72,7 @@ function Component ({ className, linkIcon, linkIconBg, request }: Props) {
         )}
         linkIcon={linkNode}
         linkIconBg={linkIconBg}
-        rightLogo={(
-          <Image
-            height={56}
-            shape='squircle'
-            src={leftLogoUrl}
-            width={56}
-          />
-        )}
+        rightLogo={rightLogo}
       />
       <Typography.Paragraph className={'text-tertiary __domain'}>
         {domain}
