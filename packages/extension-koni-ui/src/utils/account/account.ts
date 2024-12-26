@@ -221,7 +221,7 @@ export const isAddressAllowedWithAuthType = (address: string, authAccountTypes?:
   return false;
 };
 
-export function getChainTypeLogoMap (logoMap: Web3LogoMap): Record<AccountChainType, string> {
+export function getChainTypeLogoMap (logoMap: Web3LogoMap): Record<string, string> {
   return {
     [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
     [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,

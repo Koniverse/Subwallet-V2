@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
 import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -20,8 +21,8 @@ function Component ({ accountName,
   className }: Props) {
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
 
-  const chainTypeLogos = useMemo(() => {
-    return Object.values(getChainTypeLogoMap(logoMap));
+  const chainTypeLogoMap = useMemo(() => {
+    return getChainTypeLogoMap(logoMap);
   }, [logoMap]);
 
   return (
@@ -40,12 +41,12 @@ function Component ({ accountName,
 
       <div className='__item-chain-type-logos'>
         {
-          chainTypeLogos.map((cts) => (
+          SUPPORTED_ACCOUNT_CHAIN_TYPES.map((ct) => (
             <img
               alt='Network type'
               className={'__item-chain-type-logo'}
-              key={cts}
-              src={cts}
+              key={ct}
+              src={chainTypeLogoMap[ct]}
             />
           ))
         }
