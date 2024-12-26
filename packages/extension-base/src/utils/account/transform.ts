@@ -616,7 +616,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             accountActions = accountActions.filter((action) => action !== AccountActions.DERIVE);
           }
 
-          if (chainTypes.length === 1 && accountActions.includes(AccountActions.EXPORT_MNEMONIC)) {
+          if (chainTypes.length === 1 && accountActions.includes(AccountActions.EXPORT_MNEMONIC) && account.type !== 'ton-native') {
             isNeedMigrateUnifiedAccount = true;
           }
 
