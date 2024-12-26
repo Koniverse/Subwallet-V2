@@ -1937,6 +1937,7 @@ export interface ResponseMigrateUnifiedAndFetchEligibleSoloAccounts {
 
 export interface SoloAccountToBeMigrated {
   upcomingProxyId: string,
+  oldProxyId: string,
   address: string,
   name: string,
   chainType: AccountChainType

@@ -14,6 +14,7 @@ type Props = ThemeProps & SoloAccountToBeMigrated;
 function Component ({ address,
   chainType,
   className,
+  oldProxyId,
   name }: Props) {
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
 
@@ -27,7 +28,7 @@ function Component ({ address,
         <AccountProxyAvatar
           className={'__item-account-avatar'}
           size={28}
-          value={address}
+          value={oldProxyId}
         />
 
         <img
