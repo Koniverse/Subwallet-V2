@@ -67,6 +67,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     let notMigrateDeriveBefore = true;
 
     keyring.unlockKeyring(password);
+    this.parentService.updateKeyringState();
 
     for (const unifiedAccount of accountProxies) {
       const masterAccount = !unifiedAccount.parentId;
@@ -120,6 +121,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     }
 
     keyring.lockAll(false);
+    this.parentService.updateKeyringState();
 
     return unifiedAccountIds;
   }
@@ -182,17 +184,20 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     const password = this.sessionIdToPassword[sessionId].password;
 
     keyring.unlockKeyring(password);
+    this.parentService.updateKeyringState();
+
     const modifiedPairs = structuredClone(this.state.modifyPairs);
 
     const firstAccountInfo = soloAccounts[0];
     const upcomingProxyId = firstAccountInfo.upcomingProxyId;
     const firstAccountOldProxyId = firstAccountInfo.proxyId;
-
+    // const currentChainTypes = soloAccounts.map((account) => account.chainType);
     const mnemonic = this.parentService.context.exportAccountProxyMnemonic({ password, proxyId: firstAccountOldProxyId }).result;
 
-    const keypairTypes = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
+    const keypairTypesForMordifiedPairs = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
+    // const keypairTypesForAccountMetadata = SUPPORTED_ACCOUNT_CHAIN_TYPES.filter((chainType) => !currentChainTypes.includes(chainType as AccountChainType)).map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
 
-    keypairTypes.forEach((type) => {
+    keypairTypesForMordifiedPairs.forEach((type) => {
       const suri = getSuri(mnemonic, type);
       const pair = keyring.createFromUri(suri, {}, type);
       const address = pair.address;
@@ -202,7 +207,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
 
     this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName });
     this.state.upsertModifyPairs(modifiedPairs);
-    keypairTypes.forEach((type) => {
+    keypairTypesForMordifiedPairs.forEach((type) => {
       const suri = getSuri(mnemonic, type);
       const { derivePath } = keyExtractSuri(suri);
       const metadata = {
@@ -217,6 +222,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     });
 
     keyring.lockAll(false);
+    this.parentService.updateKeyringState();
 
     return {
       migratedUnifiedAccountId: upcomingProxyId
