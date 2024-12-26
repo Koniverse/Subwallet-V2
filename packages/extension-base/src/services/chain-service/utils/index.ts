@@ -305,7 +305,7 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
   const defaultTokenInfo = {
     symbol: '',
     decimals: -1
-  }
+  };
 
   if (!chainInfo) {
     return defaultTokenInfo;
@@ -330,7 +330,7 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
     return {
       symbol: chainInfo.cardanoInfo.symbol,
       decimals: chainInfo.cardanoInfo.decimals
-    }
+    };
   }
 
   return defaultTokenInfo;
@@ -659,6 +659,10 @@ export const _chainInfoToChainType = (chainInfo: _ChainInfo): AccountChainType =
 
   if (_isChainTonCompatible(chainInfo)) {
     return AccountChainType.TON;
+  }
+
+  if (_isChainCardanoCompatible(chainInfo)) {
+    return AccountChainType.CARDANO;
   }
 
   if (_isChainBitcoinCompatible(chainInfo)) {
