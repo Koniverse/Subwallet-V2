@@ -117,6 +117,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
         const suri = unifiedAccount.suri || '';
 
         this.parentService.context.derivationAccountProxyCreate({ name, suri, proxyId: unifiedAccount.parentId || '' }, true);
+        unifiedAccountIds.push(proxyId);
       }
     }
 
