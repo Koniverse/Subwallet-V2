@@ -11,7 +11,7 @@ import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate
 import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getAssetDecimals, _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
@@ -67,16 +67,19 @@ export function additionalValidateTransferForRecipient (
   isSendingTokenSufficient?: boolean
 ): [TransactionWarning[], TransactionError[]] {
   const sendingTokenMinAmount = BigInt(_getTokenMinAmount(sendingTokenInfo));
+  const sendingTokenMinAmountXCM = BigInt(new BigN(_getTokenMinAmount(sendingTokenInfo)).multipliedBy(XCM_MIN_AMOUNT_RATIO).toString());
   const nativeTokenMinAmount = _getTokenMinAmount(nativeTokenInfo);
+  const minSendingRequired = extrinsicType !== ExtrinsicType.TRANSFER_XCM ? sendingTokenMinAmount : sendingTokenMinAmountXCM;
 
   const warnings: TransactionWarning[] = [];
   const errors: TransactionError[] = [];
 
   const remainingSendingTokenOfSenderEnoughED = senderSendingTokenTransferable ? senderSendingTokenTransferable - transferAmount >= sendingTokenMinAmount : false;
   const isReceiverAliveByNativeToken = receiverSystemAccountInfo ? _isAccountActive(receiverSystemAccountInfo) : false;
-  const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= sendingTokenMinAmount;
+  const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= minSendingRequired;
+  const isReceivingNonNativeToken = extrinsicType === ExtrinsicType.TRANSFER_TOKEN || (extrinsicType === ExtrinsicType.TRANSFER_XCM && !_isNativeToken(sendingTokenInfo));
 
-  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN) {
+  if (isReceivingNonNativeToken) {
     if (!remainingSendingTokenOfSenderEnoughED) {
       const warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
 
@@ -98,10 +101,11 @@ export function additionalValidateTransferForRecipient (
       const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
 
       const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+      const atLeastAmountStr = extrinsicType === ExtrinsicType.TRANSFER_XCM ? (Number(atLeastStr) * XCM_MIN_AMOUNT_RATIO).toString() : atLeastStr;
 
       const error = new TransactionError(
         TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-        t('You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } })
+        t('You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again', { replace: { amount: atLeastAmountStr, symbol: sendingTokenInfo.symbol } })
       );
 
       errors.push(error);
@@ -112,10 +116,11 @@ export function additionalValidateTransferForRecipient (
     const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
 
     const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+    const atLeastAmountStr = extrinsicType === ExtrinsicType.TRANSFER_XCM ? (Number(atLeastStr) * XCM_MIN_AMOUNT_RATIO).toString() : atLeastStr;
 
     const error = new TransactionError(
       TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
-      t('You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } })
+      t('You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again', { replace: { amount: atLeastAmountStr, symbol: sendingTokenInfo.symbol } })
     );
 
     errors.push(error);
@@ -135,40 +140,6 @@ export function validateXcmTransferRequest (destTokenInfo: _ChainAsset | undefin
   }
 
   return [errors, keypair, transferValue];
-}
-
-export function additionalValidateXcmTransfer (originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset, sendingAmount: string, senderTransferable: string, receiverNativeBalance: string, destChainInfo: _ChainInfo, isSnowBridge = false): [TransactionWarning | undefined, TransactionError | undefined] {
-  const destMinAmount = _getTokenMinAmount(destinationTokenInfo);
-  const minSendingRequired = new BigN(destMinAmount).multipliedBy(XCM_MIN_AMOUNT_RATIO);
-
-  let error: TransactionError | undefined;
-  let warning: TransactionWarning | undefined;
-
-  // Check sending token ED for receiver
-  if (new BigN(sendingAmount).lt(minSendingRequired)) {
-    const atLeastStr = formatNumber(minSendingRequired, destinationTokenInfo.decimals || 0, balanceFormatter, { maxNumberFormat: destinationTokenInfo.decimals || 6 });
-
-    error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: originTokenInfo.symbol } }));
-  }
-
-  // check native token ED on dest chain for receiver
-  const bnKeepAliveBalance = _isNativeToken(destinationTokenInfo) ? new BigN(receiverNativeBalance).plus(sendingAmount) : new BigN(receiverNativeBalance);
-
-  if (isSnowBridge && bnKeepAliveBalance.lt(_getChainExistentialDeposit(destChainInfo))) {
-    const { decimals, symbol } = _getChainNativeTokenBasicInfo(destChainInfo);
-    const atLeastStr = formatNumber(_getChainExistentialDeposit(destChainInfo), decimals || 0, balanceFormatter, { maxNumberFormat: 6 });
-
-    error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t(' Insufficient {{symbol}} on {{chain}} to cover min balance ({{amount}} {{symbol}})', { replace: { amount: atLeastStr, symbol, chain: destChainInfo.name } }));
-  }
-
-  // Check ed for sender
-  if (!_isNativeToken(originTokenInfo)) {
-    if (new BigN(senderTransferable).minus(sendingAmount).lt(_getTokenMinAmount(originTokenInfo))) {
-      warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
-    }
-  }
-
-  return [warning, error];
 }
 
 export function checkSupportForFeature (validationResponse: SWTransactionResponse, blockedFeaturesList: string[], chainInfo: _ChainInfo) {
