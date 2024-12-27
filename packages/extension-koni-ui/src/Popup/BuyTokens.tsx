@@ -276,8 +276,7 @@ function Component ({ className, currentAccountProxy }: ComponentProps) {
       });
 
       disclaimerPromise.then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        return urlPromise!(symbol, walletAddress, serviceNetwork, walletReference);
+        return urlPromise(symbol, walletAddress, serviceNetwork, walletReference);
       })
         .then((url) => {
           openInNewTab(url)();

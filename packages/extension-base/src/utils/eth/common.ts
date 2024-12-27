@@ -29,12 +29,12 @@ export class Transaction {
   readonly isSafe: boolean;
 
   constructor (nonce: string,
-               gasPrice: string,
-               gas: string,
-               to: string,
-               value: string,
-               data: string,
-               ethereumChainId: string) {
+    gasPrice: string,
+    gas: string,
+    to: string,
+    value: string,
+    data: string,
+    ethereumChainId: string) {
     this.nonce = hexToNumberString(nonce);
     this.gasPrice = hexToNumberString(gasPrice);
     this.gas = hexToNumberString(gas);

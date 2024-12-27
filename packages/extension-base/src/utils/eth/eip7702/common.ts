@@ -24,7 +24,7 @@ export const createInitEIP7702Tx = async (chain: string, address: HexString, aut
   const txConfig: EOACodeEIP7702TxData = {
     // @ts-ignore
     authorizationList: [authorization],
-    data: '0x',
+    data: data,
     to: address
   };
 

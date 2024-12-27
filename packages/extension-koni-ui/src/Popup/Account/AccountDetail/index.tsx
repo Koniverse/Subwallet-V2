@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountActions, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountActions, AccountChainType, AccountProxy, AccountProxyType, EIP7702DelegateType } from '@subwallet/extension-base/types';
 import { AccountProxyTypeTag, CloseIcon, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { FilterTabItemType, FilterTabs } from '@subwallet/extension-koni-ui/components/FilterTabs';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
 import { useDefaultNavigate, useGetAccountProxyById, useNotification } from '@subwallet/extension-koni-ui/hooks';
-import { editAccount, forgetAccount, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
+import { delegateEIP7702, editAccount, forgetAccount, undelegateEIP7702, validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountDetailParam, ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
 import { FormCallbacks, FormFieldData } from '@subwallet/extension-koni-ui/types/form';
@@ -96,6 +96,8 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
   // @ts-ignore
   const [deriving, setDeriving] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [delegating, setDelegating] = useState(false);
+  const [undelegating, setUndelegating] = useState(false);
 
   const filterTabItems = useMemo<FilterTabItemType[]>(() => {
     const result = [
@@ -166,6 +168,37 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
       });
     }
   }, [accountProxy, openDeriveModal]);
+
+  const onDelegate = useCallback(() => {
+    const account = accountProxy.accounts.find((acc) => acc.chainType === AccountChainType.ETHEREUM);
+
+    if (account) {
+      setDelegating(true);
+      delegateEIP7702({
+        delegateType: EIP7702DelegateType.KERNEL_V3,
+        address: account.address,
+        chain: 'ithaca'
+      })
+        .finally(() => {
+          setDelegating(false);
+        });
+    }
+  }, [accountProxy]);
+
+  const onUndelegate = useCallback(() => {
+    const account = accountProxy.accounts.find((acc) => acc.chainType === AccountChainType.ETHEREUM);
+
+    if (account) {
+      setUndelegating(true);
+      undelegateEIP7702({
+        address: account.address,
+        chain: 'ithaca'
+      })
+        .finally(() => {
+          setUndelegating(false);
+        });
+    }
+  }, [accountProxy]);
 
   const onExport = useCallback(() => {
     if (accountProxy?.id) {
@@ -438,6 +471,44 @@ const Component: React.FC<ComponentProps> = ({ accountProxy, onBack, requestView
         </div>
       </Form>
 
+      {
+        accountProxy.chainTypes.includes(AccountChainType.ETHEREUM) && (
+          <div className='eip7702-button'>
+            <Button
+              block={true}
+              className={CN('account-button')}
+              disabled={delegating}
+              icon={(
+                <Icon
+                  phosphorIcon={Export}
+                  weight='fill'
+                />
+              )}
+              loading={undelegating}
+              onClick={onUndelegate}
+              schema='secondary'
+            >
+              {t('Undelegate')}
+            </Button>
+            <Button
+              block={true}
+              className={CN('account-button')}
+              disabled={undelegating}
+              icon={(
+                <Icon
+                  phosphorIcon={GitMerge}
+                  weight='fill'
+                />
+              )}
+              loading={deleting}
+              onClick={onDelegate}
+            >
+              {t('Delegate')}
+            </Button>
+          </div>
+        )
+      }
+
       <FilterTabs
         className={'filter-tabs-container'}
         items={filterTabItems}
@@ -581,6 +652,14 @@ const AccountDetail = styled(Wrapper)<Props>(({ theme: { token } }: Props) => {
         fontSize: '11px',
         textTransform: 'uppercase'
       }
+    },
+
+    '.eip7702-button': {
+      display: 'flex',
+      gap: token.sizeSM,
+      paddingRight: token.padding,
+      paddingLeft: token.padding,
+      marginTop: token.margin
     }
   };
 });

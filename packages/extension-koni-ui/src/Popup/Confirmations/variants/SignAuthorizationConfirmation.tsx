@@ -8,6 +8,7 @@ import { EvmSignatureSupportType, ThemeProps } from '@subwallet/extension-koni-u
 import CN from 'classnames';
 import React from 'react';
 import styled from 'styled-components';
+
 import { EvmSignArea } from '../parts';
 
 interface Props extends ThemeProps {

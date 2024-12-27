@@ -13,7 +13,6 @@ import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeCo
 import { useCoreReceiveModalHelper, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
-import { handleTransactionEIP7683 } from '@subwallet/extension-koni-ui/messaging';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
@@ -21,7 +20,6 @@ import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance
 import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
-import BigN from 'bignumber.js';
 import classNames from 'classnames';
 import { Coins, FadersHorizontal } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -312,54 +310,6 @@ const Component = (): React.ReactElement => {
       window.removeEventListener('resize', handleResize);
     };
   }, [handleResize]);
-
-  useEffect(() => {
-    // handleTransactionEIP7702({
-    //   calls: [
-    //     {
-    //       to: '0x354EDb76B4D1E53500FB8EE10696f59048C18ccD',
-    //       data: '0xf305d719000000000000000000000000ae83ad7a59ee18cfe97b79a5cf5cdf2df18d06950000000000000000000000000000000000000000000000000000000005f5e10000000000000000000000000000000000000000000000000000000000055d4a80000000000000000000000000000000000000000000000000006a94d74f43000000000000000000000000000049e46fc304a448a2132d2dbed6df47d0084ce92f0000000000000000000000000000000000000000000000000000019403e9f1b8',
-    //       value: `0x${BigN(0.04).shiftedBy(18).toString(16)}`
-    //     }
-    //     {
-    //       to: '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b',
-    //       value: `0x${BigN(0.04).shiftedBy(18).toString(16)}`
-    //     }
-    //   ],
-    //   address: '0x49E46fc304a448A2132d2DBEd6df47D0084cE92f',
-    //   chain: 'ithaca',
-    //   delegateType: EIP7702DelegateType.KERNEL_V3
-    // })
-    // handleTransactionEIP7683({
-    //   sourceChainId: 911867,
-    //   targetChainId: 911867,
-    //   sourceAddress: '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b',
-    //   targetAddress: '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b',
-    //   sourceToken: '0x6f59A38564B51c628db66D2a2D0A36A7D14Fe3E5',
-    //   targetToken: '0xaE83AD7A59ee18CFE97b79a5cf5Cdf2dF18d0695',
-    //   amount: `0x${BigN(10).shiftedBy(18).toString(16)}`
-    // })
-    handleTransactionEIP7683({
-      sourceChainId: 911867,
-      targetChainId: 11155111,
-      sourceAddress: '0x49E46fc304a448A2132d2DBEd6df47D0084cE92f',
-      targetAddress: '0x49E46fc304a448A2132d2DBEd6df47D0084cE92f',
-      sourceToken: '0xaE83AD7A59ee18CFE97b79a5cf5Cdf2dF18d0695',
-      targetToken: '0x0000000000000000000000000000000000000000',
-      amount: `0x${BigN(100).shiftedBy(6).toString(16)}`
-    })
-    // delegateEIP7702({
-    //   chain: 'ithaca',
-    //   address: '0x49E46fc304a448A2132d2DBEd6df47D0084cE92f',
-    //   delegateType: EIP7702DelegateType.KERNEL_V3
-    // })
-    // undelegateEIP7702({
-    //     chain: 'ithaca',
-    //     address: '0x49E46fc304a448A2132d2DBEd6df47D0084cE92f',
-    // })
-      .then(console.log)
-      .catch(console.error);
-  }, []);
 
   return (
     <div

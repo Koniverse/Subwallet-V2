@@ -1,0 +1,26 @@
+diff --git a/node_modules/@ethereumjs/tx/dist/cjs/util.js b/node_modules/@ethereumjs/tx/dist/cjs/util.js
+index d60cf92..85fc494 100644
+--- a/node_modules/@ethereumjs/tx/dist/cjs/util.js
++++ b/node_modules/@ethereumjs/tx/dist/cjs/util.js
+@@ -171,7 +171,7 @@ class AuthorizationLists {
+             const yParity = authorizationListItem[3];
+             const r = authorizationListItem[4];
+             const s = authorizationListItem[5];
+-            (0, util_1.validateNoLeadingZeroes)({ yParity, r, s });
++            // (0, util_1.validateNoLeadingZeroes)({ yParity, r, s });
+             if (address.length !== 20) {
+                 throw new Error('Invalid EIP-7702 transaction: address length should be 20 bytes');
+             }
+diff --git a/node_modules/@ethereumjs/tx/dist/esm/util.js b/node_modules/@ethereumjs/tx/dist/esm/util.js
+index 36fa7e9..02fcc35 100644
+--- a/node_modules/@ethereumjs/tx/dist/esm/util.js
++++ b/node_modules/@ethereumjs/tx/dist/esm/util.js
+@@ -166,7 +166,7 @@ export class AuthorizationLists {
+             const yParity = authorizationListItem[3];
+             const r = authorizationListItem[4];
+             const s = authorizationListItem[5];
+-            validateNoLeadingZeroes({ yParity, r, s });
++            // validateNoLeadingZeroes({ yParity, r, s });
+             if (address.length !== 20) {
+                 throw new Error('Invalid EIP-7702 transaction: address length should be 20 bytes');
+             }

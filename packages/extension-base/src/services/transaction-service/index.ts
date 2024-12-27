@@ -1170,6 +1170,13 @@ export default class TransactionService {
         id
       });
 
+      if (!rs.isApproved) {
+        eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+        emitter.emit('error', eventData);
+
+        throw new Error('User rejected request');
+      }
+
       emitter.emit('signed', eventData);
 
       this.handleTransactionTimeout(emitter, eventData);

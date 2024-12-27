@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, encodePacked, getContractAddress, keccak256 } from 'viem';
 
 import { HexString } from '@polkadot/util/types';
 
-import { SafeEIP7702ProxyAbi, SafeModuleSetupAbi } from './helper';
+import { SafeEIP7702ProxyAbi, safeEIP7702ProxyByteCode, SafeModuleSetupAbi } from './helper';
 
 const proxyFactory = '0xE60EcE6588DCcFb7373538034963B4D20a280DB0';
 const safeSingleton = '0xCfaA26AD40bFC7E3b1642E1888620FC402b95dAB';
@@ -22,9 +22,27 @@ export const unused = {
   safeSingleton
 };
 
+export const getSafeProxyAddress = (
+  inititalizer: `0x${string}`,
+  proxyCreationCode?: `0x${string}`
+) => {
+  const salt = keccak256(encodePacked(['bytes32', 'uint256'], [keccak256(encodePacked(['bytes'], [inititalizer])), 0n]));
+
+  if (!proxyCreationCode) {
+    proxyCreationCode = safeEIP7702ProxyByteCode;
+  }
+
+  const deploymentCode = encodePacked(['bytes', 'uint256', 'uint256'], [proxyCreationCode || '0x', keccak256(inititalizer) as any, safeSingleton as any]);
+
+  return getContractAddress({
+    bytecode: deploymentCode,
+    from: proxyFactory,
+    opcode: 'CREATE2',
+    salt: salt
+  });
+};
+
 export const createSafeInitDataEIP7702 = (account: string): HexString => {
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   const moduleSetupData: HexString = encodeFunctionData({
     abi: SafeModuleSetupAbi,
     functionName: 'enableModules',
@@ -34,8 +52,6 @@ export const createSafeInitDataEIP7702 = (account: string): HexString => {
   const owners = [account];
   const threshold = 1;
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
     abi: SafeEIP7702ProxyAbi,
     functionName: 'setup',

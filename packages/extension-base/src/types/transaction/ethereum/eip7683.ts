@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { HexString } from "@polkadot/util/types";
+import { HexString } from '@polkadot/util/types';
 
 export interface RequestEIP7683 {
   sourceChainId: number;

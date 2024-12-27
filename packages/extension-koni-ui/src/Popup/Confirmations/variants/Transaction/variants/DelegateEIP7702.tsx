@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicDataTypeMap, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import MetaInfo from '@subwallet/extension-koni-ui/components/MetaInfo/MetaInfo';
 import { useChainInfo, useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
@@ -15,7 +16,7 @@ type Props = BaseTransactionConfirmationProps;
 const Component: React.FC<Props> = ({ className, transaction }: Props) => {
   const { t } = useTranslation();
   const data = transaction.data as ExtrinsicDataTypeMap[ExtrinsicType.EIP7702_DELEGATE];
-  const chainInfo = useChainInfo(transaction.chain)!;
+  const chainInfo = useChainInfo(transaction.chain) as _ChainInfo;
 
   const { decimals: chainDecimals, symbol: chainSymbol } = useGetNativeTokenBasicInfo(transaction.chain);
 
@@ -31,8 +32,8 @@ const Component: React.FC<Props> = ({ className, transaction }: Props) => {
           label={t('Delegate network')}
         />
         <MetaInfo.DisplayType
-          typeName={data.delegateType}
           label={t('Delegate type')}
+          typeName={data.delegateType}
         />
         <MetaInfo.Account
           address={data.delegateAddress}

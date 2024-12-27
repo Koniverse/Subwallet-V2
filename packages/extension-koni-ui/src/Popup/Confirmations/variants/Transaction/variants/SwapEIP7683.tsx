@@ -1,9 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicDataTypeMap, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import MetaInfo from '@subwallet/extension-koni-ui/components/MetaInfo/MetaInfo';
-import { useGetChainInfoByChainId, useGetNativeTokenBasicInfo } from '@subwallet/extension-koni-ui/hooks';
+import { useGetChainInfoByChainId } from '@subwallet/extension-koni-ui/hooks';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -15,12 +16,8 @@ type Props = BaseTransactionConfirmationProps;
 const Component: React.FC<Props> = ({ className, transaction }: Props) => {
   const { t } = useTranslation();
   const data = transaction.data as ExtrinsicDataTypeMap[ExtrinsicType.EIP7683_SWAP];
-  const sourceChain = useGetChainInfoByChainId(data.sourceChainId)!;
-  const targetChain = useGetChainInfoByChainId(data.targetChainId)!;
-
-  console.log(data);
-
-  const { decimals: chainDecimals, symbol: chainSymbol } = useGetNativeTokenBasicInfo(transaction.chain);
+  const sourceChain = useGetChainInfoByChainId(data.sourceChainId) as _ChainInfo;
+  const targetChain = useGetChainInfoByChainId(data.targetChainId) as _ChainInfo;
 
   return (
     <>
@@ -40,15 +37,6 @@ const Component: React.FC<Props> = ({ className, transaction }: Props) => {
         <MetaInfo.Account
           address={data.targetAddress}
           label={t('To account')}
-        />
-      </MetaInfo>
-
-      <MetaInfo hasBackgroundWrapper>
-        <MetaInfo.Number
-          decimals={chainDecimals}
-          label={t('Estimated fee')}
-          suffix={chainSymbol}
-          value={transaction.estimateFee?.value || 0}
         />
       </MetaInfo>
     </>

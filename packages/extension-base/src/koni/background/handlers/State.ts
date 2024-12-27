@@ -52,12 +52,12 @@ import { ZeroAddress } from 'ethers';
 import { t } from 'i18next';
 import { interfaces } from 'manta-extension-sdk';
 import { BehaviorSubject, Subject } from 'rxjs';
+import { parseEther } from 'viem';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
 import { assert, logger as createLogger, noop } from '@polkadot/util';
 import { Logger } from '@polkadot/util/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
-import { parseEther } from 'viem';
 
 import { KoniCron } from '../cron';
 import { KoniSubscription } from '../subscription';
@@ -1876,7 +1876,7 @@ export default class KoniState {
   /* EIP 7683 */
 
   public async handleEIP7683Request (request: RequestEIP7683, override?: OverrideTransactionInput): Promise<SWTransactionResponse> {
-    const { sourceChainId, targetChainId, sourceAddress, targetAddress, amount, targetToken, sourceToken } = request;
+    const { amount, sourceAddress, sourceChainId, sourceToken, targetAddress, targetChainId, targetToken } = request;
     const calls: SmartAccountCall[] = [];
     const steps: EIP7683Step[] = [];
 
@@ -1919,12 +1919,12 @@ export default class KoniState {
           spender: router
         },
         title: 'Approve token'
-      })
+      });
 
       calls.push({
         to: sourceToken,
         data: approveData
-      })
+      });
 
       const swapData = swapTokenToToken(sourceToken, targetToken, amount, targetAddress);
 
@@ -1937,12 +1937,12 @@ export default class KoniState {
           minReceive: '0'
         },
         title: 'Swap token'
-      })
+      });
 
       calls.push({
         to: router,
         data: swapData
-      })
+      });
     }
 
     if (sourceChainId === 911867 && targetChainId === 11155111 && targetToken === ZeroAddress) {
@@ -1961,12 +1961,12 @@ export default class KoniState {
             spender: router
           },
           title: 'Approve token'
-        })
+        });
 
         calls.push({
           to: sourceToken,
           data: approveData
-        })
+        });
 
         const swapData = swapTokenToEth(sourceToken, amount, targetAddress);
 
@@ -1979,12 +1979,12 @@ export default class KoniState {
             minReceive: '0'
           },
           title: 'Swap token'
-        })
+        });
 
         calls.push({
           to: router,
           data: swapData
-        })
+        });
 
         bridgeAmount = `0x${parseEther('0.1').toString(16)}`;
       }
@@ -1997,22 +1997,22 @@ export default class KoniState {
         description: 'Bridge token',
         metadata: {
           bridge: bridge,
-          bridgeAmount: bridgeAmount,
+          bridgeAmount: bridgeAmount
         },
         title: 'Bridge token'
-      })
+      });
 
       calls.push({
         to: bridge,
         data: bridgeData,
         value: BigInt(bridgeAmount)
-      })
+      });
     }
 
     console.log('Calls:', calls);
     console.log('Steps:', steps);
 
-    const data: EIP7683Data = { ...request, steps }
+    const data: EIP7683Data = { ...request, steps };
 
     return this.transactionService.handleEIP7702Transaction({
       address: sourceAddress,
@@ -2024,6 +2024,6 @@ export default class KoniState {
       extrinsicType: ExtrinsicType.EIP7683_SWAP,
       chainType: ChainType.EVM,
       ...override
-    })
+    });
   }
 }

@@ -8,8 +8,8 @@ import { HexString } from '@polkadot/util/types';
 const MULTI_CHAIN_VALIDATOR_ADDRESS = '0x02d32f9c668c92a60b44825c4f79b501c0f685da';
 
 export const createKernelInitDataEIP7702 = (account: string): HexString => {
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return '0x';
+
   return encodeFunctionData({
     abi: [
       {
@@ -56,7 +56,3 @@ export const createKernelInitDataEIP7702 = (account: string): HexString => {
     ]
   });
 };
-
-export const convertKernelUserOp = () => {
-
-}

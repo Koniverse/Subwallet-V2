@@ -3,6 +3,7 @@
 
 import { RequestAccountDelegateEIP7702, RequestAccountUnDelegateEIP7702, RequestHandleTransactionWith7702 } from '@subwallet/extension-base/types';
 import { RequestEIP7683 } from '@subwallet/extension-base/types/transaction/ethereum/eip7683';
+
 import { sendMessage } from '../base';
 
 export async function delegateEIP7702 (request: RequestAccountDelegateEIP7702) {
