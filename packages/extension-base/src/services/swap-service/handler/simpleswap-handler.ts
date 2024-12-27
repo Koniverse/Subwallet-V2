@@ -224,6 +224,8 @@ export class SimpleSwapHandler implements SwapBaseInterface {
   }
 
   public async getSwapQuote (request: SwapRequest): Promise<SwapQuote | SwapError> {
+    console.log('Test', simpleSwapApiKey);
+
     try {
       const fromAsset = this.chainService.getAssetBySlug(request.pair.from);
       const toAsset = this.chainService.getAssetBySlug(request.pair.to);
