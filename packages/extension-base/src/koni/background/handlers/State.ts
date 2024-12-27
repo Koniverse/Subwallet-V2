@@ -43,7 +43,7 @@ import { OverrideTransactionInput, SmartAccountCall, SWTransactionResponse, Tran
 import WalletConnectService from '@subwallet/extension-base/services/wallet-connect-service';
 import { SWStorage } from '@subwallet/extension-base/storage';
 import { BalanceItem, BasicTxErrorType, CurrentAccountInfo, EIP7683Data, EIP7683Step, EvmFeeInfo, RequestCheckPublicAndSecretKey, RequestEIP7683, ResponseCheckPublicAndSecretKey, StorageDataInterface } from '@subwallet/extension-base/types';
-import { approveToken, bridgeEthTo, isManifestV3, stripUrl, swapTokenToEth, swapTokenToToken, targetIsWeb } from '@subwallet/extension-base/utils';
+import { approveToken, bridgeEthTo, estimateTokenOut, isManifestV3, stripUrl, swapTokenToEth, swapTokenToToken, targetIsWeb } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -52,11 +52,11 @@ import { ZeroAddress } from 'ethers';
 import { t } from 'i18next';
 import { interfaces } from 'manta-extension-sdk';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { parseEther } from 'viem';
+import { createPublicClient, http, parseEther } from 'viem';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
 import { assert, logger as createLogger, noop } from '@polkadot/util';
-import { Logger } from '@polkadot/util/types';
+import { HexString, Logger } from '@polkadot/util/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
 import { KoniCron } from '../cron';
@@ -1906,6 +1906,13 @@ export default class KoniState {
 
     const supportSwapToken = ['0xaE83AD7A59ee18CFE97b79a5cf5Cdf2dF18d0695', '0x6f59A38564B51c628db66D2a2D0A36A7D14Fe3E5'];
 
+    const convertMinOut = (expectAmount: HexString): HexString => {
+      const amount = BigInt(expectAmount);
+      const minAmount = amount * 95n / 100n;
+
+      return `0x${minAmount.toString(16)}`;
+    }
+
     if (supportSwapToken.includes(targetToken) && supportSwapToken.includes(sourceToken)) {
       const router = '0x354EDb76B4D1E53500FB8EE10696f59048C18ccD';
       const approveData = approveToken(router, amount);
@@ -1926,7 +1933,18 @@ export default class KoniState {
         data: approveData
       });
 
-      const swapData = swapTokenToToken(sourceToken, targetToken, amount, targetAddress);
+      const factory = '0x18DC0a65091416aB864c763a8D2A54Da0F6aD01a';
+      const rpc = this.getEvmApi('ithaca').apiUrl;
+      const transport = http(rpc);
+
+      const publicClient = createPublicClient({
+        transport
+      });
+
+      const tokenOut = await estimateTokenOut(sourceToken, targetToken, amount, factory, publicClient);
+      const outMin = convertMinOut(tokenOut);
+
+      const swapData = swapTokenToToken(sourceToken, targetToken, targetAddress, amount, outMin);
 
       steps.push({
         key: 'swap',
@@ -1968,7 +1986,20 @@ export default class KoniState {
           data: approveData
         });
 
-        const swapData = swapTokenToEth(sourceToken, amount, targetAddress);
+        const factory = '0x18DC0a65091416aB864c763a8D2A54Da0F6aD01a';
+        const rpc = this.getEvmApi('ithaca').apiUrl;
+        const transport = http(rpc);
+
+        const publicClient = createPublicClient({
+          transport
+        });
+
+        const tokenOut = await estimateTokenOut(sourceToken, '0x582fCdAEc1D2B61c1F71FC5e3D2791B8c76E44AE', amount, factory, publicClient);
+        const outMin = convertMinOut(tokenOut);
+
+        bridgeAmount = outMin;
+
+        const swapData = swapTokenToEth(sourceToken, targetAddress, amount, outMin);
 
         steps.push({
           key: 'swap',
@@ -1985,8 +2016,6 @@ export default class KoniState {
           to: router,
           data: swapData
         });
-
-        bridgeAmount = `0x${parseEther('0.1').toString(16)}`;
       }
 
       const bridge = '0x4200000000000000000000000000000000000010';

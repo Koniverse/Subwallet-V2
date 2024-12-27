@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ERC20_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
-import { encodeFunctionData } from 'viem';
+import { encodeFunctionData, PublicClient } from 'viem';
 
 import { HexString } from '@polkadot/util/types';
 
-import { BridgeAbi, UniswapV2RouterAbi } from './helper';
+import { BridgeAbi, UniswapFactoryV2Abi, UniswapPairV2Abi, UniswapRouterV2Abi } from './helper';
 
-export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString, amount: HexString, to: HexString): HexString => {
+export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString, to: HexString, amountIn: HexString, minOut: HexString): HexString => {
   const deadline = Date.now() + 60000;
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
-    abi: UniswapV2RouterAbi,
+    abi: UniswapRouterV2Abi,
     functionName: 'swapExactTokensForTokens',
     args: [
-      amount,
-      '0x00',
+      amountIn,
+      minOut,
       [sourceToken, targetToken],
       to,
       `0x${deadline.toString(16)}`
@@ -26,18 +26,51 @@ export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString,
   });
 };
 
-export const swapTokenToEth = (sourceToken: HexString, amount: HexString, to: HexString): HexString => {
+export const estimateTokenOut = async (sourceToken: HexString, targetToken: HexString, amount: HexString, factory: HexString, client: PublicClient): Promise<HexString> => {
+  const pairAddress = (await client.readContract({
+    abi: UniswapFactoryV2Abi,
+    address: factory,
+    functionName: 'getPair',
+    args: [sourceToken, targetToken]
+  })) as HexString;
+
+  const token0 = (await client.readContract({
+    abi: UniswapPairV2Abi,
+    address: pairAddress,
+    functionName: 'token0'
+  })) as HexString;
+
+  const [reserve0, reserve1] = (await client.readContract({
+    abi: UniswapPairV2Abi,
+    address: pairAddress,
+    functionName: 'getReserves'
+  })) as [bigint, bigint, number];
+
+  const amountIn = BigInt(amount);
+
+  const getOut = (reserve0: bigint, reserve1: bigint, in0: bigint) => {
+    return in0 * reserve1 / reserve0;
+  };
+
+  if (token0.toLowerCase() === sourceToken.toLowerCase()) {
+    return `0x${getOut(reserve0, reserve1, amountIn).toString(16)}`;
+  } else {
+    return `0x${getOut(reserve1, reserve0, amountIn).toString(16)}`;
+  }
+};
+
+export const swapTokenToEth = (sourceToken: HexString, to: HexString, amountIn: HexString, minOut: HexString): HexString => {
   const deadline = Date.now() + 60000;
   const WETH = '0x582fCdAEc1D2B61c1F71FC5e3D2791B8c76E44AE';
 
   // @ts-ignore
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
-    abi: UniswapV2RouterAbi,
+    abi: UniswapRouterV2Abi,
     functionName: 'swapExactTokensForETH',
     args: [
-      amount,
-      '0x00',
+      amountIn,
+      minOut,
       [sourceToken, WETH],
       to,
       `0x${deadline.toString(16)}`
