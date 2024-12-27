@@ -3,6 +3,7 @@
 
 import { EOACodeEIP7702TxData } from '@ethereumjs/tx';
 import { _ChainInfo } from '@subwallet/chain-list/types';
+import { pimlicoApiKey } from '@subwallet/extension-base/constants';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
@@ -125,7 +126,6 @@ export const mockSmartAccountClient = async (_address: string, rpc: string, chai
     throw new Error('Could not create smart account');
   }
 
-  const pimlicoApiKey = 'pim_AVKEuVYzUrru63JCmuVKnb';
   const pimlicoUrl = `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${pimlicoApiKey}`;
 
   const pimlicoClient = createPimlicoClient({

@@ -64,7 +64,8 @@ const _additionalEnv = {
   BITTENSOR_API_KEY_4: JSON.stringify(process.env.BITTENSOR_API_KEY_4),
   BITTENSOR_API_KEY_5: JSON.stringify(process.env.BITTENSOR_API_KEY_5),
   BITTENSOR_API_KEY_6: JSON.stringify(process.env.BITTENSOR_API_KEY_6),
-  SIMPLE_SWAP_API_KEY: JSON.stringify(process.env.SIMPLE_SWAP_API_KEY)
+  SIMPLE_SWAP_API_KEY: JSON.stringify(process.env.SIMPLE_SWAP_API_KEY),
+  PIMLICO_API_KEY: JSON.stringify(process.env.PIMLICO_API_KEY)
 };
 
 const createConfig = (entry, alias = {}, useSplitChunk = false) => {
