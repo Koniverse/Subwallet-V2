@@ -1413,5 +1413,21 @@
   "Unable to send. NFT not supported on recipient address": "",
   "EVM accounts": "",
   "Substrate accounts": "",
-  "Unable to process this swap at the moment. Try again later": ""
+  "Unable to process this swap at the moment. Try again later": "",
+  "Delegate account": "",
+  "Sign authorization request": "",
+  "Delegate account confirmation": "",
+  "Undelegate account confirmation": "",
+  "EIP7683 confirmation": "",
+  "Delegate network": "",
+  "Delegate type": "",
+  "Delegate address": "",
+  "From Chain": "",
+  "To Chain": "",
+  "Undelegate network": "",
+  "Undelegate account": "",
+  "EIP7683 Swap": "",
+  "Delegate account transaction": "",
+  "Undelegate account transaction": "",
+  "EIP7683 swap transaction": ""
 }

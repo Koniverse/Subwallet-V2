@@ -1175,8 +1175,9 @@ export interface ErrorNetworkConnection {
   errors: ErrorValidation[]
 }
 
-export interface SignAuthorizeRequest extends SignAuthEIP7702, Omit<EvmSignRequest, 'hashPayload'> {
+export interface SignAuthorizeRequest extends SignAuthEIP7702, EvmSignRequest {
   id: string;
+  errors?: ErrorValidation[];
 }
 
 export interface ConfirmationDefinitions {

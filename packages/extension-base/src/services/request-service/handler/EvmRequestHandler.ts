@@ -4,9 +4,7 @@
 import { Common } from '@ethereumjs/common';
 import { AuthorizationListItem } from '@ethereumjs/common/src/interfaces';
 import { EOACodeEIP7702Transaction, EOACodeEIP7702TxData, FeeMarketEIP1559Transaction, FeeMarketEIP1559TxData, LegacyTransaction, LegacyTxData, TransactionType, TypedTransaction } from '@ethereumjs/tx';
-
-import { bnToHex, hexAddPrefix, logger as createLogger, numberToHex } from '@polkadot/util';
-import { Logger } from '@polkadot/util/types';
+import { _ChainInfo } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { ChainType, ConfirmationDefinitions, ConfirmationsQueue, ConfirmationsQueueItemOptions, ConfirmationType, EvmProviderErrorType, RequestConfirmationComplete, SignAuthorizeRequest } from '@subwallet/extension-base/background/KoniTypes';
 import { ConfirmationRequestBase, Resolver } from '@subwallet/extension-base/background/types';
@@ -23,10 +21,13 @@ import BN from 'bn.js';
 import { toBuffer } from 'ethereumjs-util';
 import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
-import { createWalletClient, http, parseSignature, WalletClient, defineChain } from 'viem';
+import { createWalletClient, defineChain, http, parseSignature, WalletClient } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { SignedAuthorization } from 'viem/experimental';
+import { AuthorizationList, SignedAuthorization } from 'viem/experimental';
 import { TransactionConfig } from 'web3-core';
+
+import { bnToHex, hexAddPrefix, logger as createLogger, numberToHex } from '@polkadot/util';
+import { HexString, Logger } from '@polkadot/util/types';
 
 export default class EvmRequestHandler {
   readonly #requestService: RequestService;
@@ -175,7 +176,7 @@ export default class EvmRequestHandler {
   }
 
   configToTransaction (config: TransactionConfig): TypedTransaction {
-    function formatField (input: string | number | undefined | BN): number | string | undefined {
+    function formatField (input: string | number | undefined | BN): number | HexString | undefined {
       if (typeof input === 'string' || typeof input === 'number') {
         return hexAddPrefix(new BigN(input).toString(16));
       } else if (typeof input === 'undefined') {
@@ -186,10 +187,12 @@ export default class EvmRequestHandler {
     }
 
     const common = Common.custom({ chainId: config.chainId, defaultHardfork: 'cancun', networkId: config.chainId }, { eips: [1559, 7702] });
+
     if ('authorizationList' in config) {
+      const authorizationList = config.authorizationList as SignedAuthorization[];
+
       const txData: EOACodeEIP7702TxData = {
-        // @ts-ignore
-        authorizationList: config.authorizationList.map<AuthorizationListItem>((auth: SignedAuthorization) => ({
+        authorizationList: authorizationList.map<AuthorizationListItem>((auth: SignedAuthorization) => ({
           chainId: numberToHex(auth.chainId),
           address: auth.contractAddress,
           nonce: [numberToHex(auth.nonce)],
@@ -199,10 +202,9 @@ export default class EvmRequestHandler {
         })),
         gasLimit: 1_000_000,
         nonce: formatField(config.nonce),
-        to: config.to,
+        to: config.to as HexString,
         value: formatField(config.value),
-        data: toBuffer(config.data),
-        gasPrice: formatField(config.gasPrice),
+        data: Uint8Array.from(toBuffer(config.data)),
         maxFeePerGas: formatField(config.maxFeePerGas),
         maxPriorityFeePerGas: formatField(config.maxPriorityFeePerGas),
         chainId: config.chainId
@@ -215,9 +217,9 @@ export default class EvmRequestHandler {
       const txData: FeeMarketEIP1559TxData = {
         nonce: formatField(config.nonce),
         gasLimit: formatField(config.gas),
-        to: config.to,
+        to: config.to as HexString,
         value: formatField(config.value),
-        data: toBuffer(config.data),
+        data: Uint8Array.from(toBuffer(config.data)),
         maxFeePerGas: formatField(config.maxFeePerGas),
         maxPriorityFeePerGas: formatField(config.maxPriorityFeePerGas),
         chainId: config.chainId
@@ -230,9 +232,9 @@ export default class EvmRequestHandler {
         nonce: formatField(config.nonce),
         gasLimit: formatField(config.gas),
         gasPrice: formatField(config.gasPrice),
-        to: config.to,
+        to: config.to as HexString,
         value: formatField(config.value),
-        data: toBuffer(config.data)
+        data: Uint8Array.from(toBuffer(config.data))
       };
 
       return new LegacyTransaction(txData, { common });
@@ -241,7 +243,7 @@ export default class EvmRequestHandler {
 
   private async signTransaction (confirmation: ConfirmationDefinitions['evmSendTransactionRequest'][0]): Promise<string> {
     const transaction = confirmation.payload;
-    const { estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value, chainId } = transaction;
+    const { chainId, estimateGas, from, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, value } = transaction;
     const pair = keyring.getPair(from as string);
     const params = {
       ...transaction,
@@ -262,48 +264,53 @@ export default class EvmRequestHandler {
       keyring.unlockPair(pair.address);
     }
 
-    if (tx.type === TransactionType.EOACodeEIP7702) {
+    if (tx.type === TransactionType.EOACodeEIP7702 && 'authorizationList' in params) {
       const chainInfoMap = this.#requestService.chainService.getChainInfoMap();
-      const chainInfo = findChainInfoByChainId(chainInfoMap, chainId)!;
+      const chainInfo = findChainInfoByChainId(chainInfoMap, chainId) as _ChainInfo;
       const evmApi = this.#requestService.chainService.getEvmApi(chainInfo.slug || '');
       const rpc = evmApi.apiUrl;
-      const account = privateKeyToAccount(pair.evm.privateKey)
+      const account = privateKeyToAccount(pair.evm.privateKey);
       const client: WalletClient = createWalletClient({
         account,
         transport: http(rpc)
-      })
+      });
 
-      const { authorizationList, data, maxFeePerGas, maxPriorityFeePerGas, gas, value } = params;
+      const { data, gas, maxFeePerGas, maxPriorityFeePerGas, value } = params;
+      const authorizationList = params.authorizationList as SignedAuthorization;
       const chain = defineChain({
-        id: chainId,
+        id: chainId as number,
         name: chainInfo.name,
         nativeCurrency: {
-          name: "Ethereum",
-          symbol: "ETH",
-          decimals: 18,
+          name: 'Ethereum',
+          symbol: 'ETH',
+          decimals: 18
         },
         rpcUrls: {
           default: {
             http: [rpc],
-            webSocket: undefined,
-          },
+            webSocket: undefined
+          }
         },
-        testnet: chainInfo.isTestnet,
+        testnet: chainInfo.isTestnet
       });
+
+      const convertNumber = (num?: string | number | BN | undefined) => {
+        return typeof num === 'number' ? BigInt(num) : undefined;
+      };
 
       const request = await client.prepareTransactionRequest({
         chain,
         account: account,
         to: account.address, // The address of the MultiSendCallOnly contract
-        data, // MultiSend call
-        value, // Value sent with the transaction
-        authorizationList,
-        gas,
-        maxFeePerGas,
-        maxPriorityFeePerGas
-      })
+        data: data as undefined | HexString, // MultiSend call
+        value: convertNumber(value), // Value sent with the transaction
+        authorizationList: authorizationList as unknown as AuthorizationList,
+        gas: convertNumber(gas),
+        maxFeePerGas: convertNumber(maxFeePerGas),
+        maxPriorityFeePerGas: convertNumber(maxPriorityFeePerGas)
+      });
 
-      return await client.signTransaction(request)
+      return await client.signTransaction(request);
     }
 
     return pair.evm.signTransaction(tx);
@@ -385,6 +392,7 @@ export default class EvmRequestHandler {
     const requestPayload: SignAuthorizeRequest = {
       ...request,
       canSign: true,
+      hashPayload: '',
       id
     };
 

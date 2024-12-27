@@ -1,12 +1,6 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
-import { Signer, SignerOptions, SignerResult } from '@polkadot/api/types';
-import { EventRecord } from '@polkadot/types/interfaces';
-import { SignerPayloadJSON } from '@polkadot/types/types/extrinsic';
-import { hexToU8a, isHex, u8aToHex } from '@polkadot/util';
-import { HexString } from '@polkadot/util/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
@@ -24,7 +18,7 @@ import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/reques
 import { TRANSACTION_TIMEOUT } from '@subwallet/extension-base/services/transaction-service/constants';
 import { parseLiquidStakingEvents, parseLiquidStakingFastUnstakeEvents, parseTransferEventLogs, parseXcmEventLogs } from '@subwallet/extension-base/services/transaction-service/event-parser';
 import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
-import { SmartAccountTransaction, SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput, ViemSignMessageFunc } from '@subwallet/extension-base/services/transaction-service/types';
+import { OptionalSWTransaction, SmartAccountTransaction, SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput, ViemSignMessageFunc } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
 import { AccountJson, BasicTxErrorType, BasicTxWarningCode, EIP7702DelegateType, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, SubmitJoinNominationPool, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
@@ -42,6 +36,13 @@ import { BehaviorSubject, interval as rxjsInterval, Subscription } from 'rxjs';
 import { createPublicClient, http, TransactionReceipt as ViemTransactionReceipt } from 'viem';
 import { UserOperationReceipt } from 'viem/account-abstraction';
 import { TransactionConfig, TransactionReceipt } from 'web3-core';
+
+import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
+import { Signer, SignerOptions, SignerResult } from '@polkadot/api/types';
+import { EventRecord } from '@polkadot/types/interfaces';
+import { SignerPayloadJSON } from '@polkadot/types/types/extrinsic';
+import { hexToU8a, isHex, u8aToHex } from '@polkadot/util';
+import { HexString } from '@polkadot/util/types';
 
 import NotificationService from '../notification-service/NotificationService';
 
@@ -97,6 +98,7 @@ export default class TransactionService {
       status: undefined,
       errors: transactionInput.errors || [],
       warnings: transactionInput.warnings || [],
+      // @ts-ignore
       submitType: 'eoa'
     };
     const { additionalValidator, address, chain, extrinsicType } = validationResponse;
@@ -117,7 +119,7 @@ export default class TransactionService {
       checkSupportForAction(validationResponse, blockedActionsMap);
     }
 
-    const transaction = transactionInput.transaction;
+    const transaction = transactionInput.transaction as OptionalSWTransaction;
 
     // Check duplicated transaction
     validationResponse.errors.push(...this.checkDuplicate(transactionInput));
@@ -1075,16 +1077,16 @@ export default class TransactionService {
             if ('authorizationList' in payload) {
               const publicClient = createPublicClient({
                 transport: http(evmApi.apiUrl)
-              })
+              });
 
-              publicClient.sendRawTransaction({ serializedTransaction: signedTransaction })
+              publicClient.sendRawTransaction({ serializedTransaction: signedTransaction as HexString })
                 .then((hash: string) => {
                   eventData.extrinsicHash = hash;
                   emitter.emit('extrinsicHash', eventData);
 
                   return publicClient.waitForTransactionReceipt({
-                    hash: hash,
-                    pollingInterval: 12_000,
+                    hash: hash as HexString,
+                    pollingInterval: 6_000
                   });
                 })
                 .then((rs: ViemTransactionReceipt) => {
@@ -1102,7 +1104,7 @@ export default class TransactionService {
                 .catch((e: Error) => {
                   eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
                   emitter.emit('error', eventData);
-                })
+                });
             } else {
               signedTransaction && web3Api.eth.sendSignedTransaction(signedTransaction)
                 .once('transactionHash', (hash) => {
@@ -1166,14 +1168,14 @@ export default class TransactionService {
         type: 'personal_sign',
         canSign: true,
         id
-      })
+      });
 
       emitter.emit('signed', eventData);
 
       this.handleTransactionTimeout(emitter, eventData);
 
       return rs.payload as HexString;
-    }
+    };
 
     const smartAccountClient = await mockSmartAccountClient(address, rpc, chainInfo, EIP7702DelegateType.KERNEL_V3, signMessage);
 
@@ -1184,13 +1186,13 @@ export default class TransactionService {
         emitter.emit('send', eventData);
 
         return smartAccountClient.waitForUserOperationReceipt({
-          hash: userOperationHash,
-        })
+          hash: userOperationHash
+        });
       })
       .then((rs: UserOperationReceipt) => {
         const { receipt } = rs;
 
-        const { transactionHash, status } = receipt;
+        const { status, transactionHash } = receipt;
 
         eventData.extrinsicHash = transactionHash;
         emitter.emit('extrinsicHash', eventData);
@@ -1207,11 +1209,10 @@ export default class TransactionService {
       .catch((e: Error) => {
         eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SEND, t(e.message)));
         emitter.emit('error', eventData);
-      })
+      });
 
     return emitter;
   }
-
 
   private signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): TransactionEmitter {
     const emitter = new EventEmitter<TransactionEventMap>();
@@ -1404,6 +1405,7 @@ export default class TransactionService {
       status: undefined,
       errors: transaction.errors || [],
       warnings: transaction.warnings || [],
+      // @ts-ignore
       submitType: 'smartAccount'
     };
     const ignoreWarnings: BasicTxWarningCode[] = validatedTransaction.ignoreWarnings || [];
@@ -1447,7 +1449,6 @@ export default class TransactionService {
 
     return validatedTransaction;
   }
-
 
   private handleTransactionTimeout (emitter: EventEmitter<TransactionEventMap>, eventData: TransactionEventResponse): void {
     const timeout = setTimeout(() => {

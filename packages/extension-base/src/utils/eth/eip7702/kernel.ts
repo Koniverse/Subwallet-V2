@@ -50,7 +50,7 @@ export const createKernelInitDataEIP7702 = (account: string): HexString => {
     args: [
       concat(['0x01', MULTI_CHAIN_VALIDATOR_ADDRESS]),
       zeroAddress,
-      account,
+      account as HexString,
       '0x',
       []
     ]

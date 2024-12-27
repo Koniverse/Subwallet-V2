@@ -246,6 +246,8 @@ export default class DatabaseService {
     if (item.state === APIItemState.READY) {
       return this.stores.balance.upsert({ ...item } as IBalance);
     }
+
+    return undefined;
   }
 
   async updateBulkBalanceStore (items: BalanceItem[]) {
@@ -254,6 +256,8 @@ export default class DatabaseService {
     if (filtered.length) {
       return this.stores.balance.bulkUpsert(filtered);
     }
+
+    return undefined;
   }
 
   async removeFromBalanceStore (assets: string[]) {
@@ -274,6 +278,8 @@ export default class DatabaseService {
     if (item.state === APIItemState.READY) {
       return this.stores.staking.upsert(item);
     }
+
+    return undefined;
   }
 
   async getStakings (addresses: string[], chains?: string[]) {

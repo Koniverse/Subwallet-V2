@@ -10,7 +10,6 @@ import { TonWalletContract } from '@subwallet/keyring/types';
 import { Address, beginCell, Cell, MessageRelaxed, SendMode as TonSendMode, storeMessage, storeMessageRelaxed } from '@ton/core';
 import { external, JettonMaster, JettonWallet, OpenedContract, WalletContractV3R1, WalletContractV3R2, WalletContractV4, WalletContractV5R1 } from '@ton/ton';
 import { Maybe } from '@ton/ton/dist/utils/maybe';
-import { Buffer } from 'buffer';
 import nacl from 'tweetnacl';
 
 export function getJettonMasterContract (tonApi: _TonApi, contractAddress: string) {
@@ -121,6 +120,7 @@ export function getWalletQueryId () {
 
   const swSignalBuffer = Buffer.from(swSignal, 'hex');
   const randomBuffer = nacl.randomBytes(4);
+  // @ts-ignore
   const buffer = Buffer.concat([swSignalBuffer, randomBuffer]);
 
   return BigInt('0x' + buffer.toString('hex'));

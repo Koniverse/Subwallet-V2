@@ -24,7 +24,7 @@ function Component (props: Props): React.ReactElement<Props> {
   const { address: validatorAddress,
     commission,
     decimals,
-    expectedReturn: earningEstimated = '',
+    expectedReturn: earningEstimated,
     identity: validatorName = '',
     minBond: minStake,
     nominatorCount,
@@ -143,10 +143,10 @@ function Component (props: Props): React.ReactElement<Props> {
         }
 
         {
-          earningEstimated > 0 && earningEstimated !== '' && <MetaInfo.Number
+          !!earningEstimated && <MetaInfo.Number
             label={t('Estimated APY')}
             suffix={'%'}
-            value={earningEstimated}
+            value={earningEstimated?.toString()}
             valueColorSchema={'even-odd'}
           />
         }

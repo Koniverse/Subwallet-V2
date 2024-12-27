@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { EOACodeEIP7702TxData } from '@ethereumjs/tx';
-
-import { hexAddPrefix } from '@polkadot/util';
-import { HexString } from '@polkadot/util/types';
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getEvmChainId } from '@subwallet/extension-base/services/chain-service/utils';
@@ -13,17 +10,19 @@ import { ViemSignMessageFunc } from '@subwallet/extension-base/services/transact
 import { EIP7702DelegateType, EvmFeeInfo } from '@subwallet/extension-base/types';
 import keyring from '@subwallet/ui-keyring';
 import { t } from 'i18next';
-import { createSmartAccountClient } from 'permissionless';
+import { createSmartAccountClient, SmartAccountClient } from 'permissionless';
 import { toKernelSmartAccount, toSafeSmartAccount } from 'permissionless/accounts';
-import { SmartAccountClient } from 'permissionless/clients/createSmartAccountClient';
 import { createPimlicoClient } from 'permissionless/clients/pimlico';
-import { createPublicClient, defineChain, http } from 'viem';
+import { Account, createPublicClient, defineChain, http } from 'viem';
 import { entryPoint07Address } from 'viem/account-abstraction';
-import { Account } from 'viem/accounts/types';
 import { SignedAuthorization } from 'viem/experimental';
+
+import { hexAddPrefix } from '@polkadot/util';
+import { HexString } from '@polkadot/util/types';
 
 export const createInitEIP7702Tx = async (chain: string, address: HexString, authorization: SignedAuthorization, data: HexString, web3Api: _EvmApi): Promise<EOACodeEIP7702TxData> => {
   const txConfig: EOACodeEIP7702TxData = {
+    // @ts-ignore
     authorizationList: [authorization],
     data: '0x',
     to: address
@@ -74,23 +73,23 @@ export const mockSmartAccountClient = async (_address: string, rpc: string, chai
     publicKey,
     source: 'keypair',
     type: 'local'
-  }
+  };
 
   const chain = defineChain({
     id: chainId,
     name: chainInfo.name,
     nativeCurrency: {
-      name: "Ethereum",
-      symbol: "ETH",
-      decimals: 18,
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18
     },
     rpcUrls: {
       default: {
         http: [rpc],
-        webSocket: undefined,
-      },
+        webSocket: undefined
+      }
     },
-    testnet: chainInfo.isTestnet,
+    testnet: chainInfo.isTestnet
   });
 
   const transport = http(rpc);
@@ -98,7 +97,7 @@ export const mockSmartAccountClient = async (_address: string, rpc: string, chai
   const publicClient = createPublicClient({
     transport,
     chain
-  })
+  });
 
   let smartAccount: Account | undefined;
 
@@ -106,39 +105,39 @@ export const mockSmartAccountClient = async (_address: string, rpc: string, chai
     smartAccount = await toKernelSmartAccount({
       address: address,
       client: publicClient,
-      version: "0.3.1",
+      version: '0.3.1',
       owners: [owner],
       entryPoint: {
         address: entryPoint07Address,
-        version: "0.7"
+        version: '0.7'
       }
-    })
+    });
   } else if (delegateType === EIP7702DelegateType.SAFE) {
     smartAccount = await toSafeSmartAccount({
       address: address,
       owners: [owner],
       client: publicClient,
-      version: "1.4.1",
-    })
+      version: '1.4.1'
+    });
   }
 
   if (!smartAccount) {
     throw new Error('Could not create smart account');
   }
 
-  const pimlicoApiKey = 'pim_AVKEuVYzUrru63JCmuVKnb'
-  const pimlicoUrl = `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${pimlicoApiKey}`
+  const pimlicoApiKey = 'pim_AVKEuVYzUrru63JCmuVKnb';
+  const pimlicoUrl = `https://api.pimlico.io/v2/${chainId}/rpc?apikey=${pimlicoApiKey}`;
 
   const pimlicoClient = createPimlicoClient({
-    transport: http(pimlicoUrl),
-  })
+    transport: http(pimlicoUrl)
+  });
 
   return createSmartAccountClient({
     account: smartAccount,
     paymaster: pimlicoClient,
     bundlerTransport: http(pimlicoUrl),
     userOperation: {
-      estimateFeesPerGas: async () => (await pimlicoClient.getUserOperationGasPrice()).fast,
-    },
+      estimateFeesPerGas: async () => (await pimlicoClient.getUserOperationGasPrice()).fast
+    }
   });
-}
+};

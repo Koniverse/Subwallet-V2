@@ -26,11 +26,11 @@ const useHandleSubmitTransaction = (setIgnoreWarnings?: (value: boolean) => void
         if (errors[0]?.message?.startsWith('Unable to fetch staking data.')) {
           openRecheckChainConnectionModal(errors[0].message.split('"')[1]);
         } else if (
-          errors[0]?.message.startsWith(
-            'UnknownError Connection to Indexed DataBase server lost' ||
-            'Provided address is invalid, the capitalization checksum test failed' ||
+          [
+            'UnknownError Connection to Indexed DataBase server lost',
+            'Provided address is invalid, the capitalization checksum test failed',
             'connection not open on send()'
-          )
+          ].some((v) => errors[0]?.message.startsWith(v))
         ) {
           notify({
             message: t('Your selected network has lost connection. Update it by re-enabling it or changing network provider'),

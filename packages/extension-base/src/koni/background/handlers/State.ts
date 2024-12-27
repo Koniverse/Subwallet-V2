@@ -55,7 +55,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
 import { assert, logger as createLogger, noop } from '@polkadot/util';
-import { HexString, Logger } from '@polkadot/util/types';
+import { Logger } from '@polkadot/util/types';
 import { isEthereumAddress } from '@polkadot/util-crypto';
 import { parseEther } from 'viem';
 

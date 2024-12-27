@@ -501,6 +501,10 @@ function lintDependencies (dir, locals) {
           const isTest = full.endsWith('.spec.ts') || full.endsWith('.test.ts') || full.endsWith('.manual.ts') || full.includes('/test/');
 
           if (!(isTest ? devDeps : deps).includes(dep)) {
+            // With viem and permissionless, we have a number of shared dependencies that are not in the package.json
+            if (dep.startsWith('viem') || dep.startsWith('permissionless')) {
+              return null;
+            }
             return createError(full, l, n, `${dep} is not included in package.json dependencies`);
           } else if (local) {
             const ref = local[0];

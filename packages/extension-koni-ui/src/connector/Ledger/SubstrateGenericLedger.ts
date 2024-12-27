@@ -62,7 +62,7 @@ export class SubstrateGenericLedger extends BaseLedger<PolkadotGenericApp> {
       const rs = await this.wrapError((app.signWithMetadata(path, Buffer.from(message), Buffer.from(metadata))));
 
       return {
-        signature: hexAddPrefix(u8aToHex(rs.signature))
+        signature: hexAddPrefix(u8aToHex(Uint8Array.from(rs.signature)))
       };
     });
   }
@@ -73,7 +73,7 @@ export class SubstrateGenericLedger extends BaseLedger<PolkadotGenericApp> {
 
       const rs = await this.wrapError(app.signRaw(path, Buffer.from(wrapBytes(message))));
 
-      const raw = hexStripPrefix(u8aToHex(rs.signature));
+      const raw = hexStripPrefix(u8aToHex(Uint8Array.from(rs.signature)));
       const firstByte = raw.slice(0, 2);
       // Source: https://github.com/polkadot-js/common/blob/a82ebdf6f9d78791bd1f21cd3c534deee37e0840/packages/keyring/src/pair/index.ts#L29-L34
       const isExtraByte = firstByte === '00';

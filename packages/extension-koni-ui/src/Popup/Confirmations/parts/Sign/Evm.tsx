@@ -11,7 +11,7 @@ import { completeConfirmation } from '@subwallet/extension-koni-ui/messaging';
 import { PhosphorIcon, SigData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { AccountSignMode } from '@subwallet/extension-koni-ui/types/account';
 import { EvmSignatureSupportType } from '@subwallet/extension-koni-ui/types/confirmation';
-import { getSignMode, isEvmMessage, removeTransactionPersist } from '@subwallet/extension-koni-ui/utils';
+import { getSignMode, isEvmAuthorization, isEvmMessage, removeTransactionPersist } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, ModalContext } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, QrCode, Swatches, Wallet, XCircle } from 'phosphor-react';
@@ -171,8 +171,10 @@ const Component: React.FC<Props> = (props: Props) => {
     if (evmWallet) {
       let promise: Promise<`0x${string}`>;
 
-      if (isMessage) {
+      if (isEvmMessage(payload)) {
         promise = evmWallet.request<`0x${string}`>({ method: payload.payload.type, params: [account?.address || address, payload.payload.payload] });
+      } else if (isEvmAuthorization(payload)) {
+        promise = Promise.reject(new Error('Authorization is not supported'));
       } else {
         promise = new Promise<`0x${string}`>((resolve, reject) => {
           const { address, canSign, estimateGas, hashPayload, isToContract, parseData, ...transactionConfig } = payload.payload;
@@ -204,7 +206,7 @@ const Component: React.FC<Props> = (props: Props) => {
           setLoading(false);
         });
     }
-  }, [account?.address, address, chainId, evmWallet, isMessage, onApproveSignature, payload.payload]);
+  }, [account?.address, address, chainId, evmWallet, onApproveSignature, payload]);
 
   const onConfirm = useCallback(() => {
     removeTransactionPersist(extrinsicType);

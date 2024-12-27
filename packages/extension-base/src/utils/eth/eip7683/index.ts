@@ -1,9 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { HexString } from '@polkadot/util/types';
 import { _ERC20_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { encodeFunctionData } from 'viem';
+
+import { HexString } from '@polkadot/util/types';
+
 import { BridgeAbi, UniswapV2RouterAbi } from './helper';
 
 export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString, amount: HexString, to: HexString): HexString => {
@@ -22,7 +24,7 @@ export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString,
       `0x${deadline.toString(16)}`
     ]
   });
-}
+};
 
 export const swapTokenToEth = (sourceToken: HexString, amount: HexString, to: HexString): HexString => {
   const deadline = Date.now() + 60000;
@@ -41,7 +43,7 @@ export const swapTokenToEth = (sourceToken: HexString, amount: HexString, to: He
       `0x${deadline.toString(16)}`
     ]
   });
-}
+};
 
 export const approveToken = (spender: HexString, amount: HexString): HexString => {
   // @ts-ignore
@@ -54,7 +56,7 @@ export const approveToken = (spender: HexString, amount: HexString): HexString =
       amount
     ]
   });
-}
+};
 
 export const bridgeEthTo = (address: HexString): HexString => {
   // @ts-ignore

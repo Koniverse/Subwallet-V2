@@ -33,7 +33,6 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.MINT_SDOT]: detectTranslate('Mint sDOT'), // TODO: Change this
   [ExtrinsicType.MINT_QDOT]: detectTranslate('Mint qDOT'), // TODO: Change this
   [ExtrinsicType.MINT_STDOT]: detectTranslate('Mint stDOT'), // TODO: Change this
-  [ExtrinsicType.MINT_VMANTA]: detectTranslate('Mint vMANTA'), // TODO: Change this
 
   [ExtrinsicType.REDEEM_VDOT]: detectTranslate('Redeem vDOT'), // TODO: Change this
   [ExtrinsicType.REDEEM_VMANTA]: detectTranslate('Redeem vMANTA'), // TODO: Change this
@@ -41,7 +40,6 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.REDEEM_SDOT]: detectTranslate('Redeem sDOT'), // TODO: Change this
   [ExtrinsicType.REDEEM_QDOT]: detectTranslate('Redeem qDOT'), // TODO: Change this
   [ExtrinsicType.REDEEM_STDOT]: detectTranslate('Redeem stDOT'), // TODO: Change this
-  [ExtrinsicType.REDEEM_VMANTA]: detectTranslate('Redeem vMANTA'),
 
   [ExtrinsicType.UNSTAKE_VDOT]: detectTranslate('Unstake vDOT'),
   [ExtrinsicType.UNSTAKE_VMANTA]: detectTranslate('Unstake vMANTA'),
@@ -49,11 +47,12 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
   [ExtrinsicType.UNSTAKE_SDOT]: detectTranslate('Unstake sDOT'),
   [ExtrinsicType.UNSTAKE_STDOT]: detectTranslate('Unstake stDOT'),
   [ExtrinsicType.UNSTAKE_QDOT]: detectTranslate('Unstake qDOT'),
-  [ExtrinsicType.UNSTAKE_VMANTA]: detectTranslate('Unstake vMANTA'),
 
   [ExtrinsicType.CLAIM_BRIDGE]: detectTranslate('Claim tokens'),
 
   [ExtrinsicType.EIP7702_DELEGATE]: detectTranslate('Delegate account'),
+  [ExtrinsicType.EIP7702_UNDELEGATE]: detectTranslate('Undelegate account'),
+  [ExtrinsicType.EIP7683_SWAP]: detectTranslate('EIP7683 Swap'),
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap')

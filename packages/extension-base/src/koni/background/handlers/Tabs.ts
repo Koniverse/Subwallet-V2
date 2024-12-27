@@ -1,18 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { checkIfDenied } from '@polkadot/phishing';
-import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
-import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
-import { isArray, isNumber } from '@polkadot/util';
-import { isEthereumAddress } from '@polkadot/util-crypto';
-import { HexString } from '@polkadot/util/types';
+import type { InjectedAccount } from '@subwallet/extension-inject/types';
 
 import { _AssetType } from '@subwallet/chain-list/types';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { withErrorLog } from '@subwallet/extension-base/background/handlers/helpers';
 import { createSubscription, unsubscribe } from '@subwallet/extension-base/background/handlers/subscriptions';
-import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, ExtrinsicStatus, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AddNetworkRequestExternal, AddTokenRequestExternal, EvmAppState, EvmEventType, EvmProviderErrorType, EvmSendTransactionParams, PassPhishing, RequestAddPspToken, RequestEvmProviderSend, RequestSettingsType, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import RequestBytesSign from '@subwallet/extension-base/background/RequestBytesSign';
 import RequestExtrinsicSign from '@subwallet/extension-base/background/RequestExtrinsicSign';
 import { AccountAuthType, MessageTypes, RequestAccountList, RequestAccountSubscribe, RequestAccountUnsubscribe, RequestAuthorizeTab, RequestRpcSend, RequestRpcSubscribe, RequestRpcUnsubscribe, RequestTypes, ResponseRpcListProviders, ResponseSigning, ResponseTypes, SubscriptionMessageTypes } from '@subwallet/extension-base/background/types';
@@ -27,7 +22,6 @@ import { AuthUrlInfo, AuthUrls } from '@subwallet/extension-base/services/reques
 import { DEFAULT_CHAIN_PATROL_ENABLE } from '@subwallet/extension-base/services/setting-service/constants';
 import { RequestEIP7683 } from '@subwallet/extension-base/types';
 import { canDerive, getEVMChainInfo, stripUrl } from '@subwallet/extension-base/utils';
-import type { InjectedAccount } from '@subwallet/extension-inject/types';
 import { InjectedMetadataKnown, MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
 import { SingleAddress, SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -35,6 +29,13 @@ import { Subscription } from 'rxjs';
 import Web3 from 'web3';
 import { HttpProvider, RequestArguments, WebsocketProvider } from 'web3-core';
 import { JsonRpcPayload } from 'web3-core-helpers';
+
+import { checkIfDenied } from '@polkadot/phishing';
+import { JsonRpcResponse } from '@polkadot/rpc-provider/types';
+import { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
+import { isArray, isNumber } from '@polkadot/util';
+import { HexString } from '@polkadot/util/types';
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 interface AccountSub {
   subscription: Subscription;

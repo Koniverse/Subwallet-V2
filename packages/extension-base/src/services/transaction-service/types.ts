@@ -1,21 +1,22 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { HexString } from '@polkadot/util/types';
+import type { SignableMessage } from 'viem/types/misc';
+
 import { ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { BaseRequestSign } from '@subwallet/extension-base/types';
 import EventEmitter from 'eventemitter3';
-import type { SignableMessage } from 'viem/types/misc';
 import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';
+import { HexString } from '@polkadot/util/types';
 
 export interface SmartAccountCall {
   to: HexString;
   data?: HexString;
-  value?: BigInt;
+  value?: bigint;
 }
 
 export interface SmartAccountTransaction {
@@ -63,7 +64,7 @@ export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransact
   resolveOn?: keyof TransactionEventMap;
 }
 
-export type OverrideTransactionInput =  Partial<Pick<SWTransactionInput, 'url' | 'resolveOn'>>
+export type OverrideTransactionInput = Partial<Pick<SWTransactionInput, 'url' | 'resolveOn'>>
 
 export type SWTransactionResponse = SwInputBase & Pick<SWTransaction, 'warnings' | 'errors'> & Partial<Pick<SWTransaction, 'id' | 'extrinsicHash' | 'status' | 'estimateFee'>>;
 
@@ -80,6 +81,7 @@ export interface TransactionEventResponse extends ValidateTransactionResponse {
   nonce?: number,
   startBlock?: number,
 }
+
 export interface TransactionEventMap {
   send: (response: TransactionEventResponse) => void;
   signed: (response: TransactionEventResponse) => void;
@@ -89,4 +91,4 @@ export interface TransactionEventMap {
   timeout: (response: TransactionEventResponse) => void;
 }
 
-export type OptionalSWTransaction = SWTransaction['transaction'] | null | undefined;
+export type OptionalSWTransaction = Exclude<SWTransaction['transaction'], SmartAccountTransaction> | null | undefined;

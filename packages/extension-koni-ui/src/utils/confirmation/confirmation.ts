@@ -11,3 +11,7 @@ export const isSubstrateMessage = (payload: string | ExtrinsicPayload): payload 
 export const isEvmMessage = (request: ConfirmationDefinitions[EvmSignatureSupportType][0]): request is ConfirmationDefinitions['evmSignatureRequest'][0] => {
   return !!(request as ConfirmationDefinitions['evmSignatureRequest'][0]).payload.type;
 };
+
+export const isEvmAuthorization = (request: ConfirmationDefinitions[EvmSignatureSupportType][0]): request is ConfirmationDefinitions['evmSignAuthorizationRequest'][0] => {
+  return !!(request as ConfirmationDefinitions['evmSignAuthorizationRequest'][0]).payload.delegateType;
+};
