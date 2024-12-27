@@ -26,7 +26,7 @@ import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounce
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
-import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop, toShort } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -388,7 +388,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       if (part.from || part.destChain) {
         if (disabledToAddressInput) {
           form.resetFields(['to']);
-          form.setFieldValue('to', values.from);
+          form.setFieldValue('to', toShort(values.from, 9, 10));
         }
 
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
@@ -738,7 +738,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     const updateFromValue = () => {
       if (disabledToAddressInput) {
         form.resetFields(['to']);
-        form.setFieldValue('to', fromValue);
+        form.setFieldValue('to', toShort(fromValue, 9, 10));
       }
 
       if (!accountAddressItems.length) {
