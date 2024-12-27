@@ -736,6 +736,11 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   useEffect(() => {
     const updateFromValue = () => {
+      if (disabledToAddressInput) {
+        form.resetFields(['to']);
+        form.setFieldValue('to', fromValue);
+      }
+
       if (!accountAddressItems.length) {
         return;
       }
@@ -752,7 +757,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     };
 
     updateFromValue();
-  }, [accountAddressItems, form, fromValue]);
+  }, [accountAddressItems, disabledToAddressInput, form, fromValue]);
 
   // Get max transfer value
   useEffect(() => {
