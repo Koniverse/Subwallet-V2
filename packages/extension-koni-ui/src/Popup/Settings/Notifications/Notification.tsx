@@ -349,12 +349,13 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
             try {
               const metadata = item.metadata as ClaimPolygonBridgeNotificationMetadata;
               let isClaimed = false;
-              const isTestnet = metadata.chainSlug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA;
 
-              if (!(metadata.bridgeType === 'POS')) {
-                isClaimed = await getIsClaimNotificationStatus({ chainslug: metadata.chainSlug, counter: metadata.counter ?? 0, sourceNetwork: metadata.sourceNetwork ?? 0 });
-              } else {
+              if (metadata.bridgeType === 'POS') {
+                const isTestnet = metadata.chainSlug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA;
+
                 isClaimed = await isClaimedPosBridge(metadata._id, metadata.userAddress, isTestnet) || false;
+              } else {
+                isClaimed = await getIsClaimNotificationStatus({ chainslug: metadata.chainSlug, counter: metadata.counter ?? 0, sourceNetwork: metadata.sourceNetwork ?? 0 });
               }
 
               if (!isClaimed) {
