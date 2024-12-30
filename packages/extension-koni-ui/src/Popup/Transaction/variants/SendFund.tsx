@@ -14,7 +14,7 @@ import { _isPosChainBridge, _isPosChainL2Bridge } from '@subwallet/extension-bas
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
@@ -298,10 +298,11 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
 
   const addressInputRef = useRef<AddressInputRef>(null);
+  const addressInputCurrent = addressInputRef.current;
 
   const updateAddressInputValue = useCallback((value: string) => {
-    addressInputRef.current?.setInputValue(value);
-    addressInputRef.current?.setSelectedOption((prev) => {
+    addressInputCurrent?.setInputValue(value);
+    addressInputCurrent?.setSelectedOption((prev) => {
       if (!prev) {
         return prev;
       }
@@ -311,7 +312,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         formatedAddress: value
       };
     });
-  }, []);
+  }, [addressInputCurrent]);
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
@@ -386,11 +387,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       }
 
       if (part.from || part.destChain) {
-        if (disabledToAddressInput) {
-          form.resetFields(['to']);
-          form.setFieldValue('to', values.from);
-        }
-
         setForceUpdateMaxValue(isTransferAll ? {} : undefined);
       }
 
@@ -409,7 +405,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       persistData(form.getFieldsValue());
     },
-    [persistData, form, assetRegistry, disabledToAddressInput, isTransferAll]
+    [persistData, form, assetRegistry, isTransferAll]
   );
 
   const isShowWarningOnSubmit = useCallback((values: TransferParams): boolean => {
@@ -736,11 +732,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   useEffect(() => {
     const updateFromValue = () => {
-      if (disabledToAddressInput) {
-        form.resetFields(['to']);
-        form.setFieldValue('to', fromValue);
-      }
-
       if (!accountAddressItems.length) {
         return;
       }
@@ -831,6 +822,23 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         console.log('error', e);
       });
   }, [assetValue, chainValue, destChainValue, fromValue, transferAmountValue]);
+
+  useEffect(() => {
+    if (disabledToAddressInput) {
+      const selectedItem = accountAddressItems.find((i) => i.address === fromValue);
+      const chainInfo = chainInfoMap[chainValue];
+      const reformatedInputValue = _reformatAddressWithChain(fromValue, chainInfo);
+
+      addressInputCurrent?.setInputValue?.(selectedItem?.address);
+      addressInputCurrent?.setSelectedOption?.({
+        address: selectedItem?.address || '',
+        formatedAddress: reformatedInputValue,
+        analyzedGroup: AnalyzedGroup.RECENT,
+        displayName: selectedItem?.accountName
+      });
+      form.setFieldValue('to', fromValue);
+    }
+  }, [accountAddressItems, addressInputCurrent, chainInfoMap, chainValue, disabledToAddressInput, form, fromValue]);
 
   useRestoreTransaction(form);
 
