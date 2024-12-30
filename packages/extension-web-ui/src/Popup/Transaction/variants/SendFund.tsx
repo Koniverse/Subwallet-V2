@@ -41,7 +41,6 @@ import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
 import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
-import { _isPosChainBridge, _isPosChainL2Bridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 
 type Props = ThemeProps & {
   modalContent?: boolean;
@@ -260,20 +259,12 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chain];
 
-    if (_isPolygonChainBridge(chain, destChain) || _isPosChainBridge(chain, destChain)) {
+    if (_isPolygonChainBridge(chain, destChain)) {
       return true;
     }
 
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChain === chain && _isNativeToken(assetInfo);
   }, [chainInfoMap, chain, destChain, assetInfo]);
-
-  const disabledToAddressInput = useMemo(() => {
-    if (_isPosChainL2Bridge(chain, destChain)) {
-      return true;
-    }
-
-    return false;
-  }, [chain, destChain]);
 
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
@@ -465,16 +456,6 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
           validateField.push('to');
         }
 
-        if (part.from || part.destChain) {
-          if (disabledToAddressInput) {
-            form.resetFields(['to']);
-            form.setFieldValue('to', values.from);
-          }
-  
-  
-          setForceUpdateMaxValue(isTransferAll ? {} : undefined);
-        }
-
         setIsTransferAll(false);
         setForceUpdateMaxValue(undefined);
       }
@@ -485,7 +466,7 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
 
       persistData(form.getFieldsValue());
     },
-    [form, assetRegistry, isTransferAll, persistData, disabledToAddressInput]
+    [form, assetRegistry, isTransferAll, persistData]
   );
 
   // Submit transaction
@@ -904,7 +885,6 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
             validateTrigger='onBlur'
           >
             <AddressInput
-              disabled={disabledToAddressInput}
               addressPrefix={destChainNetworkPrefix}
               allowDomain={true}
               chain={destChain}
