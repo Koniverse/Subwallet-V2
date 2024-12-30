@@ -10,7 +10,7 @@ import { _reformatAddressWithChain } from '@subwallet/extension-base/utils';
 import { AddressSelectorItem } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { WalletModalContext } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useForwardFieldRef, useOpenQrScanner, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { useForwardFieldRef, useGetAccountByAddress, useOpenQrScanner, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import useGetChainInfo from '@subwallet/extension-koni-ui/hooks/screen/common/useFetchChainInfo';
 import { cancelSubscription, saveRecentAccount, subscribeAccountsInputAddress } from '@subwallet/extension-koni-ui/messaging';
 import { ScannerResult, ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -138,6 +138,23 @@ function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.Rea
   }, [autoFormatValue, chainInfo, inputValue, isShowAdvancedAddressDetection, onBlur, parseAndChangeValue, selectedOption]);
 
   // autoComplete
+  const account = useGetAccountByAddress(inputValue);
+
+  useEffect(() => {
+    if (disabled) {
+      const _inputValue = account?.address || '';
+      const name = account?.name || '';
+      const reformatedInputValue = _reformatAddressWithChain(_inputValue, chainInfo);
+
+      setSelectedOption({
+        address: _inputValue || '',
+        formatedAddress: reformatedInputValue,
+        analyzedGroup: AnalyzedGroup.RECENT,
+        displayName: name
+      });
+      setInputValue(reformatedInputValue);
+    }
+  }, [account, chainInfo, chainSlug, disabled, inputValue]);
 
   // "item: unknown" is hotfix for typescript error of AutoComplete
   const onSelectAutoComplete = useCallback((graftedValue: string, item: unknown) => {
@@ -419,7 +436,6 @@ function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.Rea
         >
           <Input
             className={CN({
-              '-disable': !!disabled,
               '-label-horizontal': labelStyle === 'horizontal',
               '-has-overlay': !!selectedOption
             })}
@@ -590,10 +606,6 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
       '.ant-input': {
         color: token.colorTextLight1,
         fontWeight: token.headingFontWeight
-      },
-
-      '.ant-input.ant-input-disabled': {
-        color: token.colorTextTertiary
       },
 
       '.ant-input-prefix': {
