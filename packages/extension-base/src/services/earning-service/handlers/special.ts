@@ -370,6 +370,8 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
 
       const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO))).sub(existentialDeposit);
       const preCheckBnMaxXCM = bnMaxXCM.lte(BN_ZERO) ? BN_ZERO : bnMaxXCM;
+
+      console.log('Precheck', preCheckBnMaxXCM);
       const maxBn = bnInputTokenBalance.add(preCheckBnMaxXCM);
       const inputTokenDecimal = _getAssetDecimals(inputTokenInfo);
 
