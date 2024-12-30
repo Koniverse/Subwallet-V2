@@ -412,4 +412,8 @@ export class InappNotificationService implements CronServiceInterface {
   removeAccountNotifications (proxyId: string) {
     this.dbService.removeAccountNotifications(proxyId).catch(console.error);
   }
+
+  async migrateNotificationProxyId (proxyIds: string[], newProxyId: string) {
+    await this.dbService.updateNotificationProxyId(proxyIds, newProxyId);
+  }
 }

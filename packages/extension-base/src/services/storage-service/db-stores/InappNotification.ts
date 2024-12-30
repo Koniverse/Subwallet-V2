@@ -44,6 +44,12 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     return filteredTable.toArray();
   }
 
+  async updateNotificationProxyId (proxyIds: string[], newProxyId: string) {
+    this.table.where('proxyId')
+      .anyOfIgnoreCase(proxyIds)
+      .modify({ proxyId: newProxyId });
+  }
+
   async cleanUpOldNotifications (overdueTime: number) {
     const currentTimestamp = Date.now();
 

@@ -3977,8 +3977,14 @@ export default class KoniExtension {
     return await this.#koniState.keyringService.context.migrateUnifiedAndFetchEligibleSoloAccounts(request);
   }
 
-  private migrateSoloAccount (request: RequestMigrateSoloAccount): ResponseMigrateSoloAccount {
-    return this.#koniState.keyringService.context.migrateSoloAccount(request);
+  private async migrateSoloAccount (request: RequestMigrateSoloAccount): Promise<ResponseMigrateSoloAccount> {
+    const response = this.#koniState.keyringService.context.migrateSoloAccount(request);
+    const proxyIds = request.soloAccounts.map((account) => account.proxyId);
+    const newProxyId = response.migratedUnifiedAccountId; // get from response to ensure account migration is done.
+
+    await this.#koniState.inappNotificationService.migrateNotificationProxyId(proxyIds, newProxyId);
+
+    return response;
   }
 
   private pingSession (request: RequestPingSession): boolean {
@@ -4607,7 +4613,7 @@ export default class KoniExtension {
       case 'pri(migrate.migrateUnifiedAndFetchEligibleSoloAccounts)':
         return await this.migrateUnifiedAndFetchEligibleSoloAccounts(request as RequestMigrateUnifiedAndFetchEligibleSoloAccounts);
       case 'pri(migrate.migrateSoloAccount)':
-        return this.migrateSoloAccount(request as RequestMigrateSoloAccount);
+        return await this.migrateSoloAccount(request as RequestMigrateSoloAccount);
       case 'pri(migrate.pingSession)':
         return this.pingSession(request as RequestPingSession);
       // Default
