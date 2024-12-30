@@ -419,6 +419,7 @@ function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.Rea
         >
           <Input
             className={CN({
+              '-disable': !!disabled,
               '-label-horizontal': labelStyle === 'horizontal',
               '-has-overlay': !!selectedOption
             })}
@@ -589,6 +590,10 @@ export const AddressInputNew = styled(forwardRef(Component))<Props>(({ theme: { 
       '.ant-input': {
         color: token.colorTextLight1,
         fontWeight: token.headingFontWeight
+      },
+
+      '.ant-input.ant-input-disabled': {
+        color: token.colorTextTertiary
       },
 
       '.ant-input-prefix': {
