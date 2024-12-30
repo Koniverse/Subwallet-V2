@@ -47,7 +47,7 @@ export const TxTypeNameMap: Record<ExtrinsicType, string> = {
   [ExtrinsicType.CLAIM_BRIDGE]: detectTranslate('Claim token'),
   [ExtrinsicType.EIP7702_DELEGATE]: detectTranslate('Delegate account'),
   [ExtrinsicType.EIP7702_UNDELEGATE]: detectTranslate('Undelegate account'),
-  [ExtrinsicType.EIP7683_SWAP]: detectTranslate('EIP7683 Swap'),
+  [ExtrinsicType.EIP7683_SWAP]: detectTranslate('Swap'),
   [ExtrinsicType.UNKNOWN]: detectTranslate('Unknown')
 };
 

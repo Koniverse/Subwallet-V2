@@ -22,4 +22,7 @@ export interface EIP7683Step {
 
 export interface EIP7683Data extends RequestEIP7683 {
   steps: EIP7683Step[];
+  amountOut: HexString;
+  paths: string[];
+  rate: number;
 }

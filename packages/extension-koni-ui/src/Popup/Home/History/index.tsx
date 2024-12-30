@@ -319,7 +319,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     [ExtrinsicType.CLAIM_BRIDGE]: t('Claim token'),
     [ExtrinsicType.EIP7702_DELEGATE]: t('Delegate account'),
     [ExtrinsicType.EIP7702_UNDELEGATE]: t('Undelegate account'),
-    [ExtrinsicType.EIP7683_SWAP]: t('EIP7683 Swap'),
+    [ExtrinsicType.EIP7683_SWAP]: t('Swap'),
     [ExtrinsicType.UNKNOWN]: t('Unknown')
   }), [t]);
 
@@ -367,7 +367,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     [ExtrinsicType.CLAIM_BRIDGE]: t('Claim token transaction'),
     [ExtrinsicType.EIP7702_DELEGATE]: t('Delegate account transaction'),
     [ExtrinsicType.EIP7702_UNDELEGATE]: t('Undelegate account transaction'),
-    [ExtrinsicType.EIP7683_SWAP]: t('EIP7683 swap transaction'),
+    [ExtrinsicType.EIP7683_SWAP]: t('Swap transaction'),
     [ExtrinsicType.UNKNOWN]: t('Unknown transaction')
   }), [t]);
 

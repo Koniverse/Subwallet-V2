@@ -8,11 +8,11 @@ import { HexString } from '@polkadot/util/types';
 
 import { BridgeAbi, UniswapFactoryV2Abi, UniswapPairV2Abi, UniswapRouterV2Abi } from './helper';
 
-export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString, to: HexString, amountIn: HexString, minOut: HexString): HexString => {
-  const deadline = Date.now() + 60000;
+const keepAliveTime = 2 * 60 * 1000;
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+export const swapTokenToToken = (sourceToken: HexString, targetToken: HexString, to: HexString, amountIn: HexString, minOut: HexString): HexString => {
+  const deadline = Date.now() + keepAliveTime;
+
   return encodeFunctionData({
     abi: UniswapRouterV2Abi,
     functionName: 'swapExactTokensForTokens',
@@ -60,11 +60,9 @@ export const estimateTokenOut = async (sourceToken: HexString, targetToken: HexS
 };
 
 export const swapTokenToEth = (sourceToken: HexString, to: HexString, amountIn: HexString, minOut: HexString): HexString => {
-  const deadline = Date.now() + 60000;
+  const deadline = Date.now() + keepAliveTime;
   const WETH = '0x582fCdAEc1D2B61c1F71FC5e3D2791B8c76E44AE';
 
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
     abi: UniswapRouterV2Abi,
     functionName: 'swapExactTokensForETH',
@@ -79,8 +77,6 @@ export const swapTokenToEth = (sourceToken: HexString, to: HexString, amountIn: 
 };
 
 export const approveToken = (spender: HexString, amount: HexString): HexString => {
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
     abi: _ERC20_ABI,
     functionName: 'approve',
@@ -92,8 +88,6 @@ export const approveToken = (spender: HexString, amount: HexString): HexString =
 };
 
 export const bridgeEthTo = (address: HexString): HexString => {
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return encodeFunctionData({
     abi: BridgeAbi,
     functionName: 'bridgeETHTo',

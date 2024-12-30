@@ -52,7 +52,7 @@ export const TRANSACTION_TITLE_MAP: Record<ExtrinsicType, string> = {
 
   [ExtrinsicType.EIP7702_DELEGATE]: detectTranslate('Delegate account'),
   [ExtrinsicType.EIP7702_UNDELEGATE]: detectTranslate('Undelegate account'),
-  [ExtrinsicType.EIP7683_SWAP]: detectTranslate('EIP7683 Swap'),
+  [ExtrinsicType.EIP7683_SWAP]: detectTranslate('Swap'),
 
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap')

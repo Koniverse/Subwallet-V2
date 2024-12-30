@@ -272,7 +272,7 @@ const Component = function ({ className }: Props) {
         case ExtrinsicType.EIP7702_UNDELEGATE:
           return t('Undelegate account confirmation');
         case ExtrinsicType.EIP7683_SWAP:
-          return t('EIP7683 confirmation');
+          return t('Swap confirmation');
         case ExtrinsicType.CROWDLOAN:
         case ExtrinsicType.EVM_EXECUTE:
         case ExtrinsicType.UNKNOWN:

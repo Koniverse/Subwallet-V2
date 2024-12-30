@@ -18,7 +18,7 @@ import { ChainOnlineService } from '@subwallet/extension-base/services/chain-onl
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _PREDEFINED_SINGLE_MODES } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainState, _NetworkUpsertParams, _ValidateCustomAssetRequest } from '@subwallet/extension-base/services/chain-service/types';
-import { _getEvmChainId, _getSubstrateGenesisHash, _getTokenOnChainAssetId, _isAssetFungibleToken, _isChainEnabled, _isChainEvmCompatible, _isChainTestNet, _parseMetadataForSmartContractAsset, findChainInfoByChainId } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getContractAddressOfToken, _getEvmChainId, _getSubstrateGenesisHash, _getTokenOnChainAssetId, _isAssetFungibleToken, _isChainEnabled, _isChainEvmCompatible, _isChainTestNet, _parseMetadataForSmartContractAsset, findChainInfoByChainId } from '@subwallet/extension-base/services/chain-service/utils';
 import EarningService from '@subwallet/extension-base/services/earning-service/service';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import FeeService from '@subwallet/extension-base/services/fee-service/service';
@@ -47,12 +47,13 @@ import { approveToken, bridgeEthTo, estimateTokenOut, isManifestV3, stripUrl, sw
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { MetadataDef, ProviderMeta } from '@subwallet/extension-inject/types';
 import { keyring } from '@subwallet/ui-keyring';
+import BigN from 'bignumber.js';
 import BN from 'bn.js';
 import { ZeroAddress } from 'ethers';
 import { t } from 'i18next';
 import { interfaces } from 'manta-extension-sdk';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { createPublicClient, http, parseEther } from 'viem';
+import { createPublicClient, http } from 'viem';
 
 import { JsonRpcResponse, ProviderInterface, ProviderInterfaceCallback } from '@polkadot/rpc-provider/types';
 import { assert, logger as createLogger, noop } from '@polkadot/util';
@@ -1879,6 +1880,9 @@ export default class KoniState {
     const { amount, sourceAddress, sourceChainId, sourceToken, targetAddress, targetChainId, targetToken } = request;
     const calls: SmartAccountCall[] = [];
     const steps: EIP7683Step[] = [];
+    const paths: string[] = [];
+    let rate = 0;
+    let amountOut: HexString = '0x';
 
     // if (sourceChainId !== targetChainId) {
     //   throw new Error('Invalid chain id');
@@ -1889,6 +1893,7 @@ export default class KoniState {
     }
 
     const chainInfoMap = this.chainService.getChainInfoMap();
+    const chainAssets = this.chainService.getAssetRegistry();
 
     const chainInfo = findChainInfoByChainId(chainInfoMap, sourceChainId);
 
@@ -1911,11 +1916,16 @@ export default class KoniState {
       const minAmount = amount * 95n / 100n;
 
       return `0x${minAmount.toString(16)}`;
-    }
+    };
 
     if (supportSwapToken.includes(targetToken) && supportSwapToken.includes(sourceToken)) {
       const router = '0x354EDb76B4D1E53500FB8EE10696f59048C18ccD';
       const approveData = approveToken(router, amount);
+      const sourceAsset = Object.values(chainAssets).find((asset) => _getContractAddressOfToken(asset) === sourceToken) as _ChainAsset;
+      const targetAsset = Object.values(chainAssets).find((asset) => _getContractAddressOfToken(asset) === targetToken) as _ChainAsset;
+
+      paths.push(sourceAsset.slug);
+      paths.push(targetAsset.slug);
 
       steps.push({
         key: 'approve',
@@ -1943,8 +1953,10 @@ export default class KoniState {
 
       const tokenOut = await estimateTokenOut(sourceToken, targetToken, amount, factory, publicClient);
       const outMin = convertMinOut(tokenOut);
-
       const swapData = swapTokenToToken(sourceToken, targetToken, targetAddress, amount, outMin);
+
+      amountOut = outMin;
+      rate = BigN(outMin).div(BigN(amount)).shiftedBy((sourceAsset.decimals || 0) - (targetAsset.decimals || 0)).toNumber();
 
       steps.push({
         key: 'swap',
@@ -1994,10 +2006,19 @@ export default class KoniState {
           transport
         });
 
+        const WETH = '0x582fCdAEc1D2B61c1F71FC5e3D2791B8c76E44AE';
+        const sourceAsset = Object.values(chainAssets).find((asset) => _getContractAddressOfToken(asset) === sourceToken) as _ChainAsset;
+        const WETHAsset = Object.values(chainAssets).find((asset) => _getContractAddressOfToken(asset) === WETH) as _ChainAsset;
+
+        paths.push(sourceAsset.slug);
+        paths.push('ithaca-NATIVE-ETH');
+
         const tokenOut = await estimateTokenOut(sourceToken, '0x582fCdAEc1D2B61c1F71FC5e3D2791B8c76E44AE', amount, factory, publicClient);
         const outMin = convertMinOut(tokenOut);
 
         bridgeAmount = outMin;
+        amountOut = outMin;
+        rate = BigN(outMin).div(BigN(amount)).shiftedBy((sourceAsset.decimals || 0) - (WETHAsset.decimals || 0)).toNumber();
 
         const swapData = swapTokenToEth(sourceToken, targetAddress, amount, outMin);
 
@@ -2016,11 +2037,15 @@ export default class KoniState {
           to: router,
           data: swapData
         });
+      } else {
+        paths.push('ithaca-NATIVE-ETH');
+        rate = 1;
       }
 
       const bridge = '0x4200000000000000000000000000000000000010';
       const bridgeData = bridgeEthTo(targetAddress);
 
+      paths.push('sepolia_ethereum-NATIVE-ETH');
       steps.push({
         key: 'swap',
         description: 'Bridge token',
@@ -2041,7 +2066,7 @@ export default class KoniState {
     console.log('Calls:', calls);
     console.log('Steps:', steps);
 
-    const data: EIP7683Data = { ...request, steps };
+    const data: EIP7683Data = { ...request, steps, paths, rate, amountOut };
 
     return this.transactionService.handleEIP7702Transaction({
       address: sourceAddress,
