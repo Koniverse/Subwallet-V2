@@ -246,16 +246,18 @@ export class AccountMigrationHandler extends AccountBaseHandler {
     };
   }
 
-  public migrateDerivedSoloAccountRelationship (soloAccounts: SoloAccountToBeMigrated[]) { // todo: optimize this function
+  public migrateDerivedSoloAccountRelationship (soloAccounts: SoloAccountToBeMigrated[]) {
     const accountProxies = this.state.accountProxies;
 
-    const proxyIds = soloAccounts.map((account) => account.proxyId);
+    // Use Set.has & Map.get to optimize search performance
+    const proxyIdsSet = new Set(soloAccounts.map((account) => account.proxyId));
+    const proxyIdToUpcomingProxyIdMap = new Map(soloAccounts.map((account) => [account.proxyId, account.upcomingProxyId]));
 
     for (const account of Object.values(accountProxies)) {
       const currentParent = account.parentId;
 
-      if (currentParent && proxyIds.includes(currentParent)) {
-        accountProxies[account.id].parentId = soloAccounts.filter((account) => account.proxyId === currentParent)[0].upcomingProxyId;
+      if (currentParent && proxyIdsSet.has(currentParent)) {
+        accountProxies[account.id].parentId = proxyIdToUpcomingProxyIdMap.get(currentParent);
       }
     }
 

@@ -126,7 +126,7 @@ export const validateTonDerivationPath = (raw: string): IDerivePathInfo_ | undef
 };
 
 export const validateCardanoDerivationPath = (raw: string): IDerivePathInfo_ | undefined => {
-  const reg = /^m\/1852'\/1815'\/(\d+)'(\/\d+')?$/; // todo: recheck derive path
+  const reg = /^m\/1852'\/1815'\/(\d+)'(\/\d+')?$/;
 
   if (raw.match(reg)) {
     const [, firstIndex, secondData] = raw.match(reg) as string[];
