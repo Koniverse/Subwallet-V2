@@ -426,6 +426,8 @@ export interface UiSettings {
   enableChainPatrol: boolean;
   notificationSetup: NotificationSetup;
   isAcknowledgedUnifiedAccountMigration: boolean;
+  isUnifiedAccountMigrationInProgress: boolean;
+  isUnifiedAccountMigrationDone: boolean;
   // On-ramp service account reference
   walletReference: string;
 }
@@ -1925,6 +1927,14 @@ export interface RequestSaveMigrationAcknowledgedStatus {
   isAcknowledgedUnifiedAccountMigration: boolean;
 }
 
+export interface RequestSaveUnifiedAccountMigrationInProgress {
+  isUnifiedAccountMigrationInProgress: boolean;
+}
+
+export interface RequestSaveUnifiedAccountMigrationDone {
+  isUnifiedAccountMigrationDone: boolean;
+}
+
 export interface RequestMigrateUnifiedAndFetchEligibleSoloAccounts {
   password: string
 }
@@ -2137,6 +2147,8 @@ export interface KoniRequestSignatures {
   'pri(settings.saveUnlockType)': [RequestUnlockType, boolean];
   'pri(settings.saveEnableChainPatrol)': [RequestChangeEnableChainPatrol, boolean];
   'pri(settings.saveNotificationSetup)': [NotificationSetup, boolean];
+  'pri(settings.saveUnifiedAccountMigrationInProgress)': [RequestSaveUnifiedAccountMigrationInProgress, boolean];
+  'pri(settings.saveUnifiedAccountMigrationDone)': [RequestSaveUnifiedAccountMigrationDone, boolean];
   'pri(settings.saveMigrationAcknowledgedStatus)': [RequestSaveMigrationAcknowledgedStatus, boolean];
   'pri(settings.saveLanguage)': [RequestChangeLanguage, boolean];
   'pri(settings.savePriceCurrency)': [RequestChangePriceCurrency, boolean];
