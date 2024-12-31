@@ -3,7 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { ChainStakingMetadata, NominationInfo, NominatorMetadata, StakingTxErrorType, StakingType, UnstakingInfo, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainStakingMetadata, NominationInfo, NominatorMetadata, StakingType, UnstakingInfo, ValidatorInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { MAX_NOMINATIONS } from '@subwallet/extension-base/constants';
 import { PalletNominationPoolsPoolMember } from '@subwallet/extension-base/core/substrate/types';
 import { calculateAlephZeroValidatorReturn, calculateChainStakedReturn, calculateInflation, calculateTernoaValidatorReturn, calculateValidatorStakedReturn, getCommission, getExistUnstakeErrorMessage, getMaxValidatorErrorMessage, getMinStakeErrorMessage, parsePoolStashAddress } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
@@ -12,7 +12,7 @@ import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { EarningStatus, NominationPoolInfo, PalletNominationPoolsBondedPoolInner, PalletStakingExposure, TernoaStakingRewardsStakingRewardsData, UnstakingStatus, ValidatorExtraInfo } from '@subwallet/extension-base/types';
+import { EarningStatus, NominationPoolInfo, PalletNominationPoolsBondedPoolInner, PalletStakingExposure, StakingTxErrorType, TernoaStakingRewardsStakingRewardsData, UnstakingStatus, ValidatorExtraInfo } from '@subwallet/extension-base/types';
 import { reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';

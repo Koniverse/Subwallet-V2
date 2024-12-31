@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { EvmSendTransactionRequest, EvmTransactionArg } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import MetaInfo from '@subwallet/extension-web-ui/components/MetaInfo/MetaInfo';
 import useGetAccountByAddress from '@subwallet/extension-web-ui/hooks/account/useGetAccountByAddress';
 import useGetChainInfoByChainId from '@subwallet/extension-web-ui/hooks/chain/useGetChainInfoByChainId';

@@ -3,11 +3,12 @@
 
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _Address } from '@subwallet/extension-base/background/KoniTypes';
+import { AbiItem } from 'web3-utils';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
-export const _ERC20_ABI = require('./erc20_abi.json');
+export const _ERC20_ABI: AbiItem[] | AbiItem = require('./erc20_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
-export const _ERC721_ABI = require('./erc721_abi.json');
+export const _ERC721_ABI: AbiItem[] | AbiItem = require('./erc721_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const _TEST_ERC721_ABI = require('./test_erc721_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
@@ -22,6 +23,12 @@ export const _NEUROGUNS_PSP34_ABI: Record<string, any> = require('./neuroguns_ps
 export const _AZERO_DOMAIN_REGISTRY_ABI: Record<string, any> = require('./azero_domain_registry_abi.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const _SNOWBRIDGE_GATEWAY_ABI: Record<string, any> = require('./snowbridge_gateway_abi.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+export const _AVAIL_BRIDGE_GATEWAY_ABI: Record<string, any> = require('./avail_bridge_abi.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+export const _AVAIL_TEST_BRIDGE_GATEWAY_ABI: Record<string, any> = require('./avail_test_bridge_abi.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+export const _POLYGON_BRIDGE_ABI: Record<string, any> = require('./polygon_bridge_abi.json');
 
 const SNOWBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS = '0x27ca963C279c93801941e1eB8799c23f407d68e7';
 const SNOWBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS = '0x5B4909cE6Ca82d2CE23BD46738953c7959E710Cd';
@@ -36,4 +43,32 @@ export function getSnowBridgeGatewayContract (chain: string) {
 
 export function isSnowBridgeGatewayContract (contractAddress: _Address) {
   return [SNOWBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS, SNOWBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS].includes(contractAddress);
+}
+
+const AVAILBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS = '0x054fd961708D8E2B9c10a63F6157c74458889F0a';
+const AVAILBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS = '0x967F7DdC4ec508462231849AE81eeaa68Ad01389';
+
+export function getAvailBridgeGatewayContract (chain: string) {
+  if (chain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA) {
+    return AVAILBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS;
+  }
+
+  return AVAILBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS;
+}
+
+export function isAvailBridgeGatewayContract (contractAddress: _Address) {
+  return [AVAILBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS, AVAILBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS].includes(contractAddress);
+}
+
+const POLYGONBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS = '0x2a3DD3EB832aF982ec71669E178424b10Dca2EDe';
+const POLYGONBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS = '0x528e26b25a34a4A5d0dbDa1d57D318153d2ED582';
+
+export function getPolygonBridgeContract (chain: string): string {
+  if (chain === 'polygonzkEvm_cardona' || chain === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA) {
+    return POLYGONBRIDGE_GATEWAY_SEPOLIA_CONTRACT_ADDRESS;
+  } else if (chain === 'polygonZkEvm' || chain === COMMON_CHAIN_SLUGS.ETHEREUM) {
+    return POLYGONBRIDGE_GATEWAY_ETHEREUM_CONTRACT_ADDRESS;
+  }
+
+  throw new Error('Invalid chain');
 }

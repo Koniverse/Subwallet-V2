@@ -3,7 +3,7 @@
 
 import { EXPORT_ACCOUNTS_PASSWORD_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useFocusById, useTranslation } from '@subwallet/extension-koni-ui/hooks';
-import { exportAccountsV2 } from '@subwallet/extension-koni-ui/messaging';
+import { exportAccountBatch } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
@@ -71,9 +71,9 @@ function Component ({ addresses, className = '' }: Props): React.ReactElement<Pr
   const onSubmit: FormCallbacks<LoginFormState>['onFinish'] = useCallback((values: LoginFormState) => {
     setLoading(true);
     setTimeout(() => {
-      exportAccountsV2({
+      exportAccountBatch({
         password: values[FormFieldName.PASSWORD],
-        addresses: addresses
+        proxyIds: addresses
       })
         .then((data) => {
           closeModal();

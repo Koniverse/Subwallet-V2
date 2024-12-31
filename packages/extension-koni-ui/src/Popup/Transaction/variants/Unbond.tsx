@@ -3,12 +3,11 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { AmountData, ExtrinsicType, NominationInfo } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { isActionFromValidator } from '@subwallet/extension-base/services/earning-service/utils';
-import { RequestYieldLeave, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, RequestYieldLeave, SpecialYieldPoolMetadata, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { AccountSelector, AlertBox, AmountInput, HiddenInput, InstructionItem, NominationSelector } from '@subwallet/extension-koni-ui/components';
-import { BN_ZERO, UNSTAKE_ALERT_DATA } from '@subwallet/extension-koni-ui/constants';
+import { BN_ZERO, UNSTAKE_ALERT_DATA, UNSTAKE_BIFROST_ALERT_DATA, UNSTAKE_BITTENSOR_ALERT_DATA } from '@subwallet/extension-koni-ui/constants';
 import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useHandleSubmitTransaction, useInitValidateTransaction, usePreCheckAction, useRestoreTransaction, useSelector, useTransactionContext, useWatchTransaction, useYieldPositionDetail } from '@subwallet/extension-koni-ui/hooks';
 import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
@@ -94,6 +93,8 @@ const Component: React.FC = () => {
   const bondedAsset = useGetChainAssetInfo(bondedSlug || poolInfo.metadata.inputAsset);
   const decimals = bondedAsset?.decimals || 0;
   const symbol = bondedAsset?.symbol || '';
+  const altAsset = useGetChainAssetInfo((poolInfo?.metadata as SpecialYieldPoolMetadata)?.altInputAssets);
+  const altSymbol = altAsset?.symbol || '';
 
   const selectedValidator = useMemo((): NominationInfo | undefined => {
     if (positionInfo) {
@@ -361,6 +362,10 @@ const Component: React.FC = () => {
     return label !== 'dApp' ? label.toLowerCase() : label;
   }, [chainValue]);
 
+  const unstakeAlertData = poolChain === 'bifrost_dot'
+    ? UNSTAKE_BIFROST_ALERT_DATA
+    : poolChain === 'bittensor' ? UNSTAKE_BITTENSOR_ALERT_DATA : UNSTAKE_ALERT_DATA;
+
   return (
     <>
       <TransactionContent>
@@ -434,7 +439,7 @@ const Component: React.FC = () => {
             valuePropName='checked'
           >
             <Checkbox>
-              <span className={'__option-label'}>{t('Fast Unstake')}</span>
+              <span className={'__option-label'}>{t('Fast unstake')}</span>
             </Checkbox>
           </Form.Item>
 
@@ -444,7 +449,7 @@ const Component: React.FC = () => {
                 poolInfo.type !== YieldPoolType.LENDING
                   ? (
                     <>
-                      {!!UNSTAKE_ALERT_DATA.length && UNSTAKE_ALERT_DATA.map((_props, index) => {
+                      {!!unstakeAlertData.length && unstakeAlertData.map((_props, index) => {
                         return (
                           <InstructionItem
                             className={'__instruction-item'}
@@ -477,7 +482,9 @@ const Component: React.FC = () => {
               )
               : (
                 <AlertBox
-                  description={t('With fast unstake, you will receive your funds immediately with a higher fee')}
+                  description={poolChain === 'bifrost_dot'
+                    ? t(`In this mode, ${symbol} will be directly exchanged for ${altSymbol} at the market price without waiting for the unstaking period`)
+                    : t('With fast unstake, you will receive your funds immediately with a higher fee')}
                   title={t('Fast unstake')}
                   type={'info'}
                 />

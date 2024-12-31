@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountChainType } from './account';
+
 export interface BuyService {
   network: string;
   symbol: string;
@@ -9,11 +11,13 @@ export interface BuyService {
 
 export type SupportService = 'transak' | 'banxa' | 'coinbase' | 'moonpay' | 'onramper';
 
+export type OnrampAccountSupportType = 'ETHEREUM' | 'SUBSTRATE';
+
 export interface BuyTokenInfo {
   network: string;
   symbol: string;
   slug: string;
-  support: 'ETHEREUM' | 'SUBSTRATE';
+  support: AccountChainType;
   services: Array<SupportService>;
   serviceInfo: Record<SupportService, BuyService>;
   supportSell: boolean;

@@ -3,7 +3,7 @@
 
 import { Layout } from '@subwallet/extension-koni-ui/components';
 import { USER_GUIDE_URL } from '@subwallet/extension-koni-ui/constants';
-import { setValueLocalStorage } from '@subwallet/extension-koni-ui/messaging';
+import { setValueLocalStorageWS } from '@subwallet/extension-koni-ui/messaging';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Icon, PageIcon } from '@subwallet/react-ui';
 import CN from 'classnames';
@@ -26,12 +26,12 @@ const Component: React.FC<Props> = (props: Props) => {
   const { token } = useTheme() as Theme;
   const learnMore = useCallback(() => {
     window.open(`${USER_GUIDE_URL}/${SUB_DOMAIN_USER_GUIDE}`);
-    setValueLocalStorage(valueStorage)
+    setValueLocalStorageWS(valueStorage)
       .catch(console.error);
   }, []);
 
   const dismiss = useCallback(() => {
-    setValueLocalStorage(valueStorage)
+    setValueLocalStorageWS(valueStorage)
       .catch(console.error);
     window.close();
   }, []);

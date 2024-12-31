@@ -1,8 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { BaseRequestSign, InternalRequestSign } from '@subwallet/extension-base/background/KoniTypes';
-
+import { BaseRequestSign, InternalRequestSign } from '../../transaction';
 import { BasePoolInfo, UnstakingInfo, YieldPoolInfo } from '../info';
 
 /**

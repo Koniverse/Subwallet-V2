@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LanguageType, PassPhishing, RequestSettingsType, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
-import { LANGUAGE } from '@subwallet/extension-base/constants';
+import { EnvConfig, LANGUAGE } from '@subwallet/extension-base/constants';
+import { EnvironmentStoreSubject } from '@subwallet/extension-base/services/environment-service/stores/Environment';
 import { SWStorage } from '@subwallet/extension-base/storage';
+import ChainlistStore, { ChainlistConfig } from '@subwallet/extension-base/stores/ChainlistStore';
 import PassPhishingStore from '@subwallet/extension-base/stores/PassPhishingStore';
 import SettingsStore from '@subwallet/extension-base/stores/Settings';
 import { Subject } from 'rxjs';
@@ -14,6 +16,8 @@ import { DEFAULT_SETTING } from './constants';
 export default class SettingService {
   private readonly settingsStore = new SettingsStore();
   private readonly passPhishingStore = new PassPhishingStore();
+  private readonly chainlistStore = new ChainlistStore();
+  private readonly environmentStore = new EnvironmentStoreSubject();
 
   constructor () {
     this.initSetting().catch(console.error);
@@ -43,7 +47,14 @@ export default class SettingService {
     this.settingsStore.get('Settings', (value) => {
       update({
         ...DEFAULT_SETTING,
-        ...(value || {})
+        ...(value || {}),
+        notificationSetup: {
+          isEnabled: value?.notificationSetup?.isEnabled ?? DEFAULT_SETTING.notificationSetup.isEnabled,
+          showNotice: {
+            ...DEFAULT_SETTING.notificationSetup.showNotice,
+            ...(value?.notificationSetup?.showNotice || {})
+          }
+        }
       });
     });
   }
@@ -64,6 +75,28 @@ export default class SettingService {
 
   public setPassPhishing (data: Record<string, PassPhishing>, callback?: () => void): void {
     this.passPhishingStore.set('PassPhishing', data, callback);
+  }
+
+  public getChainlistSetting () {
+    return this.chainlistStore.asyncGet('Chainlist');
+  }
+
+  public setChainlist (data: ChainlistConfig, callback?: () => void): void {
+    this.chainlistStore.set('Chainlist', data, callback);
+  }
+
+  public getEnvironmentSetting () {
+    return this.environmentStore.subject.value;
+  }
+
+  public getEnvironmentList (update: (value: EnvConfig) => void): void {
+    this.environmentStore.store.get('Environment', (value) => {
+      update(value || {});
+    });
+  }
+
+  public setEnvironment (data: EnvConfig): void {
+    this.environmentStore.upsertData(data);
   }
 
   // Use for mobile only

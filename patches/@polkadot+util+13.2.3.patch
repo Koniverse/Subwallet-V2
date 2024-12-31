@@ -1,0 +1,26 @@
+diff --git a/node_modules/@polkadot/util/cjs/detectPackage.js b/node_modules/@polkadot/util/cjs/detectPackage.js
+index c6ffc8f..df543f0 100644
+--- a/node_modules/@polkadot/util/cjs/detectPackage.js
++++ b/node_modules/@polkadot/util/cjs/detectPackage.js
+@@ -76,7 +76,7 @@ function warn(pre, all, fmt) {
+  * @description A `@polkadot/*` version detection utility, checking for one occurrence of a package in addition to checking for dependency versions.
+  */
+ function detectPackage({ name, path, type, version }, pathOrFn, deps = []) {
+-    if (!name.startsWith('@polkadot')) {
++    if (!name.startsWith('@polkadot') && !name.startsWith('@subwallet')) {
+         throw new Error(`Invalid package descriptor ${name}`);
+     }
+     const entry = getEntry(name);
+diff --git a/node_modules/@polkadot/util/detectPackage.js b/node_modules/@polkadot/util/detectPackage.js
+index c66aad8..afd4cc6 100644
+--- a/node_modules/@polkadot/util/detectPackage.js
++++ b/node_modules/@polkadot/util/detectPackage.js
+@@ -72,7 +72,7 @@ function warn(pre, all, fmt) {
+  * @description A `@polkadot/*` version detection utility, checking for one occurrence of a package in addition to checking for dependency versions.
+  */
+ export function detectPackage({ name, path, type, version }, pathOrFn, deps = []) {
+-    if (!name.startsWith('@polkadot')) {
++    if (!name.startsWith('@polkadot') && !name.startsWith('@subwallet')) {
+         throw new Error(`Invalid package descriptor ${name}`);
+     }
+     const entry = getEntry(name);

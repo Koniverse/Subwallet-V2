@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestAccountMeta, RequestParseTransactionSubstrate, RequestQrSignEvm, RequestQrSignSubstrate, ResponseAccountIsLocked, ResponseAccountMeta, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestParseTransactionSubstrate, RequestQrSignEvm, RequestQrSignSubstrate, ResponseAccountIsLocked, ResponseParseTransactionSubstrate, ResponseQrParseRLP, ResponseQrSignEvm, ResponseQrSignSubstrate } from '@subwallet/extension-base/background/KoniTypes';
 
 import { sendMessage } from '../base';
 
@@ -23,8 +23,4 @@ export async function parseSubstrateTransaction (request: RequestParseTransactio
 
 export async function parseEVMTransaction (data: string): Promise<ResponseQrParseRLP> {
   return sendMessage('pri(qr.transaction.parse.evm)', { data });
-}
-
-export async function getAccountMeta (request: RequestAccountMeta): Promise<ResponseAccountMeta> {
-  return sendMessage('pri(accounts.get.meta)', request);
 }

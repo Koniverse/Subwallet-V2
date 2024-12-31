@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { EarningEntryView } from '@subwallet/extension-koni-ui/types/earning';
 
 // token
@@ -22,7 +23,7 @@ export type ManageChainsParam = {
 export type ManageWebsiteAccessDetailParam = {
   siteName: string,
   origin: string,
-  accountAuthType: string,
+  accountAuthTypes: AccountAuthType[],
 };
 
 // transfer
@@ -49,9 +50,18 @@ export type EarningPoolsParam = {
 };
 
 export type EarningPositionDetailParam = {
-  earningSlug: string,
+  earningSlug: string
 };
+
+// general
 
 export type RemindBackUpSeedPhraseParamState = {
   from: string;
+}
+
+// account detail
+
+export type AccountDetailParam = {
+  requestViewDerivedAccounts?: boolean
+  requestViewDerivedAccountDetails?: boolean
 }

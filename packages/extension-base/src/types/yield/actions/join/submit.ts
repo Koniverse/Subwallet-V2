@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _Address, BaseRequestSign, ChainType, ExtrinsicType, InternalRequestSign } from '@subwallet/extension-base/background/KoniTypes';
+import { _Address, ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 
-import { TransactionData } from '../../../transaction';
+import { BaseRequestSign, InternalRequestSign, TransactionData } from '../../../transaction';
 import { NominationPoolInfo, ValidatorInfo, YieldPositionInfo } from '../../info';
 import { OptimalYieldPath } from './step';
 

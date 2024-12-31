@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
-import { _getContractAddressOfToken, _isCustomAsset, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getContractAddressOfToken, _isAssetHubToken, _isCustomAsset, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
@@ -91,7 +91,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           weight={'light'}
         />,
         onClick: handleDeleteToken,
-        disabled: !(_isCustomAsset(tokenInfo.slug) && _isSmartContractToken(tokenInfo))
+        disabled: !(_isCustomAsset(tokenInfo.slug) && (_isSmartContractToken(tokenInfo) || _isAssetHubToken(tokenInfo)))
       }
     ];
   }, [handleDeleteToken, token.fontSizeHeading3, tokenInfo]);

@@ -3,13 +3,13 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType, ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { getBondedValidators, getEarningStatusByNominations, getParaCurrentInflation, InflationConfig, isUnstakeAll } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _EXPECTED_BLOCK_TIME, _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _STAKING_CHAIN_GROUP, MANTA_MIN_DELEGATION, MANTA_VALIDATOR_POINTS_PER_BLOCK } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { BaseYieldPositionInfo, CollatorExtraInfo, EarningStatus, NativeYieldPoolInfo, PalletParachainStakingDelegationRequestsScheduledRequest, PalletParachainStakingDelegator, ParachainStakingCandidateMetadata, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, CollatorExtraInfo, EarningStatus, NativeYieldPoolInfo, PalletParachainStakingDelegationRequestsScheduledRequest, PalletParachainStakingDelegator, ParachainStakingCandidateMetadata, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, parseRawNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
@@ -288,6 +288,9 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     const totalStake = bnTotalStake.toString();
     const activeStake = bnTotalActiveStake.toString();
     const unstakingBalance = bnTotalUnstaking.toString();
+    const tokenInfo = this.state.chainService.getAssetBySlug(this.nativeToken.slug);
+
+    await this.createWithdrawNotifications(Object.values(unstakingMap), tokenInfo, address);
 
     return {
       status: stakingStatus,
@@ -399,7 +402,7 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       const _collatorAddress = collator[0].toHuman() as string[];
       const collatorAddress = _collatorAddress[0];
 
-      if (allCollatorsPool.includes(collatorAddress)) {
+      if (selectedCollators.includes(collatorAddress)) {
         const collatorInfo = collator[1].toPrimitive() as unknown as ParachainStakingCandidateMetadata;
 
         const bnTotalStake = new BN(collatorInfo.totalCounted);
@@ -425,7 +428,7 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     }
 
     await Promise.all(allCollators.map(async (collator) => {
-      if (allCollatorsPool.includes(collator.address)) {
+      if (selectedCollators.includes(collator.address)) {
         // noted: number of blocks = total points / points per block
         const _collatorPoints = await apiProps.api.query.parachainStaking.awardedPts(parseInt(round.current) - 1, collator.address);
         const collatorPoints = _collatorPoints.toPrimitive() as number;
@@ -469,14 +472,16 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
     const apiProps = await this.substrateApi.isReady;
     const allCollators: ValidatorInfo[] = [];
 
-    const [_allCollators, _collatorCommission] = await Promise.all([
+    const [_allCollators, _collatorCommission, _selectedCandidates] = await Promise.all([
       apiProps.api.query.parachainStaking.candidateInfo.entries(),
-      apiProps.api.query.parachainStaking.collatorCommission()
+      apiProps.api.query.parachainStaking.collatorCommission(),
+      apiProps.api.query.parachainStaking.selectedCandidates()
     ]);
 
     const maxDelegationPerCollator = apiProps.api.consts.parachainStaking.maxTopDelegationsPerCandidate.toString();
     const rawCollatorCommission = _collatorCommission.toHuman() as string;
     const collatorCommission = parseFloat(rawCollatorCommission.split('%')[0]);
+    const selectedCollators = _selectedCandidates.toPrimitive() as string[];
 
     for (const collator of _allCollators) {
       const _collatorAddress = collator[0].toHuman() as string[];
@@ -489,20 +494,22 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       const bnMinBond = new BN(collatorInfo.lowestTopDelegationAmount);
       const maxNominatorRewarded = parseInt(maxDelegationPerCollator);
 
-      allCollators.push({
-        commission: 0,
-        expectedReturn: 0,
-        address: collatorAddress,
-        totalStake: bnTotalStake.toString(),
-        ownStake: bnOwnStake.toString(),
-        otherStake: bnOtherStake.toString(),
-        nominatorCount: collatorInfo.delegationCount,
-        blocked: false,
-        isVerified: false,
-        minBond: bnMinBond.toString(),
-        chain: this.chain,
-        isCrowded: collatorInfo.delegationCount ? collatorInfo.delegationCount >= maxNominatorRewarded : false
-      });
+      if (selectedCollators.includes(collatorAddress)) {
+        allCollators.push({
+          commission: 0,
+          expectedReturn: 0,
+          address: collatorAddress,
+          totalStake: bnTotalStake.toString(),
+          ownStake: bnOwnStake.toString(),
+          otherStake: bnOtherStake.toString(),
+          nominatorCount: collatorInfo.delegationCount,
+          blocked: false,
+          isVerified: false,
+          minBond: bnMinBond.toString(),
+          chain: this.chain,
+          isCrowded: collatorInfo.delegationCount ? collatorInfo.delegationCount >= maxNominatorRewarded : false
+        });
+      }
     }
 
     const extraInfoMap: Record<string, CollatorExtraInfo> = {};
@@ -606,7 +613,7 @@ export default class ParaNativeStakingPoolHandler extends BaseParaNativeStakingP
       extrinsic = apiPromise.api.tx.parachainStaking.scheduleRevokeDelegation(selectedTarget);
     }
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */

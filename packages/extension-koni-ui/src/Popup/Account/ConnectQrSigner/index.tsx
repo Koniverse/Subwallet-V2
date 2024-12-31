@@ -1,27 +1,29 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { detectTranslate } from '@subwallet/extension-base/utils';
-import { Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyType } from '@subwallet/extension-base/types';
+import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
+import { AccountNameModal, Layout, PageWrapper } from '@subwallet/extension-koni-ui/components';
 import CloseIcon from '@subwallet/extension-koni-ui/components/Icon/CloseIcon';
 import DualLogo from '@subwallet/extension-koni-ui/components/Logo/DualLogo';
 import QrScannerErrorNotice from '@subwallet/extension-koni-ui/components/Qr/Scanner/ErrorNotice';
-import { ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
+import { ACCOUNT_NAME_MODAL, ATTACH_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
 import useCompleteCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useCompleteCreateAccount';
-import useGetDefaultAccountName from '@subwallet/extension-koni-ui/hooks/account/useGetDefaultAccountName';
 import useGoBackFromCreateAccount from '@subwallet/extension-koni-ui/hooks/account/useGoBackFromCreateAccount';
 import useScanAccountQr from '@subwallet/extension-koni-ui/hooks/qr/useScanAccountQr';
 import useAutoNavigateToCreatePassword from '@subwallet/extension-koni-ui/hooks/router/useAutoNavigateToCreatePassword';
 import useDefaultNavigate from '@subwallet/extension-koni-ui/hooks/router/useDefaultNavigate';
 import { createAccountExternalV2 } from '@subwallet/extension-koni-ui/messaging';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps, ValidateState } from '@subwallet/extension-koni-ui/types';
 import { QrAccount } from '@subwallet/extension-koni-ui/types/scanner';
 import { qrSignerScan } from '@subwallet/extension-koni-ui/utils/scanner/attach';
 import { Icon, Image, ModalContext, SwQrScanner } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { QrCode, XCircle } from 'phosphor-react';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import DefaultLogosMap from '../../../assets/logo';
@@ -32,6 +34,8 @@ const FooterIcon = (
     weight='fill'
   />
 );
+
+const accountNameModalId = ACCOUNT_NAME_MODAL;
 
 interface Props extends ThemeProps {
   title: string;
@@ -52,52 +56,87 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const onComplete = useCompleteCreateAccount();
   const onBack = useGoBackFromCreateAccount(ATTACH_ACCOUNT_MODAL);
+  const accounts = useSelector((root: RootState) => root.accountState.accounts);
 
-  const accountName = useGetDefaultAccountName();
-  const { inactiveModal } = useContext(ModalContext);
+  const { activeModal, inactiveModal } = useContext(ModalContext);
 
   const [validateState, setValidateState] = useState<ValidateState>({});
   const [loading, setLoading] = useState(false);
+  const [scannedAccount, setScannedAccount] = useState<QrAccount>();
+
+  const accountAddressValidator = useCallback((scannedAccount: QrAccount) => {
+    if (scannedAccount?.content) {
+      // For each account, check if the address already exists return promise reject
+      for (const account of accounts) {
+        // todo: Recheck this logic with master account
+        if (isSameAddress(account.address, scannedAccount.content)) {
+          return Promise.reject(new Error(t('Account already exists')));
+        }
+      }
+    }
+
+    return Promise.resolve();
+  }, [accounts, t]);
 
   const onSubmit = useCallback((account: QrAccount) => {
-    setLoading(true);
-    inactiveModal(modalId);
     setValidateState({
       message: '',
       status: 'validating'
     });
+    inactiveModal(modalId);
+    accountAddressValidator(account)
+      .then(() => {
+        setScannedAccount(account);
+      }).catch((error: Error) => {
+        setValidateState({
+          message: error.message,
+          status: 'error'
+        });
+      });
+  }, [accountAddressValidator, inactiveModal]);
 
-    setTimeout(() => {
-      createAccountExternalV2({
-        name: accountName,
-        address: account.content,
-        genesisHash: '',
-        isEthereum: account.isEthereum,
-        isAllowed: true,
-        isReadOnly: false
-      })
-        .then((errors) => {
-          if (errors.length) {
+  const onSubmitFinal = useCallback((name: string) => {
+    if (scannedAccount) {
+      setLoading(true);
+
+      setTimeout(() => {
+        createAccountExternalV2({
+          name,
+          address: scannedAccount.content,
+          genesisHash: '',
+          isAllowed: true,
+          isReadOnly: false
+        })
+          .then((errors) => {
+            if (errors.length) {
+              setValidateState({
+                message: errors[0].message,
+                status: 'error'
+              });
+            } else {
+              setValidateState({});
+              onComplete();
+            }
+          })
+          .catch((error: Error) => {
             setValidateState({
-              message: errors[0].message,
+              message: error.message,
               status: 'error'
             });
-          } else {
-            setValidateState({});
-            onComplete();
-          }
-        })
-        .catch((error: Error) => {
-          setValidateState({
-            message: error.message,
-            status: 'error'
+          })
+          .finally(() => {
+            setLoading(false);
+            inactiveModal(accountNameModalId);
           });
-        })
-        .finally(() => {
-          setLoading(false);
-        });
-    }, 300);
-  }, [accountName, onComplete, inactiveModal]);
+      }, 300);
+    }
+  }, [scannedAccount, onComplete, inactiveModal]);
+
+  useEffect(() => {
+    if (scannedAccount) {
+      activeModal(accountNameModalId);
+    }
+  }, [scannedAccount, activeModal]);
 
   const { onClose, onError, onSuccess, openCamera } = useScanAccountQr(modalId, qrSignerScan, setValidateState, onSubmit);
 
@@ -180,6 +219,12 @@ const Component: React.FC<Props> = (props: Props) => {
             overlay={validateState.message && (<QrScannerErrorNotice message={validateState.message} />)}
           />
         </div>
+
+        <AccountNameModal
+          accountType={AccountProxyType.QR}
+          isLoading={loading}
+          onSubmit={onSubmitFinal}
+        />
       </Layout.WithSubHeaderOnly>
     </PageWrapper>
   );

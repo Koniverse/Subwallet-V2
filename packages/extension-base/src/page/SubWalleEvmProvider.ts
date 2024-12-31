@@ -99,7 +99,7 @@ export class SubWalletEvmProvider extends SafeEventEmitter implements EvmProvide
         return new Promise((resolve, reject) => {
           const origin = document.title !== '' ? document.title : window.location.hostname;
 
-          this.sendMessage('pub(authorize.tabV2)', { origin, accountAuthType: 'evm' })
+          this.sendMessage('pub(authorize.tabV2)', { origin, accountAuthTypes: ['evm'] })
             .then(() => {
               // Return account list
               this.request<string[]>({ method: 'eth_accounts' })

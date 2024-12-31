@@ -541,7 +541,7 @@ export function getEarningStatusByNominations (bnTotalActiveStake: BN, nominatio
 export function getValidatorLabel (chain: string) {
   if (_STAKING_CHAIN_GROUP.astar.includes(chain)) {
     return 'dApp';
-  } else if (_STAKING_CHAIN_GROUP.relay.includes(chain)) {
+  } else if (_STAKING_CHAIN_GROUP.relay.includes(chain) || _STAKING_CHAIN_GROUP.bittensor.includes(chain)) {
     return 'Validator';
   }
 

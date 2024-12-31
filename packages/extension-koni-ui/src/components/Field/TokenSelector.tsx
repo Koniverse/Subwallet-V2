@@ -34,6 +34,8 @@ interface Props extends ThemeProps, BasicInputWrapper {
 const renderEmpty = () => <GeneralEmptyList />;
 
 const convertChainActivePriority = (active?: boolean) => active ? 1 : 0;
+const tokenPriorityList = ['polkadot-NATIVE-DOT', 'ethereum-NATIVE-ETH', 'ton-NATIVE-TON'];
+const convertChainPriorityInit = (index: number) => index === -1 ? tokenPriorityList.length : index;
 
 function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactElement<Props> {
   const { className = '', disabled, filterFunction = _isAssetFungibleToken, id = 'token-select', items, label, placeholder, showChainInSelected = false, statusHelp, tooltip, value } = props;
@@ -53,7 +55,13 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
     });
 
     raw.sort((a, b) => {
-      return convertChainActivePriority(chainStateMap[b.originChain]?.active) - convertChainActivePriority(chainStateMap[a.originChain]?.active);
+      const priorityComparison = convertChainActivePriority(chainStateMap[b.originChain]?.active) - convertChainActivePriority(chainStateMap[a.originChain]?.active);
+
+      if (priorityComparison !== 0) {
+        return priorityComparison;
+      }
+
+      return convertChainPriorityInit(tokenPriorityList.indexOf(a.slug)) - convertChainPriorityInit(tokenPriorityList.indexOf(b.slug));
     });
 
     return raw;
@@ -161,6 +169,7 @@ function Component (props: Props, ref: ForwardedRef<InputRef>): React.ReactEleme
   return (
     <SelectModal
       className={`${className} chain-selector-modal`}
+      destroyOnClose={true}
       disabled={disabled}
       id={id}
       inputClassName={`${className} chain-selector-input`}

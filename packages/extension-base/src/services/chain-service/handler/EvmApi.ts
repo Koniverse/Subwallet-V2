@@ -102,16 +102,12 @@ export class EvmApi implements _EvmApi {
     this.clearIntervalCheckApi();
 
     return setInterval(() => {
-      if (!this.ignoreNetListen) {
-        this.api.eth.net.isListening()
-          .then(() => {
-            this.onConnect();
-          }).catch(() => {
-            this.onDisconnect();
-          });
-      } else {
-        this.onConnect();
-      }
+      this.api.eth.getChainId()
+        .then(() => {
+          this.onConnect();
+        }).catch(() => {
+          this.onDisconnect();
+        });
     }, 10000);
   }
 
@@ -127,22 +123,17 @@ export class EvmApi implements _EvmApi {
     this.updateConnectionStatus(_ChainConnectionStatus.CONNECTING);
 
     // Check if api is ready
-    if (!this.ignoreNetListen) {
-      this.api.eth.net.isListening()
-        .then(() => {
-          this.isApiReadyOnce = true;
-          this.onConnect();
-        }).catch((error) => {
-          this.isApiReadyOnce = false;
-          this.isApiReady = false;
-          this.isReadyHandler.reject(error);
-          this.updateConnectionStatus(_ChainConnectionStatus.DISCONNECTED);
-          console.warn(`Can not connect to ${this.chainSlug} (EVM) at ${this.apiUrl}`);
-        });
-    } else {
-      this.isApiReadyOnce = true;
-      this.onConnect();
-    }
+    this.api.eth.getChainId()
+      .then(() => {
+        this.isApiReadyOnce = true;
+        this.onConnect();
+      }).catch((error) => {
+        this.isApiReadyOnce = false;
+        this.isApiReady = false;
+        this.isReadyHandler.reject(error);
+        this.updateConnectionStatus(_ChainConnectionStatus.DISCONNECTED);
+        console.warn(`Can not connect to ${this.chainSlug} (EVM) at ${this.apiUrl}`);
+      });
 
     // Interval to check connecting status
     this.intervalCheckApi = this.createIntervalCheckApi();

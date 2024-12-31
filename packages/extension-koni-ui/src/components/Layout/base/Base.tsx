@@ -20,20 +20,17 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
-import Footer from '../parts/Footer';
-
 export interface LayoutBaseProps extends Omit<
 SwScreenLayoutProps,
-'tabBarItems' | 'footer' | 'headerContent' | 'selectedTabBarItem'
+'tabBarItems' | 'headerContent' | 'selectedTabBarItem'
 >, ThemeProps {
   children: React.ReactNode | React.ReactNode[];
-  showFooter?: boolean;
   isDisableHeader?: boolean;
 }
 type TabBarItem = Omit<SwTabBarItem, 'onClick'> & { url: string };
 const specialLanguages: Array<LanguageType> = ['ja', 'ru'];
 
-const Component = ({ children, className, headerIcons, isDisableHeader, onBack, showFooter, ...props }: LayoutBaseProps) => {
+const Component = ({ children, className, headerIcons, isDisableHeader, onBack, ...props }: LayoutBaseProps) => {
   const navigate = useNavigate();
   const { goHome } = useDefaultNavigate();
   const { pathname } = useLocation();
@@ -146,7 +143,6 @@ const Component = ({ children, className, headerIcons, isDisableHeader, onBack, 
     <SwScreenLayout
       {...props}
       className={CN(className, { 'special-language': specialLanguages.includes(language), 'disable-header': isDisableHeader })}
-      footer={showFooter && <Footer />}
       headerContent={props.showHeader && <SelectAccount />}
       headerIcons={headerIcons}
       onBack={onBack || defaultOnBack}

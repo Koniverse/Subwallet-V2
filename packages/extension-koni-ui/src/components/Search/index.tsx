@@ -16,9 +16,11 @@ type Props = ThemeProps & {
   onClickActionBtn?: () => void;
   actionBtnIcon?: JSX.Element;
   showActionBtn?: boolean;
+  autoFocus?: boolean;
 }
 
 const Component: React.FC<Props> = ({ actionBtnIcon,
+  autoFocus,
   className,
   onClickActionBtn,
   onSearch,
@@ -36,6 +38,7 @@ const Component: React.FC<Props> = ({ actionBtnIcon,
   return (
     <div className={CN(className)}>
       <Input.Search
+        autoFocus={autoFocus}
         className='__search-input'
         onChange={handleInputChange}
         placeholder={placeholder}
@@ -60,10 +63,7 @@ const Component: React.FC<Props> = ({ actionBtnIcon,
 
 const Search = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-    '.__search-input': {
-      width: 360,
-      height: 48
-    }
+
   };
 });
 

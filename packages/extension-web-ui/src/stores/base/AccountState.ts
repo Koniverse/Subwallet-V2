@@ -3,7 +3,8 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AddressBookInfo, KeyringState } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, AccountsContext } from '@subwallet/extension-base/background/types';
+import { AccountsContext } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountState, ReduxStatus } from '@subwallet/extension-web-ui/stores/types';
 import { isAccountAll, isNoAccount } from '@subwallet/extension-web-ui/utils';
 

@@ -12,12 +12,17 @@ export interface Message extends MessageEvent {
   }
 }
 
+export * from './account';
 export * from './balance';
+export * from './bridge';
 export * from './buy';
 export * from './campaigns';
 export * from './common';
+export * from './error';
 export * from './fee';
 export * from './metadata';
 export * from './ordinal';
+export * from './service-base';
+export * from './swap';
 export * from './transaction';
 export * from './yield';

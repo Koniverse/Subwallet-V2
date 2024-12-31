@@ -1,8 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountAuthType, AccountJson, AuthorizeRequest } from '@subwallet/extension-base/background/types';
+import { AccountAuthType, AuthorizeRequest } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountItemWithName, ConfirmationGeneralInfo } from '@subwallet/extension-web-ui/components';
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
 import { useSetSelectedAccountTypes } from '@subwallet/extension-web-ui/hooks';

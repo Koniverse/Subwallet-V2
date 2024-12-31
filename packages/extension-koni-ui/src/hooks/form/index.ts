@@ -5,4 +5,5 @@ export { default as useFocusById } from './useFocusById';
 export { default as useFocusFormItem } from './useFocusFormItem';
 
 export * from './useForwardInputRef';
+export * from './useForwardFieldRef';
 export * from './useSelectModalInputHelper';

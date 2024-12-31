@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType, StakingTxErrorType } from '@subwallet/extension-base/background/KoniTypes';
-import { LendingYieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
+import { BasicTxErrorType, LendingYieldPoolInfo, StakingTxErrorType, YieldPoolType } from '@subwallet/extension-base/types';
 import { BN_ZERO, formatNumber } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';

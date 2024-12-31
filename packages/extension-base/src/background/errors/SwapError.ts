@@ -49,6 +49,11 @@ const defaultErrorMap: Record<SwapErrorType, { message: string, code?: number }>
   MAKE_POOL_NOT_ENOUGH_EXISTENTIAL_DEPOSIT: {
     message: detectTranslate('Insufficient liquidity to complete the swap. Lower your amount and try again'),
     code: undefined
+  },
+  NOT_MEET_MIN_EXPECTED: {
+    // TODO: update message
+    message: detectTranslate('Unable to process this swap at the moment. Try again later'),
+    code: undefined
   }
 };
 

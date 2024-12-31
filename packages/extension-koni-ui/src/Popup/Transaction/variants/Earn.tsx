@@ -4,12 +4,12 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _handleDisplayForEarningError, _handleDisplayInsufficientEarningError } from '@subwallet/extension-base/core/logic-validation/earning';
-import { _getAssetDecimals, _getAssetSymbol, _getSubstrateGenesisHash, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol } from '@subwallet/extension-base/services/chain-service/utils';
 import { isLendingPool, isLiquidPool } from '@subwallet/extension-base/services/earning-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { NominationPoolInfo, OptimalYieldPath, OptimalYieldPathParams, SubmitJoinNativeStaking, SubmitJoinNominationPool, SubmitYieldJoinData, ValidatorInfo, YieldPoolType, YieldStepType } from '@subwallet/extension-base/types';
 import { addLazy } from '@subwallet/extension-base/utils';
-import { AccountSelector, AlertBox, AmountInput, EarningPoolSelector, EarningValidatorSelector, HiddenInput, InfoIcon, LoadingScreen, MetaInfo } from '@subwallet/extension-koni-ui/components';
+import { AccountAddressSelector, AlertBox, AmountInput, EarningPoolSelector, EarningValidatorSelector, HiddenInput, InfoIcon, LoadingScreen, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { EarningProcessItem } from '@subwallet/extension-koni-ui/components/Earning';
 import { getInputValuesFromString } from '@subwallet/extension-koni-ui/components/Field/AmountInput';
 import { EarningInstructionModal } from '@subwallet/extension-koni-ui/components/Modal/Earning';
@@ -20,8 +20,8 @@ import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campa
 import { fetchPoolTarget, getOptimalYieldPath, submitJoinYieldPool, validateYieldProcess } from '@subwallet/extension-koni-ui/messaging';
 import { DEFAULT_YIELD_PROCESS, EarningActionType, earningReducer } from '@subwallet/extension-koni-ui/reducer';
 import { store } from '@subwallet/extension-koni-ui/stores';
-import { EarnParams, FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { convertFieldToObject, isAccountAll, parseNominations, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { AccountAddressItemType, EarnParams, FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { convertFieldToObject, getReformatedAddressRelatedToChain, parseNominations, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, Button, ButtonProps, Form, Icon, ModalContext, Number } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -30,14 +30,12 @@ import React, { useCallback, useContext, useEffect, useMemo, useReducer, useRef,
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import { isEthereumAddress } from '@polkadot/util-crypto';
-
 import { getJoinYieldParams } from '../helper';
 import { EarnOutlet, FreeBalance, FreeBalanceToEarn, TransactionContent, TransactionFooter } from '../parts';
 
 type Props = ThemeProps;
 
-const hideFields: Array<keyof EarnParams> = ['slug', 'chain', 'asset'];
+const hideFields: Array<keyof EarnParams> = ['slug', 'chain', 'asset', 'fromAccountProxy'];
 const validateFields: Array<keyof EarnParams> = ['from'];
 const loadingStepPromiseKey = 'earning.step.loading';
 
@@ -55,9 +53,9 @@ const Component = () => {
     openAlert, persistData,
     setBackProps, setIsDisableHeader, setSubHeaderRightButtons } = useTransactionContext<EarnParams>();
 
-  const { slug } = defaultData;
+  const { fromAccountProxy, slug } = defaultData;
 
-  const { accounts, isAllAccount } = useSelector((state) => state.accountState);
+  const { accountProxies, isAllAccount } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const poolTargetsMap = useSelector((state) => state.earning.poolTargetsMap);
@@ -94,7 +92,6 @@ const Component = () => {
   const poolInfo = poolInfoMap[slug];
   const poolType = poolInfo?.type || '';
   const poolChain = poolInfo?.chain || '';
-  const networkPrefix = chainInfoMap[poolChain]?.substrateInfo?.addressPrefix;
 
   const [isBalanceReady, setIsBalanceReady] = useState<boolean>(true);
   const [forceFetchValidator, setForceFetchValidator] = useState(false);
@@ -272,29 +269,42 @@ const Component = () => {
     }
   }, [poolTargetValue, poolTargetsMap, poolType, slug]);
 
-  const accountSelectorList = useMemo(() => {
-    const chainInfo = chainInfoMap[poolChain];
+  // todo: will convert logic to util if is necessary
+  const accountAddressItems = useMemo(() => {
+    const chainInfo = poolChain ? chainInfoMap[poolChain] : undefined;
 
     if (!chainInfo) {
       return [];
     }
 
-    return accounts.filter((a) => {
-      if (isAccountAll(a.address)) {
-        return false;
+    const result: AccountAddressItemType[] = [];
+
+    accountProxies.forEach((ap) => {
+      if (!(!fromAccountProxy || ap.id === fromAccountProxy)) {
+        return;
       }
 
-      if (a.genesisHash && _getSubstrateGenesisHash(chainInfo) !== a.genesisHash) {
-        return false;
-      }
+      ap.accounts.forEach((a) => {
+        const address = getReformatedAddressRelatedToChain(a, chainInfo);
 
-      return _isChainEvmCompatible(chainInfo) === isEthereumAddress(a.address);
+        if (address) {
+          result.push({
+            accountName: ap.name,
+            accountProxyId: ap.id,
+            accountProxyType: ap.accountType,
+            accountType: a.type,
+            address
+          });
+        }
+      });
     });
-  }, [accounts, chainInfoMap, poolChain]);
+
+    return result;
+  }, [accountProxies, chainInfoMap, fromAccountProxy, poolChain]);
 
   const onFieldsChange: FormCallbacks<EarnParams>['onFieldsChange'] = useCallback((changedFields: FormFieldData[], allFields: FormFieldData[]) => {
     // TODO: field change
-    const { empty, error } = simpleCheckForm(allFields, ['--asset']);
+    const { empty, error } = simpleCheckForm(allFields, ['--asset', '--fromAccountProxy']);
 
     const values = convertFieldToObject<EarnParams>(allFields);
 
@@ -804,10 +814,10 @@ const Component = () => {
   }, [form, inputAsset.slug]);
 
   useEffect(() => {
-    if (!fromValue && accountSelectorList.length === 1) {
-      form.setFieldValue('from', accountSelectorList[0].address);
+    if (!fromValue && accountAddressItems.length === 1) {
+      form.setFieldValue('from', accountAddressItems[0].address);
     }
-  }, [accountSelectorList, form, fromValue]);
+  }, [accountAddressItems, form, fromValue]);
 
   useEffect(() => {
     if (currentStep === 0) {
@@ -998,11 +1008,9 @@ const Component = () => {
                 <Form.Item
                   name={'from'}
                 >
-                  <AccountSelector
-                    addressPrefix={networkPrefix}
+                  <AccountAddressSelector
                     disabled={!isAllAccount}
-                    doFilter={false}
-                    externalAccounts={accountSelectorList}
+                    items={accountAddressItems}
                   />
                 </Form.Item>
 

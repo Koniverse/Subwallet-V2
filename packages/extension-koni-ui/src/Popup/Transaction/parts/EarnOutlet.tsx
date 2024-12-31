@@ -32,14 +32,17 @@ const Component: React.FC<Props> = (props: Props) => {
   const { chainStateMap } = useSelector((state) => state.chainStore);
 
   const isChainActive = !!chainStateMap[defaultData.chain]?.active;
+  const ignoreCheckChain = ['/transaction/claim-reward'].includes(path);
 
   useEffect(() => {
     if (!isChainActive) {
-      navigate('/home/earning');
+      if (!ignoreCheckChain) {
+        navigate('/home/earning');
+      }
     }
-  }, [inactiveModal, isChainActive, navigate]);
+  }, [inactiveModal, isChainActive, navigate, ignoreCheckChain]);
 
-  if (!isChainActive) {
+  if (!isChainActive && !ignoreCheckChain) {
     return <LoadingScreen />;
   }
 

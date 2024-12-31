@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+// todo: Remove unused hooks
 export { default as useAccountAvatarInfo } from './useAccountAvatarInfo';
 export { default as useAccountAvatarTheme } from './useAccountAvatarTheme';
 export { default as useAccountRecoded } from './useAccountRecoded';
@@ -16,6 +17,11 @@ export { default as useHandleMantaPaySync } from './useHandleMantaPaySync';
 export { default as useIsReadOnlyAccount } from './useIsReadOnlyAccount';
 export { default as usePreCheckAction } from './usePreCheckAction';
 export { default as useSetSelectedAccountTypes } from './useSetSelectedAccountTypes';
+export { default as useGetAccountProxyById } from './useGetAccountProxyById';
+export { default as useGetAccountChainAddresses } from './useGetAccountChainAddresses';
+export { default as useSetSelectedMnemonicType } from './useSetSelectedMnemonicType';
+export { default as useHandleTonAccountWarning } from './useHandleTonAccountWarning';
+export { default as useHandleLedgerGenericAccountWarning } from './useHandleLedgerGenericAccountWarning';
 
 export * from './useGetMantaPayConfig';
 export * from './useGetZkAddress';

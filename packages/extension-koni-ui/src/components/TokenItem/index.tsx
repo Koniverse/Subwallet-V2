@@ -3,6 +3,7 @@
 
 export { default as AccountTokenBalanceItem } from './AccountTokenBalanceItem';
 export { default as TokenToggleItem } from './TokenToggleItem';
+export { default as TokenSelectorItem } from './TokenSelectorItem';
 
 export * from './TokenBalanceDetailItem';
 export * from './TokenBalanceSelectionItem';

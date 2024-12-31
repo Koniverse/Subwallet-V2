@@ -1,11 +1,12 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson, AccountJson } from '@subwallet/extension-base/background/types';
-import { BackIcon } from '@subwallet/extension-koni-ui/components';
-import { useFilterModal, useFormatAddress, useGetChainInfoByGenesisHash, useSelector } from '@subwallet/extension-koni-ui/hooks';
+import { AnalyzeAddress, AnalyzedGroup } from '@subwallet/extension-base/types';
+import { _reformatAddressWithChain, getAccountChainTypeForAddress } from '@subwallet/extension-base/utils';
+import { AddressSelectorItem, BackIcon } from '@subwallet/extension-koni-ui/components';
+import { useChainInfo, useFilterModal, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { funcSortByName, isAccountAll, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { getReformatedAddressRelatedToChain, isAccountAll, isChainInfoAccordantAccountChainType } from '@subwallet/extension-koni-ui/utils';
 import { Badge, Icon, ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import CN from 'classnames';
@@ -14,55 +15,37 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'reac
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
-import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
-
-import { AccountItemWithName } from '../../Account';
 import { GeneralEmptyList } from '../../EmptyList';
 import { FilterModal } from '../FilterModal';
 
 interface Props extends ThemeProps {
   value?: string;
   id: string;
-  addressPrefix?: number;
-  onSelect: (val: string) => void;
-  networkGenesisHash?: string;
-}
-
-enum AccountGroup {
-  WALLET = 'wallet',
-  CONTACT = 'contact',
-  RECENT = 'recent'
+  chainSlug?: string;
+  onSelect: (val: string, item: AnalyzeAddress) => void;
 }
 
 interface FilterOption {
   label: string;
-  value: AccountGroup;
-}
-
-interface AccountItem extends AbstractAddressJson {
-  group: AccountGroup;
+  value: AnalyzedGroup;
 }
 
 const renderEmpty = () => <GeneralEmptyList />;
 
-const getGroupPriority = (item: AccountItem): number => {
-  switch (item.group) {
-    case AccountGroup.WALLET:
+const getGroupPriority = (item: AnalyzeAddress): number => {
+  switch (item.analyzedGroup) {
+    case AnalyzedGroup.WALLET:
       return 2;
-    case AccountGroup.CONTACT:
+    case AnalyzedGroup.CONTACT:
       return 1;
-    case AccountGroup.RECENT:
+    case AnalyzedGroup.RECENT:
     default:
       return 0;
   }
 };
 
-const checkLedger = (account: AccountJson, networkGenesisHash?: string): boolean => {
-  return !networkGenesisHash || !account.isHardware || account.isGeneric || (account.availableGenesisHashes || []).includes(networkGenesisHash);
-};
-
 const Component: React.FC<Props> = (props: Props) => {
-  const { addressPrefix, className, id, networkGenesisHash, onSelect, value = '' } = props;
+  const { chainSlug, className, id, onSelect, value = '' } = props;
 
   const { t } = useTranslation();
 
@@ -70,11 +53,9 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const isActive = checkActive(id);
 
-  const { accounts, contacts, recent } = useSelector((state) => state.accountState);
+  const { accountProxies, contacts, recent } = useSelector((state) => state.accountState);
 
-  const formatAddress = useFormatAddress(addressPrefix);
-  const chainInfo = useGetChainInfoByGenesisHash(networkGenesisHash);
-  const chain = chainInfo?.slug || '';
+  const chainInfo = useChainInfo(chainSlug);
 
   const filterModal = useMemo(() => `${id}-filter-modal`, [id]);
 
@@ -85,57 +66,87 @@ const Component: React.FC<Props> = (props: Props) => {
   const filterOptions: FilterOption[] = useMemo(() => ([
     {
       label: t('Your wallet'),
-      value: AccountGroup.WALLET
+      value: AnalyzedGroup.WALLET
     },
     {
       label: t('Saved contacts'),
-      value: AccountGroup.CONTACT
+      value: AnalyzedGroup.CONTACT
     },
     {
       label: t('Recent'),
-      value: AccountGroup.RECENT
+      value: AnalyzedGroup.RECENT
     }
   ]), [t]);
 
-  const items = useMemo((): AccountItem[] => {
-    const result: AccountItem[] = [];
+  const items = useMemo((): AnalyzeAddress[] => {
+    if (!chainInfo) {
+      return [];
+    }
 
-    (!selectedFilters.length || selectedFilters.includes(AccountGroup.RECENT)) && recent.forEach((acc) => {
+    const result: AnalyzeAddress[] = [];
+
+    (!selectedFilters.length || selectedFilters.includes(AnalyzedGroup.RECENT)) && recent.forEach((acc) => {
       const chains = acc.recentChainSlugs || [];
 
-      if (chains.includes(chain)) {
-        const address = isAddress(acc.address) ? reformatAddress(acc.address) : acc.address;
-
-        result.push({ ...acc, address: address, group: AccountGroup.RECENT });
+      if (chainSlug && chains.includes(chainSlug)) {
+        result.push({
+          displayName: acc.name,
+          formatedAddress: _reformatAddressWithChain(acc.address, chainInfo),
+          address: acc.address,
+          analyzedGroup: AnalyzedGroup.RECENT
+        });
       }
     });
 
-    (!selectedFilters.length || selectedFilters.includes(AccountGroup.CONTACT)) && contacts.forEach((acc) => {
-      const address = isAddress(acc.address) ? reformatAddress(acc.address) : acc.address;
-
-      result.push({ ...acc, address: address, group: AccountGroup.CONTACT });
-    });
-
-    (!selectedFilters.length || selectedFilters.includes(AccountGroup.WALLET)) && accounts.filter((acc) => !isAccountAll(acc.address)).forEach((acc) => {
-      const address = isAddress(acc.address) ? reformatAddress(acc.address) : acc.address;
-
-      if (checkLedger(acc, networkGenesisHash)) {
-        result.push({ ...acc, address: address, group: AccountGroup.WALLET });
+    (!selectedFilters.length || selectedFilters.includes(AnalyzedGroup.CONTACT)) && contacts.forEach((acc) => {
+      if (isChainInfoAccordantAccountChainType(chainInfo, getAccountChainTypeForAddress(acc.address))) {
+        result.push({
+          displayName: acc.name,
+          formatedAddress: _reformatAddressWithChain(acc.address, chainInfo),
+          address: acc.address,
+          analyzedGroup: AnalyzedGroup.CONTACT
+        });
       }
     });
+
+    (!selectedFilters.length || selectedFilters.includes(AnalyzedGroup.WALLET)) && accountProxies.forEach((ap) => {
+      if (isAccountAll(ap.id)) {
+        return;
+      }
+
+      // todo: recheck with ledger
+
+      ap.accounts.forEach((acc) => {
+        const formatedAddress = getReformatedAddressRelatedToChain(acc, chainInfo);
+
+        if (formatedAddress) {
+          result.push({
+            displayName: acc.name,
+            formatedAddress,
+            address: acc.address,
+            analyzedGroup: AnalyzedGroup.WALLET,
+            proxyId: ap.id
+          });
+        }
+      });
+    });
+
+    // todo: may need better solution for this sorting below
 
     return result
-      .sort(funcSortByName)
+      .sort((a: AnalyzeAddress, b: AnalyzeAddress) => {
+        return ((a?.displayName || '').toLowerCase() > (b?.displayName || '').toLowerCase()) ? 1 : -1;
+      })
       .sort((a, b) => getGroupPriority(b) - getGroupPriority(a));
-  }, [accounts, chain, contacts, networkGenesisHash, recent, selectedFilters]);
+  }, [accountProxies, chainInfo, chainSlug, contacts, recent, selectedFilters]);
 
-  const searchFunction = useCallback((item: AccountItem, searchText: string) => {
+  const searchFunction = useCallback((item: AnalyzeAddress, searchText: string) => {
     const searchTextLowerCase = searchText.toLowerCase();
 
     return (
-      item.address.toLowerCase().includes(searchTextLowerCase) ||
-      (item.name
-        ? item.name.toLowerCase().includes(searchTextLowerCase)
+      item.formatedAddress.toLowerCase().includes(searchTextLowerCase) ||
+      (item.displayName
+        ? item.displayName.toLowerCase().includes(searchTextLowerCase)
         : false)
     );
   }, []);
@@ -145,55 +156,41 @@ const Component: React.FC<Props> = (props: Props) => {
     onResetFilter();
   }, [id, inactiveModal, onResetFilter]);
 
-  const onSelectItem = useCallback((item: AccountItem) => {
+  const onSelectItem = useCallback((item: AnalyzeAddress) => {
     return () => {
-      const address = reformatAddress(item.address, addressPrefix);
-
       inactiveModal(id);
-      onSelect(address);
+      onSelect(item.formatedAddress, item);
       onResetFilter();
     };
-  }, [addressPrefix, id, inactiveModal, onResetFilter, onSelect]);
+  }, [id, inactiveModal, onResetFilter, onSelect]);
 
-  const renderItem = useCallback((item: AccountItem) => {
-    const address = formatAddress(item);
-    const isRecent = item.group === AccountGroup.RECENT;
-    let selected: boolean;
-
-    if (isEthereumAddress(value)) {
-      selected = value.toLowerCase() === address.toLowerCase();
-    } else {
-      selected = value === address;
-    }
-
+  const renderItem = useCallback((item: AnalyzeAddress) => {
     return (
-      <AccountItemWithName
-        accountName={item.name}
-        address={address}
-        addressPreLength={isRecent ? 9 : 4}
-        addressSufLength={isRecent ? 9 : 4}
-        avatarSize={24}
-        fallbackName={false}
-        isSelected={selected}
-        key={`${item.address}_${item.group}`}
+      <AddressSelectorItem
+        address={item.formatedAddress}
+        avatarValue={item.proxyId || item.address}
+        className={'__list-item'}
+        isSelected={value.toLowerCase() === item.formatedAddress.toLowerCase()}
+        key={`${item.formatedAddress}_${item.analyzedGroup}`}
+        name={item.displayName}
         onClick={onSelectItem(item)}
       />
     );
-  }, [formatAddress, onSelectItem, value]);
+  }, [onSelectItem, value]);
 
-  const groupSeparator = useCallback((group: AccountItem[], idx: number, groupKey: string) => {
-    const _group = groupKey as AccountGroup;
+  const groupSeparator = useCallback((group: AnalyzeAddress[], idx: number, groupKey: string) => {
+    const _group = groupKey as AnalyzedGroup;
 
     let groupLabel = _group;
 
     switch (_group) {
-      case AccountGroup.WALLET:
+      case AnalyzedGroup.WALLET:
         groupLabel = t('Your wallet');
         break;
-      case AccountGroup.CONTACT:
+      case AnalyzedGroup.CONTACT:
         groupLabel = t('Saved contacts');
         break;
-      case AccountGroup.RECENT:
+      case AnalyzedGroup.RECENT:
         groupLabel = t('Recent');
         break;
     }
@@ -247,16 +244,14 @@ const Component: React.FC<Props> = (props: Props) => {
               />
             </Badge>
           )}
-          displayRow={true}
           enableSearchInput={true}
-          groupBy='group'
+          groupBy='analyzedGroup'
           groupSeparator={groupSeparator}
           list={items}
           onClickActionBtn={openFilter}
           ref={sectionRef}
           renderItem={renderItem}
           renderWhenEmpty={renderEmpty}
-          rowGap='var(--row-gap)'
           searchFunction={searchFunction}
           searchMinCharactersCount={2}
           searchPlaceholder={t<string>('Account name')}
@@ -279,8 +274,6 @@ const Component: React.FC<Props> = (props: Props) => {
 
 const AddressBookModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
-    '--row-gap': `${token.sizeXS}px`,
-
     '.ant-sw-modal-body': {
       display: 'flex',
       paddingLeft: 0,
@@ -289,6 +282,14 @@ const AddressBookModal = styled(Component)<Props>(({ theme: { token } }: Props) 
 
     '.ant-sw-list-section': {
       flex: 1
+    },
+
+    '.ant-sw-list': {
+      paddingBottom: 0
+    },
+
+    '.___list-separator + .__list-item, .__list-item + .__list-item, .__list-item + .___list-separator': {
+      marginTop: token.marginXS
     },
 
     '.address-book-group-separator': {

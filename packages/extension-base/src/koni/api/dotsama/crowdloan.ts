@@ -178,7 +178,7 @@ export async function subscribeCrowdloan (addresses: string[], substrateApiMap: 
     const now = Date.now();
     const polkadotAPI = await substrateApiMap[COMMON_CHAIN_SLUGS.POLKADOT].isReady;
     const kusamaAPI = await substrateApiMap[COMMON_CHAIN_SLUGS.KUSAMA].isReady;
-    const substrateAddresses = categoryAddresses(addresses)[0];
+    const substrateAddresses = categoryAddresses(addresses).substrate;
     const hexAddresses = substrateAddresses.map((address) => {
       return registry.createType('AccountId', address).toHex();
     });

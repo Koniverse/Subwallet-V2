@@ -24,7 +24,7 @@ export function _canAccountBeReaped (accountInfo: FrameSystemAccountInfo): boole
 }
 
 export function _isAccountActive (accountInfo: FrameSystemAccountInfo): boolean {
-  return accountInfo.providers === 0 && accountInfo.consumers === 0;
+  return !(accountInfo.consumers === 0 && accountInfo.providers === 0 && accountInfo.sufficients === 0);
 }
 
 export function _getSystemPalletTotalBalance (accountInfo: FrameSystemAccountInfo): bigint {

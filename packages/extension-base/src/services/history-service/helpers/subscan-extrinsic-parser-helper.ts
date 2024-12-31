@@ -37,7 +37,7 @@ function balanceTransferParserFunction (item: TransactionHistoryItem): Transacti
       const toPublicKey = (p.value.id || p.value.Id) as string;
 
       if (toPublicKey) {
-        item.to = encodeAddress(autoAddPublicKeyPrefix(toPublicKey), 42);
+        item.to = encodeAddress(autoAddPublicKeyPrefix(toPublicKey), item?.addressPrefix);
       }
     } else if (p.name === 'value') {
       if (item.amount) {

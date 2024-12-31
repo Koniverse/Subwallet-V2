@@ -46,6 +46,7 @@ const Component: React.FC<Props> = (props: Props) => {
   const { token } = useTheme() as Theme;
 
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
+  const isActiveModal = useMemo(() => checkActive(modalId), [checkActive]);
   const [, setTimeOutRecords] = useLocalStorage(TIME_OUT_RECORD, {});
   const [form] = Form.useForm<AddConnectionFormState>();
 
@@ -64,13 +65,13 @@ const Component: React.FC<Props> = (props: Props) => {
   useEffect(() => {
     const timeOutRecord = getTimeOutRecords();
 
-    if (loading && !checkActive(modalId) && !timeOutRecord[keyRecords]) {
+    if (loading && !isActiveModal && !timeOutRecord[keyRecords]) {
       idTimeOut = setTimeout(reOpenModalWhenTimeOut, 20000);
       setTimeOutRecords({ ...timeOutRecord, [keyRecords]: idTimeOut });
     } else if (timeOutRecord[keyRecords]) {
       setLoading(false);
     }
-  }, [checkActive, loading, reOpenModalWhenTimeOut, setTimeOutRecords]);
+  }, [isActiveModal, loading, reOpenModalWhenTimeOut, setTimeOutRecords]);
 
   const onClickToFAQ = useCallback((isDismiss: boolean) => {
     return () => {

@@ -5,6 +5,7 @@ import { ExtrinsicStatus, TransactionHistoryItem } from '@subwallet/extension-ba
 import { CRON_RECOVER_HISTORY_INTERVAL } from '@subwallet/extension-base/constants';
 import { PersistDataServiceInterface, ServiceStatus, StoppableServiceInterface } from '@subwallet/extension-base/services/base/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
+import { _isChainEvmCompatible, _isChainSubstrateCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { historyRecover, HistoryRecoverStatus } from '@subwallet/extension-base/services/history-service/helpers/recoverHistoryStatus';
 import { getExtrinsicParserKey } from '@subwallet/extension-base/services/history-service/helpers/subscan-extrinsic-parser-helper';
@@ -12,14 +13,14 @@ import { parseSubscanExtrinsicData, parseSubscanTransferData } from '@subwallet/
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { SubscanService } from '@subwallet/extension-base/services/subscan-service';
-import { reformatAddress } from '@subwallet/extension-base/utils';
+import { categoryAddresses } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { keyring } from '@subwallet/ui-keyring';
 import { BehaviorSubject } from 'rxjs';
 
-function filterHistoryItemByAddressAndChain (chain: string, address: string) {
+function filterHistoryItemByAddressAndChain (chain: string, addresses: string[]) {
   return (item: TransactionHistoryItem) => {
-    return item.chain === chain && item.address === address;
+    return item.chain === chain && addresses.includes(item.address);
   };
 }
 
@@ -52,7 +53,7 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
     const historyRecords = [] as TransactionHistoryItem[];
 
     // Fill additional info
-    const accountMap = Object.entries(this.keyringService.accounts).reduce((map, [address, account]) => {
+    const accountMap = Object.entries(this.keyringService.context.pairs).reduce((map, [address, account]) => {
       map[address.toLowerCase()] = account.json.meta.name || address;
 
       return map;
@@ -89,12 +90,17 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
     return this.historySubject;
   }
 
-  private fetchSubscanTransactionHistory (chain: string, address: string) {
-    if (!this.subscanService.checkSupportedSubscanChain(chain)) {
+  /**
+   * @todo: Must improve performance of this function
+   * */
+  private fetchSubscanTransactionHistory (chain: string, addresses: string[]) {
+    if (!this.subscanService.checkSupportedSubscanChain(chain) || !addresses.length) {
       return;
     }
 
     const chainInfo = this.chainService.getChainInfoByKey(chain);
+    // For now, we only use the first address
+    const address = addresses[0];
 
     const excludeExtrinsicParserKeys: string[] = [
       'balances.transfer_all'
@@ -173,18 +179,27 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
     });
   }
 
-  subscribeHistories (chain: string, address: string, cb: (items: TransactionHistoryItem[]) => void) {
-    const _address = reformatAddress(address);
+  subscribeHistories (chain: string, proxyId: string, cb: (items: TransactionHistoryItem[]) => void) {
+    const addresses = this.keyringService.context.getDecodedAddresses(proxyId, false);
+    const { evm, substrate } = categoryAddresses(addresses);
 
     const subscription = this.historySubject.subscribe((items) => {
-      cb(items.filter(filterHistoryItemByAddressAndChain(chain, _address)));
+      cb(items.filter(filterHistoryItemByAddressAndChain(chain, addresses)));
     });
 
-    this.fetchSubscanTransactionHistory(chain, _address);
+    const chainInfo = this.chainService.getChainInfoByKey(chain);
+
+    if (_isChainSubstrateCompatible(chainInfo)) {
+      if (_isChainEvmCompatible(chainInfo)) {
+        this.fetchSubscanTransactionHistory(chain, evm);
+      } else {
+        this.fetchSubscanTransactionHistory(chain, substrate);
+      }
+    }
 
     return {
       unsubscribe: subscription.unsubscribe,
-      value: this.historySubject.getValue().filter(filterHistoryItemByAddressAndChain(chain, _address))
+      value: this.historySubject.getValue().filter(filterHistoryItemByAddressAndChain(chain, addresses))
     };
   }
 

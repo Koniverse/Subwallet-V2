@@ -15,6 +15,8 @@ export const CHAIN_FLIP_MAINNET_EXPLORER = 'https://scan.chainflip.io';
 export const TRANSAK_TEST_MODE = process.env.TRANSAK_TEST_MODE !== undefined ? !!process.env.TRANSAK_TEST_MODE : true;
 export const TRANSAK_URL = TRANSAK_TEST_MODE ? 'https://global-stg.transak.com' : 'https://global.transak.com';
 
+export const SIMPLE_SWAP_EXPLORER = 'https://simpleswap.io';
+
 export const CHAIN_FLIP_SUPPORTED_MAINNET_MAPPING: Record<string, Chain> = {
   [COMMON_CHAIN_SLUGS.POLKADOT]: Chains.Polkadot,
   [COMMON_CHAIN_SLUGS.ETHEREUM]: Chains.Ethereum,
@@ -39,6 +41,14 @@ export const CHAIN_FLIP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, Asset> =
   [COMMON_ASSETS.USDC_SEPOLIA]: Assets.USDC
 };
 
+export const SIMPLE_SWAP_SUPPORTED_TESTNET_ASSET_MAPPING: Record<string, string> = {
+  'bittensor-NATIVE-TAO': 'tao',
+  [COMMON_ASSETS.ETH]: 'eth',
+  [COMMON_ASSETS.DOT]: 'dot',
+  [COMMON_ASSETS.USDC_ETHEREUM]: 'usdc',
+  [COMMON_ASSETS.USDT_ETHEREUM]: 'usdterc20'
+};
+
 export const SWAP_QUOTE_TIMEOUT_MAP: Record<string, number> = { // in milliseconds
   default: 30000,
   [SwapProviderId.CHAIN_FLIP_TESTNET]: 30000,
@@ -52,7 +62,8 @@ export const _PROVIDER_TO_SUPPORTED_PAIR_MAP: Record<string, string[]> = {
   [SwapProviderId.CHAIN_FLIP_TESTNET]: [COMMON_CHAIN_SLUGS.CHAINFLIP_POLKADOT, COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA],
   [SwapProviderId.POLKADOT_ASSET_HUB]: [COMMON_CHAIN_SLUGS.POLKADOT_ASSET_HUB],
   [SwapProviderId.KUSAMA_ASSET_HUB]: [COMMON_CHAIN_SLUGS.KUSAMA_ASSET_HUB],
-  [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB]
+  [SwapProviderId.ROCOCO_ASSET_HUB]: [COMMON_CHAIN_SLUGS.ROCOCO_ASSET_HUB],
+  [SwapProviderId.SIMPLE_SWAP]: ['bittensor', COMMON_CHAIN_SLUGS.ETHEREUM, COMMON_CHAIN_SLUGS.POLKADOT]
 };
 
 export function getSwapAlternativeAsset (swapPair: SwapPair): string | undefined {

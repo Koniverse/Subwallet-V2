@@ -10,12 +10,15 @@ export { default as NominationSelector } from './NominationSelector';
 export { default as PhraseNumberSelector } from './PhraseNumberSelector';
 export { default as PrivateKeyInput } from './PrivateKeyInput';
 export { default as SeedPhraseInput } from './SeedPhraseInput';
+export { default as AccountAddressSelector } from './AccountAddressSelector';
 
 export * from './AccountSelector';
 export * from './AddressInput';
+export * from './AddressInputNew';
 export * from './BuyTokens/ServiceSelector';
 export * from './ChainSelector';
 export * from './ProviderSelector';
 export * from './TokenSelector';
 export * from './TokenTypeSelector';
 export * from './Earning';
+export * from './TransactionFee';

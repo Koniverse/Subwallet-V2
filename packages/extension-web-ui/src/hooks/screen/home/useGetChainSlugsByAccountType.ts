@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { AccountType } from '@subwallet/extension-web-ui/types';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils';

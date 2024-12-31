@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @polkadot/extension authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import type { MessageTypes, MessageTypesWithNoSubscriptions, MessageTypesWithNullRequest, MessageTypesWithSubscriptions, RequestTypes, ResponseTypes, SubscriptionMessageTypes, TransportRequestMessage, TransportResponseMessage } from '../background/types';
+import type { AccountAuthType, MessageTypes, MessageTypesWithNoSubscriptions, MessageTypesWithNullRequest, MessageTypesWithSubscriptions, RequestTypes, ResponseTypes, SubscriptionMessageTypes, TransportRequestMessage, TransportResponseMessage } from '../background/types';
 
 import { ProviderError } from '@subwallet/extension-base/background/errors/ProviderError';
 import { ProviderErrorType } from '@subwallet/extension-base/background/KoniTypes';
@@ -56,7 +56,9 @@ export function sendMessage<TMessageType extends MessageTypes> (message: TMessag
 // the enable function, called by the dapp to allow access
 
 export async function enable (origin: string, opt?: AuthRequestOption): Promise<Injected> {
-  await sendMessage('pub(authorize.tabV2)', { origin, accountAuthType: opt?.accountAuthType || 'substrate' });
+  const accountAuthTypes: AccountAuthType[] = opt?.accountAuthType === 'both' ? ['substrate', 'evm'] : [opt?.accountAuthType || 'substrate'];
+
+  await sendMessage('pub(authorize.tabV2)', { origin, accountAuthTypes });
 
   return new Injected(sendMessage);
 }

@@ -5,11 +5,12 @@ import { _ChainAsset } from '@subwallet/chain-list/types';
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { EarningRewardHistoryItem, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { isSameAddress } from '@subwallet/extension-base/utils';
 import { CollapsiblePanel, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { ASTAR_PORTAL_URL, BN_ZERO, CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS, EarningStatusUi } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation, useYieldRewardTotal } from '@subwallet/extension-koni-ui/hooks';
 import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { customFormatDate, openInNewTab, reformatAddress } from '@subwallet/extension-koni-ui/utils';
+import { customFormatDate, getReformatedAddressRelatedToChain, openInNewTab } from '@subwallet/extension-koni-ui/utils';
 import { ActivityIndicator, Button, Icon, Number } from '@subwallet/react-ui';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -36,7 +37,7 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
   const navigate = useNavigate();
 
   const { slug, type } = compound;
-  const { currentAccount } = useSelector((state) => state.accountState);
+  const { currentAccountProxy } = useSelector((state) => state.accountState);
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
 
   const [, setClaimRewardStorage] = useLocalStorage(CLAIM_REWARD_TRANSACTION, DEFAULT_CLAIM_REWARD_PARAMS);
@@ -95,16 +96,21 @@ function Component ({ className, closeAlert, compound, inputAsset, isShowBalance
   }, [type, isDAppStaking, total, setClaimRewardStorage, slug, transactionChainValue, transactionFromValue, navigate, openAlert, t, closeAlert]);
 
   const onClickViewExplore = useCallback(() => {
-    if (currentAccount) {
+    if (currentAccountProxy && currentAccountProxy.accounts.length > 0) {
       const subscanSlug = chainInfoMap[compound.chain]?.extraInfo?.subscanSlug;
-      const networkPrefix = chainInfoMap[compound.chain].substrateInfo?.addressPrefix;
-      const formatAddress = reformatAddress(currentAccount.address, networkPrefix);
+      const accountJson = currentAccountProxy.accounts.find((account) => isSameAddress(account.address, compound.address));
 
-      if (subscanSlug) {
+      if (!subscanSlug || !accountJson) {
+        return;
+      }
+
+      const formatAddress = getReformatedAddressRelatedToChain(accountJson, chainInfoMap[compound.chain]);
+
+      if (formatAddress) {
         openInNewTab(`https://${subscanSlug}.subscan.io/account/${formatAddress}?tab=reward`)();
       }
     }
-  }, [chainInfoMap, compound.chain, currentAccount]);
+  }, [chainInfoMap, compound.address, compound.chain, currentAccountProxy]);
 
   return (
     <div

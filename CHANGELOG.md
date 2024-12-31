@@ -1,5 +1,160 @@
 # CHANGELOG
 
+## 1.3.11
+Build date: Dec 23, 2024.
+
+Features & Update:
+- Support swap TAO on SimpleSwap (#3855)
+- Update content on unstake screen for some earning options (#3778)
+
+Bug fixed:
+- Fix errors when making transactions on Tangle mainnet (#3861)
+
+## 1.3.10
+Build date: Dec 12, 2024.
+
+Features & Update:
+- Update version polkadot api (#3888)
+- Unable to transfer local token on Bifrost (#3896)
+
+
+## 1.3.9
+Build date: Dec 09, 2024.
+
+Features & Update:
+- Allow Polkadot namespace use EVM address (#3870)
+- Support Generic ledger app for Vara network (#3835)
+
+Bug fixed:
+- Fixed bug validating recipient balance when sending Substrate token (#3713)
+- Fixed bug send NFT on Ethereum network (#3762)
+
+
+## 1.3.8
+Build date: Dec 03, 2024.
+
+Features & Update:
+- Improve chain-list online patch (#3132)
+- Support Unified bridge on Polygon (#3826)
+  - ETH: Ethereum -> Polygon zkEVM
+  - ETH: Polygon zkEVM -> Ethereum
+- Update chain-list
+  - Add support for G6 network testnet
+  - Add support for LOVA token (PAH, Hydration)
+  - Add support for PIP token (Storty Odyssey Testnet)
+  - Add support for Fraxtal Mainnet
+  - Add support for Cyber
+  - Update Aventus Block Explorer
+  - Delete Story Public Tesnet (Iliad testnet)
+
+
+## 1.3.7
+Build date: Nov 23, 2024.
+
+Features & Update:
+- Update chain-list (#3846)
+  - Add support for Gnosis
+  - Add support for Autonomys Mainnet
+  - Add support for KMA (Manta Pacific), USDC (Base Mainnet)
+  - Update information for some chains and tokens: add explorer, price-id, logo & name
+- Improve display collators list (#2751)
+- Improve block action online by environment (#3814)
+- Integration NFT for Story Protocol (#3854)
+
+Bug fixed:
+- Re-check transaction on Polkadot Asset Hub (#3852)
+
+## 1.3.6
+Build date: Nov 07, 2024.
+
+Features & Update:
+- Update chain-list (#3828)
+  - Add Polygon Amoy testnet
+  - Add Polygon zkEVM Cardona testnet
+  - Add WETH, POL, USDC (Amoy)
+  - Add ETH, MATIC, POL (Cardona)
+  - Update explorer for Tangle network
+
+Bug fixed:
+- Fixed error auto reset data on Pool field (#3001)
+
+## 1.3.5
+Build date: Oct 31, 2024.
+
+Features & Update:
+- Support ERC-1155 (#3726)
+- Refactor logic parsing data from contract response (#3070)
+- Re-check some old types from ExtrinsicType (#3654)
+- Update chain-list (#3815)
+  - Add support for World Chain
+  - Add support for Mode Mainnet
+  - Add support for Lisk mainnet
+  - Add support for Zircuit mainnet
+  - Add support for Tangle Network mainnet
+  - Add support Story Odyssey Testnet
+
+Bug fixed:
+- Fixed bug Do not show token (#3721)
+
+
+## 1.3.4
+Build date: Oct 28, 2024.
+
+Features & Update:
+- Integrate Avail Bridge (#3423)
+- Support Notification in app (#3507, #3515)
+- Allow importing assets on Asset Hub (#3636)
+- Update api key for TAO(Bittensor) (#3809)
+- Update chain-list (#3806)
+  - Add support for Unichain testnet
+  - Update address prefix for Bifrost
+
+
+## 1.3.3
+Build date: Oct 16, 2024.
+
+Features & Update:
+- Fix bug Do not show watch-only account on History (#3732)
+- Update Network details screen for TON (#3747)
+- Update chain-list
+  - Update logo for MATIC token
+  - Remove Tinkernet
+
+Bugs fixed:
+- Fix min stake for TAO(Bittensor) (#3788)
+- Fix bug show OG WUD BURN NFT Collection (#3791)
+
+
+## 1.3.2
+Build date: Oct 12, 2024.
+
+Features & Update:
+- Support TAO in-app staking (#2505)
+- Support Ternoa NFT (#3559)
+- Update default slippage for ChainFlip (#3634)
+- Support export for Derived account (#3751)
+- Update address for TON testnet in the token detail screen on All accounts mode (#3752)
+- Improve UI related to Account selector screen (#3755, #3772))
+- Improve UI related to Select token screen (#3756)
+- Add infobox about Wallet version for TON token (#3718)
+- Update chainlist (#3760)
+  - Add support for LogX token
+  - Add support for Mantle Network
+  - Add support for MATIC (Polygon zkEVM) and POL (Ethereum) token
+  - Add support for zkVerify Testnet
+  - Add support for RARI Chain
+  - Add support for Scroll mainnet
+  - Update some information:
+    - Update Avail group token
+    - Re-check enable TON (TON network) token
+- Add validate tokenOfOwnerByIndex when import NFT (#3609)
+
+## 1.3.1
+Build date: Oct 08, 2024.
+
+Features & Update:
+- Support Unified account
+
 ## 1.2.32
 Build date: Oct 01, 2024.
 

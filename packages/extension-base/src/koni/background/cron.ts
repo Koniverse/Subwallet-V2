@@ -78,7 +78,7 @@ export class KoniCron {
 
     await Promise.all([this.state.eventService.waitKeyringReady, this.state.eventService.waitAssetReady]);
 
-    const currentAccountInfo = this.state.keyringService.currentAccount;
+    const currentAccountInfo = this.state.keyringService.context.currentAccount;
 
     const commonReloadEvents: EventType[] = [
       'account.add',
@@ -117,7 +117,7 @@ export class KoniCron {
         return;
       }
 
-      const address = serviceInfo.currentAccountInfo?.address;
+      const address = serviceInfo.currentAccountInfo?.proxyId;
 
       if (!address) {
         return;
@@ -160,13 +160,13 @@ export class KoniCron {
 
     this.addCron('fetchMktCampaignData', this.fetchMktCampaignData, CRON_REFRESH_MKT_CAMPAIGN_INTERVAL);
 
-    if (!currentAccountInfo?.address) {
+    if (!currentAccountInfo?.proxyId) {
       return;
     }
 
     if (Object.keys(this.state.getSubstrateApiMap()).length !== 0 || Object.keys(this.state.getEvmApiMap()).length !== 0) {
-      this.resetNft(currentAccountInfo.address);
-      this.addCron('refreshNft', this.refreshNft(currentAccountInfo.address, this.state.getApiMap(), this.state.getSmartContractNfts(), this.state.getActiveChainInfoMap()), CRON_REFRESH_NFT_INTERVAL);
+      this.resetNft(currentAccountInfo.proxyId);
+      this.addCron('refreshNft', this.refreshNft(currentAccountInfo.proxyId, this.state.getApiMap(), this.state.getSmartContractNfts(), this.state.getActiveChainInfoMap()), CRON_REFRESH_NFT_INTERVAL);
       // this.addCron('refreshStakingReward', this.refreshStakingReward(currentAccountInfo.address), CRON_REFRESH_STAKING_REWARD_INTERVAL);
       this.addCron('syncMantaPay', this.syncMantaPay, CRON_SYNC_MANTA_PAY);
     }
@@ -231,7 +231,7 @@ export class KoniCron {
   };
 
   public async reloadNft () {
-    const address = this.state.keyringService.currentAccount.address;
+    const address = this.state.keyringService.context.currentAccount.proxyId;
     const serviceInfo = this.state.getServiceInfo();
 
     this.resetNft(address);
@@ -244,7 +244,7 @@ export class KoniCron {
   }
 
   public async reloadStaking () {
-    const address = this.state.keyringService.currentAccount.address;
+    const address = this.state.keyringService.context.currentAccount.proxyId;
 
     console.log('reload staking', address);
 

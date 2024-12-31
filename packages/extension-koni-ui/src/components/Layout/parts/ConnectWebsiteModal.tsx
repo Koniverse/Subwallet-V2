@@ -1,13 +1,15 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
-import { isAccountAll } from '@subwallet/extension-base/utils';
-import AccountItemWithName from '@subwallet/extension-koni-ui/components/Account/Item/AccountItemWithName';
+import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
+import { AccountProxy } from '@subwallet/extension-base/types';
+import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
+import { AccountProxyItem } from '@subwallet/extension-koni-ui/components';
 import ConfirmationGeneralInfo from '@subwallet/extension-koni-ui/components/Confirmation/ConfirmationGeneralInfo';
 import { changeAuthorizationBlock, changeAuthorizationPerSite } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { filterAuthorizeAccountProxies, isAddressAllowedWithAuthType } from '@subwallet/extension-koni-ui/utils';
 import { Button, Icon, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CheckCircle, GlobeHemisphereWest, ShieldCheck, ShieldSlash, XCircle } from 'phosphor-react';
@@ -15,8 +17,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styled, { useTheme } from 'styled-components';
-
-import { isEthereumAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps & {
   id: string;
@@ -36,21 +36,29 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
   const { t } = useTranslation();
 
   const [allowedMap, setAllowedMap] = useState<Record<string, boolean>>(authInfo?.isAllowedMap || {});
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
-  const currentAccount = useSelector((state: RootState) => state.accountState.currentAccount);
+  const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
+  const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
   // const [oldConnected, setOldConnected] = useState(0);
   const [isSubmit, setIsSubmit] = useState(false);
   const { token } = useTheme() as Theme;
   const _isNotConnected = isNotConnected || !authInfo;
 
-  const handlerUpdateMap = useCallback((address: string, oldValue: boolean) => {
+  const handlerUpdateMap = useCallback((accountProxy: AccountProxy, oldValue: boolean) => {
     return () => {
-      setAllowedMap((values) => ({
-        ...values,
-        [address]: !oldValue
-      }));
+      setAllowedMap((values) => {
+        const newValues = { ...values };
+        const listAddress = accountProxy.accounts.map(({ address }) => address);
+
+        listAddress.forEach((address) => {
+          const addressIsValid = isAddressAllowedWithAuthType(address, authInfo?.accountAuthTypes || []);
+
+          addressIsValid && (newValues[address] = !oldValue);
+        });
+
+        return newValues;
+      });
     };
-  }, []);
+  }, [authInfo?.accountAuthTypes]);
 
   const handlerSubmit = useCallback(() => {
     if (!isSubmit && authInfo?.id) {
@@ -77,20 +85,14 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
   }, [authInfo?.id, isSubmit]);
 
   useEffect(() => {
-    if (!!authInfo?.isAllowedMap && !!authInfo?.accountAuthType) {
+    if (!!authInfo?.isAllowedMap && !!authInfo?.accountAuthTypes) {
       // const connected = Object.values(authInfo.isAllowedMap).filter((s) => s).length;
 
-      const type = authInfo.accountAuthType;
+      const types = authInfo.accountAuthTypes;
       const allowedMap = authInfo.isAllowedMap;
 
       const filterType = (address: string) => {
-        if (type === 'both') {
-          return true;
-        }
-
-        const _type = type || 'substrate';
-
-        return _type === 'substrate' ? !isEthereumAddress(address) : isEthereumAddress(address);
+        return isAddressAllowedWithAuthType(address, types);
       };
 
       const result: Record<string, boolean> = {};
@@ -107,7 +109,7 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       // setOldConnected(0);
       setAllowedMap({});
     }
-  }, [authInfo?.accountAuthType, authInfo?.isAllowedMap]);
+  }, [authInfo?.accountAuthTypes, authInfo?.isAllowedMap]);
 
   const actionButtons = useMemo(() => {
     if (_isNotConnected) {
@@ -246,15 +248,21 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
       );
     }
 
-    const list = Object.entries(allowedMap).map(([address, value]) => ({ address, value }));
+    const listAccountProxy = filterAuthorizeAccountProxies(accountProxies, authInfo?.accountAuthTypes || []).map((proxy) => {
+      const value = proxy.accounts.some(({ address }) => allowedMap[address]);
 
-    const current = list.find(({ address }) => address === currentAccount?.address);
+      return {
+        ...proxy,
+        value
+      };
+    });
+    const current = listAccountProxy.find(({ id }) => isSameAddress(id, currentAccountProxy?.id || ''));
 
     if (current) {
-      const idx = list.indexOf(current);
+      const idx = listAccountProxy.indexOf(current);
 
-      list.splice(idx, 1);
-      list.unshift(current);
+      listAccountProxy.splice(idx, 1);
+      listAccountProxy.unshift(current);
     }
 
     return (
@@ -265,26 +273,22 @@ function Component ({ authInfo, className = '', id, isBlocked = true, isNotConne
 
         <div className={'__account-item-container'}>
           {
-            list.map(({ address, value }) => {
-              const account = accounts.find((acc) => acc.address === address);
-
-              if (!account || isAccountAll(account.address)) {
+            listAccountProxy.map((ap) => {
+              if (isAccountAll(ap.id)) {
                 return null;
               }
 
-              const isCurrent = account.address === currentAccount?.address;
+              const isCurrent = ap.id === currentAccountProxy?.id;
 
               return (
-                <AccountItemWithName
-                  accountName={account.name}
-                  address={account.address}
-                  avatarSize={24}
+                <AccountProxyItem
+                  accountProxy={ap}
                   className={CN({
                     '-is-current': isCurrent
-                  })}
-                  isSelected={value}
-                  key={account.address}
-                  onClick={handlerUpdateMap(address, value)}
+                  }, '__account-proxy-connect-item')}
+                  isSelected={ap.value}
+                  key={ap.id}
+                  onClick={handlerUpdateMap(ap, ap.value)}
                   showUnselectIcon
                 />
               );
@@ -350,6 +354,25 @@ export const ConnectWebsiteModal = styled(Component)<Props>(({ theme: { token } 
 
     '.__account-item-container:not(:empty)': {
       marginTop: token.margin
+    },
+
+    '.__account-item-container': {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: token.sizeXS,
+
+      '.__account-proxy-connect-item': {
+        minHeight: 52,
+
+        '.__item-middle-part': {
+          textWrap: 'nowrap',
+          textOverflow: 'ellipsis',
+          overflow: 'hidden',
+          fontWeight: 600,
+          fontSize: token.fontSizeHeading6,
+          lineHeight: token.lineHeightHeading6
+        }
+      }
     },
 
     '.account-item-with-name': {

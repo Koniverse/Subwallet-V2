@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { APIItemState, BasicTxErrorType, ChainType, ExtrinsicType, NominationInfo, StakingTxErrorType, StakingType, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { APIItemState, ChainType, ExtrinsicType, NominationInfo, StakingType, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { PalletNominationPoolsPoolMember } from '@subwallet/extension-base/core/substrate/types';
 import { calculateChainStakedReturnV2, calculateInflation, getAvgValidatorEraReward, getExistUnstakeErrorMessage, getMinStakeErrorMessage, getSupportedDaysByHistoryDepth, parsePoolStashAddress } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
-import { BaseYieldPositionInfo, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposureItem, PalletStakingNominations, RequestStakePoolingBonding, SpStakingExposurePage, StakeCancelWithdrawalParams, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, EarningRewardHistoryItem, EarningRewardItem, EarningStatus, HandleYieldStepData, NominationPoolInfo, NominationYieldPoolInfo, OptimalYieldPath, OptimalYieldPathParams, PalletNominationPoolsBondedPoolInner, PalletStakingActiveEraInfo, PalletStakingExposure, PalletStakingExposureItem, PalletStakingNominations, RequestYieldStepSubmit, SpStakingExposurePage, StakeCancelWithdrawalParams, StakingTxErrorType, SubmitJoinNominationPool, SubmitYieldJoinData, TransactionData, UnstakingStatus, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, reformatAddress } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
@@ -188,7 +188,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
 
   /* Subscribe pool position */
 
-  async parsePoolMemberMetadata (substrateApi: _SubstrateApi, poolMemberInfo: PalletNominationPoolsPoolMember, currentEra: string, _deriveSessionProgress: DeriveSessionProgress): Promise<Omit<YieldPositionInfo, keyof BaseYieldPositionInfo>> {
+  async parsePoolMemberMetadata (substrateApi: _SubstrateApi, poolMemberInfo: PalletNominationPoolsPoolMember, currentEra: string, _deriveSessionProgress: DeriveSessionProgress, address: string): Promise<Omit<YieldPositionInfo, keyof BaseYieldPositionInfo>> {
     const chainInfo = this.chainInfo;
     const unlimitedNominatorRewarded = substrateApi.api.consts.staking.maxExposurePageSize !== undefined;
     const _maxNominatorRewardedPerValidator = (substrateApi.api.consts.staking.maxNominatorRewardedPerValidator || 0).toString();
@@ -283,6 +283,8 @@ export default class NominationPoolHandler extends BasePoolHandler {
       stakingStatus = EarningStatus.NOT_EARNING;
     }
 
+    await this.createWithdrawNotifications(unstakings, this.nativeToken, address);
+
     return {
       status: stakingStatus,
       balanceToken: this.nativeToken.slug,
@@ -322,7 +324,7 @@ export default class NominationPoolHandler extends BasePoolHandler {
           const owner = reformatAddress(useAddresses[i], 42);
 
           if (poolMemberInfo) {
-            const nominatorMetadata = await this.parsePoolMemberMetadata(substrateApi, poolMemberInfo, currentEra, _deriveSessionProgress);
+            const nominatorMetadata = await this.parsePoolMemberMetadata(substrateApi, poolMemberInfo, currentEra, _deriveSessionProgress, owner);
 
             resultCallback({
               ...defaultInfo,
@@ -371,13 +373,19 @@ export default class NominationPoolHandler extends BasePoolHandler {
           const _unclaimedReward = await substrateApi.api.call?.nominationPoolsApi?.pendingRewards(address);
 
           if (_unclaimedReward) {
-            callBack({
+            const earningRewardItem = {
               ...this.baseInfo,
               address: address,
               type: this.type,
               unclaimedReward: _unclaimedReward.toString(),
               state: APIItemState.READY
-            });
+            };
+
+            if (_unclaimedReward.toString() !== '0') {
+              await this.createClaimNotification(earningRewardItem, this.nativeToken);
+            }
+
+            callBack(earningRewardItem);
           }
         }
       }
@@ -569,21 +577,19 @@ export default class NominationPoolHandler extends BasePoolHandler {
 
   async handleYieldJoin (_data: SubmitYieldJoinData, path: OptimalYieldPath, currentStep: number): Promise<HandleYieldStepData> {
     const data = _data as SubmitJoinNominationPool;
-    const { address, amount, selectedPool } = data;
+    const { address, amount } = data;
     const positionInfo = await this.getPoolPosition(address);
     const [extrinsic] = await this.createJoinExtrinsic(data, positionInfo);
 
-    const joinPoolData: RequestStakePoolingBonding = {
-      poolPosition: positionInfo,
-      slug: this.slug,
-      selectedPool,
-      amount,
-      address
+    const joinPoolData: RequestYieldStepSubmit = {
+      path,
+      data: data,
+      currentStep
     };
 
     return {
       txChain: this.chain,
-      extrinsicType: ExtrinsicType.STAKING_JOIN_POOL,
+      extrinsicType: ExtrinsicType.JOIN_YIELD_POOL,
       extrinsic,
       txData: joinPoolData,
       transferNativeAmount: amount,

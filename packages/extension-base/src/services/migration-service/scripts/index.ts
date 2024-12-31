@@ -7,6 +7,10 @@ import ClearMetadataDatabase from './databases/ClearMetadataDatabase';
 import MigrateAssetSetting from './databases/MigrateAssetSetting';
 import MigrateEarningVersion from './databases/MigrateEarningVersion';
 import ReloadMetadata from './databases/ReloadMetadata';
+import MigrateLedgerAccount from './keyring/MigrateLedgerAccount';
+import MigrateLedgerAccountV2 from './keyring/MigrateLedgerAccountV2';
+import MigratePairData from './keyring/MigratePairData';
+import MigrateRemoveGenesisHash from './keyring/MigrateRemoveGenesisHash';
 import MigrateEthProvider from './providers/MigrateEthProvider';
 import MigratePioneerProvider from './providers/MigratePioneerProvider';
 import MigrateProvidersV1M1P24 from './providers/MigrateProvidersV1M1P24';
@@ -20,13 +24,11 @@ import MigrateAuthUrls from './MigrateAuthUrls';
 import MigrateAutoLock from './MigrateAutoLock';
 import MigrateChainPatrol from './MigrateChainPatrol';
 import MigrateImportedToken from './MigrateImportedToken';
-import MigrateLedgerAccount from './MigrateLedgerAccount';
-import MigrateLedgerAccountV2 from './MigrateLedgerAccountV2';
 import MigrateNetworkSettings from './MigrateNetworkSettings';
-import MigrateRemoveGenesisHash from './MigrateRemoveGenesisHash';
 import MigrateSettings from './MigrateSettings';
 import MigrateTokenDecimals from './MigrateTokenDecimals';
 import MigrateTransactionHistory from './MigrateTransactionHistory';
+import MigrateTransactionHistoryBridge from './MigrateTransactionHistoryBridge';
 import MigrateTransactionHistoryBySymbol from './MigrateTransactionHistoryBySymbol';
 import MigrateWalletReference from './MigrateWalletReference';
 
@@ -60,7 +62,9 @@ export default <Record<string, typeof BaseMigrationJob>>{
   '1.2.28-02': MigrateTransactionHistoryBySymbol,
   '1.2.69-01': MigrateRemoveGenesisHash,
   '1.2.13-01': ReloadMetadata,
-  '1.2.14-01': ClearMetadataDatabase
+  '1.2.14-01': ClearMetadataDatabase,
+  '1.2.32-01': MigratePairData,
+  '1.3.6-01': MigrateTransactionHistoryBridge
   // [`${EVERYTIME}-1.1.42-02`]: MigrateTransactionHistoryBySymbol
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
 };

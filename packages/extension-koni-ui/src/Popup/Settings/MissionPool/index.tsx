@@ -279,11 +279,13 @@ const MissionPool = styled(Component)<Props>(({ theme: { token } }: Props) => {
       paddingRight: token.padding
     },
     '.__search-item': {
-      display: 'flex',
+      display: 'block',
       alignItems: 'center',
       justifyContent: 'center',
       paddingTop: token.paddingXS,
-      paddingBottom: token.paddingXS
+      paddingBottom: token.paddingXS,
+      paddingLeft: token.padding,
+      paddingRight: token.padding
     },
     '.__tool-area': {
       display: 'flex',

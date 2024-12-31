@@ -14,6 +14,7 @@ import useGetAccountInfoByAddress from '@subwallet/extension-koni-ui/hooks/scree
 import { INftItemDetail } from '@subwallet/extension-koni-ui/Popup/Home/Nfts/utils';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { SendNftParams, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { getTransactionFromAccountProxyValue } from '@subwallet/extension-koni-ui/utils';
 import reformatAddress from '@subwallet/extension-koni-ui/utils/account/reformatAddress';
 import { BackgroundIcon, Button, ButtonProps, Field, Icon, Image, Logo, ModalContext, SwModal } from '@subwallet/react-ui';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
@@ -53,8 +54,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const dataContext = useContext(DataContext);
   const { activeModal, inactiveModal } = useContext(ModalContext);
-
-  const accounts = useSelector((root: RootState) => root.accountState.accounts);
+  const { accounts, currentAccountProxy } = useSelector((root: RootState) => root.accountState);
 
   const originChainInfo = useGetChainInfo(nftItem.chain);
   const ownerAccountInfo = useGetAccountInfoByAddress(nftItem.owner || '');
@@ -85,10 +85,11 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       from: nftItem.owner,
       itemId: nftItem.id,
       to: '',
-      chain: nftItem.chain
+      chain: nftItem.chain,
+      fromAccountProxy: getTransactionFromAccountProxyValue(currentAccountProxy)
     });
     navigate('/transaction/send-nft');
-  }, [accounts, navigate, nftItem, notify, setStorage, t]);
+  }, [accounts, currentAccountProxy, navigate, nftItem, notify, setStorage, t]);
 
   const subHeaderRightButton: ButtonProps[] = [
     {

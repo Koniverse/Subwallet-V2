@@ -1,12 +1,13 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { Avatar } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { ADD_ADDRESS_BOOK_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { editContactAddress } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { simpleCheckForm, toShort } from '@subwallet/extension-koni-ui/utils';
+import { isAddress } from '@subwallet/keyring';
 import { Button, Form, Icon, Input, ModalContext, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { PlusCircle } from 'phosphor-react';
@@ -14,8 +15,6 @@ import { RuleObject } from 'rc-field-form/lib/interface';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
-
-import { isAddress } from '@polkadot/util-crypto';
 
 type Props = ThemeProps;
 
@@ -149,7 +148,8 @@ const Component: React.FC<Props> = (props: Props) => {
           <Input
             label={t('Contact name')}
             prefix={(
-              <Avatar
+              <AccountProxyAvatar
+                className={'__account-avatar'}
                 size={20}
                 value={address}
               />

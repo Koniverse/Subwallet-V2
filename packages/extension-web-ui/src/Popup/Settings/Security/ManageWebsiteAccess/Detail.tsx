@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { AccountItemWithName, EmptyList, Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import { ActionItemType, ActionModal } from '@subwallet/extension-web-ui/components/Modal/ActionModal';
 import useDefaultNavigate from '@subwallet/extension-web-ui/hooks/router/useDefaultNavigate';

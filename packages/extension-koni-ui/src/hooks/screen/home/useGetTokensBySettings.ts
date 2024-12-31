@@ -3,7 +3,7 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { _isAssetFungibleToken } from '@subwallet/extension-base/services/chain-service/utils';
-import { useGetChainSlugsByAccountType } from '@subwallet/extension-koni-ui/hooks/screen/home/useGetChainSlugsByAccountType';
+import { useGetChainSlugsByAccount } from '@subwallet/extension-koni-ui/hooks/screen/home/useGetChainSlugsByAccount';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -13,7 +13,7 @@ export default function useGetTokensBySettings (address?: string): Record<string
   const chainStateMap = useSelector((state: RootState) => state.chainStore.chainStateMap);
   const chainAssetMap = useSelector((state: RootState) => state.assetRegistry.assetRegistry);
   const assetSettingMap = useSelector((state: RootState) => state.assetRegistry.assetSettingMap);
-  const filteredChainSlugs = useGetChainSlugsByAccountType(address);
+  const filteredChainSlugs = useGetChainSlugsByAccount(address);
 
   return useMemo<Record<string, _ChainAsset>>(() => {
     const filteredChainAssetMap: Record<string, _ChainAsset> = {};

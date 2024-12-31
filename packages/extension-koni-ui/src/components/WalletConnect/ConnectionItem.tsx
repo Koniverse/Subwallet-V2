@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractAddressJson } from '@subwallet/extension-base/background/types';
+import { AccountProxy } from '@subwallet/extension-base/types';
 import { stripUrl } from '@subwallet/extension-base/utils';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getWCAccountList } from '@subwallet/extension-koni-ui/utils';
+import { getWCAccountProxyList } from '@subwallet/extension-koni-ui/utils';
 import { Icon, Image, Web3Block } from '@subwallet/react-ui';
 import { SessionTypes } from '@walletconnect/types';
 import CN from 'classnames';
@@ -33,9 +33,9 @@ const Component: React.FC<Props> = (props: Props) => {
 
   const logoUrl = `https://icons.duckduckgo.com/ip2/${domain}.ico`;
 
-  const { accounts } = useSelector((state) => state.accountState);
+  const accountProxies = useSelector((state) => state.accountState.accountProxies);
 
-  const accountItems = useMemo((): AbstractAddressJson[] => getWCAccountList(accounts, namespaces), [accounts, namespaces]);
+  const accountProxyItems = useMemo((): AccountProxy[] => getWCAccountProxyList(accountProxies, namespaces), [accountProxies, namespaces]);
 
   const _onClick = useCallback(() => {
     onClick(session.topic);
@@ -56,7 +56,7 @@ const Component: React.FC<Props> = (props: Props) => {
         <>
           <div className={'__website-name h5-text'}>{dAppInfo.name}</div>
           <div className={'__website-domain common-text'}>{domain}</div>
-          <div className={'__account-count h5-text'}>{accountItems.length}</div>
+          <div className={'__account-count h5-text'}>{accountProxyItems.length}</div>
         </>
       )}
       onClick={_onClick}

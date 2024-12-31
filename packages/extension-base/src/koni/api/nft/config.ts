@@ -31,7 +31,7 @@ export const BIT_COUNTRY_THUMBNAIL_RESOLVER = 'https://res.cloudinary.com/ddftct
 export const CF_IPFS_GATEWAY = 'https://cf-ipfs.com/ipfs/';
 
 // XOrigin
-export const PINATA_IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/';
+export const ODYSSEY_ENDPOINT = 'https://indexer-v2.dev.aurascan.io/api/v2/graphql';
 
 // deprecated
 // export const UNIQUE_SCAN_ENDPOINT = 'https://explorer-api.unique.network/v1/graphql';
@@ -63,6 +63,14 @@ export const IPFS_IO = 'https://ipfs.io/ipfs/';
 
 // XOrigin
 export const DWEB_LINK = 'https://dweb.link/ipfs/';
+
+// XOrigin
+export const TERNOA_MAINNET_CLIENT_NFT = 'https://indexer-mainnet.ternoa.dev';
+export const TERNOA_ALPHANET_CLIENT_NFT = 'https://indexer-alphanet.ternoa.dev';
+export const TERNOA_MAINNET_GATEWAY = 'https://ipfs-mainnet.trnnfr.com/ipfs/';
+export const TERNOA_ALPHANET_GATEWAY = 'https://ipfs-dev.trnnfr.com/ipfs/';
+
+// XOrigin
 
 export const IPFS_GATEWAY_4EVERLAND = 'https://4everland.io/ipfs/';
 
@@ -107,7 +115,7 @@ export const SUPPORTED_TRANSFER_EVM_CHAIN = [
   SUPPORTED_TRANSFER_EVM_CHAIN_NAME.shibuya as string
 ];
 
-export const UNSUPPORTED_TRANSFER_EVM_CHAIN_NAME = ['unique_evm'];
+export const UNSUPPORTED_TRANSFER_EVM_CHAIN_NAME = ['unique_evm', 'rari', 'storyOdyssey_testnet'];
 
 export const TRANSFER_CHAIN_ID = {
   [SUPPORTED_TRANSFER_EVM_CHAIN_NAME.moonbase as string]: 1287,

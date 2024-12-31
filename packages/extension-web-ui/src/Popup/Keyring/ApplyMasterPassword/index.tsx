@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { CloseIcon, Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { useDefaultNavigate, useDeleteAccount, useNotification } from '@subwallet/extension-web-ui/hooks';

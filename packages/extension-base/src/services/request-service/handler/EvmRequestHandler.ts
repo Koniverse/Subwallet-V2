@@ -145,8 +145,7 @@ export default class EvmRequestHandler {
   }
 
   private async signMessage (confirmation: ConfirmationDefinitions['evmSignatureRequest'][0]): Promise<string> {
-    const { account, payload, type } = confirmation.payload;
-    const address = account.address;
+    const { address, payload, type } = confirmation.payload;
     const pair = keyring.getPair(address);
 
     if (pair.isLocked) {
@@ -160,7 +159,7 @@ export default class EvmRequestHandler {
       case 'eth_signTypedData_v1':
       case 'eth_signTypedData_v3':
       case 'eth_signTypedData_v4':
-        return await pair.evmSigner.signMessage(payload, type);
+        return await pair.evm.signMessage(payload, type);
       default:
         throw new EvmProviderError(EvmProviderErrorType.INVALID_PARAMS, t('Unsupported action'));
     }
@@ -230,7 +229,7 @@ export default class EvmRequestHandler {
       keyring.unlockPair(pair.address);
     }
 
-    return pair.evmSigner.signTransaction(tx);
+    return pair.evm.signTransaction(tx);
   }
 
   private async decorateResult<T extends ConfirmationType> (t: T, request: ConfirmationDefinitions[T][0], result: ConfirmationDefinitions[T][1]) {

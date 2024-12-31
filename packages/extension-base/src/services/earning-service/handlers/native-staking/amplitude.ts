@@ -3,13 +3,13 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { APIItemState, BasicTxErrorType, ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
+import { APIItemState, ExtrinsicType, NominationInfo, UnstakingInfo } from '@subwallet/extension-base/background/KoniTypes';
 import { getBondedValidators, getEarningStatusByNominations, isUnstakeAll, KrestDelegateState } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { parseIdentity } from '@subwallet/extension-base/services/earning-service/utils';
-import { BaseYieldPositionInfo, EarningRewardItem, EarningStatus, NativeYieldPoolInfo, ParachainStakingStakeOption, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
+import { BaseYieldPositionInfo, BasicTxErrorType, EarningRewardItem, EarningStatus, NativeYieldPoolInfo, ParachainStakingStakeOption, StakeCancelWithdrawalParams, SubmitJoinNativeStaking, TransactionData, UnstakingStatus, ValidatorInfo, YieldPoolInfo, YieldPositionInfo, YieldStepBaseInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, parseRawNumber, reformatAddress } from '@subwallet/extension-base/utils';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
@@ -230,6 +230,8 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
     const totalBalance = new BN(activeStake).add(new BN(unstakingBalance));
     const stakingStatus = getEarningStatusByNominations(new BN(activeStake), nominationList);
 
+    await this.createWithdrawNotifications(unstakingList, this.nativeToken, address);
+
     return {
       status: stakingStatus,
       balanceToken: this.nativeToken.slug,
@@ -332,13 +334,20 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
           return;
         }
 
-        callBack({
+        const earningRewardItem = {
           ...this.baseInfo,
           address: address,
           type: this.type,
           unclaimedReward: _unclaimedReward.toString(),
           state: APIItemState.READY
-        });
+        };
+
+        // TODO: Enable this when claim action is ready
+        // if (_unclaimedReward.toString() !== '0') {
+        //   await this.createClaimNotification(earningRewardItem, this.nativeToken);
+        // }
+
+        callBack(earningRewardItem);
       }));
     }
 
@@ -563,7 +572,7 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
       extrinsic = chainApi.api.tx.parachainStaking.leaveDelegators();
     }
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */

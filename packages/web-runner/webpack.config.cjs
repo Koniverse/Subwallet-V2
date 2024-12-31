@@ -52,7 +52,14 @@ const _additionalEnv = {
   NFT_MINTING_HOST: JSON.stringify(process.env.NFT_MINTING_HOST),
   INFURA_API_KEY: JSON.stringify(process.env.INFURA_API_KEY),
   INFURA_API_KEY_SECRET: JSON.stringify(process.env.INFURA_API_KEY_SECRET),
-  CHAINFLIP_BROKER_API: JSON.stringify(process.env.CHAINFLIP_BROKER_API)
+  CHAINFLIP_BROKER_API: JSON.stringify(process.env.CHAINFLIP_BROKER_API),
+  BITTENSOR_API_KEY_1: JSON.stringify(process.env.BITTENSOR_API_KEY_1),
+  BITTENSOR_API_KEY_2: JSON.stringify(process.env.BITTENSOR_API_KEY_2),
+  BITTENSOR_API_KEY_3: JSON.stringify(process.env.BITTENSOR_API_KEY_3),
+  BITTENSOR_API_KEY_4: JSON.stringify(process.env.BITTENSOR_API_KEY_4),
+  BITTENSOR_API_KEY_5: JSON.stringify(process.env.BITTENSOR_API_KEY_5),
+  BITTENSOR_API_KEY_6: JSON.stringify(process.env.BITTENSOR_API_KEY_6),
+  SIMPLE_SWAP_API_KEY: JSON.stringify(process.env.SIMPLE_SWAP_API_KEY)
 };
 
 // Overwrite babel babel config from polkadot dev

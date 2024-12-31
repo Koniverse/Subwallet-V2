@@ -142,6 +142,16 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
     );
   }
 
+  let bittensorStakingBalances: BigN[] = new Array<BigN>(addresses.length).fill(new BigN(0));
+
+  if (['bittensor'].includes(chainInfo.slug)) {
+    bittensorStakingBalances = await Promise.all(addresses.map(async (address) => {
+      const TaoTotalStake = await substrateApi.api.query.subtensorModule.totalColdkeyStake(address);
+
+      return new BigN(TaoTotalStake.toString());
+    }));
+  }
+
   const subscription = substrateApi.subscribeDataWithMulti(params, (rs) => {
     const balances = rs[systemAccountKey];
     const poolMemberInfos = rs[poolMembersKey];
@@ -160,6 +170,10 @@ const subscribeWithSystemAccountPallet = async ({ addresses, callback, chainInfo
 
         totalLockedFromTransfer += nominationPoolBalance;
       }
+
+      const stakeValue = BigInt(bittensorStakingBalances[index].toString());
+
+      totalLockedFromTransfer += stakeValue;
 
       return ({
         address: addresses[index],
@@ -211,12 +225,13 @@ const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, cha
   const unsubList = await Promise.all(Object.values(tokenMap).map((tokenInfo) => {
     try {
       if (_isBridgedToken(tokenInfo)) {
+        const version: number = ['statemint', 'statemine'].includes(chainInfo.slug) ? 4 : 3;
         const params: _SubstrateAdapterSubscriptionArgs[] = [
           {
             section: 'query',
             module: foreignAssetsAccountKey.split('_')[1],
             method: foreignAssetsAccountKey.split('_')[2],
-            args: addresses.map((address) => [_getTokenOnChainInfo(tokenInfo) || _adaptX1Interior(_getXcmAssetMultilocation(tokenInfo), 3), address])
+            args: addresses.map((address) => [_getTokenOnChainInfo(tokenInfo) || _adaptX1Interior(_getXcmAssetMultilocation(tokenInfo), version), address])
           }
         ];
 

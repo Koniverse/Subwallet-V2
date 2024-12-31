@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { RequestStakePoolingBonding } from '@subwallet/extension-base/background/KoniTypes';
+import { RequestYieldStepSubmit, SubmitJoinNominationPool } from '@subwallet/extension-base/types';
 import CommonTransactionInfo from '@subwallet/extension-koni-ui/components/Confirmation/CommonTransactionInfo';
 import MetaInfo from '@subwallet/extension-koni-ui/components/MetaInfo/MetaInfo';
 import useGetNativeTokenBasicInfo from '@subwallet/extension-koni-ui/hooks/common/useGetNativeTokenBasicInfo';
@@ -16,7 +16,8 @@ type Props = BaseTransactionConfirmationProps;
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, transaction } = props;
-  const data = transaction.data as RequestStakePoolingBonding;
+  const requestData = transaction.data as RequestYieldStepSubmit;
+  const data = requestData.data as SubmitJoinNominationPool;
 
   const { t } = useTranslation();
   const { decimals, symbol } = useGetNativeTokenBasicInfo(transaction.chain);
@@ -31,11 +32,11 @@ const Component: React.FC<Props> = (props: Props) => {
         className={'meta-info'}
         hasBackgroundWrapper
       >
-        {/* <MetaInfo.Account */}
-        {/*   address={'5DnokDpMdNEH8cApsZoWQnjsggADXQmGWUb6q8ZhHeEwvncL'} */}
-        {/*   label={t('Validator')} */}
-        {/*   networkPrefix={42} */}
-        {/* /> */}
+        <MetaInfo.Account
+          address={data.selectedPool.address}
+          label={t('Pool')}
+          networkPrefix={42}
+        />
 
         {/* <MetaInfo.AccountGroup */}
         {/*  accounts={data.address} */}

@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountProxyType } from '@subwallet/extension-base/types';
 import { REMIND_BACKUP_SEED_PHRASE_MODAL, SELECT_ACCOUNT_MODAL, USER_GUIDE_URL } from '@subwallet/extension-koni-ui/constants';
 import { useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
@@ -24,7 +25,7 @@ const HistoryPageUrl = '/home/history';
 
 function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
-  const { currentAccount, isAllAccount } = useSelector((state: RootState) => state.accountState);
+  const { currentAccountProxy } = useSelector((state: RootState) => state.accountState);
   const location = useLocation();
   const { activeModal, checkActive, inactiveModal } = useContext(ModalContext);
   const { sessionLatest, setSessionLatest } = useSetSessionLatest();
@@ -42,14 +43,19 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     const from = location.pathname.includes(HistoryPageUrl) ? HistoryPageUrl : location.pathname;
     const state = (location.state ? { ...location.state, from } : { from }) as Record<string, string>;
 
-    if (isAllAccount || !!currentAccount?.isExternal) {
+    if (currentAccountProxy) {
+      if ([AccountProxyType.SOLO, AccountProxyType.UNIFIED].includes(currentAccountProxy.accountType)) {
+        navigate(`/accounts/export/${currentAccountProxy.id}`, { state });
+        setSessionLatest({ ...sessionLatest, timeCalculate: Date.now(), remind: false, isFinished: true });
+      } else {
+        activeModal(AccountSelectorModalId);
+        setSessionLatest({ ...sessionLatest, timeCalculate: Date.now(), remind: false });
+      }
+    } else {
       activeModal(AccountSelectorModalId);
       setSessionLatest({ ...sessionLatest, timeCalculate: Date.now(), remind: false });
-    } else if (currentAccount?.address) {
-      navigate(`/accounts/export/${currentAccount?.address}`, { state });
-      setSessionLatest({ ...sessionLatest, timeCalculate: Date.now(), remind: false, isFinished: true });
     }
-  }, [activeModal, currentAccount?.address, currentAccount?.isExternal, inactiveModal, isAllAccount, location, navigate, sessionLatest, setSessionLatest]);
+  }, [activeModal, currentAccountProxy, inactiveModal, location.pathname, location.state, navigate, sessionLatest, setSessionLatest]);
 
   useEffect(() => {
     if (!sessionLatest.remind) {

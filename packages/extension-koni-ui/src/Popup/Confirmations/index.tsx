@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ConfirmationDefinitions, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson, AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
+import { AuthorizeRequest, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { _isRuntimeUpdated, detectTranslate } from '@subwallet/extension-base/utils';
 import { AlertModal } from '@subwallet/extension-koni-ui/components';
 import { isProductionMode, NEED_SIGN_CONFIRMATION } from '@subwallet/extension-koni-ui/constants';
 import { useAlert, useConfirmationsInfo, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ConfirmationType } from '@subwallet/extension-koni-ui/stores/base/RequestState';
 import { AccountSignMode, ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { getSignMode, isRawPayload } from '@subwallet/extension-koni-ui/utils';
+import { findAccountByAddress, getSignMode, isRawPayload } from '@subwallet/extension-koni-ui/utils';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
@@ -42,6 +43,7 @@ const Component = function ({ className }: Props) {
   const { confirmationQueue, numberOfConfirmations } = useConfirmationsInfo();
   const [index, setIndex] = useState(0);
   const confirmation = confirmationQueue[index] || null;
+  const accounts = useSelector((state) => state.accountState.accounts);
   const { t } = useTranslation();
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
   const { transactionRequest } = useSelector((state) => state.requestState);
@@ -67,12 +69,13 @@ const Component = function ({ className }: Props) {
       if (confirmation.type === 'signingRequest') {
         const request = confirmation.item as SigningRequest;
         const _isMessage = isRawPayload(request.request.payload);
+        const address = request.request.payload.address;
 
-        account = request.account;
-        const isEthereum = isEthereumAddress(account.address);
+        account = findAccountByAddress(accounts, address) || undefined;
+        const isEthereum = isEthereumAddress(address);
 
-        if (account.isHardware) {
-          if (account.isGeneric) {
+        if (account?.isHardware) {
+          if (account?.isGeneric) {
             canSign = !isEthereum;
           } else {
             if (_isMessage) {
@@ -81,7 +84,7 @@ const Component = function ({ className }: Props) {
               const payload = request.request.payload as SignerPayloadJSON;
 
               // Valid even with evm ledger account (evm - availableGenesisHashes is empty)
-              canSign = !!account.availableGenesisHashes?.includes(payload.genesisHash) || _isRuntimeUpdated(payload?.signedExtensions);
+              canSign = !!account?.availableGenesisHashes?.includes(payload.genesisHash) || _isRuntimeUpdated(payload?.signedExtensions);
             }
           }
         } else {
@@ -92,7 +95,7 @@ const Component = function ({ className }: Props) {
       } else if (['evmSignatureRequest', 'evmSendTransactionRequest', 'evmWatchTransactionRequest'].includes(confirmation.type)) {
         const request = confirmation.item as ConfirmationDefinitions['evmSignatureRequest' | 'evmSendTransactionRequest' | 'evmWatchTransactionRequest'][0];
 
-        account = request.payload.account;
+        account = findAccountByAddress(accounts, request.payload.address) || undefined;
         canSign = request.payload.canSign;
         isMessage = confirmation.type === 'evmSignatureRequest';
       }
@@ -174,7 +177,7 @@ const Component = function ({ className }: Props) {
     }
 
     return null;
-  }, [closeAlert, confirmation, openAlert]);
+  }, [accounts, closeAlert, confirmation, openAlert]);
 
   const headerTitle = useMemo((): string => {
     if (!confirmation) {
@@ -252,6 +255,8 @@ const Component = function ({ className }: Props) {
           return t('Token approve');
         case ExtrinsicType.SWAP:
           return t('Swap confirmation');
+        case ExtrinsicType.CLAIM_BRIDGE:
+          return t('Claim confirmation');
         case ExtrinsicType.CROWDLOAN:
         case ExtrinsicType.EVM_EXECUTE:
         case ExtrinsicType.UNKNOWN:

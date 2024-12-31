@@ -14,10 +14,11 @@ interface Props extends BasicInputWrapper, ThemeProps {
   form: FormInstance<unknown>;
   formName: string;
   hideText: boolean;
+  handlePaste?: (words: string[]) => void;
 }
 
 const Component: React.ForwardRefRenderFunction<InputRef, Props> = (props: Props, ref: ForwardedRef<InputRef>) => {
-  const { className, form, formName, hideText, index, onBlur, onFocus, prefix, ...restProps } = props;
+  const { className, form, formName, handlePaste, hideText, index, onBlur, onFocus, prefix, ...restProps } = props;
   const [focus, setFocus] = useState(false);
 
   const _onChange: ChangeEventHandler<HTMLInputElement> = useCallback((event) => {
@@ -88,10 +89,14 @@ const Component: React.ForwardRefRenderFunction<InputRef, Props> = (props: Props
       validates.push(name);
     });
 
+    if (handlePaste) {
+      handlePaste(data);
+    }
+
     form.setFieldsValue(result);
 
     form.validateFields(validates).catch(console.error);
-  }, [form, prefix]);
+  }, [form, handlePaste, prefix]);
 
   const _onFocus: FocusEventHandler<HTMLInputElement> = useCallback((event) => {
     setFocus(true);

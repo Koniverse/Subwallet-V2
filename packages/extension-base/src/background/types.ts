@@ -4,19 +4,19 @@
 /* eslint-disable no-use-before-define */
 
 import type { InjectedAccount, InjectedMetadataKnown, MetadataDef, ProviderList, ProviderMeta } from '@subwallet/extension-inject/types';
-import type { KeyringPair, KeyringPair$Json, KeyringPair$Meta } from '@subwallet/keyring/types';
+import type { KeyringPair, KeyringPair$Json } from '@subwallet/keyring/types';
 import type { KeyringPairs$Json } from '@subwallet/ui-keyring/types';
 import type { JsonRpcResponse } from '@polkadot/rpc-provider/types';
 import type { SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import type { HexString } from '@polkadot/util/types';
-import type { KeypairType } from '@polkadot/util-crypto/types';
 
-import { CurrentNetworkInfo, KoniRequestSignatures, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
+import { KoniRequestSignatures, NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 
 import { TypeRegistry } from '@polkadot/types';
 
 import { ALLOWED_PATH } from '../defaults';
-import { AuthUrls } from './handlers/State';
 
 type KeysWithDefinedValues<T> = {
   [K in keyof T]: T[K] extends undefined ? never : K
@@ -32,78 +32,6 @@ type NullKeys<T> = { [K in keyof T]: IsNull<T, K> }[keyof T];
 
 export type SeedLengths = 12 | 24;
 
-export interface AbstractAddressJson extends KeyringPair$Meta {
-  address: string;
-  type?: KeypairType;
-  whenCreated?: number;
-  name?: string;
-}
-
-/**
- * @interface AccountJson
- * @prop {number} [accountIndex] - Ledger's account index
- * @prop {number} [addressOffset] - Ledger's address offset
- * @prop {string[]} [availableGenesisHashes] - Ledger's availableGenesisHashes
- * @prop {string|null} [genesisHash] - Ledger's genesisHash
- * @prop {boolean} [isExternal] - Is external account
- * @prop {boolean} [isHardware] - Is hardware account
- * @prop {boolean} [isHidden] - Is hidden account
- * @prop {boolean} [isInjected] - Is injected account
- * @prop {boolean} [isGeneric] - Is generic account
- * @prop {boolean} [isMasterAccount] - Is master account - account has seed
- * @prop {boolean} [isMasterPassword] - Account has migrated with wallet password
- * @prop {boolean} [isReadOnly] - Is readonly account
- * @prop {boolean} [isReadOnly] - Is readonly account
- * @prop {boolean} [isSubWallet] - Import from SubWallet
- * @prop {boolean} [pendingMigrate] - Pending migrate password
- * @prop {string|null} [originGenesisHash] - Ledger's originGenesisHash
- * @prop {string} [source] - Account's source
- * @prop {string} [suri] - Derivate path
- * */
-export interface AccountJson extends AbstractAddressJson {
-  /** Ledger's account index */
-  accountIndex?: number;
-  /** Ledger's address offset */
-  addressOffset?: number;
-  /** Ledger's availableGenesisHashes */
-  availableGenesisHashes?: string[];
-  /** Ledger's genesisHash */
-  genesisHash?: string | null;
-  /** Is external account */
-  isExternal?: boolean;
-  /** Is hardware account */
-  isHardware?: boolean;
-  /** Is hidden account */
-  isHidden?: boolean;
-  /** Is injected account */
-  isInjected?: boolean;
-  /** Is generic ledger account */
-  isGeneric?: boolean;
-  /** Is master account - account has seed */
-  isMasterAccount?: boolean;
-  /** Account has migrated with wallet password */
-  isMasterPassword?: boolean;
-  /** Is readonly account */
-  isReadOnly?: boolean;
-  /** Import from SubWallet */
-  isSubWallet?: boolean;
-  /** Pending migrate password */
-  pendingMigrate?: boolean;
-  /** Ledger's originGenesisHash */
-  originGenesisHash?: string | null;
-  /** Parent's address */
-  parentAddress?: string;
-  /** Account's source */
-  source?: string;
-  /** Derivate path */
-  suri?: string;
-}
-
-export interface AddressJson extends AbstractAddressJson {
-  isRecent?: boolean;
-  recentChainSlugs?: string[];
-}
-
 // all Accounts and the address of the current Account
 export interface AccountsWithCurrentAddress {
   accounts: AccountJson[];
@@ -118,7 +46,7 @@ export type AccountWithChildren = AccountJson & {
   children?: AccountWithChildren[];
 }
 
-export interface FindAccountFunction{
+export interface FindAccountFunction {
   (networkMap: Record<string, NetworkJson>, address: string, genesisHash?: string): AccountJson | undefined;
 }
 
@@ -131,11 +59,6 @@ export type AccountsContext = {
 export type CurrentAccContext = {
   currentAccount: AccountJson | null;
   setCurrentAccount: (account: AccountJson | null) => void;
-}
-
-export type AccNetworkContext = {
-  network: CurrentNetworkInfo;
-  setNetwork: (network: CurrentNetworkInfo) => void;
 }
 
 export interface ConfirmationRequestBase {
@@ -153,7 +76,7 @@ export interface MetadataRequest extends ConfirmationRequestBase {
 }
 
 export interface SigningRequest extends ConfirmationRequestBase {
-  account: AccountJson;
+  address: string;
   request: RequestSign;
 }
 
@@ -161,18 +84,8 @@ export interface SigningRequest extends ConfirmationRequestBase {
 export interface RequestSignatures extends KoniRequestSignatures {
   // private/internal requests, i.e. from a popup
   'pri(ping)': [null, string];
-  'pri(accounts.create.external)': [RequestAccountCreateExternal, boolean];
-  'pri(accounts.create.hardware)': [RequestAccountCreateHardware, boolean];
-  'pri(accounts.create.suri)': [RequestAccountCreateSuri, boolean];
-  'pri(accounts.edit)': [RequestAccountEdit, boolean];
-  'pri(accounts.export)': [RequestAccountExport, ResponseAccountExport];
+  'pri(accounts.export.json)': [RequestAccountExport, ResponseAccountExport];
   'pri(accounts.batchExport)': [RequestAccountBatchExport, ResponseAccountsExport]
-  'pri(accounts.forget)': [RequestAccountForget, boolean];
-  'pri(accounts.show)': [RequestAccountShow, boolean];
-  'pri(accounts.tie)': [RequestAccountTie, boolean];
-  'pri(accounts.subscribe)': [RequestAccountSubscribe, AccountJson[], AccountJson[]];
-  'pri(accounts.validate)': [RequestAccountValidate, boolean];
-  'pri(accounts.changePassword)': [RequestAccountChangePassword, boolean];
   'pri(authorize.approve)': [RequestAuthorizeApprove, boolean];
   'pri(authorize.list)': [null, ResponseAuthorizeList];
   'pri(authorize.reject)': [RequestAuthorizeReject, boolean];
@@ -180,17 +93,13 @@ export interface RequestSignatures extends KoniRequestSignatures {
   'pri(authorize.toggle)': [string, ResponseAuthorizeList];
   'pri(derivation.create)': [RequestDeriveCreate, boolean];
   'pri(derivation.validate)': [RequestDeriveValidate, ResponseDeriveValidate];
-  'pri(json.restore)': [RequestJsonRestore, void];
   'pri(json.batchRestore)': [RequestBatchRestore, void];
   'pri(json.validate.password)': [];
-  'pri(json.account.info)': [KeyringPair$Json, ResponseJsonGetAccountInfo];
   'pri(metadata.approve)': [RequestMetadataApprove, boolean];
   'pri(metadata.get)': [string | null, MetadataDef | null];
   'pri(metadata.reject)': [RequestMetadataReject, boolean];
   'pri(metadata.requests)': [RequestMetadataSubscribe, MetadataRequest[], MetadataRequest[]];
   'pri(metadata.list)': [null, MetadataDef[]];
-  'pri(seed.create)': [RequestSeedCreate, ResponseSeedCreate];
-  'pri(seed.validate)': [RequestSeedValidate, ResponseSeedValidate];
   'pri(settings.notification)': [string, boolean];
   'pri(signing.approve.password)': [RequestSigningApprovePassword, boolean];
   'pri(signing.approve.signature)': [RequestSigningApproveSignature, boolean];
@@ -234,11 +143,11 @@ export interface TransportRequestMessage<TMessageType extends MessageTypes> {
   request: RequestTypes[TMessageType];
 }
 
-export type AccountAuthType = 'substrate' | 'evm' | 'both';
+export type AccountAuthType = 'substrate' | 'evm' | 'ton';
 
 export interface RequestAuthorizeTab {
   origin: string;
-  accountAuthType?: AccountAuthType;
+  accountAuthTypes?: AccountAuthType[];
   allowedAccounts?: string[]
   reConfirm?: boolean
 }
@@ -277,14 +186,6 @@ export interface RequestAccountCreateExternal {
   name: string;
 }
 
-export interface RequestAccountCreateSuri {
-  name: string;
-  genesisHash?: string | null;
-  password: string;
-  suri: string;
-  type?: KeypairType;
-}
-
 export interface RequestAccountCreateHardware {
   accountIndex: number;
   address: string;
@@ -300,22 +201,12 @@ export interface RequestAccountChangePassword {
   newPass: string;
 }
 
-export interface RequestAccountEdit {
-  address: string;
-  genesisHash?: string | null;
-  name: string;
-}
-
-export interface RequestAccountForget {
-  address: string;
-  lockAfter: boolean;
-}
-
 export interface RequestAccountShow {
   address: string;
   isShowing: boolean;
 }
 
+/** @deprecated */
 export interface RequestAccountTie {
   address: string;
   genesisHash: string | null;
@@ -406,17 +297,6 @@ export interface ResponseSigningIsLocked {
 
 export type RequestSigningSubscribe = null;
 
-export interface RequestSeedCreate {
-  length?: SeedLengths;
-  seed?: string;
-  type?: KeypairType;
-}
-
-export interface RequestSeedValidate {
-  suri: string;
-  type?: KeypairType;
-}
-
 // Responses
 
 export type ResponseTypes = {
@@ -456,16 +336,6 @@ export interface ResponseSigning {
 }
 
 export interface ResponseDeriveValidate {
-  address: string;
-  suri: string;
-}
-
-export interface ResponseSeedCreate {
-  address: string;
-  seed: string;
-}
-
-export interface ResponseSeedValidate {
   address: string;
   suri: string;
 }
@@ -517,13 +387,6 @@ export type WindowOpenParams = {
   allowedPath: AllowedPath;
   subPath?: string;
   params?: Record<string, string>;
-}
-
-export interface ResponseJsonGetAccountInfo {
-  address: string;
-  name: string;
-  genesisHash: string;
-  type: KeypairType;
 }
 
 export interface ResponseAuthorizeList {

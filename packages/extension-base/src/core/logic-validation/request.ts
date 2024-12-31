@@ -4,13 +4,14 @@
 import { TypedDataV1Field, typedSignatureHash } from '@metamask/eth-sig-util';
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
-import { BasicTxErrorType, ConfirmationType, ErrorValidation, EvmProviderErrorType, EvmSendTransactionParams, EvmSignatureRequest, EvmTransactionData } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
+import { ConfirmationType, ErrorValidation, EvmProviderErrorType, EvmSendTransactionParams, EvmSignatureRequest, EvmTransactionData } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
+import { BasicTxErrorType } from '@subwallet/extension-base/types';
 import { BN_ZERO, createPromiseHandler, isSameAddress, stripUrl, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { isSubstrateAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import { getSdkError } from '@walletconnect/utils';
@@ -327,7 +328,7 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
   const errors: Error[] = payload.errors || [];
   let estimateGas = '';
   const transactionParams = payload.payloadAfterValidated as EvmSendTransactionParams;
-  const { address: fromAddress, networkKey, pair } = payload;
+  const { address: fromAddress, networkKey } = payload;
   const evmApi = koni.getEvmApi(networkKey || '');
   const web3 = evmApi?.api;
 
@@ -465,9 +466,6 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
     }
   }
 
-  const pair_ = pair || keyring.getPair(fromAddress);
-  const account: AccountJson = { address: fromAddress, ...pair_?.meta };
-
   try {
     transaction.nonce = await web3.eth.getTransactionCount(fromAddress);
   } catch (e) {
@@ -497,7 +495,7 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
     errors,
     payloadAfterValidated: {
       ...transaction,
-      account,
+      address: fromAddress,
       estimateGas,
       hashPayload,
       isToContract,
@@ -530,8 +528,6 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
 
   const pair = pair_ || keyring.getPair(address);
 
-  const account: AccountJson = { address: pair.address, ...pair.meta };
-
   if (method) {
     if (['eth_sign', 'personal_sign', 'eth_signTypedData', 'eth_signTypedData_v1', 'eth_signTypedData_v3', 'eth_signTypedData_v4'].indexOf(method) < 0) {
       handleError('Unsupported action');
@@ -545,14 +541,14 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
           hashPayload = payload;
           break;
         case 'eth_sign':
-          if (!account.isExternal) {
+          if (!pair.meta.isExternal) {
             canSign = true;
           }
 
           break;
         case 'eth_signTypedData':
         case 'eth_signTypedData_v1':
-          if (!account.isExternal) {
+          if (!pair.meta.isExternal) {
             canSign = true;
           }
 
@@ -562,7 +558,7 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
 
         case 'eth_signTypedData_v3':
         case 'eth_signTypedData_v4':
-          if (!account.isExternal) {
+          if (!pair.meta.isExternal) {
             canSign = true;
           }
 
@@ -581,7 +577,7 @@ export async function validationEvmSignMessageMiddleware (koni: KoniState, url: 
   }
 
   const payloadAfterValidated: EvmSignatureRequest = {
-    account: account,
+    address,
     type: method || '',
     payload: payload as unknown,
     hashPayload: hashPayload,
@@ -614,7 +610,7 @@ export function validationAuthWCMiddleware (koni: KoniState, url: string, payloa
 
     if (isEthereumAddress(address)) {
       sessionAccounts = requestSession.namespaces.eip155.accounts?.map((account) => account.split(':')[2]) || sessionAccounts;
-    } else {
+    } else if (isSubstrateAddress(address)) {
       sessionAccounts = requestSession.namespaces.polkadot.accounts?.map((account) => account.split(':')[2]) || sessionAccounts;
     }
 

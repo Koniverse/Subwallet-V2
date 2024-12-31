@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
-import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo } from '@subwallet/chain-list/types';
+import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
 import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
+import { TonChainHandler } from '@subwallet/extension-base/services/chain-service/handler/TonChainHandler';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
-import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, fetchPatchData, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
@@ -46,33 +47,15 @@ const ignoredList = [
   'core',
   'satoshivm',
   'satoshivm_testnet',
-  'ton',
-  'ton_testnet',
   'storyPartner_testnet'
 ];
 
-const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
+export const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>, addedChains?: string[]): Record<string, _ChainAsset> => {
   return Object.fromEntries(
     Object.entries(assets)
-      .filter(([, info]) => chainInfo[info.originChain])
+      .filter(([, info]) => chainInfo[info.originChain] || addedChains?.includes(info.originChain))
   );
 };
-
-// const rawAssetRefMap = (assetRefMap: Record<string, _AssetRef>) => {
-//   const result: Record<string, _AssetRef> = {};
-//
-//   Object.entries(assetRefMap).forEach(([key, assetRef]) => {
-//     const originChainInfo = ChainInfoMap[assetRef.srcChain];
-//     const destChainInfo = ChainInfoMap[assetRef.destChain];
-//     const isSnowBridgeXcm = assetRef.path === _AssetRefPath.XCM && _isSnowBridgeXcm(originChainInfo, destChainInfo);
-//
-//     if (!isSnowBridgeXcm) {
-//       result[key] = assetRef;
-//     }
-//   });
-//
-//   return result;
-// };
 
 export class ChainService {
   private dataMap: _DataMap = {
@@ -89,6 +72,7 @@ export class ChainService {
 
   private substrateChainHandler: SubstrateChainHandler;
   private evmChainHandler: EvmChainHandler;
+  private tonChainHandler: TonChainHandler;
   private mantaChainHandler: MantaPrivateHandler | undefined;
 
   refreshLatestChainDataTimeOut: NodeJS.Timer | undefined;
@@ -108,8 +92,6 @@ export class ChainService {
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
   private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
-  private assetMapPatch: string = JSON.stringify({});
-  private assetLogoPatch: string = JSON.stringify({});
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -134,6 +116,7 @@ export class ChainService {
 
     this.substrateChainHandler = new SubstrateChainHandler(this);
     this.evmChainHandler = new EvmChainHandler(this);
+    this.tonChainHandler = new TonChainHandler(this);
 
     this.logger = createLogger('chain-service');
   }
@@ -187,6 +170,14 @@ export class ChainService {
     return result;
   }
 
+  public getlockChainInfoMap () {
+    return this.lockChainInfoMap;
+  }
+
+  public setLockChainInfoMap (isLock: boolean) {
+    this.lockChainInfoMap = isLock;
+  }
+
   public getEvmApi (slug: string) {
     return this.evmChainHandler.getEvmApiByChain(slug);
   }
@@ -195,12 +186,20 @@ export class ChainService {
     return this.evmChainHandler.getEvmApiMap();
   }
 
+  public getSubstrateApi (slug: string) {
+    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  }
+
   public getSubstrateApiMap () {
     return this.substrateChainHandler.getSubstrateApiMap();
   }
 
-  public getSubstrateApi (slug: string) {
-    return this.substrateChainHandler.getSubstrateApiByChain(slug);
+  public getTonApi (slug: string) {
+    return this.tonChainHandler.getTonApiByChain(slug);
+  }
+
+  public getTonApiMap () {
+    return this.tonChainHandler.getTonApiMap();
   }
 
   public getChainCurrentProviderByKey (slug: string) {
@@ -242,6 +241,10 @@ export class ChainService {
     return this.dataMap.assetRegistry;
   }
 
+  public setAssetRegistry (assetRegistry: Record<string, _ChainAsset>) {
+    this.dataMap.assetRegistry = assetRegistry;
+  }
+
   public getMultiChainAssetMap () {
     return MultiChainAssetMap;
   }
@@ -258,8 +261,24 @@ export class ChainService {
     return filteredAssetRegistry;
   }
 
+  public getAssetHubToken () {
+    const assetHubToken: Record<string, _ChainAsset> = {};
+
+    Object.values(this.getAssetRegistry()).forEach((asset) => {
+      if (['statemint', 'statemine'].includes(asset.originChain)) {
+        assetHubToken[asset.slug] = asset;
+      }
+    });
+
+    return assetHubToken;
+  }
+
   public getChainInfoMap (): Record<string, _ChainInfo> {
     return this.dataMap.chainInfoMap;
+  }
+
+  public setChainInfoMap (chainInfoMap: Record<string, _ChainInfo>) {
+    this.dataMap.chainInfoMap = chainInfoMap;
   }
 
   public getEvmChainInfoMap (): Record<string, _ChainInfo> {
@@ -330,6 +349,10 @@ export class ChainService {
 
   public getChainStateMap () {
     return this.dataMap.chainStateMap;
+  }
+
+  public setChainStateMap (chainStateMap: Record<string, _ChainState>) {
+    this.dataMap.chainStateMap = chainStateMap;
   }
 
   public getChainStateByKey (key: string) {
@@ -585,7 +608,7 @@ export class ChainService {
 
   public upsertCustomToken (token: _ChainAsset) {
     if (token.slug.length === 0) { // new token
-      if (token.assetType === _AssetType.NATIVE) {
+      if (token.assetType === _AssetType.NATIVE || token.assetType === _AssetType.LOCAL) {
         const defaultSlug = this.generateSlugForNativeToken(token.originChain, token.assetType, token.symbol);
 
         token.slug = `${_CUSTOM_PREFIX}${defaultSlug}`;
@@ -596,7 +619,7 @@ export class ChainService {
       }
     }
 
-    if (token.originChain && _isAssetFungibleToken(token)) {
+    if (token.originChain && (_isAssetFungibleToken(token) || _isLocalToken(token))) {
       token.hasValue = !(this.getChainInfoByKey(token.originChain)?.isTestnet);
     }
 
@@ -654,11 +677,11 @@ export class ChainService {
     await this.initChains();
     this.chainInfoMapSubject.next(this.getChainInfoMap());
     this.assetRegistrySubject.next(this.getAssetRegistry());
+    this.initAssetRefMap();
     this.xcmRefMapSubject.next(this.xcmRefMap);
 
     await this.initApis();
     await this.initAssetSettings();
-    this.initAssetRefMap();
     await this.autoEnableTokens();
   }
 
@@ -697,93 +720,23 @@ export class ChainService {
     }
   }
 
-  handleLatestAssetRef (latestBlockedAssetRefList: string[], latestAssetRefMap: Record<string, _AssetRef> | null) {
-    const updatedAssetRefMap: Record<string, _AssetRef> = { ...AssetRefMap };
-
-    if (latestAssetRefMap) {
-      for (const [assetRefKey, assetRef] of Object.entries(latestAssetRefMap)) {
-        updatedAssetRefMap[assetRefKey] = assetRef;
-      }
-    }
-
-    latestBlockedAssetRefList.forEach((blockedAssetRef) => {
-      delete updatedAssetRefMap[blockedAssetRef];
-    });
-
-    this.dataMap.assetRefMap = updatedAssetRefMap;
-
-    this.xcmRefMapSubject.next(this.xcmRefMap);
-    this.swapRefMapSubject.next(this.swapRefMap);
-    this.logger.log('Finished updating latest asset ref');
-  }
-
-  handleLatestPriceId (latestPriceIds: Record<string, string | null>) {
-    let isUpdated = false;
-
-    Object.entries(latestPriceIds).forEach(([slug, priceId]) => {
-      if (this.dataMap.assetRegistry[slug] && this.dataMap.assetRegistry[slug].priceId !== priceId) {
-        isUpdated = true;
-        this.dataMap.assetRegistry[slug].priceId = priceId;
-      }
-    });
-
-    if (isUpdated) {
-      this.assetRegistrySubject.next(this.dataMap.assetRegistry);
-      this.eventService.emit('asset.updateState', '');
-    }
-
-    this.logger.log('Finished updating latest price IDs');
-  }
-
-  handleLatestAssetData (latestAssetInfo: Record<string, _ChainAsset> | null, latestAssetLogoMap: Record<string, string> | null) {
-    try {
-      if (latestAssetInfo) {
-        const latestAssetPatch = JSON.stringify(latestAssetInfo);
-
-        if (this.assetMapPatch !== latestAssetPatch) {
-          const assetRegistry = filterAssetInfoMap(this.getChainInfoMap(), Object.assign({}, this.dataMap.assetRegistry, latestAssetInfo));
-
-          this.assetMapPatch = latestAssetPatch;
-          this.dataMap.assetRegistry = assetRegistry;
-          this.assetRegistrySubject.next(assetRegistry);
-
-          this.autoEnableTokens()
-            .then(() => {
-              this.eventService.emit('asset.updateState', '');
-            })
-            .catch(console.error);
-        }
-      }
-
-      if (latestAssetLogoMap) {
-        const latestAssetLogoPatch = JSON.stringify(latestAssetLogoMap);
-
-        if (this.assetLogoPatch !== latestAssetLogoPatch) {
-          const logoMap = { ...AssetLogoMap, ...latestAssetLogoMap };
-
-          this.assetLogoPatch = latestAssetLogoPatch;
-          this.assetLogoMapSubject.next(logoMap);
-        }
-      }
-
-      if (latestAssetLogoMap) {
-        const latestAssetLogoPatch = JSON.stringify(latestAssetLogoMap);
-
-        if (this.assetLogoPatch !== latestAssetLogoPatch) {
-          const logoMap = { ...AssetLogoMap, ...latestAssetLogoMap };
-
-          this.assetLogoPatch = latestAssetLogoPatch;
-          this.assetLogoMapSubject.next(logoMap);
-        }
-      }
-    } catch (e) {
-      console.error('Error fetching latest asset data');
-    }
-
-    this.eventService.emit('asset.online.ready', true);
-
-    this.logger.log('Finished updating latest asset');
-  }
+  // handleLatestPriceId (latestPriceIds: Record<string, string | null>) {
+  //   let isUpdated = false;
+  //
+  //   Object.entries(latestPriceIds).forEach(([slug, priceId]) => {
+  //     if (this.dataMap.assetRegistry[slug] && this.dataMap.assetRegistry[slug].priceId !== priceId) {
+  //       isUpdated = true;
+  //       this.dataMap.assetRegistry[slug].priceId = priceId;
+  //     }
+  //   });
+  //
+  //   if (isUpdated) {
+  //     this.assetRegistrySubject.next(this.dataMap.assetRegistry);
+  //     this.eventService.emit('asset.updateState', '');
+  //   }
+  //
+  //   this.logger.log('Finished updating latest price IDs');
+  // }
 
   async autoEnableTokens () {
     const autoEnableTokens = Object.values(this.dataMap.assetRegistry).filter((asset) => _isAssetAutoEnable(asset));
@@ -815,25 +768,18 @@ export class ChainService {
   }
 
   handleLatestData () {
-    this.fetchLatestAssetData().then(([latestAssetInfo, latestAssetLogoMap]) => {
-      this.eventService.waitAssetReady
-        .then(() => {
-          this.handleLatestAssetData(latestAssetInfo, latestAssetLogoMap);
-        })
-        .catch(console.error);
-    }).catch(console.error);
-
     this.fetchLatestChainData().then((latestChainInfo) => {
+      this.lockChainInfoMap = true; // do not need to check current lockChainInfoMap because all remains action is fast enough and don't affect this feature.
       this.handleLatestChainData(latestChainInfo);
-    }).catch(console.error);
+      this.lockChainInfoMap = false;
+    }).catch((e) => {
+      this.lockChainInfoMap = false;
+      console.error('Error update latest chain data', e);
+    });
 
-    this.fetchLatestAssetRef().then(([latestAssetRef, latestAssetRefMap]) => {
-      this.handleLatestAssetRef(latestAssetRef, latestAssetRefMap);
-    }).catch(console.error);
-
-    this.fetchLatestPriceIdsData().then((latestPriceIds) => {
-      this.handleLatestPriceId(latestPriceIds);
-    }).catch(console.error);
+    // this.fetchLatestPriceIdsData().then((latestPriceIds) => {
+    //   this.handleLatestPriceId(latestPriceIds);
+    // }).catch(console.error);
 
     this.fetchLatestLedgerGenericAllowChains()
       .then((latestledgerGenericAllowChains) => {
@@ -943,6 +889,12 @@ export class ChainService {
 
       this.evmChainHandler.setEvmApi(chainInfo.slug, chainApi);
     }
+
+    if (chainInfo.tonInfo !== null && chainInfo.tonInfo !== undefined) {
+      const chainApi = await this.tonChainHandler.initApi(chainInfo.slug, endpoint, { providerName, onUpdateStatus });
+
+      this.tonChainHandler.setTonApi(chainInfo.slug, chainApi);
+    }
   }
 
   private destroyApiForChain (chainInfo: _ChainInfo) {
@@ -952,6 +904,10 @@ export class ChainService {
 
     if (chainInfo.evmInfo !== null) {
       this.evmChainHandler.destroyEvmApi(chainInfo.slug);
+    }
+
+    if (chainInfo.tonInfo !== null) {
+      this.tonChainHandler.destroyTonApi(chainInfo.slug);
     }
   }
 
@@ -1123,17 +1079,9 @@ export class ChainService {
     // }
   }
 
-  private async fetchLatestAssetData () {
-    return await Promise.all([fetchPatchData<Record<string, _ChainAsset>>('ChainAsset.json'), fetchPatchData<Record<string, string>>('AssetLogoMap.json')]);
-  }
-
   // @ts-ignore
   private async fetchLatestPriceIdsData () {
     return await fetchStaticData<Record<string, string | null>>('chain-assets/price-map');
-  }
-
-  private async fetchLatestAssetRef () {
-    return await Promise.all([fetchStaticData<string[]>('chain-assets/disabled-xcm-channels'), fetchPatchData<Record<string, _AssetRef>>('AssetRef.json')]);
   }
 
   private async fetchLatestLedgerGenericAllowChains () {
@@ -1268,7 +1216,7 @@ export class ChainService {
               evmInfo: storedChainInfo.evmInfo,
               substrateInfo: storedChainInfo.substrateInfo,
               bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
-              tonInfo: storedChainInfo.tonInfo ?? null,
+              tonInfo: storedChainInfo.tonInfo,
               isTestnet: storedChainInfo.isTestnet,
               chainStatus: storedChainInfo.chainStatus,
               icon: storedChainInfo.icon,
@@ -1290,8 +1238,38 @@ export class ChainService {
               manualTurnOff
             });
           }
-        } else {
-          // Todo: Remove chain from storage
+        } else { // added chain from patch
+          this.dataMap.chainStateMap[storedSlug] = {
+            currentProvider: storedChainInfo.currentProvider,
+            slug: storedSlug,
+            active: storedChainInfo.active,
+            manualTurnOff
+          };
+
+          this.updateChainConnectionStatus(storedSlug, _ChainConnectionStatus.DISCONNECTED);
+
+          newStorageData.push({
+            ...storedChainSettingMap[storedSlug],
+            active: storedChainInfo.active,
+            currentProvider: storedChainInfo.currentProvider,
+            manualTurnOff
+          });
+
+          mergedChainInfoMap[storedSlug] = {
+            slug: storedSlug,
+            name: storedChainInfo.name,
+            providers: storedChainInfo.providers,
+            evmInfo: storedChainInfo.evmInfo,
+            substrateInfo: storedChainInfo.substrateInfo,
+            bitcoinInfo: storedChainInfo.bitcoinInfo ?? null,
+            tonInfo: storedChainInfo.tonInfo,
+            isTestnet: storedChainInfo.isTestnet,
+            chainStatus: storedChainInfo.chainStatus,
+            icon: storedChainInfo.icon,
+            extraInfo: storedChainInfo.extraInfo
+          };
+
+          deprecatedChainMap[storedSlug] = storedSlug; // todo: set a better name
         }
       }
 
@@ -1476,6 +1454,7 @@ export class ChainService {
 
     let substrateInfo: _SubstrateInfo | null = null;
     let evmInfo: _EvmInfo | null = null;
+    const tonInfo: _TonInfo | null = null;
 
     if (params.chainSpec.genesisHash !== '') {
       substrateInfo = {
@@ -1514,7 +1493,7 @@ export class ChainService {
       substrateInfo,
       evmInfo,
       bitcoinInfo: null,
-      tonInfo: null,
+      tonInfo,
       isTestnet: false,
       chainStatus: _ChainStatus.ACTIVE,
       icon: '', // Todo: Allow update with custom chain,
@@ -1635,6 +1614,8 @@ export class ChainService {
 
         // TODO: EVM chain might have WS provider
         if (provider.startsWith('http')) {
+          // todo: handle validate ton provider
+
           // HTTP provider is EVM by default
           api = await this.evmChainHandler.initApi('custom', provider);
         } else {
@@ -1790,14 +1771,39 @@ export class ChainService {
     };
   }
 
+  private async getAssetIdTokenInfo (assetId: string | undefined, tokenType: _AssetType, chain: string): Promise<_SmartContractTokenInfo> {
+    if ([_AssetType.LOCAL].includes(tokenType) && assetId) {
+      return await this.substrateChainHandler.getSubstrateAssetIdTokenInfo(assetId, chain);
+    }
+
+    return {
+      decimals: -1,
+      name: '',
+      symbol: '',
+      contractError: false
+    };
+  }
+
   public async validateCustomToken (data: _ValidateCustomAssetRequest): Promise<_ValidateCustomAssetResponse> {
     const assetRegistry = this.getSmartContractTokens();
+    const asset = this.getAssetHubToken();
     let existedToken: _ChainAsset | undefined;
 
     for (const token of Object.values(assetRegistry)) {
       const contractAddress = token?.metadata?.contractAddress as string;
 
-      if (_isEqualContractAddress(contractAddress, data.contractAddress) && token.assetType === data.type && token.originChain === data.originChain) {
+      if (data.contractAddress) {
+        if (_isEqualContractAddress(contractAddress, data.contractAddress) && token.assetType === data.type && token.originChain === data.originChain) {
+          existedToken = token;
+          break;
+        }
+      }
+    }
+
+    for (const token of Object.values(asset)) {
+      const assetId = token?.metadata?.assetId as string;
+
+      if (assetId === data.assetId && token.assetType === data.type && token.originChain === data.originChain) {
         existedToken = token;
         break;
       }
@@ -1814,14 +1820,20 @@ export class ChainService {
       };
     }
 
-    const { contractError, decimals, name, symbol } = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller);
+    let info: _SmartContractTokenInfo;
+
+    if (data.contractAddress) {
+      info = await this.getSmartContractTokenInfo(data.contractAddress, data.type, data.originChain, data.contractCaller);
+    } else {
+      info = await this.getAssetIdTokenInfo(data.assetId, data.type, data.originChain);
+    }
 
     return {
-      name,
-      decimals,
-      symbol,
+      name: info.name,
+      decimals: info.decimals,
+      symbol: info.symbol,
       isExist: !!existedToken,
-      contractError
+      contractError: info.contractError
     };
   }
 
@@ -1841,10 +1853,15 @@ export class ChainService {
     this.evmChainHandler.recoverApi(slug).catch(console.error);
   }
 
+  public refreshTonApi (slug: string) {
+    this.tonChainHandler.recoverApi(slug).catch(console.error);
+  }
+
   public async stopAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.sleep(),
-      this.evmChainHandler.sleep()
+      this.evmChainHandler.sleep(),
+      this.tonChainHandler.sleep()
     ]);
 
     this.stopCheckLatestChainData();
@@ -1853,7 +1870,8 @@ export class ChainService {
   public async resumeAllChainApis () {
     await Promise.all([
       this.substrateChainHandler.wakeUp(),
-      this.evmChainHandler.wakeUp()
+      this.evmChainHandler.wakeUp(),
+      this.tonChainHandler.wakeUp()
     ]);
 
     this.checkLatestData();
@@ -1864,22 +1882,19 @@ export class ChainService {
     const activeChainSlugs = this.getActiveChainSlugs();
     const assetRegistry = this.getAssetRegistry();
 
-    if (Object.keys(assetSettings).length === 0) { // only initiate the first time
-      Object.values(assetRegistry).forEach((assetInfo) => {
-        const isSettingExisted = assetInfo.slug in assetSettings;
+    Object.values(assetRegistry).forEach((assetInfo) => {
+      const isSettingExisted = assetInfo.slug in assetSettings;
 
-        // Set visible for every enabled chains
-        if (activeChainSlugs.includes(assetInfo.originChain) && !isSettingExisted) {
-          // Setting only exist when set either by chain settings or user
-          assetSettings[assetInfo.slug] = {
-            visible: true
-          };
-        }
-      });
+      // Set visible for every enabled chains
+      if (activeChainSlugs.includes(assetInfo.originChain) && !isSettingExisted) {
+        // Setting only exist when set either by chain settings or user
+        assetSettings[assetInfo.slug] = {
+          visible: true
+        };
+      }
+    });
 
-      this.setAssetSettings(assetSettings, false);
-    }
-
+    this.setAssetSettings(assetSettings, false);
     this.eventService.emit('asset.ready', true);
   }
 

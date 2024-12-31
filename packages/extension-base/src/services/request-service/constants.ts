@@ -16,7 +16,8 @@ export const WEB_APP_URL = [
   'web.subwallet.app' // Production,
 ];
 
-export const DAPP_CONNECT_ALL_TYPE_ACCOUNT_URL = [
+// List DApp can connect 'substrate' and 'evm' account
+export const DAPP_CONNECT_BOTH_TYPE_ACCOUNT_URL = [
   'https://polkadot.js.org/apps/',
   'https://ipfs.io/ipns/dotapps.io'
 ];

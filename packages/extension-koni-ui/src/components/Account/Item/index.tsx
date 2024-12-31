@@ -4,3 +4,4 @@
 export { default as AccountItemBase } from './AccountItemBase';
 export { default as AccountItemWithName } from './AccountItemWithName';
 export { default as AccountWithNameSkeleton } from './AccountWithNameSkeleton';
+export { default as AccountItemWithProxyAvatar } from './AccountItemWithProxyAvatar';

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
-import { AssetSettingUpdateReq } from '@subwallet/extension-base/background/KoniTypes';
+import { AssetSettingUpdateReq, ResponseNftImport } from '@subwallet/extension-base/background/KoniTypes';
 import { _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
 
 import { sendMessage } from '../base';
@@ -11,7 +11,7 @@ export async function getSupportedContractTypes (): Promise<string[]> {
   return sendMessage('pri(chainService.getSupportedContractTypes)', null);
 }
 
-export async function upsertCustomToken (data: _ChainAsset): Promise<boolean> {
+export async function upsertCustomToken (data: _ChainAsset): Promise<ResponseNftImport> {
   return sendMessage('pri(chainService.upsertCustomAsset)', data);
 }
 

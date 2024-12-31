@@ -25,6 +25,8 @@ interface Props extends ThemeProps {
 
 const modalId = RECEIVE_QR_MODAL;
 
+// @deprecated
+
 const Component: React.FC<Props> = ({ address, className, selectedNetwork }: Props) => {
   const { t } = useTranslation();
   const { inactiveModal } = useContext(ModalContext);

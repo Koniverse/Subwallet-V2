@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset, _ChainStatus } from '@subwallet/chain-list/types';
-import { _isAssetFungibleToken, _isChainEvmCompatible, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetFungibleToken, _isChainEvmCompatible, _isChainSubstrateCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
@@ -32,7 +32,7 @@ export default function useChainAssets ({ chainTypes, isActive = false, isActive
   }, [availableChains, chainInfoMap]);
 
   const substrateChains = useMemo(() => {
-    return availableChains.filter((slug) => _isSubstrateChain(chainInfoMap[slug]));
+    return availableChains.filter((slug) => _isChainSubstrateCompatible(chainInfoMap[slug]));
   }, [availableChains, chainInfoMap]);
 
   const activeAssets = useMemo(() => {

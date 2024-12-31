@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AddressJson } from '@subwallet/extension-base/background/types';
-import { Avatar } from '@subwallet/extension-koni-ui/components';
+import { AddressJson } from '@subwallet/extension-base/types';
+import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { DELETE_ADDRESS_BOOK_MODAL, EDIT_ADDRESS_BOOK_MODAL } from '@subwallet/extension-koni-ui/constants';
 import { useCopy, useNotification, useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { editContactAddress, removeContactAddress } from '@subwallet/extension-koni-ui/messaging';
@@ -173,7 +173,8 @@ const Component: React.FC<Props> = (props: Props) => {
           <Input
             label={t('Contact name')}
             prefix={(
-              <Avatar
+              <AccountProxyAvatar
+                className={'__account-avatar'}
                 size={20}
                 value={address}
               />

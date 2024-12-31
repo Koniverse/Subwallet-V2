@@ -148,7 +148,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   useEffect(() => {
     createSeedV2(undefined, undefined, DEFAULT_ACCOUNT_TYPES)
       .then((response): void => {
-        const phrase = response.seed;
+        const phrase = response.mnemonic;
 
         setSeedPhrase(phrase);
       })

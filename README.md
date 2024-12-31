@@ -30,7 +30,7 @@ All data requests must be called and processed in the background. Extension Page
 
 ## Add an API
 - API is define in folder `packages/extension-koni-base/src/api`
-  - Add new file depend on types of API
+  - Add new file depend on types of API.
   - Simple API can be defined in function, more complicated API should define in Object.
 
 ## Add a store

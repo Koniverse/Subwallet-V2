@@ -1,15 +1,17 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountAuthType, AccountJson, AuthorizeRequest } from '@subwallet/extension-base/background/types';
-import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountItemWithName, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
-import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
+import { AccountAuthType, AuthorizeRequest } from '@subwallet/extension-base/background/types';
+import { ALL_ACCOUNT_AUTH_TYPES, ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
+import { AccountChainType } from '@subwallet/extension-base/types';
+import { AccountProxyItem, AccountProxySelectorAllItem, ConfirmationGeneralInfo } from '@subwallet/extension-koni-ui/components';
+import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE, TON_ACCOUNT_TYPE } from '@subwallet/extension-koni-ui/constants';
 import { useSetSelectedAccountTypes } from '@subwallet/extension-koni-ui/hooks';
 import { approveAuthRequestV2, cancelAuthRequestV2, rejectAuthRequestV2 } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { isAccountAll, isNoAccount } from '@subwallet/extension-koni-ui/utils';
+import { filterAuthorizeAccountProxies, isAccountAll } from '@subwallet/extension-koni-ui/utils';
+import { KeypairType } from '@subwallet/keyring/types';
 import { Button, Icon } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { PlusCircle, ShieldSlash, XCircle } from 'phosphor-react';
@@ -18,8 +20,6 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 interface Props extends ThemeProps {
   request: AuthorizeRequest
@@ -37,66 +37,54 @@ async function handleBlock ({ id }: AuthorizeRequest) {
   return await rejectAuthRequestV2(id);
 }
 
-export const filterAuthorizeAccounts = (accounts: AccountJson[], accountAuthType: AccountAuthType) => {
-  let rs = [...accounts];
-
-  // rs = rs.filter((acc) => acc.isReadOnly !== true);
-
-  if (accountAuthType === 'evm') {
-    rs = rs.filter((acc) => (!isAccountAll(acc.address) && acc.type === 'ethereum'));
-  } else if (accountAuthType === 'substrate') {
-    rs = rs.filter((acc) => (!isAccountAll(acc.address) && acc.type !== 'ethereum'));
-  } else {
-    rs = rs.filter((acc) => !isAccountAll(acc.address));
-  }
-
-  if (isNoAccount(rs)) {
-    return [];
-  }
-
-  return rs;
-};
-
 function Component ({ className, request }: Props) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const { accountAuthType, allowedAccounts } = request.request;
-  const accounts = useSelector((state: RootState) => state.accountState.accounts);
+  const { accountAuthTypes, allowedAccounts } = request.request;
+  const { accountProxies, accounts } = useSelector((state: RootState) => state.accountState);
   const navigate = useNavigate();
+
+  // todo: deprecated, recheck usage
   const setSelectedAccountTypes = useSetSelectedAccountTypes(true);
 
   // List all of all accounts by auth type
-  const visibleAccounts = useMemo(() => (filterAuthorizeAccounts(accounts, accountAuthType || 'both')),
-    [accountAuthType, accounts]);
+  const visibleAccountProxies = useMemo(() => (filterAuthorizeAccountProxies(accountProxies, accountAuthTypes || ALL_ACCOUNT_AUTH_TYPES)),
+    [accountAuthTypes, accountProxies]);
 
   // Selected map with default values is map of all accounts
   const [selectedMap, setSelectedMap] = useState<Record<string, boolean>>({});
 
   const isDisableConnect = useMemo(() => {
-    return !visibleAccounts.filter(({ address }) => !!selectedMap[address]).length;
-  }, [selectedMap, visibleAccounts]);
+    return !visibleAccountProxies.filter(({ id }) => !!selectedMap[id]).length;
+  }, [selectedMap, visibleAccountProxies]);
 
   const noAvailableTitle = useMemo(() => {
-    switch (accountAuthType) {
-      case 'substrate':
-        return t('No available Substrate account');
-      case 'evm':
-        return t('No available EVM account');
-      default:
-        return t('No available account');
+    if (accountAuthTypes && accountAuthTypes.length === 1) {
+      switch (accountAuthTypes[0]) {
+        case 'substrate':
+          return t('No available Substrate account');
+        case 'evm':
+          return t('No available EVM account');
+        case 'ton':
+          return t('No available TON account');
+      }
     }
-  }, [accountAuthType, t]);
+
+    return t('No available account');
+  }, [accountAuthTypes, t]);
 
   const noAvailableDescription = useMemo(() => {
-    switch (accountAuthType) {
-      case 'substrate':
-        return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
-      case 'evm':
-        return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
-      default:
-        return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+    if (accountAuthTypes && accountAuthTypes.length === 1) {
+      switch (accountAuthTypes[0]) {
+        case 'substrate':
+          return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
+        case 'evm':
+          return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
+      }
     }
-  }, [accountAuthType, t]);
+
+    return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
+  }, [accountAuthTypes, t]);
 
   // Handle buttons actions
   const onBlock = useCallback(() => {
@@ -115,51 +103,63 @@ function Component ({ className, request }: Props) {
 
   const onConfirm = useCallback(() => {
     setLoading(true);
-    const selectedAccounts = Object.keys(selectedMap).filter((key) => selectedMap[key]);
+    const selectedAccountProxyIds = Object.keys(selectedMap).filter((key) => selectedMap[key]);
+    const selectedAccounts = accounts.filter(({ chainType, proxyId }) => {
+      if (selectedAccountProxyIds.includes(proxyId || '')) {
+        switch (chainType) {
+          case AccountChainType.SUBSTRATE: return accountAuthTypes?.includes('substrate');
+          case AccountChainType.ETHEREUM: return accountAuthTypes?.includes('evm');
+          case AccountChainType.TON: return accountAuthTypes?.includes('ton');
+        }
+      }
+
+      return false;
+    }).map(({ address }) => address);
 
     handleConfirm(request, selectedAccounts).finally(() => {
       setLoading(false);
     });
-  }, [request, selectedMap]);
+  }, [accountAuthTypes, accounts, request, selectedMap]);
 
   const onAddAccount = useCallback(() => {
     let types: KeypairType[];
 
-    switch (accountAuthType) {
-      case 'substrate':
-        types = [SUBSTRATE_ACCOUNT_TYPE];
-        break;
-      case 'evm':
-        types = [EVM_ACCOUNT_TYPE];
-        break;
-      default:
-        types = DEFAULT_ACCOUNT_TYPES;
+    const addAccountType: Record<AccountAuthType, KeypairType> = {
+      evm: EVM_ACCOUNT_TYPE,
+      substrate: SUBSTRATE_ACCOUNT_TYPE,
+      ton: TON_ACCOUNT_TYPE
+    };
+
+    if (accountAuthTypes) {
+      types = accountAuthTypes.map((type) => addAccountType[type]);
+    } else {
+      types = DEFAULT_ACCOUNT_TYPES;
     }
 
     setSelectedAccountTypes(types);
     navigate('/accounts/new-seed-phrase', { state: { useGoBack: true } });
-  }, [accountAuthType, setSelectedAccountTypes, navigate]);
+  }, [accountAuthTypes, navigate, setSelectedAccountTypes]);
 
-  const onAccountSelect = useCallback((address: string) => {
-    const isAll = isAccountAll(address);
+  const onAccountSelect = useCallback((proxyId: string) => {
+    const isAll = isAccountAll(proxyId);
 
     return () => {
-      const visibleAddresses = visibleAccounts.map((item) => item.address);
+      const visibleProxyId = visibleAccountProxies.map((item) => item.id);
 
       setSelectedMap((map) => {
-        const isChecked = !map[address];
+        const isChecked = !map[proxyId];
         const newMap = { ...map };
 
         if (isAll) {
           // Select/deselect all accounts
-          visibleAddresses.forEach((key) => {
+          visibleProxyId.forEach((key) => {
             newMap[key] = isChecked;
           });
           newMap[ALL_ACCOUNT_KEY] = isChecked;
         } else {
           // Select/deselect single account and trigger all account
-          newMap[address] = isChecked;
-          newMap[ALL_ACCOUNT_KEY] = visibleAddresses
+          newMap[proxyId] = isChecked;
+          newMap[ALL_ACCOUNT_KEY] = visibleProxyId
             .filter((i) => !isAccountAll(i))
             .every((item) => newMap[item]);
         }
@@ -167,24 +167,37 @@ function Component ({ className, request }: Props) {
         return newMap;
       });
     };
-  }, [visibleAccounts]);
+  }, [visibleAccountProxies]);
 
   // Create selected map by default
   useEffect(() => {
     setSelectedMap((map) => {
       const existedKey = Object.keys(map);
 
-      accounts.forEach((item) => {
-        if (!existedKey.includes(item.address)) {
-          map[item.address] = (allowedAccounts || []).includes(item.address);
+      accountProxies.forEach((item) => {
+        if (!existedKey.includes(item.id)) {
+          map[item.id] = item.accounts.some((account) => {
+            if (allowedAccounts?.includes(account.address)) {
+              switch (account.chainType) {
+                case AccountChainType.SUBSTRATE:
+                  return accountAuthTypes?.includes('substrate');
+                case AccountChainType.ETHEREUM:
+                  return accountAuthTypes?.includes('evm');
+                case AccountChainType.TON:
+                  return accountAuthTypes?.includes('ton');
+              }
+            }
+
+            return false;
+          });
         }
       });
 
-      map[ALL_ACCOUNT_KEY] = visibleAccounts.every((item) => map[item.address]);
+      map[ALL_ACCOUNT_KEY] = visibleAccountProxies.every((item) => map[item.id]);
 
       return { ...map };
     });
-  }, [accounts, allowedAccounts, visibleAccounts]);
+  }, [accountAuthTypes, accountProxies, allowedAccounts, visibleAccountProxies]);
 
   return (
     <>
@@ -194,42 +207,38 @@ function Component ({ className, request }: Props) {
           className={CN(
             'title',
             {
-              'sub-title': visibleAccounts.length > 0
+              'sub-title': visibleAccountProxies.length > 0
             }
           )}
         >
           {
-            visibleAccounts.length === 0
+            visibleAccountProxies.length === 0
               ? noAvailableTitle
               : t('Choose the account(s) you’d like to connect')
           }
         </div>
         {
-          !!visibleAccounts.length && (
+          !!visibleAccountProxies.length && (
             <div className='account-list'>
               {
-                visibleAccounts.length > 1 &&
+                visibleAccountProxies.length > 1 &&
                   (
-                    <AccountItemWithName
-                      accountName={'All account'}
-                      accounts={visibleAccounts}
-                      address={ALL_ACCOUNT_KEY}
-                      avatarSize={24}
+                    <AccountProxySelectorAllItem
+                      accountProxies={visibleAccountProxies}
+                      className={'all-account-selection'}
                       isSelected={selectedMap[ALL_ACCOUNT_KEY]}
                       onClick={onAccountSelect(ALL_ACCOUNT_KEY)}
-                      showUnselectIcon
+                      showUnSelectedIcon
                     />
                   )
               }
-              {visibleAccounts.map((item) => (
-                <AccountItemWithName
-                  accountName={item.name}
-                  address={item.address}
-                  avatarSize={24}
-                  genesisHash={item.genesisHash}
-                  isSelected={selectedMap[item.address]}
-                  key={item.address}
-                  onClick={onAccountSelect(item.address)}
+              {visibleAccountProxies.map((item) => (
+                <AccountProxyItem
+                  accountProxy={item}
+                  className={'__account-proxy-item'}
+                  isSelected={selectedMap[item.id]}
+                  key={item.id}
+                  onClick={onAccountSelect(item.id)}
                   showUnselectIcon
                 />
               ))}
@@ -238,7 +247,7 @@ function Component ({ className, request }: Props) {
         }
         <div className='description'>
           {
-            visibleAccounts.length === 0
+            visibleAccountProxies.length === 0
               ? noAvailableDescription
               : t('Make sure you trust this site before connecting')
           }
@@ -246,7 +255,7 @@ function Component ({ className, request }: Props) {
       </div>
       <div className='confirmation-footer'>
         {
-          visibleAccounts.length > 0 &&
+          visibleAccountProxies.length > 0 &&
           (
             <>
               <Button
@@ -274,7 +283,7 @@ function Component ({ className, request }: Props) {
           )
         }
         {
-          visibleAccounts.length === 0 &&
+          visibleAccountProxies.length === 0 &&
             (
               <>
                 <Button
@@ -323,6 +332,22 @@ const AuthorizeConfirmation = styled(Component)<Props>(({ theme: { token } }: Th
     display: 'flex',
     flexDirection: 'column',
     gap: token.sizeXS
+  },
+
+  '.all-account-selection': {
+    '.__item-middle-part': {
+      textAlign: 'start',
+      fontSize: token.fontSize
+    }
+  },
+
+  '.__account-proxy-item': {
+    '.__item-middle-part': {
+      textWrap: 'nowrap',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden'
+    }
+
   }
 }));
 

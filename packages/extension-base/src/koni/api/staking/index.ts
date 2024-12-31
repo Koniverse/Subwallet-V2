@@ -19,7 +19,7 @@ interface PromiseMapping {
 
 export function stakingOnChainApi (addresses: string[], substrateApiMap: Record<string, _SubstrateApi>, chainInfoMap: Record<string, _ChainInfo>, stakingCallback: (networkKey: string, rs: StakingItem) => void, nominatorStateCallback: (nominatorMetadata: NominatorMetadata) => void) {
   const filteredApiMap: PromiseMapping[] = [];
-  const [substrateAddresses, evmAddresses] = categoryAddresses(addresses);
+  const { evm: evmAddresses, substrate: substrateAddresses } = categoryAddresses(addresses);
 
   Object.entries(chainInfoMap).forEach(([networkKey, chainInfo]) => {
     if (_PURE_EVM_CHAINS.indexOf(networkKey) < 0 && _isChainSupportSubstrateStaking(chainInfo)) {

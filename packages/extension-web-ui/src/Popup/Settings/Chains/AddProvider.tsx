@@ -3,7 +3,7 @@
 
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _NetworkUpsertParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _generateCustomProviderKey, _getChainNativeTokenBasicInfo, _isChainEvmCompatible, _isCustomProvider, _isSubstrateChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { _generateCustomProviderKey, _getChainNativeTokenBasicInfo, _isChainEvmCompatible, _isChainSubstrateCompatible, _isCustomProvider } from '@subwallet/extension-base/services/chain-service/utils';
 import { isUrl } from '@subwallet/extension-base/utils';
 import { Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import InfoIcon from '@subwallet/extension-web-ui/components/Icon/InfoIcon';
@@ -74,7 +74,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     let result = '';
     const types: string[] = [];
 
-    if (_isSubstrateChain(chainInfo)) {
+    if (_isChainSubstrateCompatible(chainInfo)) {
       types.push('Substrate');
     }
 

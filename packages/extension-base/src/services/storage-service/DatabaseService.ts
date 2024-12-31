@@ -4,17 +4,20 @@
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { APIItemState, ChainStakingMetadata, CrowdloanItem, MantaPayConfig, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, StakingType, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { EventService } from '@subwallet/extension-base/services/event-service';
+import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import KoniDatabase, { IBalance, ICampaign, IChain, ICrowdloanItem, INft } from '@subwallet/extension-base/services/storage-service/databases';
 import { AssetStore, BalanceStore, ChainStore, CrowdloanStore, MetadataStore, MigrationStore, NftCollectionStore, NftStore, PriceStore, StakingStore, TransactionStore } from '@subwallet/extension-base/services/storage-service/db-stores';
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
 import CampaignStore from '@subwallet/extension-base/services/storage-service/db-stores/Campaign';
 import ChainStakingMetadataStore from '@subwallet/extension-base/services/storage-service/db-stores/ChainStakingMetadata';
+import InappNotificationStore from '@subwallet/extension-base/services/storage-service/db-stores/InappNotification';
 import MantaPayStore from '@subwallet/extension-base/services/storage-service/db-stores/MantaPay';
 import NominatorMetadataStore from '@subwallet/extension-base/services/storage-service/db-stores/NominatorMetadata';
 import { HistoryQuery } from '@subwallet/extension-base/services/storage-service/db-stores/Transaction';
 import YieldPoolStore from '@subwallet/extension-base/services/storage-service/db-stores/YieldPoolStore';
 import YieldPositionStore from '@subwallet/extension-base/services/storage-service/db-stores/YieldPositionStore';
 import { BalanceItem, YieldPoolInfo, YieldPoolType, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { BN_ZERO, reformatAddress } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
@@ -64,8 +67,12 @@ export default class DatabaseService {
       nominatorMetadata: new NominatorMetadataStore(this._db.nominatorMetadata),
 
       mantaPay: new MantaPayStore(this._db.mantaPay),
-      campaign: new CampaignStore(this._db.campaign)
+      campaign: new CampaignStore(this._db.campaign),
       // assetRef: new AssetRefStore(this._db.assetRef)
+
+      // inapp notification
+      inappNotification: new InappNotificationStore(this._db.inappNotification)
+
     };
   }
 
@@ -399,6 +406,10 @@ export default class DatabaseService {
     return this.stores.asset.upsert(item);
   }
 
+  async bulkUpdateAssetsStore (items: _ChainAsset[]) {
+    return this.stores.asset.bulkUpsert(items);
+  }
+
   async getAllAssetStore () {
     return this.stores.asset.getAll();
   }
@@ -443,7 +454,8 @@ export default class DatabaseService {
         this.stores.crowdloan,
         this.stores.staking,
         this.stores.transaction,
-        this.stores.nominatorMetadata
+        this.stores.nominatorMetadata,
+        this.stores.inappNotification
       ];
 
       if (resetAll) {
@@ -554,6 +566,10 @@ export default class DatabaseService {
     await this.stores.yieldPosition.bulkUpsert(data);
   }
 
+  async getYieldPositions () {
+    return this.stores.yieldPosition.getAll();
+  }
+
   async getYieldPositionByAddress (addresses: string[]) {
     return this.stores.yieldPosition.getByAddress(addresses);
   }
@@ -588,6 +604,48 @@ export default class DatabaseService {
 
   public upsertCampaign (campaign: ICampaign) {
     return this.stores.campaign.upsertCampaign(campaign);
+  }
+
+  /* Inapp Notification */
+
+  public getNotification (id: string) {
+    return this.stores.inappNotification.getNotificationInfo(id);
+  }
+
+  public updateNotification (notification: _NotificationInfo) {
+    return this.stores.inappNotification.upsert(notification);
+  }
+
+  public async getNotificationsByParams (params: GetNotificationParams) {
+    return this.stores.inappNotification.getNotificationsByParams(params);
+  }
+
+  public cleanUpOldNotifications (overdueTime: number) {
+    return this.stores.inappNotification.cleanUpOldNotifications(overdueTime);
+  }
+
+  public subscribeUnreadNotificationsCountMap () {
+    return this.stores.inappNotification.subscribeUnreadNotificationsCount();
+  }
+
+  public getUnreadNotificationsCountMap () {
+    return this.stores.inappNotification.getUnreadNotificationsCountMap();
+  }
+
+  public upsertNotifications (notifications: _NotificationInfo[]) {
+    return this.stores.inappNotification.bulkUpsert(notifications);
+  }
+
+  public markAllRead (proxyId: string) {
+    return this.stores.inappNotification.markAllRead(proxyId);
+  }
+
+  public switchReadStatus (params: RequestSwitchStatusParams) {
+    return this.stores.inappNotification.switchReadStatus(params);
+  }
+
+  public removeAccountNotifications (proxyId: string) {
+    return this.stores.inappNotification.removeAccountNotifications(proxyId);
   }
 
   async exportDB () {

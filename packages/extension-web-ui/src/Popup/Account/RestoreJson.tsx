@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/background/types';
+import { ResponseJsonGetAccountInfo } from '@subwallet/extension-base/types';
 import { AlertBox, Layout, PageWrapper } from '@subwallet/extension-web-ui/components';
 import AvatarGroup from '@subwallet/extension-web-ui/components/Account/Info/AvatarGroup';
 import CloseIcon from '@subwallet/extension-web-ui/components/Icon/CloseIcon';

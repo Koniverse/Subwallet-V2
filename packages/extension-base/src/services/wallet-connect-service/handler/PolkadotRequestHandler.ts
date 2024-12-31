@@ -59,7 +59,7 @@ export default class PolkadotRequestHandler {
       const address = pair.address;
 
       this.#requestService
-        .sign(url, new RequestBytesSign({ address: address, data: param.message, type: 'bytes' }), { address, ...pair.meta }, getWCId(id))
+        .sign(url, new RequestBytesSign({ address: address, data: param.message, type: 'bytes' }), getWCId(id))
         .then(async ({ signature }) => {
           await this.#walletConnectService.responseRequest({
             topic: topic,
@@ -73,12 +73,8 @@ export default class PolkadotRequestHandler {
       const param = parseRequestParams<POLKADOT_SIGNING_METHODS.POLKADOT_SIGN_TRANSACTION>(request.params);
 
       this.#checkAccount(param.address, sessionAccounts);
-
-      const pair = keyring.getPair(param.address);
-      const address = pair.address;
-
       this.#requestService
-        .sign(url, new RequestExtrinsicSign(param.transactionPayload), { address, ...pair.meta }, getWCId(id))
+        .sign(url, new RequestExtrinsicSign(param.transactionPayload), getWCId(id))
         .then(async ({ signature }) => {
           await this.#walletConnectService.responseRequest({
             topic: topic,

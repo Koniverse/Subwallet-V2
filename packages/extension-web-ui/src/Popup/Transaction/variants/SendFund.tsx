@@ -3,11 +3,11 @@
 
 import { _AssetRef, _AssetType, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
 import { AssetSetting, ExtrinsicType, NotificationType } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountJson } from '@subwallet/extension-base/background/types';
 import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferUnstable } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _getAssetDecimals, _getContractAddressOfToken, _getOriginChainOfAsset, _getTokenMinAmount, _isAssetFungibleToken, _isChainEvmCompatible, _isMantaZkAsset, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
+import { AccountJson } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { detectTranslate, isSameAddress } from '@subwallet/extension-base/utils';
 import { AlertBox, AlertModal, HiddenInput } from '@subwallet/extension-web-ui/components';
@@ -40,6 +40,7 @@ import { BN, BN_ZERO } from '@polkadot/util';
 import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
 
 import { FreeBalance, TransactionContent, TransactionFooter } from '../parts';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 
 type Props = ThemeProps & {
   modalContent?: boolean;
@@ -257,6 +258,10 @@ const _SendFund = ({ className = '', modalContent }: Props): React.ReactElement<
 
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chain];
+
+    if (_isPolygonChainBridge(chain, destChain)) {
+      return true;
+    }
 
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChain === chain && _isNativeToken(assetInfo);
   }, [chainInfoMap, chain, destChain, assetInfo]);
