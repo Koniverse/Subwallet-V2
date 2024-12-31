@@ -122,7 +122,7 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
 
       return {
         passed: false,
-        errorMessage: `You need at least ${parsedMinJoinPool} ${originSymbol} (${originName}) or ${parsedMinAltJoinPool} ${altSymbol} (${altName}) to start earning`
+        errorMessage: `You need to deposit an additional ${parsedMinJoinPool} ${originSymbol} (${originName}) or ${parsedMinAltJoinPool} ${altSymbol} (${altName}) to start earning`
       };
     }
 
