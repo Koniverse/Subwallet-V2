@@ -106,7 +106,7 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
     const bnAltInputAssetBalance = new BN(altInputAssetBalance.value);
 
     if (bnInputAssetBalance.add(bnAltInputAssetBalance).lt(bnMinJoinPool)) {
-      const missingAmount = bnMinJoinPool.sub(bnInputAssetBalance.sub(bnAltInputAssetBalance));
+      const missingAmount = bnMinJoinPool.sub(bnInputAssetBalance).sub(bnAltInputAssetBalance);
 
       const originChain = this.state.getChainInfo(inputTokenInfo.originChain);
       const altChain = this.state.getChainInfo(altInputTokenInfo.originChain);
