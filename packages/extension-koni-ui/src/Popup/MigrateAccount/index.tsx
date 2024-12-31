@@ -98,18 +98,7 @@ function Component ({ className = '' }: Props) {
     // migrate all account
     // open migrate solo chain accounts
 
-    const { migratedUnifiedAccountIds,
-      sessionId,
-      soloAccounts } = await migrateUnifiedAndFetchEligibleSoloAccounts({ password });
-
-    if (migratedUnifiedAccountIds.length) {
-      setResultProxyIds((prev) => {
-        return [
-          ...prev,
-          ...migratedUnifiedAccountIds
-        ];
-      });
-    }
+    const { sessionId, soloAccounts } = await migrateUnifiedAndFetchEligibleSoloAccounts({ password });
 
     const soloAccountGroups = Object.values(soloAccounts);
 
