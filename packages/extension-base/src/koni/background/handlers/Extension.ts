@@ -1779,7 +1779,6 @@ export default class KoniExtension {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, originTokenInfo.slug);
-    const existentialDeposit = originTokenInfo.minAmount || '0';
 
     if (destinationTokenInfo) {
       const [bnMockExecutionFee, { value }] = await Promise.all([
@@ -1788,9 +1787,9 @@ export default class KoniExtension {
       ]);
 
       const bnMaxTransferable = new BigN(value);
-      const estimatedFee = bnMockExecutionFee.multipliedBy(XCM_FEE_RATIO).plus(new BigN(existentialDeposit));
+      const txFee = bnMockExecutionFee.multipliedBy(XCM_FEE_RATIO);
 
-      return bnMaxTransferable.minus(estimatedFee);
+      return bnMaxTransferable.minus(txFee);
     }
 
     return new BigN(0);

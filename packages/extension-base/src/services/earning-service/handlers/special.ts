@@ -103,10 +103,11 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
     const altInputTokenInfo = this.state.chainService.getAssetBySlug(this.altInputAsset);
 
     const existentialDeposit = new BN(_getAssetExistentialDeposit(altInputTokenInfo));
-    const bnAltInputAssetBalance = new BN(altInputAssetBalance.value).sub(existentialDeposit);
-    const preCheckAltInputAssetBalance = bnAltInputAssetBalance.gt(BN_ZERO) ? bnAltInputAssetBalance : BN_ZERO;
+    const bnAltInputAssetBalance = new BN(altInputAssetBalance.value);
 
-    if (bnInputAssetBalance.add(preCheckAltInputAssetBalance).lt(bnMinJoinPool)) {
+    if (bnInputAssetBalance.add(bnAltInputAssetBalance).lt(bnMinJoinPool)) {
+      const missingAmount = bnMinJoinPool.sub(bnInputAssetBalance.sub(bnAltInputAssetBalance));
+
       const originChain = this.state.getChainInfo(inputTokenInfo.originChain);
       const altChain = this.state.getChainInfo(altInputTokenInfo.originChain);
 
@@ -116,8 +117,8 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
       const originName = originChain.name;
       const altName = altChain.name;
 
-      const parsedMinJoinPool = formatNumber(bnMinJoinPool.toString(), inputAssetInfo.decimals || 0);
-      const parsedMinAltJoinPool = formatNumber((bnMinJoinPool.add(existentialDeposit)).toString(), inputAssetInfo.decimals || 0);
+      const parsedMinJoinPool = formatNumber(missingAmount.toString(), inputAssetInfo.decimals || 0);
+      const parsedMinAltJoinPool = formatNumber((missingAmount.add(existentialDeposit)).toString(), inputAssetInfo.decimals || 0);
 
       return {
         passed: false,
@@ -359,24 +360,18 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
     const xcmFee = new BN(path.totalFee[1].amount || '0');
 
     const xcmAmount = missingAmount.add(xcmFee);
-    const existentialDeposit = new BN(altInputTokenInfo.minAmount || '0');
 
     const bnAltInputTokenBalance = new BN(altInputTokenBalance.value || '0');
 
-    if (!bnAltInputTokenBalance.sub(xcmAmount).sub(xcmFee).sub(existentialDeposit).gt(BN_ZERO)) {
+    if (!bnAltInputTokenBalance.sub(xcmAmount).sub(xcmFee).gt(BN_ZERO)) {
       processValidation.failedStep = path.steps[1];
       processValidation.ok = false;
       processValidation.status = YieldValidationStatus.NOT_ENOUGH_BALANCE;
 
-      const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO))).sub(existentialDeposit);
-      const preCheckBnMaxXCM = bnMaxXCM.lte(BN_ZERO) ? BN_ZERO : bnMaxXCM;
-
-      console.log('Precheck', preCheckBnMaxXCM);
-      const maxBn = bnInputTokenBalance.add(preCheckBnMaxXCM);
+      const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO)));
       const inputTokenDecimal = _getAssetDecimals(inputTokenInfo);
-
-      const maxValue = formatNumber(maxBn.toString(), inputTokenDecimal);
-      const maxXCMValue = formatNumber(preCheckBnMaxXCM.toString(), inputTokenDecimal);
+      const maxValue = formatNumber(bnMaxXCM.toString(), inputTokenDecimal);
+      const maxXCMValue = formatNumber(bnMaxXCM.toString(), inputTokenDecimal);
 
       const symbol = _getAssetSymbol(altInputTokenInfo);
 
