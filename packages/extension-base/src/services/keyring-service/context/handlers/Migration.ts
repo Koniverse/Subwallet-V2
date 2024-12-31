@@ -81,56 +81,60 @@ export class AccountMigrationHandler extends AccountBaseHandler {
       return accountInfo;
     }, { derivedUnifiedAccounts: [], masterUnifiedAccounts: [] } as unknown as UnifiedAccountGroup);
 
-    for (const unifiedAccount of masterUnifiedAccounts) {
-      const proxyId = unifiedAccount.id;
-      const mnemonic = this.parentService.context.exportAccountProxyMnemonic({
-        password,
-        proxyId
-      }).result;
+    try {
+      for (const unifiedAccount of masterUnifiedAccounts) {
+        const proxyId = unifiedAccount.id;
+        const mnemonic = this.parentService.context.exportAccountProxyMnemonic({
+          password,
+          proxyId
+        }).result;
 
-      const newChainTypes = Object.values(AccountChainType).filter((type) => !unifiedAccount.chainTypes.includes(type) && SUPPORTED_ACCOUNT_CHAIN_TYPES.includes(type));
-      const keypairTypes = newChainTypes.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType));
+        const newChainTypes = Object.values(AccountChainType).filter((type) => !unifiedAccount.chainTypes.includes(type) && SUPPORTED_ACCOUNT_CHAIN_TYPES.includes(type));
+        const keypairTypes = newChainTypes.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType));
 
-      keypairTypes.forEach((type) => {
-        const suri = getSuri(mnemonic, type);
-        const pair = keyring.createFromUri(suri, {}, type);
-        const address = pair.address;
+        keypairTypes.forEach((type) => {
+          const suri = getSuri(mnemonic, type);
+          const pair = keyring.createFromUri(suri, {}, type);
+          const address = pair.address;
 
-        modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
-      });
+          modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
+        });
 
-      this.state.upsertModifyPairs(modifiedPairs);
+        this.state.upsertModifyPairs(modifiedPairs);
 
-      keypairTypes.forEach((type) => {
-        const suri = getSuri(mnemonic, type);
-        const { derivePath } = keyExtractSuri(suri);
-        const metadata = {
+        keypairTypes.forEach((type) => {
+          const suri = getSuri(mnemonic, type);
+          const { derivePath } = keyExtractSuri(suri);
+          const metadata = {
+            name: unifiedAccount.name,
+            derivationPath: derivePath ? derivePath.substring(1) : undefined
+          };
+
+          const rs = keyring.addUri(suri, metadata, type);
+          const address = rs.pair.address;
+
+          this.state._addAddressToAuthList(address, true);
+        });
+
+        unifiedAccountIds.push(proxyId);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait last master unified account migrated. // todo: can be optimized later by await a promise resolve if master account is migrating
+
+      for (const unifiedAccount of derivedUnifiedAccounts) {
+        this.parentService.context.derivationAccountProxyCreate({
           name: unifiedAccount.name,
-          derivationPath: derivePath ? derivePath.substring(1) : undefined
-        };
-
-        const rs = keyring.addUri(suri, metadata, type);
-        const address = rs.pair.address;
-
-        this.state._addAddressToAuthList(address, true);
-      });
-
-      unifiedAccountIds.push(proxyId);
+          suri: unifiedAccount.suri || '',
+          proxyId: unifiedAccount.parentId || ''
+        }, true);
+        unifiedAccountIds.push(unifiedAccount.id);
+      }
+    } catch (error) {
+      console.error('Migration unified account failed with error:', error);
+    } finally {
+      keyring.lockAll(false);
+      this.parentService.updateKeyringState();
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait last master unified account migrated. // todo: can be optimized later by await a promise resolve if master account is migrating
-
-    for (const unifiedAccount of derivedUnifiedAccounts) {
-      this.parentService.context.derivationAccountProxyCreate({
-        name: unifiedAccount.name,
-        suri: unifiedAccount.suri || '',
-        proxyId: unifiedAccount.parentId || ''
-      }, true);
-      unifiedAccountIds.push(unifiedAccount.id);
-    }
-
-    keyring.lockAll(false);
-    this.parentService.updateKeyringState();
 
     return unifiedAccountIds;
   }
@@ -194,45 +198,48 @@ export class AccountMigrationHandler extends AccountBaseHandler {
 
     keyring.unlockKeyring(password);
     this.parentService.updateKeyringState();
-
     const modifiedPairs = structuredClone(this.state.modifyPairs);
-
     const firstAccountInfo = soloAccounts[0];
     const upcomingProxyId = firstAccountInfo.upcomingProxyId;
     const firstAccountOldProxyId = firstAccountInfo.proxyId;
-    const mnemonic = this.parentService.context.exportAccountProxyMnemonic({ password, proxyId: firstAccountOldProxyId }).result;
 
-    const keypairTypes = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
+    try {
+      const mnemonic = this.parentService.context.exportAccountProxyMnemonic({ password, proxyId: firstAccountOldProxyId }).result;
 
-    keypairTypes.forEach((type) => {
-      const suri = getSuri(mnemonic, type);
-      const pair = keyring.createFromUri(suri, {}, type);
-      const address = pair.address;
+      const keypairTypes = SUPPORTED_ACCOUNT_CHAIN_TYPES.map((chainType) => getDefaultKeypairTypeFromAccountChainType(chainType as AccountChainType));
 
-      modifiedPairs[address] = { accountProxyId: upcomingProxyId, migrated: true, key: address };
-    });
+      keypairTypes.forEach((type) => {
+        const suri = getSuri(mnemonic, type);
+        const pair = keyring.createFromUri(suri, {}, type);
+        const address = pair.address;
 
-    this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName });
+        modifiedPairs[address] = { accountProxyId: upcomingProxyId, migrated: true, key: address };
+      });
 
-    this.migrateDerivedSoloAccountRelationship(soloAccounts);
+      this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName });
 
-    this.state.upsertModifyPairs(modifiedPairs);
-    keypairTypes.forEach((type) => {
-      const suri = getSuri(mnemonic, type);
-      const { derivePath } = keyExtractSuri(suri);
-      const metadata = {
-        name: accountName,
-        derivationPath: derivePath ? derivePath.substring(1) : undefined
-      };
+      this.migrateDerivedSoloAccountRelationship(soloAccounts);
 
-      const rs = keyring.addUri(suri, metadata, type);
-      const address = rs.pair.address;
+      this.state.upsertModifyPairs(modifiedPairs);
+      keypairTypes.forEach((type) => {
+        const suri = getSuri(mnemonic, type);
+        const { derivePath } = keyExtractSuri(suri);
+        const metadata = {
+          name: accountName,
+          derivationPath: derivePath ? derivePath.substring(1) : undefined
+        };
 
-      this.state._addAddressToAuthList(address, true);
-    });
+        const rs = keyring.addUri(suri, metadata, type);
+        const address = rs.pair.address;
 
-    keyring.lockAll(false);
-    this.parentService.updateKeyringState();
+        this.state._addAddressToAuthList(address, true);
+      });
+    } catch (error) {
+      console.error('Migration solo account failed with error', error);
+    } finally {
+      keyring.lockAll(false);
+      this.parentService.updateKeyringState();
+    }
 
     return {
       migratedUnifiedAccountId: upcomingProxyId
