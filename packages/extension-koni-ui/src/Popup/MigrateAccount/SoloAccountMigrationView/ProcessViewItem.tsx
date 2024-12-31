@@ -76,7 +76,7 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
   }, [t]);
 
   const canSubmit = (() => {
-    return !!nameValue.trim();
+    return !!nameValue?.trim();
   })();
 
   return (
