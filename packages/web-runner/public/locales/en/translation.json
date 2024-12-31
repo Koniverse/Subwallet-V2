@@ -1412,5 +1412,6 @@
   "You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again": "",
   "Unable to send. NFT not supported on recipient address": "",
   "EVM accounts": "",
-  "Substrate accounts": ""
+  "Substrate accounts": "",
+  "Unable to process this swap at the moment. Try again later": ""
 }
