@@ -35,6 +35,7 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
   const defaultValues = useMemo(() => ({
     name: ''
   }), []);
+  const nameValue = Form.useWatch('name', form);
 
   const headerContent = useMemo(() => {
     return `${t('Migrated account')}: ${currentProcessOrdinal}/${totalProcessSteps}`;
@@ -73,6 +74,10 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
 
     return Promise.resolve();
   }, [t]);
+
+  const canSubmit = (() => {
+    return !!nameValue.trim();
+  })();
 
   return (
     <div className={className}>
@@ -161,7 +166,7 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
         </Button>
         <Button
           block={true}
-          disabled={loading}
+          disabled={!canSubmit || loading}
           icon={(
             <Icon
               phosphorIcon={CheckCircle}
