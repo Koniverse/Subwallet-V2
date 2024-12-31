@@ -1706,6 +1706,13 @@ export interface RequestAddPspToken {
   };
 }
 
+// Popular tokens
+
+export interface PopularGroup {
+  tokens: Record<string, number>,
+  piority: number
+}
+
 /// WalletConnect
 
 // Connect
@@ -2297,7 +2304,7 @@ export interface KoniRequestSignatures {
   /* Ledger */
 
   /* Popular tokens */
-  'pri(popular.tokens)': [null, Record<string, number>, Record<string, number>];
+  'pri(popular.tokens)': [null, Record<string, PopularGroup>, Record<string, PopularGroup>];
   /* Popular tokens */
 }
 

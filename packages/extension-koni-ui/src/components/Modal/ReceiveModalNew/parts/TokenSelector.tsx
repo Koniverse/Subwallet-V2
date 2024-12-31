@@ -8,7 +8,9 @@ import TokenEmptyList from '@subwallet/extension-koni-ui/components/EmptyList/To
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import { RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/constants';
 import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { sortTokenInGetAddressScreen } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -31,6 +33,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
   const [currentSearchText, setCurrentSearchText] = useState<string>('');
   // @ts-ignore
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
+  const popularTokens = useSelector((state: RootState) => state.chainStore.popularTokens);
 
   const listItems = useMemo(() => {
     const filteredList = items.filter((item) => {
@@ -51,10 +54,12 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
       }
 
       return filteredList;
+    } else if (currentSearchText.toLowerCase() === '') {
+      return sortTokenInGetAddressScreen(filteredList, popularTokens);
     } else {
       return filteredList;
     }
-  }, [chainInfoMap, currentSearchText, items]);
+  }, [chainInfoMap, currentSearchText, items, popularTokens]);
 
   const isActive = checkActive(modalId);
 

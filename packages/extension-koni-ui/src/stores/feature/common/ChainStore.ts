@@ -3,6 +3,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { _ChainInfo } from '@subwallet/chain-list/types';
+import { PopularGroup } from '@subwallet/extension-base/background/KoniTypes';
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { ChainStore, ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 
@@ -55,7 +56,7 @@ const chainStoreSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updatePopularTokens (state, action: PayloadAction<Record<string, number>>) {
+    updatePopularTokens (state, action: PayloadAction<Record<string, PopularGroup>>) {
       const { payload } = action;
 
       return {
