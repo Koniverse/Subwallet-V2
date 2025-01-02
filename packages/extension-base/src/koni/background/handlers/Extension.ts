@@ -4004,7 +4004,11 @@ export default class KoniExtension {
     const newProxyId = response.migratedUnifiedAccountId; // get from response to ensure account migration is done.
     const newName = request.accountName;
 
-    await this.#koniState.inappNotificationService.migrateNotificationProxyId(proxyIds, newProxyId, newName);
+    try {
+      this.#koniState.inappNotificationService.migrateNotificationProxyId(proxyIds, newProxyId, newName);
+    } catch (error) {
+      console.error('Error on migrating notification for unified account migration', error);
+    }
 
     return response;
   }

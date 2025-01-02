@@ -44,10 +44,10 @@ export default class InappNotificationStore extends BaseStore<_NotificationInfo>
     return filteredTable.toArray();
   }
 
-  async updateNotificationProxyId (proxyIds: string[], newProxyId: string, newName: string) {
+  updateNotificationProxyId (proxyIds: string[], newProxyId: string, newName: string) {
     this.table.where('proxyId')
       .anyOfIgnoreCase(proxyIds)
-      .modify(item => {
+      .modify((item) => {
         item.proxyId = newProxyId;
         item.title = item.title.replace(/\[.*?\]/, `[${newName}]`);
       });
