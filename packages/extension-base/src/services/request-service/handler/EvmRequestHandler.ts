@@ -270,7 +270,7 @@ export default class EvmRequestHandler {
       const evmApi = this.#requestService.chainService.getEvmApi(chainInfo.slug || '');
       const rpc = evmApi.apiUrl;
       const account = privateKeyToAccount(pair.evm.privateKey);
-      const client: WalletClient = createWalletClient({
+      const walletClient: WalletClient = createWalletClient({
         account,
         transport: http(rpc)
       });
@@ -298,7 +298,7 @@ export default class EvmRequestHandler {
         return typeof num === 'number' ? BigInt(num) : undefined;
       };
 
-      const request = await client.prepareTransactionRequest({
+      const request = await walletClient.prepareTransactionRequest({
         chain,
         account: account,
         to: account.address, // The address of the MultiSendCallOnly contract
@@ -310,7 +310,7 @@ export default class EvmRequestHandler {
         maxPriorityFeePerGas: convertNumber(maxPriorityFeePerGas)
       });
 
-      return await client.signTransaction(request);
+      return await walletClient.signTransaction(request);
     }
 
     return pair.evm.signTransaction(tx);

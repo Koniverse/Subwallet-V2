@@ -54,7 +54,7 @@ import { GetNotificationParams, RequestIsClaimedPolygonBridge, RequestSwitchStat
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { RequestEIP7683 } from '@subwallet/extension-base/types/transaction/ethereum/eip7683';
-import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createInitEIP7702Tx, createKernelInitDataEIP7702, createSafeInitDataEIP7702, createTransactionFromRLP, getSafeProxyAddress, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createInitEIP7702Tx, createKernel7702CallInfo, createKernel7702InitData, createSafe7702CallData, createSafe7702InitData, createTransactionFromRLP, getSafeProxyAddress, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
 import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
@@ -3939,7 +3939,8 @@ export default class KoniExtension {
   /* EIP 7702 */
 
   private async evmDelegate7702 (request: RequestAccountDelegateEIP7702): Promise<SWTransactionResponse> {
-    const { address, chain, delegateType } = request;
+    const { address: _address, chain, delegateType } = request;
+    const address = _address as HexString;
 
     const chainInfo = this.#koniState.chainService.getChainInfoByKey(chain);
 
@@ -3959,23 +3960,22 @@ export default class KoniExtension {
 
     nonce++;
 
-    let initData = '';
+    let initData: HexString = '0x';
 
     if (delegateType === EIP7702DelegateType.KERNEL_V3) {
-      initData = createKernelInitDataEIP7702(address);
+      initData = createKernel7702InitData(address);
     } else if (delegateType === EIP7702DelegateType.SAFE) {
-      initData = createSafeInitDataEIP7702(address);
-      throw new Error('Safe delegate is not supported');
+      initData = createSafe7702InitData(address);
     }
 
-    if (initData === '') {
+    if (initData === '0x') {
       return this.#koniState.transactionService.generateBeforeHandleResponseErrors([new TransactionError(BasicTxErrorType.INVALID_PARAMS)]);
     }
 
     let delegatee: HexString = '0x';
 
     if (delegateType === EIP7702DelegateType.SAFE) {
-      delegatee = getSafeProxyAddress(initData as HexString);
+      delegatee = getSafeProxyAddress(initData);
     } else if (delegateType === EIP7702DelegateType.KERNEL_V3) {
       delegatee = '0x21523eaa06791d2524eb2788af8aa0e1cfbb61b7';
     }
@@ -3995,7 +3995,16 @@ export default class KoniExtension {
 
     const authorization = await this.#koniState.requestService.createAuthorization(authParams);
 
-    const txConfig = await createInitEIP7702Tx(chain, address as HexString, authorization, initData as HexString, api);
+    let callData = '';
+    let toAddress = address;
+
+    if (delegateType === EIP7702DelegateType.KERNEL_V3) {
+      [toAddress, callData] = createKernel7702CallInfo(address);
+    } else if (delegateType === EIP7702DelegateType.SAFE) {
+      [toAddress, callData] = await createSafe7702CallData(address, delegatee, initData, api.apiUrl);
+    }
+
+    const txConfig = await createInitEIP7702Tx(chain, toAddress, authorization, callData as HexString, api);
 
     return await this.#koniState.transactionService.handleTransaction({
       address,

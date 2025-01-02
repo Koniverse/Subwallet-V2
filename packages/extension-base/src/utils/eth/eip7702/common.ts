@@ -21,12 +21,12 @@ import { SignedAuthorization } from 'viem/experimental';
 import { hexAddPrefix } from '@polkadot/util';
 import { HexString } from '@polkadot/util/types';
 
-export const createInitEIP7702Tx = async (chain: string, address: HexString, authorization: SignedAuthorization, data: HexString, web3Api: _EvmApi): Promise<EOACodeEIP7702TxData> => {
+export const createInitEIP7702Tx = async (chain: string, to: HexString, authorization: SignedAuthorization, data: HexString, web3Api: _EvmApi): Promise<EOACodeEIP7702TxData> => {
   const txConfig: EOACodeEIP7702TxData = {
     // @ts-ignore
     authorizationList: [authorization],
     data: data,
-    to: address
+    to: to
   };
 
   let priority: EvmFeeInfo;

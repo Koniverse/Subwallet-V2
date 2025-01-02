@@ -7,9 +7,7 @@ import { HexString } from '@polkadot/util/types';
 
 const MULTI_CHAIN_VALIDATOR_ADDRESS = '0x02d32f9c668c92a60b44825c4f79b501c0f685da';
 
-export const createKernelInitDataEIP7702 = (account: string): HexString => {
-  return '0x';
-
+export const createKernel7702InitData = (account: string): HexString => {
   return encodeFunctionData({
     abi: [
       {
@@ -55,4 +53,8 @@ export const createKernelInitDataEIP7702 = (account: string): HexString => {
       []
     ]
   });
+};
+
+export const createKernel7702CallInfo = (account: string): [HexString, HexString] => {
+  return [account as HexString, '0x'];
 };
