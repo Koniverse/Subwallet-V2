@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { BrowserConfirmationType, CurrencyType, LanguageType, RequestSaveAppConfig, RequestSaveBrowserConfig, RequestSaveMigrationAcknowledgedStatus, RequestSaveOSConfig, RequestSaveUnifiedAccountMigrationDone, RequestSaveUnifiedAccountMigrationInProgress, RequestSettingsType, RequestSubscribeBalancesVisibility, ThemeNames, UiSettings, WalletUnlockType } from '@subwallet/extension-base/background/KoniTypes';
+import { BrowserConfirmationType, CurrencyType, LanguageType, RequestSaveAppConfig, RequestSaveBrowserConfig, RequestSaveMigrationAcknowledgedStatus, RequestSaveOSConfig, RequestSaveUnifiedAccountMigrationInProgress, RequestSettingsType, RequestSubscribeBalancesVisibility, ThemeNames, UiSettings, WalletUnlockType } from '@subwallet/extension-base/background/KoniTypes';
 import { NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { sendMessage } from '@subwallet/extension-koni-ui/messaging';
 
@@ -47,10 +47,6 @@ export async function saveUnifiedAccountMigrationInProgress (request: RequestSav
 
 export async function pingUnifiedAccountMigrationDone (): Promise<boolean> {
   return sendMessage('pri(settings.pingUnifiedAccountMigrationDone)');
-}
-
-export async function saveUnifiedAccountMigrationDone (request: RequestSaveUnifiedAccountMigrationDone): Promise<boolean> { // todo: remove
-  return sendMessage('pri(settings.saveUnifiedAccountMigrationDone)', request);
 }
 
 export async function saveMigrationAcknowledgedStatus (request: RequestSaveMigrationAcknowledgedStatus): Promise<boolean> {

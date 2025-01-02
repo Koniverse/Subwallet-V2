@@ -1931,10 +1931,6 @@ export interface RequestSaveUnifiedAccountMigrationInProgress {
   isUnifiedAccountMigrationInProgress: boolean;
 }
 
-export interface RequestSaveUnifiedAccountMigrationDone {
-  isUnifiedAccountMigrationDone: boolean;
-}
-
 export interface RequestMigrateUnifiedAndFetchEligibleSoloAccounts {
   password: string
 }
@@ -2149,7 +2145,6 @@ export interface KoniRequestSignatures {
   'pri(settings.saveNotificationSetup)': [NotificationSetup, boolean];
   'pri(settings.saveUnifiedAccountMigrationInProgress)': [RequestSaveUnifiedAccountMigrationInProgress, boolean];
   'pri(settings.pingUnifiedAccountMigrationDone)': [null, boolean];
-  'pri(settings.saveUnifiedAccountMigrationDone)': [RequestSaveUnifiedAccountMigrationDone, boolean]; // todo: remove
   'pri(settings.saveMigrationAcknowledgedStatus)': [RequestSaveMigrationAcknowledgedStatus, boolean];
   'pri(settings.saveLanguage)': [RequestChangeLanguage, boolean];
   'pri(settings.savePriceCurrency)': [RequestChangePriceCurrency, boolean];
