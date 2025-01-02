@@ -370,7 +370,8 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
 
       const bnMaxXCM = new BN(altInputTokenBalance.value).sub(xcmFee.mul(new BN(XCM_FEE_RATIO)));
       const inputTokenDecimal = _getAssetDecimals(inputTokenInfo);
-      const maxValue = formatNumber(bnMaxXCM.toString(), inputTokenDecimal);
+      const maxBn = bnInputTokenBalance.add(new BN(altInputTokenBalance.value)).sub(xcmFee).sub(xcmFee);
+      const maxValue = formatNumber(maxBn.toString(), inputTokenInfo.decimals || 0);
       const maxXCMValue = formatNumber(bnMaxXCM.toString(), inputTokenDecimal);
 
       const symbol = _getAssetSymbol(altInputTokenInfo);
