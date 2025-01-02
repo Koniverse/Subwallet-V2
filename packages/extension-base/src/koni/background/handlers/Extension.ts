@@ -3998,11 +3998,13 @@ export default class KoniExtension {
   }
 
   private async migrateSoloAccount (request: RequestMigrateSoloAccount): Promise<ResponseMigrateSoloAccount> {
-    const response = this.#koniState.keyringService.context.migrateSoloAccount(request);
     const proxyIds = request.soloAccounts.map((account) => account.proxyId);
-    const newProxyId = response.migratedUnifiedAccountId; // get from response to ensure account migration is done.
 
-    await this.#koniState.inappNotificationService.migrateNotificationProxyId(proxyIds, newProxyId);
+    const response = this.#koniState.keyringService.context.migrateSoloAccount(request);
+    const newProxyId = response.migratedUnifiedAccountId; // get from response to ensure account migration is done.
+    const newName = request.accountName;
+
+    await this.#koniState.inappNotificationService.migrateNotificationProxyId(proxyIds, newProxyId, newName);
 
     return response;
   }
