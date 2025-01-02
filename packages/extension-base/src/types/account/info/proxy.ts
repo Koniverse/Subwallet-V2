@@ -20,6 +20,7 @@ export interface AccountProxyData {
   name: string;
   parentId?: string;
   suri?: string;
+  isMigrationDone?: boolean;
 }
 
 /**

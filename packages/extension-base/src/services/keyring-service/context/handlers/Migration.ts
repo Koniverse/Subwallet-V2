@@ -100,8 +100,6 @@ export class AccountMigrationHandler extends AccountBaseHandler {
           modifiedPairs[address] = { accountProxyId: proxyId, migrated: true, key: address };
         });
 
-        this.state.upsertModifyPairs(modifiedPairs);
-
         keypairTypes.forEach((type) => {
           const suri = getSuri(mnemonic, type);
           const { derivePath } = keyExtractSuri(suri);
@@ -116,10 +114,12 @@ export class AccountMigrationHandler extends AccountBaseHandler {
           this.state._addAddressToAuthList(address, true);
         });
 
+        this.state.upsertModifyPairs(modifiedPairs);
+
         unifiedAccountIds.push(proxyId);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait last master unified account migrated. // todo: can be optimized later by await a promise resolve if master account is migrating
+      await new Promise((resolve) => setTimeout(resolve, 1800)); // Wait last master unified account migrated. // todo: can be optimized later by await a promise resolve if master account is migrating
 
       for (const unifiedAccount of derivedUnifiedAccounts) {
         this.parentService.context.derivationAccountProxyCreate({
@@ -216,11 +216,8 @@ export class AccountMigrationHandler extends AccountBaseHandler {
         modifiedPairs[address] = { accountProxyId: upcomingProxyId, migrated: true, key: address };
       });
 
-      this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName });
+      this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName, isMigrationDone: false });
 
-      this.migrateDerivedSoloAccountRelationship(soloAccounts);
-
-      this.state.upsertModifyPairs(modifiedPairs);
       keypairTypes.forEach((type) => {
         const suri = getSuri(mnemonic, type);
         const { derivePath } = keyExtractSuri(suri);
@@ -234,6 +231,10 @@ export class AccountMigrationHandler extends AccountBaseHandler {
 
         this.state._addAddressToAuthList(address, true);
       });
+
+      this.state.upsertModifyPairs(modifiedPairs);
+      this.migrateDerivedSoloAccountRelationship(soloAccounts);
+      this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName, isMigrationDone: true });
     } catch (error) {
       console.error('Migration solo account failed with error', error);
     } finally {
