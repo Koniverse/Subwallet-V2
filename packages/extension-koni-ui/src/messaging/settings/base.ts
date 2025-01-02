@@ -45,7 +45,11 @@ export async function saveUnifiedAccountMigrationInProgress (request: RequestSav
   return sendMessage('pri(settings.saveUnifiedAccountMigrationInProgress)', request);
 }
 
-export async function saveUnifiedAccountMigrationDone (request: RequestSaveUnifiedAccountMigrationDone): Promise<boolean> {
+export async function pingUnifiedAccountMigrationDone (): Promise<boolean> {
+  return sendMessage('pri(settings.pingUnifiedAccountMigrationDone)');
+}
+
+export async function saveUnifiedAccountMigrationDone (request: RequestSaveUnifiedAccountMigrationDone): Promise<boolean> { // todo: remove
   return sendMessage('pri(settings.saveUnifiedAccountMigrationDone)', request);
 }
 

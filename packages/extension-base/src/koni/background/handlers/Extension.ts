@@ -918,10 +918,20 @@ export default class KoniExtension {
 
   private saveUnifiedAccountMigrationInProgress ({ isUnifiedAccountMigrationInProgress }: RequestSaveUnifiedAccountMigrationInProgress) {
     this.#koniState.updateSetting('isUnifiedAccountMigrationInProgress', isUnifiedAccountMigrationInProgress);
+
+    return true;
   }
 
-  private saveUnifiedAccountMigrationDone ({ isUnifiedAccountMigrationDone }: RequestSaveUnifiedAccountMigrationDone) {
+  private pingUnifiedAccountMigrationDone (): boolean {
+    this.#koniState.updateSetting('isUnifiedAccountMigrationInProgress', false);
+
+    return true;
+  }
+
+  private saveUnifiedAccountMigrationDone ({ isUnifiedAccountMigrationDone }: RequestSaveUnifiedAccountMigrationDone) { // todo: remove
     this.#koniState.updateSetting('isUnifiedAccountMigrationDone', isUnifiedAccountMigrationDone);
+
+    return true;
   }
 
   private setShowZeroBalance ({ show }: RequestChangeShowZeroBalance) {
@@ -3982,6 +3992,8 @@ export default class KoniExtension {
 
   /* Migrate Unified Account */
   private async migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts): Promise<ResponseMigrateUnifiedAndFetchEligibleSoloAccounts> {
+    this.saveUnifiedAccountMigrationInProgress({ isUnifiedAccountMigrationInProgress: true });
+
     return await this.#koniState.keyringService.context.migrateUnifiedAndFetchEligibleSoloAccounts(request);
   }
 
@@ -4100,7 +4112,9 @@ export default class KoniExtension {
         return this.saveMigrationAcknowledgedStatus(request as RequestSaveMigrationAcknowledgedStatus);
       case 'pri(settings.saveUnifiedAccountMigrationInProgress)':
         return this.saveUnifiedAccountMigrationInProgress(request as RequestSaveUnifiedAccountMigrationInProgress);
-      case 'pri(settings.saveUnifiedAccountMigrationDone)':
+      case 'pri(settings.pingUnifiedAccountMigrationDone)':
+        return this.pingUnifiedAccountMigrationDone();
+      case 'pri(settings.saveUnifiedAccountMigrationDone)': // todo: remove
         return this.saveUnifiedAccountMigrationDone(request as RequestSaveUnifiedAccountMigrationDone);
       case 'pri(settings.saveShowZeroBalance)':
         return this.setShowZeroBalance(request as RequestChangeShowZeroBalance);
