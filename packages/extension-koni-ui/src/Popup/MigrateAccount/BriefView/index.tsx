@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { LoadingScreen } from '@subwallet/extension-koni-ui/components';
 import ContentGenerator from '@subwallet/extension-koni-ui/components/StaticContent/ContentGenerator';
 import { useFetchMarkdownContentData } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -11,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
+  isForcedMigration?: boolean;
   onDismiss: VoidFunction;
   onMigrateNow: VoidFunction;
 };
@@ -20,27 +22,46 @@ type ContentDataType = {
   title: string
 };
 
-function Component ({ className = '', onDismiss, onMigrateNow }: Props) {
+function Component ({ className = '', isForcedMigration, onDismiss, onMigrateNow }: Props) {
   const { t } = useTranslation();
   const [contentData, setContentData] = useState<ContentDataType>({
     content: '',
     title: ''
   });
+  const [isFetchingBriefContent, setIsFetchingBriefContent] = useState<boolean>(true);
+
   const fetchMarkdownContentData = useFetchMarkdownContentData();
 
   useEffect(() => {
     let sync = true;
 
-    fetchMarkdownContentData<ContentDataType>('unified_account_migration_content', ['en'])
-      .then((data) => {
-        sync && setContentData(data);
-      })
-      .catch((e) => console.log('fetch unified_account_migration_content error:', e));
+    if (!isForcedMigration) {
+      setIsFetchingBriefContent(true);
+
+      fetchMarkdownContentData<ContentDataType>('unified_account_migration_content', ['en'])
+        .then((data) => {
+          if (sync) {
+            setContentData(data);
+            setIsFetchingBriefContent(false);
+          }
+        })
+        .catch((e) => console.log('fetch unified_account_migration_content error:', e));
+    }
 
     return () => {
       sync = false;
     };
-  }, [fetchMarkdownContentData]);
+  }, [fetchMarkdownContentData, isForcedMigration]);
+
+  useEffect(() => {
+    if (isForcedMigration) {
+      setIsFetchingBriefContent(false);
+    }
+  }, [isForcedMigration]);
+
+  if (isFetchingBriefContent) {
+    return (<LoadingScreen />);
+  }
 
   return (
     <div className={className}>
@@ -51,26 +72,42 @@ function Component ({ className = '', onDismiss, onMigrateNow }: Props) {
       </div>
 
       <div className='__body-area'>
-        <ContentGenerator
-          className={'__content-generator'}
-          content={contentData.content || ''}
-        />
+        {
+          !isForcedMigration && (
+            <ContentGenerator
+              className={'__content-generator'}
+              content={contentData.content || ''}
+            />
+          )
+        }
+
+        {
+          isForcedMigration && (
+            <div className={'__forced-migration-content'}>
+              You must continue to perform account migration
+            </div>
+          )
+        }
       </div>
 
       <div className='__footer-area'>
-        <Button
-          block={true}
-          icon={(
-            <Icon
-              phosphorIcon={XCircle}
-              weight='fill'
-            />
-          )}
-          onClick={onDismiss}
-          schema={'secondary'}
-        >
-          {t('Dismiss')}
-        </Button>
+        {
+          !isForcedMigration && (
+            <Button
+              block={true}
+              icon={(
+                <Icon
+                  phosphorIcon={XCircle}
+                  weight='fill'
+                />
+              )}
+              onClick={onDismiss}
+              schema={'secondary'}
+            >
+              {t('Dismiss')}
+            </Button>
+          )
+        }
 
         <Button
           block={true}

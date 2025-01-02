@@ -4,13 +4,13 @@
 import { RequestMigrateSoloAccount, SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
 import { hasAnyAccountForMigration } from '@subwallet/extension-base/services/keyring-service/utils';
 import { useDefaultNavigate, useIsPopup } from '@subwallet/extension-koni-ui/hooks';
-import { saveMigrationAcknowledgedStatus, windowOpen } from '@subwallet/extension-koni-ui/messaging';
+import { saveMigrationAcknowledgedStatus } from '@subwallet/extension-koni-ui/messaging';
 import { migrateSoloAccount, migrateUnifiedAndFetchEligibleSoloAccounts } from '@subwallet/extension-koni-ui/messaging/migrate-unified-account';
 import { BriefView } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/BriefView';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { ModalContext } from '@subwallet/react-ui';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -30,6 +30,7 @@ export enum ScreenView {
 function Component ({ className = '' }: Props) {
   const [searchParams] = useSearchParams();
   const isMigrationNotion = searchParams.has('is-notion');
+  const isForcedMigration = searchParams.has('is-forced-migration');
   const [currentScreenView, setCurrentScreenView] = useState<ScreenView>(ScreenView.BRIEF);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState<boolean>(false);
   const { activeModal, inactiveModal } = useContext(ModalContext);
@@ -72,27 +73,12 @@ function Component ({ className = '' }: Props) {
   const onClickMigrateNow = useCallback(() => {
     onInteractAction();
 
-    if (isPopup) {
-      const params: Record<string, string> = {};
-
-      if (isMigrationNotion) {
-        params['is-notion'] = 'true';
-      }
-
-      windowOpen({
-        allowedPath: '/migrate-account',
-        params: Object.keys(params).length ? params : undefined
-      }).then(window.close).catch(console.log);
-
-      return;
-    }
-
     if (!hasAnyAccountForMigration(accountProxies)) {
       setCurrentScreenView(ScreenView.SUMMARY);
     } else {
       onOpenPasswordModal();
     }
-  }, [accountProxies, isMigrationNotion, isPopup, onInteractAction, onOpenPasswordModal]);
+  }, [accountProxies, onInteractAction, onOpenPasswordModal]);
 
   const onSubmitPassword = useCallback(async (password: string) => {
     // migrate all account
@@ -135,10 +121,17 @@ function Component ({ className = '' }: Props) {
     goHome();
   }, [goHome]);
 
+  useEffect(() => {
+    if (!isPopup) {
+      goHome();
+    }
+  }, [goHome, isPopup]);
+
   return (
     <>
       {currentScreenView === ScreenView.BRIEF && (
         <BriefView
+          isForcedMigration={isForcedMigration}
           onDismiss={onClickDismiss}
           onMigrateNow={onClickMigrateNow}
         />

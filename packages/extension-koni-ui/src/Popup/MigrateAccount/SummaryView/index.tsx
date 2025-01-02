@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
+import { pingUnifiedAccountMigrationDone } from '@subwallet/extension-koni-ui/messaging';
 import { ResultAccountProxyItem, ResultAccountProxyItemType } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SummaryView/ResultAccountProxyItem';
 import { ResultAccountProxyListModal, resultAccountProxyListModal } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SummaryView/ResultAccountProxyListModal';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
 import { CheckCircle } from 'phosphor-react';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
@@ -59,6 +60,11 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
 
     return t('And {{number}} others', { replace: { number: resultAccountProxies.length - 2 } });
   };
+
+  useEffect(() => {
+    // notice to background that account migration is done
+    pingUnifiedAccountMigrationDone().catch(console.error);
+  }, []);
 
   return (
     <>
