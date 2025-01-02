@@ -107,7 +107,7 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
 
     if (bnInputAssetBalance.add(bnAltInputAssetBalance).lt(bnMinJoinPool)) {
       const missingAmount = bnMinJoinPool.sub(bnInputAssetBalance).sub(bnAltInputAssetBalance);
-
+      const isTheSame = missingAmount.toString() === bnMinJoinPool.toString();
       const originChain = this.state.getChainInfo(inputTokenInfo.originChain);
       const altChain = this.state.getChainInfo(altInputTokenInfo.originChain);
 
@@ -118,11 +118,13 @@ export default abstract class BaseSpecialStakingPoolHandler extends BasePoolHand
       const altName = altChain.name;
 
       const parsedMinJoinPool = formatNumber(missingAmount.toString(), inputAssetInfo.decimals || 0);
+      const formatparsedMinJoinPool = isTheSame ? parsedMinJoinPool : Number(parsedMinJoinPool) + 0.01;
       const parsedMinAltJoinPool = formatNumber((missingAmount.add(existentialDeposit)).toString(), inputAssetInfo.decimals || 0);
+      const formatParsedMinAltJoinPool = isTheSame ? parsedMinAltJoinPool : Number(parsedMinAltJoinPool) + 0.01;
 
       return {
         passed: false,
-        errorMessage: `You need to deposit an additional ${parsedMinJoinPool} ${originSymbol} (${originName}) or ${parsedMinAltJoinPool} ${altSymbol} (${altName}) to start earning`
+        errorMessage: `You need to deposit an additional ${formatparsedMinJoinPool} ${originSymbol} (${originName}) or ${formatParsedMinAltJoinPool} ${altSymbol} (${altName}) to start earning`
       };
     }
 
