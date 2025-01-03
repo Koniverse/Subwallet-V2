@@ -7,6 +7,7 @@ import { MnemonicType, RequestAccountCreateSuriV2, ResponseAccountCreateSuriV2, 
 import { sendMessage } from '@subwallet/extension-web-ui/messaging/base';
 
 // Create seed
+
 export async function createSeedV2 (length?: SeedLengths, mnemonic?: string, type?: MnemonicType): Promise<ResponseMnemonicCreateV2> {
   return sendMessage('pri(seed.createV2)', { length, mnemonic, type });
 }

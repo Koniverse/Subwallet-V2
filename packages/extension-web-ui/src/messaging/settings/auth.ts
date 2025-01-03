@@ -1,9 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrls } from '@subwallet/extension-base/background/handlers/State';
 import { RequestAuthorizationBlock, RequestAuthorizationPerSite } from '@subwallet/extension-base/background/KoniTypes';
 import { ResponseAuthorizeList } from '@subwallet/extension-base/background/types';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 
 import { sendMessage } from '../base';
 

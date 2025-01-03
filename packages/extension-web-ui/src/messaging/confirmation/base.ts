@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ConfirmationDefinitions, ConfirmationType, RequestSigningApprovePasswordV2 } from '@subwallet/extension-base/background/KoniTypes';
+import { ConfirmationDefinitions, ConfirmationDefinitionsTon, ConfirmationType, ConfirmationTypeTon, RequestSigningApprovePasswordV2 } from '@subwallet/extension-base/background/KoniTypes';
 import { ResponseSigningIsLocked } from '@subwallet/extension-base/background/types';
 
 import { HexString } from '@polkadot/util/types';
@@ -30,4 +30,8 @@ export async function approveSignSignature (id: string, signature: HexString, si
 
 export async function completeConfirmation<CT extends ConfirmationType> (type: CT, payload: ConfirmationDefinitions[CT][1]): Promise<boolean> {
   return sendMessage('pri(confirmations.complete)', { [type]: payload });
+}
+
+export async function completeConfirmationTon<CT extends ConfirmationTypeTon> (type: CT, payload: ConfirmationDefinitionsTon[CT][1]): Promise<boolean> {
+  return sendMessage('pri(confirmationsTon.complete)', { [type]: payload });
 }
