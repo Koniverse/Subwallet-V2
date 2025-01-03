@@ -3,6 +3,7 @@
 
 import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
+import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { ServiceStatus, ServiceWithProcessInterface, StoppableServiceInterface } from '@subwallet/extension-base/services/base/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
@@ -18,6 +19,9 @@ import { _SUPPORTED_SWAP_PROVIDERS, OptimalSwapPathParams, QuoteAskResponse, Swa
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
 import { BehaviorSubject } from 'rxjs';
 
+import { EvmApi } from '../chain-service/handler/EvmApi';
+import { _SubstrateApi } from '../chain-service/types';
+import { _isChainSubstrateCompatible } from '../chain-service/utils';
 import { SimpleSwapHandler } from './handler/simpleswap-handler';
 
 export const _isChainSupportedByProvider = (providerSlug: SwapProviderId, chain: string) => {
@@ -57,6 +61,26 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
         await handler.init();
       }
 
+      let api: _SubstrateApi | EvmApi;
+
+      const fromAsset = this.chainService.getAssetBySlug(request.pair.from);
+      const fromChain = this.chainService.getChainInfoByKey(fromAsset.originChain);
+      const chainType = _isChainSubstrateCompatible(fromChain) ? ChainType.SUBSTRATE : ChainType.EVM;
+
+      if (chainType === ChainType.SUBSTRATE) {
+        api = this.chainService.getSubstrateApi(fromChain.slug);
+      } else {
+        api = this.chainService.getEvmApi(fromChain.slug);
+      }
+
+      const params = {
+        fromAsset: fromAsset,
+        toAsset: this.chainService.getAssetBySlug(request.pair.to),
+        fromChain: this.chainService.getChainInfoByKey(fromAsset.originChain),
+        request: request
+      };
+
+      console.log('params', fromAsset);
       const quote = await handler.getSwapQuote(request);
 
       if (!(quote instanceof SwapError)) { // todo: can do better

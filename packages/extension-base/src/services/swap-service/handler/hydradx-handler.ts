@@ -305,7 +305,10 @@ export class HydradxHandler implements SwapBaseInterface {
       const minReceive = toAmount.times(1 - request.slippage).integerValue();
       const txHex = quoteResponse.toTx(minReceive).hex;
 
+      console.log('Chain', this.chain());
       const substrateApi = this.chainService.getSubstrateApi(this.chain());
+
+      console.log('Chain2', [fromAsset, toAsset, fromChain]);
       const extrinsic = substrateApi.api.tx(txHex);
       const paymentInfo = await extrinsic.paymentInfo(request.address);
 

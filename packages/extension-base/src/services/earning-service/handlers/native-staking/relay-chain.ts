@@ -285,6 +285,8 @@ export default class RelayNativeStakingPoolHandler extends BaseNativeStakingPool
         nominationStatus = EarningStatus.EARNING_REWARD;
       }
 
+      console.log('Hmm', [chain, validatorAddress, nominationStatus, identity]);
+
       nominationList.push({
         chain,
         validatorAddress,
