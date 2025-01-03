@@ -1,9 +1,11 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { NotificationType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _POLYGON_BRIDGE_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
+import { isClaimedPosBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 import { _NotificationInfo, BridgeTransactionStatus, ClaimAvailBridgeNotificationMetadata, ClaimPolygonBridgeNotificationMetadata, NotificationActionType, NotificationSetup, NotificationTab, WithdrawClaimNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
 import { detectTranslate } from '@subwallet/extension-base/utils';
@@ -346,7 +348,15 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           const handleClaimPolygonBridge = async () => {
             try {
               const metadata = item.metadata as ClaimPolygonBridgeNotificationMetadata;
-              const isClaimed = await getIsClaimNotificationStatus({ chainslug: metadata.chainSlug, counter: metadata.counter, sourceNetwork: metadata.sourceNetwork });
+              let isClaimed = false;
+
+              if (metadata.bridgeType === 'POS') {
+                const isTestnet = metadata.chainSlug === COMMON_CHAIN_SLUGS.ETHEREUM_SEPOLIA;
+
+                isClaimed = await isClaimedPosBridge(metadata._id, metadata.userAddress, isTestnet) || false;
+              } else {
+                isClaimed = await getIsClaimNotificationStatus({ chainslug: metadata.chainSlug, counter: metadata.counter ?? 0, sourceNetwork: metadata.sourceNetwork ?? 0 });
+              }
 
               if (!isClaimed) {
                 setClaimAvailBridgeStorage({
