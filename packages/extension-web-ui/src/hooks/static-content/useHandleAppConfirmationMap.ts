@@ -6,7 +6,7 @@ import { YieldPositionInfo } from '@subwallet/extension-base/types';
 import { getOutputValuesFromString } from '@subwallet/extension-web-ui/components/Field/AmountInput';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { updateAppConfirmationData, updateConfirmationHistoryData } from '@subwallet/extension-web-ui/stores/base/StaticContent';
-import { AppConfirmationData, PopupHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
+import { AppConfirmationData, MktCampaignHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
 import BigN from 'bignumber.js';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,7 +33,7 @@ export const useHandleAppConfirmationMap = (
   );
 
   const initConfirmationHistoryMap = useCallback((data: AppConfirmationData[]) => {
-    const newData: Record<string, PopupHistoryData> = data && data.length
+    const newData: Record<string, MktCampaignHistoryData> = data && data.length
       ? data.reduce(
         (o, key) =>
           Object.assign(o, {

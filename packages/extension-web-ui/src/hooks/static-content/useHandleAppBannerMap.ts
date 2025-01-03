@@ -6,7 +6,7 @@ import { YieldPositionInfo } from '@subwallet/extension-base/types';
 import { getOutputValuesFromString } from '@subwallet/extension-web-ui/components/Field/AmountInput';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { updateAppBannerData, updateBannerHistoryData } from '@subwallet/extension-web-ui/stores/base/StaticContent';
-import { AppBannerData, AppBasicInfoData, PopupHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
+import { AppBannerData, AppBasicInfoData, MktCampaignHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
 import BigN from 'bignumber.js';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,7 +41,7 @@ export const useHandleAppBannerMap = (
   );
 
   const initBannerHistoryMap = useCallback((data: AppBannerData[]) => {
-    const newData: Record<string, PopupHistoryData> = data && data.length
+    const newData: Record<string, MktCampaignHistoryData> = data && data.length
       ? data.reduce(
         (o, key) =>
           Object.assign(o, {
@@ -68,7 +68,7 @@ export const useHandleAppBannerMap = (
   );
   const updateBannerHistoryMap = useCallback(
     (ids: string[]) => {
-      const result: Record<string, PopupHistoryData> = {};
+      const result: Record<string, MktCampaignHistoryData> = {};
 
       for (const key of ids) {
         result[key] = { lastShowTime: Date.now(), showTimes: bannerHistoryMap[key].showTimes + 1 };

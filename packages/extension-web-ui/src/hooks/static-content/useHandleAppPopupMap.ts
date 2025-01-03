@@ -6,7 +6,7 @@ import { YieldPositionInfo } from '@subwallet/extension-base/types';
 import { getOutputValuesFromString } from '@subwallet/extension-web-ui/components/Field/AmountInput';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { updateAppPopupData, updatePopupHistoryData } from '@subwallet/extension-web-ui/stores/base/StaticContent';
-import { AppBasicInfoData, AppPopupData, PopupHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
+import { AppBasicInfoData, AppPopupData, MktCampaignHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
 import BigN from 'bignumber.js';
 import { useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -41,7 +41,7 @@ export const useHandleAppPopupMap = (
   );
 
   const initPopupHistoryMap = useCallback((data: AppPopupData[]) => {
-    const newData: Record<string, PopupHistoryData> = data && data.length
+    const newData: Record<string, MktCampaignHistoryData> = data && data.length
       ? data.reduce(
         (o, key) =>
           Object.assign(o, {

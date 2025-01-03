@@ -3,7 +3,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit/dist';
 import { AppOnlineContent, ReduxStatus } from '@subwallet/extension-web-ui/stores/types';
-import { AppBannerData, AppConfirmationData, AppPopupData, PopupHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
+import { AppBannerData, AppConfirmationData, AppPopupData, MktCampaignHistoryData } from '@subwallet/extension-web-ui/types/staticContent';
 
 const initialState = {
   appPopupData: [],
@@ -46,7 +46,7 @@ const staticContentSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updatePopupHistoryData (state, action: PayloadAction<Record<string, PopupHistoryData>>) {
+    updatePopupHistoryData (state, action: PayloadAction<Record<string, MktCampaignHistoryData>>) {
       const payload = action.payload;
 
       return {
@@ -55,7 +55,7 @@ const staticContentSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updateBannerHistoryData (state, action: PayloadAction<Record<string, PopupHistoryData>>) {
+    updateBannerHistoryData (state, action: PayloadAction<Record<string, MktCampaignHistoryData>>) {
       const payload = action.payload;
 
       return {
@@ -64,7 +64,7 @@ const staticContentSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updateConfirmationHistoryData (state, action: PayloadAction<Record<string, PopupHistoryData>>) {
+    updateConfirmationHistoryData (state, action: PayloadAction<Record<string, MktCampaignHistoryData>>) {
       const payload = action.payload;
 
       return {

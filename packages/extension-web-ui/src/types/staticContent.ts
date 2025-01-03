@@ -15,7 +15,7 @@ export interface AppInstructionInfo {
   icon: PhosphorIcon;
 }
 
-export interface PopupHistoryData {
+export interface MktCampaignHistoryData {
   lastShowTime: number;
   showTimes: number;
 }
