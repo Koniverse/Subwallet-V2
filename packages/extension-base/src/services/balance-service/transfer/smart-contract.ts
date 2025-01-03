@@ -92,7 +92,7 @@ export async function getERC20TransactionObject (
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
     erc20Contract.methods.transfer(to, transferValue).estimateGas({ from })
       .catch(() => {
-        throw Error('Cannot estimate gas');
+        throw Error('Unable to estimate fee for this transaction. Try again or contact support at agent@subwallet.app');
       }) as number,
     calculateGasFeeParams(evmApi, networkKey)
   ]);
