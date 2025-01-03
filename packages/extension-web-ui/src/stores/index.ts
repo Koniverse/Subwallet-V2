@@ -22,6 +22,7 @@ import EarningReducer from './feature/Earning';
 import MantaPayReducer from './feature/MantaPay';
 import MissionPoolReducer from './feature/MissionPool';
 import NftReducer from './feature/Nft';
+import NotificationReducer from './feature/Notification';
 import PriceReducer from './feature/Price';
 import SwapReducer from './feature/Swap';
 import TransactionHistoryReducer from './feature/TransactionHistory';
@@ -73,7 +74,10 @@ const rootReducers = combineReducers({
   dApp: DAppReducer,
 
   // mission pool
-  missionPool: MissionPoolReducer
+  missionPool: MissionPoolReducer,
+
+  // inapp notification
+  notification: NotificationReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducers);

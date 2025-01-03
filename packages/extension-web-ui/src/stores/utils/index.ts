@@ -2,45 +2,46 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _AssetRef, _ChainAsset, _ChainInfo, _MultiChainAsset } from '@subwallet/chain-list/types';
-import { AuthUrls } from '@subwallet/extension-base/background/handlers/State';
-import { AddressBookInfo, AssetSetting, CampaignBanner, ChainStakingMetadata, ConfirmationsQueue, CrowdloanJson, KeyringState, MantaPayConfig, MantaPaySyncState, NftCollection, NftJson, NominatorMetadata, PriceJson, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, TransactionHistoryItem, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
+import { AddressBookInfo, AssetSetting, CampaignBanner, ChainStakingMetadata, ConfirmationsQueue, ConfirmationsQueueTon, CrowdloanJson, KeyringState, MantaPayConfig, MantaPaySyncState, NftCollection, NftJson, NominatorMetadata, PriceJson, ShowCampaignPopupRequest, StakingJson, StakingRewardJson, TransactionHistoryItem, UiSettings } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountsContext, AuthorizeRequest, ConfirmationRequestBase, MetadataRequest, SigningRequest } from '@subwallet/extension-base/background/types';
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
+import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
+import { AuthUrls } from '@subwallet/extension-base/services/request-service/types';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
 import { WalletConnectNotSupportRequest, WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
-import { AccountJson, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
+import { AccountJson, AccountProxy, AccountsWithCurrentAddress, BalanceJson, BuyServiceInfo, BuyTokenInfo, EarningRewardHistoryItem, EarningRewardJson, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
 import { SwapPair } from '@subwallet/extension-base/types/swap';
-import { addLazy, canDerive, fetchStaticData, isEmptyObject } from '@subwallet/extension-base/utils';
+import { addLazy, fetchStaticData, isEmptyObject } from '@subwallet/extension-base/utils';
 import { lazySubscribeMessage } from '@subwallet/extension-web-ui/messaging';
 import { store } from '@subwallet/extension-web-ui/stores';
 import { DAppCategory, DAppInfo } from '@subwallet/extension-web-ui/types/dapp';
 import { MissionInfo } from '@subwallet/extension-web-ui/types/missionPool';
-import { buildHierarchy } from '@subwallet/extension-web-ui/utils/account/buildHierarchy';
 import { SessionTypes } from '@walletconnect/types';
 
 // Setup redux stores
 
 // Base
 // AccountState store
-export const updateAccountData = (data: AccountsWithCurrentAddress) => {
-  let currentAccountJson: AccountJson = data.accounts[0];
-  const accounts = data.accounts;
+export const updateCurrentAccountProxy = (accountProxy: AccountProxy) => {
+  store.dispatch({ type: 'accountState/updateCurrentAccountProxy', payload: accountProxy });
+};
 
-  accounts.forEach((accountJson) => {
-    if (accountJson.address === data.currentAccountProxy) {
-      currentAccountJson = accountJson;
+export const updateAccountProxies = (data: AccountProxy[]) => {
+  store.dispatch({ type: 'accountState/updateAccountProxies', payload: data });
+};
+
+export const updateAccountData = (data: AccountsWithCurrentAddress) => {
+  let currentAccountProxy: AccountProxy = data.accounts[0];
+  const accountProxies = data.accounts;
+
+  accountProxies.forEach((ap) => {
+    if (ap.id === data.currentAccountProxy) {
+      currentAccountProxy = ap;
     }
   });
 
-  const hierarchy = buildHierarchy(accounts);
-  const master = hierarchy.find(({ isExternal, type }) => !isExternal && canDerive(type));
-
-  updateCurrentAccountState(currentAccountJson);
-  updateAccountsContext({
-    accounts,
-    hierarchy,
-    master
-  } as AccountsContext);
+  updateCurrentAccountProxy(currentAccountProxy);
+  updateAccountProxies(accountProxies);
 };
 
 export const updateCurrentAccountState = (currentAccountJson: AccountJson) => {
@@ -109,6 +110,12 @@ export const updateConfirmationRequests = (data: ConfirmationsQueue) => {
 };
 
 export const subscribeConfirmationRequests = lazySubscribeMessage('pri(confirmations.subscribe)', null, updateConfirmationRequests, updateConfirmationRequests);
+
+export const updateConfirmationRequestsTon = (data: ConfirmationsQueueTon) => {
+  store.dispatch({ type: 'requestState/updateConfirmationRequestsTon', payload: data });
+};
+
+export const subscribeConfirmationRequestsTon = lazySubscribeMessage('pri(confirmationsTon.subscribe)', null, updateConfirmationRequestsTon, updateConfirmationRequestsTon);
 
 export const updateTransactionRequests = (data: Record<string, SWTransactionResult>) => {
   // Convert data to object with key as id
@@ -410,9 +417,27 @@ export const updateCampaignPopupVisibility = (data: ShowCampaignPopupRequest) =>
   store.dispatch({ type: 'campaign/updatePopupVisibility', payload: data.value });
 };
 
+export const updateCampaignPopupData = (data: AppPopupData[]) => {
+  store.dispatch({ type: 'staticContent/updateAppPopupData', payload: data });
+};
+
+export const updateCampaignBannerData = (data: AppBannerData[]) => {
+  store.dispatch({ type: 'staticContent/updateAppBannerData', payload: data });
+};
+
+export const updateCampaignConfirmationData = (data: AppConfirmationData[]) => {
+  store.dispatch({ type: 'staticContent/updateAppConfirmationData', payload: data });
+};
+
 export const subscribeProcessingCampaign = lazySubscribeMessage('pri(campaign.banner.subscribe)', null, updateBanner, updateBanner);
 
 export const subscribeCampaignPopupVisibility = lazySubscribeMessage('pri(campaign.popup.subscribeVisibility)', null, updateCampaignPopupVisibility, updateCampaignPopupVisibility);
+
+export const subscribeCampaignPopupData = lazySubscribeMessage('pri(campaign.popups.subscribe)', null, updateCampaignPopupData, updateCampaignPopupData);
+
+export const subscribeCampaignBannerData = lazySubscribeMessage('pri(campaign.banners.subscribe)', null, updateCampaignBannerData, updateCampaignBannerData);
+
+export const subscribeCampaignConfirmationData = lazySubscribeMessage('pri(campaign.confirmations.subscribe)', null, updateCampaignConfirmationData, updateCampaignConfirmationData);
 /* Campaign */
 
 /* Buy service */
@@ -529,3 +554,11 @@ export const updateLedgerGenericAllowNetworks = (data: string[]) => {
 
 export const subscribeLedgerGenericAllowNetworks = lazySubscribeMessage('pri(ledger.generic.allow)', null, updateLedgerGenericAllowNetworks, updateLedgerGenericAllowNetworks);
 /* Ledger */
+
+/* Notification service */
+export const updateUnreadNotificationCountMap = (data: Record<string, number>) => {
+  store.dispatch({ type: 'notification/updateUnreadNotificationCountMap', payload: data });
+};
+
+export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappNotification.subscribeUnreadNotificationCountMap)', null, updateUnreadNotificationCountMap, updateUnreadNotificationCountMap);
+/* Notification service */
