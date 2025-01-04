@@ -4,6 +4,8 @@
 import { MessageTypes, RequestSignatures, TransportRequestMessage } from '@subwallet/extension-base/background/types';
 import { PORT_CONTENT, PORT_EXTENSION } from '@subwallet/extension-base/defaults';
 import { SWHandler } from '@subwallet/extension-base/koni/background/handlers';
+import { sendMessage } from '@subwallet/extension-base/page';
+import { isFirefox } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { startHeartbeat, stopHeartbeat } from '@subwallet/extension-koni/helper/HeartBeat';
 
@@ -92,7 +94,9 @@ export class ActionHandler {
 
       if (!this.isActive) {
         this.isActive = true;
-        startHeartbeat();
+        startHeartbeat(async () => {
+          await (isFirefox ? sendMessage('pub(ping)', null) : chrome.storage.local.set({ 'last-heartbeat': new Date().getTime() }));
+        });
         this.mainHandler && await this.mainHandler.state.wakeup();
         this.waitActiveHandler.resolve(true);
       }
