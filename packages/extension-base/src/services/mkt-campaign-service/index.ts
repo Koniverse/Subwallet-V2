@@ -102,6 +102,7 @@ export default class MktCampaignService {
   }
 
   public async handleMktCampaignData<T extends AppCommonData> (data: T[]): Promise<T[]> {
+    await this.#state.eventService.waitAccountReady;
     const addresses = keyring.getPairs().map((pair) => pair.address);
     const allConditions: Record<string, string[]> = this.getAllConditions(data);
     const conditionBalanceMap = await this.checkBalanceCondition(allConditions, addresses);
