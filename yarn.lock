@@ -6439,15 +6439,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.96":
-  version: 0.2.96
-  resolution: "@subwallet/chain-list@npm:0.2.96"
+"@subwallet/chain-list@npm:0.2.97":
+  version: 0.2.97
+  resolution: "@subwallet/chain-list@npm:0.2.97"
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
     ts-md5: ^1.3.1
-  checksum: a7d9436d2e799f3ad0e976fea33ff2319a3a69fc45dda7915ebead94007c4de81069411bf30be27136ea6eb8a11aa77750e230c62747885d19d8f06cf2924f47
+  checksum: 3271231e2c5b435dd2f4c502da5af8b547a5ac8aafe7089d09c9966fd74b233eb4077d04e0c960857d5b5e2fbd29f178f08aec473e6ec23d19bd07b6642af432
   languageName: node
   linkType: hard
 
@@ -6490,7 +6490,7 @@ __metadata:
     "@reduxjs/toolkit": ^1.9.1
     "@sora-substrate/type-definitions": ^1.17.7
     "@substrate/connect": ^0.8.9
-    "@subwallet/chain-list": 0.2.96
+    "@subwallet/chain-list": 0.2.97
     "@subwallet/extension-base": ^1.3.11-0
     "@subwallet/extension-chains": ^1.3.11-0
     "@subwallet/extension-dapp": ^1.3.11-0
@@ -6629,7 +6629,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.96
+    "@subwallet/chain-list": 0.2.97
     "@subwallet/extension-base": ^1.3.11-0
     "@subwallet/extension-chains": ^1.3.11-0
     "@subwallet/extension-dapp": ^1.3.11-0
@@ -6769,7 +6769,7 @@ __metadata:
     "@polkadot/util-crypto": ^12.6.2
     "@ramonak/react-progress-bar": ^5.0.3
     "@reduxjs/toolkit": ^1.9.1
-    "@subwallet/chain-list": 0.2.96
+    "@subwallet/chain-list": 0.2.97
     "@subwallet/extension-base": ^1.3.11-0
     "@subwallet/extension-chains": ^1.3.11-0
     "@subwallet/extension-dapp": ^1.3.11-0
@@ -9243,23 +9243,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zondax/ledger-js@npm:^0.8.2":
-  version: 0.8.2
-  resolution: "@zondax/ledger-js@npm:0.8.2"
+"@zondax/ledger-js@npm:^0.11.0":
+  version: 0.11.0
+  resolution: "@zondax/ledger-js@npm:0.11.0"
   dependencies:
     "@ledgerhq/hw-transport": 6.30.6
-  checksum: 7b33cd87d8569732028a57e594a4674f9fa232155c227031a00985bf9b6af62774a5cdbed59a5754c998122862ded64060b042c97850a38e6b734455828b362d
+  checksum: 38743b887fceaeb13460d70a127cb385f5df034fe014f698d4f164f0d111add71dd01381c182ac71135c7fb43f38e7b21218d5df7d87d69ddaee17dd9c57d392
   languageName: node
   linkType: hard
 
-"@zondax/ledger-substrate@npm:0.44.2":
-  version: 0.44.2
-  resolution: "@zondax/ledger-substrate@npm:0.44.2"
+"@zondax/ledger-substrate@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@zondax/ledger-substrate@npm:1.0.1"
   dependencies:
-    "@ledgerhq/hw-transport": 6.30.6
-    "@zondax/ledger-js": ^0.8.2
-    axios: ^1.6.8
-  checksum: 1f0035725c88335c8e1c234fc75ebdbc39666d8567bb3d77734ed861f85a49b87d358f520bef76287ff2e75914f790a5454cb27b7814489292100730023a9541
+    "@ledgerhq/hw-transport": 6.31.2
+    "@zondax/ledger-js": ^0.11.0
+    axios: ^1.7.4
+  checksum: e5fd0743bb6a5638c7a633131a0f4db84e9e8eec720fa659f6f116a8fe6629125b6d472184683c1a64a88fadf89bb54c6e3ffa4fa063470b4395df87d7be0bb0
   languageName: node
   linkType: hard
 
@@ -10133,14 +10133,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.8":
-  version: 1.6.8
-  resolution: "axios@npm:1.6.8"
+"axios@npm:^1.7.4":
+  version: 1.7.9
+  resolution: "axios@npm:1.7.9"
   dependencies:
     follow-redirects: ^1.15.6
     form-data: ^4.0.0
     proxy-from-env: ^1.1.0
-  checksum: bf007fa4b207d102459300698620b3b0873503c6d47bf5a8f6e43c0c64c90035a4f698b55027ca1958f61ab43723df2781c38a99711848d232cad7accbcdfcdd
+  checksum: cb8ce291818effda09240cb60f114d5625909b345e10f389a945320e06acf0bc949d0f8422d25720f5dd421362abee302c99f5e97edec4c156c8939814b23d19
   languageName: node
   linkType: hard
 
