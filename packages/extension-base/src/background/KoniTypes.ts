@@ -1711,9 +1711,9 @@ export interface RequestAddPspToken {
 
 // Popular tokens
 
-export interface PopularGroup {
+export interface PrioritizedTokenList {
   tokens: Record<string, number>,
-  piority: number
+  priority: number
 }
 
 /// WalletConnect
@@ -2307,7 +2307,7 @@ export interface KoniRequestSignatures {
   /* Ledger */
 
   /* Popular tokens */
-  'pri(popular.tokens)': [null, Record<string, PopularGroup>, Record<string, PopularGroup>];
+  'pri(popular.tokens)': [null, Record<string, PrioritizedTokenList>, Record<string, PrioritizedTokenList>];
   /* Popular tokens */
 }
 

@@ -1,17 +1,17 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { PopularGroup } from '@subwallet/extension-base/background/KoniTypes';
+import { PrioritizedTokenList } from '@subwallet/extension-base/background/KoniTypes';
 import { BalanceValueInfo } from '@subwallet/extension-koni-ui/types';
 
-export interface TokenSort {
+export interface TokenAttributes {
   slug: string,
   symbol: string,
   total?: BalanceValueInfo,
   multiChainAsset?: string | null
 }
 
-export const sortTokenByValue = (a: TokenSort, b: TokenSort): number => {
+export const sortTokenByValue = (a: TokenAttributes, b: TokenAttributes): number => {
   if (a.total && b.total) {
     const convertValue = b.total.convertedValue.minus(a.total.convertedValue).toNumber();
 
@@ -38,17 +38,17 @@ export const sortTokenAlphabetically = (a: string, b: string): number => {
   }
 };
 
-export const sortByTokenPopularity = (a: string, b: string, aIsPiorityToken: boolean, bIsPiorityToken: boolean, aPiority: number, bPiority: number): number => {
-  if (aIsPiorityToken && !bIsPiorityToken) {
+export const sortByTokenPopularity = (a: string, b: string, aIsPrioritizedToken: boolean, bIsPrioritizedToken: boolean, aPriority: number, bPriority: number): number => {
+  if (aIsPrioritizedToken && !bIsPrioritizedToken) {
     return -1;
-  } else if (!aIsPiorityToken && bIsPiorityToken) {
+  } else if (!aIsPrioritizedToken && bIsPrioritizedToken) {
     return 1;
-  } else if (!aIsPiorityToken && !bIsPiorityToken) {
+  } else if (!aIsPrioritizedToken && !bIsPrioritizedToken) {
     return sortTokenAlphabetically(a, b);
   } else {
-    if (aPiority < bPiority) {
+    if (aPriority < bPriority) {
       return -1;
-    } else if (aPiority > bPiority) {
+    } else if (aPriority > bPriority) {
       return 1;
     } else {
       return 0;
@@ -56,19 +56,19 @@ export const sortByTokenPopularity = (a: string, b: string, aIsPiorityToken: boo
   }
 };
 
-export function sortToken (tokenGroupSlug: TokenSort[], popularTokens: Record<string, PopularGroup>) {
+export function sortToken (tokenGroupSlug: TokenAttributes[], popularTokens: Record<string, PrioritizedTokenList>) {
   return tokenGroupSlug.sort((a, b) => {
-    const aBelongtoPiorityGroup = a.multiChainAsset ? Object.keys(popularTokens).includes(a.multiChainAsset) : false;
-    const bBelongtoPiorityGroup = b.multiChainAsset ? Object.keys(popularTokens).includes(b.multiChainAsset) : false;
+    const aBelongtoPrioritizedGroup = a.multiChainAsset ? Object.keys(popularTokens).includes(a.multiChainAsset) : false;
+    const bBelongtoPrioritizedGroup = b.multiChainAsset ? Object.keys(popularTokens).includes(b.multiChainAsset) : false;
 
-    const aIsPiorityToken = (aBelongtoPiorityGroup && a.multiChainAsset && Object.keys(popularTokens[a.multiChainAsset].tokens).includes(a.slug)) || Object.keys(popularTokens).includes(a.slug);
-    const bIsPiorityToken = (bBelongtoPiorityGroup && b.multiChainAsset && Object.keys(popularTokens[b.multiChainAsset].tokens).includes(b.slug)) || Object.keys(popularTokens).includes(b.slug);
+    const aIsPrioritizedToken = (aBelongtoPrioritizedGroup && a.multiChainAsset && Object.keys(popularTokens[a.multiChainAsset].tokens).includes(a.slug)) || Object.keys(popularTokens).includes(a.slug);
+    const bIsPrioritizedToken = (bBelongtoPrioritizedGroup && b.multiChainAsset && Object.keys(popularTokens[b.multiChainAsset].tokens).includes(b.slug)) || Object.keys(popularTokens).includes(b.slug);
 
     const aHasBalance = (a.total && a.total.convertedValue.toNumber() !== 0) || (a.total && a.total.value.toNumber() !== 0);
     const bHasBalance = (b.total && b.total.convertedValue.toNumber() !== 0) || (b.total && b.total.value.toNumber() !== 0);
 
-    const aPiority = a.multiChainAsset ? aIsPiorityToken ? (popularTokens[a.multiChainAsset].tokens)[a.slug] : 0 : aIsPiorityToken ? popularTokens[a.slug].piority : 0;
-    const bPiority = b.multiChainAsset ? bIsPiorityToken ? (popularTokens[b.multiChainAsset].tokens)[b.slug] : 0 : bIsPiorityToken ? popularTokens[b.slug].piority : 0;
+    const aPriority = a.multiChainAsset ? aIsPrioritizedToken ? (popularTokens[a.multiChainAsset].tokens)[a.slug] : 0 : aIsPrioritizedToken ? popularTokens[a.slug].priority : 0;
+    const bPriority = b.multiChainAsset ? bIsPrioritizedToken ? (popularTokens[b.multiChainAsset].tokens)[b.slug] : 0 : bIsPrioritizedToken ? popularTokens[b.slug].priority : 0;
 
     if (aHasBalance && bHasBalance) {
       return sortTokenByValue(a, b);
@@ -77,7 +77,7 @@ export function sortToken (tokenGroupSlug: TokenSort[], popularTokens: Record<st
     } else if (!aHasBalance && bHasBalance) {
       return 1;
     } else {
-      return sortByTokenPopularity(a.symbol, b.symbol, aIsPiorityToken, bIsPiorityToken, aPiority, bPiority);
+      return sortByTokenPopularity(a.symbol, b.symbol, aIsPrioritizedToken, bIsPrioritizedToken, aPriority, bPriority);
     }
   });
 }
