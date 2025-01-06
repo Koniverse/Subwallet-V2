@@ -10,6 +10,7 @@ Features & Update:
 Bug fixed:
 - Fix errors when making transactions on Tangle mainnet (#3861)
 
+
 ## 1.3.10
 Build date: Dec 12, 2024.
 
