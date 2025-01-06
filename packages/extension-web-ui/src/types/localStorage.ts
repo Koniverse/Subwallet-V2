@@ -1,0 +1,14 @@
+// Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
+// SPDX-License-Identifier: Apache-2.0
+
+export interface SessionStorage {
+  timeCalculate: number;
+  remind: boolean;
+  timeBackup: number;
+  isFinished: boolean;
+}
+
+export interface SeedPhraseTermStorage {
+  state: string;
+  useDefaultContent?: boolean;
+}

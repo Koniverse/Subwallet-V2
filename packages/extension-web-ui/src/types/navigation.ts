@@ -1,17 +1,12 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { EarningEntryView } from '@subwallet/extension-web-ui/types/earning';
 
 export type CreateDoneParam = {
   accounts: AccountJson[];
-};
-
-// settings
-
-export type ManageChainsParam = {
-  defaultSearch: string,
 };
 
 // token
@@ -22,12 +17,18 @@ export type TokenDetailParam = {
   tokenSlug?: string,
 };
 
+// settings
+
+export type ManageChainsParam = {
+  defaultSearch: string,
+};
+
 // manage website access
 
 export type ManageWebsiteAccessDetailParam = {
   siteName: string,
   origin: string,
-  accountAuthType: string,
+  accountAuthTypes: AccountAuthType[],
 };
 
 // transfer
@@ -60,5 +61,18 @@ export type EarningPoolsParam = {
 };
 
 export type EarningPositionDetailParam = {
-  earningSlug: string,
+  earningSlug: string
 };
+
+// general
+
+export type RemindBackUpSeedPhraseParamState = {
+  from: string;
+}
+
+// account detail
+
+export type AccountDetailParam = {
+  requestViewDerivedAccounts?: boolean
+  requestViewDerivedAccountDetails?: boolean
+}

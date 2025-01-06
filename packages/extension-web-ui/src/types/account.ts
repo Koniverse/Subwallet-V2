@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { AccountActions, AccountProxyType } from '@subwallet/extension-base/types';
+
 import { KeypairType } from '@polkadot/util-crypto/types';
 
 export interface NewSeedPhraseState {
@@ -28,4 +30,20 @@ export enum AccountSignMode {
   ALL_ACCOUNT = 'all',
   INJECTED = 'injected',
   UNKNOWN = 'unknown'
+}
+
+export type AccountChainAddress = {
+  name: string;
+  slug: string;
+  address: string;
+  accountType: KeypairType;
+}
+
+export type AccountAddressItemType = {
+  accountName: string;
+  accountProxyId: string;
+  accountProxyType: AccountProxyType;
+  accountType: KeypairType;
+  address: string;
+  accountActions?: AccountActions[]
 }

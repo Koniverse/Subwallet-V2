@@ -4,13 +4,12 @@
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils';
+import { KeypairType } from '@subwallet/keyring/types';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import CN from 'classnames';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
 
 export interface BaseAccountInfo {
   address: string;

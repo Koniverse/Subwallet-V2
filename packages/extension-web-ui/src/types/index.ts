@@ -22,14 +22,18 @@ export type AlertDialogButtonProps = {
 }
 
 export type AlertDialogProps = {
-  title: string,
+  title: string;
   className?: string,
-  type?: NotificationType,
-  closable?: boolean,
-  content: React.ReactNode,
-  cancelButton?: AlertDialogButtonProps,
-  okButton: AlertDialogButtonProps,
-  onCancel?: VoidFunction
+  subtitle?: React.ReactNode;
+  type?: NotificationType;
+  closable?: boolean;
+  content: React.ReactNode;
+  cancelButton?: AlertDialogButtonProps;
+  okButton: AlertDialogButtonProps;
+  onCancel?: VoidFunction;
+  okLoading?: boolean;
+  cancelDisabled?: boolean;
+  maskClosable?: boolean;
 };
 
 export type AccountType = 'ALL' | 'ETHEREUM' | 'SUBSTRATE';
@@ -144,6 +148,7 @@ export * from './form';
 export * from './history';
 export * from './hook';
 export * from './ledger';
+export * from './localStorage';
 export * from './metadata';
 export * from './missionPool';
 export * from './navigation';
@@ -152,3 +157,4 @@ export * from './staking';
 export * from './transaction';
 export * from './wallet';
 export * from './walletConnect';
+export * from './component';
