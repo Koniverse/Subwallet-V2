@@ -200,7 +200,7 @@ export const DataContextProvider = ({ children }: DataContextProviderProps) => {
   _DataContext.addHandler({ ...subscribeChainStatusMap, name: 'subscribeChainStatusMap', relatedStores: ['chainStore'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeChainInfoMap, name: 'subscribeChainInfoMap', relatedStores: ['chainStore'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeLedgerGenericAllowNetworks, name: 'subscribeLedgerGenericAllowNetworks', relatedStores: ['chainStore'], isStartImmediately: true });
-  _DataContext.addHandler({ ...subscribePopularTokens, name: 'subscribePopularTokens', relatedStores: ['chainStore'], isStartImmediately: true });
+  _DataContext.addHandler({ ...subscribePopularTokens, name: 'subscribePopularTokens', relatedStores: ['chainStore'], isStartImmediately: false });
 
   _DataContext.addHandler({ ...subscribeAssetRegistry, name: 'subscribeAssetRegistry', relatedStores: ['assetRegistry'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeMultiChainAssetMap, name: 'subscribeMultiChainAssetMap', relatedStores: ['assetRegistry'], isStartImmediately: true });

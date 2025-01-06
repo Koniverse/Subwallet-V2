@@ -301,7 +301,7 @@ const Component = (): React.ReactElement => {
       }
     });
 
-    return sortToken(result, popularTokens);
+    return sortToken(result, popularTokens) as TokenBalanceItemType[];
   }, [sortedTokenGroups, tokenGroupBalanceMap, popularTokens]);
 
   useEffect(() => {

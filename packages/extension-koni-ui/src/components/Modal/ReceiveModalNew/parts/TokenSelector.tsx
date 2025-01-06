@@ -10,7 +10,7 @@ import { RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/const
 import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { sortTokenInGetAddressScreen } from '@subwallet/extension-koni-ui/utils';
+import { sortToken } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -55,7 +55,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
 
       return filteredList;
     } else if (currentSearchText.toLowerCase() === '') {
-      return sortTokenInGetAddressScreen(filteredList, popularTokens);
+      return sortToken(filteredList, popularTokens) as _ChainAsset[];
     } else {
       return filteredList;
     }
