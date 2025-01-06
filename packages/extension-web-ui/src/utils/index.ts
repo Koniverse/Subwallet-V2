@@ -1,7 +1,6 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ChainLogoMap } from '@subwallet/chain-list';
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountWithChildren } from '@subwallet/extension-base/background/types';
@@ -42,9 +41,7 @@ export function getEthereumChains (networkMap: Record<string, NetworkJson>): str
 export const defaultRecoded: Recoded = { account: null, formatted: null, prefix: 42, isEthereum: false };
 
 export const accountAllRecoded: Recoded = {
-  account: {
-    address: ALL_ACCOUNT_KEY
-  },
+  account: null,
   formatted: ALL_ACCOUNT_KEY,
   prefix: 42,
   isEthereum: false
@@ -81,10 +78,6 @@ export const NFT_GRID_HEIGHT_THRESHOLD = 600;
 export const NFT_HEADER_HEIGHT = 202;
 
 export const NFT_PER_ROW = 3;
-
-export function getLogoByNetworkKey (networkKey: string, defaultLogo = 'default'): string {
-  return ChainLogoMap[networkKey] || ChainLogoMap[defaultLogo] || ChainLogoMap.default;
-}
 
 export const subscanByNetworkKey: Record<string, string> = {
   acala: 'https://acala.subscan.io',
@@ -228,9 +221,10 @@ export * from './earning';
 export * from './form';
 export * from './history';
 export * from './metadata';
+export * from './missionPools';
 export * from './qr';
 export * from './scanner';
 export * from './sort';
 export * from './transaction';
 export * from './walletConnect';
-export * from './missionPools';
+export * from './accountProxy';

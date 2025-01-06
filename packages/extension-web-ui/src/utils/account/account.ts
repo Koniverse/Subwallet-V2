@@ -6,18 +6,20 @@ import { NetworkJson } from '@subwallet/extension-base/background/KoniTypes';
 import { AccountAuthType } from '@subwallet/extension-base/background/types';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _getChainSubstrateAddressPrefix, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { AbstractAddressJson, AccountJson } from '@subwallet/extension-base/types';
-import { isAccountAll, uniqueStringArray } from '@subwallet/extension-base/utils';
+import { AbstractAddressJson, AccountChainType, AccountJson, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
+import { isAccountAll, reformatAddress, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { DEFAULT_ACCOUNT_TYPES, EVM_ACCOUNT_TYPE, SUBSTRATE_ACCOUNT_TYPE, TON_ACCOUNT_TYPE } from '@subwallet/extension-web-ui/constants';
 import { MODE_CAN_SIGN } from '@subwallet/extension-web-ui/constants/signing';
 import { AccountAddressType, AccountSignMode, AccountType } from '@subwallet/extension-web-ui/types';
-import { getLogoByNetworkKey } from '@subwallet/extension-web-ui/utils';
-import reformatAddress from '@subwallet/extension-web-ui/utils/account/reformatAddress';
 import { getNetworkKeyByGenesisHash } from '@subwallet/extension-web-ui/utils/chain/getNetworkJsonByGenesisHash';
 import { AccountInfoByNetwork } from '@subwallet/extension-web-ui/utils/types';
+import { isAddress, isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
-import { decodeAddress, encodeAddress, isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import { decodeAddress, encodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+
+import { isChainInfoAccordantAccountChainType } from '../chain';
+import { getLogoByNetworkKey } from '../common';
 
 export function getAccountType (address: string): AccountType {
   return isAccountAll(address) ? 'ALL' : isEthereumAddress(address) ? 'ETHEREUM' : 'SUBSTRATE';
@@ -38,6 +40,7 @@ export const getAccountInfoByNetwork = (networkMap: Record<string, NetworkJson>,
   };
 };
 
+// todo: recheck this function with current account
 export const findAccountByAddress = (accounts: AccountJson[], address?: string): AccountJson | null => {
   try {
     const isAllAccount = address && isAccountAll(address);
@@ -46,7 +49,7 @@ export const findAccountByAddress = (accounts: AccountJson[], address?: string):
       return null;
     }
 
-    const originAddress = isAccountAll(address) ? address : isEthereumAddress(address) ? address : encodeAddress(decodeAddress(address));
+    const originAddress = isAccountAll(address) ? address : reformatAddress(address);
     const result = accounts.find((account) => account.address.toLowerCase() === originAddress.toLowerCase());
 
     return result || null;
@@ -61,29 +64,7 @@ export const getSignMode = (account: AccountJson | null | undefined): AccountSig
   if (!account) {
     return AccountSignMode.UNKNOWN;
   } else {
-    if (account.address === ALL_ACCOUNT_KEY) {
-      return AccountSignMode.ALL_ACCOUNT;
-    } else {
-      if (account.isInjected) {
-        return AccountSignMode.INJECTED;
-      }
-
-      if (account.isExternal) {
-        if (account.isHardware) {
-          if (account.isGeneric) {
-            return AccountSignMode.GENERIC_LEDGER;
-          } else {
-            return AccountSignMode.LEGACY_LEDGER;
-          }
-        } else if (account.isReadOnly) {
-          return AccountSignMode.READ_ONLY;
-        } else {
-          return AccountSignMode.QR;
-        }
-      } else {
-        return AccountSignMode.PASSWORD;
-      }
-    }
+    return account.signMode;
   }
 };
 
@@ -101,6 +82,10 @@ export const isNoAccount = (accounts: AccountJson[] | null): boolean => {
 
 export const searchAccountFunction = (item: AbstractAddressJson, searchText: string): boolean => {
   return item.address.toLowerCase().includes(searchText.toLowerCase()) || (item.name || '').toLowerCase().includes(searchText.toLowerCase());
+};
+
+export const searchAccountProxyFunction = (item: AccountProxy, searchText: string): boolean => {
+  return (item.name || '').toLowerCase().includes(searchText.toLowerCase());
 };
 
 export const formatAccountAddress = (account: AccountJson, networkInfo: _ChainInfo | null): string => {
@@ -177,12 +162,58 @@ export const convertKeyTypes = (authTypes: AccountAuthType[]): KeypairType[] => 
   return _rs.length ? _rs : DEFAULT_ACCOUNT_TYPES;
 };
 
+// todo:
+//  - support bitcoin
+export function getReformatedAddressRelatedToChain (accountJson: AccountJson, chainInfo: _ChainInfo): string | undefined {
+  if (accountJson.specialChain && accountJson.specialChain !== chainInfo.slug) {
+    return undefined;
+  }
+
+  if (!isChainInfoAccordantAccountChainType(chainInfo, accountJson.chainType)) {
+    return undefined;
+  }
+
+  if (accountJson.chainType === AccountChainType.SUBSTRATE && chainInfo.substrateInfo) {
+    return reformatAddress(accountJson.address, chainInfo.substrateInfo.addressPrefix);
+  } else if (accountJson.chainType === AccountChainType.ETHEREUM && chainInfo.evmInfo) {
+    return accountJson.address;
+  } else if (accountJson.chainType === AccountChainType.TON && chainInfo.tonInfo) {
+    return reformatAddress(accountJson.address, chainInfo.isTestnet ? 0 : 1);
+  }
+
+  return undefined;
+}
+
 type LedgerMustCheckType = 'polkadot' | 'migration' | 'unnecessary'
 
-export const ledgerMustCheckNetwork = (account: AccountJson | null): LedgerMustCheckType => {
+export const ledgerMustCheckNetwork = (account: AccountJson | null | undefined): LedgerMustCheckType => {
   if (account && account.isHardware && account.isGeneric && !isEthereumAddress(account.address)) {
     return account.originGenesisHash ? 'migration' : 'polkadot';
   } else {
     return 'unnecessary';
   }
+};
+
+export const ledgerGenericAccountProblemCheck = (accountProxy: AccountProxy | null | undefined): LedgerMustCheckType => {
+  if (accountProxy && accountProxy.accountType === AccountProxyType.LEDGER && accountProxy.chainTypes.includes(AccountChainType.SUBSTRATE) && !accountProxy.specialChain) {
+    return ledgerMustCheckNetwork(accountProxy.accounts[0]);
+  } else {
+    return 'unnecessary';
+  }
+};
+
+export const isAddressAllowedWithAuthType = (address: string, authAccountTypes?: AccountAuthType[]) => {
+  if (isEthereumAddress(address) && authAccountTypes?.includes('evm')) {
+    return true;
+  }
+
+  if (isSubstrateAddress(address) && authAccountTypes?.includes('substrate')) {
+    return true;
+  }
+
+  if (isTonAddress(address) && authAccountTypes?.includes('ton')) {
+    return true;
+  }
+
+  return false;
 };
