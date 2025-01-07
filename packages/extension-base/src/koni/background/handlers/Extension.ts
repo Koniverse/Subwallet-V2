@@ -1615,8 +1615,8 @@ export default class KoniExtension {
     return await this.#koniState.enableChain(chainSlug, enableTokens);
   }
 
-  private async enableChainWithPopularAssets ({ chainSlug, enableTokens }: EnableChainParams): Promise<boolean> {
-    return await this.#koniState.enableChainWithPopularAssets(chainSlug, enableTokens);
+  private async enableChainWithPriorityAssets ({ chainSlug, enableTokens }: EnableChainParams): Promise<boolean> {
+    return await this.#koniState.enableChainWithPriorityAssets(chainSlug, enableTokens);
   }
 
   private async reconnectChain (chainSlug: string): Promise<boolean> {
@@ -4265,8 +4265,8 @@ export default class KoniExtension {
         return this.getSupportedSmartContractTypes();
       case 'pri(chainService.enableChain)':
         return await this.enableChain(request as EnableChainParams);
-      case 'pri(chainService.enableChainWithPopularAssets)':
-        return await this.enableChainWithPopularAssets(request as EnableChainParams);
+      case 'pri(chainService.enableChainWithPriorityAssets)':
+        return await this.enableChainWithPriorityAssets(request as EnableChainParams);
       case 'pri(chainService.reconnectChain)':
         return await this.reconnectChain(request as string);
       case 'pri(chainService.disableChain)':

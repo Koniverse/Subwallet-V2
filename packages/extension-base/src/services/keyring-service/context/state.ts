@@ -709,8 +709,8 @@ export class AccountState {
     this.koniState.enableChain(slug, true).catch(console.error);
   }
 
-  public enableChainWithPopularAssets (slug: string) {
-    this.koniState.enableChainWithPopularAssets(slug, true).catch(console.error);
+  public enableChainWithPriorityAssets (slug: string) {
+    this.koniState.enableChainWithPriorityAssets(slug, true).catch(console.error);
   }
 
   /* Others */

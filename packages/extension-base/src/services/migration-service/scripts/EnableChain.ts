@@ -9,6 +9,6 @@ export default abstract class EnableChain extends BaseMigrationJob {
   public override async run (): Promise<void> {
     const state = this.state;
 
-    await state.enableChainWithPopularAssets(this.slug, true);
+    await state.enableChainWithPriorityAssets(this.slug, true);
   }
 }

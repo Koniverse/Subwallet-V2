@@ -2027,7 +2027,7 @@ export class ChainService {
     this.setAssetSettings(assetSettings);
   }
 
-  public async updatePopularAssetsByChain (chainSlug: string, visible: boolean) {
+  public async updatePriorityAssetsByChain (chainSlug: string, visible: boolean) {
     const currentAssetSettings = await this.getAssetSettings();
     const assetsByChain = this.getFungibleTokensByChain(chainSlug);
     const priorityTokensMap = this.priorityTokensSubject.value || {};
@@ -2036,22 +2036,22 @@ export class ChainService {
       Object.keys(tokenData.priorityTokens)
     );
 
-    let popularTokenFound = false;
+    let priorityTokenFound = false;
 
     for (const asset of Object.values(assetsByChain)) {
       if (visible) {
-        const isPopularToken = priorityTokensList.includes(asset.slug);
+        const isPriorityToken = priorityTokensList.includes(asset.slug);
 
-        if (isPopularToken) {
+        if (isPriorityToken) {
           currentAssetSettings[asset.slug] = { visible: true };
-          popularTokenFound = true;
+          priorityTokenFound = true;
         }
       } else {
         currentAssetSettings[asset.slug] = { visible: false };
       }
     }
 
-    if (!popularTokenFound && visible) {
+    if (!priorityTokenFound && visible) {
       const nativeTokenInfo = this.getNativeTokenInfo(chainSlug);
 
       currentAssetSettings[nativeTokenInfo.slug] = { visible: true };
