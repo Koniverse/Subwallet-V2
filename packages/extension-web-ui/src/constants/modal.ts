@@ -47,6 +47,18 @@ export const WALLET_CONNECT_LIST_MODAL = 'wallet-connect-list-modal';
 export const CONFIRMATION_MODAL = 'confirmation-modal';
 export const BUY_TOKEN_MODAL = 'buy-token-modal';
 
+export const NOTIFICATION_DETAIL_MODAL = 'notification-detail-modal';
+export const RECEIVE_MODAL_TOKEN_SELECTOR = 'receive-modal-token-selector';
+export const RECEIVE_MODAL_ACCOUNT_SELECTOR = 'receive-modal-account-selector';
+
+export const REMIND_DUPLICATE_ACCOUNT_NAME_MODAL = 'remind-update-unified-account';
+export const ADDRESS_QR_MODAL = 'address-qr-modal';
+export const ACCOUNT_CHAIN_ADDRESSES_MODAL = 'account-chain-addresses-modal';
+export const ACCOUNT_NAME_MODAL = 'account-name-modal';
+export const GLOBAL_ALERT_MODAL = 'global-alert-modal';
+export const TON_WALLET_CONTRACT_SELECTOR_MODAL = 'ton-wallet-contract-selector-modal';
+export const TON_ACCOUNT_SELECTOR_MODAL = 'ton-account-selector-modal';
+
 /* Token */
 
 export const IMPORT_NFT_MODAL = 'import-nft-modal';
@@ -112,3 +124,8 @@ export const SWAP_MORE_BALANCE_MODAL = 'swap-more-balance-modal';
 export const SWAP_CHOOSE_FEE_TOKEN_MODAL = 'swap-choose-fee-token-modal';
 export const SWAP_TERMS_OF_SERVICE_MODAL = 'swap-terms-of-service-modal';
 export const SWAP_IDLE_WARNING_MODAL = 'swap-idle-warning-modal';
+
+/* Derive */
+export const DERIVE_ACCOUNT_LIST_MODAL = 'derive-account-list-modal';
+export const DERIVE_ACCOUNT_ACTION_MODAL = 'derive-account-action-modal';
+/* Derive */

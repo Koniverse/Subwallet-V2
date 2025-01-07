@@ -12,7 +12,7 @@ export const TxTypeNameMap: Record<ExtrinsicType, string> = {
   [ExtrinsicType.TRANSFER_XCM]: detectTranslate('Transfer'),
   [ExtrinsicType.SEND_NFT]: detectTranslate('NFT transaction'),
   [ExtrinsicType.CROWDLOAN]: detectTranslate('Crowdloan contribution'),
-  [ExtrinsicType.STAKING_JOIN_POOL]: detectTranslate('Stake'),
+  [ExtrinsicType.STAKING_JOIN_POOL]: detectTranslate('Join pool'),
   [ExtrinsicType.STAKING_BOND]: detectTranslate('Stake'),
   [ExtrinsicType.MINT_VDOT]: detectTranslate('Mint vDOT'),
   [ExtrinsicType.MINT_VMANTA]: detectTranslate('Mint vMANTA'),
@@ -45,6 +45,7 @@ export const TxTypeNameMap: Record<ExtrinsicType, string> = {
   [ExtrinsicType.TOKEN_SPENDING_APPROVAL]: detectTranslate('Token approve'),
   [ExtrinsicType.SWAP]: detectTranslate('Swap'),
   [ExtrinsicType.SET_FEE_TOKEN]: detectTranslate('Fee token'),
+  [ExtrinsicType.CLAIM_BRIDGE]: detectTranslate('Claim token'),
   [ExtrinsicType.UNKNOWN]: detectTranslate('Unknown')
 };
 

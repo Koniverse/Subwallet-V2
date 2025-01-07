@@ -14,6 +14,7 @@ export interface OffRampParams {
 }
 
 export interface TransactionFormBaseProps {
+  fromAccountProxy: string;
   from: string,
   chain: string
   asset: string
@@ -75,4 +76,8 @@ export interface SwapParams extends TransactionFormBaseProps {
   fromTokenSlug: string;
   toTokenSlug: string;
   recipient?: string;
+}
+
+export interface ClaimBridgeParams extends TransactionFormBaseProps {
+  notificationId: string;
 }
