@@ -574,7 +574,7 @@ export default class KoniState {
 
     if (authUrls[shortenUrl]) {
       if (chainInfo && !_isChainEnabled(chainState)) {
-        await this.enableChain(networkKey);
+        await this.enableChainWithPopularAssets(networkKey);
       }
 
       authUrls[shortenUrl].currentEvmNetworkKey = networkKey;
