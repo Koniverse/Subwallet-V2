@@ -6,7 +6,7 @@ import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 
 export function getCardanoAssetId (chainAsset: _ChainAsset): string {
-  return chainAsset.metadata?.policyId as string;
+  return chainAsset.metadata?.cardanoId as string;
 }
 
 export function _isCIP26Token (tokenInfo: _ChainAsset) {
@@ -48,4 +48,20 @@ export async function retryCardanoTxStatus (fn: () => Promise<boolean>, options:
   console.error('Cardano transaction timeout', lastError); // throw only last error, in case no successful result from fn()
 
   return false;
+}
+
+interface CardanoNativeAssetMetadata {
+  policyId: string;
+  nameHex: string;
+}
+
+export function splitCardanoId (id: string): CardanoNativeAssetMetadata {
+  if (!id || id.length < 56) {
+    throw new Error('The cardano native asset policy id must has 28 bytes in length.');
+  } else {
+    return {
+      policyId: id.slice(0, 56),
+      nameHex: id.slice(56)
+    };
+  }
 }

@@ -27,7 +27,7 @@ import { getPoolingBondingExtrinsic, getPoolingUnbondingExtrinsic, validatePoolB
 import { YIELD_EXTRINSIC_TYPES } from '@subwallet/extension-base/koni/api/yield/helper/utils';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers/process';
-import { CARDANO_TTL_OFFSET } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/consts';
+import { DEFAULT_CARDANO_TTL_OFFSET } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/consts';
 import { _isTokenTransferredByCardano } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { createCardanoTransaction } from '@subwallet/extension-base/services/balance-service/transfer/cardano-transfer';
@@ -1372,7 +1372,7 @@ export default class KoniExtension {
           to,
           networkKey,
           value: value || '0',
-          cardanoTtlOffset: CARDANO_TTL_OFFSET,
+          cardanoTtlOffset: DEFAULT_CARDANO_TTL_OFFSET,
           transferAll: !!transferAll,
           cardanoApi
         });
