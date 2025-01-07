@@ -10,7 +10,7 @@ import { RECEIVE_MODAL_TOKEN_SELECTOR } from '@subwallet/extension-koni-ui/const
 import { useSelector, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
-import { sortToken } from '@subwallet/extension-koni-ui/utils';
+import { sortTokensByStandard } from '@subwallet/extension-koni-ui/utils';
 import { ModalContext, SwList, SwModal } from '@subwallet/react-ui';
 import { SwListSectionRef } from '@subwallet/react-ui/es/sw-list';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -33,7 +33,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
   const [currentSearchText, setCurrentSearchText] = useState<string>('');
   // @ts-ignore
   const chainInfoMap = useSelector((state) => state.chainStore.chainInfoMap);
-  const popularTokens = useSelector((state: RootState) => state.chainStore.popularTokens);
+  const priorityTokens = useSelector((state: RootState) => state.chainStore.priorityTokens);
 
   const listItems = useMemo(() => {
     const filteredList = items.filter((item) => {
@@ -41,6 +41,12 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
 
       return item.symbol.toLowerCase().includes(currentSearchText.toLowerCase()) || chainName.toLowerCase().includes(currentSearchText.toLowerCase());
     });
+
+    if (!currentSearchText) {
+      sortTokensByStandard(filteredList, priorityTokens);
+
+      return filteredList;
+    }
 
     if (currentSearchText.toLowerCase() === 'ton') {
       const tonItemIndex = filteredList.findIndex((item) => item.slug === 'ton-NATIVE-TON');
@@ -54,12 +60,10 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
       }
 
       return filteredList;
-    } else if (currentSearchText.toLowerCase() === '') {
-      return sortToken(filteredList, popularTokens) as _ChainAsset[];
-    } else {
-      return filteredList;
     }
-  }, [chainInfoMap, currentSearchText, items, popularTokens]);
+
+    return filteredList;
+  }, [chainInfoMap, currentSearchText, items, priorityTokens]);
 
   const isActive = checkActive(modalId);
 

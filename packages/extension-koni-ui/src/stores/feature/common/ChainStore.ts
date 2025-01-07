@@ -3,7 +3,7 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { _ChainInfo } from '@subwallet/chain-list/types';
-import { PrioritizedTokenList } from '@subwallet/extension-base/background/KoniTypes';
+import { TokenPriorityDetails } from '@subwallet/extension-base/background/KoniTypes';
 import { _ChainApiStatus, _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { ChainStore, ReduxStatus } from '@subwallet/extension-koni-ui/stores/types';
 
@@ -12,7 +12,7 @@ const initialState: ChainStore = {
   chainStateMap: {},
   chainStatusMap: {},
   ledgerGenericAllowNetworks: [],
-  popularTokens: {},
+  priorityTokens: {},
   reduxStatus: ReduxStatus.INIT
 };
 
@@ -56,12 +56,12 @@ const chainStoreSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updatePopularTokens (state, action: PayloadAction<Record<string, PrioritizedTokenList>>) {
+    updatePriorityTokens (state, action: PayloadAction<Record<string, TokenPriorityDetails>>) {
       const { payload } = action;
 
       return {
         ...state,
-        popularTokens: payload,
+        priorityTokens: payload,
         reduxStatus: ReduxStatus.READY
       };
     }
