@@ -12,6 +12,7 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import styled, { createGlobalStyle, ThemeProvider as StyledComponentThemeProvider } from 'styled-components';
 
+import { GLOBAL_ALERT_MODAL } from '../constants';
 import { Theme } from '../types';
 
 interface Props {
@@ -86,6 +87,14 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         }
       }
     },
+
+    // make sure alert modal is above autocomplete dropdown
+    [`.modal-id-${GLOBAL_ALERT_MODAL}`]: {
+      '.ant-sw-modal-wrap': {
+        zIndex: 11000
+      }
+    },
+
     '.general-modal.-mobile': {
       justifyContent: 'flex-end',
       '.ant-sw-modal-content': {
@@ -93,6 +102,7 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         width: '100%'
       }
     },
+
     '.__currency-value-detail-tooltip': {
       paddingBottom: 0,
 
@@ -107,6 +117,7 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         transform: 'translateX(-50%) translateY(100%) rotate(180deg) scaleX(0.5)'
       }
     },
+
     '.__tooltip-overlay-remind': {
       '.ant-tooltip-inner': {
         fontSize: token.fontSizeXS,
@@ -117,6 +128,7 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
         marginRight: token.marginSM
       }
     },
+
     '.text-secondary': {
       color: token.colorTextSecondary
     },
@@ -263,6 +275,49 @@ const GlobalStyle = createGlobalStyle<ThemeProps>(({ theme }) => {
 
     '.ant-input': {
       minWidth: 0 // fix issue related to input overflow width
+    },
+
+    // field
+    '.ant-select-modal-input-suffix.ant-select-modal-input-suffix, .ant-field-suffix.ant-field-suffix': {
+      color: token.colorTextLight3
+    },
+
+    '.ant-field-container.-label-horizontal': {
+      flexDirection: 'row',
+      gap: token.sizeXXS,
+      alignItems: 'center',
+
+      '.ant-field-label': {
+        paddingRight: 0,
+        top: 0,
+        paddingTop: 0,
+        minWidth: 46
+      },
+
+      '.ant-field-wrapper': {
+        flex: 1,
+        gap: token.sizeXXS,
+        paddingLeft: 0,
+        paddingBottom: token.paddingXS
+      }
+    },
+
+    '.ant-field-container.is-selectable': {
+      cursor: 'pointer',
+
+      '&:not(.-status-success):not(.-status-warning):not(.-status-error):hover': {
+        '&:before': {
+          borderColor: token['geekblue-4']
+        }
+      }
+    },
+
+    '.ant-field-container.is-readonly': {
+      cursor: 'default'
+    },
+
+    '.ant-field-container.is-disabled': {
+      cursor: 'not-allowed'
     },
 
     '.ledger-warning-modal': {

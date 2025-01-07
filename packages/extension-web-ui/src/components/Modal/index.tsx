@@ -6,7 +6,9 @@ export { default as RequestCreatePasswordModal } from './RequestCreatePasswordMo
 export { default as ResetWalletModal } from './ResetWalletModal';
 export { default as AddNetworkWCModal } from './AddNetworkWCModal';
 export { SortingModal } from './SortingModal';
+export { default as TonWalletContractSelectorModal } from './TonWalletContractSelectorModal';
 
+export * from './Global';
 export * from './Account';
 export * from './ActionModal';
 export * from './AddressBook';

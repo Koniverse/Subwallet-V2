@@ -9,14 +9,14 @@ import { Logo2D } from '@subwallet/extension-web-ui/components/Logo';
 import { DEFAULT_ROUTER_PATH } from '@subwallet/extension-web-ui/constants/router';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
-import { WalletModalContext } from '@subwallet/extension-web-ui/contexts/WalletModalContext';
+import { WalletModalContextProvider } from '@subwallet/extension-web-ui/contexts/WalletModalContextProvider';
 import { useSubscribeLanguage } from '@subwallet/extension-web-ui/hooks';
 import useNotification from '@subwallet/extension-web-ui/hooks/common/useNotification';
 import useUILock from '@subwallet/extension-web-ui/hooks/common/useUILock';
 import { subscribeNotifications } from '@subwallet/extension-web-ui/messaging';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { OffRampParams, ThemeProps } from '@subwallet/extension-web-ui/types';
-import { removeStorage } from '@subwallet/extension-web-ui/utils';
+import { isNoAccount as _isNoAccount, removeStorage } from '@subwallet/extension-web-ui/utils';
 import { changeHeaderLogo, ModalContext } from '@subwallet/react-ui';
 import { NotificationProps } from '@subwallet/react-ui/es/notification/NotificationProvider';
 import CN from 'classnames';
@@ -148,10 +148,15 @@ function DefaultRoute ({ children }: {children: React.ReactNode}): React.ReactEl
 
   const { unlockType } = useSelector((state: RootState) => state.settings);
   const { hasConfirmations, hasInternalConfirmations } = useSelector((state: RootState) => state.requestState);
-  const { accounts, currentAccount, hasMasterPassword, isLocked, isNoAccount } = useSelector((state: RootState) => state.accountState);
+  const { accounts, currentAccount, hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
   const [initAccount, setInitAccount] = useState(currentAccount);
   const { isUILocked } = useUILock();
   const needUnlock = isUILocked || (isLocked && unlockType === WalletUnlockType.ALWAYS_REQUIRED);
+
+  // todo: need recheck this logic after updating unified account feature completely
+  const isNoAccount = useMemo(() => {
+    return _isNoAccount(accounts);
+  }, [accounts]);
 
   const needMigrate = useMemo(
     () => !!accounts
@@ -333,13 +338,13 @@ export function Root (): React.ReactElement {
 
   return (
     <WebUIContextProvider>
-      <WalletModalContext>
+      <WalletModalContextProvider>
         <DefaultRoute>
           <BaseWeb>
             <Outlet />
           </BaseWeb>
         </DefaultRoute>
-      </WalletModalContext>
+      </WalletModalContextProvider>
     </WebUIContextProvider>
   );
 }

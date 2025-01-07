@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { persistor, store, StoreName } from '@subwallet/extension-web-ui/stores';
-import { getDAppsData, getMissionPoolData, subscribeAccountsData, subscribeAddressBook, subscribeAssetLogoMaps, subscribeAssetRegistry, subscribeAssetSettings, subscribeAuthorizeRequests, subscribeAuthUrls, subscribeBalance, subscribeBuyServices, subscribeBuyTokens, subscribeCampaignPopupVisibility, subscribeChainInfoMap, subscribeChainLogoMaps, subscribeChainStateMap, subscribeChainStatusMap, subscribeConfirmationRequests, subscribeConnectWCRequests, subscribeCrowdloan, subscribeKeyringState, subscribeLedgerGenericAllowNetworks, subscribeMantaPayConfig, subscribeMantaPaySyncingState, subscribeMetadataRequests, subscribeMultiChainAssetMap, subscribeNftCollections, subscribeNftItems, subscribePrice, subscribeProcessingCampaign, subscribeRewardHistory, subscribeSigningRequests, subscribeSwapPairs, subscribeTransactionRequests, subscribeTxHistory, subscribeUiSettings, subscribeWalletConnectSessions, subscribeWCNotSupportRequests, subscribeXcmRefMap, subscribeYieldMinAmountPercent, subscribeYieldPoolInfo, subscribeYieldPositionInfo, subscribeYieldReward } from '@subwallet/extension-web-ui/stores/utils';
+import { getDAppsData, getMissionPoolData, subscribeAccountsData, subscribeAddressBook, subscribeAssetLogoMaps, subscribeAssetRegistry, subscribeAssetSettings, subscribeAuthorizeRequests, subscribeAuthUrls, subscribeBalance, subscribeBuyServices, subscribeBuyTokens, subscribeCampaignPopupVisibility, subscribeChainInfoMap, subscribeChainLogoMaps, subscribeChainStateMap, subscribeChainStatusMap, subscribeConfirmationRequests, subscribeConfirmationRequestsTon, subscribeConnectWCRequests, subscribeCrowdloan, subscribeKeyringState, subscribeLedgerGenericAllowNetworks, subscribeMantaPayConfig, subscribeMantaPaySyncingState, subscribeMetadataRequests, subscribeMultiChainAssetMap, subscribeNftCollections, subscribeNftItems, subscribePrice, subscribeProcessingCampaign, subscribeRewardHistory, subscribeSigningRequests, subscribeSwapPairs, subscribeTransactionRequests, subscribeTxHistory, subscribeUiSettings, subscribeUnreadNotificationCount, subscribeWalletConnectSessions, subscribeWCNotSupportRequests, subscribeXcmRefMap, subscribeYieldMinAmountPercent, subscribeYieldPoolInfo, subscribeYieldPositionInfo, subscribeYieldReward } from '@subwallet/extension-web-ui/stores/utils';
 import Bowser from 'bowser';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -223,6 +223,7 @@ export const DataContextProvider = ({ children }: DataContextProviderProps) => {
   _DataContext.addHandler({ ...subscribeMetadataRequests, name: 'subscribeMetadataRequests', relatedStores: ['requestState'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeSigningRequests, name: 'subscribeSigningRequests', relatedStores: ['requestState'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeConfirmationRequests, name: 'subscribeConfirmationRequests', relatedStores: ['requestState'], isStartImmediately: true });
+  _DataContext.addHandler({ ...subscribeConfirmationRequestsTon, name: 'subscribeConfirmationRequestsTon', relatedStores: ['requestState'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeTransactionRequests, name: 'subscribeTransactionRequests', relatedStores: ['requestState'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeConnectWCRequests, name: 'subscribeConnectWCRequests', relatedStores: ['requestState'], isStartImmediately: true });
   _DataContext.addHandler({ ...subscribeWCNotSupportRequests, name: 'subscribeWCNotSupportRequests', relatedStores: ['requestState'], isStartImmediately: true });
@@ -248,6 +249,9 @@ export const DataContextProvider = ({ children }: DataContextProviderProps) => {
 
   // Swap
   _DataContext.addHandler({ ...subscribeSwapPairs, name: 'subscribeSwapPairs', relatedStores: ['swap'] });
+
+  // Notification
+  _DataContext.addHandler({ ...subscribeUnreadNotificationCount, name: 'subscribeUnreadNotificationCount', relatedStores: ['notification'], isStartImmediately: true });
 
   return <Provider store={store}>
     <PersistGate persistor={persistor}>
