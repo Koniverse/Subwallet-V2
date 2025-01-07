@@ -2030,17 +2030,17 @@ export class ChainService {
   public async updatePopularAssetsByChain (chainSlug: string, visible: boolean) {
     const currentAssetSettings = await this.getAssetSettings();
     const assetsByChain = this.getFungibleTokensByChain(chainSlug);
-    const popularTokensMap = this.popularTokensSubject.value || {};
+    const priorityTokensMap = this.priorityTokensSubject.value || {};
 
-    const popularTokensList = Object.values(popularTokensMap).flatMap((tokenData) =>
-      Object.keys(tokenData.tokens)
+    const priorityTokensList = Object.values(priorityTokensMap).flatMap((tokenData) =>
+      Object.keys(tokenData.priorityTokens)
     );
 
     let popularTokenFound = false;
 
     for (const asset of Object.values(assetsByChain)) {
       if (visible) {
-        const isPopularToken = popularTokensList.includes(asset.slug);
+        const isPopularToken = priorityTokensList.includes(asset.slug);
 
         if (isPopularToken) {
           currentAssetSettings[asset.slug] = { visible: true };
