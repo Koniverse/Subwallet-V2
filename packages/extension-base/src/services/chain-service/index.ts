@@ -47,7 +47,9 @@ const ignoredList = [
   'core',
   'satoshivm',
   'satoshivm_testnet',
-  'storyPartner_testnet'
+  'storyPartner_testnet',
+  'tangle',
+  'laos_network',
 ];
 
 const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
