@@ -895,6 +895,14 @@ export default class KoniState {
     return this.chainService.enableChain(chainSlug);
   }
 
+  public async enableChainWithPopularAssets (chainSlug: string, enableTokens = true): Promise<boolean> {
+    if (enableTokens) {
+      await this.chainService.updatePopularAssetsByChain(chainSlug, true);
+    }
+
+    return this.chainService.enableChain(chainSlug);
+  }
+
   public resetDefaultChains () {
     const defaultChains = this.getDefaultNetworkKeys();
 

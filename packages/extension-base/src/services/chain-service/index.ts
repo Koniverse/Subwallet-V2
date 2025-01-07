@@ -2027,6 +2027,39 @@ export class ChainService {
     this.setAssetSettings(assetSettings);
   }
 
+  public async updatePopularAssetsByChain (chainSlug: string, visible: boolean) {
+    const currentAssetSettings = await this.getAssetSettings();
+    const assetsByChain = this.getFungibleTokensByChain(chainSlug);
+    const popularTokensMap = this.popularTokensSubject.value || {};
+
+    const popularTokensList = Object.values(popularTokensMap).flatMap((tokenData) =>
+      Object.keys(tokenData.tokens)
+    );
+
+    let popularTokenFound = false;
+
+    for (const asset of Object.values(assetsByChain)) {
+      if (visible) {
+        const isPopularToken = popularTokensList.includes(asset.slug);
+
+        if (isPopularToken) {
+          currentAssetSettings[asset.slug] = { visible: true };
+          popularTokenFound = true;
+        }
+      } else {
+        currentAssetSettings[asset.slug] = { visible: false };
+      }
+    }
+
+    if (!popularTokenFound && visible) {
+      const nativeTokenInfo = this.getNativeTokenInfo(chainSlug);
+
+      currentAssetSettings[nativeTokenInfo.slug] = { visible: true };
+    }
+
+    this.setAssetSettings(currentAssetSettings);
+  }
+
   public subscribeAssetSettings () {
     return this.assetSettingSubject;
   }
