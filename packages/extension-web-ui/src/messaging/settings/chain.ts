@@ -24,7 +24,7 @@ export async function removeChain (networkKey: string): Promise<boolean> {
 
 export async function updateChainActiveState (chain: string, active: boolean): Promise<boolean> {
   if (active) {
-    return await enableChainWithPopularAssets(chain);
+    return await enableChainWithPriorityAssets(chain);
   } else {
     return await disableChain(chain);
   }

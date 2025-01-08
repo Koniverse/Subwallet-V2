@@ -35,7 +35,7 @@ export default class DisableZeroBalanceTokens extends BaseMigrationJob {
       // Extract the slugs of tokens with balance > 0
       const nonZeroBalanceSlugs = new Set(balanceNonZero.map((item) => item.tokenSlug));
 
-      const updatedSettings = structuredClone(filteredEnabledTokens);
+      const updatedSettings = structuredClone(tokensList);
 
       Object.keys(filteredEnabledTokens).forEach((slug) => {
         const originAsset = state.chainService.getAssetBySlug(slug);
