@@ -5,6 +5,7 @@ import { RequestMigrateSoloAccount, RequestMigrateUnifiedAndFetchEligibleSoloAcc
 import { AccountBaseHandler } from '@subwallet/extension-base/services/keyring-service/context/handlers/Base';
 import { AccountChainType, AccountProxy, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
 import { createAccountProxyId, getDefaultKeypairTypeFromAccountChainType, getSuri } from '@subwallet/extension-base/utils';
+import { generateRandomString } from '@subwallet/extension-base/utils/getId';
 import { keyring } from '@subwallet/ui-keyring';
 
 import { keyExtractSuri } from '@polkadot/util-crypto';
@@ -222,7 +223,7 @@ export class AccountMigrationHandler extends AccountBaseHandler {
         const suri = getSuri(mnemonic, type);
         const { derivePath } = keyExtractSuri(suri);
         const metadata = {
-          name: accountName,
+          name: accountName.concat(' - ').concat(generateRandomString()),
           derivationPath: derivePath ? derivePath.substring(1) : undefined
         };
 
