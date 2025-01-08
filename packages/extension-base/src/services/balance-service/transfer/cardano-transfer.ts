@@ -4,6 +4,7 @@
 import * as csl from '@emurgo/cardano-serialization-lib-nodejs';
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { fetchUnsignedPayload } from '@subwallet/extension-base/services/backend-controller/cardano';
+import { CardanoTxJson } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
 import { estimateCardanoTxFee, splitCardanoId } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _CardanoApi } from '@subwallet/extension-base/services/chain-service/types';
 
@@ -27,31 +28,6 @@ export interface CardanoTransactionConfig {
   cardanoTtlOffset: number,
   estimateCardanoFee: string,
   cardanoPayload: string // hex unsigned tx
-}
-
-export interface CardanoTxJson {
-  body: {
-    inputs: CardanoTxInput[],
-    outputs: CardanoTxOutput[],
-    fee: string,
-    ttl: string
-  }
-  witness_set: any,
-  is_valid: any,
-  auxiliary_data: any
-}
-
-interface CardanoTxOutput {
-  address: string,
-  amount: {
-    coin: string,
-    multiasset: Record<string, Record<string, string>>;
-  }
-}
-
-interface CardanoTxInput {
-  transaction_id: string,
-  index: number
 }
 
 export async function createCardanoTransaction (params: CardanoTransactionConfigProps): Promise<[CardanoTransactionConfig | null, string]> {
