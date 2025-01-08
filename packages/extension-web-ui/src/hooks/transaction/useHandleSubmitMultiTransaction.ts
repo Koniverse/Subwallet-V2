@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { AmountData } from '@subwallet/extension-base/background/KoniTypes';
+import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { useTransactionContext } from '@subwallet/extension-web-ui/hooks';
 import { CommonActionType, CommonProcessAction } from '@subwallet/extension-web-ui/reducer';
@@ -10,7 +11,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useNotification, useTranslation } from '../common';
 
-const useHandleSubmitMultiTransaction = (dispatchProcessState: (value: CommonProcessAction) => void, setIgnoreWarnings?: (value: boolean) => void, handleDataForInsufficientAlert?: (estimateFee: AmountData) => Record<string, string>) => {
+const useHandleSubmitMultiTransaction = (dispatchProcessState: (value: CommonProcessAction) => void, handleWarning?: (value: TransactionWarning[]) => void, handleDataForInsufficientAlert?: (estimateFee: AmountData) => Record<string, string>) => {
   const notify = useNotification();
   const { t } = useTranslation();
 
@@ -60,10 +61,11 @@ const useHandleSubmitMultiTransaction = (dispatchProcessState: (value: CommonPro
             }
 
             if (!_errors.length) {
-              warnings[0] && setIgnoreWarnings?.(true);
+              handleWarning?.(warnings);
             } else {
               // hideAll();
               onError(_errors[0]);
+              handleWarning?.([]);
             }
 
             return false;
@@ -93,7 +95,7 @@ const useHandleSubmitMultiTransaction = (dispatchProcessState: (value: CommonPro
         return false;
       };
     },
-    [dispatchProcessState, notify, onDone, onError, setIgnoreWarnings, t]
+    [dispatchProcessState, notify, onDone, onError, handleWarning, t]
   );
 
   return useMemo(() => ({

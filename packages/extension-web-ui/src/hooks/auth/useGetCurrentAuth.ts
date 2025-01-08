@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AuthUrlInfo } from '@subwallet/extension-base/background/handlers/State';
+import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
 import { useGetCurrentTab } from '@subwallet/extension-web-ui/hooks/auth/useGetCurrentTab';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { useMemo } from 'react';

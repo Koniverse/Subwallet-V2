@@ -6,7 +6,6 @@ import { MantaPayConfig } from '@subwallet/extension-base/background/KoniTypes';
 import { _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX } from '@subwallet/extension-base/services/chain-service/constants';
 import { _getMultiChainAsset, _isAssetFungibleToken, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson } from '@subwallet/extension-base/types';
-import { AccountSelectorModalId } from '@subwallet/extension-web-ui/components/Modal/AccountSelectorModal';
 import { RECEIVE_QR_MODAL, RECEIVE_TOKEN_SELECTOR_MODAL, WARNING_LEDGER_RECEIVE_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { useConfirmModal, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { useChainAssets } from '@subwallet/extension-web-ui/hooks/assets';
@@ -63,6 +62,9 @@ function isMantaPayEnabled (account: AccountJson | null, configs: MantaPayConfig
   return false;
 }
 
+const AccountSelectorModalId = 'accountSelectorModalId';
+
+// todo: deprecated, will remove
 export default function useReceiveQR (tokenGroupSlug?: string) {
   const { t } = useTranslation();
   const { activeModal, inactiveModal } = useContext(ModalContext);

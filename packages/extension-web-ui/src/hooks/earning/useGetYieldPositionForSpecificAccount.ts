@@ -2,28 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { YieldPositionInfo } from '@subwallet/extension-base/types';
-import { isAccountAll, isSameAddress } from '@subwallet/extension-base/utils';
-import { useGetChainSlugsByAccountType, useSelector } from '@subwallet/extension-web-ui/hooks';
+import { isSameAddress } from '@subwallet/extension-base/utils';
+import { useGetChainSlugsByAccount, useSelector } from '@subwallet/extension-web-ui/hooks';
 import BigN from 'bignumber.js';
 import { useMemo } from 'react';
 
-const useGetYieldPositionForSpecificAccount = (_address?: string): YieldPositionInfo[] => {
+const useGetYieldPositionForSpecificAccount = (address?: string): YieldPositionInfo[] => {
   const poolInfoMap = useSelector((state) => state.earning.poolInfoMap);
   const yieldPositions = useSelector((state) => state.earning.yieldPositions);
-  const currentAccount = useSelector((state) => state.accountState.currentAccount);
-  const chainsByAccountType = useGetChainSlugsByAccountType();
+  const isAllAccount = useSelector((state) => state.accountState.isAllAccount);
+  const currentAccountProxy = useSelector((state) => state.accountState.currentAccountProxy);
+  const chainsByAccountType = useGetChainSlugsByAccount();
 
   return useMemo(() => {
     const infoSpecificList: YieldPositionInfo[] = [];
 
-    const address = _address || currentAccount?.address || '';
-    const isAll = isAccountAll(address);
-
     const checkAddress = (item: YieldPositionInfo) => {
-      if (isAll) {
+      if (isAllAccount) {
+        if (address) {
+          return isSameAddress(address, item.address);
+        }
+
         return true;
       } else {
-        return isSameAddress(address, item.address);
+        return currentAccountProxy?.accounts.some(({ address: _address }) => {
+          const compareAddress = address ? isSameAddress(address, _address) : true;
+
+          return compareAddress && isSameAddress(_address, item.address);
+        });
       }
     };
 
@@ -39,7 +45,7 @@ const useGetYieldPositionForSpecificAccount = (_address?: string): YieldPosition
     }
 
     return infoSpecificList;
-  }, [_address, chainsByAccountType, currentAccount?.address, poolInfoMap, yieldPositions]);
+  }, [address, chainsByAccountType, currentAccountProxy?.accounts, isAllAccount, poolInfoMap, yieldPositions]);
 };
 
 export default useGetYieldPositionForSpecificAccount;

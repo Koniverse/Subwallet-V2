@@ -7,7 +7,7 @@ import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning
 import { calculateReward } from '@subwallet/extension-base/services/earning-service/utils';
 import { YieldPoolInfo, YieldPoolType } from '@subwallet/extension-base/types';
 import { BN_TEN, BN_ZERO } from '@subwallet/extension-web-ui/constants';
-import { useAccountBalance, useGetChainSlugsByCurrentAccount, useSelector, useTokenGroup } from '@subwallet/extension-web-ui/hooks';
+import { useAccountBalance, useGetChainSlugsByAccount, useSelector, useTokenGroup } from '@subwallet/extension-web-ui/hooks';
 import { BalanceValueInfo, YieldGroupInfo } from '@subwallet/extension-web-ui/types';
 import { isRelatedToAstar } from '@subwallet/extension-web-ui/utils';
 import BigN from 'bignumber.js';
@@ -46,7 +46,7 @@ const useYieldGroupInfo = (): YieldGroupInfo[] => {
   const { poolInfoMap } = useSelector((state) => state.earning);
   const { assetRegistry, multiChainAssetMap } = useSelector((state) => state.assetRegistry);
   const { chainInfoMap } = useSelector((state) => state.chainStore);
-  const chainsByAccountType = useGetChainSlugsByCurrentAccount();
+  const chainsByAccountType = useGetChainSlugsByAccount();
   const { tokenGroupMap } = useTokenGroup(chainsByAccountType);
   const { tokenBalanceMap, tokenGroupBalanceMap } = useAccountBalance(tokenGroupMap, true);
   const { priceMap } = useSelector((state) => state.price);

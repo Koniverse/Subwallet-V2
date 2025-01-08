@@ -1,13 +1,9 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import type { KeypairType } from '@subwallet/keyring/types';
+
 import { AccountActions, AccountProxyType } from '@subwallet/extension-base/types';
-
-import { KeypairType } from '@polkadot/util-crypto/types';
-
-export interface NewSeedPhraseState {
-  accountTypes: KeypairType[];
-}
 
 export interface WordItem {
   index: number;
