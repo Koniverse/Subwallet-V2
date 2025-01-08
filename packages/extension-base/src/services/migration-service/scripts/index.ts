@@ -66,7 +66,7 @@ export default <Record<string, typeof BaseMigrationJob>>{
   '1.2.14-01': ClearMetadataDatabase,
   '1.2.32-01': MigratePairData,
   '1.3.6-01': MigrateTransactionHistoryBridge,
-  '1.3.12': DisableZeroBalanceTokens
+  '1.3.12-01': DisableZeroBalanceTokens
   // [`${EVERYTIME}-1.1.42-02`]: MigrateTransactionHistoryBySymbol
   // [`${EVERYTIME}-1`]: AutoEnableChainsTokens
 };
