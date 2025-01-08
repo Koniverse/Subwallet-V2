@@ -1,9 +1,9 @@
-    2908	AnhMTV                        	Release version 1.3.10
-    2551	Nam Phạm                      	
-    2376	S2kael                        	[Issue-3713] Fix cannot transfer TON
+    2922	AnhMTV                        	Release version 1.3.12
+    2552	Nam Phạm                      	[Issue 3855] test: add log
+    2387	S2kael                        	
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
-     490	bluezdot                      	[Issue-3888] build: update version @galacticcouncil/sdk to 5.1.0
+     492	bluezdot                      	
      465	Jaco                          	0.42.5 (#969)
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
@@ -12,23 +12,23 @@
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
+      99	PDTnhah                       	[Issue-3897] Update chainlist
       96	lw                            	
-      89	PDTnhah                       	[Issue 3896] Extension - Unable to transfer local token on Bifrost
+      94	tunghp2002                    	[Update] Refactor code
       83	Hieu Dao                      	Update README.md
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
       74	bluedot                       	[Issue-3888] build: upgrade version polkadot api
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      53	tunghp2002                    	[Update] Hide Max Button ETH <-> Polygonzkevm
       26	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
        7	Ivan Rukhavets                	Mention derivation in FAQ (#334)
+       6	tunghp2002                    	
        6	unknown                       	refactor code
        5	anhnhu                        	[issue-2231]: add condition branch_name webapp-dev auto increase run scripts change build number
-       5	tunghp2002                    	
        4	Amaury Martiny                	PostMessageProvider with on('connected' | 'disconnected') (#279)
        4	namph                         	update UI for nft
        4	Quangdm-cdm                   	

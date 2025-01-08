@@ -798,6 +798,7 @@ export interface CreateHardwareAccountItem {
   name: string;
   isEthereum: boolean;
   isGeneric: boolean;
+  isLedgerRecovery?: boolean;
 }
 
 export interface RequestAccountCreateHardwareV2 extends CreateHardwareAccountItem {
@@ -1296,6 +1297,8 @@ export interface LedgerNetwork {
   isEthereum: boolean;
   /** Hide networks that are supported by the dot migration app */
   isHide?: boolean;
+  /** Recovery app */
+  isRecovery?: boolean;
   /** Slip44 in the derivation path */
   slip44: number;
 }
