@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
-import { AccountJson } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountJson } from '@subwallet/extension-base/types';
 import { isSameAddress } from '@subwallet/extension-base/utils';
 import { AccountItemWithProxyAvatar, AccountProxySelectorAllItem, AlertBox } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
@@ -24,6 +24,7 @@ interface Props extends ThemeProps {
   selectedAccounts: string[];
   appliedAccounts: string[];
   availableAccounts: AccountJson[];
+  accountType: AccountChainType;
   onSelectAccount: (account: string, applyImmediately?: boolean) => VoidFunction;
   useModal: boolean;
   onApply: () => void;
@@ -33,7 +34,7 @@ interface Props extends ThemeProps {
 const renderEmpty = () => <GeneralEmptyList />;
 
 const Component: React.FC<Props> = (props: Props) => {
-  const { appliedAccounts, availableAccounts, className, id, namespace, onApply, onCancel, onSelectAccount, selectedAccounts, useModal } = props;
+  const { accountType, appliedAccounts, availableAccounts, className, id, onApply, onCancel, onSelectAccount, selectedAccounts, useModal } = props;
 
   const { t } = useTranslation();
 
@@ -44,26 +45,26 @@ const Component: React.FC<Props> = (props: Props) => {
   const isActive = checkActive(id);
 
   const noAccountTitle = useMemo(() => {
-    switch (namespace) {
-      case 'polkadot':
+    switch (accountType) {
+      case AccountChainType.SUBSTRATE:
         return t('No available Substrate account');
-      case 'eip155':
+      case AccountChainType.ETHEREUM:
         return t('No available EVM account');
       default:
         return t('No available account');
     }
-  }, [namespace, t]);
+  }, [accountType, t]);
 
   const noAccountDescription = useMemo(() => {
-    switch (namespace) {
-      case 'polkadot':
+    switch (accountType) {
+      case AccountChainType.SUBSTRATE:
         return t("You don't have any Substrate account to connect. Please create one or skip this step by hitting Cancel.");
-      case 'eip155':
+      case AccountChainType.ETHEREUM:
         return t("You don't have any EVM account to connect. Please create one or skip this step by hitting Cancel.");
       default:
         return t("You don't have any account to connect. Please create one or skip this step by hitting Cancel.");
     }
-  }, [namespace, t]);
+  }, [accountType, t]);
 
   const basicProxyAccounts = useMemo(() => {
     return availableAccounts.map(({ name, proxyId }) => ({ name, id: proxyId || '' }));

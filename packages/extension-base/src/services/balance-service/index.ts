@@ -17,6 +17,7 @@ import { addLazy, createPromiseHandler, isAccountAll, PromiseHandler, waitTimeou
 import { getKeypairTypeByAddress } from '@subwallet/keyring';
 import { EthereumKeypairTypes, SubstrateKeypairTypes } from '@subwallet/keyring/types';
 import keyring from '@subwallet/ui-keyring';
+import BigN from 'bignumber.js';
 import { t } from 'i18next';
 import { BehaviorSubject } from 'rxjs';
 
@@ -189,7 +190,14 @@ export class BalanceService implements StoppableServiceInterface {
   }
 
   /** Subscribe token free balance of an address on chain */
-  public async subscribeTransferableBalance (address: string, chain: string, tokenSlug: string | undefined, extrinsicType?: ExtrinsicType, callback?: (rs: AmountData) => void): Promise<[() => void, AmountData]> {
+  public async subscribeBalance (
+    address: string,
+    chain: string,
+    tokenSlug: string | undefined,
+    balanceType: 'transferable' | 'total' | 'keepAlive' = 'transferable',
+    extrinsicType?: ExtrinsicType,
+    callback?: (rs: AmountData) => void
+  ): Promise<[() => void, AmountData]> {
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
     const chainState = this.state.chainService.getChainStateByKey(chain);
 
@@ -219,10 +227,20 @@ export class BalanceService implements StoppableServiceInterface {
       unsub = subscribeBalance([address], [chain], [tSlug], assetMap, chainInfoMap, substrateApiMap, evmApiMap, tonApiMap, cardanoApiMap, (result) => {
         const rs = result[0];
 
+        let value: string;
+
+        switch (balanceType) {
+          case 'total':
+            value = new BigN(rs.free).plus(new BigN(rs.locked)).toFixed();
+            break;
+          default:
+            value = rs.free;
+        }
+
         if (rs.tokenSlug === tSlug && rs.state !== APIItemState.PENDING) {
           hasError = false;
           const balance: AmountData = {
-            value: rs.free,
+            value,
             decimals: tokenInfo.decimals || 0,
             symbol: tokenInfo.symbol,
             metadata: rs.metadata
@@ -248,6 +266,14 @@ export class BalanceService implements StoppableServiceInterface {
     });
   }
 
+  public async subscribeTransferableBalance (address: string, chain: string, tokenSlug: string | undefined, extrinsicType?: ExtrinsicType, callback?: (rs: AmountData) => void): Promise<[() => void, AmountData]> {
+    return this.subscribeBalance(address, chain, tokenSlug, 'transferable', extrinsicType, callback);
+  }
+
+  public async subscribeTotalBalance (address: string, chain: string, tokenSlug: string | undefined, extrinsicType?: ExtrinsicType, callback?: (rs: AmountData) => void): Promise<[() => void, AmountData]> {
+    return this.subscribeBalance(address, chain, tokenSlug, 'total', extrinsicType, callback);
+  }
+
   /**
    * @public
    * @async
@@ -261,6 +287,12 @@ export class BalanceService implements StoppableServiceInterface {
    */
   public async getTransferableBalance (address: string, chain: string, tokenSlug?: string, extrinsicType?: ExtrinsicType): Promise<AmountData> {
     const [, balance] = await this.subscribeTransferableBalance(address, chain, tokenSlug, extrinsicType);
+
+    return balance;
+  }
+
+  public async getTotalBalance (address: string, chain: string, tokenSlug?: string, extrinsicType?: ExtrinsicType): Promise<AmountData> {
+    const [, balance] = await this.subscribeTotalBalance(address, chain, tokenSlug, extrinsicType);
 
     return balance;
   }

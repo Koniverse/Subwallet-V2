@@ -9,9 +9,11 @@ import SwapLayout from '@subwallet/extension-koni-ui/Popup/Home/History/Detail/p
 import { ThemeProps, TransactionHistoryDisplayItem } from '@subwallet/extension-koni-ui/types';
 import { formatHistoryDate, isAbleToShowFee, toShort } from '@subwallet/extension-koni-ui/utils';
 import CN from 'classnames';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+
+import { hexAddPrefix, isHex } from '@polkadot/util';
 
 import HistoryDetailAmount from './Amount';
 import HistoryDetailFee from './Fee';
@@ -27,6 +29,12 @@ const Component: React.FC<Props> = (props: Props) => {
   const { t } = useTranslation();
 
   const { language } = useSelector((state) => state.settings);
+
+  const extrinsicHash = useMemo(() => {
+    const hash = data.extrinsicHash || '';
+
+    return isHex(hexAddPrefix(hash)) ? toShort(data.extrinsicHash, 8, 9) : '...';
+  }, [data.extrinsicHash]);
 
   if (data.type === ExtrinsicType.SWAP) {
     return (
@@ -47,7 +55,7 @@ const Component: React.FC<Props> = (props: Props) => {
         statusName={t(HistoryStatusMap[data.status].name)}
         valueColorSchema={HistoryStatusMap[data.status].schema}
       />
-      <MetaInfo.Default label={t('Extrinsic hash')}>{(data.extrinsicHash || '').startsWith('0x') ? toShort(data.extrinsicHash, 8, 9) : '...'}</MetaInfo.Default>
+      <MetaInfo.Default label={t('Extrinsic hash')}>{extrinsicHash}</MetaInfo.Default>
       <MetaInfo.Default label={t('Transaction time')}>{formatHistoryDate(data.time, language, 'detail')}</MetaInfo.Default>
       <HistoryDetailAmount data={data} />
 

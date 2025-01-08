@@ -25,7 +25,7 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
     conditions.push(ValidationCondition.IS_VALID_TON_ADDRESS_FORMAT);
   }
 
-  if (srcChain === destChainInfo.slug && isSendAction && !destChainInfo.tonInfo) {
+  if (srcChain === destChainInfo.slug && isSendAction && !destChainInfo.tonInfo && !destChainInfo.cardanoInfo) {
     conditions.push(ValidationCondition.IS_NOT_DUPLICATE_ADDRESS);
   }
 

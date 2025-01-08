@@ -71,7 +71,7 @@ export function validateNativeLocalTransferMetadata (chainAsset: _ChainAsset) {
   }
 
   const moonbeamGroup = ['moonbeam, moonbase, moonriver'];
-  const onChainInfoLocalGroup = [_TRANSFER_CHAIN_GROUP.centrifuge, ..._TRANSFER_CHAIN_GROUP.bitcountry, ..._TRANSFER_CHAIN_GROUP.acala, ..._TRANSFER_CHAIN_GROUP.kintsugi, 'pendulum', 'amplitude'];
+  const onChainInfoLocalGroup = [_TRANSFER_CHAIN_GROUP.centrifuge, ..._TRANSFER_CHAIN_GROUP.bitcountry, ..._TRANSFER_CHAIN_GROUP.acala, ..._TRANSFER_CHAIN_GROUP.kintsugi, 'pendulum', 'amplitude', 'bifrost', 'bifrost_dot'];
   const onChainInfoNativeGroup = [_TRANSFER_CHAIN_GROUP.centrifuge, ..._TRANSFER_CHAIN_GROUP.acala, ..._TRANSFER_CHAIN_GROUP.kintsugi];
   const assetIdLocalGroup = [..._TRANSFER_CHAIN_GROUP.statemine, ..._TRANSFER_CHAIN_GROUP.genshiro, ...moonbeamGroup, 'hydradx'];
   const assetIdNativeGroup = [..._TRANSFER_CHAIN_GROUP.sora_substrate, 'hydradx'];

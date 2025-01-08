@@ -302,11 +302,13 @@ export function _getTokenTypesSupportedByChain (chainInfo: _ChainInfo): _AssetTy
 }
 
 export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicTokenInfo {
+  const defaultTokenInfo = {
+    symbol: '',
+    decimals: -1
+  }
+
   if (!chainInfo) {
-    return {
-      symbol: '',
-      decimals: -1
-    };
+    return defaultTokenInfo;
   }
 
   if (chainInfo.substrateInfo) { // substrate by default
@@ -324,12 +326,14 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
       symbol: chainInfo.tonInfo.symbol,
       decimals: chainInfo.tonInfo.decimals
     };
+  } else if (chainInfo.cardanoInfo) {
+    return {
+      symbol: chainInfo.cardanoInfo.symbol,
+      decimals: chainInfo.cardanoInfo.decimals
+    }
   }
 
-  return {
-    symbol: '',
-    decimals: -1
-  };
+  return defaultTokenInfo;
 }
 
 export function _getChainNativeTokenSlug (chainInfo: _ChainInfo) {
@@ -624,8 +628,6 @@ export function updateLatestChainInfo (currentDataMap: _DataMap, latestChainInfo
 
     if (currentChainInfo) {
       needUpdate = true;
-      currentChainInfo.extraInfo = latestChainInfo.extraInfo;
-      currentChainInfo.chainStatus = latestChainInfo.chainStatus;
 
       if (Object.keys(currentChainInfo.providers).length === 0) {
         currentChainInfo.chainStatus = _ChainStatus.INACTIVE;

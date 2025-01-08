@@ -3,6 +3,7 @@
 
 import { WALLET_CONNECT_EIP155_NAMESPACE, WALLET_CONNECT_POLKADOT_NAMESPACE } from '@subwallet/extension-base/services/wallet-connect-service/constants';
 import { WalletConnectSessionRequest } from '@subwallet/extension-base/services/wallet-connect-service/types';
+import { AccountChainType } from '@subwallet/extension-base/types';
 import { AddNetworkWCModal, AlertBox, ConfirmationGeneralInfo, WCAccountSelect, WCNetworkSelected, WCNetworkSupported } from '@subwallet/extension-koni-ui/components';
 import { ADD_NETWORK_WALLET_CONNECT_MODAL, TIME_OUT_RECORD } from '@subwallet/extension-koni-ui/constants';
 import { useNotification, useSelectWalletConnectAccount, useSetSelectedAccountTypes } from '@subwallet/extension-koni-ui/hooks';
@@ -49,9 +50,9 @@ function Component ({ className, request }: Props) {
   const [blockAddNetwork, setBlockAddNetwork] = useState(false);
   const [networkNeedToImport, setNetworkNeedToImport] = useState<string[]>([]);
 
-  const nameSpaceNameMap = useMemo((): Record<string, string> => ({
-    [WALLET_CONNECT_EIP155_NAMESPACE]: t('EVM networks'),
-    [WALLET_CONNECT_POLKADOT_NAMESPACE]: t('Substrate networks')
+  const accountTypeNameMap = useMemo((): Record<string, string> => ({
+    [AccountChainType.ETHEREUM]: t('EVM accounts'),
+    [AccountChainType.SUBSTRATE]: t('Substrate accounts')
   }), [t]);
   const { activeModal, inactiveModal } = useContext(ModalContext);
 
@@ -73,8 +74,8 @@ function Component ({ className, request }: Props) {
     onApplyAccounts,
     onCancelSelectAccounts,
     onSelectAccount,
+    supportOneAccountType,
     supportOneChain,
-    supportOneNamespace,
     supportedChains } = useSelectWalletConnectAccount(params);
 
   const allowSubmit = useMemo(() => {
@@ -137,7 +138,10 @@ function Component ({ className, request }: Props) {
 
   const onConfirm = useCallback(() => {
     setLoading(true);
-    const selectedAccounts = Object.values(namespaceAccounts).map(({ appliedAccounts }) => appliedAccounts).flat();
+    const selectedAccounts = Object.values(namespaceAccounts)
+      .flatMap(({ appliedAccounts, networks }) => {
+        return networks.flatMap(({ wcChain }) => appliedAccounts.map((address) => `${wcChain}:${address}`));
+      });
 
     handleConfirm(request, selectedAccounts)
       .catch((e) => {
@@ -234,17 +238,17 @@ function Component ({ className, request }: Props) {
             <div className='namespaces-list'>
               {
                 Object.entries(namespaceAccounts).map(([namespace, value]) => {
-                  const { appliedAccounts, availableAccounts, networks, selectedAccounts } = value;
+                  const { accountType, appliedAccounts, availableAccounts, networks, selectedAccounts } = value;
 
                   return (
                     <div
-                      className={CN('namespace-container', { 'space-xs': !supportOneNamespace })}
+                      className={CN('namespace-container', { 'space-xs': !supportOneAccountType })}
                       key={namespace}
                     >
                       {!supportOneChain && (
                         <>
                           <div className='namespace-title'>
-                            {supportOneNamespace ? t('Networks') : nameSpaceNameMap[namespace]}
+                            {supportOneAccountType ? t('Networks') : accountTypeNameMap[namespace]}
                           </div>
                           <WCNetworkSelected
                             id={`${namespace}-networks`}
@@ -253,13 +257,14 @@ function Component ({ className, request }: Props) {
                         </>
                       )}
                       {
-                        supportOneNamespace && (
+                        supportOneAccountType && (
                           <div className='account-list-title'>
                             {t('Choose the account(s) you’d like to connect')}
                           </div>
                         )
                       }
                       <WCAccountSelect
+                        accountType={accountType}
                         appliedAccounts={appliedAccounts}
                         availableAccounts={availableAccounts}
                         id={`${namespace}-accounts`}
@@ -268,7 +273,7 @@ function Component ({ className, request }: Props) {
                         onCancel={onCancelModal(namespace)}
                         onSelectAccount={_onSelectAccount(namespace)}
                         selectedAccounts={selectedAccounts}
-                        useModal={!supportOneNamespace}
+                        useModal={!supportOneAccountType}
                       />
                     </div>
                   );

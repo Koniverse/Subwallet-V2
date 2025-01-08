@@ -94,6 +94,7 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
   const result: AccountActions[] = [];
   const meta = _meta as AccountMetadataData;
 
+  // todo: check this function for Cardano
   // JSON
   if (signMode === AccountSignMode.PASSWORD) {
     result.push(AccountActions.EXPORT_JSON);
@@ -215,7 +216,7 @@ const EVM_ACTIONS: ExtrinsicType[] = [
 ];
 
 const CLAIM_AVAIL_BRIDGE: ExtrinsicType[] = [
-  ExtrinsicType.CLAIM_AVAIL_BRIDGE
+  ExtrinsicType.CLAIM_BRIDGE
 ];
 
 const OTHER_ACTIONS: ExtrinsicType[] = [
@@ -255,6 +256,10 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         return [
           ...BASE_TRANSFER_ACTIONS
         ];
+      case AccountChainType.CARDANO:
+        return [
+          ...BASE_TRANSFER_ACTIONS
+        ];
     }
   } else if (signMode === AccountSignMode.QR) {
     switch (networkType) {
@@ -289,6 +294,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         ];
       case AccountChainType.TON:
         return [];
+      case AccountChainType.CARDANO:
+        return [];
     }
   } else if (signMode === AccountSignMode.GENERIC_LEDGER) {
     switch (networkType) {
@@ -318,6 +325,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         return [
           ...BASE_TRANSFER_ACTIONS
         ];
+      case AccountChainType.CARDANO:
+        return [];
     }
   } else if (signMode === AccountSignMode.LEGACY_LEDGER) { // Only for Substrate
     const result: ExtrinsicType[] = [];
@@ -381,6 +390,8 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
     case 'bitcoin-86':
     case 'bittest-86':
       return [_AssetType.NATIVE, _AssetType.RUNE, _AssetType.BRC20];
+    case 'cardano':
+      return [_AssetType.NATIVE, _AssetType.CIP26];
     default:
       return [];
   }
@@ -689,17 +700,10 @@ export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountP
   const specialChain: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialChain : undefined;
 
   for (const accountProxy of accountProxies) {
-    // Have 4 network types, but at the moment, we only support 3 network types
-    if (chainTypes.size === 3) {
-      break;
-    }
-
     for (const chainType of accountProxy.chainTypes) {
       chainTypes.add(chainType);
     }
-  }
 
-  for (const accountProxy of accountProxies) {
     for (const tokenType of accountProxy.tokenTypes) {
       tokenTypes.add(tokenType);
     }

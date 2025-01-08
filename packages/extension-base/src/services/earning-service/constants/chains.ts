@@ -27,3 +27,5 @@ export const ST_LIQUID_TOKEN_ABI: Record<string, any> = require('./abis/st_liqui
 
 export const MANTA_VALIDATOR_POINTS_PER_BLOCK = 20;
 export const MANTA_MIN_DELEGATION = 500;
+
+export const CHANNEL_ID = 7;

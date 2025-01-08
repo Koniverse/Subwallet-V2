@@ -63,7 +63,7 @@ const Component: React.FC = () => {
   const from = useWatchTransaction('from', form, defaultData);
   const chain = useWatchTransaction('chain', form, defaultData);
 
-  const { chainInfoMap } = useSelector((state) => state.chainStore);
+  const { chainInfoMap, ledgerGenericAllowNetworks } = useSelector((state) => state.chainStore);
   const { nftCollections, nftItems } = useSelector((state) => state.nft);
   const { accounts } = useSelector((state) => state.accountState);
   const [isBalanceReady, setIsBalanceReady] = useState(true);
@@ -104,8 +104,9 @@ const Component: React.FC = () => {
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SEND_NFT,
-      autoFormatValue });
-  }, [accounts, autoFormatValue, chainInfoMap, form]);
+      autoFormatValue,
+      allowLedgerGenerics: ledgerGenericAllowNetworks });
+  }, [accounts, autoFormatValue, chainInfoMap, form, ledgerGenericAllowNetworks]);
 
   const onValuesChange: FormCallbacks<SendNftParams>['onValuesChange'] = useCallback((part: Partial<SendNftParams>, values: SendNftParams) => {
     if (part.to) {

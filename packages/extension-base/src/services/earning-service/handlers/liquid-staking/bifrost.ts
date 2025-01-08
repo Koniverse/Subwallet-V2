@@ -5,7 +5,7 @@ import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/K
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { _STAKING_ERA_LENGTH_MAP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _getAssetDecimals, _getTokenOnChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
-import { fakeAddress } from '@subwallet/extension-base/services/earning-service/constants';
+import { CHANNEL_ID, fakeAddress } from '@subwallet/extension-base/services/earning-service/constants';
 import { BaseYieldStepDetail, EarningStatus, HandleYieldStepData, LiquidYieldPoolInfo, LiquidYieldPositionInfo, OptimalYieldPath, OptimalYieldPathParams, RuntimeDispatchInfo, SubmitYieldJoinData, TokenBalanceRaw, TransactionData, UnstakingInfo, UnstakingStatus, YieldPoolMethodInfo, YieldPositionInfo, YieldStepType, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { reformatAddress } from '@subwallet/extension-base/utils';
 import BigNumber from 'bignumber.js';
@@ -337,7 +337,7 @@ export default class BifrostLiquidStakingPoolHandler extends BaseLiquidStakingPo
     const defaultFeeTokenSlug = this.feeAssets[0];
 
     if (new BN(params.amount).gt(BN_ZERO)) {
-      const _mintFeeInfo = await poolOriginSubstrateApi.api.tx.vtokenMinting.mint(_getTokenOnChainInfo(inputTokenInfo), params.amount, undefined, undefined).paymentInfo(fakeAddress);
+      const _mintFeeInfo = await poolOriginSubstrateApi.api.tx.vtokenMinting.mint(_getTokenOnChainInfo(inputTokenInfo), params.amount, undefined, CHANNEL_ID).paymentInfo(fakeAddress);
       const mintFeeInfo = _mintFeeInfo.toPrimitive() as unknown as RuntimeDispatchInfo;
 
       return {
@@ -356,7 +356,7 @@ export default class BifrostLiquidStakingPoolHandler extends BaseLiquidStakingPo
     const substrateApi = await this.substrateApi.isReady;
     const inputTokenSlug = this.inputAsset;
     const inputTokenInfo = this.state.getAssetBySlug(inputTokenSlug);
-    const extrinsic = substrateApi.api.tx.vtokenMinting.mint(_getTokenOnChainInfo(inputTokenInfo), data.amount, undefined, undefined);
+    const extrinsic = substrateApi.api.tx.vtokenMinting.mint(_getTokenOnChainInfo(inputTokenInfo), data.amount, undefined, CHANNEL_ID);
 
     return {
       txChain: this.chain,

@@ -1273,7 +1273,6 @@
   "An error occurred when signing this request. Try again or contact support at agent@subwallet.app": "",
   "This sign method is not supported by SubWallet. Try again or contact support at agent@subwallet.app": "",
   "Method not supported": "",
-  "The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again": "",
   "Do you still want to get the address?": "",
   "Ledger {{ledgerApp}} accounts are NOT compatible with {{networkName}} network. Tokens will get stuck (i.e., can’t be transferred out or staked) when sent to this account type.": "",
   "This network is not yet supported on SubWallet. (Import the network)[https://docs.subwallet.app/main/extension-user-guide/customize-your-networks#import-networks] on SubWallet and try again": "",
@@ -1406,5 +1405,13 @@
   "Save settings": "",
   "Invalid asset ID": "",
   "Please type or paste an asset ID": "",
-  "Asset ID": ""
+  "Asset ID": "",
+  "Claim POLYGON bridge": "",
+  "The recipient account has less than {{amount}} {{nativeSymbol}}, which can lead to your {{localSymbol}} being lost. Change recipient account and try again": "",
+  "You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again": "",
+  "You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again": "",
+  "Unable to send. NFT not supported on recipient address": "",
+  "EVM accounts": "",
+  "Substrate accounts": "",
+  "Unable to process this swap at the moment. Try again later": ""
 }

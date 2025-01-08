@@ -61,7 +61,7 @@ function Component (props: Props): React.ReactElement<Props> {
           title: 'Claim tokens',
           icon: Gift
         };
-      case ExtrinsicType.CLAIM_AVAIL_BRIDGE:
+      case ExtrinsicType.CLAIM_BRIDGE:
         return {
           title: 'Claim tokens',
           icon: Coins

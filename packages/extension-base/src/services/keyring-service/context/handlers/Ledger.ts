@@ -86,7 +86,7 @@ export class AccountLedgerHandler extends AccountBaseHandler {
     const pairs: KeyringPair[] = [];
 
     for (const account of accounts) {
-      const { accountIndex, address, addressOffset, genesisHash, hardwareType, isEthereum, isGeneric, name, originGenesisHash } = account;
+      const { accountIndex, address, addressOffset, genesisHash, hardwareType, isEthereum, isGeneric, isLedgerRecovery, name, originGenesisHash } = account;
 
       const baseMeta: KeyringPair$Meta = {
         name,
@@ -95,7 +95,8 @@ export class AccountLedgerHandler extends AccountBaseHandler {
         addressOffset,
         genesisHash,
         originGenesisHash,
-        isGeneric
+        isGeneric,
+        isLedgerRecovery
       };
 
       const type = isEthereum ? 'ethereum' : 'sr25519';

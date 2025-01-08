@@ -3,6 +3,7 @@
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { CardanoTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/cardano-transfer';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
 import { SWTransaction } from '@subwallet/extension-base/services/transaction-service/types';
 
@@ -27,6 +28,12 @@ export const isTonTransaction = (tx: SWTransaction['transaction']): tx is TonTra
   const tonTransactionConfig = tx as TonTransactionConfig;
 
   return Boolean(tonTransactionConfig.messagePayload) && tonTransactionConfig.seqno >= 0;
+};
+
+export const isCardanoTransaction = (tx: SWTransaction['transaction']): tx is CardanoTransactionConfig => {
+  const cardanoTransactionConfig = tx as CardanoTransactionConfig;
+
+  return cardanoTransactionConfig.cardanoPayload !== null && cardanoTransactionConfig.cardanoPayload !== undefined;
 };
 
 const typeName = (type: SWTransaction['extrinsicType']) => {

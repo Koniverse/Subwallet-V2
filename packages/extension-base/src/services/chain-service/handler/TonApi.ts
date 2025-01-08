@@ -4,7 +4,7 @@
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { TON_CENTER_API_KEY, TON_OPCODES } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/consts';
 import { AccountState, TxByMsgResponse } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/types';
-import { getJettonTxStatus, retry } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { getJettonTxStatus, retryTonTxStatus } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _ApiOptions } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainConnectionStatus, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
@@ -201,7 +201,7 @@ export class TonApi implements _TonApi {
   }
 
   async getStatusByExtMsgHash (extMsgHash: string, extrinsicType?: ExtrinsicType): Promise<[boolean, string]> {
-    return retry<[boolean, string]>(async () => { // retry many times to get transaction status and transaction hex
+    return retryTonTxStatus<[boolean, string]>(async () => { // retry many times to get transaction status and transaction hex
       const externalTxInfoRaw = await this.getTxByInMsg(extMsgHash);
       const externalTxInfo = externalTxInfoRaw.transactions[0];
       const isExternalTxCompute = externalTxInfo.description.compute_ph.success;

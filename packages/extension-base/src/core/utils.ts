@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { LEDGER_GENERIC_ALLOW_NETWORKS } from '@subwallet/extension-base/core/consts';
 import { BalanceAccountType } from '@subwallet/extension-base/core/substrate/types';
 import { LedgerMustCheckType, ValidateRecipientParams } from '@subwallet/extension-base/core/types';
 import { tonAddressInfo } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
@@ -110,7 +109,7 @@ export function _isNotDuplicateAddress (validateRecipientParams: ValidateRecipie
 }
 
 export function _isSupportLedgerAccount (validateRecipientParams: ValidateRecipientParams): string {
-  const { account, destChainInfo } = validateRecipientParams;
+  const { account, allowLedgerGenerics, destChainInfo } = validateRecipientParams;
 
   if (account?.isHardware) {
     if (!account.isGeneric) {
@@ -125,7 +124,7 @@ export function _isSupportLedgerAccount (validateRecipientParams: ValidateRecipi
       // For ledger generic
       const ledgerCheck = ledgerMustCheckNetwork(account);
 
-      if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
+      if (ledgerCheck !== 'unnecessary' && !allowLedgerGenerics.includes(destChainInfo.slug)) {
         return `Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`;
       }
     }

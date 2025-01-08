@@ -57,7 +57,8 @@ export const _NFT_CHAIN_GROUP = {
   vara: ['vara_network'],
   avail: ['avail_mainnet'],
   ternoa: ['ternoa', 'ternoa_alphanet'],
-  rari: ['rari']
+  rari: ['rari'],
+  story_odyssey: ['storyOdyssey', 'storyOdyssey_testnet']
 };
 
 // Staking--------------------------------------------------------------------------------------------------------------
@@ -230,12 +231,12 @@ export const _TRANSFER_CHAIN_GROUP = {
   kintsugi: ['kintsugi', 'kintsugi_test', 'interlay', 'mangatax_para'],
   genshiro: ['genshiro_testnet', 'genshiro', 'equilibrium_parachain'],
   // crab: ['crab', 'pangolin'],
-  bitcountry: ['pioneer', 'bitcountry', 'bifrost', 'bifrost_dot'],
+  bitcountry: ['pioneer', 'bitcountry'],
   statemine: ['statemint', 'statemine', 'darwinia2', 'astar', 'shiden', 'shibuya', 'parallel', 'liberland', 'liberlandTest', 'dentnet', 'dbcchain'],
   riochain: ['riochain'],
   sora_substrate: ['sora_substrate'],
   avail: ['kate', 'goldberg_testnet'],
-  pendulum: ['pendulum', 'amplitude', 'amplitude_test', 'hydradx_main'],
+  pendulum: ['pendulum', 'amplitude', 'amplitude_test', 'hydradx_main', 'bifrost', 'bifrost_dot'],
   centrifuge: ['centrifuge'],
   disable_transfer: ['invarch', 'crab', 'pangolin']
 };
@@ -258,6 +259,7 @@ export const _XCM_CHAIN_GROUP = {
   xcmPallet: ['polkadot', 'kusama', 'rococo']
   // default is xTokens pallet
 };
+export const SUFFICIENT_CHAIN = ['astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain', 'pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam', 'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub'];
 
 export const _XCM_TYPE = {
   RP: `${_SubstrateChainType.RELAYCHAIN}-${_SubstrateChainType.PARACHAIN}`, // DMP

@@ -47,7 +47,7 @@ export const convertLedgerError = (err: Error, t: TFunction, network: string, is
   }
 
   if (message.includes('Data is invalid')) {
-    if (isGetAddress) {
+    if (!isGetAddress) {
       return {
         status: 'error',
         message: t('Unable to sign. Open “{{network}}” on Ledger, refresh and approve again', { replace: { network: network } })

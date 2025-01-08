@@ -1,14 +1,14 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { ClaimAvailBridgeNotificationMetadata, ClaimPolygonBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { SWTransactionResult } from '@subwallet/extension-base/services/transaction-service/types';
-import { RequestClaimAvailBridge } from '@subwallet/extension-base/types/avail-bridge';
+import { RequestClaimBridge } from '@subwallet/extension-base/types/bridge';
 import { CommonTransactionInfo, MetaInfo } from '@subwallet/extension-koni-ui/components';
 import { useGetChainAssetInfo, useGetNativeTokenBasicInfo, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { AlertDialogProps, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import CN from 'classnames';
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 export interface BaseTransactionConfirmationProps extends ThemeProps {
@@ -19,8 +19,29 @@ export interface BaseTransactionConfirmationProps extends ThemeProps {
 
 const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransactionConfirmationProps) => {
   const { className, transaction } = props;
-  const data = transaction.data as RequestClaimAvailBridge;
-  const metadata = data.notification.metadata as ClaimAvailBridgeNotificationMetadata;
+  const data = transaction.data as RequestClaimBridge;
+
+  const isPolygonBridge = useMemo(() => {
+    return data.notification?.actionType === 'CLAIM_POLYGON_BRIDGE';
+  }, [data.notification?.actionType]);
+
+  const metadata = useMemo(() => {
+    if (isPolygonBridge) {
+      return data?.notification?.metadata as ClaimPolygonBridgeNotificationMetadata;
+    }
+
+    return data?.notification?.metadata as ClaimAvailBridgeNotificationMetadata;
+  }, [isPolygonBridge, data.notification.metadata]);
+
+  const amountValue = useMemo(() => {
+    if (!isPolygonBridge && 'amount' in metadata) {
+      return metadata.amount;
+    } else if ('amounts' in metadata) {
+      return metadata.amounts[0];
+    }
+
+    return 0;
+  }, [isPolygonBridge, metadata]);
 
   const { t } = useTranslation();
 
@@ -43,7 +64,7 @@ const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransa
               decimals={claimToken.decimals || 0}
               label={t('Amount')}
               suffix={claimToken.symbol}
-              value={metadata.amount}
+              value={amountValue}
             />
           )
         }
@@ -58,8 +79,8 @@ const Component: React.FC<BaseTransactionConfirmationProps> = (props: BaseTransa
   );
 };
 
-const ClaimAvailBridgeTransactionConfirmation = styled(Component)<BaseTransactionConfirmationProps>(({ theme: { token } }: BaseTransactionConfirmationProps) => {
+const ClaimBridgeTransactionConfirmation = styled(Component)<BaseTransactionConfirmationProps>(({ theme: { token } }: BaseTransactionConfirmationProps) => {
   return {};
 });
 
-export default ClaimAvailBridgeTransactionConfirmation;
+export default ClaimBridgeTransactionConfirmation;

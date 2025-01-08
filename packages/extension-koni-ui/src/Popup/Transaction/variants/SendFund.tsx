@@ -9,10 +9,12 @@ import { _getXcmUnstableWarning, _isMythosFromHydrationToMythos, _isXcmTransferU
 import { ActionType } from '@subwallet/extension-base/core/types';
 import { getAvailBridgeGatewayContract, getSnowBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { isAvailChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
+import { _isPosChainBridge, _isPosChainL2Bridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, BasicTxWarningCode } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
@@ -150,7 +152,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const assetInfo = useFetchChainAssetInfo(assetValue);
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
 
-  const { chainInfoMap, chainStateMap, chainStatusMap } = useSelector((root) => root.chainStore);
+  const { chainInfoMap, chainStateMap, chainStatusMap, ledgerGenericAllowNetworks } = useSelector((root) => root.chainStore);
   const { assetRegistry, xcmRefMap } = useSelector((root) => root.assetRegistry);
   const { accounts } = useSelector((state: RootState) => state.accountState);
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
@@ -171,8 +173,20 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const hideMaxButton = useMemo(() => {
     const chainInfo = chainInfoMap[chainValue];
 
+    if (_isPolygonChainBridge(chainValue, destChainValue) || _isPosChainBridge(chainValue, destChainValue)) {
+      return true;
+    }
+
     return !!chainInfo && !!assetInfo && _isChainEvmCompatible(chainInfo) && destChainValue === chainValue && _isNativeToken(assetInfo);
   }, [chainInfoMap, chainValue, destChainValue, assetInfo]);
+
+  const disabledToAddressInput = useMemo(() => {
+    if (_isPosChainL2Bridge(chainValue, destChainValue)) {
+      return true;
+    }
+
+    return false;
+  }, [chainValue, destChainValue]);
 
   const [loading, setLoading] = useState(false);
   const [isTransferAll, setIsTransferAll] = useState(false);
@@ -284,10 +298,11 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const isNotShowAccountSelector = !isAllAccount && accountAddressItems.length < 2;
 
   const addressInputRef = useRef<AddressInputRef>(null);
+  const addressInputCurrent = addressInputRef.current;
 
   const updateAddressInputValue = useCallback((value: string) => {
-    addressInputRef.current?.setInputValue(value);
-    addressInputRef.current?.setSelectedOption((prev) => {
+    addressInputCurrent?.setInputValue(value);
+    addressInputCurrent?.setSelectedOption((prev) => {
       if (!prev) {
         return prev;
       }
@@ -297,7 +312,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         formatedAddress: value
       };
     });
-  }, []);
+  }, [addressInputCurrent]);
 
   const validateRecipient = useCallback((rule: Rule, _recipientAddress: string): Promise<void> => {
     const { chain, destChain, from } = form.getFieldsValue();
@@ -310,8 +325,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       toAddress: _recipientAddress,
       account,
       actionType: ActionType.SEND_FUND,
-      autoFormatValue });
-  }, [accounts, autoFormatValue, chainInfoMap, form]);
+      autoFormatValue,
+      allowLedgerGenerics: ledgerGenericAllowNetworks });
+  }, [accounts, autoFormatValue, chainInfoMap, form, ledgerGenericAllowNetworks]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     if (!amount) {
@@ -389,7 +405,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
       persistData(form.getFieldsValue());
     },
-    [form, assetRegistry, isTransferAll, persistData]
+    [persistData, form, assetRegistry, isTransferAll]
   );
 
   const isShowWarningOnSubmit = useCallback((values: TransferParams): boolean => {
@@ -550,8 +566,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     let checkTransferAll = false;
 
     const _doSubmit = async () => {
-      setLoading(true);
-
       if (values.chain !== values.destChain) {
         const originChainInfo = chainInfoMap[values.chain];
         const destChainInfo = chainInfoMap[values.destChain];
@@ -734,7 +748,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     };
 
     updateFromValue();
-  }, [accountAddressItems, form, fromValue]);
+  }, [accountAddressItems, disabledToAddressInput, form, fromValue]);
 
   // Get max transfer value
   useEffect(() => {
@@ -809,6 +823,23 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       });
   }, [assetValue, chainValue, destChainValue, fromValue, transferAmountValue]);
 
+  useEffect(() => {
+    if (disabledToAddressInput) {
+      const selectedItem = accountAddressItems.find((i) => i.address === fromValue);
+      const chainInfo = chainInfoMap[chainValue];
+      const reformatedInputValue = _reformatAddressWithChain(fromValue, chainInfo);
+
+      addressInputCurrent?.setInputValue?.(selectedItem?.address);
+      addressInputCurrent?.setSelectedOption?.({
+        address: selectedItem?.address || '',
+        formatedAddress: reformatedInputValue,
+        analyzedGroup: AnalyzedGroup.RECENT,
+        displayName: selectedItem?.accountName
+      });
+      form.setFieldValue('to', fromValue);
+    }
+  }, [accountAddressItems, addressInputCurrent, chainInfoMap, chainValue, disabledToAddressInput, form, fromValue]);
+
   useRestoreTransaction(form);
 
   return (
@@ -878,6 +909,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           >
             <AddressInputNew
               chainSlug={destChainValue}
+              disabled={disabledToAddressInput}
               dropdownHeight={isNotShowAccountSelector ? 317 : 257}
               key={addressInputRenderKey}
               label={`${t('To')}:`}

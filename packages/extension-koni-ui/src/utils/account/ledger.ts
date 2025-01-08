@@ -5,7 +5,7 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 import { LedgerNetwork } from '@subwallet/extension-base/background/KoniTypes';
 import { _ChainState } from '@subwallet/extension-base/services/chain-service/types';
 import { _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
-import { PredefinedLedgerNetwork } from '@subwallet/extension-koni-ui/constants/ledger';
+import { PredefinedLedgerNetwork, RECOVERY_SLUG } from '@subwallet/extension-koni-ui/constants/ledger';
 
 interface ChainItem extends _ChainState {
   isEthereum: boolean;
@@ -25,3 +25,5 @@ export const getSupportedLedger = (networkInfoMap: Record<string, _ChainInfo>, n
     return networkInfoItems.find((item) => ledgerNetwork.slug === item.slug || (ledgerNetwork.isEthereum && item.isEthereum));
   });
 };
+
+export const convertNetworkSlug = (network: LedgerNetwork) => network.slug.concat(network.isRecovery ? RECOVERY_SLUG : '');

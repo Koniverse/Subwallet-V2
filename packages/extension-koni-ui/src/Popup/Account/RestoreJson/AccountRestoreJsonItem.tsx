@@ -54,9 +54,10 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
       [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
       [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,
       [AccountChainType.BITCOIN]: logoMap.network.bitcoin as string,
-      [AccountChainType.TON]: logoMap.network.ton as string
+      [AccountChainType.TON]: logoMap.network.ton as string,
+      [AccountChainType.CARDANO]: logoMap.network.cardano as string
     };
-  }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
+  }, [logoMap.network.bitcoin, logoMap.network.cardano, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
   const _onSelect = useCallback(() => {
     onClick && onClick(accountProxyId || '');
   },
