@@ -27,7 +27,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
 
   /* Create seed */
   public async mnemonicCreateV2 ({ length = SEED_DEFAULT_LENGTH, mnemonic: _seed, type = 'general' }: RequestMnemonicCreateV2): Promise<ResponseMnemonicCreateV2> {
-    const types: KeypairType[] = type === 'general' ? ['sr25519', 'ethereum', 'ton'] : ['ton-native'];
+    const types: KeypairType[] = type === 'general' ? ['sr25519', 'ethereum', 'ton', 'cardano'] : ['ton-native'];
     const seed = _seed ||
     type === 'general'
       ? mnemonicGenerate(length)
@@ -89,7 +89,7 @@ export class AccountMnemonicHandler extends AccountBaseHandler {
     const addressDict = {} as Record<KeypairType, string>;
     let changedAccount = false;
     const hasMasterPassword = keyring.keyring.hasMasterPassword;
-    const types: KeypairType[] = type ? [type] : ['sr25519', 'ethereum', 'ton'];
+    const types: KeypairType[] = type ? [type] : ['sr25519', 'ethereum', 'ton', 'cardano'];
 
     if (!hasMasterPassword) {
       if (!password) {

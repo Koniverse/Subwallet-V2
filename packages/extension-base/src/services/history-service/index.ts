@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { ExtrinsicStatus, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainType, ExtrinsicStatus, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_RECOVER_HISTORY_INTERVAL } from '@subwallet/extension-base/constants';
 import { PersistDataServiceInterface, ServiceStatus, StoppableServiceInterface } from '@subwallet/extension-base/services/base/types';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
@@ -13,7 +13,7 @@ import { parseSubscanExtrinsicData, parseSubscanTransferData } from '@subwallet/
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { SubscanService } from '@subwallet/extension-base/services/subscan-service';
-import { categoryAddresses } from '@subwallet/extension-base/utils';
+import { getAddressesByChainType } from '@subwallet/extension-base/utils';
 import { createPromiseHandler } from '@subwallet/extension-base/utils/promise';
 import { keyring } from '@subwallet/ui-keyring';
 import { BehaviorSubject } from 'rxjs';
@@ -181,7 +181,8 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
 
   subscribeHistories (chain: string, proxyId: string, cb: (items: TransactionHistoryItem[]) => void) {
     const addresses = this.keyringService.context.getDecodedAddresses(proxyId, false);
-    const { evm, substrate } = categoryAddresses(addresses);
+    const evmAddresses = getAddressesByChainType(addresses, [ChainType.EVM]);
+    const substrateAddresses = getAddressesByChainType(addresses, [ChainType.SUBSTRATE]);
 
     const subscription = this.historySubject.subscribe((items) => {
       cb(items.filter(filterHistoryItemByAddressAndChain(chain, addresses)));
@@ -191,9 +192,9 @@ export class HistoryService implements StoppableServiceInterface, PersistDataSer
 
     if (_isChainSubstrateCompatible(chainInfo)) {
       if (_isChainEvmCompatible(chainInfo)) {
-        this.fetchSubscanTransactionHistory(chain, evm);
+        this.fetchSubscanTransactionHistory(chain, evmAddresses);
       } else {
-        this.fetchSubscanTransactionHistory(chain, substrate);
+        this.fetchSubscanTransactionHistory(chain, substrateAddresses);
       }
     }
 

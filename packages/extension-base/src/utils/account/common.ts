@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainInfo } from '@subwallet/chain-list/types';
+import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
 import { getAccountChainType } from '@subwallet/extension-base/utils';
-import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isTonAddress } from '@subwallet/keyring';
+import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isCardanoAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
 import { ethereumEncode, isEthereumAddress } from '@polkadot/util-crypto';
@@ -49,12 +50,12 @@ export function reformatAddress (address: string, networkPrefix = 42, isEthereum
   }
 }
 
-export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => {
+export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo): string => { // todo: check for cardano
   const chainType = _chainInfoToChainType(chainInfo);
 
   if (chainType === AccountChainType.SUBSTRATE) {
     return reformatAddress(address, _getChainSubstrateAddressPrefix(chainInfo));
-  } else if (chainType === AccountChainType.TON) {
+  } else if (chainType === AccountChainType.TON || chainType === AccountChainType.CARDANO) {
     const isTestnet = chainInfo.isTestnet;
 
     return reformatAddress(address, isTestnet ? 0 : 1);
@@ -69,35 +70,46 @@ export const getAccountChainTypeForAddress = (address: string): AccountChainType
   return getAccountChainType(type);
 };
 
-export function categoryAddresses (addresses: string[]): {
-  substrate: string[],
-  evm: string[],
-  ton: string[],
-  bitcoin: string[]
-} {
-  const substrate: string[] = [];
-  const evm: string[] = [];
-  const ton: string[] = [];
-  const bitcoin: string[] = [];
+interface AddressesByChainType {
+  [ChainType.SUBSTRATE]: string[],
+  [ChainType.EVM]: string[],
+  [ChainType.BITCOIN]: string[],
+  [ChainType.TON]: string[],
+  [ChainType.CARDANO]: string[]
+}
+
+export function getAddressesByChainType (addresses: string[], chainTypes: ChainType[]): string[] {
+  const addressByChainTypeMap = getAddressesByChainTypeMap(addresses);
+
+  return chainTypes.map((chainType) => {
+    return addressByChainTypeMap[chainType];
+  }).flat(); // todo: recheck
+}
+
+export function getAddressesByChainTypeMap (addresses: string[]): AddressesByChainType {
+  const addressByChainType: AddressesByChainType = {
+    substrate: [],
+    evm: [],
+    bitcoin: [],
+    ton: [],
+    cardano: []
+  };
 
   addresses.forEach((address) => {
     if (isEthereumAddress(address)) {
-      evm.push(address);
+      addressByChainType.evm.push(address);
     } else if (isTonAddress(address)) {
-      ton.push(address);
+      addressByChainType.ton.push(address);
     } else if (isBitcoinAddress(address)) {
-      bitcoin.push(address);
+      addressByChainType.bitcoin.push(address);
+    } else if (isCardanoAddress(address)) {
+      addressByChainType.cardano.push(address);
     } else {
-      substrate.push(address);
+      addressByChainType.substrate.push(address);
     }
   });
 
-  return {
-    bitcoin,
-    evm,
-    substrate,
-    ton
-  };
+  return addressByChainType;
 }
 
 export function quickFormatAddressToCompare (address?: string) {

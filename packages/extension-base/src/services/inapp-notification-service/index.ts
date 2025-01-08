@@ -3,7 +3,7 @@
 
 import { COMMON_ASSETS, COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainAsset } from '@subwallet/chain-list/types';
-import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
+import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { CRON_LISTEN_AVAIL_BRIDGE_CLAIM } from '@subwallet/extension-base/constants';
 import { fetchLastestRemindNotificationTime } from '@subwallet/extension-base/constants/remind-notification-time';
 import { CronServiceInterface, ServiceStatus } from '@subwallet/extension-base/services/base/types';
@@ -15,7 +15,7 @@ import { AvailBridgeSourceChain, AvailBridgeTransaction, fetchAllAvailBridgeClai
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import { GetNotificationParams, RequestSwitchStatusParams } from '@subwallet/extension-base/types/notification';
-import { categoryAddresses, formatNumber } from '@subwallet/extension-base/utils';
+import { formatNumber, getAddressesByChainType } from '@subwallet/extension-base/utils';
 import { isSubstrateAddress } from '@subwallet/keyring';
 
 export class InappNotificationService implements CronServiceInterface {
@@ -201,12 +201,14 @@ export class InappNotificationService implements CronServiceInterface {
 
   getCategorizedAddresses () {
     const addresses = this.keyringService.context.getAllAddresses();
+    const evmAddresses = getAddressesByChainType(addresses, [ChainType.EVM]);
+    const substrateAddresses = getAddressesByChainType(addresses, [ChainType.SUBSTRATE]);
 
-    return categoryAddresses(addresses);
+    return { evmAddresses: evmAddresses, substrateAddresses: substrateAddresses };
   }
 
   createAvailBridgeClaimNotification () {
-    const { evm: evmAddresses, substrate: substrateAddresses } = this.getCategorizedAddresses();
+    const { evmAddresses, substrateAddresses } = this.getCategorizedAddresses();
 
     const chainAssets = this.chainService.getAssetRegistry();
 
@@ -299,7 +301,7 @@ export class InappNotificationService implements CronServiceInterface {
 
   // Polygon Claimable Handle
   async createPolygonClaimableTransactions () {
-    const { evm: evmAddresses } = this.getCategorizedAddresses();
+    const { evmAddresses } = this.getCategorizedAddresses();
     const etherChains = [COMMON_ASSETS.ETH, COMMON_ASSETS.ETH_SEPOLIA];
 
     const polygonAssets = Object.values(this.chainService.getAssetRegistry()).filter(

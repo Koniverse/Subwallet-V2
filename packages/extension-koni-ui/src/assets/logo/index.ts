@@ -15,6 +15,7 @@ export const DefaultLogosMap: Record<string, string> = {
   polkadot_vault: './images/projects/polkadot-vault.png',
   walletconnect: './images/projects/walletconnect.png',
   banxa: './images/projects/banxa.png',
+  cardano: './images/projects/cardano.png',
   coinbase: './images/projects/coinbase.png',
   stellaswap: './images/projects/stellaswap.png',
   xtwitter: './images/projects/xtwitter.png',

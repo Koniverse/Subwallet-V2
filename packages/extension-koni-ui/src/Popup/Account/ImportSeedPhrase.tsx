@@ -36,7 +36,7 @@ interface FormState extends Record<`seed-phrase-${number}`, string> {
 }
 
 const words = wordlists.english;
-const phraseNumberOptions = [12, 24];
+const phraseNumberOptions = [12, 15, 24];
 
 const Component: React.FC<Props> = ({ className }: Props) => {
   useAutoNavigateToCreatePassword();

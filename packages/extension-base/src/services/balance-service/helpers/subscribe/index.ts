@@ -3,10 +3,11 @@
 
 import { _AssetType, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { APIItemState, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { _EvmApi, _SubstrateApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
+import { subscribeCardanoBalance } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano';
+import { _CardanoApi, _EvmApi, _SubstrateApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
+import { _getSubstrateGenesisHash, _isChainBitcoinCompatible, _isChainCardanoCompatible, _isChainEvmCompatible, _isChainTonCompatible, _isPureCardanoChain, _isPureEvmChain, _isPureTonChain } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson, BalanceItem } from '@subwallet/extension-base/types';
-import { categoryAddresses, filterAssetsByChainAndType, pairToAccount } from '@subwallet/extension-base/utils';
+import { filterAssetsByChainAndType, getAddressesByChainTypeMap, pairToAccount } from '@subwallet/extension-base/utils';
 import keyring from '@subwallet/ui-keyring';
 
 import { subscribeTonBalance } from './ton/ton';
@@ -40,14 +41,16 @@ export const getAccountJsonByAddress = (address: string): AccountJson | null => 
 
 /** Filter addresses to subscribe by chain info */
 const filterAddress = (addresses: string[], chainInfo: _ChainInfo): [string[], string[]] => {
-  const { bitcoin, evm, substrate, ton } = categoryAddresses(addresses);
+  const { bitcoin, cardano, evm, substrate, ton } = getAddressesByChainTypeMap(addresses);
 
   if (_isChainEvmCompatible(chainInfo)) {
-    return [evm, [...bitcoin, ...substrate, ...ton]];
+    return [evm, [...bitcoin, ...substrate, ...ton, ...cardano]];
   } else if (_isChainBitcoinCompatible(chainInfo)) {
-    return [bitcoin, [...evm, ...substrate, ...ton]];
+    return [bitcoin, [...evm, ...substrate, ...ton, ...cardano]];
   } else if (_isChainTonCompatible(chainInfo)) {
-    return [ton, [...bitcoin, ...evm, ...substrate]];
+    return [ton, [...bitcoin, ...evm, ...substrate, ...cardano]];
+  } else if (_isChainCardanoCompatible(chainInfo)) {
+    return [cardano, [...bitcoin, ...evm, ...substrate, ...ton]];
   } else {
     const fetchList: string[] = [];
     const unfetchList: string[] = [];
@@ -77,7 +80,7 @@ const filterAddress = (addresses: string[], chainInfo: _ChainInfo): [string[], s
       }
     });
 
-    return [fetchList, [...unfetchList, ...bitcoin, ...evm, ...ton]];
+    return [fetchList, [...unfetchList, ...bitcoin, ...evm, ...ton, ...cardano]];
   }
 };
 
@@ -94,7 +97,9 @@ const handleUnsupportedOrPendingAddresses = (
     _AssetType.PSP22,
     _AssetType.LOCAL,
     _AssetType.GRC20,
-    _AssetType.VFT
+    _AssetType.VFT,
+    _AssetType.TEP74,
+    _AssetType.CIP26
   ]);
 
   const now = new Date().getTime();
@@ -123,6 +128,7 @@ export function subscribeBalance (
   substrateApiMap: Record<string, _SubstrateApi>,
   evmApiMap: Record<string, _EvmApi>,
   tonApiMap: Record<string, _TonApi>,
+  cardanoApiMap: Record<string, _CardanoApi>,
   callback: (rs: BalanceItem[]) => void,
   extrinsicType?: ExtrinsicType
 ) {
@@ -166,6 +172,18 @@ export function subscribeBalance (
         callback,
         chainInfo,
         tonApi
+      });
+    }
+
+    const cardanoApi = cardanoApiMap[chainSlug];
+
+    if (_isPureCardanoChain(chainInfo)) {
+      return subscribeCardanoBalance({
+        addresses: useAddresses,
+        assetMap: chainAssetMap,
+        callback,
+        chainInfo,
+        cardanoApi
       });
     }
 

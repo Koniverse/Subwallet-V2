@@ -53,6 +53,7 @@ const _additionalEnv = {
   BITTENSOR_API_KEY_4: JSON.stringify(process.env.BITTENSOR_API_KEY_4),
   BITTENSOR_API_KEY_5: JSON.stringify(process.env.BITTENSOR_API_KEY_5),
   BITTENSOR_API_KEY_6: JSON.stringify(process.env.BITTENSOR_API_KEY_6),
+  SUBWALLET_API: JSON.stringify(process.env.SUBWALLET_API),
   SIMPLE_SWAP_API_KEY: JSON.stringify(process.env.SIMPLE_SWAP_API_KEY)
 };
 
@@ -155,7 +156,11 @@ module.exports = (entry, alias = {}, isFirefox = false) => {
         filename: 'notification.html',
         template: 'public/notification.html',
         chunks: ['extension']
-      })
+      }),
+      new webpack.NormalModuleReplacementPlugin(
+        /@emurgo\/cardano-serialization-lib-nodejs/,
+        '@emurgo/cardano-serialization-lib-browser'
+      )
     ],
     resolve: {
       alias: packages.reduce((alias, p) => ({

@@ -62,15 +62,19 @@ export function _isEqualSmartContractAsset (asset1: _ChainAsset, asset2: _ChainA
 }
 
 export function _isPureEvmChain (chainInfo: _ChainInfo) {
-  return (!!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo);
+  return (!!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo && !chainInfo.cardanoInfo);
 }
 
 export function _isPureSubstrateChain (chainInfo: _ChainInfo) {
-  return (!chainInfo.evmInfo && !!chainInfo.substrateInfo && !chainInfo.tonInfo);
+  return (!chainInfo.evmInfo && !!chainInfo.substrateInfo && !chainInfo.tonInfo && !chainInfo.cardanoInfo);
 }
 
 export function _isPureTonChain (chainInfo: _ChainInfo) {
-  return (!chainInfo.evmInfo && !chainInfo.substrateInfo && !!chainInfo.tonInfo);
+  return (!chainInfo.evmInfo && !chainInfo.substrateInfo && !!chainInfo.tonInfo && !chainInfo.cardanoInfo);
+}
+
+export function _isPureCardanoChain (chainInfo: _ChainInfo) {
+  return (!chainInfo.evmInfo && !chainInfo.substrateInfo && !chainInfo.tonInfo && !!chainInfo.cardanoInfo);
 }
 
 export function _getOriginChainOfAsset (assetSlug: string) {
@@ -157,6 +161,10 @@ export function _isChainBitcoinCompatible (chainInfo: _ChainInfo) {
 
 export function _isChainTonCompatible (chainInfo: _ChainInfo) {
   return !!chainInfo.tonInfo;
+}
+
+export function _isChainCardanoCompatible (chainInfo: _ChainInfo) {
+  return !!chainInfo.cardanoInfo;
 }
 
 export function _isNativeToken (tokenInfo: _ChainAsset) {
@@ -294,11 +302,13 @@ export function _getTokenTypesSupportedByChain (chainInfo: _ChainInfo): _AssetTy
 }
 
 export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicTokenInfo {
+  const defaultTokenInfo = {
+    symbol: '',
+    decimals: -1
+  }
+
   if (!chainInfo) {
-    return {
-      symbol: '',
-      decimals: -1
-    };
+    return defaultTokenInfo;
   }
 
   if (chainInfo.substrateInfo) { // substrate by default
@@ -316,12 +326,14 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
       symbol: chainInfo.tonInfo.symbol,
       decimals: chainInfo.tonInfo.decimals
     };
+  } else if (chainInfo.cardanoInfo) {
+    return {
+      symbol: chainInfo.cardanoInfo.symbol,
+      decimals: chainInfo.cardanoInfo.decimals
+    }
   }
 
-  return {
-    symbol: '',
-    decimals: -1
-  };
+  return defaultTokenInfo;
 }
 
 export function _getChainNativeTokenSlug (chainInfo: _ChainInfo) {

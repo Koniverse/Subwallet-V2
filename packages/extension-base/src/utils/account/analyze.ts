@@ -27,7 +27,7 @@ const isStrValidWithAddress = (str: string, account: AddressDataJson, chainInfo:
     } else if (account.address.toLowerCase().includes(str) || reformated.toLowerCase().includes(str)) {
       return 'valid';
     }
-  } else if (account.chainType === AccountChainType.TON) {
+  } else if (account.chainType === AccountChainType.TON || account.chainType === AccountChainType.CARDANO) { // todo: recheck for Cardano
     const isTestnet = chainInfo.isTestnet;
     const reformated = reformatAddress(account.address, isTestnet ? 0 : 1);
 

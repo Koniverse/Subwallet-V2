@@ -7,11 +7,15 @@ import { AccountChainType } from '@subwallet/extension-base/types';
 export const SIGNING_COMPATIBLE_MAP: Record<ChainType, AccountChainType[]> = {
   [ChainType.SUBSTRATE]: [AccountChainType.SUBSTRATE, AccountChainType.ETHEREUM],
   [ChainType.EVM]: [AccountChainType.ETHEREUM],
-  [ChainType.TON]: [AccountChainType.TON]
+  [ChainType.BITCOIN]: [AccountChainType.BITCOIN],
+  [ChainType.TON]: [AccountChainType.TON],
+  [ChainType.CARDANO]: [AccountChainType.CARDANO]
 };
 
 export const LEDGER_SIGNING_COMPATIBLE_MAP: Record<ChainType, AccountChainType[]> = {
   [ChainType.SUBSTRATE]: [AccountChainType.SUBSTRATE],
   [ChainType.EVM]: [AccountChainType.ETHEREUM],
-  [ChainType.TON]: [AccountChainType.TON]
+  [ChainType.BITCOIN]: [AccountChainType.BITCOIN],
+  [ChainType.TON]: [AccountChainType.TON],
+  [ChainType.CARDANO]: [AccountChainType.CARDANO]
 };

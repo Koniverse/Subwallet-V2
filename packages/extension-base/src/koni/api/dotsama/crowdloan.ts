@@ -3,11 +3,11 @@
 
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
 import { _ChainInfo, _CrowdloanFund, _FundStatus } from '@subwallet/chain-list/types';
-import { APIItemState, CrowdloanItem, CrowdloanParaState } from '@subwallet/extension-base/background/KoniTypes';
+import { APIItemState, ChainType, CrowdloanItem, CrowdloanParaState } from '@subwallet/extension-base/background/KoniTypes';
 import { ACALA_REFRESH_CROWDLOAN_INTERVAL } from '@subwallet/extension-base/constants';
 import registry from '@subwallet/extension-base/koni/api/dotsama/typeRegistry';
 import { _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { categoryAddresses, fetchJson, reformatAddress } from '@subwallet/extension-base/utils';
+import { fetchJson, getAddressesByChainType, reformatAddress } from '@subwallet/extension-base/utils';
 import { fetchStaticData } from '@subwallet/extension-base/utils/fetchStaticData';
 
 import { DeriveOwnContributions } from '@polkadot/api-derive/types';
@@ -178,7 +178,7 @@ export async function subscribeCrowdloan (addresses: string[], substrateApiMap: 
     const now = Date.now();
     const polkadotAPI = await substrateApiMap[COMMON_CHAIN_SLUGS.POLKADOT].isReady;
     const kusamaAPI = await substrateApiMap[COMMON_CHAIN_SLUGS.KUSAMA].isReady;
-    const substrateAddresses = categoryAddresses(addresses).substrate;
+    const substrateAddresses = getAddressesByChainType(addresses, [ChainType.SUBSTRATE]);
     const hexAddresses = substrateAddresses.map((address) => {
       return registry.createType('AccountId', address).toHex();
     });

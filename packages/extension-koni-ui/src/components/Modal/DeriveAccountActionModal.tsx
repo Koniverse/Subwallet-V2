@@ -76,9 +76,10 @@ const Component: React.FC<Props> = (props: Props) => {
       'bitcoin-86': logoMap.network.bitcoin as string,
       'bittest-44': logoMap.network.bitcoin as string,
       'bittest-84': logoMap.network.bitcoin as string,
-      'bittest-86': logoMap.network.bitcoin as string
+      'bittest-86': logoMap.network.bitcoin as string,
+      cardano: logoMap.network.cardano as string
     };
-  }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
+  }, [logoMap.network.bitcoin, logoMap.network.cardano, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
 
   const [form] = Form.useForm<DeriveFormState>();
 
