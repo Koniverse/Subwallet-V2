@@ -59,10 +59,38 @@ function validatePayload (payload: string, params: CardanoTransactionConfigProps
   const txInfo = JSON.parse(csl.Transaction.from_hex(payload).to_json()) as CardanoTxJson;
   const outputs = txInfo.body.outputs;
   const cardanoId = params.tokenInfo.metadata?.cardanoId;
+  const isSameAddress = params.to === params.from;
   let receiverAmount = 0;
 
   if (!cardanoId) {
     throw new Error('Missing token policy id metadata');
+  }
+
+  if (isSameAddress) {
+    const isNativeAsset = params.tokenInfo.assetType === _AssetType.NATIVE;
+    const isCip26Asset = params.tokenInfo.assetType === _AssetType.CIP26;
+
+    for (const output of outputs) {
+      if (output.address !== params.to && output.address !== params.from) {
+        throw new Error('Transaction has invalid address information');
+      }
+
+      if (isNativeAsset) {
+        if (params.value === output.amount.coin) {
+          return;
+        }
+      }
+
+      if (isCip26Asset) {
+        const { nameHex, policyId } = splitCardanoId(cardanoId);
+
+        if (params.value === output.amount.multiasset[policyId][nameHex]) {
+          return;
+        }
+      }
+    }
+
+    throw new Error('Transaction has invalid transfer amount information');
   }
 
   for (const output of outputs) {
