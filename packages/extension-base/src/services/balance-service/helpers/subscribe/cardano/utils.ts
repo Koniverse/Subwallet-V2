@@ -41,26 +41,16 @@ export async function retryCardanoTxStatus (fn: () => Promise<boolean>, options:
   return false;
 }
 
-export interface CardanoAssetMetadata {
-  cardanoId: string;
+interface CardanoNativeAssetMetadata {
   policyId: string;
   nameHex: string;
 }
 
-export function splitCardanoId (id: string): CardanoAssetMetadata {
-  if (id === 'lovelace') {
-    return {
-      cardanoId: id,
-      policyId: '',
-      nameHex: ''
-    };
-  }
-
+export function splitCardanoId (id: string): CardanoNativeAssetMetadata {
   if (!id || id.length < 56) {
     throw new Error('The cardano native asset policy id must has 28 bytes in length.');
   } else {
     return {
-      cardanoId: id,
       policyId: id.slice(0, 56),
       nameHex: id.slice(56)
     };

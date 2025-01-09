@@ -4,8 +4,8 @@
 import * as csl from '@emurgo/cardano-serialization-lib-nodejs';
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { fetchUnsignedPayload } from '@subwallet/extension-base/services/backend-controller/cardano';
-import { CardanoTxJson, CardanoTxOutput } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
-import { CardanoAssetMetadata, estimateCardanoTxFee, splitCardanoId } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
+import { CardanoTxJson } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
+import { estimateCardanoTxFee, splitCardanoId } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _CardanoApi } from '@subwallet/extension-base/services/chain-service/types';
 
 export interface CardanoTransactionConfigProps {
@@ -59,83 +59,57 @@ function validatePayload (payload: string, params: CardanoTransactionConfigProps
   const txInfo = JSON.parse(csl.Transaction.from_hex(payload).to_json()) as CardanoTxJson;
   const outputs = txInfo.body.outputs;
   const cardanoId = params.tokenInfo.metadata?.cardanoId;
-  const assetType = params.tokenInfo.assetType;
-  const isSendSameAddress = params.from === params.to;
+  const isSameAddress = params.to === params.from;
+  let receiverAmount = 0;
 
   if (!cardanoId) {
-    throw new Error('Missing cardano id metadata');
+    throw new Error('Missing token policy id metadata');
   }
 
-  const cardanoAssetMetadata = splitCardanoId(cardanoId);
+  if (isSameAddress) {
+    const isNativeAsset = params.tokenInfo.assetType === _AssetType.NATIVE;
+    const isCip26Asset = params.tokenInfo.assetType === _AssetType.CIP26;
 
-  if (isSendSameAddress) {
-    validateAllOutputsBelongToAddress(params.from, outputs);
-    validateExistOutputWithAmountSend(params.value, outputs, assetType, cardanoAssetMetadata);
-  } else {
-    const [outputsBelongToReceiver, outputsNotBelongToReceiver] = [
-      outputs.filter((output) => output.address === params.to),
-      outputs.filter((output) => output.address !== params.to)
-    ];
+    for (const output of outputs) {
+      if (output.address !== params.to && output.address !== params.from) {
+        throw new Error('Transaction has invalid address information');
+      }
 
-    validateReceiverOutputsWithAmountSend(params.value, outputsBelongToReceiver, assetType, cardanoAssetMetadata);
-    validateAllOutputsBelongToAddress(params.from, outputsNotBelongToReceiver);
+      if (isNativeAsset) {
+        if (params.value === output.amount.coin) {
+          return;
+        }
+      }
+
+      if (isCip26Asset) {
+        const { nameHex, policyId } = splitCardanoId(cardanoId);
+
+        if (params.value === output.amount.multiasset[policyId][nameHex]) {
+          return;
+        }
+      }
+    }
+
+    throw new Error('Transaction has invalid transfer amount information');
   }
-}
 
-function validateAllOutputsBelongToAddress (address: string, outputs: CardanoTxOutput[]) {
   for (const output of outputs) {
-    if (output.address !== address) {
+    if (output.address !== params.to && output.address !== params.from) {
       throw new Error('Transaction has invalid address information');
     }
-  }
-}
 
-function validateExistOutputWithAmountSend (amount: string, outputs: CardanoTxOutput[], assetType: _AssetType, cardanoAssetMetadata: CardanoAssetMetadata) {
-  if (assetType === _AssetType.NATIVE) {
-    for (const output of outputs) {
-      if (output.amount.coin === amount) {
-        return;
-      }
+    if (params.tokenInfo.assetType === _AssetType.NATIVE && output.address === params.to) {
+      receiverAmount = receiverAmount + parseInt(output.amount.coin);
     }
 
-    throw new Error('Transaction has invalid transfer amount information');
-  }
+    if (params.tokenInfo.assetType === _AssetType.CIP26 && output.address === params.to) {
+      const { nameHex, policyId } = splitCardanoId(cardanoId);
 
-  if (assetType === _AssetType.CIP26) {
-    for (const output of outputs) {
-      if (amount === output.amount.multiasset[cardanoAssetMetadata.policyId][cardanoAssetMetadata.nameHex]) {
-        return;
-      }
+      receiverAmount = receiverAmount + parseInt(output.amount.multiasset[policyId][nameHex]);
     }
-
-    throw new Error('Transaction has invalid transfer amount information');
   }
 
-  throw new Error('AssetType is invalid');
-}
-
-function validateReceiverOutputsWithAmountSend (amount: string, outputs: CardanoTxOutput[], assetType: _AssetType, cardanoAssetMetadata: CardanoAssetMetadata) {
-  if (outputs.length !== 1) {
+  if (receiverAmount.toString() !== params.value) {
     throw new Error('Transaction has invalid transfer amount information');
   }
-
-  const receiverOutput = outputs[0];
-
-  if (assetType === _AssetType.NATIVE) {
-    if (receiverOutput.amount.coin === amount) {
-      return;
-    }
-
-    throw new Error('Transaction has invalid transfer amount information');
-  }
-
-  if (assetType === _AssetType.CIP26) {
-    if (receiverOutput.amount.multiasset[cardanoAssetMetadata.policyId][cardanoAssetMetadata.nameHex] === amount) {
-      return;
-    }
-
-    throw new Error('Transaction has invalid transfer amount information');
-  }
-
-  throw new Error('AssetType is invalid');
 }

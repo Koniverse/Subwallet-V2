@@ -26,7 +26,7 @@ export interface CardanoTxJson {
   auxiliary_data: any
 }
 
-export interface CardanoTxOutput {
+interface CardanoTxOutput {
   address: string,
   amount: {
     coin: string,
