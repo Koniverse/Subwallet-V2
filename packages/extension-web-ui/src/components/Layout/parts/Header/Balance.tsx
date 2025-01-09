@@ -3,15 +3,13 @@
 
 import { BuyTokenInfo } from '@subwallet/extension-base/types';
 import { balanceNoPrefixFormater, formatNumber } from '@subwallet/extension-base/utils';
-import { ReceiveQrModal, TokensSelectorModal } from '@subwallet/extension-web-ui/components/Modal';
-import { AccountSelectorModal } from '@subwallet/extension-web-ui/components/Modal/AccountSelectorModal';
 import { BaseModal } from '@subwallet/extension-web-ui/components/Modal/BaseModal';
 import { BUY_TOKEN_MODAL, DEFAULT_TRANSFER_PARAMS, OFF_RAMP_DATA, OFF_RAMP_TRANSACTION_TRANSFER_MODAL, TRANSACTION_TRANSFER_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-web-ui/constants';
 import { DataContext } from '@subwallet/extension-web-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeContext';
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { BackgroundColorMap, WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
-import { useNotification, useReceiveQR, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
+import { useNotification, useSelector, useTranslation } from '@subwallet/extension-web-ui/hooks';
 import { reloadCron, saveShowBalance } from '@subwallet/extension-web-ui/messaging';
 import BuyTokens from '@subwallet/extension-web-ui/Popup/BuyTokens';
 import Transaction from '@subwallet/extension-web-ui/Popup/Transaction/Transaction';
@@ -19,7 +17,7 @@ import SendFund from '@subwallet/extension-web-ui/Popup/Transaction/variants/Sen
 import SendFundOffRamp from '@subwallet/extension-web-ui/Popup/Transaction/variants/SendFundOffRamp';
 import { RootState } from '@subwallet/extension-web-ui/stores';
 import { PhosphorIcon, ThemeProps } from '@subwallet/extension-web-ui/types';
-import { getAccountType, isAccountAll, removeStorage } from '@subwallet/extension-web-ui/utils';
+import { isAccountAll, removeStorage } from '@subwallet/extension-web-ui/utils';
 import { Button, Icon, ModalContext, Number, Tag, Tooltip, Typography } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowFatLinesDown, ArrowsClockwise, Eye, EyeSlash, PaperPlaneTilt, PlusMinus } from 'phosphor-react';
@@ -65,13 +63,13 @@ function Component ({ className }: Props): React.ReactElement<Props> {
   const { t } = useTranslation();
   const { accountBalance: { totalBalanceInfo }, tokenGroupStructure: { tokenGroupMap } } = useContext(HomeContext);
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const { accountSelectorItems,
-    onOpenReceive,
-    openSelectAccount,
-    openSelectToken,
-    selectedAccount,
-    selectedNetwork,
-    tokenSelectorItems } = useReceiveQR(_tokenGroupSlug);
+  // const { accountSelectorItems,
+  //   onOpenReceive,
+  //   openSelectAccount,
+  //   openSelectToken,
+  //   selectedAccount,
+  //   selectedNetwork,
+  //   tokenSelectorItems } = useReceiveQR(_tokenGroupSlug);
 
   const currentAccount = useSelector((state) => state.accountState.currentAccount);
   const { tokens } = useSelector((state) => state.buyService);
@@ -94,26 +92,27 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     }
 
     const slug = tokenGroupSlug || '';
+    // @ts-ignore
     const slugs = tokenGroupMap[slug] ? tokenGroupMap[slug] : [slug];
     const result: BuyTokenInfo[] = [];
 
-    for (const [slug, buyInfo] of Object.entries(tokens)) {
-      if (slugs.includes(slug)) {
-        const supportType = buyInfo.support;
-
-        if (isAccountAll(currentAccount?.address || '')) {
-          const support = accounts.some((account) => supportType === getAccountType(account.address));
-
-          if (support) {
-            result.push(buyInfo);
-          }
-        } else {
-          if (currentAccount?.address && (supportType === getAccountType(currentAccount?.address))) {
-            result.push(buyInfo);
-          }
-        }
-      }
-    }
+    // for (const [slug, buyInfo] of Object.entries(tokens)) {
+    //   if (slugs.includes(slug)) {
+    //     const supportType = buyInfo.support;
+    //
+    //     if (isAccountAll(currentAccount?.address || '')) {
+    //       const support = accounts.some((account) => supportType === getAccountType(account.address));
+    //
+    //       if (support) {
+    //         result.push(buyInfo);
+    //       }
+    //     } else {
+    //       if (currentAccount?.address && (supportType === getAccountType(currentAccount?.address))) {
+    //         result.push(buyInfo);
+    //       }
+    //     }
+    //   }
+    // }
 
     return result;
   }, [accounts, currentAccount?.address, locationPathname, tokenGroupMap, tokenGroupSlug, tokens]);
@@ -219,8 +218,8 @@ function Component ({ className }: Props): React.ReactElement<Props> {
     {
       label: 'Receive',
       type: 'receive',
-      icon: ArrowFatLinesDown,
-      onClick: onOpenReceive
+      icon: ArrowFatLinesDown
+      // onClick: onOpenReceive
     },
     {
       label: 'Send',
@@ -463,21 +462,21 @@ function Component ({ className }: Props): React.ReactElement<Props> {
         />
       </BaseModal>
 
-      <AccountSelectorModal
-        items={accountSelectorItems}
-        onSelectItem={openSelectAccount}
-      />
+      {/* <AccountSelectorModal */}
+      {/*  items={accountSelectorItems} */}
+      {/*  onSelectItem={openSelectAccount} */}
+      {/* /> */}
 
-      <TokensSelectorModal
-        address={selectedAccount}
-        items={tokenSelectorItems}
-        onSelectItem={openSelectToken}
-      />
+      {/* <TokensSelectorModal */}
+      {/*  address={selectedAccount} */}
+      {/*  items={tokenSelectorItems} */}
+      {/*  onSelectItem={openSelectToken} */}
+      {/* /> */}
 
-      <ReceiveQrModal
-        address={selectedAccount}
-        selectedNetwork={selectedNetwork}
-      />
+      {/* <ReceiveQrModal */}
+      {/*  address={selectedAccount} */}
+      {/*  selectedNetwork={selectedNetwork} */}
+      {/* /> */}
     </div>
   );
 }

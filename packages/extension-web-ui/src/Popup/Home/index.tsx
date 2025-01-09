@@ -9,7 +9,7 @@ import { HomeContext } from '@subwallet/extension-web-ui/contexts/screen/HomeCon
 import { ScreenContext } from '@subwallet/extension-web-ui/contexts/ScreenContext';
 import { WebUIContext } from '@subwallet/extension-web-ui/contexts/WebUIContext';
 import useAccountBalance from '@subwallet/extension-web-ui/hooks/screen/home/useAccountBalance';
-import { useGetChainSlugsByAccountType } from '@subwallet/extension-web-ui/hooks/screen/home/useGetChainSlugsByAccountType';
+import { useGetChainSlugsByAccount } from '@subwallet/extension-web-ui/hooks/screen/home/useGetChainSlugsByAccount';
 import useTokenGroup from '@subwallet/extension-web-ui/hooks/screen/home/useTokenGroup';
 import PortfolioPage from '@subwallet/extension-web-ui/Popup/Home/PortfolioPage';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
@@ -26,7 +26,7 @@ export const GlobalSearchTokenModalId = 'globalSearchToken';
 
 function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const { activeModal, inactiveModal } = useContext(ModalContext);
-  const chainsByAccountType = useGetChainSlugsByAccountType();
+  const chainsByAccountType = useGetChainSlugsByAccount();
   const tokenGroupStructure = useTokenGroup(chainsByAccountType);
   const accountBalance = useAccountBalance(tokenGroupStructure.tokenGroupMap);
   const [isConfirmedTermGeneral, setIsConfirmedTermGeneral] = useLocalStorage(CONFIRM_GENERAL_TERM, 'nonConfirmed');

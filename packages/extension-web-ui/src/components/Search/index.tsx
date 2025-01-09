@@ -17,10 +17,11 @@ type Props = ThemeProps & {
   actionBtnIcon?: JSX.Element;
   showActionBtn?: boolean;
   extraButton?: JSX.Element
-  showExtraButton?: boolean
+  showExtraButton?: boolean;
+  autoFocus?: boolean;
 }
 
-const Component: React.FC<Props> = ({ actionBtnIcon,
+const Component: React.FC<Props> = ({ actionBtnIcon, autoFocus,
   className,
   extraButton,
   onClickActionBtn,
@@ -67,6 +68,7 @@ const Component: React.FC<Props> = ({ actionBtnIcon,
       <div className='right-section'>
         {showExtraButton && button}
         <Input.Search
+          autoFocus={autoFocus}
           className='search-input'
           onChange={handleInputChange}
           placeholder={placeholder}

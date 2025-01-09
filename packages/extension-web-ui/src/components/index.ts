@@ -16,7 +16,10 @@ export { default as SocialGroup } from './SocialGroup';
 export { default as WordPhrase } from './WordPhrase';
 
 export * from '../contexts';
+export * from './Common';
+// todo: will merge Account and AccountProxy folder
 export * from './Account';
+export * from './AccountProxy';
 export * from './Avatar';
 export * from './Confirmation';
 export * from './EmptyList';
@@ -35,6 +38,5 @@ export * from './StakingItem';
 export * from './TokenItem';
 export * from './WalletConnect';
 export * from './Crowdloan';
-export * from './Common';
 export * from './Table';
 export * from './NetworkTag';
