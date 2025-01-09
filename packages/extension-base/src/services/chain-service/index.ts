@@ -50,6 +50,7 @@ const ignoredList = [
   'storyPartner_testnet',
   'tangle',
   'laos_network',
+  'autonomys',
 ];
 
 const filterAssetInfoMap = (chainInfo: Record<string, _ChainInfo>, assets: Record<string, _ChainAsset>): Record<string, _ChainAsset> => {
