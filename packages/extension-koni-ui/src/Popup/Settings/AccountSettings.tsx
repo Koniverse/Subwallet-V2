@@ -78,7 +78,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: Strategy,
           leftIconBgColor: token.colorPrimary,
           rightIcon: CaretRight,
-          title: t('Migrate account'),
+          title: t('Migrate to unified account'),
           onClick: () => {
             navigate('/migrate-account');
           }
@@ -88,7 +88,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           leftIcon: CornersOut,
           leftIconBgColor: token['volcano-6'],
           rightIcon: CaretRight,
-          title: t('Split account'),
+          title: t('Split unified account'),
           onClick: () => {
             notify({
               message: 'Coming soon!'

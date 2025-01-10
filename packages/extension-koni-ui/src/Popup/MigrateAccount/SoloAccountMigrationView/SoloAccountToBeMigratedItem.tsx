@@ -14,8 +14,8 @@ type Props = ThemeProps & SoloAccountToBeMigrated;
 function Component ({ address,
   chainType,
   className,
-  proxyId,
-  name }: Props) {
+  name,
+  proxyId }: Props) {
   const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
 
   const chainTypeLogoMap = useMemo(() => {
@@ -24,26 +24,31 @@ function Component ({ address,
 
   return (
     <div className={className}>
-      <div className='__item-account-avatar-wrapper'>
-        <AccountProxyAvatar
-          className={'__item-account-avatar'}
-          size={28}
-          value={proxyId}
-        />
+      <div className='__item-left-part'>
 
-        <img
-          alt='Network type'
-          className={'__item-chain-type-logo'}
-          src={chainTypeLogoMap[chainType]}
-        />
+        <div className='__item-account-avatar-wrapper'>
+          <AccountProxyAvatar
+            className={'__item-account-avatar'}
+            size={28}
+            value={proxyId}
+          />
+
+          <img
+            alt='Network type'
+            className={'__item-chain-type-logo'}
+            src={chainTypeLogoMap[chainType]}
+          />
+        </div>
       </div>
 
-      <div className='__item-account-name'>
-        {name}
-      </div>
+      <div className='__item-center-part'>
+        <div className='__item-account-name'>
+          {name}
+        </div>
 
-      <div className='__item-account-address'>
-        {toShort(address, 4, 5)}
+        <div className='__item-account-address'>
+          {toShort(address, 4, 5)}
+        </div>
       </div>
     </div>
   );
@@ -76,6 +81,13 @@ export const SoloAccountToBeMigratedItem = styled(Component)<Props>(({ theme: { 
       display: 'block',
       width: token.size,
       height: token.size
+    },
+
+    '.__item-center-part': {
+      display: 'flex',
+      overflow: 'hidden',
+      alignItems: 'flex-end',
+      gap: 5
     },
 
     '.__item-account-name': {

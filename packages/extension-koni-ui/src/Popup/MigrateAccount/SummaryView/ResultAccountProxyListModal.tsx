@@ -4,8 +4,7 @@
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { ResultAccountProxyItem, ResultAccountProxyItemType } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SummaryView/ResultAccountProxyItem';
 import { ThemeProps, VoidFunction } from '@subwallet/extension-koni-ui/types';
-import { Button, Icon, SwModal } from '@subwallet/react-ui';
-import { CheckCircle } from 'phosphor-react';
+import { Button, SwModal } from '@subwallet/react-ui';
 import React from 'react';
 import styled from 'styled-components';
 
@@ -26,21 +25,15 @@ function Component ({ accountProxies, className = '', onClose }: Props): React.R
         <>
           <Button
             block={true}
-            icon={(
-              <Icon
-                phosphorIcon={CheckCircle}
-                weight='fill'
-              />
-            )}
             onClick={onClose}
           >
-            {t('OK')}
+            {t('Close')}
           </Button>
         </>
       )}
       id={resultAccountProxyListModal}
       onCancel={onClose}
-      title={t('Account list')}
+      title={t('Migrated account list')}
       zIndex={9999}
     >
       {

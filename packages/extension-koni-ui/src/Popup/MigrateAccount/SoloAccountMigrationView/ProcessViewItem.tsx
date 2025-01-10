@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SoloAccountToBeMigrated } from '@subwallet/extension-base/background/KoniTypes';
-import { AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountProxyTypeTag } from '@subwallet/extension-koni-ui/components';
+import { AccountChainType, AccountProxyType, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
+import { AccountChainTypeLogos, AccountProxyTypeTag } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { validateAccountName } from '@subwallet/extension-koni-ui/messaging';
 import { SoloAccountToBeMigratedItem } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SoloAccountMigrationView/SoloAccountToBeMigratedItem';
@@ -38,7 +38,7 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
   const nameValue = Form.useWatch('name', form);
 
   const headerContent = useMemo(() => {
-    return `${t('Migrated account')}: ${currentProcessOrdinal}/${totalProcessSteps}`;
+    return `${t('Accounts migrated')}: ${currentProcessOrdinal}/${totalProcessSteps}`;
   }, [currentProcessOrdinal, t, totalProcessSteps]);
 
   const _onApprove = useCallback(() => {
@@ -87,7 +87,7 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
 
       <div className='__body-area'>
         <div className='__brief'>
-          {t('Enter a name for the unified account to complete the migration process')}
+          {t('Enter a name for this unified account to complete the migration')}
         </div>
 
         <div className='__section-label'>
@@ -143,6 +143,12 @@ function Component ({ className = '', currentProcessOrdinal, currentSoloAccountT
                 disabled={loading}
                 label={t('Account name')}
                 placeholder={t('Enter the account name')}
+                suffix={(
+                  <AccountChainTypeLogos
+                    chainTypes={SUPPORTED_ACCOUNT_CHAIN_TYPES as AccountChainType[]}
+                    className={'__chain-type-logos'}
+                  />
+                )}
               />
             </Form.Item>
           </div>
@@ -258,6 +264,14 @@ export const ProcessViewItem = styled(Component)<Props>(({ theme: { extendToken,
 
     '.__account-type-tag': {
       marginRight: 0
+    },
+
+    '.__chain-type-logos': {
+      paddingRight: 10
+    },
+
+    '.__account-name-input .ant-input-suffix': {
+      paddingLeft: token.paddingXS
     }
   });
 });

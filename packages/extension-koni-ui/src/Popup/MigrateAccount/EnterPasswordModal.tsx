@@ -84,7 +84,7 @@ function Component ({ className = '', onClose, onSubmit }: Props): React.ReactEl
             loading={loading}
             onClick={form.submit}
           >
-            {t('Next')}
+            {t('Continue')}
           </Button>
         </>
       )}
@@ -93,7 +93,7 @@ function Component ({ className = '', onClose, onSubmit }: Props): React.ReactEl
       zIndex={9999}
     >
       <div className='__brief'>
-        {t('Enter your master password to migrate account')}
+        {t('Enter your SubWallet password to continue')}
       </div>
 
       <Form

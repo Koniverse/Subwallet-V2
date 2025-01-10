@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { detectTranslate } from '@subwallet/extension-base/utils';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { pingUnifiedAccountMigrationDone } from '@subwallet/extension-koni-ui/messaging';
 import { ResultAccountProxyItem, ResultAccountProxyItemType } from '@subwallet/extension-koni-ui/Popup/MigrateAccount/SummaryView/ResultAccountProxyItem';
@@ -10,6 +11,7 @@ import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
 import { CheckCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Trans } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
@@ -55,11 +57,13 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
 
   const getAccountListModalTriggerLabel = () => {
     if (resultAccountProxies.length === 3) {
-      return t('And another');
+      return t('And 1 other');
     }
 
     return t('And {{number}} others', { replace: { number: resultAccountProxies.length - 2 } });
   };
+
+  const hasAnyAccountToMigrate = !!resultAccountProxies.length;
 
   useEffect(() => {
     // notice to background that account migration is done
@@ -70,7 +74,7 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
     <>
       <div className={className}>
         <div className='__header-area'>
-          {t('Success')}
+          {t('Finish')}
         </div>
 
         <div className='__body-area'>
@@ -89,24 +93,59 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
           </div>
 
           {
-            !resultAccountProxies.length && (
+            !hasAnyAccountToMigrate && (
               <div className='__brief'>
-                {t('No account to migrate')}
+                <Trans
+                  components={{
+                    guide: (
+                      <a
+                        className='__link'
+                        href={'https://docs.subwallet.app/main/extension-user-guide/account-management/migrate-solo-accounts-to-unified-accounts'}
+                        target='__blank'
+                      />
+                    )
+                  }}
+                  i18nKey={detectTranslate('All eligible accounts have been migrated. Check your account list or review <guide>our guide</guide> to learn more about migration eligibility & process')}
+                />
               </div>
             )
           }
 
           {
-            !!resultAccountProxies.length && (
+            hasAnyAccountToMigrate && (
               <>
                 <div className='__brief'>
-                  {t('You have successfully migrated')}
-
-                  <br />
-
-                  <span className={'__highlight'}>
-                    {t('{{number}} unified accounts', { replace: { number: `${resultAccountProxies.length}`.padStart(2, '0') } })}
-                  </span>
+                  {
+                    resultAccountProxies.length > 1
+                      ? (
+                        <Trans
+                          components={{
+                            br: (<br />),
+                            highlight: (
+                              <span
+                                className='__highlight'
+                              />
+                            )
+                          }}
+                          i18nKey={detectTranslate('You have successfully migrated to <br/> <highlight>{{number}} unified accounts</highlight>')}
+                          values={{ number: `${resultAccountProxies.length}`.padStart(2, '0') }}
+                        />
+                      )
+                      : (
+                        <Trans
+                          components={{
+                            br: (<br />),
+                            highlight: (
+                              <span
+                                className='__highlight'
+                              />
+                            )
+                          }}
+                          i18nKey={detectTranslate('You have successfully migrated to <br/> <highlight>{{number}} unified account</highlight>')}
+                          values={{ number: `${resultAccountProxies.length}`.padStart(2, '0') }}
+                        />
+                      )
+                  }
                 </div>
 
                 <div className='__account-list-container'>
@@ -141,15 +180,19 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
         <div className='__footer-area'>
           <Button
             block={true}
-            icon={(
-              <Icon
-                phosphorIcon={CheckCircle}
-                weight='fill'
-              />
-            )}
+            icon={
+              hasAnyAccountToMigrate
+                ? (
+                  <Icon
+                    phosphorIcon={CheckCircle}
+                    weight='fill'
+                  />
+                )
+                : undefined
+            }
             onClick={onClickFinish}
           >
-            {t('Finish')}
+            {hasAnyAccountToMigrate ? t('Finish') : t('Back to home')}
           </Button>
         </div>
       </div>
@@ -219,6 +262,10 @@ export const SummaryView = styled(Component)<Props>(({ theme: { extendToken, tok
       fontSize: token.fontSizeHeading5,
       lineHeight: token.lineHeightHeading5,
       textAlign: 'center',
+
+      '.__link': {
+        color: token.colorPrimary
+      },
 
       '.__highlight': {
         color: token.colorTextLight1
