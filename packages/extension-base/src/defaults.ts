@@ -7,7 +7,8 @@ const ALLOWED_PATH = [
   '/accounts/connect-ledger',
   '/accounts/restore-json',
   '/accounts/detail',
-  '/accounts/new-seed-phrase'
+  '/accounts/new-seed-phrase',
+  '/migrate-account'
 ] as const;
 const PHISHING_PAGE_REDIRECT = '/phishing-page-detected';
 const EXTENSION_PREFIX = process.env.EXTENSION_PREFIX as string || '';

@@ -6,7 +6,7 @@ import { ChainType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import { _chainInfoToChainType, _getChainSubstrateAddressPrefix } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountChainType } from '@subwallet/extension-base/types';
-import { getAccountChainType } from '@subwallet/extension-base/utils';
+import { getAccountChainTypeFromKeypairType } from '@subwallet/extension-base/utils';
 import { decodeAddress, encodeAddress, getKeypairTypeByAddress, isAddress, isBitcoinAddress, isCardanoAddress, isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 
@@ -67,7 +67,7 @@ export const _reformatAddressWithChain = (address: string, chainInfo: _ChainInfo
 export const getAccountChainTypeForAddress = (address: string): AccountChainType => {
   const type = getKeypairTypeByAddress(address);
 
-  return getAccountChainType(type);
+  return getAccountChainTypeFromKeypairType(type);
 };
 
 interface AddressesByChainType {

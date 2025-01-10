@@ -37,7 +37,7 @@ interface DeriveFormState {
 
 const modalId = DERIVE_ACCOUNT_ACTION_MODAL;
 
-const alertTypes: DerivePathInfo['type'][] = ['unified', 'ton', 'ethereum'];
+const alertTypes: DerivePathInfo['type'][] = ['unified', 'ton', 'ethereum',  'cardano'];
 
 const Component: React.FC<Props> = (props: Props) => {
   const { className, onCompleteCb, proxyId } = props;

@@ -134,6 +134,10 @@ export function _isTokenTransferredByTon (tokenInfo: _ChainAsset) {
   return _isJettonToken(tokenInfo) || _isNativeToken(tokenInfo);
 }
 
+export function _isTokenTransferredByCardano (tokenInfo: _ChainAsset) {
+  return _isCIP26Token(tokenInfo) || _isNativeToken(tokenInfo);
+}
+
 // Utils for balance functions
 export function _getTokenOnChainAssetId (tokenInfo: _ChainAsset): string {
   return tokenInfo.metadata?.assetId as string || '-1';
@@ -305,7 +309,7 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
   const defaultTokenInfo = {
     symbol: '',
     decimals: -1
-  }
+  };
 
   if (!chainInfo) {
     return defaultTokenInfo;
@@ -330,7 +334,7 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
     return {
       symbol: chainInfo.cardanoInfo.symbol,
       decimals: chainInfo.cardanoInfo.decimals
-    }
+    };
   }
 
   return defaultTokenInfo;
@@ -354,6 +358,10 @@ export function _isTokenEvmSmartContract (tokenInfo: _ChainAsset) {
 
 export function _isTokenTonSmartContract (tokenInfo: _ChainAsset) {
   return [_AssetType.TEP74].includes(tokenInfo.assetType); // add TEP-62 when supporting
+}
+
+export function _isCIP26Token (tokenInfo: _ChainAsset) {
+  return [_AssetType.CIP26].includes(tokenInfo.assetType);
 }
 
 export function _isTokenWasmSmartContract (tokenInfo: _ChainAsset) {
@@ -659,6 +667,10 @@ export const _chainInfoToChainType = (chainInfo: _ChainInfo): AccountChainType =
 
   if (_isChainTonCompatible(chainInfo)) {
     return AccountChainType.TON;
+  }
+
+  if (_isChainCardanoCompatible(chainInfo)) {
+    return AccountChainType.CARDANO;
   }
 
   if (_isChainBitcoinCompatible(chainInfo)) {

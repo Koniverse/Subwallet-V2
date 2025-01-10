@@ -125,6 +125,46 @@ export const validateTonDerivationPath = (raw: string): IDerivePathInfo_ | undef
   }
 };
 
+export const validateCardanoDerivationPath = (raw: string): IDerivePathInfo_ | undefined => {
+  const reg = /^m\/1852'\/1815'\/(\d+)'(\/\d+')?$/;
+
+  if (raw.match(reg)) {
+    const [, firstIndex, secondData] = raw.match(reg) as string[];
+
+    const first = parseInt(firstIndex, 10);
+    const autoIndexes: number[] = [first];
+
+    let depth: number;
+    let suri = `//${first}`;
+
+    if (first === 0) {
+      depth = 0;
+    } else {
+      depth = 1;
+    }
+
+    if (secondData) {
+      const [, secondIndex] = secondData.match(/\/(\d+)/) as string[];
+
+      const second = parseInt(secondIndex, 10);
+
+      autoIndexes.push(second);
+      depth = 2;
+      suri += `//${second}`;
+    }
+
+    return {
+      depth,
+      type: 'cardano',
+      suri,
+      derivationPath: raw,
+      autoIndexes
+    };
+  } else {
+    return undefined;
+  }
+};
+
 export const validateSr25519DerivationPath = (raw: string): IDerivePathInfo_ | undefined => {
   const reg = /\/(\/?)([^/]+)/g;
   const parts = raw.match(reg);
@@ -197,10 +237,12 @@ export const validateDerivationPath = (raw: string, type?: KeypairType): DeriveP
       return validateSr25519DerivationPath(raw);
     } else if (type === 'ed25519' || type === 'ecdsa') {
       return validateOtherSubstrateDerivationPath(raw, type);
+    } else if (type === 'cardano') {
+      return validateCardanoDerivationPath(raw);
     } else {
       return undefined;
     }
   } else {
-    return validateUnifiedDerivationPath(raw) || validateEvmDerivationPath(raw) || validateTonDerivationPath(raw) || validateSr25519DerivationPath(raw);
+    return validateUnifiedDerivationPath(raw) || validateEvmDerivationPath(raw) || validateTonDerivationPath(raw) || validateSr25519DerivationPath(raw) || validateCardanoDerivationPath(raw);
   }
 };

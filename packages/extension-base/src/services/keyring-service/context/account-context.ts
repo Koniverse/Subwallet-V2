@@ -1,9 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestChangeMasterPassword, RequestMigratePassword, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
+import { AccountExternalError, RequestAccountCreateExternalV2, RequestAccountCreateHardwareMultiple, RequestAccountCreateHardwareV2, RequestAccountCreateWithSecretKey, RequestAccountExportPrivateKey, RequestChangeMasterPassword, RequestMigratePassword, RequestMigrateSoloAccount, RequestMigrateUnifiedAndFetchEligibleSoloAccounts, RequestPingSession, ResponseAccountCreateWithSecretKey, ResponseAccountExportPrivateKey, ResponseChangeMasterPassword, ResponseMigratePassword } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { KeyringService } from '@subwallet/extension-base/services/keyring-service';
+import { AccountMigrationHandler } from '@subwallet/extension-base/services/keyring-service/context/handlers/Migration';
 import { AccountProxyMap, CurrentAccountInfo, RequestAccountBatchExportV2, RequestAccountCreateSuriV2, RequestAccountNameValidate, RequestAccountProxyEdit, RequestAccountProxyForget, RequestBatchJsonGetAccountInfo, RequestBatchRestoreV2, RequestChangeTonWalletContractVersion, RequestCheckPublicAndSecretKey, RequestDeriveCreateMultiple, RequestDeriveCreateV3, RequestDeriveValidateV2, RequestExportAccountProxyMnemonic, RequestGetAllTonWalletContractVersion, RequestGetDeriveAccounts, RequestGetDeriveSuggestion, RequestJsonGetAccountInfo, RequestJsonRestoreV2, RequestMnemonicCreateV2, RequestMnemonicValidateV2, RequestPrivateKeyValidateV2, ResponseAccountBatchExportV2, ResponseAccountCreateSuriV2, ResponseAccountNameValidate, ResponseBatchJsonGetAccountInfo, ResponseCheckPublicAndSecretKey, ResponseDeriveValidateV2, ResponseExportAccountProxyMnemonic, ResponseGetAllTonWalletContractVersion, ResponseGetDeriveAccounts, ResponseGetDeriveSuggestion, ResponseJsonGetAccountInfo, ResponseMnemonicCreateV2, ResponseMnemonicValidateV2, ResponsePrivateKeyValidateV2 } from '@subwallet/extension-base/types';
 import { InjectedAccountWithMeta } from '@subwallet/extension-inject/types';
 import { SubjectInfo } from '@subwallet/ui-keyring/observable/types';
@@ -20,6 +21,7 @@ export class AccountContext {
   private readonly ledgerHandler: AccountLedgerHandler;
   private readonly modifyHandler: AccountModifyHandler;
   private readonly secretHandler: AccountSecretHandler;
+  private readonly migrationHandler: AccountMigrationHandler;
 
   constructor (private readonly koniState: KoniState, private readonly parentService: KeyringService) {
     this.state = new AccountState(this.koniState);
@@ -30,6 +32,7 @@ export class AccountContext {
     this.ledgerHandler = new AccountLedgerHandler(this.parentService, this.state);
     this.modifyHandler = new AccountModifyHandler(this.parentService, this.state);
     this.secretHandler = new AccountSecretHandler(this.parentService, this.state);
+    this.migrationHandler = new AccountMigrationHandler(this.parentService, this.state);
   }
 
   // TODO: Merge to value
@@ -253,8 +256,8 @@ export class AccountContext {
   }
 
   /* Derive account proxy  */
-  public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
-    return this.deriveHandler.derivationAccountProxyCreate(request);
+  public derivationAccountProxyCreate (request: RequestDeriveCreateV3, isMigration?: boolean): boolean {
+    return this.deriveHandler.derivationAccountProxyCreate(request, isMigration);
   }
 
   /* Derive */
@@ -270,6 +273,21 @@ export class AccountContext {
   }
 
   /* Inject */
+
+  /* Migration */
+  public async migrateUnifiedAndFetchEligibleSoloAccounts (request: RequestMigrateUnifiedAndFetchEligibleSoloAccounts) {
+    return await this.migrationHandler.migrateUnifiedAndFetchEligibleSoloAccounts(request);
+  }
+
+  public migrateSoloAccount (request: RequestMigrateSoloAccount) {
+    return this.migrationHandler.migrateSoloToUnifiedAccount(request);
+  }
+
+  public pingSession (request: RequestPingSession) {
+    return this.migrationHandler.pingSession(request);
+  }
+
+  /* Migration */
 
   /* Others */
 

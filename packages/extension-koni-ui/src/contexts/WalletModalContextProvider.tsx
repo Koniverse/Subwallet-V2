@@ -1,11 +1,11 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AddressQrModal, AlertModal, AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountActionModal, DeriveAccountListModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
+import { AccountMigrationInProgressWarningModal, AddressQrModal, AlertModal, AttachAccountModal, ClaimDappStakingRewardsModal, CreateAccountModal, DeriveAccountActionModal, DeriveAccountListModal, ImportAccountModal, ImportSeedModal, NewSeedModal, RemindBackupSeedPhraseModal, RequestCameraAccessModal, RequestCreatePasswordModal } from '@subwallet/extension-koni-ui/components';
 import { CustomizeModal } from '@subwallet/extension-koni-ui/components/Modal/Customize/CustomizeModal';
 import { AccountDeriveActionProps } from '@subwallet/extension-koni-ui/components/Modal/DeriveAccountActionModal';
-import { ADDRESS_QR_MODAL, DERIVE_ACCOUNT_ACTION_MODAL, EARNING_INSTRUCTION_MODAL, GLOBAL_ALERT_MODAL } from '@subwallet/extension-koni-ui/constants';
-import { useAlert, useGetConfig, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
+import { ACCOUNT_MIGRATION_IN_PROGRESS_WARNING_MODAL, ADDRESS_QR_MODAL, DERIVE_ACCOUNT_ACTION_MODAL, EARNING_INSTRUCTION_MODAL, GLOBAL_ALERT_MODAL } from '@subwallet/extension-koni-ui/constants';
+import { useAlert, useGetConfig, useIsPopup, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import Confirmations from '@subwallet/extension-koni-ui/Popup/Confirmations';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AlertDialogProps } from '@subwallet/extension-koni-ui/types';
@@ -105,9 +105,12 @@ export const WalletModalContextProvider = ({ children }: Props) => {
   const { getConfig } = useGetConfig();
   const { onHandleSessionLatest, setTimeBackUp } = useSetSessionLatest();
   const { alertProps, closeAlert, openAlert } = useAlert(alertModalId);
+  const isUnifiedAccountMigrationInProgress = useSelector((state: RootState) => state.settings.isUnifiedAccountMigrationInProgress);
+  const isPopup = useIsPopup();
 
   useExcludeModal('confirmations');
   useExcludeModal(EARNING_INSTRUCTION_MODAL);
+  useExcludeModal(ACCOUNT_MIGRATION_IN_PROGRESS_WARNING_MODAL);
 
   const onCloseModal = useCallback(() => {
     setSearchParams((prev) => {
@@ -171,6 +174,12 @@ export const WalletModalContextProvider = ({ children }: Props) => {
   }, [hasMasterPassword, inactiveAll, isLocked]);
 
   useEffect(() => {
+    if (!isPopup && isUnifiedAccountMigrationInProgress) {
+      activeModal(ACCOUNT_MIGRATION_IN_PROGRESS_WARNING_MODAL);
+    }
+  }, [activeModal, isPopup, isUnifiedAccountMigrationInProgress]);
+
+  useEffect(() => {
     const confirmID = searchParams.get('popup');
 
     // Auto open confirm modal with method modalContext.activeModal else auto close all modal
@@ -220,6 +229,7 @@ export const WalletModalContextProvider = ({ children }: Props) => {
     <RequestCameraAccessModal />
     <CustomizeModal />
     <UnlockModal />
+    <AccountMigrationInProgressWarningModal />
 
     {
       !!addressQrModalProps && (

@@ -10,16 +10,16 @@ import ExportAllSelector from '@subwallet/extension-koni-ui/components/Layout/pa
 import SelectAccountFooter from '@subwallet/extension-koni-ui/components/Layout/parts/SelectAccount/Footer';
 import Search from '@subwallet/extension-koni-ui/components/Search';
 import { ACCOUNT_CHAIN_ADDRESSES_MODAL, SELECT_ACCOUNT_MODAL } from '@subwallet/extension-koni-ui/constants/modal';
-import { useDefaultNavigate, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
+import { useDefaultNavigate, useIsPopup, useSetSessionLatest } from '@subwallet/extension-koni-ui/hooks';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { saveCurrentAccountAddress } from '@subwallet/extension-koni-ui/messaging';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { AccountDetailParam, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { isAccountAll } from '@subwallet/extension-koni-ui/utils';
-import { Icon, ModalContext, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
+import { Button, Icon, ModalContext, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { Circle, Export } from 'phosphor-react';
+import { Circle, Export, Gear } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -88,6 +88,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
   const navigate = useNavigate();
   const { setStateSelectAccount } = useSetSessionLatest();
   const isModalVisible = useMemo(() => checkActive(modalId), [checkActive]);
+  const isPopup = useIsPopup();
 
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const currentAccountProxy = useSelector((state: RootState) => state.accountState.currentAccountProxy);
@@ -338,6 +339,22 @@ const Component: React.FC<Props> = ({ className }: Props) => {
     }
   }, [isModalVisible]);
 
+  const accountSettingButtonProps = useMemo<ButtonProps>(() => {
+    return {
+      icon: (
+        <Icon
+          phosphorIcon={Gear}
+        />
+      ),
+      type: 'ghost',
+      onClick: () => {
+        navigate('/settings/account-settings');
+      },
+      tooltip: t('Account settings'),
+      tooltipPlacement: 'topRight'
+    };
+  }, [navigate, t]);
+
   const rightIconProps = useMemo((): ButtonProps | undefined => {
     if (!enableExtraction) {
       return;
@@ -398,7 +415,19 @@ const Component: React.FC<Props> = ({ className }: Props) => {
         id={modalId}
         onCancel={_onCancel}
         rightIconProps={rightIconProps}
-        title={t('Select account')}
+        title={(
+          <>
+            {t('Select account')}
+
+            {isPopup && (
+              <Button
+                {...accountSettingButtonProps}
+                className={'__account-setting-button -schema-header'}
+                size={'xs'}
+              />
+            )}
+          </>
+        )}
       >
         <Search
           autoFocus={true}
@@ -435,6 +464,23 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
 export const AccountSelectorModal = styled(Component)<Props>(({ theme: { token } }: Props) => {
   return {
+    '.ant-sw-header-center-part': {
+      position: 'relative',
+      height: 40
+    },
+
+    '.ant-sw-sub-header-title': {
+      fontSize: token.fontSizeXL,
+      lineHeight: token.lineHeightHeading4,
+      fontWeight: token.fontWeightStrong
+    },
+
+    '.ant-sw-header-center-part .__account-setting-button': {
+      position: 'absolute',
+      right: 0,
+      top: 0
+    },
+
     '.ant-sw-modal-content': {
       height: '100vh'
     },

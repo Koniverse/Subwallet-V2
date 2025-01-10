@@ -648,6 +648,10 @@ export default class DatabaseService {
     return this.stores.inappNotification.removeAccountNotifications(proxyId);
   }
 
+  public updateNotificationProxyId (proxyIds: string[], newProxyId: string, newName: string) {
+    return this.stores.inappNotification.updateNotificationProxyId(proxyIds, newProxyId, newName);
+  }
+
   async exportDB () {
     const blob = await exportDB(this._db, {
       filter: (table, value, key) => {

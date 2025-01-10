@@ -16,7 +16,7 @@ import { Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { computeStatus, openInNewTab } from '@subwallet/extension-koni-ui/utils';
 import { BackgroundIcon, Button, ButtonProps, Icon, Image, ModalContext, SettingItem, SwHeader, SwIconProps, SwModal } from '@subwallet/react-ui';
 import CN from 'classnames';
-import { ArrowsOut, ArrowSquareOut, Book, BookBookmark, CaretRight, ChatTeardropText, Coin, EnvelopeSimple, FrameCorners, Globe, GlobeHemisphereEast, Lock, Rocket, ShareNetwork, ShieldCheck, X } from 'phosphor-react';
+import { ArrowsOut, ArrowSquareOut, Book, BookBookmark, CaretRight, ChatTeardropText, Coin, EnvelopeSimple, FrameCorners, Globe, GlobeHemisphereEast, Lock, Rocket, ShareNetwork, ShieldCheck, UserCircleGear, X } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import styled, { useTheme } from 'styled-components';
@@ -144,6 +144,17 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
           onClick: () => {
             navigate('/settings/security', { state: true });
           }
+        },
+        {
+          key: 'account-settings',
+          leftIcon: UserCircleGear,
+          leftIconBgColor: token['purple-8'],
+          rightIcon: CaretRight,
+          title: t('Account settings'),
+          onClick: () => {
+            navigate('/settings/account-settings');
+          },
+          isHidden: !isPopup
         },
         {
           key: 'crowdloans',

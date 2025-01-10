@@ -9,7 +9,7 @@ import { t } from 'i18next';
 
 import { assert } from '@polkadot/util';
 
-import { validateEvmDerivationPath, validateOtherSubstrateDerivationPath, validateSr25519DerivationPath, validateTonDerivationPath, validateUnifiedDerivationPath } from '../validate';
+import { validateCardanoDerivationPath, validateEvmDerivationPath, validateOtherSubstrateDerivationPath, validateSr25519DerivationPath, validateTonDerivationPath, validateUnifiedDerivationPath } from '../validate';
 
 export const parseUnifiedSuriToDerivationPath = (suri: string, type: KeypairType): string => {
   const reg = /^\/\/(\d+)(\/\/\d+)?$/;
@@ -25,12 +25,16 @@ export const parseUnifiedSuriToDerivationPath = (suri: string, type: KeypairType
         return `m/44'/60'/0'/0/${first}/${secondIndex}`;
       } else if (type === 'ton') {
         return `m/44'/607'/${first}'/${secondIndex}'`;
+      } else if (type === 'cardano') {
+        return `m/1852'/1815'/${first}'/${secondIndex}'`;
       }
     } else {
       if (type === 'ethereum') {
         return `m/44'/60'/0'/0/${first}`;
       } else if (type === 'ton') {
         return `m/44'/607'/${first}'`;
+      } else if (type === 'cardano') {
+        return `m/1852'/1815'/${first}'`;
       }
     }
 
@@ -51,7 +55,9 @@ export const getSoloDerivationInfo = (type: KeypairType, metadata: AccountDerive
         ? validateEvmDerivationPath
         : type === 'ton'
           ? validateTonDerivationPath
-          : () => undefined;
+          : type === 'cardano'
+            ? validateCardanoDerivationPath
+            : () => undefined;
       const validateTypeRs = validateTypeFunc(derivePath);
 
       if (validateTypeRs) {
@@ -114,7 +120,9 @@ export const getSoloDerivationInfo = (type: KeypairType, metadata: AccountDerive
         ? validateEvmDerivationPath
         : type === 'ton'
           ? validateTonDerivationPath
-          : () => undefined;
+          : type === 'cardano'
+            ? validateCardanoDerivationPath
+            : () => undefined;
       const validateTypeRs = validateTypeFunc(derivePath);
 
       if (validateTypeRs) {
@@ -242,6 +250,7 @@ export const derivePair = (parentPair: KeyringPair, name: string, suri: string, 
 
   const isEvm = EthereumKeypairTypes.includes(parentPair.type);
   const isTon = parentPair.type === 'ton';
+  const isCardano = parentPair.type === 'cardano';
 
   const meta = {
     name,
@@ -255,8 +264,8 @@ export const derivePair = (parentPair: KeyringPair, name: string, suri: string, 
     meta.tonContractVersion = parentPair.ton.contractVersion;
   }
 
-  if (derivationPath && (isEvm || isTon)) {
-    return isEvm ? parentPair.evm.deriveCustom(derivationPath, meta) : parentPair.ton.deriveCustom(derivationPath, meta);
+  if (derivationPath && (isEvm || isTon || isCardano)) {
+    return isEvm ? parentPair.evm.deriveCustom(derivationPath, meta) : isTon ? parentPair.ton.deriveCustom(derivationPath, meta) : parentPair.cardano.deriveCustom(derivationPath, meta);
   } else {
     return parentPair.substrate.derive(suri, meta);
   }
