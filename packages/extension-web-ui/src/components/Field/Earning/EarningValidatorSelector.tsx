@@ -1,10 +1,11 @@
 // Copyright 2019-2022 @subwallet/extension-web-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { ChainRecommendValidator } from '@subwallet/extension-base/constants';
 import { getValidatorLabel } from '@subwallet/extension-base/koni/api/staking/bonding/utils';
 import { _STAKING_CHAIN_GROUP } from '@subwallet/extension-base/services/earning-service/constants';
 import { YieldPoolType } from '@subwallet/extension-base/types';
-import { detectTranslate } from '@subwallet/extension-base/utils';
+import { detectTranslate, fetchStaticData } from '@subwallet/extension-base/utils';
 import { BaseModal, SelectValidatorInput, StakingValidatorItem } from '@subwallet/extension-web-ui/components';
 import EmptyValidator from '@subwallet/extension-web-ui/components/Account/EmptyValidator';
 import { BasicInputWrapper } from '@subwallet/extension-web-ui/components/Field/Base';
@@ -50,8 +51,6 @@ interface SortOption {
 
 const SORTING_MODAL_ID = 'nominated-sorting-modal';
 const FILTER_MODAL_ID = 'nominated-filter-modal';
-const AVAIL_CHAIN = 'avail_mainnet';
-const AVAIL_VALIDATOR = '5FjdibsxmNFas5HWcT2i1AXbpfgiNfWqezzo88H2tskxWdt2';
 
 const filterOptions = [
   {
@@ -103,6 +102,8 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   const isRelayChain = useMemo(() => _STAKING_CHAIN_GROUP.relay.includes(chain), [chain]);
   const isSingleSelect = useMemo(() => _isSingleSelect || !isRelayChain, [_isSingleSelect, isRelayChain]);
   const hasReturn = useMemo(() => items[0]?.expectedReturn !== undefined, [items]);
+
+  const [defaultPoolMap, setDefaultPoolMap] = useState<Record<string, ChainRecommendValidator>>({});
 
   const maxPoolMembersValue = useMemo(() => {
     if (poolInfo.type === YieldPoolType.NATIVE_STAKING) { // todo: should also check chain group for pool
@@ -314,12 +315,25 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
   }, [activeModal, id]);
 
   useEffect(() => {
-    if (chain === AVAIL_CHAIN) {
+    fetchStaticData<Record<string, ChainRecommendValidator>>('direct-nomination-validator').then((earningPoolRecommendation) => {
+      setDefaultPoolMap(earningPoolRecommendation);
+    }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    const recommendValidator = defaultPoolMap[chain];
+
+    if (recommendValidator) {
       setAutoValidator((old) => {
         if (old) {
           return old;
         } else {
-          const selectedValidator = autoSelectValidatorOptimally(items, 16, true, AVAIL_VALIDATOR);
+          const selectedValidator = autoSelectValidatorOptimally(
+            items,
+            recommendValidator.maxCount,
+            true,
+            recommendValidator.preSelectValidators
+          );
 
           return selectedValidator.map((item) => getValidatorKey(item.address, item.identity)).join(',');
         }
@@ -327,7 +341,7 @@ const Component = (props: Props, ref: ForwardedRef<InputRef>) => {
     } else {
       setAutoValidator('');
     }
-  }, [items, chain]);
+  }, [items, chain, defaultPoolMap]);
 
   useEffect(() => {
     const _default = nominations?.map((item) => getValidatorKey(item.validatorAddress, item.validatorIdentity)).join(',') || autoValidator || '';

@@ -277,6 +277,17 @@ export interface MetadataItem {
   types: Record<string, Record<string, string> | string>;
   userExtensions?: ExtDef;
   hexV15?: HexString;
+  tokenInfo?: {
+    ss58Format: number;
+    tokenDecimals: number;
+    tokenSymbol: string;
+  };
+}
+
+export interface MetadataV15Item {
+  genesisHash: string;
+  specVersion: string;
+  hexV15?: HexString;
 }
 
 export interface CrowdloanItem {
@@ -792,6 +803,7 @@ export interface CreateHardwareAccountItem {
   name: string;
   isEthereum: boolean;
   isGeneric: boolean;
+  isLedgerRecovery?: boolean;
 }
 
 export interface RequestAccountCreateHardwareV2 extends CreateHardwareAccountItem {
@@ -1264,6 +1276,8 @@ export interface LedgerNetwork {
   isEthereum: boolean;
   /** Hide networks that are supported by the dot migration app */
   isHide?: boolean;
+  /** Recovery app */
+  isRecovery?: boolean;
   /** Slip44 in the derivation path */
   slip44: number;
 }
