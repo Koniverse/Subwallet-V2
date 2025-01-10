@@ -6,7 +6,7 @@ import { APIItemState, ChainStakingMetadata, CrowdloanItem, MantaPayConfig, NftC
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import KoniDatabase, { IBalance, ICampaign, IChain, ICrowdloanItem, INft } from '@subwallet/extension-base/services/storage-service/databases';
-import { AssetStore, BalanceStore, ChainStore, CrowdloanStore, MetadataStore, MigrationStore, NftCollectionStore, NftStore, PriceStore, StakingStore, TransactionStore } from '@subwallet/extension-base/services/storage-service/db-stores';
+import { AssetStore, BalanceStore, ChainStore, CrowdloanStore, MetadataStore, MetadataV15Store, MigrationStore, NftCollectionStore, NftStore, PriceStore, StakingStore, TransactionStore } from '@subwallet/extension-base/services/storage-service/db-stores';
 import BaseStore from '@subwallet/extension-base/services/storage-service/db-stores/BaseStore';
 import CampaignStore from '@subwallet/extension-base/services/storage-service/db-stores/Campaign';
 import ChainStakingMetadataStore from '@subwallet/extension-base/services/storage-service/db-stores/ChainStakingMetadata';
@@ -55,6 +55,8 @@ export default class DatabaseService {
       migration: new MigrationStore(this._db.migrations),
 
       metadata: new MetadataStore(this._db.metadata),
+      metadataV15: new MetadataV15Store(this._db.metadataV15),
+
       chain: new ChainStore(this._db.chain),
       asset: new AssetStore(this._db.asset),
 

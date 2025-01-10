@@ -57,7 +57,6 @@ import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base'
 import { SwapPair, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapSubmitParams, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { _analyzeAddress, BN_ZERO, combineAllAccountProxy, createTransactionFromRLP, isSameAddress, MODULE_SUPPORT, reformatAddress, signatureToHex, toBNString, Transaction as QrTransaction, transformAccounts, transformAddresses, uniqueStringArray } from '@subwallet/extension-base/utils';
 import { parseContractInput, parseEvmRlp } from '@subwallet/extension-base/utils/eth/parseTransaction';
-import { metadataExpand } from '@subwallet/extension-chains';
 import { MetadataDef } from '@subwallet/extension-inject/types';
 import { getKeypairTypeByAddress, isAddress, isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 import { EthereumKeypairTypes, SubstrateKeypairTypes, TonKeypairTypes } from '@subwallet/keyring/types';
@@ -73,11 +72,12 @@ import { combineLatest, Subject } from 'rxjs';
 import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
-import { Metadata, TypeRegistry } from '@polkadot/types';
-import { ChainProperties } from '@polkadot/types/interfaces';
+import { TypeRegistry } from '@polkadot/types';
 import { AnyJson, Registry, SignerPayloadJSON, SignerPayloadRaw } from '@polkadot/types/types';
 import { assert, hexStripPrefix, hexToU8a, isAscii, isHex, u8aToHex } from '@polkadot/util';
 import { decodeAddress, isEthereumAddress } from '@polkadot/util-crypto';
+
+import { getSuitableRegistry, RegistrySource, setupApiRegistry, setupDappRegistry, setupDatabaseRegistry } from '../utils';
 
 export function isJsonPayload (value: SignerPayloadJSON | SignerPayloadRaw): value is SignerPayloadJSON {
   return (value as SignerPayloadJSON).genesisHash !== undefined;
@@ -2523,7 +2523,7 @@ export default class KoniExtension {
     }
   }
 
-  /// Signing substrate request
+  // Signing substrate request
   private async signingApprovePasswordV2 ({ id }: RequestSigningApprovePasswordV2): Promise<boolean> {
     const queued = this.#koniState.getSignRequest(id);
 
@@ -2534,7 +2534,7 @@ export default class KoniExtension {
 
     // unlike queued.account.address the following
     // address is encoded with the default prefix
-    // which what is used for password caching mapping
+    // which is used for password caching mapping
     const { address } = pair;
 
     if (!pair) {
@@ -2549,77 +2549,29 @@ export default class KoniExtension {
 
     const { payload } = request;
 
-    let registry: Registry;
+    let registry: Registry = new TypeRegistry();
 
     if (isJsonPayload(payload)) {
       const [, chainInfo] = this.#koniState.findNetworkKeyByGenesisHash(payload.genesisHash);
-      let metadata: MetadataDef | MetadataItem | undefined;
 
-      /**
-       *  Get the metadata for the genesisHash
-       *  @todo: need to handle case metadata store in db
-      */
-      metadata = this.#koniState.knownMetadata.find((meta: MetadataDef) =>
-        meta.genesisHash === payload.genesisHash);
+      const allRegistry: RegistrySource[] = [
+        setupApiRegistry(chainInfo, this.#koniState),
+        setupDatabaseRegistry(
+          await this.#koniState.chainService.getMetadataByHash(payload.genesisHash) as MetadataItem,
+          chainInfo,
+          payload
+        ),
+        setupDappRegistry(
+          this.#koniState.knownMetadata.find((meta: MetadataDef) => meta.genesisHash === payload.genesisHash) as MetadataDef,
+          payload
+        )
+      ].filter((item): item is RegistrySource => item !== null && item.registry !== undefined);
 
-      if (metadata) {
-        // we have metadata, expand it and extract the info/registry
-        const expanded = metadataExpand(metadata, false);
-
-        registry = expanded.registry;
-        registry.setSignedExtensions(payload.signedExtensions, expanded.definition.userExtensions);
+      if (allRegistry.length === 0) {
+        registry.setSignedExtensions(payload.signedExtensions);
       } else {
-        metadata = await this.#koniState.chainService.getMetadataByHash(payload.genesisHash);
-
-        if (metadata) {
-          registry = new TypeRegistry();
-
-          const _metadata = new Metadata(registry, metadata.hexValue);
-
-          registry.register(metadata.types);
-          registry.setChainProperties(registry.createType('ChainProperties', {
-            ss58Format: chainInfo?.substrateInfo?.addressPrefix ?? 42,
-            tokenDecimals: chainInfo?.substrateInfo?.decimals,
-            tokenSymbol: chainInfo?.substrateInfo?.symbol
-          }) as unknown as ChainProperties);
-          registry.setMetadata(_metadata, payload.signedExtensions, metadata.userExtensions);
-        } else {
-          // we have no metadata, create a new registry
-          registry = new TypeRegistry();
-          registry.setSignedExtensions(payload.signedExtensions);
-        }
+        registry = getSuitableRegistry(allRegistry, payload);
       }
-
-      if (!metadata) {
-        /*
-        * Some networks must have metadata to signing,
-        * so if the chain not active (cannot use metadata from api), it must be rejected
-        *  */
-        if (
-          chainInfo &&
-          (_API_OPTIONS_CHAIN_GROUP.avail.includes(chainInfo.slug) || _API_OPTIONS_CHAIN_GROUP.goldberg.includes(chainInfo.slug)) // The special case for chains that need metadata to signing
-        ) {
-          // For case the chain does not have any provider
-          if (!Object.keys(chainInfo.providers).length) {
-            reject(new Error('{{chain}} network does not have any provider to connect, please update metadata from dApp'.replaceAll('{{chain}}', chainInfo.name)));
-
-            return false;
-          }
-
-          const isChainActive = this.#koniState.getChainStateByKey(chainInfo.slug).active;
-
-          if (!isChainActive) {
-            reject(new Error('Please activate {{chain}} network before signing'.replaceAll('{{chain}}', chainInfo.name)));
-
-            return false;
-          }
-
-          registry = this.#koniState.getSubstrateApi(chainInfo.slug).api.registry as unknown as TypeRegistry;
-        }
-      }
-    } else {
-      // for non-payload, just create a registry to use
-      registry = new TypeRegistry();
     }
 
     const result = request.sign(registry as unknown as TypeRegistry, pair);
