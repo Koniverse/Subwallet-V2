@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 1.3.11
+Build date: Dec 23, 2024.
+
+Features & Update:
+- Support swap TAO on SimpleSwap (#3855)
+- Update content on unstake screen for some earning options (#3778)
+
+Bug fixed:
+- Fix errors when making transactions on Tangle mainnet (#3861)
+
 ## 1.3.10
 Build date: Dec 12, 2024.
 
