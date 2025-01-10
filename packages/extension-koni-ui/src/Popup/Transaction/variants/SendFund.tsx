@@ -14,10 +14,10 @@ import { _isPosChainBridge, _isPosChainL2Bridge } from '@subwallet/extension-bas
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode, FeeOption } from '@subwallet/extension-base/types';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
-import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
+import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, FeeEditor, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
 import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
@@ -159,6 +159,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
   const [maxTransfer, setMaxTransfer] = useState<string>('0');
+  const [selectedOption, setSelectedOption] = useState<FeeOption | undefined>();
   const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('send-fund');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
 
@@ -451,12 +452,13 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       // Transfer token or send fund
       sendPromise = makeTransfer({
         from,
-        networkKey: chain,
+        chain,
         to: to,
         tokenSlug: asset,
         value: value,
         transferAll: options.isTransferAll,
-        transferBounceable: options.isTransferBounceable
+        transferBounceable: options.isTransferBounceable,
+        feeOption: selectedOption
       });
     } else {
       // Make cross chain transfer
@@ -473,7 +475,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     }
 
     return sendPromise;
-  }, []);
+  }, [selectedOption]);
 
   // todo: must refactor later, temporary solution to support SnowBridge
   const handleBridgeSpendingApproval = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
@@ -953,6 +955,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           </Form.Item>
         </Form>
 
+        <FeeEditor
+          onSelect={setSelectedOption}
+          tokenSlug={assetValue}
+        />
         {
           chainValue !== destChainValue && (
             <div className={'__warning_message_cross_chain'}>

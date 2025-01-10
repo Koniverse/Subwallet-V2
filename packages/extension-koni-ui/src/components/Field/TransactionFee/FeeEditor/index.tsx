@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _getAssetDecimals, _getAssetPriceId, _getAssetSymbol } from '@subwallet/extension-base/services/chain-service/utils';
+import { FeeOption } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -27,7 +28,7 @@ export type RenderFieldNodeParams = {
 }
 
 type Props = ThemeProps & {
-  onSelect?: () => void;
+  onSelect?: (option: FeeOption) => void;
   isLoading?: boolean;
   tokenSlug: string;
   renderFieldNode?: (params: RenderFieldNodeParams) => React.ReactNode;
@@ -66,8 +67,8 @@ const Component = ({ className, isLoading = false, onSelect, renderFieldNode, to
     }, 100);
   }, [activeModal]);
 
-  const onSelectOption = useCallback(() => {
-    onSelect?.();
+  const onSelectOption = useCallback((option: FeeOption) => {
+    onSelect?.(option);
   }, [onSelect]);
 
   const customFieldNode = useMemo(() => {

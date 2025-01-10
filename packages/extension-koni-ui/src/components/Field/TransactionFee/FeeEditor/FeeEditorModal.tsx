@@ -1,9 +1,10 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { FeeDefaultOption, FeeOption } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { BasicInputEvent, RadioGroup } from '@subwallet/extension-koni-ui/components';
-import { FeeOption, FeeOptionItem } from '@subwallet/extension-koni-ui/components/Field/TransactionFee/FeeEditor/FeeOptionItem';
+import { FeeOptionItem } from '@subwallet/extension-koni-ui/components/Field/TransactionFee/FeeEditor/FeeOptionItem';
 import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Form, Input, ModalContext, Number, SwModal } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
@@ -15,7 +16,7 @@ import styled from 'styled-components';
 
 type Props = ThemeProps & {
   modalId: string;
-  onSelectOption: () => void
+  onSelectOption: (option: FeeOption) => void
 };
 
 enum ViewMode {
@@ -32,7 +33,7 @@ interface FormProps {
   customValue: string;
 }
 
-const OPTIONS: FeeOption[] = [
+const OPTIONS: FeeDefaultOption[] = [
   'slow',
   'average',
   'fast'
@@ -43,7 +44,7 @@ type FeeInfo = {
   value: number;
 };
 
-const feeInfoMap: Record<FeeOption, FeeInfo> = {
+const feeInfoMap: Record<FeeDefaultOption, FeeInfo> = {
   slow: {
     time: 60 * 1000 * 30,
     value: 0.02
@@ -92,14 +93,21 @@ const Component = ({ className, modalId, onSelectOption }: Props): React.ReactEl
     inactiveModal(modalId);
   }, [inactiveModal, modalId]);
 
-  const _onSelectOption = useCallback(() => {
+  const _onSelectOption = useCallback((option: FeeOption) => {
     return () => {
-      onSelectOption();
+      onSelectOption(option);
       inactiveModal(modalId);
     };
   }, [inactiveModal, modalId, onSelectOption]);
 
-  const renderOption = (option: FeeOption) => {
+  const _onSelectCustomOption = useCallback(() => {
+    return () => {
+      onSelectOption('custom');
+      inactiveModal(modalId);
+    };
+  }, [inactiveModal, modalId, onSelectOption]);
+
+  const renderOption = (option: FeeDefaultOption) => {
     return (
       <FeeOptionItem
         className={'__fee-option-item'}
@@ -109,7 +117,7 @@ const Component = ({ className, modalId, onSelectOption }: Props): React.ReactEl
           symbol: 'KSM'
         }}
         key={option}
-        onClick={_onSelectOption()}
+        onClick={_onSelectOption(option)}
         time={feeInfoMap[option].time}
         type={option}
       />
@@ -126,7 +134,7 @@ const Component = ({ className, modalId, onSelectOption }: Props): React.ReactEl
 
   const onSubmitCustomValue: FormCallbacks<FormProps>['onFinish'] = useCallback(({ customValue }: FormProps) => {
     inactiveModal(modalId);
-    onSelectOption();
+    onSelectOption('custom');
   }, [inactiveModal, modalId, onSelectOption]);
 
   return (
@@ -136,6 +144,7 @@ const Component = ({ className, modalId, onSelectOption }: Props): React.ReactEl
         <Button
           block={true}
           className={'__approve-button'}
+          onClick={_onSelectCustomOption}
         >
           Approve
         </Button>
