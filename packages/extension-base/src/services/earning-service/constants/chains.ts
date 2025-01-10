@@ -15,7 +15,8 @@ export const _STAKING_CHAIN_GROUP = {
   lending: ['interlay'],
   krest_network: ['krest_network'],
   manta: ['manta_network'],
-  bittensor: ['bittensor', 'bittensor_devnet']
+  bittensor: ['bittensor', 'bittensor_devnet'],
+  mythos: ['muse_testnet']
 };
 
 export const TON_CHAINS = ['ton', 'ton_testnet'];

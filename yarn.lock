@@ -6439,15 +6439,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subwallet/chain-list@npm:0.2.97":
-  version: 0.2.97
-  resolution: "@subwallet/chain-list@npm:0.2.97"
+"@subwallet/chain-list@file:/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build::locator=root-workspace-0b6124%40workspace%3A.":
+  version: 0.2.98-beta.1
+  resolution: "@subwallet/chain-list@file:/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build#/Users/truongnguyen/Workspace/SubWallet-ChainList/packages/chain-list/build::hash=4d73a3&locator=root-workspace-0b6124%40workspace%3A."
   dependencies:
     "@polkadot/dev": 0.67.167
     "@polkadot/util": ^12.5.1
     eventemitter3: ^5.0.1
     ts-md5: ^1.3.1
-  checksum: 3271231e2c5b435dd2f4c502da5af8b547a5ac8aafe7089d09c9966fd74b233eb4077d04e0c960857d5b5e2fbd29f178f08aec473e6ec23d19bd07b6642af432
+  checksum: 8f9571c1fccbef0a7d7e1c2b344dc0c27f6ea65e75781a19cb4ab032e70df9e048400ffa677d702648ab89dc608025773209dd2b52636bfa8c743e8f8a622af0
   languageName: node
   linkType: hard
 

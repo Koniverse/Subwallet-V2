@@ -86,6 +86,8 @@ const Component: React.FC<Props> = (props: Props) => {
     const totalApr = poolInfo.statistic?.totalApr;
     const minJoinPool = poolInfo.statistic?.earningThreshold.join || '0';
 
+    console.log('minJoinPool', minJoinPool);
+
     const getOrigin = () => {
       switch (type) {
         case YieldPoolType.NOMINATION_POOL:
@@ -126,6 +128,7 @@ const Component: React.FC<Props> = (props: Props) => {
       if (Number(minJoinPool) === 0) {
         result = result.replace(' from {{minActiveStake}}', '');
       } else {
+        console.log(minJoinPool);
         const string = formatNumber(minJoinPool, asset.decimals || 0, balanceFormatter);
 
         result = result.replace('{{minActiveStake}}', `${string} ${asset.symbol}`);
