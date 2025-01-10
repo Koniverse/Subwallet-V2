@@ -4,12 +4,13 @@
 import { AmountData, RequestMaxTransferable } from '@subwallet/extension-base/background/KoniTypes';
 import { RequestOptimalTransferProcess } from '@subwallet/extension-base/services/balance-service/helpers';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { RequestCrossChainTransfer, RequestTransfer, TokenSpendingApprovalParams } from '@subwallet/extension-base/types';
+import { RequestCrossChainTransfer, TokenSpendingApprovalParams } from '@subwallet/extension-base/types';
+import { RequestSubmitTransfer } from '@subwallet/extension-base/types/balance/transfer';
 import { CommonOptimalPath } from '@subwallet/extension-base/types/service-base';
 
 import { sendMessage } from '../base';
 
-export async function makeTransfer (request: RequestTransfer): Promise<SWTransactionResponse> {
+export async function makeTransfer (request: RequestSubmitTransfer): Promise<SWTransactionResponse> {
   return sendMessage('pri(accounts.transfer)', request);
 }
 
