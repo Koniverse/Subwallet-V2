@@ -5,7 +5,7 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { CurrentAccountInfo } from '@subwallet/extension-base/background/types';
 import { AccountActions, AccountProxy, AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountChainAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, GeneralEmptyList } from '@subwallet/extension-web-ui/components';
+import { AccountChainAddressesModal, AccountProxySelectorAllItem, AccountProxySelectorItem, BaseModal, GeneralEmptyList } from '@subwallet/extension-web-ui/components';
 import ExportAllSelector from '@subwallet/extension-web-ui/components/Layout/parts/SelectAccount/ExportAllSelector';
 import SelectAccountFooter from '@subwallet/extension-web-ui/components/Layout/parts/SelectAccount/Footer';
 import Search from '@subwallet/extension-web-ui/components/Search';
@@ -17,7 +17,7 @@ import { RootState } from '@subwallet/extension-web-ui/stores';
 import { Theme } from '@subwallet/extension-web-ui/themes';
 import { AccountDetailParam, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { isAccountAll } from '@subwallet/extension-web-ui/utils';
-import { Icon, ModalContext, SwList, SwModal, Tooltip } from '@subwallet/react-ui';
+import { Icon, ModalContext, SwList, Tooltip } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { Circle, Export } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -392,7 +392,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
 
   return (
     <>
-      <SwModal
+      <BaseModal
         className={CN(className)}
         footer={<SelectAccountFooter />}
         id={modalId}
@@ -414,7 +414,7 @@ const Component: React.FC<Props> = ({ className }: Props) => {
           renderItem={renderItem}
           renderWhenEmpty={renderEmpty}
         />
-      </SwModal>
+      </BaseModal>
 
       {
         accountProxyToGetAddresses && (

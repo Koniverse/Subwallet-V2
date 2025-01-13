@@ -3,14 +3,14 @@
 
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { AccountProxy } from '@subwallet/extension-base/types';
-import { AccountChainAddressItem, CloseIcon, GeneralEmptyList } from '@subwallet/extension-web-ui/components';
+import { AccountChainAddressItem, BaseModal, CloseIcon, GeneralEmptyList } from '@subwallet/extension-web-ui/components';
 import { ACCOUNT_CHAIN_ADDRESSES_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { WalletModalContext } from '@subwallet/extension-web-ui/contexts/WalletModalContextProvider';
 import { useGetAccountChainAddresses, useHandleLedgerGenericAccountWarning, useHandleTonAccountWarning, useNotification } from '@subwallet/extension-web-ui/hooks';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { AccountChainAddress, ThemeProps } from '@subwallet/extension-web-ui/types';
 import { copyToClipboard } from '@subwallet/extension-web-ui/utils';
-import { Icon, SwList, SwModal } from '@subwallet/react-ui';
+import { Icon, SwList } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { CaretLeft } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect } from 'react';
@@ -122,7 +122,7 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
   }, [addressQrModal, items]);
 
   return (
-    <SwModal
+    <BaseModal
       className={CN(className)}
       closeIcon={
         onBack
@@ -154,7 +154,7 @@ const Component: React.FC<Props> = ({ accountProxy, className, onBack, onCancel 
         searchMinCharactersCount={2}
         searchPlaceholder={t<string>('Enter network name')}
       />
-    </SwModal>
+    </BaseModal>
   );
 };
 

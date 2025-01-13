@@ -5,14 +5,14 @@ import type { ButtonProps } from '@subwallet/react-ui/es/button/button';
 
 import { getExplorerLink } from '@subwallet/extension-base/services/transaction-service/utils';
 import { AccountActions } from '@subwallet/extension-base/types';
-import { CloseIcon, TonWalletContractSelectorModal } from '@subwallet/extension-web-ui/components';
+import { BaseModal, CloseIcon, TonWalletContractSelectorModal } from '@subwallet/extension-web-ui/components';
 import { ADDRESS_QR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL } from '@subwallet/extension-web-ui/constants/modal';
 import { useFetchChainInfo, useGetAccountByAddress } from '@subwallet/extension-web-ui/hooks';
 import useNotification from '@subwallet/extension-web-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-web-ui/hooks/common/useTranslation';
 import { ThemeProps } from '@subwallet/extension-web-ui/types';
 import { toShort } from '@subwallet/extension-web-ui/utils';
-import { Button, Icon, Logo, ModalContext, SwModal, SwQRCode } from '@subwallet/react-ui';
+import { Button, Icon, Logo, ModalContext, SwQRCode } from '@subwallet/react-ui';
 import CN from 'classnames';
 import { ArrowSquareOut, CaretLeft, CopySimple, Gear } from 'phosphor-react';
 import React, { useCallback, useContext, useMemo } from 'react';
@@ -86,7 +86,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
 
   return (
     <>
-      <SwModal
+      <BaseModal
         className={CN(className)}
         closeIcon={
           onBack
@@ -179,7 +179,7 @@ const Component: React.FC<Props> = ({ address, chainSlug, className, onBack, onC
             onClick={handleClickViewOnExplorer}
           >{t('View on explorer')}</Button>
         </>
-      </SwModal>
+      </BaseModal>
       {isRelatedToTon && isTonWalletContactSelectorModalActive &&
         <TonWalletContractSelectorModal
           address={address}
