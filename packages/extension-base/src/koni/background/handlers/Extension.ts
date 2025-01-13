@@ -1872,6 +1872,8 @@ export default class KoniExtension {
               } else {
                 const contractAddress = _getContractAddressOfToken(tokenInfo);
                 const erc20Contract = getERC20Contract(contractAddress, web3);
+
+                // Todo: For testing purposes, update with real data later.
                 const address1 = '0xdd718f9Ecaf8f144a3140b79361b5D713D3A6b19';
                 const address2 = '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b';
                 const to = address1.toLowerCase() === address.toLowerCase() ? address2 : address1;
