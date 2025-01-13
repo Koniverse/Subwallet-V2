@@ -29,8 +29,8 @@ export interface BifrostVtokenExchangeRate {
   token_pool: number
 }
 
-const STATS_URL = 'https://api.bifrost.app/api/site';
-const RATIO_URL = 'https://api.bifrost.app/api/omni/MANTA';
+const STATS_URL = 'https://dapi.bifrost.io/api/site';
+const RATIO_URL = 'https://dapi.bifrost.io/api/omni/MANTA';
 
 export default class BifrostMantaLiquidStakingPoolHandler extends BifrostLiquidStakingPoolHandler {
   protected override readonly altInputAsset: string = 'manta_network-NATIVE-MANTA';
