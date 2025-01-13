@@ -15,19 +15,20 @@ import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode, FeeOption } from '@subwallet/extension-base/types';
+import { ResponseSubscribeTransfer } from '@subwallet/extension-base/types/balance/transfer';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
 import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, FeeEditor, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
-import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useGetNativeTokenBasicInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
-import { approveSpending, getMaxTransfer, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer } from '@subwallet/extension-koni-ui/messaging';
+import { approveSpending, cancelSubscription, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer, subscribeMaxTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop } from '@subwallet/extension-koni-ui/utils';
-import { Button, Form, Icon } from '@subwallet/react-ui';
+import { Button, Form, Icon, Number } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -158,10 +159,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
-  const [maxTransfer, setMaxTransfer] = useState<string>('0');
   const [selectedOption, setSelectedOption] = useState<FeeOption | undefined>();
   const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('send-fund');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
+  const nativeTokenBasicInfo = useGetNativeTokenBasicInfo(chainValue);
 
   const currentConfirmation = useMemo(() => {
     if (chainValue && destChainValue) {
@@ -196,10 +197,14 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [addressInputRenderKey, setAddressInputRenderKey] = useState<string>(defaultAddressInputRenderKey);
 
   const [, update] = useState({});
-  const [isFetchingMaxValue, setIsFetchingMaxValue] = useState(false);
   const [isBalanceReady, setIsBalanceReady] = useState(true);
   const [forceUpdateMaxValue, setForceUpdateMaxValue] = useState<object|undefined>(undefined);
+  const [transferInfo, setTransferInfo] = useState<ResponseSubscribeTransfer | undefined>();
+  const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
+  const estimatedFee = useMemo((): string => transferInfo?.feeOptions.estimatedFee || '0', [transferInfo]);
+
+  console.log('transferInfo?.feeOptions', transferInfo?.feeOptions);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
@@ -331,6 +336,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [accounts, autoFormatValue, chainInfoMap, form, ledgerGenericAllowNetworks]);
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
+    const maxTransfer = transferInfo?.maxTransferable || '0';
+
+    console.log('maxTransfer', maxTransfer);
+
     if (!amount) {
       return Promise.reject(t('Amount is required'));
     }
@@ -350,7 +359,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
     }
 
     return Promise.resolve();
-  }, [decimals, maxTransfer, t]);
+  }, [decimals, t, transferInfo?.maxTransferable]);
 
   const onValuesChange: FormCallbacks<TransferParams>['onValuesChange'] = useCallback(
     (part: Partial<TransferParams>, values: TransferParams) => {
@@ -552,12 +561,12 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   }, [handleBasicSubmit, handleBridgeSpendingApproval, isShowWarningOnSubmit, onError, onSuccess, processState]);
 
   const onSetMaxTransferable = useCallback((value: boolean) => {
-    const bnMaxTransfer = new BN(maxTransfer);
+    const bnMaxTransfer = new BN(transferInfo?.maxTransferable || '0');
 
     if (!bnMaxTransfer.isZero()) {
       setIsTransferAll(value);
     }
-  }, [maxTransfer]);
+  }, [transferInfo?.maxTransferable]);
 
   const onSubmit: FormCallbacks<TransferParams>['onFinish'] = useCallback((values: TransferParams) => {
     const options: TransferOptions = {
@@ -756,52 +765,68 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   useEffect(() => {
     let cancel = false;
 
-    setIsFetchingMaxValue(false);
+    // setIsFetchingMaxValue(false);
+
+    let id = '';
+
+    setIsFetchingInfo(true);
+
+    const validate = () => {
+      const value = form.getFieldValue('value') as string;
+
+      if (value) {
+        setTimeout(() => {
+          form.validateFields(['value']).finally(() => update({}));
+        }, 100);
+      }
+    };
+
+    const callback = (transferInfo: ResponseSubscribeTransfer) => {
+      if (!cancel) {
+        setTransferInfo(transferInfo);
+        id = transferInfo.id;
+
+        validate();
+      } else {
+        cancelSubscription(transferInfo.id).catch(console.error);
+      }
+    };
 
     if (fromValue && assetValue) {
-      getMaxTransfer({
+      subscribeMaxTransfer({
         address: fromValue,
-        networkKey: assetRegistry[assetValue].originChain,
+        chain: assetRegistry[assetValue].originChain,
         token: assetValue,
         isXcmTransfer: chainValue !== destChainValue,
-        destChain: destChainValue
-      })
-        .then((balance) => {
-          if (!cancel) {
-            setMaxTransfer(balance.value);
-            setIsFetchingMaxValue(true);
-          }
-        })
-        .catch(() => {
-          if (!cancel) {
-            setMaxTransfer('0');
-            setIsFetchingMaxValue(true);
-          }
+        destChain: destChainValue,
+        feeOption: selectedOption
+      }, callback)
+        .then((callback))
+        .catch((e) => {
+          console.error(e);
+
+          setTransferInfo(undefined);
+          validate();
         })
         .finally(() => {
-          if (!cancel) {
-            const value = form.getFieldValue('value') as string;
-
-            if (value) {
-              update({});
-            }
-          }
+          setIsFetchingInfo(false);
         });
     }
 
     return () => {
       cancel = true;
+      id && cancelSubscription(id).catch(console.error);
     };
-  }, [assetValue, assetRegistry, chainValue, chainStatus, form, fromValue, destChainValue]);
+  }, [assetValue, assetRegistry, chainValue, chainStatus, form, fromValue, destChainValue, selectedOption]);
 
   useEffect(() => {
     const bnTransferAmount = new BN(transferAmountValue || '0');
-    const bnMaxTransfer = new BN(maxTransfer || '0');
+    const bnMaxTransfer = new BN(transferInfo?.maxTransferable || '0');
 
     if (bnTransferAmount.gt(BN_ZERO) && bnTransferAmount.eq(bnMaxTransfer)) {
       setIsTransferAll(true);
     }
-  }, [maxTransfer, transferAmountValue]);
+  }, [transferAmountValue, transferInfo?.maxTransferable]);
 
   useEffect(() => {
     getOptimalTransferProcess({
@@ -947,7 +972,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
               decimals={decimals}
               disabled={decimals === 0}
               forceUpdateMaxValue={forceUpdateMaxValue}
-              maxValue={maxTransfer}
+              maxValue={transferInfo?.maxTransferable || '0'}
               onSetMax={onSetMaxTransferable}
               showMaxButton={!hideMaxButton}
               tooltip={t('Amount')}
@@ -956,6 +981,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         </Form>
 
         <FeeEditor
+          feeOptions={transferInfo?.feeOptions}
           onSelect={setSelectedOption}
           tokenSlug={assetValue}
         />
@@ -978,12 +1004,17 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             />
           )
         }
+        <Number
+          decimal={nativeTokenBasicInfo.decimals}
+          suffix={nativeTokenBasicInfo.symbol}
+          value={estimatedFee}
+        />
       </TransactionContent>
       <TransactionFooter
         className={`${className} -transaction-footer`}
       >
         <Button
-          disabled={!isBalanceReady || (isTransferAll ? !isFetchingMaxValue : false)}
+          disabled={!isBalanceReady || (isTransferAll ? isFetchingInfo : false)}
           icon={(
             <Icon
               phosphorIcon={PaperPlaneTilt}

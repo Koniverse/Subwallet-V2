@@ -189,4 +189,20 @@ export default class FeeService {
       }
     });
   }
+
+  public unsubscribeChainFee (id: string, chain: string, type: FeeChainType) {
+    const subscription = this.chainFeeSubscriptionMap[type][chain];
+
+    if (subscription) {
+      const unsub = subscription.subscription[id];
+
+      unsub && unsub();
+      delete subscription.subscription[id];
+
+      if (Object.keys(subscription.subscription).length === 0) {
+        subscription.unsubscribe();
+        delete this.chainFeeSubscriptionMap[type][chain];
+      }
+    }
+  }
 }

@@ -1778,6 +1778,227 @@ export default class KoniExtension {
     }
   }
 
+  private async subscribeMaxTransferable ({ address, chain, destChain, feeCustom, feeOption: _feeOptions, isXcmTransfer, token }: RequestSubscribeTransfer, id: string, port: chrome.runtime.Port): Promise<ResponseSubscribeTransfer> {
+    const cb = createSubscription<'pri(transfer.subscribe)'>(id, port);
+
+    const tokenInfo = token ? this.#koniState.chainService.getAssetBySlug(token) : this.#koniState.chainService.getNativeTokenInfo(chain);
+    const chainInfo = this.#koniState.chainService.getChainInfoByKey(chain);
+    const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
+
+    console.log('subscribeMaxTransferable', feeCustom, _feeOptions);
+
+    const freeBalanceSubject = new Subject<AmountData>();
+    const feeSubject = new Subject<FeeInfo>();
+    const feeChainType: FeeChainType = isXcmTransfer
+      ? 'substrate'
+      : _isChainEvmCompatible(chainInfo) && _isTokenTransferredByEvm(tokenInfo)
+        ? 'evm'
+        : 'substrate';
+
+    const convertData = async (freeBalance: AmountData, fee: FeeInfo): Promise<ResponseSubscribeTransfer> => {
+      const substrateApi = this.#koniState.chainService.getSubstrateApi(chain);
+      let estimatedFee: string;
+      let feeOptions: FeeDetail;
+      let tip = '0';
+      let maxTransferable = new BigN(freeBalance.value);
+
+      try {
+        if (isXcmTransfer) {
+          const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, tokenInfo.slug);
+
+          if (!destinationTokenInfo) {
+            const _fee = fee as SubstrateFeeInfo;
+
+            estimatedFee = '0';
+            feeOptions = {
+              ..._fee,
+              estimatedFee
+            };
+          } else {
+            maxTransferable = maxTransferable.minus(new BigN(tokenInfo.minAmount || '0').multipliedBy(XCM_MIN_AMOUNT_RATIO));
+            const desChainInfo = chainInfoMap[destChain];
+            const orgChainInfo = chainInfoMap[chain];
+            const recipient = !isEthereumAddress(address) && _isChainEvmCompatible(desChainInfo) && !_isChainEvmCompatible(orgChainInfo)
+              ? u8aToHex(addressToEvm(address))
+              : address
+            ;
+
+            const mockTx = await createXcmExtrinsic({
+              chainInfoMap,
+              destinationTokenInfo,
+              originTokenInfo: tokenInfo,
+              recipient: recipient,
+              sendingValue: '1000000000000000000',
+              substrateApi
+            });
+
+            try {
+              const paymentInfo = await mockTx.paymentInfo(address);
+
+              estimatedFee = paymentInfo?.partialFee?.toString() || '0';
+            } catch (e) {
+              estimatedFee = tokenInfo.minAmount || '0';
+            }
+
+            const _fee = fee as SubstrateFeeInfo;
+
+            if (_feeOptions && _feeOptions !== 'custom') {
+              tip = _fee.options[_feeOptions].tip;
+            } else if (_feeOptions === 'custom' && feeCustom && 'tip' in feeCustom) {
+              tip = feeCustom.tip;
+            } else {
+              tip = _fee.options[_fee.options.default].tip;
+            }
+
+            feeOptions = {
+              ..._fee,
+              estimatedFee
+            };
+          }
+        } else {
+          if (_isChainEvmCompatible(chainInfo) && _isTokenTransferredByEvm(tokenInfo)) {
+            const web3 = this.#koniState.chainService.getEvmApi(chain);
+            let gasLimit: number;
+
+            try {
+              if (_isNativeToken(tokenInfo)) {
+                const transaction: TransactionConfig = {
+                  value: 0,
+                  to: '0x0000000000000000000000000000000000000000', // null address
+                  from: address
+                };
+
+                gasLimit = await web3.api.eth.estimateGas(transaction);
+              } else {
+                const contractAddress = _getContractAddressOfToken(tokenInfo);
+                const erc20Contract = getERC20Contract(contractAddress, web3);
+                const address1 = '0xdd718f9Ecaf8f144a3140b79361b5D713D3A6b19';
+                const address2 = '0x5e10e440FEce4dB0b16a6159A4536efb74d32E9b';
+                const to = address1.toLowerCase() === address.toLowerCase() ? address2 : address1;
+
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+                gasLimit = await erc20Contract.methods.transfer(to, freeBalance.value).estimateGas({ from: address }) as number;
+              }
+            } catch (e) {
+              console.error(e);
+              gasLimit = 0;
+            }
+
+            const _fee = fee as EvmFeeInfo;
+            const _feeCustom = feeCustom as EvmEIP1559FeeOption;
+            const combineFee = combineEthFee(_fee, _feeOptions, _feeCustom);
+
+            if (combineFee.maxFeePerGas) {
+              estimatedFee = new BigN(combineFee.maxFeePerGas).multipliedBy(gasLimit).toFixed(0);
+            } else {
+              estimatedFee = new BigN(combineFee.gasPrice || '0').multipliedBy(gasLimit).toFixed(0);
+            }
+
+            feeOptions = {
+              ..._fee,
+              estimatedFee,
+              gasLimit: gasLimit.toString()
+            };
+          } else {
+            const [mockTx] = await createTransferExtrinsic({
+              from: address,
+              networkKey: chain,
+              substrateApi,
+              to: address,
+              tokenInfo,
+              transferAll: true,
+              value: '1000000000000000000'
+            });
+
+            const paymentInfo = await mockTx?.paymentInfo(address);
+            const _fee = fee as SubstrateFeeInfo;
+
+            if (_feeOptions && _feeOptions !== 'custom') {
+              tip = _fee.options[_feeOptions].tip;
+            } else if (_feeOptions === 'custom' && feeCustom && 'tip' in feeCustom) {
+              tip = feeCustom.tip;
+            } else {
+              tip = _fee.options[_fee.options.default].tip;
+            }
+
+            estimatedFee = paymentInfo?.partialFee?.toString() || '0';
+            feeOptions = {
+              ..._fee,
+              estimatedFee
+            };
+          }
+        }
+      } catch (e) {
+        estimatedFee = '0';
+
+        if (fee.type === 'substrate') {
+          feeOptions = {
+            ...fee,
+            estimatedFee
+          };
+        } else {
+          feeOptions = {
+            ...fee,
+            estimatedFee,
+            gasLimit: '0'
+          };
+        }
+
+        console.warn('Unable to estimate fee', e);
+      }
+
+      maxTransferable = maxTransferable
+        .minus(new BigN(estimatedFee).multipliedBy(isXcmTransfer ? XCM_FEE_RATIO : 1))
+        .minus(tip);
+
+      return {
+        maxTransferable: !_isNativeToken(tokenInfo)
+          ? freeBalance.value
+          : maxTransferable.gt(BN_ZERO) ? (maxTransferable.toFixed(0) || '0') : '0',
+        feeOptions: feeOptions,
+        feeType: feeChainType,
+        id: id
+      };
+    };
+
+    const subscription = combineLatest({
+      freeBalance: freeBalanceSubject,
+      fee: feeSubject
+    })
+      .subscribe({
+        next: ({ fee, freeBalance }) => {
+          convertData(freeBalance, fee)
+            .then(cb)
+            .catch(console.error);
+        }
+      });
+
+    const [unsubBalance, freeBalance] = await this.#koniState.balanceService.subscribeBalance(address, chain, token, 'transferable', undefined, (data) => {
+      freeBalanceSubject.next(data); // Must be called after subscription
+    });
+
+    const fee = await this.#koniState.feeService.subscribeChainFee(id, chain, feeChainType, (data) => {
+      feeSubject.next(data); // Must be called after subscription
+    });
+
+    const unsub = () => {
+      subscription.unsubscribe();
+      unsubBalance();
+      this.#koniState.feeService.unsubscribeChainFee(id, chain, feeChainType);
+    };
+
+    this.createUnsubscriptionHandle(
+      id,
+      unsub
+    );
+
+    port.onDisconnect.addListener((): void => {
+      this.cancelSubscription(id);
+    });
+
+    return convertData(freeBalance, fee);
+  }
+
   private async getXcmMaxTransferable (originTokenInfo: _ChainAsset, destChain: string, address: string): Promise<BigN> {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
@@ -4274,6 +4495,9 @@ export default class KoniExtension {
 
       case 'pri(transfer.getMaxTransferable)':
         return this.getMaxTransferable(request as RequestMaxTransferable);
+      case 'pri(transfer.subscribe)':
+        return this.subscribeMaxTransferable(request as RequestSubscribeTransfer, id, port);
+
       case 'pri(freeBalance.get)':
         return this.getAddressTransferableBalance(request as RequestFreeBalance);
       case 'pri(freeBalance.subscribe)':
