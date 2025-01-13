@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _getAssetDecimals, _getAssetPriceId, _getAssetSymbol } from '@subwallet/extension-base/services/chain-service/utils';
-import { FeeOption } from '@subwallet/extension-base/types';
+import { FeeDetail, FeeOption } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { useSelector } from '@subwallet/extension-koni-ui/hooks';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
@@ -31,13 +31,14 @@ type Props = ThemeProps & {
   onSelect?: (option: FeeOption) => void;
   isLoading?: boolean;
   tokenSlug: string;
+  feeOptions?: FeeDetail;
   renderFieldNode?: (params: RenderFieldNodeParams) => React.ReactNode;
 };
 
 // todo: will update dynamic later
 const modalId = 'FeeEditorModalId';
 
-const Component = ({ className, isLoading = false, onSelect, renderFieldNode, tokenSlug }: Props): React.ReactElement<Props> => {
+const Component = ({ className, feeOptions, isLoading = false, onSelect, renderFieldNode, tokenSlug }: Props): React.ReactElement<Props> => {
   const { t } = useTranslation();
   const { activeModal } = useContext(ModalContext);
   const assetRegistry = useSelector((root) => root.assetRegistry.assetRegistry);
@@ -130,8 +131,11 @@ const Component = ({ className, isLoading = false, onSelect, renderFieldNode, to
       }
 
       <FeeEditorModal
+        decimals={decimals}
+        feeOptions={feeOptions}
         modalId={modalId}
         onSelectOption={onSelectOption}
+        symbol={symbol}
       />
     </>
   );

@@ -1,7 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { FeeDefaultOption, FeeOption } from '@subwallet/extension-base/types';
+import { FeeDefaultOption, FeeDetail, FeeOption } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { BasicInputEvent, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { FeeOptionItem } from '@subwallet/extension-koni-ui/components/Field/TransactionFee/FeeEditor/FeeOptionItem';
@@ -16,7 +16,10 @@ import styled from 'styled-components';
 
 type Props = ThemeProps & {
   modalId: string;
-  onSelectOption: (option: FeeOption) => void
+  feeOptions?: FeeDetail;
+  onSelectOption: (option: FeeOption) => void;
+  symbol: string;
+  decimals: number;
 };
 
 enum ViewMode {
@@ -59,7 +62,7 @@ const feeInfoMap: Record<FeeDefaultOption, FeeInfo> = {
   }
 };
 
-const Component = ({ className, modalId, onSelectOption }: Props): React.ReactElement<Props> => {
+const Component = ({ className, decimals, feeOptions, modalId, onSelectOption, symbol }: Props): React.ReactElement<Props> => {
   const { t } = useTranslation();
   const { inactiveModal } = useContext(ModalContext);
   const [currentViewMode, setViewMode] = useState<ViewMode>(ViewMode.RECOMMENDED);
@@ -113,8 +116,8 @@ const Component = ({ className, modalId, onSelectOption }: Props): React.ReactEl
         className={'__fee-option-item'}
         feeValueInfo={{
           value: feeInfoMap[option].value,
-          decimals: 0,
-          symbol: 'KSM'
+          decimals: decimals,
+          symbol: symbol
         }}
         key={option}
         onClick={_onSelectOption(option)}
