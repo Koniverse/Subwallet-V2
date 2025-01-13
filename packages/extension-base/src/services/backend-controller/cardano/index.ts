@@ -5,6 +5,14 @@ import { CardanoTransactionConfigProps } from '@subwallet/extension-base/service
 
 export const SUBWALLET_API = process.env.SUBWALLET_API || '';
 
+interface SubWalletResponse<T> {
+  statusCode: number, // todo: better to use a flag status than status code
+  result: T,
+  message: string
+}
+
+type SWFetchCardanoTx = SubWalletResponse<string>;
+
 export async function fetchUnsignedPayload (params: CardanoTransactionConfigProps): Promise<string> {
   const cardanoId = params.tokenInfo.metadata?.cardanoId;
 
@@ -12,16 +20,16 @@ export async function fetchUnsignedPayload (params: CardanoTransactionConfigProp
     throw new Error('Missing token policy id metadata');
   }
 
-  try {
-    const url = `${SUBWALLET_API}/build-cardano-tx?`;
-    const searchParamsUrl = new URLSearchParams({
-      sender: params.from,
-      receiver: params.to,
-      unit: cardanoId,
-      quantity: params.value,
-      ttl: params.cardanoTtlOffset.toString()
-    }).toString();
+  const url = `${SUBWALLET_API}/build-cardano-tx?`;
+  const searchParamsUrl = new URLSearchParams({
+    sender: params.from,
+    receiver: params.to,
+    unit: cardanoId,
+    quantity: params.value,
+    ttl: params.cardanoTtlOffset.toString()
+  }).toString();
 
+  try {
     const rawResponse = await fetch(url + searchParamsUrl, {
       method: 'GET',
       headers: {
@@ -30,10 +38,16 @@ export async function fetchUnsignedPayload (params: CardanoTransactionConfigProp
       }
     });
 
-    const response = await rawResponse.json() as { result: string };
+    const response = await rawResponse.json() as SWFetchCardanoTx;
+
+    if (response.statusCode !== 200) {
+      throw new Error(response.message);
+    }
 
     return response.result;
   } catch (error) {
-    throw new Error('Transaction is not built successfully.');
+    const errorMessage = (error as Error).message;
+
+    throw new Error(`Transaction is not built successfully: ${errorMessage}`);
   }
 }
