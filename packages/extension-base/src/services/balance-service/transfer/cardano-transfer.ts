@@ -83,35 +83,35 @@ function validatePayload (payload: string, params: CardanoTransactionConfigProps
 }
 
 function validateAllOutputsBelongToAddress (address: string, outputs: CardanoTxOutput[]) {
-  for (const output of outputs) {
-    if (output.address !== address) {
-      throw new Error('Transaction has invalid address information');
-    }
+  const found = outputs.find((output) => output.address !== address);
+
+  if (found) {
+    throw new Error('Transaction has invalid address information');
   }
 }
 
 function validateExistOutputWithAmountSend (amount: string, outputs: CardanoTxOutput[], assetType: _AssetType, cardanoAssetMetadata: CardanoAssetMetadata) {
   if (assetType === _AssetType.NATIVE) {
-    for (const output of outputs) {
-      if (output.amount.coin === amount) {
-        return;
-      }
+    const found = outputs.find((output) => output.amount.coin === amount);
+
+    if (found) {
+      return;
     }
 
     throw new Error('Transaction has invalid transfer amount information');
   }
 
   if (assetType === _AssetType.CIP26) {
-    for (const output of outputs) {
-      if (amount === output.amount.multiasset[cardanoAssetMetadata.policyId][cardanoAssetMetadata.nameHex]) {
-        return;
-      }
+    const found = outputs.find((output) => amount === output.amount.multiasset[cardanoAssetMetadata.policyId]?.[cardanoAssetMetadata.nameHex]);
+
+    if (found) {
+      return;
     }
 
     throw new Error('Transaction has invalid transfer amount information');
   }
 
-  throw new Error('AssetType is invalid');
+  throw new Error('Invalid asset type!');
 }
 
 function validateReceiverOutputsWithAmountSend (amount: string, outputs: CardanoTxOutput[], assetType: _AssetType, cardanoAssetMetadata: CardanoAssetMetadata) {
@@ -137,5 +137,5 @@ function validateReceiverOutputsWithAmountSend (amount: string, outputs: Cardano
     throw new Error('Transaction has invalid transfer amount information');
   }
 
-  throw new Error('AssetType is invalid');
+  throw new Error('Invalid asset type!');
 }
