@@ -114,9 +114,15 @@ function Component ({ className, inputAsset, poolInfo, transactionChainValue, tr
     navigate('/transaction/cancel-unstake');
   }, [navigate, setCancelUnStakeStorage, slug, transactionChainValue, transactionFromValue]);
 
-  const renderWithdrawTime = useCallback(
+  const renderWithdrawTime = useCallback( // todo: need refactor conditions for this block
     (item: UnstakingInfo) => {
       if (!poolInfo.metadata.availableMethod.withdraw) {
+        if (item.waitingTime) {
+          return (
+            <div className={'__withdraw-time-label'}>{t(getWaitingTime(t, currentTimestampMs, item.targetTimestampMs, item.waitingTime))}</div>
+          );
+        }
+
         return (
           <div className={'__withdraw-time-label'}>{t('Automatic withdrawal')}</div>
         );
