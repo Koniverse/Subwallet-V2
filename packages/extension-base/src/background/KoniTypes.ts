@@ -1126,6 +1126,7 @@ export interface ConfirmationsQueueItemOptions {
   requiredPassword?: boolean;
   address?: string;
   networkKey?: string;
+  isPassConfirmation?: boolean;
 }
 
 export interface ConfirmationsQueueItem<T> extends ConfirmationsQueueItemOptions, ConfirmationRequestBase {
