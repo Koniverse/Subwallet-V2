@@ -627,7 +627,6 @@ div#popup-container {
 }
 
 .ant-sw-modal .ant-sw-modal-content.ant-sw-modal-content {
-    padding-bottom: 0;
     border-bottom: 0;
     background: #0c0c0c;
     box-shadow: 4px 4px 4px 0 rgba(0, 0, 0, 0.25);
