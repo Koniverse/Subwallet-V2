@@ -21,14 +21,14 @@ import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwa
 import { AccountAddressSelector, AddressInputNew, AddressInputRef, AlertBox, AlertModal, AmountInput, ChainSelector, FeeEditor, HiddenInput, TokenItemType, TokenSelector } from '@subwallet/extension-koni-ui/components';
 import { ADDRESS_INPUT_AUTO_FORMAT_VALUE } from '@subwallet/extension-koni-ui/constants';
 import { MktCampaignModalContext } from '@subwallet/extension-koni-ui/contexts/MktCampaignModalContext';
-import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useGetNativeTokenBasicInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
+import { useAlert, useDefaultNavigate, useFetchChainAssetInfo, useHandleSubmitMultiTransaction, useNotification, usePreCheckAction, useRestoreTransaction, useSelector, useSetCurrentPage, useTransactionContext, useWatchTransaction } from '@subwallet/extension-koni-ui/hooks';
 import useGetConfirmationByScreen from '@subwallet/extension-koni-ui/hooks/campaign/useGetConfirmationByScreen';
 import { approveSpending, cancelSubscription, getOptimalTransferProcess, isTonBounceableAddress, makeCrossChainTransfer, makeTransfer, subscribeMaxTransfer } from '@subwallet/extension-koni-ui/messaging';
 import { CommonActionType, commonProcessReducer, DEFAULT_COMMON_PROCESS } from '@subwallet/extension-koni-ui/reducer';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ChainItemType, FormCallbacks, Theme, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { findAccountByAddress, formatBalance, getChainsByAccountAll, getChainsByAccountType, getReformatedAddressRelatedToChain, noop } from '@subwallet/extension-koni-ui/utils';
-import { Button, Form, Icon, Number } from '@subwallet/react-ui';
+import { Button, Form, Icon } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
@@ -162,7 +162,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [selectedOption, setSelectedOption] = useState<FeeOption | undefined>();
   const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('send-fund');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
-  const nativeTokenBasicInfo = useGetNativeTokenBasicInfo(chainValue);
 
   const currentConfirmation = useMemo(() => {
     if (chainValue && destChainValue) {
@@ -203,8 +202,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
   const estimatedFee = useMemo((): string => transferInfo?.feeOptions.estimatedFee || '0', [transferInfo]);
-
-  console.log('transferInfo?.feeOptions', transferInfo?.feeOptions);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
@@ -337,8 +334,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
 
   const validateAmount = useCallback((rule: Rule, amount: string): Promise<void> => {
     const maxTransfer = transferInfo?.maxTransferable || '0';
-
-    console.log('maxTransfer', maxTransfer);
 
     if (!amount) {
       return Promise.reject(t('Amount is required'));
@@ -981,7 +976,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         </Form>
 
         <FeeEditor
-          feeOptions={transferInfo?.feeOptions}
+          estimateFee={estimatedFee}
+          feeOptionsInfo={transferInfo?.feeOptions}
           onSelect={setSelectedOption}
           tokenSlug={assetValue}
         />
@@ -1004,11 +1000,6 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
             />
           )
         }
-        <Number
-          decimal={nativeTokenBasicInfo.decimals}
-          suffix={nativeTokenBasicInfo.symbol}
-          value={estimatedFee}
-        />
       </TransactionContent>
       <TransactionFooter
         className={`${className} -transaction-footer`}

@@ -13,6 +13,15 @@ export interface EvmLegacyFeeInfo extends BaseFeeInfo {
 export interface EvmEIP1559FeeOption {
   maxFeePerGas: string;
   maxPriorityFeePerGas: string;
+  minWaitTimeEstimate: number;
+  maxWaitTimeEstimate: number;
+}
+
+export enum FeeOptionKey {
+  SLOW = 'slow',
+  AVERAGE = 'average',
+  FAST = 'fast',
+  DEFAULT = 'default',
 }
 
 export interface EvmEIP1559FeeInfo extends BaseFeeInfo {
@@ -20,10 +29,10 @@ export interface EvmEIP1559FeeInfo extends BaseFeeInfo {
   gasPrice: undefined;
   baseGasFee: string;
   options: {
-    slow: EvmEIP1559FeeOption;
-    average: EvmEIP1559FeeOption;
-    fast: EvmEIP1559FeeOption;
-    default: FeeDefaultOption;
+    [FeeOptionKey.SLOW]: EvmEIP1559FeeOption;
+    [FeeOptionKey.AVERAGE]: EvmEIP1559FeeOption;
+    [FeeOptionKey.FAST]: EvmEIP1559FeeOption;
+    [FeeOptionKey.DEFAULT]: FeeDefaultOption;
   }
 }
 
