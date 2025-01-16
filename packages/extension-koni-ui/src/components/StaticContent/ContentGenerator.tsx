@@ -30,10 +30,20 @@ const Component = ({ className, content }: Props) => {
         img (props) {
           const { children, className, node, src, ...rest } = props;
 
+          if (className?.includes('md-element')) {
+            return (
+              <img
+                {...rest}
+                className={className}
+                src={src}
+              />
+            );
+          }
+
           return (
             <Image
               {...rest}
-              className={'custom-img'}
+              className={className || 'custom-img'}
               onClick={noop}
               src={src}
               width={'100%'}
