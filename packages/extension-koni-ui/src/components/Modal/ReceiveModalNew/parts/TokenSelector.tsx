@@ -43,7 +43,7 @@ function Component ({ className = '', items, onCancel, onSelectItem }: Props): R
     });
 
     if (!currentSearchText) {
-      sortTokensByStandard(filteredList, priorityTokens);
+      sortTokensByStandard(filteredList, priorityTokens, true);
 
       return filteredList;
     }

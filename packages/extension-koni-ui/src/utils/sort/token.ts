@@ -56,7 +56,7 @@ export const sortTokenByPriority = (a: string, b: string, aIsPrioritizedToken: b
   }
 };
 
-export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorityTokenGroups: Record<string, TokenPriorityDetails>) {
+export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorityTokenGroups: Record<string, TokenPriorityDetails>, useTokenPriority?: boolean) {
   const priorityTokenGroupKeys = Object.keys(priorityTokenGroups);
 
   targetTokens.sort((a, b) => {
@@ -83,8 +83,16 @@ export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorit
     const aIsPrioritizedToken = !!(aBelongToPrioritizedGroup && aMultiChainAsset && priorityTokenGroups[aMultiChainAsset].priorityTokens[aSlug]) || priorityTokenGroupKeys.includes(aSlug);
     const bIsPrioritizedToken = !!(bBelongToPrioritizedGroup && bMultiChainAsset && priorityTokenGroups[bMultiChainAsset].priorityTokens[bSlug]) || priorityTokenGroupKeys.includes(bSlug);
 
-    const aPriority = aMultiChainAsset ? (aIsPrioritizedToken ? priorityTokenGroups[aMultiChainAsset].priorityTokens[aSlug] : 0) : (aIsPrioritizedToken ? priorityTokenGroups[aSlug].groupPriority : 0);
-    const bPriority = bMultiChainAsset ? (bIsPrioritizedToken ? priorityTokenGroups[bMultiChainAsset].priorityTokens[bSlug] : 0) : (bIsPrioritizedToken ? priorityTokenGroups[bSlug].groupPriority : 0);
+    let aPriority: number;
+    let bPriority: number;
+
+    if (useTokenPriority) {
+      aPriority = aMultiChainAsset ? (aIsPrioritizedToken ? priorityTokenGroups[aMultiChainAsset].priorityTokens[aSlug] : 0) : (aIsPrioritizedToken ? priorityTokenGroups[aSlug].priorityTokens[aSlug] : 0);
+      bPriority = bMultiChainAsset ? (bIsPrioritizedToken ? priorityTokenGroups[bMultiChainAsset].priorityTokens[bSlug] : 0) : (bIsPrioritizedToken ? priorityTokenGroups[bSlug].priorityTokens[bSlug] : 0);
+    } else {
+      aPriority = aMultiChainAsset ? (aIsPrioritizedToken ? priorityTokenGroups[aMultiChainAsset].groupPriority : 0) : (aIsPrioritizedToken ? priorityTokenGroups[aSlug].groupPriority : 0);
+      bPriority = bMultiChainAsset ? (bIsPrioritizedToken ? priorityTokenGroups[bMultiChainAsset].groupPriority : 0) : (bIsPrioritizedToken ? priorityTokenGroups[bSlug].groupPriority : 0);
+    }
 
     return sortTokenByPriority(a.symbol, b.symbol, aIsPrioritizedToken, bIsPrioritizedToken, aPriority, bPriority);
   });
