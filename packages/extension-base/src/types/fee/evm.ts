@@ -13,8 +13,8 @@ export interface EvmLegacyFeeInfo extends BaseFeeInfo {
 export interface EvmEIP1559FeeOption {
   maxFeePerGas: string;
   maxPriorityFeePerGas: string;
-  minWaitTimeEstimate: number;
-  maxWaitTimeEstimate: number;
+  minWaitTimeEstimate?: number;
+  maxWaitTimeEstimate?: number;
 }
 
 export enum FeeOptionKey {

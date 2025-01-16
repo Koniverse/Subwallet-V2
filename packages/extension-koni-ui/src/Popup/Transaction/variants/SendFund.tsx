@@ -474,7 +474,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         to,
         value,
         transferAll: options.isTransferAll,
-        transferBounceable: options.isTransferBounceable
+        transferBounceable: options.isTransferBounceable,
+        feeOption: selectedOption
       });
     }
 

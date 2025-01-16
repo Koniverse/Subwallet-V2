@@ -26,15 +26,21 @@ export const parseInfuraFee = (info: InfuraFeeInfo, threshold: InfuraThresholdIn
     options: {
       slow: {
         maxFeePerGas: new BigN(info.low.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
-        maxPriorityFeePerGas: new BigN(info.low.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0)
+        maxPriorityFeePerGas: new BigN(info.low.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxWaitTimeEstimate: info.low.maxWaitTimeEstimate || 0,
+        minWaitTimeEstimate: info.low.minWaitTimeEstimate || 0
       },
       average: {
         maxFeePerGas: new BigN(info.medium.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
-        maxPriorityFeePerGas: new BigN(info.medium.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0)
+        maxPriorityFeePerGas: new BigN(info.medium.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxWaitTimeEstimate: info.medium.maxWaitTimeEstimate || 0,
+        minWaitTimeEstimate: info.medium.minWaitTimeEstimate || 0
       },
       fast: {
         maxFeePerGas: new BigN(info.high.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
-        maxPriorityFeePerGas: new BigN(info.high.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0)
+        maxPriorityFeePerGas: new BigN(info.high.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxWaitTimeEstimate: info.high.maxWaitTimeEstimate || 0,
+        minWaitTimeEstimate: info.high.minWaitTimeEstimate || 0
       },
       default: busyNetwork ? 'average' : 'slow'
     }
@@ -59,12 +65,11 @@ export const fetchInfuraFeeData = async (chainId: number, infuraAuth?: string): 
       });
     }));
 
-    const [feeInfo, thresholdInfo] = await Promise.all([feeResp.json(), thressholdResp.json()]);
+    const [feeInfo, thresholdInfo]: [InfuraFeeInfo, InfuraThresholdInfo] = await Promise.all([
+      feeResp.json(),
+      thressholdResp.json()]);
 
-    console.log('feeInfo', feeInfo);
-    console.log('thresholdInfo', thresholdInfo);
-
-    return parseInfuraFee(feeInfo as InfuraFeeInfo, thresholdInfo as InfuraThresholdInfo);
+    return parseInfuraFee(feeInfo, thresholdInfo);
   } catch (e) {
     console.warn(e);
 
@@ -159,11 +164,11 @@ export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, u
       const gasPriceInWei = gasResponse.standard * 1e9 + 200000;
 
       return {
+        type: 'evm',
         gasPrice: gasPriceInWei.toString(),
-        maxFeePerGas: undefined,
-        maxPriorityFeePerGas: undefined,
         baseGasFee: undefined,
-        busyNetwork: false
+        busyNetwork: false,
+        options: undefined
       };
     }
 

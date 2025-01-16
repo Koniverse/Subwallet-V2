@@ -1,57 +1,68 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { _ChainInfo } from '@subwallet/chain-list/types';
 import { getERC20Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _ERC721_ABI } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { getPSP34ContractPromise } from '@subwallet/extension-base/koni/api/contract-handler/wasm';
 import { getWasmContractGasLimit } from '@subwallet/extension-base/koni/api/contract-handler/wasm/utils';
 import { EVM_REFORMAT_DECIMALS } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
-import { EvmFeeInfo } from '@subwallet/extension-base/types';
+import { EvmEIP1559FeeOption, EvmFeeInfo, GetFeeFunction, TransactionFee } from '@subwallet/extension-base/types';
+import { combineEthFee } from '@subwallet/extension-base/utils';
+import { getId } from '@subwallet/extension-base/utils/getId';
 import BigN from 'bignumber.js';
 import { t } from 'i18next';
 import { TransactionConfig } from 'web3-core';
 
-export async function getEVMTransactionObject (
-  chainInfo: _ChainInfo,
-  from: string,
-  to: string,
-  value: string,
-  transferAll: boolean,
-  web3Api: _EvmApi
-): Promise<[TransactionConfig, string]> {
-  const networkKey = chainInfo.slug;
+interface TransferEvmProps extends TransactionFee {
+  chain: string;
+  from: string;
+  getChainFee: GetFeeFunction;
+  to: string;
+  transferAll: boolean;
+  value: string;
+  evmApi: _EvmApi;
+}
 
-  const priority = await calculateGasFeeParams(web3Api, networkKey);
+export async function getEVMTransactionObject ({ chain,
+  evmApi,
+  feeCustom: _feeCustom,
+  feeOption,
+  from,
+  getChainFee,
+  to,
+  transferAll,
+  value }: TransferEvmProps): Promise<[TransactionConfig, string]> {
+  const id = getId();
+  const feeCustom = _feeCustom as EvmEIP1559FeeOption;
+  const feeInfo = await getChainFee(id, chain, 'evm') as EvmFeeInfo;
+
+  const feeCombine = combineEthFee(feeInfo, feeOption, feeCustom);
 
   const transactionObject = {
     to: to,
     value: value,
     from: from,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   } as TransactionConfig;
 
-  const gasLimit = await web3Api.api.eth.estimateGas(transactionObject);
+  const gasLimit = await evmApi.api.eth.estimateGas(transactionObject);
 
   transactionObject.gas = gasLimit;
 
   let estimateFee: BigN;
 
-  if (priority.baseGasFee) {
-    const maxFee = priority.maxFeePerGas;
+  if (feeCombine.maxFeePerGas) {
+    const maxFee = new BigN(feeCombine.maxFeePerGas);
 
     estimateFee = maxFee.multipliedBy(gasLimit);
   } else {
-    estimateFee = new BigN(priority.gasPrice).multipliedBy(gasLimit);
+    estimateFee = new BigN(feeCombine.gasPrice || '0').multipliedBy(gasLimit);
   }
 
   transactionObject.value = transferAll ? new BigN(value).minus(estimateFee).toString() : value;
 
-  if (EVM_REFORMAT_DECIMALS.acala.includes(networkKey)) {
+  if (EVM_REFORMAT_DECIMALS.acala.includes(chain)) {
     const numberReplace = 18 - 12;
 
     transactionObject.value = transactionObject.value.substring(0, transactionObject.value.length - 6) + new Array(numberReplace).fill('0').join('');
@@ -61,16 +72,20 @@ export async function getEVMTransactionObject (
 }
 
 export async function getERC20TransactionObject (
-  assetAddress: string,
-  chainInfo: _ChainInfo,
-  from: string,
-  to: string,
-  value: string,
-  transferAll: boolean,
-  evmApi: _EvmApi
+  { assetAddress,
+    chain,
+    evmApi,
+    feeCustom: _feeCustom,
+    feeOption,
+    from,
+    getChainFee,
+    to,
+    transferAll,
+    value }: TransferERC20Props
 ): Promise<[TransactionConfig, string]> {
-  const networkKey = chainInfo.slug;
   const erc20Contract = getERC20Contract(assetAddress, evmApi);
+  const feeCustom = _feeCustom as EvmEIP1559FeeOption;
+
   let freeAmount = new BigN(0);
   let transferValue = value;
 
@@ -87,15 +102,17 @@ export async function getERC20TransactionObject (
     return erc20Contract.methods.transfer(to, transferValue).encodeABI() as string;
   }
 
+  const id = getId();
+
   const transferData = generateTransferData(to, transferValue);
-  const [gasLimit, priority] = await Promise.all([
+  const [gasLimit, _feeInfo] = await Promise.all([
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-    erc20Contract.methods.transfer(to, transferValue).estimateGas({ from })
-      .catch(() => {
-        throw Error('Unable to estimate fee for this transaction. Try again or contact support at agent@subwallet.app');
-      }) as number,
-    calculateGasFeeParams(evmApi, networkKey)
+    erc20Contract.methods.transfer(to, transferValue).estimateGas({ from }) as number,
+    getChainFee(id, chain, 'evm')
   ]);
+
+  const feeInfo = _feeInfo as EvmFeeInfo;
+  const feeCombine = combineEthFee(feeInfo, feeOption, feeCustom);
 
   const transactionObject = {
     gas: gasLimit,
@@ -103,9 +120,7 @@ export async function getERC20TransactionObject (
     value: '0',
     to: assetAddress,
     data: transferData,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   } as TransactionConfig;
 
   if (transferAll) {
@@ -116,24 +131,34 @@ export async function getERC20TransactionObject (
   return [transactionObject, transferValue];
 }
 
+interface TransferERC20Props extends TransactionFee {
+  assetAddress: string;
+  chain: string;
+  evmApi: _EvmApi;
+  from: string;
+  getChainFee: GetFeeFunction;
+  to: string;
+  transferAll: boolean;
+  value: string;
+}
+
 export async function getERC721Transaction (
   web3Api: _EvmApi,
   chain: string,
   contractAddress: string,
   senderAddress: string,
   recipientAddress: string,
-  tokenId: string): Promise<TransactionConfig> {
+  tokenId: string,
+  getChainFee: GetFeeFunction): Promise<TransactionConfig> {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const contract = new web3Api.api.eth.Contract(_ERC721_ABI, contractAddress);
 
   let gasLimit: number;
-  let priority: EvmFeeInfo;
 
   try {
-    [gasLimit, priority] = await Promise.all([
+    [gasLimit] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-      contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).estimateGas({ from: senderAddress }) as number,
-      calculateGasFeeParams(web3Api, chain)
+      contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).estimateGas({ from: senderAddress }) as number
     ]);
   } catch (e) {
     const error = e as Error;
@@ -145,16 +170,18 @@ export async function getERC721Transaction (
     throw error;
   }
 
+  const id = getId();
+  const feeInfo = await getChainFee(id, chain, 'evm') as EvmFeeInfo;
+  const feeCombine = combineEthFee(feeInfo);
+
   return {
     from: senderAddress,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString(),
     gas: gasLimit,
     to: contractAddress,
     value: '0x00',
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
-    data: contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).encodeABI()
+    data: contract.methods.safeTransferFrom(senderAddress, recipientAddress, tokenId).encodeABI(),
+    ...feeCombine
   };
 }
 
