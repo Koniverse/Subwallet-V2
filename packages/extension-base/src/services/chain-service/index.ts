@@ -3,7 +3,7 @@
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
-import { AssetSetting, TokenPriorityDetails, MetadataItem, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AssetSetting, MetadataItem, TokenPriorityDetails, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
