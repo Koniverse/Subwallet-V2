@@ -165,6 +165,7 @@ export class InappNotificationService implements CronServiceInterface {
   }
 
   async validateAndWriteNotificationsToDB (notifications: _BaseNotificationInfo[], address: string) {
+    return;
     const proxyId = this.keyringService.context.belongUnifiedAccount(address) || address;
     const accountName = this.keyringService.context.getCurrentAccountProxyName(proxyId);
     const passNotifications: _NotificationInfo[] = [];
@@ -373,7 +374,7 @@ export class InappNotificationService implements CronServiceInterface {
 
     try {
       this.status = ServiceStatus.STARTING;
-      await this.startCron();
+      // await this.startCron();
       this.status = ServiceStatus.STARTED;
     } catch (e) {
 
