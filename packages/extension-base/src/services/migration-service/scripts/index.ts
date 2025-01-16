@@ -15,7 +15,6 @@ import MigrateEthProvider from './providers/MigrateEthProvider';
 import MigratePioneerProvider from './providers/MigratePioneerProvider';
 import MigrateProvidersV1M1P24 from './providers/MigrateProvidersV1M1P24';
 import MigratePolygonUSDCProvider from './tokens/MigratePolygonUSDCProvider';
-import AutoEnableChainsTokens from './AutoEnableChainsTokens';
 import DeleteChain from './DeleteChain';
 import DeleteChainStaking from './DeleteChainStaking';
 import DeleteEarningData from './DeleteEarningData';
@@ -38,7 +37,7 @@ export default <Record<string, typeof BaseMigrationJob>>{
   '1.0.1-11': MigrateNetworkSettings,
   '1.0.1-20': MigrateImportedToken,
   '1.0.1-30': MigrateTransactionHistory,
-  '1.0.1-40': AutoEnableChainsTokens,
+  // '1.0.1-40': AutoEnableChainsTokens,
   '1.0.1-50': MigrateSettings,
   '1.0.1-60': MigrateAuthUrls,
   '1.0.3-01': MigrateAutoLock,
