@@ -1,27 +1,28 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { EvmEIP1559FeeOption, FeeDefaultOption, FeeDetail, FeeOption, FeeOptionKey } from '@subwallet/extension-base/types';
+import { EvmEIP1559FeeOption, FeeCustom, FeeDefaultOption, FeeDetail, FeeOptionKey, TransactionFee } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
 import { BasicInputEvent, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { FeeOptionItem } from '@subwallet/extension-koni-ui/components/Field/TransactionFee/FeeEditor/FeeOptionItem';
-import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Form, Input, Logo, ModalContext, Number, SwModal } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
 import CN from 'classnames';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 type Props = ThemeProps & {
   modalId: string;
   feeOptionsInfo?: FeeDetail;
-  onSelectOption: (option: FeeOption) => void;
+  onSelectOption: (option: TransactionFee) => void;
   symbol: string;
   decimals: number;
   tokenSlug: string;
   priceValue: number;
+  feeType?: string;
 };
 
 enum ViewMode {
@@ -44,12 +45,18 @@ const OPTIONS: FeeDefaultOption[] = [
   'fast'
 ];
 
-const Component = ({ className, decimals, feeOptionsInfo, modalId, onSelectOption, priceValue, symbol, tokenSlug }: Props): React.ReactElement<Props> => {
+const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSelectOption, priceValue, symbol, tokenSlug }: Props): React.ReactElement<Props> => {
   const { t } = useTranslation();
   const { inactiveModal } = useContext(ModalContext);
   const [currentViewMode, setViewMode] = useState<ViewMode>(ViewMode.RECOMMENDED);
 
   const [form] = Form.useForm<FormProps>();
+
+  useEffect(() => {
+    if (feeType === 'substrate') {
+      setViewMode(ViewMode.CUSTOM);
+    }
+  }, [feeType]);
 
   const formDefault = useMemo((): FormProps => {
     return {
@@ -78,16 +85,9 @@ const Component = ({ className, decimals, feeOptionsInfo, modalId, onSelectOptio
     inactiveModal(modalId);
   }, [inactiveModal, modalId]);
 
-  const _onSelectOption = useCallback((option: FeeOption) => {
+  const _onSelectOption = useCallback((option: TransactionFee) => {
     return () => {
       onSelectOption(option);
-      inactiveModal(modalId);
-    };
-  }, [inactiveModal, modalId, onSelectOption]);
-
-  const _onSelectCustomOption = useCallback(() => {
-    return () => {
-      onSelectOption('custom');
       inactiveModal(modalId);
     };
   }, [inactiveModal, modalId, onSelectOption]);
@@ -109,7 +109,9 @@ const Component = ({ className, decimals, feeOptionsInfo, modalId, onSelectOptio
   const renderOption = (option: FeeDefaultOption) => {
     const optionValue = feeOptionsInfo?.options?.[option] as EvmEIP1559FeeOption;
     const feeValue = calculateEstimateFee(option as FeeOptionKey);
-    const estimatedWaitTime = (optionValue?.maxWaitTimeEstimate + optionValue?.minWaitTimeEstimate) / 2 || 0;
+    const estimatedWaitTime = optionValue
+      ? ((optionValue.maxWaitTimeEstimate || 0) + (optionValue.minWaitTimeEstimate || 0)) / 2
+      : 0;
 
     return (
       <FeeOptionItem
@@ -120,25 +122,81 @@ const Component = ({ className, decimals, feeOptionsInfo, modalId, onSelectOptio
           symbol: symbol
         }}
         key={option}
-        onClick={_onSelectOption(option)}
+        onClick={_onSelectOption({ feeOption: option })}
         time={estimatedWaitTime}
         type={option}
       />
     );
   };
 
+  const _onSelectCustomOption = useCallback(() => {
+    let customValue;
+
+    if (feeType === 'evm') {
+      const maxFeeValue = form.getFieldValue('maxFeeValue') as string;
+      const priorityFeeValue = form.getFieldValue('priorityFeeValue') as string;
+
+      console.log('maxFeeValue', maxFeeValue);
+      console.log('priorityFeeValue', form.getFieldValue('priorityFeeValue'));
+
+      customValue = { maxFeePerGas: maxFeeValue, maxPriorityFeePerGas: priorityFeeValue } as FeeCustom;
+    } else {
+      customValue = form.getFieldValue('customValue') as FeeCustom;
+    }
+
+    return _onSelectOption({ feeCustom: customValue })();
+  }, [_onSelectOption, feeType, form]);
+
   const customValueValidator = useCallback((rule: Rule, value: string): Promise<void> => {
     return Promise.resolve();
   }, []);
 
+  const customPriorityValidator = useCallback((rule: Rule, value: string): Promise<void> => {
+    if (!value) {
+      return Promise.resolve();
+    }
+
+    if ((new BigN(value)).lte(BN_ZERO)) {
+      return Promise.reject(t('The priority fee must be greater than 0'));
+    }
+
+    return Promise.resolve();
+  }, [t]);
+
+  const customMaxFeeValidator = useCallback((rule: Rule, value: string): Promise<void> => {
+    if (!value) {
+      return Promise.reject(t('Please enter the maximum fee.'));
+    }
+
+    if (feeOptionsInfo && 'baseGasFee' in feeOptionsInfo) {
+      const baseGasFee = feeOptionsInfo.baseGasFee;
+      const maxFeeValue = form.getFieldValue('maxFeeValue') as string;
+
+      if (baseGasFee && maxFeeValue && new BigN(value).lte(new BigN(baseGasFee).multipliedBy(1.5))) {
+        return Promise.reject(t('The maximum fee entered is too low'));
+      }
+
+      if ((new BigN(value)).lte(BN_ZERO)) {
+        return Promise.reject(t('The maximum fee must be greater than 0'));
+      }
+    }
+
+    return Promise.resolve();
+  }, [feeOptionsInfo, form, t]);
+
+  const feeDefaultValue = useMemo(() => {
+    const defaultOption = feeOptionsInfo?.options?.default;
+
+    if (defaultOption) {
+      return feeOptionsInfo?.options?.[defaultOption] as EvmEIP1559FeeOption;
+    }
+
+    return undefined;
+  }, [feeOptionsInfo]);
+
   const convertedCustomValue = useMemo<BigN>(() => {
     return BN_ZERO;
   }, []);
-
-  const onSubmitCustomValue: FormCallbacks<FormProps>['onFinish'] = useCallback(({ customValue }: FormProps) => {
-    inactiveModal(modalId);
-    onSelectOption('custom');
-  }, [inactiveModal, modalId, onSelectOption]);
 
   return (
     <SwModal
@@ -156,14 +214,16 @@ const Component = ({ className, decimals, feeOptionsInfo, modalId, onSelectOptio
       onCancel={onCancelModal}
       title={t('Choose fee')}
     >
-      <div className={'__switcher-box'}>
-        <RadioGroup
-          onChange={onChaneViewMode}
-          optionType='button'
-          options={viewOptions}
-          value={currentViewMode}
-        />
-      </div>
+      {feeType === 'evm' && (
+        <div className={'__switcher-box'}>
+          <RadioGroup
+            onChange={onChaneViewMode}
+            optionType='button'
+            options={viewOptions}
+            value={currentViewMode}
+          />
+        </div>
+      )}
 
       <div className={'__fee-token-selector-area'}>
         <div className={'__fee-token-selector-label'}>{t('Fee paid in')}</div>
@@ -195,32 +255,73 @@ const Component = ({ className, decimals, feeOptionsInfo, modalId, onSelectOptio
             <Form
               form={form}
               initialValues={formDefault}
-              onFinish={onSubmitCustomValue}
             >
-              <div className={'__custom-value-field-wrapper'}>
-                <Number
-                  className={'__converted-custom-value'}
-                  decimal={0}
-                  prefix={'~ $'}
-                  value={convertedCustomValue}
-                />
-                <Form.Item
-                  className={'__custom-value-field'}
-                  name={'customValue'}
-                  rules={[
-                    {
-                      validator: customValueValidator
-                    }
-                  ]}
-                  statusHelpAsTooltip={true}
-                >
-                  <Input
-                    label={'TOKEN'}
-                    placeholder={'Enter fee value'}
-                    type={'number'}
-                  />
-                </Form.Item>
-              </div>
+              {!(feeType === 'evm')
+                ? (
+                  <div className={'__custom-value-field-wrapper'}>
+                    <Number
+                      className={'__converted-custom-value'}
+                      decimal={0}
+                      prefix={'~ $'}
+                      value={convertedCustomValue}
+                    />
+                    <Form.Item
+                      className={'__custom-value-field'}
+                      name={'customValue'}
+                      rules={[
+                        {
+                          validator: customValueValidator
+                        }
+                      ]}
+                      statusHelpAsTooltip={true}
+                    >
+                      <Input
+                        label={feeType === 'substrate' ? 'TIP' : 'TOKEN'}
+                        placeholder={'Enter fee value'}
+                        type={'number'}
+                      />
+                    </Form.Item>
+                  </div>
+
+                )
+                : (
+                  <div className={'__custom-value-field-wrapper'}>
+                    <Form.Item
+                      className={'__base-fee-value-field'}
+                      name={'maxFeeValue'}
+                      rules={[
+                        {
+                          validator: customMaxFeeValidator
+                        }
+                      ]}
+                      statusHelpAsTooltip={true}
+                    >
+                      <Input
+                        defaultValue={feeDefaultValue && feeDefaultValue.maxFeePerGas}
+                        label={'Max fee (GWEI)'}
+                        placeholder={'Enter fee value'}
+                        type={'number'}
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      className={'__priority-fee-value-field'}
+                      name={'priorityFeeValue'}
+                      rules={[
+                        {
+                          validator: customPriorityValidator
+                        }
+                      ]}
+                      statusHelpAsTooltip={true}
+                    >
+                      <Input
+                        defaultValue={feeDefaultValue && feeDefaultValue.maxPriorityFeePerGas}
+                        label={'Priority fee (GWEI)'}
+                        placeholder={'Enter fee value'}
+                        type={'number'}
+                      />
+                    </Form.Item>
+                  </div>)}
+
             </Form>
           </div>
         )
@@ -237,6 +338,10 @@ export const FeeEditorModal = styled(Component)<Props>(({ theme: { token } }: Pr
 
     '.ant-sw-modal-footer': {
       borderTop: 0
+    },
+
+    '.__base-fee-value-field.__base-fee-value-field': {
+      marginBottom: 8
     },
 
     '.__switcher-box': {

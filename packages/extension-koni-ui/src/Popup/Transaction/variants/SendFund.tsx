@@ -14,7 +14,7 @@ import { _isPosChainBridge, _isPosChainL2Bridge } from '@subwallet/extension-bas
 import { _getAssetDecimals, _getAssetName, _getAssetOriginChain, _getAssetSymbol, _getContractAddressOfToken, _getMultiChainAsset, _getOriginChainOfAsset, _getTokenMinAmount, _isChainEvmCompatible, _isNativeToken, _isTokenTransferredByEvm } from '@subwallet/extension-base/services/chain-service/utils';
 import { TON_CHAINS } from '@subwallet/extension-base/services/earning-service/constants';
 import { SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode, FeeOption } from '@subwallet/extension-base/types';
+import { AccountChainType, AccountProxy, AccountProxyType, AccountSignMode, AnalyzedGroup, BasicTxWarningCode, TransactionFee } from '@subwallet/extension-base/types';
 import { ResponseSubscribeTransfer } from '@subwallet/extension-base/types/balance/transfer';
 import { CommonStepType } from '@subwallet/extension-base/types/service-base';
 import { _reformatAddressWithChain, detectTranslate, isAccountAll } from '@subwallet/extension-base/utils';
@@ -159,7 +159,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const accountProxies = useSelector((state: RootState) => state.accountState.accountProxies);
   const [autoFormatValue] = useLocalStorage(ADDRESS_INPUT_AUTO_FORMAT_VALUE, false);
 
-  const [selectedOption, setSelectedOption] = useState<FeeOption | undefined>();
+  const [selectedTransactionFee, setSelectedTransactionFee] = useState<TransactionFee | undefined>();
   const { getCurrentConfirmation, renderConfirmationButtons } = useGetConfirmationByScreen('send-fund');
   const checkAction = usePreCheckAction(fromValue, true, detectTranslate('The account you are using is {{accountTitle}}, you cannot send assets with it'));
 
@@ -202,6 +202,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
   const [isFetchingInfo, setIsFetchingInfo] = useState(false);
   const chainStatus = useMemo(() => chainStatusMap[chainValue]?.connectionStatus, [chainValue, chainStatusMap]);
   const estimatedFee = useMemo((): string => transferInfo?.feeOptions.estimatedFee || '0', [transferInfo]);
+
+  console.log('transferInfo', transferInfo);
 
   const [processState, dispatchProcessState] = useReducer(commonProcessReducer, DEFAULT_COMMON_PROCESS);
 
@@ -462,7 +464,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         value: value,
         transferAll: options.isTransferAll,
         transferBounceable: options.isTransferBounceable,
-        feeOption: selectedOption
+        feeOption: selectedTransactionFee?.feeOption,
+        feeCustom: selectedTransactionFee?.feeCustom
       });
     } else {
       // Make cross chain transfer
@@ -475,12 +478,13 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         value,
         transferAll: options.isTransferAll,
         transferBounceable: options.isTransferBounceable,
-        feeOption: selectedOption
+        feeOption: selectedTransactionFee?.feeOption,
+        feeCustom: selectedTransactionFee?.feeCustom
       });
     }
 
     return sendPromise;
-  }, [selectedOption]);
+  }, [selectedTransactionFee]);
 
   // todo: must refactor later, temporary solution to support SnowBridge
   const handleBridgeSpendingApproval = useCallback((values: TransferParams): Promise<SWTransactionResponse> => {
@@ -795,7 +799,8 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         token: assetValue,
         isXcmTransfer: chainValue !== destChainValue,
         destChain: destChainValue,
-        feeOption: selectedOption
+        feeOption: selectedTransactionFee?.feeOption,
+        feeCustom: selectedTransactionFee?.feeCustom
       }, callback)
         .then((callback))
         .catch((e) => {
@@ -813,7 +818,7 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
       cancel = true;
       id && cancelSubscription(id).catch(console.error);
     };
-  }, [assetValue, assetRegistry, chainValue, chainStatus, form, fromValue, destChainValue, selectedOption]);
+  }, [assetValue, assetRegistry, chainValue, chainStatus, form, fromValue, destChainValue, selectedTransactionFee]);
 
   useEffect(() => {
     const bnTransferAmount = new BN(transferAmountValue || '0');
@@ -979,8 +984,10 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
         <FeeEditor
           estimateFee={estimatedFee}
           feeOptionsInfo={transferInfo?.feeOptions}
-          onSelect={setSelectedOption}
+          feeType={transferInfo?.feeType}
+          onSelect={setSelectedTransactionFee}
           tokenSlug={assetValue}
+          loading={loading}
         />
         {
           chainValue !== destChainValue && (

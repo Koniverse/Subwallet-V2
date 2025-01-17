@@ -434,7 +434,6 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
       estimateGas = new BigN(transactionParams.gasPrice).multipliedBy(transaction.gas).toFixed(0);
     } else {
       try {
-        // const priority = await calculateGasFeeParams(evmApi, networkKey || '');
         const gasLimit = transaction.gas || await evmApi.api.eth.estimateGas(transaction);
         const id = getId();
         const feeInfo = await koni.feeService.subscribeChainFee(id, transaction.chain || '', 'evm') as EvmFeeInfo;
