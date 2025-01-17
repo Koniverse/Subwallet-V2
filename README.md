@@ -4,7 +4,7 @@ Our SubWallet is forked from polkadot-js/extension. We aim to adding more featur
 ![Main Concept](https://github.com/Koniverse/Subwallet-V2/wiki/images/ExtensionConcept.png)
 The extension is compiled from folder `packages/extension-koni`
 - **Background environment**: The Background environment is compiled from `packages/extension-koni/src/background.ts`.
-  - The Background is use to handle message from Extensions pages and Chrome tabs via Chrome API Message Passing.
+  - The Background is used to handle message from Extensions pages and Chrome tabs via Chrome API Message Passing.
   - Save all state to store and persist to chrome storage.
   - Run cronjob.
 - **Extension**: Is frontend and page of extension:
