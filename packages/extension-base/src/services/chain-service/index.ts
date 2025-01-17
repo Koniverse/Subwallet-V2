@@ -3,7 +3,7 @@
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
-import { AssetSetting, MetadataItem, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AssetSetting, MetadataItem, TokenPriorityDetails, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
@@ -92,6 +92,7 @@ export class ChainService {
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
   private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
+  private priorityTokensSubject = new BehaviorSubject({} as TokenPriorityDetails);
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -123,20 +124,28 @@ export class ChainService {
 
   public get value () {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+    const priorityTokens = this.priorityTokensSubject;
 
     return {
       get ledgerGenericAllowChains () {
         return ledgerGenericAllowChains.value;
+      },
+      get priorityTokens () {
+        return priorityTokens.value;
       }
     };
   }
 
   public get observable () {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+    const priorityTokens = this.priorityTokensSubject;
 
     return {
       get ledgerGenericAllowChains () {
         return ledgerGenericAllowChains.asObservable();
+      },
+      get priorityTokens () {
+        return priorityTokens.asObservable();
       }
     };
   }
@@ -767,6 +776,11 @@ export class ChainService {
     this.logger.log('Finished updating latest ledger generic allow chains');
   }
 
+  handleLatestPriorityTokens (latestPriorityTokens: TokenPriorityDetails) {
+    this.priorityTokensSubject.next(latestPriorityTokens);
+    this.logger.log('Finished updating latest popular tokens');
+  }
+
   handleLatestData () {
     this.fetchLatestChainData().then((latestChainInfo) => {
       this.lockChainInfoMap = true; // do not need to check current lockChainInfoMap because all remains action is fast enough and don't affect this feature.
@@ -784,6 +798,12 @@ export class ChainService {
     this.fetchLatestLedgerGenericAllowChains()
       .then((latestledgerGenericAllowChains) => {
         this.handleLatestLedgerGenericAllowChains(latestledgerGenericAllowChains);
+      })
+      .catch(console.error);
+
+    this.fetchLatestPriorityTokens()
+      .then((latestPriorityTokens) => {
+        this.handleLatestPriorityTokens(latestPriorityTokens);
       })
       .catch(console.error);
   }
@@ -1086,6 +1106,13 @@ export class ChainService {
 
   private async fetchLatestLedgerGenericAllowChains () {
     return await fetchStaticData<string[]>('chains/ledger-generic-allow-chains') || [];
+  }
+
+  private async fetchLatestPriorityTokens () {
+    return await fetchStaticData<TokenPriorityDetails>('chain-assets/priority-tokens') || {
+      tokenGroup: {},
+      token: {}
+    };
   }
 
   private async initChains () {
