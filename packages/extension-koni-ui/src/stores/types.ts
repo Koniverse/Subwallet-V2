@@ -126,7 +126,7 @@ export interface ChainStore extends BaseReduxStore {
   chainStateMap: Record<string, _ChainState>
   chainStatusMap: Record<string, _ChainApiStatus>
   ledgerGenericAllowNetworks: string[];
-  priorityTokens: Record<string, TokenPriorityDetails>;
+  priorityTokens: TokenPriorityDetails;
 }
 
 export interface BalanceStore extends BaseReduxStore {

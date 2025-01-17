@@ -92,7 +92,7 @@ export class ChainService {
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
   private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
-  private priorityTokensSubject = new BehaviorSubject<Record<string, TokenPriorityDetails>>({});
+  private priorityTokensSubject = new BehaviorSubject({} as TokenPriorityDetails);
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -776,7 +776,7 @@ export class ChainService {
     this.logger.log('Finished updating latest ledger generic allow chains');
   }
 
-  handleLatestPriorityTokens (latestPriorityTokens: Record<string, TokenPriorityDetails>) {
+  handleLatestPriorityTokens (latestPriorityTokens: TokenPriorityDetails) {
     this.priorityTokensSubject.next(latestPriorityTokens);
     this.logger.log('Finished updating latest popular tokens');
   }
@@ -1109,7 +1109,7 @@ export class ChainService {
   }
 
   private async fetchLatestPriorityTokens () {
-    return await fetchStaticData<Record<string, TokenPriorityDetails>>('chain-assets/priority-tokens') || [];
+    return await fetchStaticData<TokenPriorityDetails>('chain-assets/priority-tokens') || [];
   }
 
   private async initChains () {

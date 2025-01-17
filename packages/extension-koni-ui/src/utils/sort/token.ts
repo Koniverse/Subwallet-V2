@@ -8,7 +8,6 @@ export interface SortableTokenItem {
   slug: string,
   symbol: string,
   total?: BalanceValueInfo,
-  multiChainAsset?: string | null
 }
 
 export const sortTokenByValue = (a: SortableTokenItem, b: SortableTokenItem): number => {
@@ -56,10 +55,14 @@ export const sortTokenByPriority = (a: string, b: string, aIsPrioritizedToken: b
   }
 };
 
-export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorityTokenGroups: Record<string, TokenPriorityDetails>, useTokenPriority?: boolean) {
-  const priorityTokenGroupKeys = Object.keys(priorityTokenGroups);
+export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorityTokenGroups: TokenPriorityDetails, isTokenGroup: boolean) {
+  const priorityTokenGroupKeys = Object.keys(priorityTokenGroups.tokenGroup);
+  const priorityTokenKeys = Object.keys(priorityTokenGroups.token);
 
   targetTokens.sort((a, b) => {
+    const aSlug = a.slug;
+    const bSlug = b.slug;
+
     const aHasBalance = (a.total && (a.total.convertedValue.toNumber() !== 0 || a.total.value.toNumber() !== 0));
     const bHasBalance = (b.total && (b.total.convertedValue.toNumber() !== 0 || b.total.value.toNumber() !== 0));
 
@@ -71,29 +74,22 @@ export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorit
       return 1;
     }
 
-    const aMultiChainAsset = a.multiChainAsset;
-    const bMultiChainAsset = b.multiChainAsset;
+    if (isTokenGroup) {
+      const aBelongToPrioritizedGroup = priorityTokenGroupKeys.includes(aSlug);
+      const bBelongToPrioritizedGroup = priorityTokenGroupKeys.includes(bSlug);
 
-    const aSlug = a.slug;
-    const bSlug = b.slug;
+      const aPriority = aBelongToPrioritizedGroup ? priorityTokenGroups.tokenGroup[aSlug] : 0;
+      const bPriority = bBelongToPrioritizedGroup ? priorityTokenGroups.tokenGroup[bSlug] : 0;
 
-    const aBelongToPrioritizedGroup = aMultiChainAsset ? priorityTokenGroupKeys.includes(aMultiChainAsset) : false;
-    const bBelongToPrioritizedGroup = bMultiChainAsset ? priorityTokenGroupKeys.includes(bMultiChainAsset) : false;
-
-    const aIsPrioritizedToken = !!(aBelongToPrioritizedGroup && aMultiChainAsset && priorityTokenGroups[aMultiChainAsset].priorityTokens[aSlug]) || priorityTokenGroupKeys.includes(aSlug);
-    const bIsPrioritizedToken = !!(bBelongToPrioritizedGroup && bMultiChainAsset && priorityTokenGroups[bMultiChainAsset].priorityTokens[bSlug]) || priorityTokenGroupKeys.includes(bSlug);
-
-    let aPriority: number;
-    let bPriority: number;
-
-    if (useTokenPriority) {
-      aPriority = aMultiChainAsset ? (aIsPrioritizedToken ? priorityTokenGroups[aMultiChainAsset].priorityTokens[aSlug] : 0) : (aIsPrioritizedToken ? priorityTokenGroups[aSlug].priorityTokens[aSlug] : 0);
-      bPriority = bMultiChainAsset ? (bIsPrioritizedToken ? priorityTokenGroups[bMultiChainAsset].priorityTokens[bSlug] : 0) : (bIsPrioritizedToken ? priorityTokenGroups[bSlug].priorityTokens[bSlug] : 0);
+      return sortTokenByPriority(a.symbol, b.symbol, aBelongToPrioritizedGroup, bBelongToPrioritizedGroup, aPriority, bPriority);
     } else {
-      aPriority = aMultiChainAsset ? (aIsPrioritizedToken ? priorityTokenGroups[aMultiChainAsset].groupPriority : 0) : (aIsPrioritizedToken ? priorityTokenGroups[aSlug].groupPriority : 0);
-      bPriority = bMultiChainAsset ? (bIsPrioritizedToken ? priorityTokenGroups[bMultiChainAsset].groupPriority : 0) : (bIsPrioritizedToken ? priorityTokenGroups[bSlug].groupPriority : 0);
-    }
+      const aIsPrioritizedToken = priorityTokenKeys.includes(aSlug);
+      const bIsPrioritizedToken = priorityTokenKeys.includes(bSlug);
 
-    return sortTokenByPriority(a.symbol, b.symbol, aIsPrioritizedToken, bIsPrioritizedToken, aPriority, bPriority);
+      const aPriority = aIsPrioritizedToken ? priorityTokenGroups.token[aSlug] : 0;
+      const bPriority = bIsPrioritizedToken ? priorityTokenGroups.token[bSlug] : 0;
+
+      return sortTokenByPriority(a.symbol, b.symbol, aIsPrioritizedToken, bIsPrioritizedToken, aPriority, bPriority);
+    }
   });
 }

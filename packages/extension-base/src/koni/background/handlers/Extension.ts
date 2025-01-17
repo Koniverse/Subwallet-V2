@@ -3899,7 +3899,7 @@ export default class KoniExtension {
 
   /* Popular tokens */
 
-  private subscribePriorityTokens (id: string, port: chrome.runtime.Port): Record<string, TokenPriorityDetails> {
+  private subscribePriorityTokens (id: string, port: chrome.runtime.Port): TokenPriorityDetails {
     const cb = createSubscription<'pri(tokens.subscribePriority)'>(id, port);
 
     const subscription = this.#koniState.chainService.observable.priorityTokens.subscribe(cb);
