@@ -55,14 +55,11 @@ export const sortTokenByPriority = (a: string, b: string, aIsPrioritizedToken: b
   }
 };
 
-export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorityTokenGroups: TokenPriorityDetails, isTokenGroup: boolean) {
+export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorityTokenGroups: TokenPriorityDetails, isTokenGroup = false) {
   const priorityTokenGroupKeys = Object.keys(priorityTokenGroups.tokenGroup);
   const priorityTokenKeys = Object.keys(priorityTokenGroups.token);
 
   targetTokens.sort((a, b) => {
-    const aSlug = a.slug;
-    const bSlug = b.slug;
-
     const aHasBalance = (a.total && (a.total.convertedValue.toNumber() !== 0 || a.total.value.toNumber() !== 0));
     const bHasBalance = (b.total && (b.total.convertedValue.toNumber() !== 0 || b.total.value.toNumber() !== 0));
 
@@ -73,6 +70,9 @@ export function sortTokensByStandard (targetTokens: SortableTokenItem[], priorit
     } else if (!aHasBalance && bHasBalance) {
       return 1;
     }
+
+    const aSlug = a.slug;
+    const bSlug = b.slug;
 
     if (isTokenGroup) {
       const aBelongToPrioritizedGroup = priorityTokenGroupKeys.includes(aSlug);

@@ -191,7 +191,7 @@ function Component (): React.ReactElement {
           }
         });
 
-        sortTokensByStandard(items, priorityTokens, false);
+        sortTokensByStandard(items, priorityTokens);
 
         return items;
       }

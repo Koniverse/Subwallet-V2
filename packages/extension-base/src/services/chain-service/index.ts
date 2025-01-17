@@ -1109,7 +1109,10 @@ export class ChainService {
   }
 
   private async fetchLatestPriorityTokens () {
-    return await fetchStaticData<TokenPriorityDetails>('chain-assets/priority-tokens') || [];
+    return await fetchStaticData<TokenPriorityDetails>('chain-assets/priority-tokens') || {
+      tokenGroup: {},
+      token: {}
+    };
   }
 
   private async initChains () {
