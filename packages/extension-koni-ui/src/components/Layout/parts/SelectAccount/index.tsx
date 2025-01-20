@@ -360,24 +360,18 @@ const SelectAccount = styled(Component)<Props>(({ theme }) => {
       width: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      padding: `${token.paddingXS}px  ${token.padding}px`,
-      paddingLeft: 0,
-      gap: 8,
+      padding: `${token.paddingXS}px`,
+      paddingLeft: token.marginXXS,
+      paddingRight: token.marginXS,
+      overflow: 'hidden',
+      gap: token.sizeXS,
       cursor: 'pointer'
-    },
-
-    '.selected-account.is-no-all-account': {
-      marginLeft: token.marginXXS,
-
-      '.account-name ': {
-        maxWidth: 165
-      }
     },
 
     '.connect-icon': {
       color: token.colorTextBase,
-      width: 40,
       height: 40,
+      paddingRight: token.paddingXXS,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
