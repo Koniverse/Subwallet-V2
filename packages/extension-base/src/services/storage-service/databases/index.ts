@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _AssetRef, _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
-import { CampaignData, ChainStakingMetadata, CrowdloanItem, MetadataItem, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
+import { CampaignData, ChainStakingMetadata, CrowdloanItem, MetadataItem, MetadataV15Item, NftCollection, NftItem, NominatorMetadata, PriceJson, StakingItem, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
 import { _NotificationInfo } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { BalanceItem, YieldPoolInfo, YieldPositionInfo } from '@subwallet/extension-base/types';
 import Dexie, { Table, Transaction } from 'dexie';
@@ -41,6 +41,7 @@ export interface IMigration {
 }
 
 export interface IMetadataItem extends MetadataItem, DefaultChainDoc {}
+export interface IMetadataV15Item extends MetadataV15Item, DefaultChainDoc {}
 
 export type IMantaPayLedger = any;
 
@@ -62,6 +63,8 @@ export default class KoniDatabase extends Dexie {
   public migrations!: Table<IMigration, object>;
 
   public metadata!: Table<IMetadataItem, object>;
+  public metadataV15!: Table<IMetadataV15Item, object>;
+
   public chain!: Table<IChain, object>;
   public asset!: Table<_ChainAsset, object>;
 
@@ -125,6 +128,10 @@ export default class KoniDatabase extends Dexie {
 
     this.conditionalVersion(7, {
       inappNotification: 'id, address, proxyId, [proxyId+actionType], actionType'
+    });
+
+    this.conditionalVersion(8, {
+      metadataV15: 'genesisHash, chain'
     });
   }
 
