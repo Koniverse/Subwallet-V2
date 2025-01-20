@@ -12,7 +12,7 @@ const initialState: ChainStore = {
   chainStateMap: {},
   chainStatusMap: {},
   ledgerGenericAllowNetworks: [],
-  priorityTokens: {},
+  priorityTokens: { tokenGroup: {}, token: {} },
   reduxStatus: ReduxStatus.INIT
 };
 
@@ -56,7 +56,7 @@ const chainStoreSlice = createSlice({
         reduxStatus: ReduxStatus.READY
       };
     },
-    updatePriorityTokens (state, action: PayloadAction<Record<string, TokenPriorityDetails>>) {
+    updatePriorityTokens (state, action: PayloadAction<TokenPriorityDetails>) {
       const { payload } = action;
 
       return {

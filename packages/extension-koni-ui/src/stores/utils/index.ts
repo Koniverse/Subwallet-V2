@@ -510,7 +510,7 @@ export const subscribeUnreadNotificationCount = lazySubscribeMessage('pri(inappN
 /* Notification service */
 
 /* Priority tokens */
-export const updatePriorityTokens = (data: Record<string, TokenPriorityDetails>) => {
+export const updatePriorityTokens = (data: TokenPriorityDetails) => {
   store.dispatch({ type: 'chainStore/updatePriorityTokens', payload: data });
 };
 

@@ -18,7 +18,7 @@ import { DetailUpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isAccountAll, sortTokensByStandard } from '@subwallet/extension-koni-ui/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { KeypairType } from '@subwallet/keyring/types';
 import { ModalContext } from '@subwallet/react-ui';
@@ -72,6 +72,7 @@ function Component (): React.ReactElement {
   const isAllAccount = useSelector((state: RootState) => state.accountState.isAllAccount);
   const { tokens } = useSelector((state: RootState) => state.buyService);
   const swapPairs = useSelector((state) => state.swap.swapPairs);
+  const priorityTokens = useSelector((root: RootState) => root.chainStore.priorityTokens);
   const [, setStorage] = useLocalStorage(TRANSFER_TRANSACTION, DEFAULT_TRANSFER_PARAMS);
   const [, setSwapStorage] = useLocalStorage(SWAP_TRANSACTION, DEFAULT_SWAP_PARAMS);
   const { banners, dismissBanner, onClickBanner } = useGetBannerByScreen('token_detail', tokenGroupSlug);
@@ -190,7 +191,9 @@ function Component (): React.ReactElement {
           }
         });
 
-        return items.sort(sortTokenByValue);
+        sortTokensByStandard(items, priorityTokens);
+
+        return items;
       }
 
       if (tokenBalanceMap[tokenGroupSlug]) {
@@ -199,7 +202,7 @@ function Component (): React.ReactElement {
     }
 
     return [] as TokenBalanceItemType[];
-  }, [tokenGroupSlug, tokenGroupMap, tokenBalanceMap]);
+  }, [tokenGroupSlug, tokenGroupMap, tokenBalanceMap, priorityTokens]);
 
   const isHaveOnlyTonSoloAcc = useMemo(() => {
     const checkValidAcc = (currentAcc: AccountProxy) => {

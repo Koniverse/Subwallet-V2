@@ -304,7 +304,7 @@ const Component = (): React.ReactElement => {
       }
     });
 
-    sortTokensByStandard(result, priorityTokens);
+    sortTokensByStandard(result, priorityTokens, true);
 
     return result;
   }, [sortedTokenGroups, debouncedTokenGroupBalanceMap, priorityTokens]);
