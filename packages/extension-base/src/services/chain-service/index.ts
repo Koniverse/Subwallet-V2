@@ -2035,9 +2035,7 @@ export class ChainService {
     const assetsByChain = this.getFungibleTokensByChain(chainSlug);
     const priorityTokensMap = this.priorityTokensSubject.value || {};
 
-    const priorityTokensList = Object.values(priorityTokensMap).flatMap((tokenData) =>
-      Object.keys(tokenData.priorityTokens)
-    );
+    const priorityTokensList = Object.keys(priorityTokensMap.token);
 
     for (const asset of Object.values(assetsByChain)) {
       if (visible) {
