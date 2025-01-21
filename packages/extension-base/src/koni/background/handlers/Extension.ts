@@ -1782,7 +1782,6 @@ export default class KoniExtension {
     const substrateApi = this.#koniState.chainService.getSubstrateApi(originTokenInfo.originChain);
     const chainInfoMap = this.#koniState.chainService.getChainInfoMap();
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destChain, originTokenInfo.slug);
-    const existentialDeposit = originTokenInfo.minAmount || '0';
 
     // todo: improve this case. Currently set 1 AVAIL for covering fee as default.
     const isSpecialBridgeFromAvail = originTokenInfo.slug === 'avail_mainnet-NATIVE-AVAIL' && destChain === COMMON_CHAIN_SLUGS.ETHEREUM;
@@ -1795,9 +1794,9 @@ export default class KoniExtension {
       ]);
 
       const bnMaxTransferable = new BigN(value);
-      const estimatedFee = isSpecialBridgeFromAvail ? specialBridgeFromAvailFee : bnMockExecutionFee.multipliedBy(XCM_FEE_RATIO).plus(new BigN(existentialDeposit));
+      const txFee = isSpecialBridgeFromAvail ? specialBridgeFromAvailFee : bnMockExecutionFee.multipliedBy(XCM_FEE_RATIO);
 
-      return bnMaxTransferable.minus(estimatedFee);
+      return bnMaxTransferable.minus(txFee);
     }
 
     return new BigN(0);
