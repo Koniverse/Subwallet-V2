@@ -10,6 +10,7 @@ import { useChainChecker, useDefaultNavigate, useGetChainPrefixBySlug, useGetFun
 import { upsertCustomToken, validateCustomToken } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormRule, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToError, convertFieldToObject, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { reformatContractAddress } from '@subwallet/extension-koni-ui/utils/account/reformatContractAddress';
 import { Col, Field, Form, Icon, Input, Row } from '@subwallet/react-ui';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import { PlusCircle } from 'phosphor-react';
@@ -18,7 +19,6 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import styled, { useTheme } from 'styled-components';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
-import {reformatContractAddress} from "@subwallet/extension-koni-ui/utils/account/reformatContractAddress";
 
 type Props = ThemeProps
 
@@ -108,8 +108,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const contractRules = useMemo((): FormRule[] => {
     return [
-      ({ getFieldValue  }) => ({
-        transform: (contractAddress) => {
+      ({ getFieldValue }) => ({
+        transform: (contractAddress: string) => {
           return reformatContractAddress(selectedChain, contractAddress);
         },
         validator: (_, contractAddress: string) => {
@@ -215,7 +215,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     const all = convertFieldToObject<TokenImportFormType>(allFields);
     const allError = convertFieldToError<TokenImportFormType>(allFields);
 
-    const { chain, type, contractAddress } = changes;
+    const { chain, contractAddress, type } = changes;
 
     const baseResetFields = ['tokenName', 'symbol', 'decimals', 'priceId'];
 
@@ -238,7 +238,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     }
 
     if (contractAddress) {
-        form.setFieldValue('contractAddress', reformatContractAddress(selectedChain, contractAddress));
+      form.setFieldValue('contractAddress', reformatContractAddress(selectedChain, contractAddress));
     }
 
     if (allError.contractAddress.length > 0 || allError.assetId.length > 0) {
@@ -247,7 +247,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     setFieldDisabled(!all.chain || !all.type || allError.contractAddress.length > 0 || allError.assetId.length > 0);
     setIsDisabled(empty || error);
-  }, [chainInfoMap, form]);
+  }, [chainInfoMap, form, selectedChain]);
 
   const onSubmitContractAddress: FormCallbacks<TokenImportFormType>['onFinish'] = useCallback((formValues: TokenImportFormType) => {
     const { chain, contractAddress, decimals, priceId, symbol, tokenName, type } = formValues;

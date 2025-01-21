@@ -1,8 +1,9 @@
 // Copyright 2019-2022 @polkadot/extension-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import {isEthereumAddress} from "@polkadot/util-crypto";
-import {reformatAddress} from "@subwallet/extension-koni-ui/utils";
+import { reformatAddress } from '@subwallet/extension-koni-ui/utils';
+
+import { isEthereumAddress } from '@polkadot/util-crypto';
 
 const SPECIAL_CHAIN = ['rootstock'];
 

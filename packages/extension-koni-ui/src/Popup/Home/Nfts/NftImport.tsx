@@ -10,6 +10,7 @@ import { useChainChecker, useGetChainPrefixBySlug, useGetNftContractSupportedCha
 import { upsertCustomToken, validateCustomToken } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToError, convertFieldToObject, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { reformatContractAddress } from '@subwallet/extension-koni-ui/utils/account/reformatContractAddress';
 import { Form, Icon, Input } from '@subwallet/react-ui';
 import { PlusCircle } from 'phosphor-react';
 import { RuleObject } from 'rc-field-form/lib/interface';
@@ -18,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
-import {reformatContractAddress} from "@subwallet/extension-koni-ui/utils/account/reformatContractAddress";
 
 type Props = ThemeProps;
 
@@ -93,7 +93,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     const empty = Object.entries(all).some(([key, value]) => key !== 'symbol' ? !value : false);
 
-    const { chain, type, contractAddress } = changes;
+    const { chain, contractAddress, type } = changes;
 
     if (chain) {
       const nftTypes = getNftTypeSupported(chainInfoMap[chain]);
@@ -189,7 +189,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const contractAddressTransform = useCallback((contractAddress: string) => {
     return reformatContractAddress(selectedChain, contractAddress);
-  }, [selectedChain])
+  }, [selectedChain]);
 
   const contractAddressValidator = useCallback((rule: RuleObject, contractAddress: string): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -300,7 +300,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
             <Form.Item
               name='contractAddress'
-              rules={[{transform: contractAddressTransform}, { validator: contractAddressValidator }]}
+              rules={[{ transform: contractAddressTransform }, { validator: contractAddressValidator }]}
               statusHelpAsTooltip={true}
             >
               <AddressInput
