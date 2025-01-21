@@ -65,7 +65,10 @@ function Component ({ className = '', isForcedMigration, onDismiss, onMigrateNow
   }
 
   return (
-    <div className={className}>
+    <div className={CN(className, {
+      '-forced-migration': isForcedMigration
+    })}
+    >
       <div className='__header-area'>
         <div className='__view-title'>
           {
@@ -243,6 +246,14 @@ export const BriefView = styled(Component)<Props>(({ theme: { extendToken, token
       color: token.colorTextLight4,
       fontSize: token.fontSize,
       lineHeight: token.lineHeight
+    },
+
+    '&.-forced-migration': {
+      '.__body-area': {
+        paddingTop: 40,
+        paddingRight: 32,
+        paddingLeft: 32
+      }
     }
   });
 });
