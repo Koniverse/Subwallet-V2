@@ -459,7 +459,7 @@ export default class AstarNativeStakingPoolHandler extends BaseParaNativeStaking
 
     const extrinsic = chainApi.api.tx.dappsStaking.unbondAndUnstake(dappParam, binaryAmount);
 
-    return [ExtrinsicType.STAKING_LEAVE_POOL, extrinsic];
+    return [ExtrinsicType.STAKING_UNBOND, extrinsic];
   }
 
   /* Leave pool action */

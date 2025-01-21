@@ -129,6 +129,10 @@ const Home = styled(Component)<Props>(({ theme: { token } }: Props) => ({
     display: 'flex'
   },
 
+  '.ant-sw-header-center-part.ant-sw-header-center-part': {
+    paddingRight: 0
+  },
+
   '.notification-icon': {
     position: 'relative',
     display: 'flex'

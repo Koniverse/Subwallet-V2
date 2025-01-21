@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { AvailBridgeSourceChain, AvailBridgeTransactionStatus } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { AvailBridgeSourceChain } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { YieldPoolType } from '@subwallet/extension-base/types';
 
 export interface _BaseNotificationInfo {
@@ -21,13 +21,20 @@ export interface _NotificationInfo extends _BaseNotificationInfo {
   proxyId: string
 }
 
+export enum BridgeTransactionStatus {
+  READY_TO_CLAIM = 'READY_TO_CLAIM',
+  CLAIMED = 'CLAIMED',
+  BRIDGED = 'BRIDGED'
+}
+
 export interface ActionTypeToMetadataMap {
   [NotificationActionType.SEND]: SendReceiveNotificationMetadata,
   [NotificationActionType.RECEIVE]: SendReceiveNotificationMetadata
   [NotificationActionType.WITHDRAW]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM]: WithdrawClaimNotificationMetadata,
   [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_AVAIL]: ClaimAvailBridgeNotificationMetadata,
-  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeNotificationMetadata
+  [NotificationActionType.CLAIM_AVAIL_BRIDGE_ON_ETHEREUM]: ClaimAvailBridgeNotificationMetadata,
+  [NotificationActionType.CLAIM_POLYGON_BRIDGE]: ClaimPolygonBridgeNotificationMetadata
 }
 
 export interface SendReceiveNotificationMetadata {
@@ -55,7 +62,25 @@ export interface ClaimAvailBridgeNotificationMetadata {
   amount: string;
   sourceBlockHash: string;
   sourceTransactionIndex: string;
-  status: AvailBridgeTransactionStatus;
+  status: BridgeTransactionStatus;
+}
+
+export interface ClaimPolygonBridgeNotificationMetadata {
+  chainSlug: string;
+  tokenSlug: string;
+  _id: string;
+  amounts: string[];
+  bridgeType: string;
+  counter?: number;
+  destinationNetwork: number;
+  originTokenAddress?: string;
+  originTokenNetwork?: number;
+  receiver?: string;
+  sourceNetwork?: number;
+  status: BridgeTransactionStatus;
+  transactionHash: string;
+  transactionInitiator?: string;
+  userAddress: string;
 }
 
 export enum NotificationTimePeriod {
@@ -70,7 +95,8 @@ export enum NotificationActionType {
   WITHDRAW = 'WITHDRAW',
   CLAIM = 'CLAIM', // Claim reward
   CLAIM_AVAIL_BRIDGE_ON_AVAIL = 'CLAIM_AVAIL_BRIDGE_ON_AVAIL',
-  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM'
+  CLAIM_AVAIL_BRIDGE_ON_ETHEREUM = 'CLAIM_AVAIL_BRIDGE_ON_ETHEREUM',
+  CLAIM_POLYGON_BRIDGE = 'CLAIM_POLYGON_BRIDGE'
 }
 
 export enum NotificationTab {
@@ -85,6 +111,7 @@ export interface ShowNotificationPayload {
   earningClaim: boolean, // notice when an account has an earning reward to claim
   earningWithdraw: boolean, // notice when an account has an earning unstake to withdraw
   availBridgeClaim: boolean, // notice when an account has an avail bridge to claim
+  polygonBridgeClaim: boolean, // notice when an account has an polygon bridge to claim
   // marketing: boolean, // notice when wallet has a marketing announcement
   // marketing: boolean, // notice when wallet has a marketing announcement
   // announcement: boolean // notice when wallet has an announcement

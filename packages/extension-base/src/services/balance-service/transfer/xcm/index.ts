@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
-import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
+import { _isPolygonBridgeXcm, _isPosBridgeXcm, _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { getAvailBridgeExtrinsicFromAvail, getAvailBridgeTxFromEth } from '@subwallet/extension-base/services/balance-service/transfer/xcm/availBridge';
 import { getExtrinsicByPolkadotXcmPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polkadotXcm';
+import { _createPolygonBridgeL1toL2Extrinsic, _createPolygonBridgeL2toL1Extrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { getSnowBridgeEvmTransfer } from '@subwallet/extension-base/services/balance-service/transfer/xcm/snowBridge';
 import { getExtrinsicByXcmPalletPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xcmPallet';
 import { getExtrinsicByXtokensPallet } from '@subwallet/extension-base/services/balance-service/transfer/xcm/xTokens';
@@ -17,6 +18,8 @@ import { TransactionConfig } from 'web3-core';
 import { SubmittableExtrinsic } from '@polkadot/api/types';
 import { u8aToHex } from '@polkadot/util';
 import { addressToEvm } from '@polkadot/util-crypto';
+
+import { _createPosBridgeL1toL2Extrinsic, _createPosBridgeL2toL1Extrinsic, _isPosChainBridge } from './posBridge';
 
 export type CreateXcmExtrinsicProps = {
   originTokenInfo: _ChainAsset;
@@ -110,6 +113,44 @@ export const createAvailBridgeExtrinsicFromAvail = async ({ recipient, sendingVa
   }
 
   return await getAvailBridgeExtrinsicFromAvail(recipient, sendingValue, substrateApi);
+};
+
+export const createPolygonBridgeExtrinsic = async ({ chainInfoMap,
+  destinationTokenInfo,
+  evmApi,
+  originTokenInfo,
+  recipient,
+  sender,
+  sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
+  const originChainInfo = chainInfoMap[originTokenInfo.originChain];
+  const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
+  const isPolygonBridgeXcm = _isPolygonBridgeXcm(originChainInfo, destinationChainInfo);
+
+  const isValidBridge = isPolygonBridgeXcm || _isPosBridgeXcm(originChainInfo, destinationChainInfo);
+
+  if (!isValidBridge) {
+    throw new Error('This is not a valid PolygonBridge transfer');
+  }
+
+  if (!evmApi) {
+    throw Error('Evm API is not available');
+  }
+
+  if (!sender) {
+    throw Error('Sender is required');
+  }
+
+  const sourceChain = originChainInfo.slug;
+
+  const createExtrinsic = isPolygonBridgeXcm
+    ? (sourceChain === 'polygonzkEvm_cardona' || sourceChain === 'polygonZkEvm')
+      ? _createPolygonBridgeL2toL1Extrinsic
+      : _createPolygonBridgeL1toL2Extrinsic
+    : (sourceChain === 'polygon_amoy' || sourceChain === 'polygon')
+      ? _createPosBridgeL2toL1Extrinsic
+      : _createPosBridgeL1toL2Extrinsic;
+
+  return createExtrinsic(originTokenInfo, originChainInfo, sender, recipient, sendingValue, evmApi);
 };
 
 export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {

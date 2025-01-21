@@ -4,11 +4,12 @@
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY, fetchLastestBlockedActionsAndFeatures } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, fetchBlockedConfigObjects, fetchLastestBlockedActionsAndFeatures, getPassConfigId } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForAction, checkSupportForFeature, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -21,7 +22,7 @@ import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction, isTon
 import { SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
-import { AccountJson, BasicTxErrorType, BasicTxWarningCode, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
+import { AccountJson, BasicTxErrorType, BasicTxWarningCode, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, SubmitJoinNominationPool, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
 import { _isRuntimeUpdated, anyNumberToBN, pairToAccount, reformatAddress } from '@subwallet/extension-base/utils';
 import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
@@ -100,11 +101,20 @@ export default class TransactionService {
     const { additionalValidator, address, chain, extrinsicType } = validationResponse;
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
-    const { blockedActionsMap, blockedFeaturesList } = await fetchLastestBlockedActionsAndFeatures();
+    const blockedConfigObjects = await fetchBlockedConfigObjects();
+    const currentConfig = this.state.settingService.getEnvironmentSetting();
 
-    checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
+    const passBlockedConfigId = getPassConfigId(currentConfig, blockedConfigObjects);
 
-    checkSupportForAction(validationResponse, blockedActionsMap);
+    const blockedActionsFeaturesMaps = await fetchLastestBlockedActionsAndFeatures(passBlockedConfigId);
+
+    for (const blockedActionsFeaturesMap of blockedActionsFeaturesMaps) {
+      const { blockedActionsMap, blockedFeaturesList } = blockedActionsFeaturesMap;
+
+      checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
+
+      checkSupportForAction(validationResponse, blockedActionsMap);
+    }
 
     const transaction = transactionInput.transaction;
 
@@ -403,11 +413,12 @@ export default class TransactionService {
       }
 
         break;
-      case ExtrinsicType.STAKING_JOIN_POOL: {
-        const data = parseTransactionData<ExtrinsicType.STAKING_JOIN_POOL>(transaction.data);
+      case ExtrinsicType.JOIN_YIELD_POOL: {
+        const data = parseTransactionData<ExtrinsicType.JOIN_YIELD_POOL>(transaction.data);
+        const poolData = data.data as SubmitJoinNominationPool;
 
-        historyItem.amount = { ...baseNativeAmount, value: data.amount || '0' };
-        historyItem.to = data.selectedPool.name || data.selectedPool.id.toString();
+        historyItem.amount = { ...baseNativeAmount, value: poolData.amount || '0' };
+        historyItem.to = poolData.selectedPool.name || poolData.selectedPool.id.toString();
       }
 
         break;
@@ -614,8 +625,8 @@ export default class TransactionService {
         break;
       }
 
-      case ExtrinsicType.CLAIM_AVAIL_BRIDGE: {
-        const data = parseTransactionData<ExtrinsicType.CLAIM_AVAIL_BRIDGE>(transaction.data); // TODO: switch by provider
+      case ExtrinsicType.CLAIM_BRIDGE: {
+        const data = parseTransactionData<ExtrinsicType.CLAIM_BRIDGE>(transaction.data); // TODO: switch by provider
         const metadata = data.notification.metadata as ClaimAvailBridgeNotificationMetadata;
         const claimAsset = this.state.chainService.getAssetBySlug(metadata.tokenSlug);
 
@@ -729,7 +740,7 @@ export default class TransactionService {
       } catch (e) {
         console.error(e);
       }
-    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.STAKING_JOIN_POOL, ExtrinsicType.STAKING_POOL_WITHDRAW, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
+    } else if ([ExtrinsicType.STAKING_BOND, ExtrinsicType.STAKING_UNBOND, ExtrinsicType.STAKING_WITHDRAW, ExtrinsicType.STAKING_CANCEL_UNSTAKE, ExtrinsicType.STAKING_CLAIM_REWARD, ExtrinsicType.JOIN_YIELD_POOL, ExtrinsicType.STAKING_LEAVE_POOL].includes(transaction.extrinsicType)) {
       this.state.eventService.emit('transaction.submitStaking', transaction.chain);
     } else if (transaction.extrinsicType === ExtrinsicType.SWAP) {
       const inputData = parseTransactionData<ExtrinsicType.SWAP>(transaction.data);
@@ -1087,7 +1098,7 @@ export default class TransactionService {
     return emitter;
   }
 
-  private async signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): TransactionEmitter {
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1097,8 +1108,8 @@ export default class TransactionService {
     };
 
     const extrinsic = transaction as SubmittableExtrinsic;
-    const registry = extrinsic.registry;
-    const signedExtensions = registry.signedExtensions;
+    // const registry = extrinsic.registry;
+    // const signedExtensions = registry.signedExtensions;
 
     const signerOption: Partial<SignerOptions> = {
       signer: {
@@ -1115,14 +1126,14 @@ export default class TransactionService {
       withSignedTransaction: true
     };
 
-    if (_isRuntimeUpdated(signedExtensions)) {
-      const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
-
-      if (metadataHash) {
-        signerOption.mode = 1;
-        signerOption.metadataHash = metadataHash;
-      }
-    }
+    // if (_isRuntimeUpdated(signedExtensions)) {
+    //   const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
+    //
+    //   if (metadataHash) {
+    //     signerOption.mode = 1;
+    //     signerOption.metadataHash = metadataHash;
+    //   }
+    // }
 
     extrinsic.signAsync(address, signerOption).then(async (rs) => {
       // Emit signed event

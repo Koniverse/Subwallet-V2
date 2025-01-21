@@ -1,31 +1,32 @@
-    2858	AnhMTV                        	Release version 1.3.2
-    2545	Nam Phạm                      	[Issue 3609] chore: fix eslint
-    2343	S2kael                        	[Issue-3634] Fix swap error
+    2922	AnhMTV                        	Release version 1.3.12
+    2552	Nam Phạm                      	[Issue 3855] test: add log
+    2387	S2kael                        	
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
+     492	bluezdot                      	
      465	Jaco                          	0.42.5 (#969)
-     393	bluezdot                      	[Issue-3760] fix: fix chainlist
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
+     186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
      185	quangdo                       	
-     178	dominhquang                   	[Issue-3756] Improve UI related to Select token screen
-     172	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
+     179	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
+      99	PDTnhah                       	[Issue-3897] Update chainlist
       96	lw                            	
+      94	tunghp2002                    	[Update] Refactor code
       83	Hieu Dao                      	Update README.md
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
-      73	bluedot                       	[Issue-3579] fix: update check fully migrate
+      74	bluedot                       	[Issue-3888] build: upgrade version polkadot api
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      37	PDTnhah                       	
-      25	S2kael                        	
-      20	tunghp2002                    	[Add] Extension - Add type notification
+      26	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
        7	Ivan Rukhavets                	Mention derivation in FAQ (#334)
+       6	tunghp2002                    	
        6	unknown                       	refactor code
        5	anhnhu                        	[issue-2231]: add condition branch_name webapp-dev auto increase run scripts change build number
        4	Amaury Martiny                	PostMessageProvider with on('connected' | 'disconnected') (#279)
@@ -40,7 +41,6 @@
        2	joe petrowski                 	add plasm (#462)
        2	Remon Nashid                  	Prevent unauthorized apps from abusing pub(authorize.tab) request (#686)
        2	Shawn Tabrizi                 	Add configurable notifications (#767)
-       2	tunghp2002                    	
        2	WoeOm                         	add darwinia network (#493)
        2	Yash Mittal                   	Address comment
        1	0_0./                         	

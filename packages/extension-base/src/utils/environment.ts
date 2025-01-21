@@ -65,9 +65,17 @@ export const RuntimeInfo: RuntimeEnvironmentInfo = detectRuntimeEnvironment();
 
 // Todo: Support more in backend case
 export const BowserParser = Bowser.getParser(typeof navigator !== 'undefined' ? navigator?.userAgent + '' : '');
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+export const isBrave = navigator.brave !== undefined && navigator.brave.isBrave.name === 'isBrave';
 export const isFirefox = BowserParser.getBrowserName(true) === 'firefox';
+export const browserName = isBrave ? 'brave' : BowserParser.getBrowserName(true);
+export const browserVersion = BowserParser.getBrowserVersion();
 export const osName = BowserParser.getOSName();
+export const osVersion = BowserParser.getOSVersion();
 export const isMobile = BowserParser.getPlatform().type === 'mobile';
+export const platformType = BowserParser.getPlatform().type;
+export const platformModel = BowserParser.getPlatform().model;
 
 export const TARGET_ENV = (process.env.TARGET_ENV || 'extension') as TargetEnvironment;
 export const targetIsExtension = TARGET_ENV === 'extension';

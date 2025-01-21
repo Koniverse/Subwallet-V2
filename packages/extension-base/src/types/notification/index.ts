@@ -12,3 +12,9 @@ export interface RequestSwitchStatusParams {
   id: string,
   isRead: boolean
 }
+
+export interface RequestIsClaimedPolygonBridge {
+  chainslug: string,
+  counter: number,
+  sourceNetwork: number
+}

@@ -121,7 +121,7 @@ const Unstake = new LazyLoader('Unstake', () => import('@subwallet/extension-kon
 const CancelUnstake = new LazyLoader('CancelUnstake', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/CancelUnstake'));
 const ClaimReward = new LazyLoader('ClaimReward', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimReward'));
 const Withdraw = new LazyLoader('Withdraw', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/Withdraw'));
-const ClaimAvailBridge = new LazyLoader('ClaimAvailBridge', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimAvailBridge'));
+const ClaimBridge = new LazyLoader('ClaimBridge', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimBridge'));
 
 // Earning
 
@@ -208,7 +208,7 @@ export const router = createHashRouter([
           CancelUnstake.generateRouterObject('cancel-unstake'),
           ClaimReward.generateRouterObject('claim-reward'),
           Withdraw.generateRouterObject('withdraw'),
-          ClaimAvailBridge.generateRouterObject('claim-avail-bridge'),
+          ClaimBridge.generateRouterObject('claim-bridge'),
           {
             path: 'compound',
             element: <Example />
