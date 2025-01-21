@@ -121,7 +121,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     setNameDisabled(!all.chain || !all.type || allError.contractAddress.length > 0);
     setIsDisabled(empty || error);
-  }, [chainInfoMap, form]);
+  }, [chainInfoMap, form, selectedChain]);
 
   const onSubmit: FormCallbacks<NftImportFormType>['onFinish'] = useCallback((formValues: NftImportFormType) => {
     const { chain, contractAddress, symbol, type } = formValues;
