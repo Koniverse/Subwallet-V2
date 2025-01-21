@@ -18,6 +18,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import styled, { useTheme } from 'styled-components';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
+import {reformatContractAddress} from "@subwallet/extension-koni-ui/utils/account/reformatContractAddress";
 
 type Props = ThemeProps
 
@@ -107,10 +108,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
   const contractRules = useMemo((): FormRule[] => {
     return [
-      ({ getFieldValue }) => ({
+      ({ getFieldValue  }) => ({
+        transform: (contractAddress) => {
+          return reformatContractAddress(selectedChain, contractAddress);
+        },
         validator: (_, contractAddress: string) => {
           return new Promise<void>((resolve, reject) => {
             const selectedTokenType = getFieldValue('type') as _AssetType;
+
             const isValidEvmContract = [_AssetType.ERC20].includes(selectedTokenType) && isEthereumAddress(contractAddress);
             const isValidWasmContract = [_AssetType.PSP22].includes(selectedTokenType) && isValidSubstrateAddress(contractAddress);
             const isValidGearContract = [_AssetType.VFT].includes(selectedTokenType) && isValidSubstrateAddress(contractAddress);
@@ -210,7 +215,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     const all = convertFieldToObject<TokenImportFormType>(allFields);
     const allError = convertFieldToError<TokenImportFormType>(allFields);
 
-    const { chain, type } = changes;
+    const { chain, type, contractAddress } = changes;
 
     const baseResetFields = ['tokenName', 'symbol', 'decimals', 'priceId'];
 
@@ -230,6 +235,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     if (type) {
       form.resetFields(['contractAddress', ...baseResetFields]);
       form.resetFields(['assetId', ...baseResetFields]);
+    }
+
+    if (contractAddress) {
+        form.setFieldValue('contractAddress', reformatContractAddress(selectedChain, contractAddress));
     }
 
     if (allError.contractAddress.length > 0 || allError.assetId.length > 0) {
