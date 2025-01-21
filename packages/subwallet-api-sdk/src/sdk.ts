@@ -1,6 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import { SwapApi } from './modules/swapApi';
+
 export interface CardanoTransactionConfigProps {
   cardanoId: string;
   from: string;
@@ -10,7 +12,7 @@ export interface CardanoTransactionConfigProps {
 }
 
 // TODO: NEED TO UPDATE THIS INTERFACE
-interface SubWalletResponse<T> {
+export interface SubWalletResponse<T> {
   statusCode: number, // todo: better to use a flag status than status code
   result: T,
   message: string
@@ -20,9 +22,11 @@ type SWFetchCardanoTx = SubWalletResponse<string>;
 
 export class SubWalletApiSdk {
   private baseUrl = '';
+  public swapApi: SwapApi | undefined;
 
   public init (url: string) {
     this.baseUrl = url;
+    this.swapApi = new SwapApi(url);
   }
 
   async fetchUnsignedPayload (params: CardanoTransactionConfigProps): Promise<string> {
@@ -37,7 +41,7 @@ export class SubWalletApiSdk {
       sender: params.from,
       receiver: params.to,
       unit: cardanoId,
-      quantity: params.value,
+      quantity: params.value
     });
 
     if (params.cardanoTtlOffset) {
