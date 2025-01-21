@@ -11,6 +11,8 @@
     { "path": "../extension-dapp/tsconfig.build.json"
     },
     { "path": "../extension-inject/tsconfig.build.json"
+    },
+    { "path": "../subwallet-api-sdk/tsconfig.build.json"
     }
   ]
 }
