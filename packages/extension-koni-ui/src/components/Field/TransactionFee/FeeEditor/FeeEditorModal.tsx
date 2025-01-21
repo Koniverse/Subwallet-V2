@@ -3,9 +3,9 @@
 
 import { EvmEIP1559FeeOption, FeeCustom, FeeDefaultOption, FeeDetail, FeeOptionKey, TransactionFee } from '@subwallet/extension-base/types';
 import { BN_ZERO } from '@subwallet/extension-base/utils';
-import { BasicInputEvent, RadioGroup } from '@subwallet/extension-koni-ui/components';
+import { AmountInput, BasicInputEvent, RadioGroup } from '@subwallet/extension-koni-ui/components';
 import { FeeOptionItem } from '@subwallet/extension-koni-ui/components/Field/TransactionFee/FeeEditor/FeeOptionItem';
-import { ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { FormCallbacks, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Form, Input, Logo, ModalContext, Number, SwModal } from '@subwallet/react-ui';
 import { Rule } from '@subwallet/react-ui/es/form';
 import BigN from 'bignumber.js';
@@ -37,6 +37,8 @@ interface ViewOption {
 
 interface FormProps {
   customValue: string;
+  maxFeeValue?: string;
+  priorityFeeValue?: string
 }
 
 const OPTIONS: FeeDefaultOption[] = [
@@ -58,11 +60,23 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
     }
   }, [feeType]);
 
+  const feeDefaultValue = useMemo(() => {
+    const defaultOption = feeOptionsInfo?.options?.default;
+
+    if (defaultOption) {
+      return feeOptionsInfo?.options?.[defaultOption] as EvmEIP1559FeeOption;
+    }
+
+    return undefined;
+  }, [feeOptionsInfo]);
+
   const formDefault = useMemo((): FormProps => {
     return {
-      customValue: ''
+      customValue: '',
+      maxFeeValue: feeDefaultValue?.maxFeePerGas,
+      priorityFeeValue: feeDefaultValue?.maxPriorityFeePerGas
     };
-  }, []);
+  }, [feeDefaultValue?.maxFeePerGas, feeDefaultValue?.maxPriorityFeePerGas]);
 
   const viewOptions = useMemo((): ViewOption[] => {
     return [
@@ -148,8 +162,16 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
   }, [_onSelectOption, feeType, form]);
 
   const customValueValidator = useCallback((rule: Rule, value: string): Promise<void> => {
+    if (!value) {
+      return Promise.resolve();
+    }
+
+    if ((new BigN(value)).lte(BN_ZERO)) {
+      return Promise.reject(t('The custom value must be greater than 0'));
+    }
+
     return Promise.resolve();
-  }, []);
+  }, [t]);
 
   const customPriorityValidator = useCallback((rule: Rule, value: string): Promise<void> => {
     if (!value) {
@@ -184,19 +206,26 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
     return Promise.resolve();
   }, [feeOptionsInfo, form, t]);
 
-  const feeDefaultValue = useMemo(() => {
-    const defaultOption = feeOptionsInfo?.options?.default;
+  const convertedCustomValue = useMemo(() => {
+    const customValue = form.getFieldValue('customValue') as string;
 
-    if (defaultOption) {
-      return feeOptionsInfo?.options?.[defaultOption] as EvmEIP1559FeeOption;
+    if (!customValue) {
+      return 0;
     }
 
-    return undefined;
-  }, [feeOptionsInfo]);
+    return new BigN(customValue).multipliedBy(priceValue).toString();
+  }, [form, priceValue]);
 
-  const convertedCustomValue = useMemo<BigN>(() => {
-    return BN_ZERO;
-  }, []);
+  const onValuesChange: FormCallbacks<FormProps>['onValuesChange'] = useCallback(
+    (part: Partial<FormProps>, values: FormProps) => {
+      if (part.customValue) {
+        form.setFieldsValue({
+          customValue: part.customValue
+        });
+      }
+    },
+    [form]
+  );
 
   return (
     <SwModal
@@ -205,7 +234,7 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
         <Button
           block={true}
           className={'__approve-button'}
-          onClick={_onSelectCustomOption}
+          onClick={form.submit}
         >
           Approve
         </Button>
@@ -255,13 +284,15 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
             <Form
               form={form}
               initialValues={formDefault}
+              onFinish={_onSelectCustomOption}
+              onValuesChange={onValuesChange}
             >
               {!(feeType === 'evm')
                 ? (
                   <div className={'__custom-value-field-wrapper'}>
                     <Number
                       className={'__converted-custom-value'}
-                      decimal={0}
+                      decimal={decimals}
                       prefix={'~ $'}
                       value={convertedCustomValue}
                     />
@@ -275,10 +306,12 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
                       ]}
                       statusHelpAsTooltip={true}
                     >
-                      <Input
-                        label={feeType === 'substrate' ? 'TIP' : 'TOKEN'}
-                        placeholder={'Enter fee value'}
-                        type={'number'}
+                      <AmountInput
+                        decimals={decimals}
+                        disabled={decimals === 0}
+                        maxValue={'1'}
+                        showMaxButton={false}
+                        tooltip={t('Amount')}
                       />
                     </Form.Item>
                   </div>

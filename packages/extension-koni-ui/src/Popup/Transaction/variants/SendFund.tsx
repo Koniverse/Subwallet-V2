@@ -985,9 +985,9 @@ const Component = ({ className = '', isAllAccount, targetAccountProxy }: Compone
           estimateFee={estimatedFee}
           feeOptionsInfo={transferInfo?.feeOptions}
           feeType={transferInfo?.feeType}
+          loading={loading}
           onSelect={setSelectedTransactionFee}
           tokenSlug={assetValue}
-          loading={loading}
         />
         {
           chainValue !== destChainValue && (
