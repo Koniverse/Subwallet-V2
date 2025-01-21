@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 1.3.13
+Build date: Jan 21, 2025.
+
+Features & Update:
+- Re-enable search token feature (#3958)
+- Update signing flow with metadata (#3306)
+
+Bug fixed:
+- Fix bug setup validator related maxCount (#3971)
+
+
 ## 1.3.12
 Build date: Jan 06, 2025.
 
