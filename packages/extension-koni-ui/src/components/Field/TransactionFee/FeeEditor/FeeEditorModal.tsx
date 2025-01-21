@@ -91,6 +91,9 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
     ];
   }, [t]);
 
+  const convertedCustomValue = form.getFieldValue('customValue') as string;
+  const transformAmount = (!!convertedCustomValue && new BigN(convertedCustomValue).multipliedBy(priceValue)) || 0;
+
   const onChaneViewMode = useCallback((event: BasicInputEvent) => {
     setViewMode(event.target.value as ViewMode);
   }, []);
@@ -206,16 +209,6 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
     return Promise.resolve();
   }, [feeOptionsInfo, form, t]);
 
-  const convertedCustomValue = useMemo(() => {
-    const customValue = form.getFieldValue('customValue') as string;
-
-    if (!customValue) {
-      return 0;
-    }
-
-    return new BigN(customValue).multipliedBy(priceValue).toString();
-  }, [form, priceValue]);
-
   const onValuesChange: FormCallbacks<FormProps>['onValuesChange'] = useCallback(
     (part: Partial<FormProps>, values: FormProps) => {
       if (part.customValue) {
@@ -294,7 +287,7 @@ const Component = ({ className, decimals, feeOptionsInfo, feeType, modalId, onSe
                       className={'__converted-custom-value'}
                       decimal={decimals}
                       prefix={'~ $'}
-                      value={convertedCustomValue}
+                      value={transformAmount}
                     />
                     <Form.Item
                       className={'__custom-value-field'}
