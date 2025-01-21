@@ -5,6 +5,6 @@ import { SubWalletApiSdk } from './sdk';
 
 export { packageInfo } from './packageInfo';
 
-export const subwalletApiSdk = new SubWalletApiSdk();
+export const subwalletApiSdk = SubWalletApiSdk.instance();
 
 export { SubWalletApiSdk } from './sdk';

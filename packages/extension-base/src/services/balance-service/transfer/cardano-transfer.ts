@@ -3,10 +3,10 @@
 
 import * as csl from '@emurgo/cardano-serialization-lib-nodejs';
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
-import { fetchUnsignedPayload } from '@subwallet/extension-base/services/backend-controller/cardano';
 import { CardanoTxJson, CardanoTxOutput } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/types';
 import { CardanoAssetMetadata, estimateCardanoTxFee, splitCardanoId } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { _CardanoApi } from '@subwallet/extension-base/services/chain-service/types';
+import { subwalletApiSdk } from '@subwallet/subwallet-api-sdk';
 
 export interface CardanoTransactionConfigProps {
   tokenInfo: _ChainAsset;
@@ -33,7 +33,20 @@ export interface CardanoTransactionConfig {
 export async function createCardanoTransaction (params: CardanoTransactionConfigProps): Promise<[CardanoTransactionConfig | null, string]> {
   const { cardanoTtlOffset, from, networkKey, to, transferAll, value } = params;
 
-  const payload = await fetchUnsignedPayload(params);
+  const cardanoId = params.tokenInfo.metadata?.cardanoId;
+
+  if (!cardanoId) {
+    throw new Error('Missing token policy id metadata');
+  }
+
+  const payload = await subwalletApiSdk.fetchUnsignedPayload({
+    tokenDecimals: params.tokenInfo.decimals || 0,
+    cardanoId,
+    from: params.from,
+    to: params.to,
+    value: params.value,
+    cardanoTtlOffset: params.cardanoTtlOffset
+  });
 
   console.log('Build cardano payload successfully!', payload);
 
