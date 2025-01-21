@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
 import { isAddress, isEthereumAddress } from '@polkadot/util-crypto';
+import {reformatContractAddress} from "@subwallet/extension-koni-ui/utils/account/reformatContractAddress";
 
 type Props = ThemeProps;
 
@@ -92,7 +93,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     const empty = Object.entries(all).some(([key, value]) => key !== 'symbol' ? !value : false);
 
-    const { chain, type } = changes;
+    const { chain, type, contractAddress } = changes;
 
     if (chain) {
       const nftTypes = getNftTypeSupported(chainInfoMap[chain]);
@@ -108,6 +109,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     if (type) {
       form.resetFields(['contractAddress', 'collectionName']);
+    }
+
+    if (contractAddress) {
+      form.setFieldValue('contractAddress', reformatContractAddress(selectedChain, contractAddress));
     }
 
     if (allError.contractAddress.length > 0) {
@@ -181,6 +186,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
       }
     });
   }, [t]);
+
+  const contractAddressTransform = useCallback((contractAddress: string) => {
+    return reformatContractAddress(selectedChain, contractAddress);
+  }, [selectedChain])
 
   const contractAddressValidator = useCallback((rule: RuleObject, contractAddress: string): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -291,7 +300,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
             <Form.Item
               name='contractAddress'
-              rules={[{ validator: contractAddressValidator }]}
+              rules={[{transform: contractAddressTransform}, { validator: contractAddressValidator }]}
               statusHelpAsTooltip={true}
             >
               <AddressInput
