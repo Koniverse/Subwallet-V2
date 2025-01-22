@@ -3,13 +3,14 @@
 
 import { _ChainAsset } from '@subwallet/chain-list/types';
 import { AssetSetting } from '@subwallet/extension-base/background/KoniTypes';
+import { _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { updateAssetSetting } from '@subwallet/extension-koni-ui/messaging';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, Switch } from '@subwallet/react-ui';
 import { PencilSimpleLine } from 'phosphor-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { NavigateFunction } from 'react-router';
 import styled from 'styled-components';
 
@@ -25,6 +26,10 @@ function Component ({ assetSetting, className = '', navigate, tokenInfo }: Props
 
   const [loading, setLoading] = useState(false);
 
+  const isNativeToken = useMemo(() => {
+    return _isNativeToken(tokenInfo);
+  }, [tokenInfo]);
+
   const onSwitchTokenVisible = useCallback((checked: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
     if (!loading) {
       setLoading(true);
@@ -33,7 +38,8 @@ function Component ({ assetSetting, className = '', navigate, tokenInfo }: Props
           tokenSlug: tokenInfo.slug,
           assetSetting: {
             visible: checked
-          }
+          },
+          autoEnableNativeToken: !isNativeToken
         })
           .then((result) => {
             if (!result) {
@@ -54,7 +60,7 @@ function Component ({ assetSetting, className = '', navigate, tokenInfo }: Props
           });
       }, 300);
     }
-  }, [loading, showNotification, t, tokenInfo.slug]);
+  }, [isNativeToken, loading, showNotification, t, tokenInfo.slug]);
 
   const onClick = useCallback(() => {
     navigate('/settings/tokens/detail', { state: tokenInfo.slug });

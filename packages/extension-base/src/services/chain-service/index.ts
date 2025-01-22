@@ -3,7 +3,7 @@
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
-import { AssetSetting, MetadataItem, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AssetSetting, MetadataItem, TokenPriorityDetails, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
@@ -11,7 +11,7 @@ import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-
 import { TonChainHandler } from '@subwallet/extension-base/services/chain-service/handler/TonChainHandler';
 import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chain-service/handler/types';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
-import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isNativeTokenBySlug, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
 import { IChain, IMetadataItem, IMetadataV15Item } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
@@ -92,6 +92,7 @@ export class ChainService {
   private assetLogoMapSubject = new BehaviorSubject<Record<string, string>>(AssetLogoMap);
   private chainLogoMapSubject = new BehaviorSubject<Record<string, string>>(ChainLogoMap);
   private ledgerGenericAllowChainsSubject = new BehaviorSubject<string[]>([]);
+  private priorityTokensSubject = new BehaviorSubject({} as TokenPriorityDetails);
 
   // Todo: Update to new store indexed DB
   private store: AssetSettingStore = new AssetSettingStore();
@@ -123,20 +124,28 @@ export class ChainService {
 
   public get value () {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+    const priorityTokens = this.priorityTokensSubject;
 
     return {
       get ledgerGenericAllowChains () {
         return ledgerGenericAllowChains.value;
+      },
+      get priorityTokens () {
+        return priorityTokens.value;
       }
     };
   }
 
   public get observable () {
     const ledgerGenericAllowChains = this.ledgerGenericAllowChainsSubject;
+    const priorityTokens = this.priorityTokensSubject;
 
     return {
       get ledgerGenericAllowChains () {
         return ledgerGenericAllowChains.asObservable();
+      },
+      get priorityTokens () {
+        return priorityTokens.asObservable();
       }
     };
   }
@@ -767,6 +776,11 @@ export class ChainService {
     this.logger.log('Finished updating latest ledger generic allow chains');
   }
 
+  handleLatestPriorityTokens (latestPriorityTokens: TokenPriorityDetails) {
+    this.priorityTokensSubject.next(latestPriorityTokens);
+    this.logger.log('Finished updating latest popular tokens');
+  }
+
   handleLatestData () {
     this.fetchLatestChainData().then((latestChainInfo) => {
       this.lockChainInfoMap = true; // do not need to check current lockChainInfoMap because all remains action is fast enough and don't affect this feature.
@@ -784,6 +798,12 @@ export class ChainService {
     this.fetchLatestLedgerGenericAllowChains()
       .then((latestledgerGenericAllowChains) => {
         this.handleLatestLedgerGenericAllowChains(latestledgerGenericAllowChains);
+      })
+      .catch(console.error);
+
+    this.fetchLatestPriorityTokens()
+      .then((latestPriorityTokens) => {
+        this.handleLatestPriorityTokens(latestPriorityTokens);
       })
       .catch(console.error);
   }
@@ -1086,6 +1106,13 @@ export class ChainService {
 
   private async fetchLatestLedgerGenericAllowChains () {
     return await fetchStaticData<string[]>('chains/ledger-generic-allow-chains') || [];
+  }
+
+  private async fetchLatestPriorityTokens () {
+    return await fetchStaticData<TokenPriorityDetails>('chain-assets/priority-tokens') || {
+      tokenGroup: {},
+      token: {}
+    };
   }
 
   private async initChains () {
@@ -2001,6 +2028,28 @@ export class ChainService {
     });
 
     this.setAssetSettings(assetSettings);
+  }
+
+  public async updatePriorityAssetsByChain (chainSlug: string, visible: boolean) {
+    const currentAssetSettings = await this.getAssetSettings();
+    const assetsByChain = this.getFungibleTokensByChain(chainSlug);
+    const priorityTokensMap = this.priorityTokensSubject.value || {};
+
+    const priorityTokensList = Object.keys(priorityTokensMap.token);
+
+    for (const asset of Object.values(assetsByChain)) {
+      if (visible) {
+        const isPriorityToken = priorityTokensList.includes(asset.slug);
+
+        if (isPriorityToken || _isNativeToken(asset)) {
+          currentAssetSettings[asset.slug] = { visible: true };
+        }
+      } else {
+        currentAssetSettings[asset.slug] = { visible: false };
+      }
+    }
+
+    this.setAssetSettings(currentAssetSettings);
   }
 
   public subscribeAssetSettings () {

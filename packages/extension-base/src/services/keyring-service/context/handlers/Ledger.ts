@@ -151,7 +151,7 @@ export class AccountLedgerHandler extends AccountBaseHandler {
 
     if (Object.keys(slugMap).length) {
       for (const chainSlug of Object.keys(slugMap)) {
-        this.state.enableChain(chainSlug);
+        this.state.enableChainWithPriorityAssets(chainSlug);
       }
     }
 
