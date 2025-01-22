@@ -1,69 +1,37 @@
 // Copyright 2019-2022 @subwallet/extension-base authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-export interface CardanoTransactionConfigProps {
-  cardanoId: string;
-  from: string;
-  to: string;
-  value: string;
-  cardanoTtlOffset: number | null;
-}
-
 // TODO: NEED TO UPDATE THIS INTERFACE
-interface SubWalletResponse<T> {
+import { fetchUnsignedPayload } from '@subwallet/subwallet-api-sdk/cardano';
+import { BuildCardanoTxParams } from '@subwallet/subwallet-api-sdk/cardano/utils';
+
+export interface SubWalletResponse<T> {
   statusCode: number, // todo: better to use a flag status than status code
   result: T,
   message: string
 }
 
-type SWFetchCardanoTx = SubWalletResponse<string>;
-
 export class SubWalletApiSdk {
   private baseUrl = '';
+  private static _instance: SubWalletApiSdk | undefined = undefined;
 
   public init (url: string) {
     this.baseUrl = url;
   }
 
-  async fetchUnsignedPayload (params: CardanoTransactionConfigProps): Promise<string> {
-    const cardanoId = params.cardanoId;
+  async fetchUnsignedPayload (params: BuildCardanoTxParams): Promise<string> {
+    const url = `${this.baseUrl}/build-cardano-tx?`;
 
-    if (!cardanoId) {
-      throw new Error('Missing token policy id metadata');
+    return fetchUnsignedPayload(url, params);
+  }
+
+  static instance () {
+    if (this._instance) {
+      return this._instance;
     }
 
-    const url = `${this.baseUrl}/cardano/build-cardano-tx?`;
-    const searchParams = new URLSearchParams({
-      sender: params.from,
-      receiver: params.to,
-      unit: cardanoId,
-      quantity: params.value,
-    });
+    this._instance = new SubWalletApiSdk();
 
-    if (params.cardanoTtlOffset) {
-      searchParams.append('ttl', params.cardanoTtlOffset.toString());
-    }
-
-    try {
-      const rawResponse = await fetch(url + searchParams.toString(), {
-        method: 'GET',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const response = await rawResponse.json() as SWFetchCardanoTx;
-
-      if (response.statusCode !== 200) {
-        throw new Error(response.message);
-      }
-
-      return response.result;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
-
-      throw new Error(`Transaction is not built successfully: ${errorMessage}`);
-    }
+    return this._instance;
   }
 }
