@@ -236,6 +236,22 @@ export class AccountMigrationHandler extends AccountBaseHandler {
       this.state.upsertModifyPairs(modifiedPairs);
       this.migrateDerivedSoloAccountRelationship(soloAccounts);
       this.state.upsertAccountProxyByKey({ id: upcomingProxyId, name: accountName, isMigrationDone: true });
+
+      // Reupdate account name
+      const oldProxyIds = soloAccounts.map((account) => account.proxyId);
+
+      oldProxyIds.forEach((oldProxyId) => {
+        const pair = keyring.getPair(oldProxyId);
+
+        keyring.saveAccountMeta(pair, { ...pair.meta, name: accountName });
+      });
+
+      // Update current account after migrating
+      const currentAccountProxyId = this.state.currentAccount.proxyId;
+
+      if (oldProxyIds.includes(currentAccountProxyId)) {
+        this.state.saveCurrentAccountProxyId(upcomingProxyId);
+      }
     } catch (error) {
       console.error('Migration solo account failed with error', error);
     } finally {

@@ -6511,6 +6511,7 @@ __metadata:
     "@subwallet/extension-inject": ^1.3.12-1
     "@subwallet/extension-mocks": ^1.3.12-1
     "@subwallet/keyring": ^0.1.8-beta.0
+    "@subwallet/subwallet-api-sdk": ^1.3.12-1
     "@subwallet/ui-keyring": ^0.1.8-beta.0
     "@ton/core": ^0.56.3
     "@ton/crypto": ^3.2.0
@@ -6959,6 +6960,15 @@ __metadata:
   checksum: ceff0237b3f27641b0f070684ca66267c19c8952e7f40679648a98ee0590036bf764c936afda1e57c07499914d4bc929299d39c15c66e47bab53737c8ae65818
   languageName: node
   linkType: hard
+
+"@subwallet/subwallet-api-sdk@^1.3.12-1, @subwallet/subwallet-api-sdk@workspace:packages/subwallet-api-sdk":
+  version: 0.0.0-use.local
+  resolution: "@subwallet/subwallet-api-sdk@workspace:packages/subwallet-api-sdk"
+  dependencies:
+    "@polkadot/util": ^13.2.3
+    "@subwallet/chain-list": 0.2.97
+  languageName: unknown
+  linkType: soft
 
 "@subwallet/ui-keyring@file:../SubWallet-Base/packages/ui-keyring/build/::locator=root-workspace-0b6124%40workspace%3A.":
   version: 0.1.7
