@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ActionType, ValidateRecipientParams, ValidationCondition } from '@subwallet/extension-base/core/types';
-import { _isAddress, _isNotDuplicateAddress, _isNotNull, _isSupportLedgerAccount, _isValidAddressForEcosystem, _isValidSubstrateAddressFormat, _isValidTonAddressFormat } from '@subwallet/extension-base/core/utils';
+import { _isAddress, _isNotDuplicateAddress, _isNotNull, _isSupportLedgerAccount, _isValidAddressForEcosystem, _isValidCardanoAddressFormat, _isValidSubstrateAddressFormat, _isValidTonAddressFormat } from '@subwallet/extension-base/core/utils';
 import { AccountSignMode } from '@subwallet/extension-base/types';
 import { detectTranslate } from '@subwallet/extension-base/utils';
-import { isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
+import { isCardanoAddress, isSubstrateAddress, isTonAddress } from '@subwallet/keyring';
 
 function getConditions (validateRecipientParams: ValidateRecipientParams): ValidationCondition[] {
   const { account, actionType, autoFormatValue, destChainInfo, srcChain, toAddress } = validateRecipientParams;
@@ -25,7 +25,11 @@ function getConditions (validateRecipientParams: ValidateRecipientParams): Valid
     conditions.push(ValidationCondition.IS_VALID_TON_ADDRESS_FORMAT);
   }
 
-  if (srcChain === destChainInfo.slug && isSendAction && !destChainInfo.tonInfo) {
+  if (isCardanoAddress(toAddress)) {
+    conditions.push(ValidationCondition.IS_VALID_CARDANO_ADDRESS_FORMAT);
+  }
+
+  if (srcChain === destChainInfo.slug && isSendAction && !destChainInfo.tonInfo && !destChainInfo.cardanoInfo) {
     conditions.push(ValidationCondition.IS_NOT_DUPLICATE_ADDRESS);
   }
 
@@ -71,6 +75,12 @@ function getValidationFunctions (conditions: ValidationCondition[]): Array<(vali
 
       case ValidationCondition.IS_VALID_TON_ADDRESS_FORMAT: {
         validationFunctions.push(_isValidTonAddressFormat);
+
+        break;
+      }
+
+      case ValidationCondition.IS_VALID_CARDANO_ADDRESS_FORMAT: {
+        validationFunctions.push(_isValidCardanoAddressFormat);
 
         break;
       }

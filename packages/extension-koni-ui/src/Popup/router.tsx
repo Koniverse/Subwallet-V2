@@ -76,6 +76,7 @@ const Settings = new LazyLoader('Settings', () => import('@subwallet/extension-k
 const GeneralSetting = new LazyLoader('GeneralSetting', () => import('@subwallet/extension-koni-ui/Popup/Settings/GeneralSetting'));
 const MissionPools = new LazyLoader('MissionPools', () => import('@subwallet/extension-koni-ui/Popup/Settings/MissionPool/index'));
 const ManageAddressBook = new LazyLoader('ManageAddressBook', () => import('@subwallet/extension-koni-ui/Popup/Settings/AddressBook'));
+const AccountSettings = new LazyLoader('ManageAddressBook', () => import('@subwallet/extension-koni-ui/Popup/Settings/AccountSettings'));
 
 const ManageChains = new LazyLoader('ManageChains', () => import('@subwallet/extension-koni-ui/Popup/Settings/Chains/ManageChains'));
 const ChainImport = new LazyLoader('ChainImport', () => import('@subwallet/extension-koni-ui/Popup/Settings/Chains/ChainImport'));
@@ -121,7 +122,8 @@ const Unstake = new LazyLoader('Unstake', () => import('@subwallet/extension-kon
 const CancelUnstake = new LazyLoader('CancelUnstake', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/CancelUnstake'));
 const ClaimReward = new LazyLoader('ClaimReward', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimReward'));
 const Withdraw = new LazyLoader('Withdraw', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/Withdraw'));
-const ClaimAvailBridge = new LazyLoader('ClaimAvailBridge', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimAvailBridge'));
+const ClaimBridge = new LazyLoader('ClaimBridge', () => import('@subwallet/extension-koni-ui/Popup/Transaction/variants/ClaimBridge'));
+const MigrateAccount = new LazyLoader('MigrateAccount', () => import('@subwallet/extension-koni-ui/Popup/MigrateAccount'));
 
 // Earning
 
@@ -208,7 +210,7 @@ export const router = createHashRouter([
           CancelUnstake.generateRouterObject('cancel-unstake'),
           ClaimReward.generateRouterObject('claim-reward'),
           Withdraw.generateRouterObject('withdraw'),
-          ClaimAvailBridge.generateRouterObject('claim-avail-bridge'),
+          ClaimBridge.generateRouterObject('claim-bridge'),
           {
             path: 'compound',
             element: <Example />
@@ -234,6 +236,7 @@ export const router = createHashRouter([
         children: [
           Settings.generateRouterObject('list'),
           GeneralSetting.generateRouterObject('general'),
+          AccountSettings.generateRouterObject('account-settings'),
           Crowdloans.generateRouterObject('crowdloans'),
           ManageAddressBook.generateRouterObject('address-book'),
           SecurityList.generateRouterObject('security'),
@@ -280,6 +283,9 @@ export const router = createHashRouter([
           AccountExport.generateRouterObject('export/:accountProxyId'),
           ExportAllDone.generateRouterObject('export-all-done')
         ]
+      },
+      {
+        ...MigrateAccount.generateRouterObject('migrate-account')
       },
       {
         path: 'wallet-connect',

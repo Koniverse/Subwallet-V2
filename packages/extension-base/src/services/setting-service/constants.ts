@@ -23,12 +23,16 @@ export const DEFAULT_NOTIFICATION_SETUP: NotificationSetup = {
     // receive: true,
     earningClaim: true,
     earningWithdraw: true,
-    availBridgeClaim: true
+    availBridgeClaim: true,
+    polygonBridgeClaim: true
     // isHideWithdraw: false, // todo: just for test, remove later
     // isHideMarketing: false,
     // isHideAnnouncement: false
   }
 };
+export const DEFAULT_ACKNOWLEDGED_MIGRATION_STATUS = false;
+export const DEFAULT_UNIFIED_ACCOUNT_MIGRATION_IN_PROGRESS = false;
+export const DEFAULT_UNIFIED_ACCOUNT_MIGRATION_IN_DONE = false;
 
 export const DEFAULT_SETTING: UiSettings = {
   language: DEFAULT_LANGUAGE,
@@ -43,5 +47,8 @@ export const DEFAULT_SETTING: UiSettings = {
   timeAutoLock: DEFAULT_AUTO_LOCK_TIME,
   enableChainPatrol: DEFAULT_CHAIN_PATROL_ENABLE,
   notificationSetup: DEFAULT_NOTIFICATION_SETUP,
+  isAcknowledgedUnifiedAccountMigration: DEFAULT_ACKNOWLEDGED_MIGRATION_STATUS,
+  isUnifiedAccountMigrationInProgress: DEFAULT_UNIFIED_ACCOUNT_MIGRATION_IN_PROGRESS,
+  isUnifiedAccountMigrationDone: DEFAULT_UNIFIED_ACCOUNT_MIGRATION_IN_DONE,
   walletReference: ''
 };

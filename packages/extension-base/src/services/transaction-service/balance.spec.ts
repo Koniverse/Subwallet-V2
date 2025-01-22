@@ -4,7 +4,7 @@
 import { ChainAssetMap, ChainInfoMap } from '@subwallet/chain-list';
 import { _AssetType, _ChainAsset } from '@subwallet/chain-list/types';
 import { getERC20TransactionObject, getEVMTransactionObject } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
-import { createTransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/token';
+import { createSubstrateExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { SubstrateChainHandler } from '@subwallet/extension-base/services/chain-service/handler/SubstrateChainHandler';
 import { _getContractAddressOfToken, _isLocalToken, _isTokenEvmSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
@@ -49,7 +49,7 @@ describe('test token transfer', () => {
 
       for (const asset of assets) {
         try {
-          const [extrinsic] = await createTransferExtrinsic({
+          const [extrinsic] = await createSubstrateExtrinsic({
             from: '5DnokDpMdNEH8cApsZoWQnjsggADXQmGWUb6q8ZhHeEwvncL',
             networkKey: networkKey,
             to: '5EhSb8uHkbPRF869wynQ4gh5V7B62YgkEQvMdk6tzHD9bK7b',

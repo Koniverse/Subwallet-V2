@@ -3,6 +3,7 @@
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 import { ChainInfoMap } from '@subwallet/chain-list';
+import { BlockedActionsFeaturesMap, EnvConfig } from '@subwallet/extension-base/constants';
 import { NotificationActionType } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-var-requires
@@ -18,9 +19,11 @@ export const termAndCondition: Record<string, unknown> = require('./termAndCondi
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const currencySymbol: Record<string, unknown> = require('./currencySymbol.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
-export const blockedActionsFeatures: Record<string, unknown> = require('./blockedActionsFeatures.json');
+export const blockedActionsFeatures: BlockedActionsFeaturesMap = require('./blockedActionsFeatures.json');
 // eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
 export const remindNotificationTime: Record<NotificationActionType, number> = require('./remindNotificationTime.json');
+// eslint-disable-next-line @typescript-eslint/no-var-requires,@typescript-eslint/no-unsafe-assignment
+export const blockedActions: Record<string, EnvConfig> = require('./blockedActions.json');
 
 export enum StaticKey {
   BUY_SERVICE_INFOS = 'buy-service-infos',
@@ -32,6 +35,7 @@ export enum StaticKey {
   BUY_TOKEN_CONFIGS = 'buy-token-configs',
   BLOCKED_ACTIONS_FEATURES = 'blocked-actions-features',
   REMIND_NOTIFICATION_TIME = 'remind-notification-time',
+  BLOCKED_ACTIONS = 'blocked-actions',
 }
 
 export const staticData = {
@@ -43,5 +47,6 @@ export const staticData = {
   [StaticKey.TERM_AND_CONDITION]: termAndCondition.default,
   [StaticKey.BUY_TOKEN_CONFIGS]: buyTokenConfigs,
   [StaticKey.BLOCKED_ACTIONS_FEATURES]: blockedActionsFeatures,
-  [StaticKey.REMIND_NOTIFICATION_TIME]: remindNotificationTime
+  [StaticKey.REMIND_NOTIFICATION_TIME]: remindNotificationTime,
+  [StaticKey.BLOCKED_ACTIONS]: blockedActions
 };

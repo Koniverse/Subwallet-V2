@@ -225,12 +225,13 @@ const subscribeForeignAssetBalance = async ({ addresses, assetMap, callback, cha
   const unsubList = await Promise.all(Object.values(tokenMap).map((tokenInfo) => {
     try {
       if (_isBridgedToken(tokenInfo)) {
+        const version: number = ['statemint', 'statemine'].includes(chainInfo.slug) ? 4 : 3;
         const params: _SubstrateAdapterSubscriptionArgs[] = [
           {
             section: 'query',
             module: foreignAssetsAccountKey.split('_')[1],
             method: foreignAssetsAccountKey.split('_')[2],
-            args: addresses.map((address) => [_getTokenOnChainInfo(tokenInfo) || _adaptX1Interior(_getXcmAssetMultilocation(tokenInfo), 3), address])
+            args: addresses.map((address) => [_getTokenOnChainInfo(tokenInfo) || _adaptX1Interior(_getXcmAssetMultilocation(tokenInfo), version), address])
           }
         ];
 

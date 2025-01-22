@@ -134,6 +134,10 @@ export function _isTokenTransferredByTon (tokenInfo: _ChainAsset) {
   return _isJettonToken(tokenInfo) || _isNativeToken(tokenInfo);
 }
 
+export function _isTokenTransferredByCardano (tokenInfo: _ChainAsset) {
+  return _isCIP26Token(tokenInfo) || _isNativeToken(tokenInfo);
+}
+
 // Utils for balance functions
 export function _getTokenOnChainAssetId (tokenInfo: _ChainAsset): string {
   return tokenInfo.metadata?.assetId as string || '-1';
@@ -302,11 +306,13 @@ export function _getTokenTypesSupportedByChain (chainInfo: _ChainInfo): _AssetTy
 }
 
 export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicTokenInfo {
+  const defaultTokenInfo = {
+    symbol: '',
+    decimals: -1
+  };
+
   if (!chainInfo) {
-    return {
-      symbol: '',
-      decimals: -1
-    };
+    return defaultTokenInfo;
   }
 
   if (chainInfo.substrateInfo) { // substrate by default
@@ -324,12 +330,14 @@ export function _getChainNativeTokenBasicInfo (chainInfo: _ChainInfo): BasicToke
       symbol: chainInfo.tonInfo.symbol,
       decimals: chainInfo.tonInfo.decimals
     };
+  } else if (chainInfo.cardanoInfo) {
+    return {
+      symbol: chainInfo.cardanoInfo.symbol,
+      decimals: chainInfo.cardanoInfo.decimals
+    };
   }
 
-  return {
-    symbol: '',
-    decimals: -1
-  };
+  return defaultTokenInfo;
 }
 
 export function _getChainNativeTokenSlug (chainInfo: _ChainInfo) {
@@ -350,6 +358,10 @@ export function _isTokenEvmSmartContract (tokenInfo: _ChainAsset) {
 
 export function _isTokenTonSmartContract (tokenInfo: _ChainAsset) {
   return [_AssetType.TEP74].includes(tokenInfo.assetType); // add TEP-62 when supporting
+}
+
+export function _isCIP26Token (tokenInfo: _ChainAsset) {
+  return [_AssetType.CIP26].includes(tokenInfo.assetType);
 }
 
 export function _isTokenWasmSmartContract (tokenInfo: _ChainAsset) {
@@ -624,8 +636,6 @@ export function updateLatestChainInfo (currentDataMap: _DataMap, latestChainInfo
 
     if (currentChainInfo) {
       needUpdate = true;
-      currentChainInfo.extraInfo = latestChainInfo.extraInfo;
-      currentChainInfo.chainStatus = latestChainInfo.chainStatus;
 
       if (Object.keys(currentChainInfo.providers).length === 0) {
         currentChainInfo.chainStatus = _ChainStatus.INACTIVE;
@@ -657,6 +667,10 @@ export const _chainInfoToChainType = (chainInfo: _ChainInfo): AccountChainType =
 
   if (_isChainTonCompatible(chainInfo)) {
     return AccountChainType.TON;
+  }
+
+  if (_isChainCardanoCompatible(chainInfo)) {
+    return AccountChainType.CARDANO;
   }
 
   if (_isChainBitcoinCompatible(chainInfo)) {

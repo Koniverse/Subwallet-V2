@@ -13,3 +13,28 @@ export interface CardanoBalanceItem {
   unit: string,
   quantity: string
 }
+
+export interface CardanoTxJson {
+  body: {
+    inputs: CardanoTxInput[],
+    outputs: CardanoTxOutput[],
+    fee: string,
+    ttl: string
+  }
+  witness_set: any,
+  is_valid: any,
+  auxiliary_data: any
+}
+
+export interface CardanoTxOutput {
+  address: string,
+  amount: {
+    coin: string,
+    multiasset: Record<string, Record<string, string>>;
+  }
+}
+
+interface CardanoTxInput {
+  transaction_id: string,
+  index: number
+}

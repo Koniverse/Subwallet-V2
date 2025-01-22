@@ -10,7 +10,7 @@ import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/K
 import { _getChainflipEarlyValidationError } from '@subwallet/extension-base/core/logic-validation/swap';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { getERC20TransactionObject, getEVMTransactionObject } from '@subwallet/extension-base/services/balance-service/transfer/smart-contract';
-import { createTransferExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/token';
+import { createSubstrateExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/token';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenSlug, _getContractAddressOfToken, _isChainSubstrateCompatible, _isNativeToken, _isSmartContractToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
@@ -412,8 +412,6 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
       }
     });
 
-    console.log('depositAddressResp', depositAddressResponse);
-
     const txData: ChainflipSwapTxData = {
       address,
       provider: this.providerInfo,
@@ -432,7 +430,7 @@ export class ChainflipSwapHandler implements SwapBaseInterface {
 
       const substrateApi = await chainApi.isReady;
 
-      const [submittableExtrinsic] = await createTransferExtrinsic({
+      const [submittableExtrinsic] = await createSubstrateExtrinsic({
         from: address,
         networkKey: chainInfo.slug,
         substrateApi,

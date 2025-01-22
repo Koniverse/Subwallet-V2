@@ -1,8 +1,8 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import { AccountChainType, AccountProxyExtra, AccountProxyType } from '@subwallet/extension-base/types';
-import { AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
+import { AccountProxyExtra, AccountProxyType } from '@subwallet/extension-base/types';
+import { AccountChainTypeLogos, AccountProxyAvatar } from '@subwallet/extension-koni-ui/components';
 import { useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { Theme } from '@subwallet/extension-koni-ui/themes';
 import { PhosphorIcon } from '@subwallet/extension-koni-ui/types';
@@ -47,16 +47,7 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
   const { accountType, chainTypes, id: accountProxyId, name: accountName } = useMemo(() => accountProxy, [accountProxy]);
   const { t } = useTranslation();
   const token = useContext<Theme>(ThemeContext as Context<Theme>).token;
-  const logoMap = useContext<Theme>(ThemeContext as Context<Theme>).logoMap;
   const disabledItem = useMemo(() => disabled || accountProxy.isExistAccount, [accountProxy.isExistAccount, disabled]);
-  const chainTypeLogoMap = useMemo(() => {
-    return {
-      [AccountChainType.SUBSTRATE]: logoMap.network.polkadot as string,
-      [AccountChainType.ETHEREUM]: logoMap.network.ethereum as string,
-      [AccountChainType.BITCOIN]: logoMap.network.bitcoin as string,
-      [AccountChainType.TON]: logoMap.network.ton as string
-    };
-  }, [logoMap.network.bitcoin, logoMap.network.ethereum, logoMap.network.polkadot, logoMap.network.ton]);
   const _onSelect = useCallback(() => {
     onClick && onClick(accountProxyId || '');
   },
@@ -150,20 +141,11 @@ function Component (props: _AccountCardItem): React.ReactElement<_AccountCardIte
         <div className='__item-center-part'>
           <div className={'middle-item__name-wrapper'}>
             <div className='__item-name'>{accountName}</div>
-            <div className='__item-chain-types'>
-              {
-                chainTypes.map((nt) => {
-                  return (
-                    <img
-                      alt='Network type'
-                      className={'__item-chain-type-item'}
-                      key={nt}
-                      src={chainTypeLogoMap[nt]}
-                    />
-                  );
-                })
-              }
-            </div>
+
+            <AccountChainTypeLogos
+              chainTypes={chainTypes}
+              className={'__item-chain-type-logos'}
+            />
           </div>
         </div>
 
@@ -268,22 +250,8 @@ const AccountRestoreJsonItem = styled(Component)<_AccountCardItem>(({ theme }) =
       overflow: 'hidden',
       'white-space': 'nowrap'
     },
-    '.__item-chain-types': {
-      display: 'flex',
-      paddingTop: 2,
-
-      '.__item-chain-type-item': {
-        display: 'block',
-        boxShadow: '-4px 0px 4px 0px rgba(0, 0, 0, 0.40)',
-        width: token.size,
-        height: token.size,
-        borderRadius: '100%',
-        marginLeft: -token.marginXXS
-      },
-
-      '.__item-chain-type-item:first-of-type': {
-        marginLeft: 0
-      }
+    '.__item-chain-type-logos': {
+      minHeight: 20
     },
     '.__item-right-part': {
       marginLeft: 'auto',

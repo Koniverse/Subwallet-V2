@@ -35,7 +35,8 @@ const packages = [
   'extension-dapp',
   'extension-inject',
   'extension-koni',
-  'extension-koni-ui'
+  'extension-koni-ui',
+  'subwallet-api-sdk'
 ];
 
 const _additionalEnv = {
@@ -52,7 +53,9 @@ const _additionalEnv = {
   BITTENSOR_API_KEY_3: JSON.stringify(process.env.BITTENSOR_API_KEY_3),
   BITTENSOR_API_KEY_4: JSON.stringify(process.env.BITTENSOR_API_KEY_4),
   BITTENSOR_API_KEY_5: JSON.stringify(process.env.BITTENSOR_API_KEY_5),
-  BITTENSOR_API_KEY_6: JSON.stringify(process.env.BITTENSOR_API_KEY_6)
+  BITTENSOR_API_KEY_6: JSON.stringify(process.env.BITTENSOR_API_KEY_6),
+  SIMPLE_SWAP_API_KEY: JSON.stringify(process.env.SIMPLE_SWAP_API_KEY),
+  SUBWALLET_API: JSON.stringify(process.env.SUBWALLET_API)
 };
 
 const additionalEnvDict = {

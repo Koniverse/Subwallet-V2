@@ -5,7 +5,7 @@ import { _AssetType, _ChainInfo } from '@subwallet/chain-list/types';
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
 import { ALL_ACCOUNT_KEY, isProductionMode } from '@subwallet/extension-base/constants';
 import { _getSubstrateGenesisHash } from '@subwallet/extension-base/services/chain-service/utils';
-import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData } from '@subwallet/extension-base/types';
+import { AccountActions, AccountChainType, AccountJson, AccountMetadataData, AccountProxy, AccountProxyMap, AccountProxyStoreData, AccountProxyType, AccountSignMode, AddressJson, ModifyPairStoreData, SUPPORTED_ACCOUNT_CHAIN_TYPES } from '@subwallet/extension-base/types';
 import { getKeypairTypeByAddress, tonMnemonicToEntropy } from '@subwallet/keyring';
 import { BitcoinKeypairTypes, CardanoKeypairTypes, EthereumKeypairTypes, KeypairType, KeyringPair, KeyringPair$Meta, TonKeypairTypes } from '@subwallet/keyring/types';
 import { tonMnemonicValidate } from '@subwallet/keyring/utils';
@@ -44,7 +44,7 @@ export const createAccountProxyId = (_suri: string, derivationPath?: string) => 
   return blake2AsHex(data, 256);
 };
 
-export const getAccountChainType = (type: KeypairType): AccountChainType => {
+export const getAccountChainTypeFromKeypairType = (type: KeypairType): AccountChainType => {
   return type
     ? EthereumKeypairTypes.includes(type)
       ? AccountChainType.ETHEREUM
@@ -56,6 +56,20 @@ export const getAccountChainType = (type: KeypairType): AccountChainType => {
             ? AccountChainType.CARDANO
             : AccountChainType.SUBSTRATE
     : AccountChainType.SUBSTRATE;
+};
+
+export const getDefaultKeypairTypeFromAccountChainType = (type: AccountChainType): KeypairType => {
+  if (type === AccountChainType.ETHEREUM) {
+    return 'ethereum';
+  } else if (type === AccountChainType.TON) {
+    return 'ton';
+  } else if (type === AccountChainType.BITCOIN) {
+    return 'bitcoin-84';
+  } else if (type === AccountChainType.CARDANO) {
+    return 'cardano';
+  } else {
+    return 'sr25519';
+  }
 };
 
 export const getAccountSignMode = (address: string, _meta?: KeyringPair$Meta): AccountSignMode => {
@@ -94,6 +108,7 @@ export const getAccountActions = (signMode: AccountSignMode, networkType: Accoun
   const result: AccountActions[] = [];
   const meta = _meta as AccountMetadataData;
 
+  // todo: check this function for Cardano
   // JSON
   if (signMode === AccountSignMode.PASSWORD) {
     result.push(AccountActions.EXPORT_JSON);
@@ -215,7 +230,7 @@ const EVM_ACTIONS: ExtrinsicType[] = [
 ];
 
 const CLAIM_AVAIL_BRIDGE: ExtrinsicType[] = [
-  ExtrinsicType.CLAIM_AVAIL_BRIDGE
+  ExtrinsicType.CLAIM_BRIDGE
 ];
 
 const OTHER_ACTIONS: ExtrinsicType[] = [
@@ -255,6 +270,10 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         return [
           ...BASE_TRANSFER_ACTIONS
         ];
+      case AccountChainType.CARDANO:
+        return [
+          ...BASE_TRANSFER_ACTIONS
+        ];
     }
   } else if (signMode === AccountSignMode.QR) {
     switch (networkType) {
@@ -289,6 +308,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         ];
       case AccountChainType.TON:
         return [];
+      case AccountChainType.CARDANO:
+        return [];
     }
   } else if (signMode === AccountSignMode.GENERIC_LEDGER) {
     switch (networkType) {
@@ -318,6 +339,8 @@ export const getAccountTransactionActions = (signMode: AccountSignMode, networkT
         return [
           ...BASE_TRANSFER_ACTIONS
         ];
+      case AccountChainType.CARDANO:
+        return [];
     }
   } else if (signMode === AccountSignMode.LEGACY_LEDGER) { // Only for Substrate
     const result: ExtrinsicType[] = [];
@@ -381,6 +404,8 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
     case 'bitcoin-86':
     case 'bittest-86':
       return [_AssetType.NATIVE, _AssetType.RUNE, _AssetType.BRC20];
+    case 'cardano':
+      return [_AssetType.NATIVE, _AssetType.CIP26];
     default:
       return [];
   }
@@ -405,7 +430,7 @@ export const getAccountTokenTypes = (type: KeypairType): _AssetType[] => {
 export const transformAccount = (address: string, _type?: KeypairType, meta?: KeyringPair$Meta, chainInfoMap?: Record<string, _ChainInfo>, parentAccount?: AccountJson): AccountJson => {
   const signMode = getAccountSignMode(address, meta);
   const type = _type || getKeypairTypeByAddress(address);
-  const chainType: AccountChainType = getAccountChainType(type);
+  const chainType: AccountChainType = getAccountChainTypeFromKeypairType(type);
   let specialChain: string | undefined;
 
   if (!chainInfoMap) {
@@ -466,7 +491,7 @@ export const transformAccounts = (accounts: SubjectInfo): AccountJson[] => Objec
 
 export const transformAddress = (address: string, meta?: KeyringPair$Meta): AddressJson => {
   const type = getKeypairTypeByAddress(address);
-  const chainType: AccountChainType = getAccountChainType(type);
+  const chainType: AccountChainType = getAccountChainTypeFromKeypairType(type);
 
   return {
     address,
@@ -541,6 +566,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
         let tokenTypes: _AssetType[] = [];
         let accountActions: AccountActions[] = [];
         let specialChain: string | undefined;
+        let isNeedMigrateUnifiedAccount: boolean | undefined;
 
         if (value.accounts.length > 1) {
           accountType = AccountProxyType.UNIFIED;
@@ -552,6 +578,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
 
             return rs;
           }, new Set()));
+
+          if (chainTypes.length < SUPPORTED_ACCOUNT_CHAIN_TYPES.length) {
+            isNeedMigrateUnifiedAccount = true;
+          }
 
           /* Account actions */
 
@@ -586,6 +616,10 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
             accountActions = accountActions.filter((action) => action !== AccountActions.DERIVE);
           }
 
+          if (chainTypes.length === 1 && accountActions.includes(AccountActions.EXPORT_MNEMONIC) && account.isMasterAccount && account.type !== 'ton-native') {
+            isNeedMigrateUnifiedAccount = true;
+          }
+
           switch (account.signMode) {
             case AccountSignMode.GENERIC_LEDGER:
             case AccountSignMode.LEGACY_LEDGER:
@@ -594,7 +628,7 @@ export const _combineAccounts = (accounts: AccountJson[], modifyPairs: ModifyPai
           }
         }
 
-        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes, accountActions }];
+        return [key, { ...value, accountType, chainTypes, specialChain, tokenTypes, accountActions, isNeedMigrateUnifiedAccount }];
       })
   );
 
@@ -689,17 +723,10 @@ export const combineAllAccountProxy = (accountProxies: AccountProxy[]): AccountP
   const specialChain: string | undefined = accountProxies.length === 1 ? accountProxies[0].specialChain : undefined;
 
   for (const accountProxy of accountProxies) {
-    // Have 4 network types, but at the moment, we only support 3 network types
-    if (chainTypes.size === 3) {
-      break;
-    }
-
     for (const chainType of accountProxy.chainTypes) {
       chainTypes.add(chainType);
     }
-  }
 
-  for (const accountProxy of accountProxies) {
     for (const tokenType of accountProxy.tokenTypes) {
       tokenTypes.add(tokenType);
     }

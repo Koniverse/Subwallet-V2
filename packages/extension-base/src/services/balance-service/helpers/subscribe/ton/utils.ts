@@ -41,7 +41,7 @@ export function externalMessage (contract: TonWalletContract, seqno: number, bod
     .endCell();
 }
 
-export async function retry<T> (fn: () => Promise<T>, options: { retries: number, delay: number }): Promise<T> {
+export async function retryTonTxStatus<T> (fn: () => Promise<T>, options: { retries: number, delay: number }): Promise<T> {
   let lastError: Error | undefined;
 
   for (let i = 0; i < options.retries; i++) {

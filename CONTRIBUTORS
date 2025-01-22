@@ -1,10 +1,10 @@
-    2885	AnhMTV                        	Release version 1.3.6
-    2546	Nam Phạm                      	[Issue 3747] chore: fix eslint
-    2366	S2kael                        	[Issue-3828] Update stable version for chain-list
+    2922	AnhMTV                        	Release version 1.3.12
+    2552	Nam Phạm                      	[Issue 3855] test: add log
+    2387	S2kael                        	
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
+     492	bluezdot                      	
      465	Jaco                          	0.42.5 (#969)
-     458	bluezdot                      	[Issue-3515] fix: minor fix
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
      185	quangdo                       	
@@ -12,20 +12,21 @@
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
+      99	PDTnhah                       	[Issue-3897] Update chainlist
       96	lw                            	
+      94	tunghp2002                    	[Update] Refactor code
       83	Hieu Dao                      	Update README.md
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
-      73	bluedot                       	[Issue-3579] fix: update check fully migrate
-      70	PDTnhah                       	[Issue-3828] Update chainlist
+      74	bluedot                       	[Issue-3888] build: upgrade version polkadot api
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code
-      34	tunghp2002                    	
       26	S2kael                        	
       10	Trang Trịnh                   	api get karura and acala nfts
        9	Minh Le                       	
        9	minhld1029                    	[#115] [ForgetAccount] catch exception refList undefined
        7	Ivan Rukhavets                	Mention derivation in FAQ (#334)
+       6	tunghp2002                    	
        6	unknown                       	refactor code
        5	anhnhu                        	[issue-2231]: add condition branch_name webapp-dev auto increase run scripts change build number
        4	Amaury Martiny                	PostMessageProvider with on('connected' | 'disconnected') (#279)
@@ -33,7 +34,6 @@
        4	Quangdm-cdm                   	
        3	Antoine Estienne              	Add eth test for extension signature (#909)
        3	quangdm                       	Update style for Auth Transaction Screen, Export Screen, Derive Screen
-       3	tunghp2002                    	
        2	Axel Chalon                   	Add typings to messages (#130)
        2	Bartłomiej Rutkowski          	Allow account creation by derivation from existing one (#296)
        2	carumusan                     	Support ipfs and ipns urls (#667)

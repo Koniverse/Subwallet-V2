@@ -10,7 +10,7 @@ import { CURRENT_PAGE, TRANSACTION_STORAGES } from '@subwallet/extension-koni-ui
 import { DEFAULT_ROUTER_PATH } from '@subwallet/extension-koni-ui/constants/router';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { usePredefinedModal, WalletModalContextProvider } from '@subwallet/extension-koni-ui/contexts/WalletModalContextProvider';
-import { useGetCurrentPage, useSubscribeLanguage } from '@subwallet/extension-koni-ui/hooks';
+import { useGetCurrentPage, useIsPopup, useSubscribeLanguage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useUILock from '@subwallet/extension-koni-ui/hooks/common/useUILock';
 import { subscribeNotifications } from '@subwallet/extension-koni-ui/messaging';
@@ -34,6 +34,8 @@ export const RouteState = {
 
 const welcomeUrl = '/welcome';
 const tokenUrl = '/home/tokens';
+const migrateAccountNotionUrl = '/migrate-account?is-notion=true';
+const forcedAccountMigrationUrl = '/migrate-account?is-forced-migration=true';
 const loginUrl = '/keyring/login';
 const phishingUrl = '/phishing-page-detected';
 const mv3MigrationUrl = '/mv3-migration';
@@ -90,7 +92,7 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
   const [dataLoaded, setDataLoaded] = useState(false);
   const initDataRef = useRef<Promise<boolean>>(dataContext.awaitStores(['accountState', 'chainStore', 'assetRegistry', 'requestState', 'settings', 'mantaPay']));
   const currentPage = useGetCurrentPage();
-  const [, setStorage] = useLocalStorage<string>(CURRENT_PAGE, DEFAULT_ROUTER_PATH);
+  const [, setCurrentPage] = useLocalStorage<string>(CURRENT_PAGE, DEFAULT_ROUTER_PATH);
   const firstRender = useRef(true);
 
   useSubscribeLanguage();
@@ -98,20 +100,113 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
   const { unlockType } = useSelector((state: RootState) => state.settings);
   const { hasConfirmations, hasInternalConfirmations } = useSelector((state: RootState) => state.requestState);
   const { accounts, currentAccount, hasMasterPassword, isLocked } = useSelector((state: RootState) => state.accountState);
+  const isAcknowledgedUnifiedAccountMigration = useSelector((state: RootState) => state.settings.isAcknowledgedUnifiedAccountMigration);
+  const isUnifiedAccountMigrationInProgress = useSelector((state: RootState) => state.settings.isUnifiedAccountMigrationInProgress);
   const [initAccount, setInitAccount] = useState(currentAccount);
   const noAccount = useMemo(() => isNoAccount(accounts), [accounts]);
   const { isUILocked } = useUILock();
   const needUnlock = isUILocked || (isLocked && unlockType === WalletUnlockType.ALWAYS_REQUIRED);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const navigate = useNavigate();
+  const isPopup = useIsPopup();
 
-  const needMigrate = useMemo(
+  const needMasterPasswordMigration = useMemo(
     () => !!accounts
       .filter((acc) => acc.address !== ALL_ACCOUNT_KEY && !acc.isExternal && !acc.isInjected && !acc.pendingMigrate)
       .filter((acc) => !acc.isMasterPassword)
       .length
     , [accounts]
   );
+
+  const activePriorityPath = useMemo(() => {
+    if (isPopup && !isAcknowledgedUnifiedAccountMigration) {
+      return migrateAccountNotionUrl;
+    }
+
+    if (isPopup && isUnifiedAccountMigrationInProgress) {
+      return forcedAccountMigrationUrl;
+    }
+
+    return undefined;
+  }, [isAcknowledgedUnifiedAccountMigration, isPopup, isUnifiedAccountMigrationInProgress]);
+
+  const redirectPath = useMemo<string | null>(() => {
+    const pathName = location.pathname;
+    let redirectTarget: string | null = null;
+
+    // Wait until data loaded
+    if (!dataLoaded) {
+      return null;
+    }
+
+    const requireLogin = pathName !== mv3MigrationUrl && !pathName.startsWith(phishingUrl);
+
+    if (!requireLogin) {
+      // Do nothing
+    } else if (needMasterPasswordMigration && hasMasterPassword && !needUnlock) {
+      redirectTarget = migratePasswordUrl;
+    } else if (hasMasterPassword && needUnlock) {
+      redirectTarget = loginUrl;
+    } else if (hasMasterPassword && pathName === createPasswordUrl) {
+      redirectTarget = DEFAULT_ROUTER_PATH;
+    } else if (!hasMasterPassword) {
+      if (noAccount) {
+        if (![...allowImportAccountUrls, welcomeUrl, createPasswordUrl, securityUrl].includes(pathName)) {
+          redirectTarget = welcomeUrl;
+        }
+      } else if (pathName !== createDoneUrl) {
+        redirectTarget = createPasswordUrl;
+      }
+    } else if (noAccount) {
+      if (![...allowImportAccountUrls, welcomeUrl, createPasswordUrl, securityUrl].includes(pathName)) {
+        redirectTarget = welcomeUrl;
+      }
+    } else if (pathName === DEFAULT_ROUTER_PATH) {
+      if (hasConfirmations) {
+        openPModal('confirmations');
+      } else if (activePriorityPath) {
+        redirectTarget = activePriorityPath;
+      } else if (firstRender.current && currentPage) {
+        redirectTarget = currentPage;
+      } else {
+        redirectTarget = tokenUrl;
+      }
+    } else if (pathName === loginUrl && !needUnlock) {
+      redirectTarget = DEFAULT_ROUTER_PATH;
+    } else if (pathName === welcomeUrl && !noAccount) {
+      redirectTarget = DEFAULT_ROUTER_PATH;
+    } else if (pathName === migratePasswordUrl && !needMasterPasswordMigration) {
+      if (noAccount) {
+        redirectTarget = welcomeUrl;
+      } else {
+        redirectTarget = DEFAULT_ROUTER_PATH;
+      }
+    } else if (hasInternalConfirmations && pathName === accountNewSeedPhrase) {
+      openPModal(null);
+    } else if (hasInternalConfirmations && pathName === settingImportNetwork) {
+      openPModal(null);
+    } else if (hasInternalConfirmations) {
+      openPModal('confirmations');
+    } else if (!hasInternalConfirmations && isOpenPModal('confirmations')) {
+      openPModal(null);
+    }
+
+    // Remove loading on finished first compute
+    firstRender.current && setRootLoading((val) => {
+      if (val) {
+        removeLoadingPlaceholder(!needUnlock);
+        firstRender.current = false;
+      }
+
+      return false;
+    });
+
+    if (redirectTarget && redirectTarget !== pathName) {
+      return redirectTarget;
+    } else {
+      return null;
+    }
+  }, [location.pathname, dataLoaded, needMasterPasswordMigration, hasMasterPassword, needUnlock, noAccount, hasInternalConfirmations, isOpenPModal, hasConfirmations, activePriorityPath, currentPage, openPModal]);
 
   useEffect(() => {
     initDataRef.current.then(() => {
@@ -157,82 +252,6 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
     RouteState.lastPathName = location.pathname;
   }, [location]);
 
-  const redirectPath = useMemo<string | null>(() => {
-    const pathName = location.pathname;
-    let redirectTarget: string | null = null;
-
-    // Wait until data loaded
-    if (!dataLoaded) {
-      return null;
-    }
-
-    const requireLogin = pathName !== mv3MigrationUrl && !pathName.startsWith(phishingUrl);
-
-    if (!requireLogin) {
-      // Do nothing
-    } else if (needMigrate && hasMasterPassword && !needUnlock) {
-      redirectTarget = migratePasswordUrl;
-    } else if (hasMasterPassword && needUnlock) {
-      redirectTarget = loginUrl;
-    } else if (hasMasterPassword && pathName === createPasswordUrl) {
-      redirectTarget = DEFAULT_ROUTER_PATH;
-    } else if (!hasMasterPassword) {
-      if (noAccount) {
-        if (![...allowImportAccountUrls, welcomeUrl, createPasswordUrl, securityUrl].includes(pathName)) {
-          redirectTarget = welcomeUrl;
-        }
-      } else if (pathName !== createDoneUrl) {
-        redirectTarget = createPasswordUrl;
-      }
-    } else if (noAccount) {
-      if (![...allowImportAccountUrls, welcomeUrl, createPasswordUrl, securityUrl].includes(pathName)) {
-        redirectTarget = welcomeUrl;
-      }
-    } else if (pathName === DEFAULT_ROUTER_PATH) {
-      if (hasConfirmations) {
-        openPModal('confirmations');
-      } else if (firstRender.current && currentPage) {
-        redirectTarget = currentPage;
-      } else {
-        redirectTarget = tokenUrl;
-      }
-    } else if (pathName === loginUrl && !needUnlock) {
-      redirectTarget = DEFAULT_ROUTER_PATH;
-    } else if (pathName === welcomeUrl && !noAccount) {
-      redirectTarget = DEFAULT_ROUTER_PATH;
-    } else if (pathName === migratePasswordUrl && !needMigrate) {
-      if (noAccount) {
-        redirectTarget = welcomeUrl;
-      } else {
-        redirectTarget = DEFAULT_ROUTER_PATH;
-      }
-    } else if (hasInternalConfirmations && pathName === accountNewSeedPhrase) {
-      openPModal(null);
-    } else if (hasInternalConfirmations && pathName === settingImportNetwork) {
-      openPModal(null);
-    } else if (hasInternalConfirmations) {
-      openPModal('confirmations');
-    } else if (!hasInternalConfirmations && isOpenPModal('confirmations')) {
-      openPModal(null);
-    }
-
-    // Remove loading on finished first compute
-    firstRender.current && setRootLoading((val) => {
-      if (val) {
-        removeLoadingPlaceholder(!needUnlock);
-        firstRender.current = false;
-      }
-
-      return false;
-    });
-
-    if (redirectTarget && redirectTarget !== pathName) {
-      return redirectTarget;
-    } else {
-      return null;
-    }
-  }, [location.pathname, dataLoaded, needMigrate, hasMasterPassword, needUnlock, noAccount, hasInternalConfirmations, isOpenPModal, hasConfirmations, currentPage, openPModal]);
-
   // Remove transaction persist state
   useEffect(() => {
     if (!dataLoaded && initAccount === null && currentAccount !== null) {
@@ -253,14 +272,14 @@ function DefaultRoute ({ children }: { children: React.ReactNode }): React.React
   useEffect(() => {
     if (rootLoading || redirectPath) {
       if (redirectPath && currentPage !== redirectPath && allowBlackScreenWS.includes(redirectPath)) {
-        setStorage(redirectPath);
+        setCurrentPage(redirectPath);
       }
 
       setShouldRedirect(true);
     } else {
       setShouldRedirect(false);
     }
-  }, [rootLoading, redirectPath, currentPage, setStorage]);
+  }, [rootLoading, redirectPath, currentPage, setCurrentPage]);
 
   useEffect(() => {
     if (shouldRedirect && redirectPath) {

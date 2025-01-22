@@ -6,18 +6,19 @@ import { TransactionError } from '@subwallet/extension-base/background/errors/Tr
 import { _Address, AmountData, ExtrinsicDataTypeMap, ExtrinsicType, FeeData } from '@subwallet/extension-base/background/KoniTypes';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { LEDGER_SIGNING_COMPATIBLE_MAP, SIGNING_COMPATIBLE_MAP, XCM_MIN_AMOUNT_RATIO } from '@subwallet/extension-base/constants';
-import { _canAccountBeReaped } from '@subwallet/extension-base/core/substrate/system-pallet';
+import { _canAccountBeReaped, _isAccountActive } from '@subwallet/extension-base/core/substrate/system-pallet';
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
+import { getCardanoAssetId } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/cardano/utils';
 import { isBounceableAddress } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
-import { _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isCIP26Token, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
 import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
-import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { isCardanoTransaction, isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
 import { AccountSignMode, BasicTxErrorType, BasicTxWarningCode, TransferTxErrorType } from '@subwallet/extension-base/types';
 import { balanceFormatter, formatNumber, pairToAccount } from '@subwallet/extension-base/utils';
-import { isTonAddress } from '@subwallet/keyring';
+import { isCardanoAddress, isTonAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
 import BigN from 'bignumber.js';
@@ -53,40 +54,74 @@ export function validateTransferRequest (tokenInfo: _ChainAsset, from: _Address,
     errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('Not found TEP74 address for this token')));
   }
 
+  if (isCardanoAddress(from) && isCardanoAddress(to) && _isCIP26Token(tokenInfo) && getCardanoAssetId(tokenInfo).length === 0) {
+    errors.push(new TransactionError(BasicTxErrorType.INVALID_PARAMS, t('Not found policy id of this token')));
+  }
+
   return [errors, keypair, transferValue];
 }
 
-export function additionalValidateTransfer (tokenInfo: _ChainAsset, nativeTokenInfo: _ChainAsset, extrinsicType: ExtrinsicType, receiverTransferTokenFreeBalance: string, transferAmount: string, senderTransferTokenTransferable?: string, receiverNativeTransferable?: string): [TransactionWarning[], TransactionError[]] {
-  const minAmount = _getTokenMinAmount(tokenInfo);
-  const nativeMinAmount = _getTokenMinAmount(nativeTokenInfo);
+export function additionalValidateTransferForRecipient (
+  sendingTokenInfo: _ChainAsset,
+  nativeTokenInfo: _ChainAsset,
+  extrinsicType: ExtrinsicType,
+  receiverSendingTokenKeepAliveBalance: bigint,
+  transferAmount: bigint,
+  senderSendingTokenTransferable?: bigint,
+  receiverSystemAccountInfo?: FrameSystemAccountInfo,
+  isSendingTokenSufficient?: boolean
+): [TransactionWarning[], TransactionError[]] {
+  const sendingTokenMinAmount = BigInt(_getTokenMinAmount(sendingTokenInfo));
+  const nativeTokenMinAmount = _getTokenMinAmount(nativeTokenInfo);
+
   const warnings: TransactionWarning[] = [];
   const errors: TransactionError[] = [];
 
-  // Check ed of not native token for sender after sending
-  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN && senderTransferTokenTransferable) {
-    if (new BigN(senderTransferTokenTransferable).minus(transferAmount).lt(minAmount)) {
+  const remainingSendingTokenOfSenderEnoughED = senderSendingTokenTransferable ? senderSendingTokenTransferable - transferAmount >= sendingTokenMinAmount : false;
+  const isReceiverAliveByNativeToken = receiverSystemAccountInfo ? _isAccountActive(receiverSystemAccountInfo) : false;
+  const isReceivingAmountPassED = receiverSendingTokenKeepAliveBalance + transferAmount >= sendingTokenMinAmount;
+
+  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN) {
+    if (!remainingSendingTokenOfSenderEnoughED) {
       const warning = new TransactionWarning(BasicTxWarningCode.NOT_ENOUGH_EXISTENTIAL_DEPOSIT);
 
       warnings.push(warning);
     }
-  }
 
-  // Check ed for receiver before sending
-  if (extrinsicType === ExtrinsicType.TRANSFER_TOKEN && receiverNativeTransferable) {
-    if (new BigN(receiverNativeTransferable).lt(nativeMinAmount)) {
-      const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('The recipient account has {{amount}} {{nativeSymbol}} which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: receiverNativeTransferable, nativeSymbol: nativeTokenInfo.symbol, localSymbol: tokenInfo.symbol } }));
+    if (!isReceiverAliveByNativeToken && !isSendingTokenSufficient) {
+      const balanceKeepAlive = formatNumber(nativeTokenMinAmount, _getAssetDecimals(nativeTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(nativeTokenInfo) || 6 });
+
+      const error = new TransactionError(
+        TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
+        t('The recipient account has less than {{amount}} {{nativeSymbol}}, which can lead to your {{localSymbol}} being lost. Change recipient account and try again', { replace: { amount: balanceKeepAlive, nativeSymbol: nativeTokenInfo.symbol, localSymbol: sendingTokenInfo.symbol } })
+      );
+
+      errors.push(error);
+    }
+
+    if (!isReceivingAmountPassED) {
+      const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
+
+      const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
+
+      const error = new TransactionError(
+        TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
+        t('You must transfer at least {{amount}} {{symbol}} to avoid losing funds on the recipient account. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } })
+      );
 
       errors.push(error);
     }
   }
 
-  // Check ed for receiver after sending
-  if (new BigN(receiverTransferTokenFreeBalance).plus(transferAmount).lt(minAmount)) {
-    const atLeast = new BigN(minAmount).minus(receiverTransferTokenFreeBalance).plus((tokenInfo.decimals || 0) === 0 ? 0 : 1);
+  if (!isReceivingAmountPassED) {
+    const atLeast = sendingTokenMinAmount - receiverSendingTokenKeepAliveBalance;
 
-    const atLeastStr = formatNumber(atLeast, tokenInfo.decimals || 0, balanceFormatter, { maxNumberFormat: tokenInfo.decimals || 6 });
+    const atLeastStr = formatNumber(atLeast.toString(), _getAssetDecimals(sendingTokenInfo), balanceFormatter, { maxNumberFormat: _getAssetDecimals(sendingTokenInfo) || 6 });
 
-    const error = new TransactionError(TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT, t('You must transfer at least {{amount}} {{symbol}} to keep the destination account alive', { replace: { amount: atLeastStr, symbol: tokenInfo.symbol } }));
+    const error = new TransactionError(
+      TransferTxErrorType.RECEIVER_NOT_ENOUGH_EXISTENTIAL_DEPOSIT,
+      t('You must transfer at least {{amount}} {{symbol}} to keep the recipient account alive. Increase amount and try again', { replace: { amount: atLeastStr, symbol: sendingTokenInfo.symbol } })
+    );
 
     errors.push(error);
   }
@@ -358,6 +393,8 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
         estimateFee.value = (await transaction.paymentInfo(validationResponse.address)).partialFee.toString();
       } else if (isTonTransaction(transaction)) {
         estimateFee.value = transaction.estimateFee; // todo: might need to update logic estimate fee inside for future actions excluding normal transfer Ton and Jetton
+      } else if (isCardanoTransaction(transaction)) {
+        estimateFee.value = transaction.estimateCardanoFee;
       } else {
         const gasLimit = transaction.gas || await evmApi.api.eth.estimateGas(transaction);
 

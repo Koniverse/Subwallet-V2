@@ -1,6 +1,7 @@
 // Copyright 2019-2022 @subwallet/extension-koni-ui authors & contributors
 // SPDX-License-Identifier: Apache-2.0
 
+export { default as AccountChainTypeLogos } from './AccountChainTypeLogos';
 export { default as AccountProxySelectorItem } from './AccountProxySelectorItem';
 export { default as AccountProxyBriefInfo } from './AccountProxyBriefInfo';
 export { default as AccountProxySelectorAllItem } from './AccountProxySelectorAllItem';

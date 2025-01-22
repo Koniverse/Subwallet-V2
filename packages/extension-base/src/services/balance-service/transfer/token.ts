@@ -31,7 +31,7 @@ interface CreateTransferExtrinsicProps {
   tokenInfo: _ChainAsset,
 }
 
-export const createTransferExtrinsic = async ({ from, networkKey, substrateApi, to, tokenInfo, transferAll, value }: CreateTransferExtrinsicProps): Promise<[SubmittableExtrinsic | null, string]> => {
+export const createSubstrateExtrinsic = async ({ from, networkKey, substrateApi, to, tokenInfo, transferAll, value }: CreateTransferExtrinsicProps): Promise<[SubmittableExtrinsic | null, string]> => {
   const api = substrateApi.api;
 
   const isDisableTransfer = tokenInfo.metadata?.isDisableTransfer as boolean;
@@ -161,7 +161,7 @@ export const getTransferMockTxFee = async (address: string, chainInfo: _ChainInf
     } else {
       const substrateApi = api as _SubstrateApi;
       const chainApi = await substrateApi.isReady;
-      const [mockTx] = await createTransferExtrinsic({
+      const [mockTx] = await createSubstrateExtrinsic({
         from: address,
         networkKey: chainInfo.slug,
         substrateApi: chainApi,

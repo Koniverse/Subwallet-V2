@@ -12,7 +12,7 @@ import { assert } from '@polkadot/util';
 
 import { AccountBaseHandler } from './Base';
 
-const validDeriveKeypairTypes: KeypairType[] = [...SubstrateKeypairTypes, ...EthereumKeypairTypes, 'ton'];
+const validDeriveKeypairTypes: KeypairType[] = [...SubstrateKeypairTypes, ...EthereumKeypairTypes, 'ton', 'cardano'];
 
 /**
  * @class AccountDeriveHandler
@@ -227,7 +227,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
   /**
    * Derive account proxy
    *  */
-  public derivationAccountProxyCreate (request: RequestDeriveCreateV3): boolean {
+  public derivationAccountProxyCreate (request: RequestDeriveCreateV3, isMigration = false): boolean {
     const { name, proxyId: deriveId, suri } = request;
     const isUnified = this.state.isUnifiedAccount(deriveId);
 
@@ -237,7 +237,7 @@ export class AccountDeriveHandler extends AccountBaseHandler {
 
     const nameExists = this.state.checkNameExists(name);
 
-    if (nameExists) {
+    if (nameExists && !isMigration) {
       throw new SWCommonAccountError(CommonAccountErrorType.ACCOUNT_NAME_EXISTED);
     }
 
@@ -366,7 +366,9 @@ export class AccountDeriveHandler extends AccountBaseHandler {
     const addresses = pairs.map((pair) => pair.address);
     const exists = this.state.checkAddressExists(addresses);
 
-    assert(!exists, t('Account already exists under the name "{{name}}"', { replace: { name: exists?.name || exists?.address || '' } }));
+    if (!isMigration) {
+      assert(!exists, t('Account already exists under the name "{{name}}"', { replace: { name: exists?.name || exists?.address || '' } }));
+    }
 
     childAccountProxy && this.state.upsertAccountProxyByKey(childAccountProxy);
     this.state.upsertModifyPairs(modifyPairs);

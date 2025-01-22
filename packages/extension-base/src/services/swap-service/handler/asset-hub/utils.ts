@@ -13,6 +13,7 @@ import { StagingXcmV3MultiLocation } from '@polkadot/types/lookup';
 export const _getPoolInfo = async (api: ApiPromise, asset1: _ChainAsset, asset2: _ChainAsset): Promise<[string, string]> => {
   const assetLocation1 = _getXcmAssetMultilocation(asset1) as StagingXcmV3MultiLocation;
   const assetLocation2 = _getXcmAssetMultilocation(asset2) as StagingXcmV3MultiLocation;
+  // @ts-ignore - Type auto detect incorrect
   const rs = await api.call.assetConversionApi.getReserves(assetLocation1, assetLocation2);
 
   if (!rs) {

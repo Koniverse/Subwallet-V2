@@ -406,6 +406,10 @@ export default class DatabaseService {
     return this.stores.asset.upsert(item);
   }
 
+  async bulkUpdateAssetsStore (items: _ChainAsset[]) {
+    return this.stores.asset.bulkUpsert(items);
+  }
+
   async getAllAssetStore () {
     return this.stores.asset.getAll();
   }
@@ -642,6 +646,10 @@ export default class DatabaseService {
 
   public removeAccountNotifications (proxyId: string) {
     return this.stores.inappNotification.removeAccountNotifications(proxyId);
+  }
+
+  public updateNotificationProxyId (proxyIds: string[], newProxyId: string, newName: string) {
+    return this.stores.inappNotification.updateNotificationProxyId(proxyIds, newProxyId, newName);
   }
 
   async exportDB () {

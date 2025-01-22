@@ -7,6 +7,8 @@ import { EvmFeeInfo, EvmFeeInfoCache, InfuraFeeInfo } from '@subwallet/extension
 import { BN_WEI, BN_ZERO } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
+import { gasStation, POLYGON_GAS_INDEXER } from '../../balance-service/transfer/xcm/polygonBridge';
+
 const INFURA_API_KEY = process.env.INFURA_API_KEY || '';
 const INFURA_API_KEY_SECRET = process.env.INFURA_API_KEY_SECRET || '';
 const INFURA_AUTH = 'Basic ' + Buffer.from(INFURA_API_KEY + ':' + INFURA_API_KEY_SECRET).toString('base64');
@@ -119,6 +121,21 @@ export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, u
   }
 
   try {
+    if (networkKey === 'polygonzkEvm_cardona' || networkKey === 'polygonZkEvm') {
+      const isTestnet = networkKey === 'polygonzkEvm_cardona';
+      const gasDomain = isTestnet ? POLYGON_GAS_INDEXER.TESTNET : POLYGON_GAS_INDEXER.MAINNET;
+      const gasResponse = await fetch(`${gasDomain}`).then((res) => res.json()) as gasStation;
+      const gasPriceInWei = gasResponse.standard * 1e9 + 200000;
+
+      return {
+        gasPrice: gasPriceInWei.toString(),
+        maxFeePerGas: undefined,
+        maxPriorityFeePerGas: undefined,
+        baseGasFee: undefined,
+        busyNetwork: false
+      };
+    }
+
     const numBlock = 20;
     const rewardPercent: number[] = [];
 

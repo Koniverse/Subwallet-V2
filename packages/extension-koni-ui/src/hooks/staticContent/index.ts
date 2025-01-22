@@ -2,3 +2,4 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export { default as useGetConfig } from './useGetConfig';
+export { default as useFetchMarkdownContentData } from './useFetchMarkdownContentData';

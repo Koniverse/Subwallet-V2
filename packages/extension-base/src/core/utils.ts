@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { LEDGER_GENERIC_ALLOW_NETWORKS } from '@subwallet/extension-base/core/consts';
 import { BalanceAccountType } from '@subwallet/extension-base/core/substrate/types';
 import { LedgerMustCheckType, ValidateRecipientParams } from '@subwallet/extension-base/core/types';
 import { tonAddressInfo } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
-import { _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
+import { _isChainCardanoCompatible, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { AccountJson } from '@subwallet/extension-base/types';
 import { isAddressAndChainCompatible, isSameAddress, reformatAddress } from '@subwallet/extension-base/utils';
-import { isAddress, isTonAddress } from '@subwallet/keyring';
+import { isAddress, isCardanoTestnetAddress, isTonAddress } from '@subwallet/keyring';
 
 import { isEthereumAddress } from '@polkadot/util-crypto';
 
@@ -65,7 +64,8 @@ export function _isValidAddressForEcosystem (validateRecipientParams: ValidateRe
   if (!isAddressAndChainCompatible(toAddress, destChainInfo)) {
     if (_isChainEvmCompatible(destChainInfo) ||
       _isChainSubstrateCompatible(destChainInfo) ||
-      _isChainTonCompatible(destChainInfo)) {
+      _isChainTonCompatible(destChainInfo) ||
+      _isChainCardanoCompatible(destChainInfo)) {
       return 'Recipient address must be the same type as sender address';
     }
 
@@ -99,6 +99,16 @@ export function _isValidTonAddressFormat (validateRecipientParams: ValidateRecip
   return '';
 }
 
+export function _isValidCardanoAddressFormat (validateRecipientParams: ValidateRecipientParams): string {
+  const { destChainInfo, toAddress } = validateRecipientParams;
+
+  if (isCardanoTestnetAddress(toAddress) !== destChainInfo.isTestnet) {
+    return `Recipient address must be a valid ${destChainInfo.name} address`;
+  }
+
+  return '';
+}
+
 export function _isNotDuplicateAddress (validateRecipientParams: ValidateRecipientParams): string {
   const { fromAddress, toAddress } = validateRecipientParams;
 
@@ -110,7 +120,7 @@ export function _isNotDuplicateAddress (validateRecipientParams: ValidateRecipie
 }
 
 export function _isSupportLedgerAccount (validateRecipientParams: ValidateRecipientParams): string {
-  const { account, destChainInfo } = validateRecipientParams;
+  const { account, allowLedgerGenerics, destChainInfo } = validateRecipientParams;
 
   if (account?.isHardware) {
     if (!account.isGeneric) {
@@ -125,7 +135,7 @@ export function _isSupportLedgerAccount (validateRecipientParams: ValidateRecipi
       // For ledger generic
       const ledgerCheck = ledgerMustCheckNetwork(account);
 
-      if (ledgerCheck !== 'unnecessary' && !LEDGER_GENERIC_ALLOW_NETWORKS.includes(destChainInfo.slug)) {
+      if (ledgerCheck !== 'unnecessary' && !allowLedgerGenerics.includes(destChainInfo.slug)) {
         return `Ledger ${ledgerCheck === 'polkadot' ? 'Polkadot' : 'Migration'} address is not supported for this transfer`;
       }
     }

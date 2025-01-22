@@ -4,11 +4,13 @@
 import { EvmProviderError } from '@subwallet/extension-base/background/errors/EvmProviderError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { AmountData, ChainType, EvmProviderErrorType, EvmSendTransactionRequest, ExtrinsicStatus, ExtrinsicType, NotificationType, TransactionAdditionalInfo, TransactionDirection, TransactionHistoryItem } from '@subwallet/extension-base/background/KoniTypes';
-import { ALL_ACCOUNT_KEY, fetchLastestBlockedActionsAndFeatures } from '@subwallet/extension-base/constants';
+import { ALL_ACCOUNT_KEY, fetchBlockedConfigObjects, fetchLastestBlockedActionsAndFeatures, getPassConfigId } from '@subwallet/extension-base/constants';
 import { checkBalanceWithTransactionFee, checkSigningAccountForTransaction, checkSupportForAction, checkSupportForFeature, checkSupportForTransaction, estimateFeeForTransaction } from '@subwallet/extension-base/core/logic-validation/transfer';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { cellToBase64Str, externalMessage, getTransferCellPromise } from '@subwallet/extension-base/services/balance-service/helpers/subscribe/ton/utils';
+import { CardanoTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/cardano-transfer';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
+import { _isPolygonChainBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/polygonBridge';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getEvmChainId, _isChainEvmCompatible } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
@@ -17,7 +19,7 @@ import { ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
 import { TRANSACTION_TIMEOUT } from '@subwallet/extension-base/services/transaction-service/constants';
 import { parseLiquidStakingEvents, parseLiquidStakingFastUnstakeEvents, parseTransferEventLogs, parseXcmEventLogs } from '@subwallet/extension-base/services/transaction-service/event-parser';
-import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
+import { getBaseTransactionInfo, getTransactionId, isCardanoTransaction, isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
@@ -100,11 +102,20 @@ export default class TransactionService {
     const { additionalValidator, address, chain, extrinsicType } = validationResponse;
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
-    const { blockedActionsMap, blockedFeaturesList } = await fetchLastestBlockedActionsAndFeatures();
+    const blockedConfigObjects = await fetchBlockedConfigObjects();
+    const currentConfig = this.state.settingService.getEnvironmentSetting();
 
-    checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
+    const passBlockedConfigId = getPassConfigId(currentConfig, blockedConfigObjects);
 
-    checkSupportForAction(validationResponse, blockedActionsMap);
+    const blockedActionsFeaturesMaps = await fetchLastestBlockedActionsAndFeatures(passBlockedConfigId);
+
+    for (const blockedActionsFeaturesMap of blockedActionsFeaturesMaps) {
+      const { blockedActionsMap, blockedFeaturesList } = blockedActionsFeaturesMap;
+
+      checkSupportForFeature(validationResponse, blockedFeaturesList, chainInfo);
+
+      checkSupportForAction(validationResponse, blockedActionsMap);
+    }
 
     const transaction = transactionInput.transaction;
 
@@ -120,10 +131,14 @@ export default class TransactionService {
 
     const evmApi = this.state.chainService.getEvmApi(chainInfo.slug);
     const tonApi = this.state.chainService.getTonApi(chainInfo.slug);
-    const isNoEvmApi = transaction && !isSubstrateTransaction(transaction) && !isTonTransaction(transaction) && !evmApi; // todo: should split isEvmTx && isNoEvmApi. Because other chains type also has no Evm Api
+    const cardanoApi = this.state.chainService.getCardanoApi(chainInfo.slug);
+    // todo: should split into isEvmTx && isNoEvmApi. Because other chains type also has no Evm Api. Same to all blockchain.
+    // todo: refactor check evmTransaction.
+    const isNoEvmApi = transaction && !isSubstrateTransaction(transaction) && !isTonTransaction(transaction) && !isCardanoTransaction(transaction) && !evmApi;
     const isNoTonApi = transaction && isTonTransaction(transaction) && !tonApi;
+    const isNoCardanoApi = transaction && isCardanoTransaction(transaction) && !cardanoApi;
 
-    if (isNoEvmApi || isNoTonApi) {
+    if (isNoEvmApi || isNoTonApi || isNoCardanoApi) {
       validationResponse.errors.push(new TransactionError(BasicTxErrorType.CHAIN_DISCONNECTED, undefined));
     }
 
@@ -254,7 +269,13 @@ export default class TransactionService {
 
   private async sendTransaction (transaction: SWTransaction): Promise<TransactionEmitter> {
     // Send Transaction
-    const emitter = await (transaction.chainType === 'substrate' ? this.signAndSendSubstrateTransaction(transaction) : transaction.chainType === 'evm' ? this.signAndSendEvmTransaction(transaction) : this.signAndSendTonTransaction(transaction));
+    const emitter = await (transaction.chainType === 'substrate'
+      ? this.signAndSendSubstrateTransaction(transaction)
+      : transaction.chainType === 'evm'
+        ? this.signAndSendEvmTransaction(transaction)
+        : transaction.chainType === 'cardano'
+          ? this.signAndSendCardanoTransaction(transaction)
+          : this.signAndSendTonTransaction(transaction));
 
     const { eventsHandler } = transaction;
 
@@ -615,8 +636,8 @@ export default class TransactionService {
         break;
       }
 
-      case ExtrinsicType.CLAIM_AVAIL_BRIDGE: {
-        const data = parseTransactionData<ExtrinsicType.CLAIM_AVAIL_BRIDGE>(transaction.data); // TODO: switch by provider
+      case ExtrinsicType.CLAIM_BRIDGE: {
+        const data = parseTransactionData<ExtrinsicType.CLAIM_BRIDGE>(transaction.data); // TODO: switch by provider
         const metadata = data.notification.metadata as ClaimAvailBridgeNotificationMetadata;
         const claimAsset = this.state.chainService.getAssetBySlug(metadata.tokenSlug);
 
@@ -1088,7 +1109,7 @@ export default class TransactionService {
     return emitter;
   }
 
-  private async signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): Promise<TransactionEmitter> {
+  private signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): TransactionEmitter {
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1098,8 +1119,8 @@ export default class TransactionService {
     };
 
     const extrinsic = transaction as SubmittableExtrinsic;
-    const registry = extrinsic.registry;
-    const signedExtensions = registry.signedExtensions;
+    // const registry = extrinsic.registry;
+    // const signedExtensions = registry.signedExtensions;
 
     const signerOption: Partial<SignerOptions> = {
       signer: {
@@ -1116,14 +1137,14 @@ export default class TransactionService {
       withSignedTransaction: true
     };
 
-    if (_isRuntimeUpdated(signedExtensions)) {
-      const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
-
-      if (metadataHash) {
-        signerOption.mode = 1;
-        signerOption.metadataHash = metadataHash;
-      }
-    }
+    // if (_isRuntimeUpdated(signedExtensions)) {
+    //   const metadataHash = await this.state.chainService.calculateMetadataHash(chain);
+    //
+    //   if (metadataHash) {
+    //     signerOption.mode = 1;
+    //     signerOption.metadataHash = metadataHash;
+    //   }
+    // }
 
     extrinsic.signAsync(address, signerOption).then(async (rs) => {
       // Emit signed event
@@ -1218,7 +1239,7 @@ export default class TransactionService {
       });
     };
 
-    const tonTransactionConfig = transaction as TonTransactionConfig;
+    const tonTransactionConfig = transaction as TonTransactionConfig; // todo: is this same as payload?
     const seqno = tonTransactionConfig.seqno;
     const messages = tonTransactionConfig.messages;
 
@@ -1267,6 +1288,77 @@ export default class TransactionService {
       eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, e.message));
       emitter.emit('error', eventData);
     });
+
+    return emitter;
+  }
+
+  private signAndSendCardanoTransaction ({ chain, id, transaction, url }: SWTransaction): TransactionEmitter {
+    const emitter = new EventEmitter<TransactionEventMap>();
+    const eventData: TransactionEventResponse = {
+      id,
+      errors: [],
+      warnings: [],
+      extrinsicHash: id
+    };
+
+    const transactionConfig = transaction as CardanoTransactionConfig;
+    const cardanoApi = this.state.chainService.getCardanoApi(chain);
+
+    this.state.requestService.addConfirmationCardano(id, url || EXTENSION_REQUEST_URL, 'cardanoSendTransactionRequest', transactionConfig, {})
+      .then(({ isApproved, payload }) => {
+        if (!isApproved) {
+          this.removeTransaction(id);
+          eventData.errors.push(new TransactionError(BasicTxErrorType.USER_REJECT_REQUEST));
+          emitter.emit('error', eventData);
+        } else {
+          if (!payload) {
+            throw new Error('Failed to sign');
+          }
+
+          // Emit signed event
+          emitter.emit('signed', eventData);
+
+          // Send transaction
+          this.handleTransactionTimeout(emitter, eventData);
+          emitter.emit('send', eventData);
+
+          // send qua api
+          cardanoApi.sendCardanoTxReturnHash(payload)
+            .then((txHash) => {
+              if (!txHash) {
+                eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
+                emitter.emit('error', eventData);
+              }
+
+              eventData.extrinsicHash = txHash;
+              emitter.emit('extrinsicHash', eventData);
+
+              // todo: wait transaction by fetch txHash by API
+              cardanoApi.getStatusByTxHash(txHash, transactionConfig.cardanoTtlOffset).then((status) => {
+                if (!status) {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED));
+                  emitter.emit('error', eventData);
+                }
+
+                emitter.emit('success', eventData);
+              })
+                .catch((e: Error) => {
+                  eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+                  emitter.emit('error', eventData);
+                });
+            })
+            .catch((e: Error) => {
+              eventData.errors.push(new TransactionError(BasicTxErrorType.SEND_TRANSACTION_FAILED, e.message));
+              emitter.emit('error', eventData);
+            });
+        }
+      })
+      .catch((e: Error) => {
+        this.removeTransaction(id);
+        eventData.errors.push(new TransactionError(BasicTxErrorType.UNABLE_TO_SIGN, t(e.message)));
+
+        emitter.emit('error', eventData);
+      });
 
     return emitter;
   }

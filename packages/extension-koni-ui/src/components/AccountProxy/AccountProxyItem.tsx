@@ -81,7 +81,10 @@ const AccountProxyItem = styled(Component)<Props>(({ theme }) => {
 
     '.__item-middle-part': {
       flex: 1,
-      textAlign: 'left'
+      textAlign: 'left',
+      'white-space': 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis'
     },
 
     '.__item-right-part': {
