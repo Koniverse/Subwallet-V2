@@ -1,24 +1,21 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
-import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ChainType, ExtrinsicType } from '@subwallet/extension-base/background/KoniTypes';
-import { _getEarlyAssetHubValidationError, _validateBalanceToSwapOnAssetHub, _validateSwapRecipient } from '@subwallet/extension-base/core/logic-validation/swap';
+import { _validateBalanceToSwapOnAssetHub, _validateSwapRecipient } from '@subwallet/extension-base/core/logic-validation/swap';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { createXcmExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
 import { _getChainNativeTokenSlug, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
-import { convertSwapRate, getSwapAlternativeAsset, SWAP_QUOTE_TIMEOUT_MAP } from '@subwallet/extension-base/services/swap-service/utils';
+import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { BasicTxErrorType, RequestCrossChainTransfer, RuntimeDispatchInfo } from '@subwallet/extension-base/types';
-import { BaseStepDetail, CommonFeeComponent, CommonOptimalPath, CommonStepFeeInfo, CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { AssetHubSwapEarlyValidation, OptimalSwapPathParams, SwapBaseTxData, SwapErrorType, SwapFeeType, SwapProviderId, SwapQuote, SwapRequest, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType } from '@subwallet/extension-base/types/service-base';
+import { OptimalSwapPathParams, SwapBaseTxData, SwapErrorType, SwapFeeType, SwapProviderId, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import BigN from 'bignumber.js';
 
 import { SwapBaseHandler, SwapBaseInterface } from '../base-handler';
 import { AssetHubRouter } from './router';
-
-const PAH_LOW_LIQUIDITY_THRESHOLD = 0.15;
 
 export class AssetHubSwapHandler implements SwapBaseInterface {
   private swapBaseHandler: SwapBaseHandler;
@@ -168,65 +165,6 @@ export class AssetHubSwapHandler implements SwapBaseInterface {
       this.getXcmStep,
       this.getSubmitStep
     ]);
-  }
-
-  async getSwapQuote (request: SwapRequest): Promise<SwapQuote | SwapError> {
-    const fromAsset = this.chainService.getAssetBySlug(request.pair.from);
-    const toAsset = this.chainService.getAssetBySlug(request.pair.to);
-    const fromChain = this.chainService.getChainInfoByKey(fromAsset.originChain);
-    const fromChainNativeTokenSlug = _getChainNativeTokenSlug(fromChain);
-
-    if (!this.isReady || !this.router) {
-      return new SwapError(SwapErrorType.UNKNOWN);
-    }
-
-    const earlyValidation = await this.validateSwapRequest(request);
-
-    if (earlyValidation.error) {
-      const metadata = earlyValidation.metadata;
-
-      return _getEarlyAssetHubValidationError(earlyValidation.error, metadata);
-    }
-
-    try {
-      const paths = this.router.buildPath(request.pair);
-      const amountOut = earlyValidation.metadata.toAmount;
-      const toAmount = new BigN(amountOut);
-      const minReceive = toAmount.times(1 - request.slippage).integerValue(BigN.ROUND_DOWN);
-      const extrinsic = await this.router.buildSwapExtrinsic(paths, request.address, request.fromAmount, minReceive.toString());
-      const paymentInfo = await extrinsic.paymentInfo(request.address);
-
-      const networkFee: CommonFeeComponent = {
-        tokenSlug: fromChainNativeTokenSlug,
-        amount: paymentInfo.partialFee.toString(),
-        feeType: SwapFeeType.NETWORK_FEE
-      };
-
-      const feeTokenOptions = [fromChainNativeTokenSlug];
-      const selectedFeeToken = fromChainNativeTokenSlug;
-      const priceImpactPct = earlyValidation.metadata.priceImpactPct || '0';
-
-      return {
-        pair: request.pair,
-        fromAmount: request.fromAmount,
-        toAmount: toAmount.toString(),
-        rate: convertSwapRate(earlyValidation.metadata.quoteRate, fromAsset, toAsset),
-        provider: this.providerInfo,
-        aliveUntil: +Date.now() + (SWAP_QUOTE_TIMEOUT_MAP[this.slug] || SWAP_QUOTE_TIMEOUT_MAP.default),
-        feeInfo: {
-          feeComponent: [networkFee],
-          defaultFeeToken: fromChainNativeTokenSlug,
-          feeOptions: feeTokenOptions, // TODO: enable fee options
-          selectedFeeToken
-        },
-        isLowLiquidity: Math.abs(parseFloat(priceImpactPct)) >= PAH_LOW_LIQUIDITY_THRESHOLD,
-        route: {
-          path: paths.map((asset) => asset.slug)
-        }
-      } as SwapQuote;
-    } catch (e) {
-      return new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
-    }
   }
 
   public async handleXcmStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
@@ -414,13 +352,5 @@ export class AssetHubSwapHandler implements SwapBaseInterface {
     }
 
     return [];
-  }
-
-  validateSwapRequest (request: SwapRequest): Promise<AssetHubSwapEarlyValidation> {
-    if (!this.isReady || !this.router) {
-      throw new SwapError(SwapErrorType.ERROR_FETCHING_QUOTE);
-    }
-
-    return this.router.earlyValidateSwapValidation(request);
   }
 }

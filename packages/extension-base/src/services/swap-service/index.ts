@@ -16,6 +16,7 @@ import { BasicTxErrorType } from '@subwallet/extension-base/types';
 import { CommonOptimalPath, DEFAULT_FIRST_STEP, MOCK_STEP_FEE } from '@subwallet/extension-base/types/service-base';
 import { _SUPPORTED_SWAP_PROVIDERS, OptimalSwapPathParams, QuoteAskResponse, SwapErrorType, SwapPair, SwapProviderId, SwapQuote, SwapQuoteResponse, SwapRequest, SwapRequestResult, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import { createPromiseHandler, PromiseHandler } from '@subwallet/extension-base/utils';
+import subwalletApiSdk from '@subwallet/subwallet-api-sdk';
 import { BehaviorSubject } from 'rxjs';
 
 import { SimpleSwapHandler } from './handler/simpleswap-handler';
@@ -43,34 +44,24 @@ export class SwapService implements ServiceWithProcessInterface, StoppableServic
     this.chainService = state.chainService;
   }
 
-  private async askProvidersForQuote (request: SwapRequest): Promise<QuoteAskResponse[]> {
+  private async askProvidersForQuote (request: SwapRequest) {
     const availableQuotes: QuoteAskResponse[] = [];
-    const swappingSrcChain = this.chainService.getAssetBySlug(request.pair.from).originChain;
 
-    await Promise.all(Object.values(this.handlers).map(async (handler) => {
-      // temporary solution to reduce number of requests to providers, will work as long as there's only 1 provider for 1 chain
-      if (!_isChainSupportedByProvider(handler.providerSlug, swappingSrcChain)) {
-        return;
-      }
+    const quotes = await subwalletApiSdk.swapApi?.fetchSwapQuoteData(request);
 
-      if (handler.init && handler.isReady === false) {
-        await handler.init();
-      }
+    if (Array.isArray(quotes)) {
+      quotes.forEach((quoteData) => {
+        if (!(quoteData.quote && 'errorClass' in quoteData.quote)) {
+          availableQuotes.push({ quote: quoteData.quote as SwapQuote | undefined });
+        } else {
+          availableQuotes.push({
+            error: new SwapError(quoteData.quote.errorType as SwapErrorType, quoteData.quote.message)
+          });
+        }
+      });
+    }
 
-      const quote = await handler.getSwapQuote(request);
-
-      if (!(quote instanceof SwapError)) { // todo: can do better
-        availableQuotes.push({
-          quote
-        });
-      } else {
-        availableQuotes.push({
-          error: quote
-        });
-      }
-    }));
-
-    return availableQuotes; // todo: need to propagate error for further handling
+    return availableQuotes;
   }
 
   private getDefaultProcess (params: OptimalSwapPathParams): CommonOptimalPath {
