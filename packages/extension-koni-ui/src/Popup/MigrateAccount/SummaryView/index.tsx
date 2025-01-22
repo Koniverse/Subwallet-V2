@@ -9,6 +9,7 @@ import { ResultAccountProxyListModal, resultAccountProxyListModal } from '@subwa
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { Button, Icon, ModalContext, PageIcon } from '@subwallet/react-ui';
+import CN from 'classnames';
 import { CheckCircle } from 'phosphor-react';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
@@ -72,7 +73,10 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
 
   return (
     <>
-      <div className={className}>
+      <div className={CN(className, {
+        '-no-account': !hasAnyAccountToMigrate
+      })}
+      >
         <div className='__header-area'>
           {t('Finish')}
         </div>
@@ -105,7 +109,7 @@ function Component ({ className = '', onClickFinish, resultProxyIds }: Props) {
                       />
                     )
                   }}
-                  i18nKey={detectTranslate('All eligible accounts have been migrated. Check your account list or review <guide>our guide</guide> to learn more about migration eligibility & process')}
+                  i18nKey={detectTranslate('All eligible accounts have been migrated. Review <guide>our guide</guide> to learn more about migration eligibility & process')}
                 />
               </div>
             )
@@ -296,6 +300,14 @@ export const SummaryView = styled(Component)<Props>(({ theme: { extendToken, tok
       fontSize: token.fontSize,
       lineHeight: token.lineHeight,
       color: token.colorTextLight4
+    },
+
+    '&.-no-account': {
+      '.__body-area': {
+        paddingTop: 40,
+        paddingRight: 32,
+        paddingLeft: 32
+      }
     }
   });
 });
