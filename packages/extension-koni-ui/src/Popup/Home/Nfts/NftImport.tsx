@@ -8,7 +8,7 @@ import { AddressInput, ChainSelector, Layout, PageWrapper, TokenTypeSelector } f
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { useChainChecker, useGetChainPrefixBySlug, useGetNftContractSupportedChains, useNotification, useTranslation } from '@subwallet/extension-koni-ui/hooks';
 import { upsertCustomToken, validateCustomToken } from '@subwallet/extension-koni-ui/messaging';
-import { FormCallbacks, FormFieldData, ThemeProps } from '@subwallet/extension-koni-ui/types';
+import { FormCallbacks, FormFieldData, FormRule, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToError, convertFieldToObject, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
 import { reformatContractAddress } from '@subwallet/extension-koni-ui/utils/account/reformatContractAddress';
 import { Form, Icon, Input } from '@subwallet/react-ui';
@@ -94,6 +94,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     const empty = Object.entries(all).some(([key, value]) => key !== 'symbol' ? !value : false);
 
     const { chain, contractAddress, type } = changes;
+    const { chain: selectedChain } = all;
 
     if (chain) {
       const nftTypes = getNftTypeSupported(chainInfoMap[chain]);
@@ -121,7 +122,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     setNameDisabled(!all.chain || !all.type || allError.contractAddress.length > 0);
     setIsDisabled(empty || error);
-  }, [chainInfoMap, form, selectedChain]);
+  }, [chainInfoMap, form]);
 
   const onSubmit: FormCallbacks<NftImportFormType>['onFinish'] = useCallback((formValues: NftImportFormType) => {
     const { chain, contractAddress, symbol, type } = formValues;
@@ -187,53 +188,62 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     });
   }, [t]);
 
-  const contractAddressTransform = useCallback((contractAddress: string) => {
-    return reformatContractAddress(selectedChain, contractAddress);
-  }, [selectedChain]);
+  const contractRules = useMemo((): FormRule[] => {
+    return [
+      ({ getFieldValue }) => ({
+        transform: (contractAddress: string) => {
+          const selectedChain = getFieldValue('chain') as string;
 
-  const contractAddressValidator = useCallback((rule: RuleObject, contractAddress: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (!isAddress(contractAddress)) {
-        reject(t('Invalid contract address'));
-      } else {
-        const isValidEvmContract = [_AssetType.ERC721].includes(selectedNftType) && isEthereumAddress(contractAddress);
-        const isValidWasmContract = [_AssetType.PSP34].includes(selectedNftType) && isValidSubstrateAddress(contractAddress);
-        const reformattedAddress = reformatAddress(contractAddress, chainNetworkPrefix);
+          return reformatContractAddress(selectedChain, contractAddress);
+        },
+        validator: (_, contractAddress: string): Promise<void> => {
+          return new Promise((resolve, reject) => {
+            if (!isAddress(contractAddress)) {
+              reject(t('Invalid contract address'));
+            } else {
+              const selectedChain = getFieldValue('chain') as string;
+              const selectedNftType = getFieldValue('type') as _AssetType;
+              const isValidEvmContract = [_AssetType.ERC721].includes(selectedNftType) && isEthereumAddress(contractAddress);
+              const isValidWasmContract = [_AssetType.PSP34].includes(selectedNftType) && isValidSubstrateAddress(contractAddress);
+              const reformattedAddress = reformatAddress(contractAddress, chainNetworkPrefix);
 
-        if (isValidEvmContract || isValidWasmContract) {
-          setLoading(true);
-          validateCustomToken({
-            contractAddress: reformattedAddress,
-            originChain: selectedChain,
-            type: selectedNftType
-          })
-            .then((validationResult) => {
-              setLoading(false);
+              if (isValidEvmContract || isValidWasmContract) {
+                setLoading(true);
+                validateCustomToken({
+                  contractAddress: reformattedAddress,
+                  originChain: selectedChain,
+                  type: selectedNftType
+                })
+                  .then((validationResult) => {
+                    setLoading(false);
 
-              if (validationResult.isExist) {
-                reject(t('Existed NFT'));
+                    if (validationResult.isExist) {
+                      reject(t('Existed NFT'));
+                    }
+
+                    if (validationResult.contractError) {
+                      reject(t('Invalid contract for the selected chain'));
+                    }
+
+                    if (!validationResult.isExist && !validationResult.contractError) {
+                      form.setFieldValue('collectionName', validationResult.name);
+                      form.setFieldValue('symbol', validationResult.symbol);
+                      resolve();
+                    }
+                  })
+                  .catch(() => {
+                    setLoading(false);
+                    reject(t('Invalid contract for the selected chain'));
+                  });
+              } else {
+                reject(t('Invalid contract address'));
               }
-
-              if (validationResult.contractError) {
-                reject(t('Invalid contract for the selected chain'));
-              }
-
-              if (!validationResult.isExist && !validationResult.contractError) {
-                form.setFieldValue('collectionName', validationResult.name);
-                form.setFieldValue('symbol', validationResult.symbol);
-                resolve();
-              }
-            })
-            .catch(() => {
-              setLoading(false);
-              reject(t('Invalid contract for the selected chain'));
-            });
-        } else {
-          reject(t('Invalid contract address'));
+            }
+          });
         }
-      }
-    });
-  }, [chainNetworkPrefix, form, selectedChain, selectedNftType, t]);
+      })
+    ];
+  }, [chainNetworkPrefix, form, t]);
 
   useEffect(() => {
     selectedChain && checkChain(selectedChain);
@@ -300,7 +310,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
             <Form.Item
               name='contractAddress'
-              rules={[{ transform: contractAddressTransform }, { validator: contractAddressValidator }]}
+              rules={contractRules}
               statusHelpAsTooltip={true}
             >
               <AddressInput

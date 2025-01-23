@@ -110,11 +110,14 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     return [
       ({ getFieldValue }) => ({
         transform: (contractAddress: string) => {
+          const selectedChain = getFieldValue('chain') as string;
+
           return reformatContractAddress(selectedChain, contractAddress);
         },
         validator: (_, contractAddress: string) => {
           return new Promise<void>((resolve, reject) => {
             const selectedTokenType = getFieldValue('type') as _AssetType;
+            const selectedChain = getFieldValue('chain') as string;
 
             const isValidEvmContract = [_AssetType.ERC20].includes(selectedTokenType) && isEthereumAddress(contractAddress);
             const isValidWasmContract = [_AssetType.PSP22].includes(selectedTokenType) && isValidSubstrateAddress(contractAddress);
@@ -160,7 +163,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         }
       })
     ];
-  }, [chainNetworkPrefix, form, selectedChain, t]);
+  }, [chainNetworkPrefix, form, t]);
 
   const assetIdRules = useMemo((): FormRule[] => {
     return [
@@ -216,6 +219,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     const allError = convertFieldToError<TokenImportFormType>(allFields);
 
     const { chain, contractAddress, type } = changes;
+    const { chain: selectedChain } = all;
 
     const baseResetFields = ['tokenName', 'symbol', 'decimals', 'priceId'];
 
@@ -247,7 +251,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
 
     setFieldDisabled(!all.chain || !all.type || allError.contractAddress.length > 0 || allError.assetId.length > 0);
     setIsDisabled(empty || error);
-  }, [chainInfoMap, form, selectedChain]);
+  }, [chainInfoMap, form]);
 
   const onSubmitContractAddress: FormCallbacks<TokenImportFormType>['onFinish'] = useCallback((formValues: TokenImportFormType) => {
     const { chain, contractAddress, decimals, priceId, symbol, tokenName, type } = formValues;
