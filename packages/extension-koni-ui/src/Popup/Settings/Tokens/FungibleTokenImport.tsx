@@ -10,6 +10,7 @@ import { useChainChecker, useDefaultNavigate, useGetChainPrefixBySlug, useGetFun
 import { upsertCustomToken, validateCustomToken } from '@subwallet/extension-koni-ui/messaging';
 import { FormCallbacks, FormRule, Theme, ThemeProps } from '@subwallet/extension-koni-ui/types';
 import { convertFieldToError, convertFieldToObject, reformatAddress, simpleCheckForm } from '@subwallet/extension-koni-ui/utils';
+import { reformatContractAddress } from '@subwallet/extension-koni-ui/utils/account/reformatContractAddress';
 import { Col, Field, Form, Icon, Input, Row } from '@subwallet/react-ui';
 import SwAvatar from '@subwallet/react-ui/es/sw-avatar';
 import { PlusCircle } from 'phosphor-react';
@@ -108,9 +109,16 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
   const contractRules = useMemo((): FormRule[] => {
     return [
       ({ getFieldValue }) => ({
+        transform: (contractAddress: string) => {
+          const selectedChain = getFieldValue('chain') as string;
+
+          return reformatContractAddress(selectedChain, contractAddress);
+        },
         validator: (_, contractAddress: string) => {
           return new Promise<void>((resolve, reject) => {
             const selectedTokenType = getFieldValue('type') as _AssetType;
+            const selectedChain = getFieldValue('chain') as string;
+
             const isValidEvmContract = [_AssetType.ERC20].includes(selectedTokenType) && isEthereumAddress(contractAddress);
             const isValidWasmContract = [_AssetType.PSP22].includes(selectedTokenType) && isValidSubstrateAddress(contractAddress);
             const isValidGearContract = [_AssetType.VFT].includes(selectedTokenType) && isValidSubstrateAddress(contractAddress);
@@ -155,7 +163,7 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
         }
       })
     ];
-  }, [chainNetworkPrefix, form, selectedChain, t]);
+  }, [chainNetworkPrefix, form, t]);
 
   const assetIdRules = useMemo((): FormRule[] => {
     return [
@@ -210,7 +218,8 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     const all = convertFieldToObject<TokenImportFormType>(allFields);
     const allError = convertFieldToError<TokenImportFormType>(allFields);
 
-    const { chain, type } = changes;
+    const { chain, contractAddress, type } = changes;
+    const { chain: selectedChain } = all;
 
     const baseResetFields = ['tokenName', 'symbol', 'decimals', 'priceId'];
 
@@ -230,6 +239,10 @@ function Component ({ className = '' }: Props): React.ReactElement<Props> {
     if (type) {
       form.resetFields(['contractAddress', ...baseResetFields]);
       form.resetFields(['assetId', ...baseResetFields]);
+    }
+
+    if (contractAddress) {
+      form.setFieldValue('contractAddress', reformatContractAddress(selectedChain, contractAddress));
     }
 
     if (allError.contractAddress.length > 0 || allError.assetId.length > 0) {
