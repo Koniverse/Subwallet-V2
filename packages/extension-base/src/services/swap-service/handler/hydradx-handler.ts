@@ -1,18 +1,20 @@
 // Copyright 2019-2022 @subwallet/extension-base
 // SPDX-License-Identifier: Apache-2.0
 
+import { PoolService, TradeRouter } from '@galacticcouncil/sdk';
 import { COMMON_CHAIN_SLUGS } from '@subwallet/chain-list';
+import { SwapError } from '@subwallet/extension-base/background/errors/SwapError';
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ChainType, ExtrinsicType, RequestChangeFeeToken } from '@subwallet/extension-base/background/KoniTypes';
 import { BalanceService } from '@subwallet/extension-base/services/balance-service';
 import { createXcmExtrinsic } from '@subwallet/extension-base/services/balance-service/transfer/xcm';
 import { ChainService } from '@subwallet/extension-base/services/chain-service';
-import { _getChainNativeTokenSlug, _getTokenOnChainAssetId, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getChainNativeTokenSlug, _getTokenOnChainAssetId, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
 import { SwapBaseHandler, SwapBaseInterface } from '@subwallet/extension-base/services/swap-service/handler/base-handler';
 import { getSwapAlternativeAsset } from '@subwallet/extension-base/services/swap-service/utils';
 import { BasicTxErrorType, RequestCrossChainTransfer, RuntimeDispatchInfo } from '@subwallet/extension-base/types';
 import { BaseStepDetail, CommonOptimalPath, CommonStepFeeInfo, CommonStepType } from '@subwallet/extension-base/types/service-base';
-import { HydradxSwapTxData, OptimalSwapPathParams, SwapFeeType, SwapProviderId, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
+import { HydradxSwapTxData, OptimalSwapPathParams, SwapErrorType, SwapFeeType, SwapProviderId, SwapStepType, SwapSubmitParams, SwapSubmitStepData, ValidateSwapProcessParams } from '@subwallet/extension-base/types/swap';
 import BigNumber from 'bignumber.js';
 
 import { SubmittableExtrinsic } from '@polkadot/api/types';
@@ -25,6 +27,7 @@ const HYDRADX_TESTNET_SUBWALLET_REFERRAL_ACCOUNT = '7LCt6dFqtxzdKVB2648jWW9d85do
 
 export class HydradxHandler implements SwapBaseInterface {
   private swapBaseHandler: SwapBaseHandler;
+  private tradeRouter: TradeRouter | undefined;
   private readonly isTestnet: boolean = true;
   public isReady = false;
   providerSlug: SwapProviderId;
@@ -51,6 +54,9 @@ export class HydradxHandler implements SwapBaseInterface {
     const substrateApi = this.chainService.getSubstrateApi(this.chain());
 
     await substrateApi.api.isReady;
+    const poolService = new PoolService(substrateApi.api);
+
+    this.tradeRouter = new TradeRouter(poolService);
 
     this.isReady = true;
   }
@@ -311,8 +317,22 @@ export class HydradxHandler implements SwapBaseInterface {
   }
 
   public async handleSubmitStep (params: SwapSubmitParams): Promise<SwapSubmitStepData> {
-    const txHex = params.quote.metadata as string;
     const fromAsset = this.chainService.getAssetBySlug(params.quote.pair.from);
+    const toAsset = this.chainService.getAssetBySlug(params.quote.pair.to);
+    const fromAssetId = _getTokenOnChainAssetId(fromAsset);
+    const toAssetId = _getTokenOnChainAssetId(toAsset);
+
+    if (!this.isReady || !this.tradeRouter) {
+      return new SwapError(SwapErrorType.UNKNOWN) as unknown as SwapSubmitStepData;
+    }
+
+    const parsedFromAmount = new BigNumber(params.quote.fromAmount).shiftedBy(-1 * _getAssetDecimals(fromAsset)).toString();
+    const quoteResponse = await this.tradeRouter.getBestSell(fromAssetId, toAssetId, parsedFromAmount);
+
+    const toAmount = quoteResponse.amountOut;
+
+    const minReceive = toAmount.times(1 - params.slippage).integerValue();
+    const txHex = quoteResponse.toTx(minReceive).hex;
 
     const substrateApi = this.chainService.getSubstrateApi(this.chain());
 
