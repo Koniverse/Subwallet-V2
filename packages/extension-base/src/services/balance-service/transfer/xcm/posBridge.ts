@@ -6,10 +6,11 @@ import { _ChainAsset, _ChainInfo } from '@subwallet/chain-list/types';
 import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _POS_BRIDGE_ABI, _POS_BRIDGE_L2_ABI, getPosL1BridgeContract, getPosL2BridgeContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
-import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { _NotificationInfo, ClaimPolygonBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { fetchPolygonBridgeTransactions } from '@subwallet/extension-base/services/inapp-notification-service/utils';
-import { BasicTxErrorType } from '@subwallet/extension-base/types';
+import { BasicTxErrorType, EvmEIP1559FeeOption, EvmFeeInfo, FeeCustom, FeeOption, GetFeeFunction } from '@subwallet/extension-base/types';
+import { combineEthFee } from '@subwallet/extension-base/utils';
+import { getId } from '@subwallet/extension-base/utils/getId';
 import { TransactionConfig } from 'web3-core';
 import { ContractSendMethod } from 'web3-eth-contract';
 
@@ -32,23 +33,27 @@ export const POS_EXIT_PAYLOAD_INDEXER = {
   TESTNET: 'https://proof-generator.polygon.technology/api/v1/amoy/exit-payload'
 };
 
-export async function _createPosBridgeL1toL2Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
+export async function _createPosBridgeL1toL2Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi, getChainFee: GetFeeFunction, feeCustom?: FeeCustom, feeOption?: FeeOption): Promise<TransactionConfig> {
   const posBridgeContractAddress = getPosL1BridgeContract(originChainInfo.slug);
   const posBridgeContract = getWeb3Contract(posBridgeContractAddress, evmApi, _POS_BRIDGE_ABI);
+
+  const id = getId();
+  const _feeCustom = feeCustom as EvmEIP1559FeeOption;
+  const feeInfo = await getChainFee(id, originChainInfo.slug, 'evm') as EvmFeeInfo;
+  const feeCombine = combineEthFee(feeInfo, feeOption, _feeCustom);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
   const transferCall: ContractSendMethod = posBridgeContract.methods.depositEtherFor(recipientAddress);
   const transferEncodedCall = transferCall.encodeABI();
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
+
+  // const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
 
   const transactionConfig: TransactionConfig = {
     from: sender,
     to: posBridgeContractAddress,
     value: value,
     data: transferEncodedCall,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority?.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority?.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   };
 
   const gasLimit = await evmApi.api.eth.estimateGas(transactionConfig).catch(() => 200000);
@@ -58,23 +63,25 @@ export async function _createPosBridgeL1toL2Extrinsic (tokenInfo: _ChainAsset, o
   return transactionConfig;
 }
 
-export async function _createPosBridgeL2toL1Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
+export async function _createPosBridgeL2toL1Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi, getChainFee: GetFeeFunction, feeCustom?: FeeCustom, feeOption?: FeeOption): Promise<TransactionConfig> {
   const posBridgeContractAddress = getPosL2BridgeContract(originChainInfo.slug);
   const posBridgeContract = getWeb3Contract(posBridgeContractAddress, evmApi, _POS_BRIDGE_L2_ABI);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
   const transferCall: ContractSendMethod = posBridgeContract.methods.withdraw(value);
   const transferEncodedCall = transferCall.encodeABI();
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
+
+  const id = getId();
+  const _feeCustom = feeCustom as EvmEIP1559FeeOption;
+  const feeInfo = await getChainFee(id, originChainInfo.slug, 'evm') as EvmFeeInfo;
+  const feeCombine = combineEthFee(feeInfo, feeOption, _feeCustom);
 
   const transactionConfig: TransactionConfig = {
     from: sender,
     to: posBridgeContractAddress,
     value: undefined,
     data: transferEncodedCall,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority?.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority?.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   };
 
   const gasLimit = await evmApi.api.eth.estimateGas(transactionConfig).catch(() => 200000);
@@ -84,7 +91,7 @@ export async function _createPosBridgeL2toL1Extrinsic (tokenInfo: _ChainAsset, o
   return transactionConfig;
 }
 
-export async function getClaimPosBridge (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi) {
+export async function getClaimPosBridge (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi, feeInfo: EvmFeeInfo) {
   const posBridgeContractAddress = getPosL2BridgeContract(chainSlug);
   const posBridgeContract = getWeb3Contract(posBridgeContractAddress, evmApi, _POS_BRIDGE_L2_ABI);
 
@@ -120,16 +127,14 @@ export async function getClaimPosBridge (chainSlug: string, notification: _Notif
   const transferCall: ContractSendMethod = posClaimContract.methods.exit(inputData.result);
   const transferEncodedCall = transferCall.encodeABI();
 
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
+  const feeCombine = combineEthFee(feeInfo);
 
   const transactionConfig = {
     from: metadata.userAddress,
     to: posClaimContractAddress,
     value: '0',
     data: transferEncodedCall,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   } as TransactionConfig;
 
   const gasLimit = await evmApi.api.eth.estimateGas(transactionConfig).catch(() => 200000);

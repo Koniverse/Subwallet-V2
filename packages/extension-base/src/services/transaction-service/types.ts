@@ -3,14 +3,14 @@
 
 import { ChainType, ExtrinsicDataTypeMap, ExtrinsicStatus, ExtrinsicType, FeeData, ValidateTransactionResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { TonTransactionConfig } from '@subwallet/extension-base/services/balance-service/transfer/ton-transfer';
-import { BaseRequestSign } from '@subwallet/extension-base/types';
+import { BaseRequestSign, TransactionFee } from '@subwallet/extension-base/types';
 import EventEmitter from 'eventemitter3';
 import { TransactionConfig } from 'web3-core';
 
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types';
 import { EventRecord } from '@polkadot/types/interfaces';
 
-export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>> {
+export interface SWTransaction extends ValidateTransactionResponse, Partial<Pick<BaseRequestSign, 'ignoreWarnings'>>, TransactionFee {
   id: string;
   url?: string;
   isInternal: boolean,
@@ -34,7 +34,7 @@ export type SWTransactionResult = Omit<SWTransaction, 'transaction' | 'additiona
 type SwInputBase = Pick<SWTransaction, 'address' | 'url' | 'data' | 'extrinsicType' | 'chain' | 'chainType' | 'ignoreWarnings' | 'transferNativeAmount'>
 & Partial<Pick<SWTransaction, 'additionalValidator' | 'eventsHandler'>>;
 
-export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransaction, 'estimateFee'>> {
+export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransaction, 'estimateFee'>>, TransactionFee {
   id?: string;
   transaction?: SWTransaction['transaction'] | null;
   warnings?: SWTransaction['warnings'];
@@ -45,7 +45,7 @@ export interface SWTransactionInput extends SwInputBase, Partial<Pick<SWTransact
   skipFeeValidation?: boolean;
 }
 
-export type SWTransactionResponse = SwInputBase & Pick<SWTransaction, 'warnings' | 'errors'> & Partial<Pick<SWTransaction, 'id' | 'extrinsicHash' | 'status' | 'estimateFee'>>;
+export type SWTransactionResponse = SwInputBase & Pick<SWTransaction, 'warnings' | 'errors'> & Partial<Pick<SWTransaction, 'id' | 'extrinsicHash' | 'status' | 'estimateFee'>> & TransactionFee;
 
 export type ValidateTransactionResponseInput = SWTransactionInput;
 

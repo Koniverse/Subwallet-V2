@@ -22,13 +22,15 @@ import { getBaseTransactionInfo, getTransactionId, isSubstrateTransaction, isTon
 import { SWTransaction, SWTransactionInput, SWTransactionResponse, TransactionEmitter, TransactionEventMap, TransactionEventResponse, ValidateTransactionResponseInput } from '@subwallet/extension-base/services/transaction-service/types';
 import { getExplorerLink, parseTransactionData } from '@subwallet/extension-base/services/transaction-service/utils';
 import { isWalletConnectRequest } from '@subwallet/extension-base/services/wallet-connect-service/helpers';
-import { AccountJson, BasicTxErrorType, BasicTxWarningCode, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, SubmitJoinNominationPool, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
+import { AccountJson, BasicTxErrorType, BasicTxWarningCode, EvmFeeInfo, LeavePoolAdditionalData, RequestStakePoolingBonding, RequestYieldStepSubmit, SpecialYieldPoolInfo, SubmitJoinNominationPool, SubstrateTipInfo, Web3Transaction, YieldPoolType } from '@subwallet/extension-base/types';
 import { _isRuntimeUpdated, anyNumberToBN, pairToAccount, reformatAddress } from '@subwallet/extension-base/utils';
 import { mergeTransactionAndSignature } from '@subwallet/extension-base/utils/eth/mergeTransactionAndSignature';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { getId } from '@subwallet/extension-base/utils/getId';
 import { BN_ZERO } from '@subwallet/extension-base/utils/number';
 import keyring from '@subwallet/ui-keyring';
 import { Cell } from '@ton/core';
+import BigN from 'bignumber.js';
 import { addHexPrefix } from 'ethereumjs-util';
 import { ethers, TransactionLike } from 'ethers';
 import EventEmitter from 'eventemitter3';
@@ -98,7 +100,7 @@ export default class TransactionService {
       errors: transactionInput.errors || [],
       warnings: transactionInput.warnings || []
     };
-    const { additionalValidator, address, chain, extrinsicType } = validationResponse;
+    const { additionalValidator, address, chain, extrinsicType, feeCustom, feeOption } = validationResponse;
     const chainInfo = this.state.chainService.getChainInfoByKey(chain);
 
     const blockedConfigObjects = await fetchBlockedConfigObjects();
@@ -138,7 +140,10 @@ export default class TransactionService {
     }
 
     // Estimate fee for transaction
-    validationResponse.estimateFee = await estimateFeeForTransaction(validationResponse, transaction, chainInfo, evmApi);
+    const id = getId();
+    const feeInfo = await this.state.feeService.subscribeChainFee(id, chain, 'evm') as EvmFeeInfo;
+
+    validationResponse.estimateFee = await estimateFeeForTransaction(validationResponse, transaction, chainInfo, evmApi, feeInfo);
 
     const chainInfoMap = this.state.chainService.getChainInfoMap();
 
@@ -924,6 +929,14 @@ export default class TransactionService {
       payload.from = address;
     }
 
+    if (!payload.estimateGas) {
+      if (payload.maxFeePerGas) {
+        payload.estimateGas = new BigN(anyNumberToBN(payload.maxFeePerGas).toNumber()).multipliedBy(payload.gas || '0').toFixed(0);
+      } else {
+        payload.estimateGas = new BigN(anyNumberToBN(payload.gasPrice).toNumber()).multipliedBy(payload.gas || '0').toFixed(0);
+      }
+    }
+
     const isExternal = !!account.isExternal;
     const isInjected = !!account.isInjected;
 
@@ -1098,7 +1111,8 @@ export default class TransactionService {
     return emitter;
   }
 
-  private signAndSendSubstrateTransaction ({ address, chain, id, transaction, url }: SWTransaction): TransactionEmitter {
+  private signAndSendSubstrateTransaction ({ address, chain, feeCustom, id, transaction, url }: SWTransaction): TransactionEmitter {
+    const tip = (feeCustom as SubstrateTipInfo)?.tip || '0';
     const emitter = new EventEmitter<TransactionEventMap>();
     const eventData: TransactionEventResponse = {
       id,
@@ -1123,6 +1137,7 @@ export default class TransactionService {
           } as SignerResult;
         }
       } as Signer,
+      tip,
       withSignedTransaction: true
     };
 

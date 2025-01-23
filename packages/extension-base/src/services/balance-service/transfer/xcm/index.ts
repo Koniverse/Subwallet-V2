@@ -12,6 +12,7 @@ import { getExtrinsicByXtokensPallet } from '@subwallet/extension-base/services/
 import { _XCM_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _isChainEvmCompatible, _isNativeToken } from '@subwallet/extension-base/services/chain-service/utils';
+import { GetFeeFunction, TransactionFee } from '@subwallet/extension-base/types';
 import BigN from 'bignumber.js';
 import { TransactionConfig } from 'web3-core';
 
@@ -30,17 +31,18 @@ export type CreateXcmExtrinsicProps = {
   substrateApi?: _SubstrateApi;
   chainInfoMap: Record<string, _ChainInfo>;
   sender?: string;
-}
+  getChainFee: GetFeeFunction;
+} & TransactionFee;
 
 export type FunctionCreateXcmExtrinsic = (props: CreateXcmExtrinsicProps) => Promise<SubmittableExtrinsic<'promise'> | TransactionConfig>;
 
 export const createSnowBridgeExtrinsic = async ({ chainInfoMap,
   destinationTokenInfo,
   evmApi,
-  originTokenInfo,
-  recipient,
-  sender,
-  sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
+  feeCustom,
+  feeOption,
+  getChainFee,
+  originTokenInfo, recipient, sender, sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
   const destinationChainInfo = chainInfoMap[destinationTokenInfo.originChain];
 
@@ -56,11 +58,12 @@ export const createSnowBridgeExtrinsic = async ({ chainInfoMap,
     throw Error('Sender is required');
   }
 
-  return getSnowBridgeEvmTransfer(originTokenInfo, originChainInfo, destinationChainInfo, sender, recipient, sendingValue, evmApi);
+  return getSnowBridgeEvmTransfer(originTokenInfo, originChainInfo, destinationChainInfo, sender, recipient, sendingValue, evmApi, getChainFee, feeCustom, feeOption);
 };
 
 export const createXcmExtrinsic = async ({ chainInfoMap,
   destinationTokenInfo,
+  getChainFee,
   originTokenInfo,
   recipient,
   sendingValue,
@@ -90,9 +93,9 @@ export const createXcmExtrinsic = async ({ chainInfoMap,
 
 export const createAvailBridgeTxFromEth = ({ chainInfoMap,
   evmApi,
-  originTokenInfo,
-  recipient,
-  sender,
+  feeCustom,
+  feeOption,
+  getChainFee, originTokenInfo, recipient, sender,
   sendingValue }: CreateXcmExtrinsicProps): Promise<TransactionConfig> => {
   const originChainInfo = chainInfoMap[originTokenInfo.originChain];
 
@@ -104,7 +107,7 @@ export const createAvailBridgeTxFromEth = ({ chainInfoMap,
     throw Error('Sender is required');
   }
 
-  return getAvailBridgeTxFromEth(originChainInfo, sender, recipient, sendingValue, evmApi);
+  return getAvailBridgeTxFromEth(originChainInfo, sender, recipient, sendingValue, evmApi, getChainFee, feeCustom, feeOption);
 };
 
 export const createAvailBridgeExtrinsicFromAvail = async ({ recipient, sendingValue, substrateApi }: CreateXcmExtrinsicProps): Promise<SubmittableExtrinsic<'promise'>> => {
@@ -118,6 +121,9 @@ export const createAvailBridgeExtrinsicFromAvail = async ({ recipient, sendingVa
 export const createPolygonBridgeExtrinsic = async ({ chainInfoMap,
   destinationTokenInfo,
   evmApi,
+  feeCustom,
+  feeOption,
+  getChainFee,
   originTokenInfo,
   recipient,
   sender,
@@ -150,10 +156,10 @@ export const createPolygonBridgeExtrinsic = async ({ chainInfoMap,
       ? _createPosBridgeL2toL1Extrinsic
       : _createPosBridgeL1toL2Extrinsic;
 
-  return createExtrinsic(originTokenInfo, originChainInfo, sender, recipient, sendingValue, evmApi);
+  return createExtrinsic(originTokenInfo, originChainInfo, sender, recipient, sendingValue, evmApi, getChainFee, feeCustom, feeOption);
 };
 
-export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset): Promise<BigN> => {
+export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap: Record<string, _ChainInfo>, originTokenInfo: _ChainAsset, destinationTokenInfo: _ChainAsset, getChainFee: GetFeeFunction): Promise<BigN> => {
   try {
     const destChainInfo = chainInfoMap[destinationTokenInfo.originChain];
     const originChainInfo = chainInfoMap[originTokenInfo.originChain];
@@ -172,7 +178,8 @@ export const getXcmMockTxFee = async (substrateApi: _SubstrateApi, chainInfoMap:
       sender,
       recipient,
       sendingValue: '1000000000000000000',
-      substrateApi
+      substrateApi,
+      getChainFee
     });
     const paymentInfo = await mockTx.paymentInfo(fakeAddress);
 

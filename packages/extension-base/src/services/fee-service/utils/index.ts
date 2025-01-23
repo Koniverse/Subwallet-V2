@@ -3,7 +3,7 @@
 
 import { GAS_PRICE_RATIO, NETWORK_MULTI_GAS_FEE } from '@subwallet/extension-base/constants';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
-import { EvmFeeInfo, EvmFeeInfoCache, InfuraFeeInfo } from '@subwallet/extension-base/types';
+import { EvmEIP1559FeeOption, EvmFeeInfo, EvmFeeInfoCache, InfuraFeeInfo, InfuraThresholdInfo } from '@subwallet/extension-base/types';
 import { BN_WEI, BN_ZERO } from '@subwallet/extension-base/utils';
 import BigN from 'bignumber.js';
 
@@ -13,44 +13,68 @@ const INFURA_API_KEY = process.env.INFURA_API_KEY || '';
 const INFURA_API_KEY_SECRET = process.env.INFURA_API_KEY_SECRET || '';
 const INFURA_AUTH = 'Basic ' + Buffer.from(INFURA_API_KEY + ':' + INFURA_API_KEY_SECRET).toString('base64');
 
-export const parseInfuraFee = (info: InfuraFeeInfo): EvmFeeInfo => {
+export const parseInfuraFee = (info: InfuraFeeInfo, threshold: InfuraThresholdInfo): EvmFeeInfo => {
   const base = new BigN(info.estimatedBaseFee).multipliedBy(BN_WEI);
-  const low = new BigN(info.low.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI);
-  const busyNetwork = base.gt(BN_ZERO) ? low.dividedBy(base).gte(0.3) : false;
-  const data = !busyNetwork ? info.low : info.medium;
+  const thresholdBN = new BigN(threshold.busyThreshold).multipliedBy(BN_WEI);
+  const busyNetwork = thresholdBN.gte(BN_ZERO) ? base.gt(thresholdBN) : false;
 
   return {
     busyNetwork,
     gasPrice: undefined,
-    baseGasFee: base,
-    maxFeePerGas: new BigN(data.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP),
-    maxPriorityFeePerGas: new BigN(data.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP)
+    baseGasFee: base.toFixed(0),
+    type: 'evm',
+    options: {
+      slow: {
+        maxFeePerGas: new BigN(info.low.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxPriorityFeePerGas: new BigN(info.low.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxWaitTimeEstimate: info.low.maxWaitTimeEstimate || 0,
+        minWaitTimeEstimate: info.low.minWaitTimeEstimate || 0
+      },
+      average: {
+        maxFeePerGas: new BigN(info.medium.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxPriorityFeePerGas: new BigN(info.medium.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxWaitTimeEstimate: info.medium.maxWaitTimeEstimate || 0,
+        minWaitTimeEstimate: info.medium.minWaitTimeEstimate || 0
+      },
+      fast: {
+        maxFeePerGas: new BigN(info.high.suggestedMaxFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxPriorityFeePerGas: new BigN(info.high.suggestedMaxPriorityFeePerGas).multipliedBy(BN_WEI).integerValue(BigN.ROUND_UP).toFixed(0),
+        maxWaitTimeEstimate: info.high.maxWaitTimeEstimate || 0,
+        minWaitTimeEstimate: info.high.minWaitTimeEstimate || 0
+      },
+      default: busyNetwork ? 'average' : 'slow'
+    }
   };
 };
 
 export const fetchInfuraFeeData = async (chainId: number, infuraAuth?: string): Promise<EvmFeeInfo | null> => {
-  return await new Promise<EvmFeeInfo | null>((resolve) => {
-    const baseUrl = 'https://gas.api.infura.io/networks/{{chainId}}/suggestedGasFees';
-    const url = baseUrl.replaceAll('{{chainId}}', chainId.toString());
+  const baseUrl = 'https://gas.api.infura.io/networks/{{chainId}}/suggestedGasFees';
+  const baseThressholdUrl = 'https://gas.api.infura.io/networks/{{chainId}}/busyThreshold';
+  // const baseFeeHistoryUrl = 'https://gas.api.infura.io/networks/{{chainId}}/baseFeeHistory';
+  // const baseFeePercentileUrl = 'https://gas.api.infura.io/networks/{{chainId}}/baseFeePercentile';
+  const feeUrl = baseUrl.replaceAll('{{chainId}}', chainId.toString());
+  const thressholdUrl = baseThressholdUrl.replaceAll('{{chainId}}', chainId.toString());
 
-    fetch(url,
-      {
+  try {
+    const [feeResp, thressholdResp] = await Promise.all([feeUrl, thressholdUrl].map((url) => {
+      return fetch(url, {
         method: 'GET',
         headers: {
-          Authorization: infuraAuth || INFURA_AUTH
+          Authorization: INFURA_AUTH
         }
-      })
-      .then((rs) => {
-        return rs.json();
-      })
-      .then((info: InfuraFeeInfo) => {
-        resolve(parseInfuraFee(info));
-      })
-      .catch((e) => {
-        console.warn(e);
-        resolve(null);
       });
-  });
+    }));
+
+    const [feeInfo, thresholdInfo]: [InfuraFeeInfo, InfuraThresholdInfo] = await Promise.all([
+      feeResp.json(),
+      thressholdResp.json()]);
+
+    return parseInfuraFee(feeInfo, thresholdInfo);
+  } catch (e) {
+    console.warn(e);
+
+    return null;
+  }
 };
 
 export const fetchSubWalletFeeData = async (chainId: number, networkKey: string): Promise<EvmFeeInfo | null> => {
@@ -58,6 +82,7 @@ export const fetchSubWalletFeeData = async (chainId: number, networkKey: string)
     const baseUrl = 'https://api-cache.subwallet.app/sw-evm-gas/{{chain}}';
     const url = baseUrl.replaceAll('{{chain}}', networkKey);
 
+    // TODO: Update the logo to follow the new estimateFee format or move the logic to the backend
     fetch(url,
       {
         method: 'GET'
@@ -106,10 +131,21 @@ export const recalculateGasPrice = (_price: string, chain: string) => {
   return needMulti ? new BigN(_price).multipliedBy(GAS_PRICE_RATIO).toFixed(0) : _price;
 };
 
-export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, useOnline = true, useInfura = false): Promise<EvmFeeInfo> => {
+export const getEIP1559GasFee = (
+  baseFee: BigN,
+  maxPriorityFee: BigN
+): EvmEIP1559FeeOption => {
+  // https://www.blocknative.com/blog/eip-1559-fees
+  const maxFee = baseFee.multipliedBy(2).plus(maxPriorityFee);
+
+  return { maxFeePerGas: maxFee.toFixed(0), maxPriorityFeePerGas: maxPriorityFee.toFixed(0) };
+};
+
+export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, useOnline = true, useInfura = true): Promise<EvmFeeInfo> => {
   if (useOnline) {
     try {
       const chainId = await web3.api.eth.getChainId();
+
       const onlineData = await fetchOnlineFeeData(chainId, networkKey, useInfura);
 
       if (onlineData) {
@@ -128,20 +164,16 @@ export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, u
       const gasPriceInWei = gasResponse.standard * 1e9 + 200000;
 
       return {
+        type: 'evm',
         gasPrice: gasPriceInWei.toString(),
-        maxFeePerGas: undefined,
-        maxPriorityFeePerGas: undefined,
         baseGasFee: undefined,
-        busyNetwork: false
+        busyNetwork: false,
+        options: undefined
       };
     }
 
     const numBlock = 20;
-    const rewardPercent: number[] = [];
-
-    for (let i = 0; i <= 100; i = i + 5) {
-      rewardPercent.push(i);
-    }
+    const rewardPercent: number[] = [25, 50, 75];
 
     const history = await web3.api.eth.getFeeHistory(numBlock, 'latest', rewardPercent);
 
@@ -166,93 +198,32 @@ export const calculateGasFeeParams = async (web3: _EvmApi, networkKey: string, u
 
     const busyNetwork = blocksBusy >= (numBlock / 2); // True, if half of block is busy
 
-    const maxPriorityFeePerGas = history.reward.reduce((previous, rewards) => {
-      let firstBN = BN_ZERO;
-      let firstIndex = 0;
-
-      /* Get first priority which greater than 0 */
-      for (let i = 0; i < rewards.length; i++) {
-        firstIndex = i;
-        const current = rewards[i];
-        const currentBN = new BigN(current);
-
-        if (currentBN.gt(BN_ZERO)) {
-          firstBN = currentBN;
-
-          break;
-        }
-      }
-
-      let secondBN = firstBN;
-
-      /* Get second priority which greater than first priority */
-      for (let i = firstIndex; i < rewards.length; i++) {
-        const current = rewards[i];
-        const currentBN = new BigN(current);
-
-        if (currentBN.gt(firstBN)) {
-          secondBN = currentBN;
-
-          break;
-        }
-      }
-
-      let current: BigN;
-
-      if (busyNetwork) {
-        current = secondBN.dividedBy(2).gte(firstBN) ? firstBN : secondBN; // second too larger than first (> 2 times), use first else use second
-      } else {
-        current = firstBN;
-      }
-
-      if (busyNetwork) {
-        /* Get max value */
-        return current.gte(previous) ? current : previous; // get max priority
-      } else {
-        /* Get min value which greater than 0 */
-        if (previous.eq(BN_ZERO)) {
-          return current; // get min priority
-        } else if (current.eq(BN_ZERO)) {
-          return previous;
-        }
-
-        return current.lte(previous) ? current : previous; // get min priority
-      }
-    }, BN_ZERO);
-
-    if (maxPriorityFeePerGas.eq(BN_ZERO)) {
-      const _price = await web3.api.eth.getGasPrice();
-      const gasPrice = recalculateGasPrice(_price, networkKey);
-
-      return {
-        gasPrice,
-        maxFeePerGas: undefined,
-        maxPriorityFeePerGas: undefined,
-        baseGasFee: undefined,
-        busyNetwork: false
-      };
-    }
-
-    /* Max gas = (base + priority) * 1.5 (if not busy or 2 when busy); */
-    const maxFeePerGas = baseGasFee.plus(maxPriorityFeePerGas).multipliedBy(busyNetwork ? 2 : 1.5).decimalPlaces(0);
+    const slowPriorityFee = history.reward.reduce((previous, rewards) => previous.plus(rewards[0]), BN_ZERO).dividedBy(numBlock).decimalPlaces(0);
+    const averagePriorityFee = history.reward.reduce((previous, rewards) => previous.plus(rewards[1]), BN_ZERO).dividedBy(numBlock).decimalPlaces(0);
+    const fastPriorityFee = history.reward.reduce((previous, rewards) => previous.plus(rewards[2]), BN_ZERO).dividedBy(numBlock).decimalPlaces(0);
 
     return {
+      type: 'evm',
       gasPrice: undefined,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      baseGasFee,
-      busyNetwork
+      baseGasFee: baseGasFee.toString(),
+      busyNetwork,
+      options: {
+        slow: getEIP1559GasFee(baseGasFee, slowPriorityFee),
+        average: getEIP1559GasFee(baseGasFee, averagePriorityFee),
+        fast: getEIP1559GasFee(baseGasFee, fastPriorityFee),
+        default: busyNetwork ? 'average' : 'slow'
+      }
     };
   } catch (e) {
     const _price = await web3.api.eth.getGasPrice();
     const gasPrice = recalculateGasPrice(_price, networkKey);
 
     return {
+      type: 'evm',
+      busyNetwork: false,
       gasPrice,
-      maxFeePerGas: undefined,
-      maxPriorityFeePerGas: undefined,
       baseGasFee: undefined,
-      busyNetwork: false
+      options: undefined
     };
   }
 };
