@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 1.3.14
+Build date: Jan 24, 2025.
+
+Features & Update:
+- Update chain-list stable (#3974)
+- Add staking support for CERE (#360)
+
+
 ## 1.3.13
 Build date: Jan 21, 2025.
 
