@@ -1738,6 +1738,11 @@ export default class KoniExtension {
         queryParams.module = 'assets';
       }
 
+      if (tokenInfo.originChain === 'hydradx_main') {
+        queryParams.module = 'assetRegistry';
+        queryParams.method = 'assets';
+      }
+
       metadata = (await substrateApi.makeRpcQuery<AnyJson>(queryParams)) as unknown as SufficientMetadata;
     } else {
       return false;
