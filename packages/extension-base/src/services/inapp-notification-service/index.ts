@@ -329,12 +329,13 @@ export class InappNotificationService implements CronServiceInterface {
     const symbol = token.symbol;
     const decimals = token.decimals ?? 0;
     const notifications: _BaseNotificationInfo[] = transactions.map((transaction) => {
-      const { _id, amounts, counter, destinationNetwork, originTokenAddress, originTokenNetwork, receiver, sourceNetwork, status, transactionHash, transactionInitiator, userAddress } = transaction;
+      const { _id, amounts, bridgeType, counter, destinationNetwork, originTokenAddress, originTokenNetwork, receiver, sourceNetwork, status, transactionHash, transactionInitiator, userAddress } = transaction;
       const metadata: ClaimPolygonBridgeNotificationMetadata = {
         chainSlug: token.originChain,
         tokenSlug: token.slug,
         _id,
         amounts,
+        bridgeType,
         counter,
         destinationNetwork,
         originTokenAddress,

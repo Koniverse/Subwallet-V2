@@ -8,7 +8,7 @@ const branchName = process.env.BRANCH_NAME || 'subwallet-dev';
 const fetchDomain = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'https://chain-list-assets.subwallet.app' : 'https://dev.sw-chain-list-assets.pages.dev';
 const fetchFile = PRODUCTION_BRANCHES.indexOf(branchName) > -1 ? 'list.json' : 'preview.json';
 
-const ChainListVersion = '0.2.96'; // update this when build chainlist
+const ChainListVersion = '0.2.98'; // update this when build chainlist
 
 // todo: move this interface to chainlist
 export interface PatchInfo {

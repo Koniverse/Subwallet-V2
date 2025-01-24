@@ -3,7 +3,7 @@
 
 import { AssetLogoMap, AssetRefMap, ChainAssetMap, ChainInfoMap, ChainLogoMap, MultiChainAssetMap } from '@subwallet/chain-list';
 import { _AssetRef, _AssetRefPath, _AssetType, _ChainAsset, _ChainInfo, _ChainStatus, _EvmInfo, _MultiChainAsset, _SubstrateChainType, _SubstrateInfo, _TonInfo } from '@subwallet/chain-list/types';
-import { AssetSetting, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
+import { AssetSetting, MetadataItem, ValidateNetworkResponse } from '@subwallet/extension-base/background/KoniTypes';
 import { _DEFAULT_ACTIVE_CHAINS, _ZK_ASSET_PREFIX, LATEST_CHAIN_DATA_FETCHING_INTERVAL } from '@subwallet/extension-base/services/chain-service/constants';
 import { EvmChainHandler } from '@subwallet/extension-base/services/chain-service/handler/EvmChainHandler';
 import { MantaPrivateHandler } from '@subwallet/extension-base/services/chain-service/handler/manta/MantaPrivateHandler';
@@ -13,7 +13,7 @@ import { _CHAIN_VALIDATION_ERROR } from '@subwallet/extension-base/services/chai
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _CUSTOM_PREFIX, _DataMap, _EvmApi, _NetworkUpsertParams, _NFT_CONTRACT_STANDARDS, _SMART_CONTRACT_STANDARDS, _SmartContractTokenInfo, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse } from '@subwallet/extension-base/services/chain-service/types';
 import { _isAssetAutoEnable, _isAssetCanPayTxFee, _isAssetFungibleToken, _isChainEnabled, _isCustomAsset, _isCustomChain, _isCustomProvider, _isEqualContractAddress, _isEqualSmartContractAsset, _isLocalToken, _isMantaZkAsset, _isPureEvmChain, _isPureSubstrateChain, _parseAssetRefKey, randomizeProvider, updateLatestChainInfo } from '@subwallet/extension-base/services/chain-service/utils';
 import { EventService } from '@subwallet/extension-base/services/event-service';
-import { IChain, IMetadataItem } from '@subwallet/extension-base/services/storage-service/databases';
+import { IChain, IMetadataItem, IMetadataV15Item } from '@subwallet/extension-base/services/storage-service/databases';
 import DatabaseService from '@subwallet/extension-base/services/storage-service/DatabaseService';
 import AssetSettingStore from '@subwallet/extension-base/stores/AssetSetting';
 import { addLazy, calculateMetadataHash, fetchStaticData, filterAssetsByChainAndType, getShortMetadata, MODULE_SUPPORT } from '@subwallet/extension-base/utils';
@@ -2070,46 +2070,56 @@ export class ChainService {
     return this.dbService.stores.metadata.upsertMetadata(chain, metadata);
   }
 
+  getMetadataV15 (chain: string) {
+    return this.dbService.stores.metadataV15.getMetadata(chain);
+  }
+
+  upsertMetadataV15 (chain: string, metadata: IMetadataV15Item) {
+    return this.dbService.stores.metadataV15.upsertMetadata(chain, metadata);
+  }
+
   getMetadataByHash (hash: string) {
     return this.dbService.stores.metadata.getMetadataByGenesisHash(hash);
   }
 
-  getExtraInfo (chain: string): Omit<ExtraInfo, 'specVersion' | 'specName'> {
-    const chainInfo = this.getChainInfoByKey(chain);
+  getExtraInfo (metadata: MetadataItem): Omit<ExtraInfo, 'specVersion' | 'specName'> {
+    const tokenInfo = metadata.tokenInfo;
 
     return {
-      decimals: chainInfo.substrateInfo?.decimals ?? 0,
-      tokenSymbol: chainInfo.substrateInfo?.symbol ?? 'Unit',
-      base58Prefix: chainInfo.substrateInfo?.addressPrefix ?? 42
+      decimals: tokenInfo?.tokenDecimals ?? 0,
+      tokenSymbol: tokenInfo?.tokenSymbol ?? 'Unit',
+      base58Prefix: tokenInfo?.ss58Format ?? 42
     };
   }
 
   async calculateMetadataHash (chain: string): Promise<string | undefined> {
     const metadata = await this.getMetadata(chain);
+    const metadataV15 = await this.getMetadataV15(chain);
 
-    if (!metadata || !metadata.hexV15) {
+    if (!metadata || !metadataV15 || !metadataV15.hexV15) {
       return undefined;
     }
 
-    const extraInfo = this.getExtraInfo(chain);
+    const extraInfo = this.getExtraInfo(metadata);
     const specVersion = parseInt(metadata.specVersion);
     const specName = metadata.specName;
-    const hexV15 = metadata.hexV15;
+    const hexV15 = metadataV15.hexV15;
 
     return calculateMetadataHash({ ...extraInfo, specVersion, specName }, hexV15);
   }
 
   async shortenMetadata (chain: string, txBlob: string): Promise<string | undefined> {
     const metadata = await this.getMetadata(chain);
+    const metadataV15 = await this.getMetadataV15(chain);
 
-    if (!metadata || !metadata.hexV15) {
+    if (!metadata || !metadataV15 || !metadataV15.hexV15) {
       return undefined;
     }
 
-    const extraInfo = this.getExtraInfo(chain);
+    const extraInfo = this.getExtraInfo(metadata);
     const specVersion = parseInt(metadata.specVersion);
     const specName = metadata.specName;
-    const hexV15 = metadata.hexV15;
+    const hexV15 = metadataV15.hexV15;
 
     return getShortMetadata(txBlob as HexString, { ...extraInfo, specVersion, specName }, hexV15);
   }

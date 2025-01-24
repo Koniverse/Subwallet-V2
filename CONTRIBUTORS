@@ -1,23 +1,23 @@
-    2914	AnhMTV                        	Release version 1.3.11
+    2929	AnhMTV                        	
     2552	Nam Phạm                      	[Issue 3855] test: add log
-    2380	S2kael                        	[Issue-3855] Remove log
+    2390	S2kael                        	
      869	lw-cdm                        	[MasterAccount] Update logic to reorder account on select account modal
      568	nguyentiendung                	[Issue-3553] [Issue-3553] Refactor code and add recipient to swap history.
-     490	bluezdot                      	[Issue-3888] build: update version @galacticcouncil/sdk to 5.1.0
+     492	bluezdot                      	
      465	Jaco                          	0.42.5 (#969)
      354	Thiendekaco                   	[Issue-3707] [fix] Unified account - fix dApp ui bug #4
      186	dominhquang                   	[Issue-3507] Fix UI bug for Notification
      185	quangdo                       	
-     179	Frenkie Nguyen                	[Issue-3696] Update UI for derivation
+     181	Frenkie Nguyen                	[Issue-3958] Extension - Re-enable search token feature
      170	lw-cdm                        	
      160	Automation Bot                	[CI Skip] Auto increase webapp build number
      104	khainh                        	predefine metadata for Polkadot & Kusama chains
+     104	PDTnhah                       	[Cere Network] Add staking support for CERE
+     102	tunghp2002                    	[Fix] Not autoselect when 1 maxcount
       96	lw                            	
-      91	PDTnhah                       	[Issue-3861] Fix: Update link navigate to explorer
       83	Hieu Dao                      	Update README.md
       83	leewong                       	
       82	Thibaut Sardan                	Add account filtering feature (#832)
-      77	tunghp2002                    	[update] Reformat sender address
       74	bluedot                       	[Issue-3888] build: upgrade version polkadot api
       63	Roman                         	fix ui issues
       53	Dominhquangdev                	update Bridge code

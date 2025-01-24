@@ -138,7 +138,6 @@ function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.Rea
   }, [autoFormatValue, chainInfo, inputValue, isShowAdvancedAddressDetection, onBlur, parseAndChangeValue, selectedOption]);
 
   // autoComplete
-
   // "item: unknown" is hotfix for typescript error of AutoComplete
   const onSelectAutoComplete = useCallback((graftedValue: string, item: unknown) => {
     setInputValue(getInputValueFromGraftedValue(graftedValue));
@@ -402,6 +401,7 @@ function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.Rea
     <>
       <div className={CN(className, '-input-container')}>
         <AutoComplete
+          disabled={disabled}
           dropdownRender={dropdownRender}
           fieldNames={autoCompleteFieldNames}
           listHeight={dropdownListHeight}
@@ -480,6 +480,7 @@ function Component (props: Props, ref: ForwardedRef<AddressInputRef>): React.Rea
             showAddressBook &&
             (
               <Button
+                disabled={disabled}
                 icon={(
                   <Icon
                     phosphorIcon={Book}

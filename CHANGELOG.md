@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## 1.3.13
+Build date: Jan 21, 2025.
+
+Features & Update:
+- Re-enable search token feature (#3958)
+- Update signing flow with metadata (#3306)
+
+Bug fixed:
+- Fix bug setup validator related maxCount (#3971)
+
+
+## 1.3.12
+Build date: Jan 06, 2025.
+
+Features & Update:
+- Add referral code for Bifrost Liquid Staking (vDOT, vMANTA)
+- Support bridge ETH <-> POS (#3893)
+- Support Avail Recovery app (#3915)
+- Set up SubWallet validators (#2533)
+- Update chain-list (#3897)
+
+Bug fixed:
+- Fix max transferable for Avail Bridge (#3911)
+
+
 ## 1.3.11
 Build date: Dec 23, 2024.
 
@@ -9,6 +34,7 @@ Features & Update:
 
 Bug fixed:
 - Fix errors when making transactions on Tangle mainnet (#3861)
+
 
 ## 1.3.10
 Build date: Dec 12, 2024.
