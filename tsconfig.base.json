@@ -22,7 +22,9 @@
         "@subwallet/web-runner": ["web-runner/src"],
         "@subwallet/web-runner/*": ["web-runner/src/*"],
         "@subwallet/webapp": ["webapp/src"],
-        "@subwallet/webapp/*": ["webapp/src/*"]
+        "@subwallet/webapp/*": ["webapp/src/*"],
+        "@subwallet/subwallet-api-sdk": ["subwallet-api-sdk/src"],
+        "@subwallet/subwallet-api-sdk/*": ["subwallet-api-sdk/src/*"]
     },
     "skipLibCheck": true
 	}

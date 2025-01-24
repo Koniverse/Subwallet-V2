@@ -116,3 +116,11 @@ export function getChainflipBroker (isTestnet: boolean) { // noted: currently no
     };
   }
 }
+
+export function getChainflipSwap (isTestnet: boolean) {
+  if (isTestnet) {
+    return `https://perseverance.chainflip-broker.io/swap?apikey=${CHAINFLIP_BROKER_API}`;
+  } else {
+    return `https://chainflip-broker.io/swap?apikey=${CHAINFLIP_BROKER_API}`;
+  }
+}

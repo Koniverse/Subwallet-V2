@@ -8,6 +8,7 @@
   "references": [
     { "path": "../extension-chains" },
     { "path": "../extension-dapp" },
-    { "path": "../extension-inject" }
+    { "path": "../extension-inject" },
+    { "path": "../subwallet-api-sdk" }
   ]
 }
