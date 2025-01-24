@@ -12,7 +12,7 @@ import { AccountExternalError, AddressBookInfo, AmountData, AmountDataWithId, As
 import { AccountAuthType, AuthorizeRequest, MessageTypes, MetadataRequest, RequestAccountExport, RequestAuthorizeCancel, RequestAuthorizeReject, RequestCurrentAccountAddress, RequestMetadataApprove, RequestMetadataReject, RequestSigningApproveSignature, RequestSigningCancel, RequestTypes, ResponseAccountExport, ResponseAuthorizeList, ResponseType, SigningRequest, WindowOpenParams } from '@subwallet/extension-base/background/types';
 import { TransactionWarning } from '@subwallet/extension-base/background/warnings/TransactionWarning';
 import { ALL_ACCOUNT_KEY, LATEST_SESSION, XCM_FEE_RATIO } from '@subwallet/extension-base/constants';
-import { additionalValidateTransferForRecipient, additionalValidateXcmTransfer, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
+import { additionalValidateTransferForRecipient, validateTransferRequest, validateXcmTransferRequest } from '@subwallet/extension-base/core/logic-validation/transfer';
 import { FrameSystemAccountInfo } from '@subwallet/extension-base/core/substrate/types';
 import { _isSnowBridgeXcm } from '@subwallet/extension-base/core/substrate/xcm-parser';
 import { ALLOWED_PATH } from '@subwallet/extension-base/defaults';
@@ -38,7 +38,7 @@ import { _isPolygonChainBridge, getClaimPolygonBridge, isClaimedPolygonBridge } 
 import { _isPosChainBridge, getClaimPosBridge } from '@subwallet/extension-base/services/balance-service/transfer/xcm/posBridge';
 import { _API_OPTIONS_CHAIN_GROUP, _DEFAULT_MANTA_ZK_CHAIN, _MANTA_ZK_CHAIN_GROUP, _ZK_ASSET_PREFIX, SUFFICIENT_CHAIN } from '@subwallet/extension-base/services/chain-service/constants';
 import { _ChainApiStatus, _ChainConnectionStatus, _ChainState, _NetworkUpsertParams, _SubstrateAdapterQueryArgs, _SubstrateApi, _ValidateCustomAssetRequest, _ValidateCustomAssetResponse, EnableChainParams, EnableMultiChainParams } from '@subwallet/extension-base/services/chain-service/types';
-import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getEvmChainId, _getTokenMinAmount, _getTokenOnChainAssetId, _getXcmAssetMultilocation, _isAssetSmartContractNft, _isBridgedToken, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
+import { _getAssetDecimals, _getAssetSymbol, _getChainNativeTokenBasicInfo, _getChainNativeTokenSlug, _getContractAddressOfToken, _getEvmChainId, _getTokenMinAmount, _getTokenOnChainAssetId, _getXcmAssetMultilocation, _isAssetSmartContractNft, _isBridgedToken, _isChainEvmCompatible, _isChainSubstrateCompatible, _isChainTonCompatible, _isCustomAsset, _isLocalToken, _isMantaZkAsset, _isNativeToken, _isPureEvmChain, _isTokenEvmSmartContract, _isTokenTransferredByEvm, _isTokenTransferredByTon } from '@subwallet/extension-base/services/chain-service/utils';
 import { ClaimPolygonBridgeNotificationMetadata, NotificationSetup } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AppBannerData, AppConfirmationData, AppPopupData } from '@subwallet/extension-base/services/mkt-campaign-service/types';
 import { EXTENSION_REQUEST_URL } from '@subwallet/extension-base/services/request-service/constants';
@@ -1452,6 +1452,10 @@ export default class KoniExtension {
 
     const originTokenInfo = this.#koniState.getAssetBySlug(tokenSlug);
     const destinationTokenInfo = this.#koniState.getXcmEqualAssetByChain(destinationNetworkKey, tokenSlug);
+
+    const destinationNativeTokenInfo = this.#koniState.getNativeTokenInfo(destinationNetworkKey);
+    const destinationNativeTokenSlug: string = destinationNativeTokenInfo.slug;
+
     const [errors, fromKeyPair] = validateXcmTransferRequest(destinationTokenInfo, from, value);
     let extrinsic: SubmittableExtrinsic<'promise'> | TransactionConfig | null = null;
 
@@ -1465,6 +1469,7 @@ export default class KoniExtension {
     const isSnowBridgeEvmTransfer = _isPureEvmChain(chainInfoMap[originNetworkKey]) && _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]) && !isAvailBridgeFromEvm;
     const isPolygonBridgeTransfer = _isPolygonChainBridge(originNetworkKey, destinationNetworkKey);
     const isPosBridgeTransfer = _isPosChainBridge(originNetworkKey, destinationNetworkKey);
+    const extrinsicType = ExtrinsicType.TRANSFER_XCM;
 
     let additionalValidator: undefined | ((inputTransaction: SWTransactionResponse) => Promise<void>);
     let eventsHandler: undefined | ((eventEmitter: TransactionEmitter) => void);
@@ -1500,20 +1505,50 @@ export default class KoniExtension {
       extrinsic = await funcCreateExtrinsic(params);
 
       additionalValidator = async (inputTransaction: SWTransactionResponse): Promise<void> => {
-        const { value: senderTransferable } = await this.getAddressTransferableBalance({ address: from, networkKey: originNetworkKey, token: originTokenInfo.slug });
-        const isSnowBridge = _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
-        let recipientNativeBalance = '0';
+        let isSendingTokenSufficient = false;
+        let receiverSystemAccountInfo: FrameSystemAccountInfo | undefined;
 
-        if (isSnowBridge) {
-          const { value } = await this.getAddressTransferableBalance({ address: to, networkKey: destinationNetworkKey, extrinsicType: ExtrinsicType.TRANSFER_BALANCE });
+        const { value: _senderTransferable } = await this.getAddressTransferableBalance({ address: from, networkKey: originNetworkKey, token: originTokenInfo.slug });
+        const senderTransferable = BigInt(_senderTransferable);
 
-          recipientNativeBalance = value;
+        // const isSnowBridge = _isSnowBridgeXcm(chainInfoMap[originNetworkKey], chainInfoMap[destinationNetworkKey]);
+
+        const sendingAmount = BigInt(value);
+
+        const { value: _receiverDestinationTokenKeepAliveBalance } = await this.getAddressTotalBalance({ address: to, networkKey: destinationNetworkKey, token: destinationTokenInfo.slug, extrinsicType });
+        const receiverDestinationTokenKeepAliveBalance = BigInt(_receiverDestinationTokenKeepAliveBalance);
+
+        // if (isSnowBridge) {
+        //   const { value } = await this.getAddressTransferableBalance({ address: to, networkKey: destinationNetworkKey, extrinsicType: ExtrinsicType.TRANSFER_BALANCE });
+        //
+        //   receiverNativeBalance = BigInt(value);
+        // }
+
+        if (!_isNativeToken(destinationTokenInfo)) {
+          const _receiverNativeTotal = await this.getAddressTotalBalance({ address: to, networkKey: destinationNetworkKey, token: destinationNativeTokenSlug, extrinsicType });
+
+          receiverSystemAccountInfo = _receiverNativeTotal.metadata as FrameSystemAccountInfo;
         }
 
-        const [warning, error] = additionalValidateXcmTransfer(originTokenInfo, destinationTokenInfo, value, senderTransferable, recipientNativeBalance, chainInfoMap[destinationNetworkKey], isSnowBridge);
+        if (_isChainSubstrateCompatible(chainInfoMap[destinationNetworkKey])) {
+          const substrateApi = this.#koniState.getSubstrateApi(destinationNetworkKey);
 
-        error && inputTransaction.errors.push(error);
-        warning && inputTransaction.warnings.push(warning);
+          isSendingTokenSufficient = await this.isSufficientToken(destinationTokenInfo, substrateApi);
+        }
+
+        const [warning, error] = additionalValidateTransferForRecipient(
+          destinationTokenInfo,
+          destinationNativeTokenInfo,
+          extrinsicType,
+          receiverDestinationTokenKeepAliveBalance,
+          sendingAmount,
+          senderTransferable, // different from sendingTokenInfo being passed in
+          receiverSystemAccountInfo,
+          isSendingTokenSufficient
+        );
+
+        warning.length && inputTransaction.warnings.push(...warning);
+        error.length && inputTransaction.errors.push(...error);
       };
 
       eventsHandler = (eventEmitter: TransactionEmitter) => {
@@ -1550,7 +1585,7 @@ export default class KoniExtension {
       chain: originNetworkKey,
       transaction: extrinsic,
       data: inputData,
-      extrinsicType: ExtrinsicType.TRANSFER_XCM,
+      extrinsicType,
       chainType: !isSnowBridgeEvmTransfer && !isAvailBridgeFromEvm && !isPolygonBridgeTransfer && !isPosBridgeTransfer ? ChainType.SUBSTRATE : ChainType.EVM,
       transferNativeAmount: _isNativeToken(originTokenInfo) ? value : '0',
       ignoreWarnings,
@@ -1704,6 +1739,11 @@ export default class KoniExtension {
 
       if (!_isBridgedToken(tokenInfo)) {
         queryParams.module = 'assets';
+      }
+
+      if (tokenInfo.originChain === 'hydradx_main') {
+        queryParams.module = 'assetRegistry';
+        queryParams.method = 'assets';
       }
 
       metadata = (await substrateApi.makeRpcQuery<AnyJson>(queryParams)) as unknown as SufficientMetadata;

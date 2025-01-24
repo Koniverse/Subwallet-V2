@@ -260,7 +260,7 @@ export const _XCM_CHAIN_GROUP = {
   xcmPallet: ['polkadot', 'kusama', 'rococo']
   // default is xTokens pallet
 };
-export const SUFFICIENT_CHAIN = ['astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain', 'pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam', 'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub'];
+export const SUFFICIENT_CHAIN = ['astar', 'calamari', 'parallel', 'darwinia2', 'crabParachain', 'pangolin', 'statemint', 'moonriver', 'shiden', 'moonbeam', 'statemine', 'liberland', 'dentnet', 'phala', 'crust', 'dbcchain', 'rococo_assethub', 'hydradx_main'];
 
 export const _XCM_TYPE = {
   RP: `${_SubstrateChainType.RELAYCHAIN}-${_SubstrateChainType.PARACHAIN}`, // DMP
