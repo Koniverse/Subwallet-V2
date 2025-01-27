@@ -19,7 +19,9 @@ const actionHandler = ActionHandler.instance;
 
 actionHandler.setHandler(SWHandler.instance);
 
-globalThis.window = globalThis.self;
+if (!globalThis.window) {
+  globalThis.window = globalThis.self;
+}
 
 cryptoWaitReady()
   .then((): void => {
