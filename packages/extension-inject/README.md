@@ -7,7 +7,7 @@ This is a basic extension injector that manages access to the global objects ava
 ```js
 import { injectExtension } from '@subwallet/extension-inject';
 
-// this a the function that will be exposed to be callable by the dapp. It resolves a promise
+// this is the function that will be exposed to be callable by the dapp. It resolves a promise
 // with the injected interface, (see `Injected`) when the dapp at `originName` (url) is allowed
 // to access functionality
 function enableFn (originName: string): Promise<Injected> {
