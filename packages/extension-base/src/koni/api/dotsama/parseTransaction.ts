@@ -25,7 +25,7 @@ const formatArgs = (callInstance: Call): ArgInfo[] => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-return
       argument = (args[i] as any).map((v: any) => v.toString());
     } else {
-      // toHuman takes care of the balance formating
+      // toHuman takes care of the balance formatting
       // with the right chain unit
       argument = JSON.stringify(args[i].toHuman());
     }
