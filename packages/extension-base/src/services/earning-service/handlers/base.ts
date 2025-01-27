@@ -8,7 +8,7 @@ import { ALL_ACCOUNT_KEY } from '@subwallet/extension-base/constants';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
 import { DEFAULT_YIELD_FIRST_STEP } from '@subwallet/extension-base/services/earning-service/constants';
-import { createClaimNotification, createWithdrawNotifications } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { createWithdrawNotifications } from '@subwallet/extension-base/services/inapp-notification-service/utils';
 import { BasePoolInfo, BaseYieldPoolMetadata, EarningRewardHistoryItem, EarningRewardItem, GenStepFunction, HandleYieldStepData, OptimalYieldPath, OptimalYieldPathParams, RequestEarlyValidateYield, ResponseEarlyValidateYield, StakeCancelWithdrawalParams, SubmitYieldJoinData, TransactionData, UnstakingInfo, YieldPoolInfo, YieldPoolMethodInfo, YieldPoolTarget, YieldPoolType, YieldPositionInfo, YieldStepBaseInfo, YieldTokenBaseInfo } from '@subwallet/extension-base/types';
 import { formatNumber, reformatAddress } from '@subwallet/extension-base/utils';
 
@@ -131,11 +131,11 @@ export default abstract class BasePoolHandler {
     await this.state.inappNotificationService.validateAndWriteNotificationsToDB(notifications, address);
   }
 
-  public async createClaimNotification (claimItemInfo: EarningRewardItem, tokenInfo: _ChainAsset) {
-    const notification = createClaimNotification(claimItemInfo, tokenInfo);
-
-    await this.state.inappNotificationService.validateAndWriteNotificationsToDB([notification], claimItemInfo.address);
-  }
+  // public async createClaimNotification (claimItemInfo: EarningRewardItem, tokenInfo: _ChainAsset) {
+  //   const notification = createClaimNotification(claimItemInfo, tokenInfo);
+  //
+  //   await this.state.inappNotificationService.validateAndWriteNotificationsToDB([notification], claimItemInfo.address);
+  // }
 
   /** Can mint when haven't enough native token (use input token for fee) */
   public get isPoolSupportAlternativeFee (): boolean {
@@ -159,7 +159,7 @@ export default abstract class BasePoolHandler {
   /** Subscribe pool position */
   public abstract subscribePoolPosition (useAddresses: string[], callback: (rs: YieldPositionInfo) => void): Promise<VoidFunction>;
   /** Get pool reward */
-  public abstract getPoolReward (useAddresses: string[], callback: (rs: EarningRewardItem) => void): Promise<VoidFunction>;
+  public abstract getPoolReward (useAddresses: string[], callback: (rs: EarningRewardItem, tokenInfo: _ChainAsset) => void): Promise<VoidFunction>;
   /** Get pool reward history */
   public abstract getPoolRewardHistory (useAddresses: string[], callback: (rs: EarningRewardHistoryItem) => void): Promise<VoidFunction>;
   /** Get pool target */
