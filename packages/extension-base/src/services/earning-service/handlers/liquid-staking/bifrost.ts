@@ -201,25 +201,21 @@ export default class BifrostLiquidStakingPoolHandler extends BaseLiquidStakingPo
       ]);
 
       const exchangeRate = new BigNumber(rate);
-
       const currentRelayEraObj = _currentRelayEra.toPrimitive() as Record<string, number>;
-
-      const currentRelayEra = currentRelayEraObj.era;
+      const currentRelayEra = currentRelayEraObj.era; // .round in case parachain (vMAnta)
 
       const unlockLedgerList: BifrostUnlockLedger[] = [];
-
       const activeBalanceMap: Record<string, BN> = {};
 
       for (let i = 0; i < balances.length; i++) {
         const balanceItem = balances[i];
         const address = useAddresses[i];
         const formattedAddress = reformatAddress(address);
+        const unlockLedger = _unlockLedgerList[i].toPrimitive();
 
         activeBalanceMap[formattedAddress] = balanceItem.free || BN_ZERO;
 
-        const _unlockLedger = _unlockLedgerList[i];
-        const unlockLedger = _unlockLedger.toPrimitive();
-
+        // need refactor this get ledgerIds
         if (unlockLedger) {
           // @ts-ignore
           // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -247,7 +243,7 @@ export default class BifrostLiquidStakingPoolHandler extends BaseLiquidStakingPo
         const owner = reformatAddress(unlockInfo[0] as string);
         const amount = (unlockInfo[1] as number).toString();
         // @ts-ignore
-        const withdrawalEra = unlockInfo[2].era as number;
+        const withdrawalEra = unlockInfo[2].era as number; // recheck in case round
 
         if (owner in unlockingMap) {
           unlockingMap[owner].push({
@@ -274,7 +270,7 @@ export default class BifrostLiquidStakingPoolHandler extends BaseLiquidStakingPo
 
         if (unlockings) {
           unlockings.forEach((unlocking) => {
-            const isClaimable = unlocking.era - currentRelayEra < 0;
+            const isClaimable = unlocking.era - currentRelayEra <= 0;
             const remainingEra = unlocking.era - currentRelayEra;
             const waitingTime = remainingEra * _STAKING_ERA_LENGTH_MAP[this.chain];
             // const currentTimestampMs = Date.now();
