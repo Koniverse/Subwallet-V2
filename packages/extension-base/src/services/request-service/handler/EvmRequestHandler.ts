@@ -106,6 +106,10 @@ export default class EvmRequestHandler {
       this.#requestService.popupOpen();
     }
 
+    if (options.isPassConfirmation) {
+      await this.completeConfirmation({ evmSendTransactionRequest: { id, url, isApproved: true, payload: '' } });
+    }
+
     this.#requestService.updateIconV2();
 
     return promise;
