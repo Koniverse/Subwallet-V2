@@ -579,13 +579,8 @@ export default class AmplitudeNativeStakingPoolHandler extends BaseParaNativeSta
 
   /* Other action */
 
-  /**
-   * @todo Need recheck
-   * */
   async handleYieldCancelUnstake (params: StakeCancelWithdrawalParams): Promise<TransactionData> {
-    const chainApi = await this.substrateApi.isReady;
-
-    return chainApi.api.tx.parachainStaking.cancelLeaveCandidates();
+    return Promise.reject(new TransactionError(BasicTxErrorType.UNSUPPORTED));
   }
 
   async handleYieldWithdraw (address: string, unstakingInfo: UnstakingInfo): Promise<TransactionData> {
