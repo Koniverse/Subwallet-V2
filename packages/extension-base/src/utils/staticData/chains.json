@@ -5122,37 +5122,6 @@
     "extraInfo": null
   },
   {
-    "slug": "automata",
-    "name": "Automata",
-    "isTestnet": false,
-    "chainStatus": "ACTIVE",
-    "ordinal": 136,
-    "icon": "https://static-data.subwallet.app/chains/images/icon/automata_network_21b619c323.png",
-    "providers": {
-      "Automata Network": "wss://api.ata.network",
-      "OnFinality": "wss://automata.api.onfinality.io/public-ws"
-    },
-    "evmInfo": null,
-    "substrateInfo": {
-      "relaySlug": null,
-      "paraId": null,
-      "genesisHash": "0xc8eda34601b5a48c73f47ee39a3a86a858c34f044185b17dc7d5ad155813dc63",
-      "addressPrefix": 2349,
-      "chainType": "RELAYCHAIN",
-      "crowdloanUrl": null,
-      "blockExplorer": null,
-      "existentialDeposit": "1000000000000000000",
-      "symbol": "ATA",
-      "decimals": 18,
-      "hasNativeNft": false,
-      "supportStaking": false,
-      "supportSmartContract": null,
-      "crowdloanParaId": null,
-      "crowdloanFunds": []
-    },
-    "extraInfo": null
-  },
-  {
     "slug": "creditcoin",
     "name": "Creditcoin",
     "isTestnet": false,
