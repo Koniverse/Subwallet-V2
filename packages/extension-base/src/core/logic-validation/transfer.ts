@@ -12,11 +12,10 @@ import { isBounceableAddress } from '@subwallet/extension-base/services/balance-
 import { _TRANSFER_CHAIN_GROUP } from '@subwallet/extension-base/services/chain-service/constants';
 import { _EvmApi, _TonApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getAssetDecimals, _getChainExistentialDeposit, _getChainNativeTokenBasicInfo, _getContractAddressOfToken, _getTokenMinAmount, _isNativeToken, _isTokenEvmSmartContract, _isTokenTonSmartContract } from '@subwallet/extension-base/services/chain-service/utils';
-import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { isSubstrateTransaction, isTonTransaction } from '@subwallet/extension-base/services/transaction-service/helpers';
 import { OptionalSWTransaction, SWTransactionInput, SWTransactionResponse } from '@subwallet/extension-base/services/transaction-service/types';
-import { AccountSignMode, BasicTxErrorType, BasicTxWarningCode, TransferTxErrorType } from '@subwallet/extension-base/types';
-import { balanceFormatter, formatNumber, pairToAccount } from '@subwallet/extension-base/utils';
+import { AccountSignMode, BasicTxErrorType, BasicTxWarningCode, EvmEIP1559FeeOption, EvmFeeInfo, TransferTxErrorType } from '@subwallet/extension-base/types';
+import { balanceFormatter, combineEthFee, formatNumber, pairToAccount } from '@subwallet/extension-base/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -370,7 +369,7 @@ export function checkSupportForTransaction (validationResponse: SWTransactionRes
   }
 }
 
-export async function estimateFeeForTransaction (validationResponse: SWTransactionResponse, transaction: OptionalSWTransaction, chainInfo: _ChainInfo, evmApi: _EvmApi): Promise<FeeData> {
+export async function estimateFeeForTransaction (validationResponse: SWTransactionResponse, transaction: OptionalSWTransaction, chainInfo: _ChainInfo, evmApi: _EvmApi, feeInfo: EvmFeeInfo): Promise<FeeData> {
   const estimateFee: FeeData = {
     symbol: '',
     decimals: 0,
@@ -391,23 +390,23 @@ export async function estimateFeeForTransaction (validationResponse: SWTransacti
       } else {
         const gasLimit = transaction.gas || await evmApi.api.eth.estimateGas(transaction);
 
-        const priority = await calculateGasFeeParams(evmApi, chainInfo.slug);
+        const feeCombine = combineEthFee(feeInfo, validationResponse.feeOption, validationResponse.feeCustom as EvmEIP1559FeeOption);
 
         if (transaction.maxFeePerGas) {
           estimateFee.value = new BigN(transaction.maxFeePerGas.toString()).multipliedBy(gasLimit).toFixed(0);
         } else if (transaction.gasPrice) {
-          estimateFee.value = new BigN((transaction.gasPrice || 0).toString()).multipliedBy(gasLimit).toFixed(0);
+          estimateFee.value = new BigN(transaction.gasPrice.toString()).multipliedBy(gasLimit).toFixed(0);
         } else {
-          if (priority.baseGasFee) {
-            const maxFee = priority.maxFeePerGas; // TODO: Need review
+          if (feeCombine.maxFeePerGas) {
+            const maxFee = new BigN(feeCombine.maxFeePerGas); // TODO: Need review
 
             estimateFee.value = maxFee.multipliedBy(gasLimit).toFixed(0);
-          } else {
-            estimateFee.value = new BigN(priority.gasPrice).multipliedBy(gasLimit).toFixed(0);
+          } else if (feeCombine.gasPrice) {
+            estimateFee.value = new BigN((feeCombine.gasPrice || 0)).multipliedBy(gasLimit).toFixed(0);
           }
         }
 
-        estimateFee.tooHigh = priority.busyNetwork;
+        estimateFee.tooHigh = feeInfo.busyNetwork;
       }
     } catch (e) {
       const error = e as Error;

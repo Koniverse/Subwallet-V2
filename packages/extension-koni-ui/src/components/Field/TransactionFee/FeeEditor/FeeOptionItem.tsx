@@ -78,7 +78,7 @@ const Component: React.FC<Props> = (props: Props) => {
 
       timeString = timeString.trim();
 
-      return timeString ? `~ ${timeString}` : '0 min'; // Return '0 minutes' if time is 0
+      return timeString ? `~ ${timeString}` : `${seconds} sec`; // Return '0 minutes' if time is 0
     } else {
       return 'Unknown time';
     }

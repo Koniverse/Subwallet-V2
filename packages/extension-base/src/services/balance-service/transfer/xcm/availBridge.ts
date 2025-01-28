@@ -6,9 +6,11 @@ import { _ChainInfo } from '@subwallet/chain-list/types';
 import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-handler/evm/web3';
 import { _AVAIL_BRIDGE_GATEWAY_ABI, _AVAIL_TEST_BRIDGE_GATEWAY_ABI, getAvailBridgeGatewayContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi, _SubstrateApi } from '@subwallet/extension-base/services/chain-service/types';
-import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { _NotificationInfo, ClaimAvailBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
 import { AVAIL_BRIDGE_API } from '@subwallet/extension-base/services/inapp-notification-service/utils';
+import { EvmEIP1559FeeOption, EvmFeeInfo, FeeCustom, FeeOption, GetFeeFunction } from '@subwallet/extension-base/types';
+import { combineEthFee } from '@subwallet/extension-base/utils';
+import { getId } from '@subwallet/extension-base/utils/getId';
 import { decodeAddress } from '@subwallet/keyring';
 import { PrefixedHexString } from 'ethereumjs-util';
 import { TransactionConfig } from 'web3-core';
@@ -54,7 +56,7 @@ type Message = {
   messageType: string;
 };
 
-export async function getAvailBridgeTxFromEth (originChainInfo: _ChainInfo, sender: string, recipient: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
+export async function getAvailBridgeTxFromEth (originChainInfo: _ChainInfo, sender: string, recipient: string, value: string, evmApi: _EvmApi, getChainFee: GetFeeFunction, feeCustom?: FeeCustom, feeOption?: FeeOption): Promise<TransactionConfig> {
   const availBridgeContractAddress = getAvailBridgeGatewayContract(originChainInfo.slug);
   const ABI = getAvailBridgeAbi(originChainInfo.slug);
   const availBridgeContract = getWeb3Contract(availBridgeContractAddress, evmApi, ABI);
@@ -62,18 +64,20 @@ export async function getAvailBridgeTxFromEth (originChainInfo: _ChainInfo, send
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
   const sendAvail = availBridgeContract.methods.sendAVAIL(_address, value) as ContractSendMethod;
   const transferData = sendAvail.encodeABI();
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
   const gasLimit = await sendAvail.estimateGas({ from: sender });
+  const id = getId();
+  const _feeCustom = feeCustom as EvmEIP1559FeeOption;
+  const feeInfo = await getChainFee(id, originChainInfo.slug, 'evm') as EvmFeeInfo;
+
+  const feeCombine = combineEthFee(feeInfo, feeOption, _feeCustom);
 
   return {
     from: sender,
     to: availBridgeContractAddress,
     value: '0',
     data: transferData,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString(),
-    gas: gasLimit
+    gas: gasLimit,
+    ...feeCombine
   } as TransactionConfig;
 }
 
@@ -168,7 +172,7 @@ function getAvailBridgeApi (chainSlug: string) {
   return AVAIL_BRIDGE_API.AVAIL_TESTNET;
 }
 
-export async function getClaimTxOnEthereum (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi) {
+export async function getClaimTxOnEthereum (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi, feeInfo: EvmFeeInfo) {
   const availBridgeContractAddress = getAvailBridgeGatewayContract(chainSlug);
   const ABI = getAvailBridgeAbi(chainSlug);
   const availBridgeContract = getWeb3Contract(availBridgeContractAddress, evmApi, ABI);
@@ -214,17 +218,16 @@ export async function getClaimTxOnEthereum (chainSlug: string, notification: _No
   ) as ContractSendMethod;
   const transferData = transfer.encodeABI();
   const gasLimit = await transfer.estimateGas({ from: metadata.receiverAddress });
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
+
+  const feeCombine = combineEthFee(feeInfo);
 
   return {
     from: metadata.receiverAddress,
     to: availBridgeContractAddress,
     value: '0',
     data: transferData,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString(),
-    gas: gasLimit
+    gas: gasLimit,
+    ...feeCombine
   } as TransactionConfig;
 }
 

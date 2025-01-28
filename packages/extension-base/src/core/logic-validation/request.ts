@@ -6,11 +6,11 @@ import { EvmProviderError } from '@subwallet/extension-base/background/errors/Ev
 import { TransactionError } from '@subwallet/extension-base/background/errors/TransactionError';
 import { ConfirmationType, ErrorValidation, EvmProviderErrorType, EvmSendTransactionParams, EvmSignatureRequest, EvmTransactionData } from '@subwallet/extension-base/background/KoniTypes';
 import KoniState from '@subwallet/extension-base/koni/background/handlers/State';
-import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { AuthUrlInfo } from '@subwallet/extension-base/services/request-service/types';
-import { BasicTxErrorType } from '@subwallet/extension-base/types';
-import { BN_ZERO, createPromiseHandler, isSameAddress, stripUrl, wait } from '@subwallet/extension-base/utils';
+import { BasicTxErrorType, EvmFeeInfo } from '@subwallet/extension-base/types';
+import { BN_ZERO, combineEthFee, createPromiseHandler, isSameAddress, stripUrl, wait } from '@subwallet/extension-base/utils';
 import { isContractAddress, parseContractInput } from '@subwallet/extension-base/utils/eth/parseTransaction';
+import { getId } from '@subwallet/extension-base/utils/getId';
 import { isSubstrateAddress } from '@subwallet/keyring';
 import { KeyringPair } from '@subwallet/keyring/types';
 import { keyring } from '@subwallet/ui-keyring';
@@ -434,18 +434,23 @@ export async function validationEvmDataTransactionMiddleware (koni: KoniState, u
       estimateGas = new BigN(transactionParams.gasPrice).multipliedBy(transaction.gas).toFixed(0);
     } else {
       try {
-        const priority = await calculateGasFeeParams(evmApi, networkKey || '');
+        const gasLimit = transaction.gas || await evmApi.api.eth.estimateGas(transaction);
+        const id = getId();
+        const feeInfo = await koni.feeService.subscribeChainFee(id, transaction.chain || '', 'evm') as EvmFeeInfo;
+        const feeCombine = combineEthFee(feeInfo);
 
-        if (priority.baseGasFee) {
-          transaction.maxPriorityFeePerGas = priority.maxPriorityFeePerGas.toString();
-          transaction.maxFeePerGas = priority.maxFeePerGas.toString();
-
-          const maxFee = priority.maxFeePerGas;
-
-          estimateGas = maxFee.multipliedBy(transaction.gas).toFixed(0);
+        if (transaction.maxFeePerGas) {
+          estimateGas = new BigN(transaction.maxFeePerGas.toString()).multipliedBy(gasLimit).toFixed(0);
+        } else if (transaction.gasPrice) {
+          estimateGas = new BigN(transaction.gasPrice.toString()).multipliedBy(gasLimit).toFixed(0);
         } else {
-          transaction.gasPrice = priority.gasPrice;
-          estimateGas = new BigN(priority.gasPrice).multipliedBy(transaction.gas).toFixed(0);
+          if (feeCombine.maxFeePerGas) {
+            const maxFee = new BigN(feeCombine.maxFeePerGas); // TODO: Need review
+
+            estimateGas = maxFee.multipliedBy(gasLimit).toFixed(0);
+          } else if (feeCombine.gasPrice) {
+            estimateGas = new BigN((feeCombine.gasPrice || 0)).multipliedBy(gasLimit).toFixed(0);
+          }
         }
       } catch (e) {
         handleError((e as Error).message);

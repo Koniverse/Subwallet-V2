@@ -7,8 +7,10 @@ import { getWeb3Contract } from '@subwallet/extension-base/koni/api/contract-han
 import { _POLYGON_BRIDGE_ABI, getPolygonBridgeContract } from '@subwallet/extension-base/koni/api/contract-handler/utils';
 import { _EvmApi } from '@subwallet/extension-base/services/chain-service/types';
 import { _getContractAddressOfToken } from '@subwallet/extension-base/services/chain-service/utils';
-import { calculateGasFeeParams } from '@subwallet/extension-base/services/fee-service/utils';
 import { _NotificationInfo, ClaimPolygonBridgeNotificationMetadata } from '@subwallet/extension-base/services/inapp-notification-service/interfaces';
+import { EvmFeeInfo, FeeCustom, FeeOption, GetFeeFunction } from '@subwallet/extension-base/types';
+import { combineEthFee } from '@subwallet/extension-base/utils';
+import { getId } from '@subwallet/extension-base/utils/getId';
 import { TransactionConfig } from 'web3-core';
 import { ContractSendMethod } from 'web3-eth-contract';
 
@@ -39,7 +41,18 @@ export const POLYGON_GAS_INDEXER = {
   TESTNET: 'https://gasstation.polygon.technology/zkevm/cardona'
 };
 
-async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, destinationNetwork: number, evmApi: _EvmApi): Promise<TransactionConfig> {
+async function createPolygonBridgeTransaction (
+  tokenInfo: _ChainAsset,
+  originChainInfo: _ChainInfo,
+  sender: string,
+  recipientAddress: string,
+  value: string,
+  destinationNetwork: number,
+  evmApi: _EvmApi,
+  getChainFee: GetFeeFunction,
+  feeCustom?: FeeCustom,
+  feeOption?: FeeOption
+): Promise<TransactionConfig> {
   const polygonBridgeContractAddress = getPolygonBridgeContract(originChainInfo.slug);
   const polygonBridgeContract = getWeb3Contract(polygonBridgeContractAddress, evmApi, _POLYGON_BRIDGE_ABI);
   const tokenContract = _getContractAddressOfToken(tokenInfo) || '0x0000000000000000000000000000000000000000'; // FOR Ethereum: use null address
@@ -58,16 +71,17 @@ async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originCha
     '0x'
   );
   const transferEncodedCall = transferCall.encodeABI();
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
+  const id = getId();
+  const feeInfo = await getChainFee(id, originChainInfo.slug, 'evm') as EvmFeeInfo;
+
+  const feeCombine = combineEthFee(feeInfo);
 
   const transactionConfig: TransactionConfig = {
     from: sender,
     to: polygonBridgeContractAddress,
     value: value,
     data: transferEncodedCall,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority?.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority?.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   };
 
   const gasLimit = await evmApi.api.eth.estimateGas(transactionConfig).catch(() => 200000);
@@ -77,15 +91,15 @@ async function createPolygonBridgeTransaction (tokenInfo: _ChainAsset, originCha
   return transactionConfig;
 }
 
-export async function _createPolygonBridgeL1toL2Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
-  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 1, evmApi);
+export async function _createPolygonBridgeL1toL2Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi, getChainFee: GetFeeFunction, feeCustom?: FeeCustom, feeOption?: FeeOption): Promise<TransactionConfig> {
+  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 1, evmApi, getChainFee, feeCustom, feeOption);
 }
 
-export async function _createPolygonBridgeL2toL1Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi): Promise<TransactionConfig> {
-  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 0, evmApi);
+export async function _createPolygonBridgeL2toL1Extrinsic (tokenInfo: _ChainAsset, originChainInfo: _ChainInfo, sender: string, recipientAddress: string, value: string, evmApi: _EvmApi, getChainFee: GetFeeFunction, feeCustom?: FeeCustom, feeOption?: FeeOption): Promise<TransactionConfig> {
+  return createPolygonBridgeTransaction(tokenInfo, originChainInfo, sender, recipientAddress, value, 0, evmApi, getChainFee, feeCustom, feeOption);
 }
 
-export async function getClaimPolygonBridge (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi) {
+export async function getClaimPolygonBridge (chainSlug: string, notification: _NotificationInfo, evmApi: _EvmApi, feeInfo: EvmFeeInfo) {
   const polygonBridgeContractAddress = getPolygonBridgeContract(chainSlug);
   const polygonBridgeContract = getWeb3Contract(polygonBridgeContractAddress, evmApi, _POLYGON_BRIDGE_ABI);
   const metadata = notification.metadata as ClaimPolygonBridgeNotificationMetadata;
@@ -101,16 +115,14 @@ export async function getClaimPolygonBridge (chainSlug: string, notification: _N
   const transferCall: ContractSendMethod = polygonBridgeContract.methods.claimAsset(proof.merkle_proof, proof.rollup_merkle_proof, metadata.counter, proof.main_exit_root, proof.rollup_exit_root, metadata.originTokenNetwork, metadata.originTokenAddress, metadata.destinationNetwork, metadata.receiver, metadata.amounts[0], '0x');
   const transferEncodedCall = transferCall.encodeABI();
 
-  const priority = await calculateGasFeeParams(evmApi, evmApi.chainSlug);
+  const feeCombine = combineEthFee(feeInfo);
 
   const transactionConfig = {
     from: metadata.userAddress,
     to: polygonBridgeContractAddress,
     value: '0',
     data: transferEncodedCall,
-    gasPrice: priority.gasPrice,
-    maxFeePerGas: priority.maxFeePerGas?.toString(),
-    maxPriorityFeePerGas: priority.maxPriorityFeePerGas?.toString()
+    ...feeCombine
   } as TransactionConfig;
 
   const gasLimit = await evmApi.api.eth.estimateGas(transactionConfig).catch(() => 200000);
