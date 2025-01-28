@@ -286,6 +286,8 @@ export const EVM_REFORMAT_DECIMALS = {
   acala: ['acala_evm', 'karura_evm']
 };
 
+export const XTOKENS_TRANSFER_TOKEN = ['acala-NATIVE-ACA'];
+
 export const LATEST_CHAIN_DATA_FETCHING_INTERVAL = 120000;
 
 // TODO: review
