@@ -10,14 +10,14 @@ import { TokenGroupBalanceItem } from '@subwallet/extension-koni-ui/components/T
 import { DEFAULT_SWAP_PARAMS, DEFAULT_TRANSFER_PARAMS, IS_SHOW_TON_CONTRACT_VERSION_WARNING, SWAP_TRANSACTION, TON_ACCOUNT_SELECTOR_MODAL, TON_WALLET_CONTRACT_SELECTOR_MODAL, TRANSFER_TRANSACTION } from '@subwallet/extension-koni-ui/constants';
 import { DataContext } from '@subwallet/extension-koni-ui/contexts/DataContext';
 import { HomeContext } from '@subwallet/extension-koni-ui/contexts/screen/HomeContext';
-import { useCoreReceiveModalHelper, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
+import { useCoreReceiveModalHelper, useDebouncedValue, useGetBannerByScreen, useGetChainSlugsByAccount, useSetCurrentPage } from '@subwallet/extension-koni-ui/hooks';
 import useNotification from '@subwallet/extension-koni-ui/hooks/common/useNotification';
 import useTranslation from '@subwallet/extension-koni-ui/hooks/common/useTranslation';
 import { UpperBlock } from '@subwallet/extension-koni-ui/Popup/Home/Tokens/UpperBlock';
 import { RootState } from '@subwallet/extension-koni-ui/stores';
 import { AccountAddressItemType, ThemeProps, TransferParams } from '@subwallet/extension-koni-ui/types';
 import { TokenBalanceItemType } from '@subwallet/extension-koni-ui/types/balance';
-import { getTransactionFromAccountProxyValue, isAccountAll, sortTokenByValue } from '@subwallet/extension-koni-ui/utils';
+import { getTransactionFromAccountProxyValue, isAccountAll, sortTokensByStandard } from '@subwallet/extension-koni-ui/utils';
 import { isTonAddress } from '@subwallet/keyring';
 import { Button, Icon, ModalContext, SwAlert } from '@subwallet/react-ui';
 import classNames from 'classnames';
@@ -30,6 +30,7 @@ import styled from 'styled-components';
 import { useLocalStorage } from 'usehooks-ts';
 
 type Props = ThemeProps;
+
 const tonWalletContractSelectorModalId = TON_WALLET_CONTRACT_SELECTOR_MODAL;
 const tonAccountSelectorModalId = TON_ACCOUNT_SELECTOR_MODAL;
 
@@ -47,6 +48,7 @@ const Component = (): React.ReactElement => {
     totalBalanceInfo }, tokenGroupStructure: { sortedTokenGroups } } = useContext(HomeContext);
   const notify = useNotification();
   const { onOpenReceive, receiveModalProps } = useCoreReceiveModalHelper();
+  const priorityTokens = useSelector((state: RootState) => state.chainStore.priorityTokens);
 
   const isZkModeSyncing = useSelector((state: RootState) => state.mantaPay.isSyncing);
   const zkModeSyncProgress = useSelector((state: RootState) => state.mantaPay.progress);
@@ -291,17 +293,21 @@ const Component = (): React.ReactElement => {
     navigate('/transaction/swap');
   }, [accountProxies, currentAccountProxy, navigate, notify, setSwapStorage, t]);
 
-  const tokenGroupBalanceItems = useMemo<TokenBalanceItemType[]>(() => {
+  const debouncedTokenGroupBalanceMap = useDebouncedValue<Record<string, TokenBalanceItemType>>(tokenGroupBalanceMap, 300);
+
+  const tokenGroupBalanceItems = useMemo((): TokenBalanceItemType[] => {
     const result: TokenBalanceItemType[] = [];
 
     sortedTokenGroups.forEach((tokenGroupSlug) => {
-      if (tokenGroupBalanceMap[tokenGroupSlug]) {
-        result.push(tokenGroupBalanceMap[tokenGroupSlug]);
+      if (debouncedTokenGroupBalanceMap[tokenGroupSlug]) {
+        result.push(debouncedTokenGroupBalanceMap[tokenGroupSlug]);
       }
     });
 
-    return result.sort(sortTokenByValue);
-  }, [sortedTokenGroups, tokenGroupBalanceMap]);
+    sortTokensByStandard(result, priorityTokens, true);
+
+    return result;
+  }, [sortedTokenGroups, debouncedTokenGroupBalanceMap, priorityTokens]);
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);

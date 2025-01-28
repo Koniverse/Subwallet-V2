@@ -1720,6 +1720,13 @@ export interface RequestAddPspToken {
   };
 }
 
+// Popular tokens
+
+export interface TokenPriorityDetails {
+  tokenGroup: Record<string, number>;
+  token: Record<string, number>
+}
+
 /// WalletConnect
 
 // Connect
@@ -2308,6 +2315,11 @@ export interface KoniRequestSignatures {
 
   /* Ledger */
   'pri(ledger.generic.allow)': [null, string[], string[]];
+  /* Ledger */
+
+  /* Popular tokens */
+  'pri(tokens.subscribePriority)': [null, TokenPriorityDetails, TokenPriorityDetails];
+  /* Popular tokens */
 }
 
 export interface ApplicationMetadataType {
