@@ -24,7 +24,7 @@ export async function removeChain (networkKey: string): Promise<boolean> {
 
 export async function updateChainActiveState (chain: string, active: boolean): Promise<boolean> {
   if (active) {
-    return await enableChain(chain);
+    return await enableChainWithPriorityAssets(chain);
   } else {
     return await disableChain(chain);
   }
@@ -36,6 +36,10 @@ export async function disableChain (networkKey: string): Promise<boolean> {
 
 export async function enableChain (networkKey: string, enableTokens = true): Promise<boolean> {
   return sendMessage('pri(chainService.enableChain)', { chainSlug: networkKey, enableTokens });
+}
+
+export async function enableChainWithPriorityAssets (networkKey: string, enableTokens = true): Promise<boolean> {
+  return sendMessage('pri(chainService.enableChainWithPriorityAssets)', { chainSlug: networkKey, enableTokens });
 }
 
 export async function enableChains (targetKeys: string[], enableTokens = true): Promise<boolean> {
